@@ -50,7 +50,7 @@ public class MarshallableUserObject<T> {
       this.object = object;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    byte[] getBytes() {
       return Util.EMPTY_BYTE_ARRAY;
    }

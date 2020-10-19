@@ -56,12 +56,12 @@ public class EmbeddedMetadata implements Metadata {
       return version;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public NumericVersion getNumericVersion() {
       return version instanceof NumericVersion ? (NumericVersion) version : null;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public SimpleClusteredVersion getClusteredVersion() {
       return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
    }

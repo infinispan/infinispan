@@ -1,19 +1,17 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.Embeddable;
 
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Embeddable
-public class Address implements Serializable {
+public class Address {
 
    private String city;
    private String street;
    private int zipCode;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getCity() {
       return city;
    }
@@ -22,7 +20,7 @@ public class Address implements Serializable {
       this.city = city;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getStreet() {
       return street;
    }

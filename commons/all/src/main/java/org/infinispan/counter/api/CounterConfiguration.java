@@ -58,7 +58,7 @@ public class CounterConfiguration {
       return lowerBound;
    }
 
-   @ProtoField(number = 5)
+   @ProtoField(5)
    public CounterType type() {
       return type;
    }
@@ -68,7 +68,7 @@ public class CounterConfiguration {
       return concurrencyLevel;
    }
 
-   @ProtoField(number = 6)
+   @ProtoField(6)
    public Storage storage() {
       return storage;
    }

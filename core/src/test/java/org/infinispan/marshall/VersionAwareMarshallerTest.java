@@ -701,10 +701,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public static class PojoWithExternalAndInternal {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final Human human;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       final String value;
 
       @ProtoFactory

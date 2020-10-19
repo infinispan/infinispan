@@ -1,6 +1,5 @@
 package org.infinispan.query.indexedembedded;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,12 +12,12 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 @Indexed
-public class Country implements Serializable {
+public class Country {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public Long id;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String countryName;
 
    @ProtoField(number = 3, collectionImplementation = HashSet.class)

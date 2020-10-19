@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -13,14 +11,14 @@ import org.infinispan.protostream.annotations.ProtoField;
  *
  */
 @Entity
-public class Document implements Serializable {
+public class Document {
 
    @Id
    private String name;
    private String title;
    private String article;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getName() {
       return name;
    }
@@ -29,7 +27,7 @@ public class Document implements Serializable {
       this.name = name;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getTitle() {
       return title;
    }
@@ -38,7 +36,7 @@ public class Document implements Serializable {
       this.title = title;
    }
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    public String getArticle() {
       return article;
    }
@@ -83,10 +81,10 @@ public class Document implements Serializable {
          return false;
       return true;
    }
+
    @Override
    public String toString() {
       return "Document [name=" + name + ", title=" + title + ", article="
             + article + "]";
    }
-
 }

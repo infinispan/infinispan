@@ -64,7 +64,7 @@ public class MarshalledValueImpl implements MarshalledValue {
       return lastUsed;
    }
 
-   @ProtoField(number = 5)
+   @ProtoField(5)
    byte[] getInternalMetadata() {
       return internalMetadataBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(internalMetadataBytes);
    }

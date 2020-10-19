@@ -5,7 +5,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -118,11 +117,12 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
       }
    }
 
-   public static class CustomEventFilter implements CacheEventFilter<String, Object>, Serializable {
+   public static class CustomEventFilter implements CacheEventFilter<String, Object> {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String firstParam;
-      @ProtoField(number = 2)
+
+      @ProtoField(2)
       final String secondParam;
 
       @ProtoFactory

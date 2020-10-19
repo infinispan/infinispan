@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -16,7 +14,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 @Entity
 @Table(name="Users")
-public class User implements Serializable {
+public class User {
 
    @Id
    private String username;
@@ -29,7 +27,7 @@ public class User implements Serializable {
 
    private String note;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getUsername() {
       return username;
    }
@@ -38,7 +36,7 @@ public class User implements Serializable {
       this.username = username;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getFirstName() {
       return firstName;
    }
@@ -47,7 +45,7 @@ public class User implements Serializable {
       this.firstName = firstName;
    }
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    public String getLastName() {
       return lastName;
    }
@@ -56,7 +54,7 @@ public class User implements Serializable {
       this.lastName = lastName;
    }
 
-   @ProtoField(number = 4)
+   @ProtoField(4)
    public String getNote() {
       return note;
    }
@@ -116,6 +114,4 @@ public class User implements Serializable {
       return "User [username=" + username + ", firstName=" + firstName
             + ", lastName=" + lastName + ", note=" + note + "]";
    }
-
-
 }

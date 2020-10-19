@@ -202,7 +202,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          return new SubstringFilterConverter(params);
       }
 
-      static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable {
+      static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> {
 
          @ProtoField(number = 1, defaultValue = "0")
          final int length;

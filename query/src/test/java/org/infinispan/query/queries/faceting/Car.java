@@ -1,7 +1,5 @@
 package org.infinispan.query.queries.faceting;
 
-import java.io.Serializable;
-
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Store;
@@ -15,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Hardy Ferentschik
  */
 @Indexed(index = "car")
-public class Car implements Serializable {
+public class Car {
 
    private String color;
 

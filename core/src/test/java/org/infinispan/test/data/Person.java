@@ -24,7 +24,7 @@ public class Person implements Serializable {
       this.address = address;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getName() {
       return name;
    }
@@ -33,7 +33,7 @@ public class Person implements Serializable {
       this.name = name;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public Address getAddress() {
       return address;
    }

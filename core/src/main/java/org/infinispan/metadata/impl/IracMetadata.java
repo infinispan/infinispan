@@ -37,12 +37,12 @@ public class IracMetadata {
       return new IracMetadata(in.readUTF(), (IracEntryVersion) in.readObject());
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getSite() {
       return site;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public IracEntryVersion getVersion() {
       return version;
    }

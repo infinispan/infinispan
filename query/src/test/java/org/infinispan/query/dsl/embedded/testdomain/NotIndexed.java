@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class NotIndexed implements Serializable {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String notIndexedField;
 
    @ProtoFactory

@@ -11,10 +11,10 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  **/
 @ProtoTypeId(ProtoStreamTypeIds.DISTRIBUTED_SERVER_TASK_PARAMETER)
 class TaskParameter {
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String key;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    String value;
 
    @ProtoFactory

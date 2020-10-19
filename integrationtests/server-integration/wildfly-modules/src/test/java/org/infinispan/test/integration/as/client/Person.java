@@ -4,10 +4,10 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class Person {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String name;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public Integer id;
 
    public Person(String name) {

@@ -24,10 +24,10 @@ import org.infinispan.tasks.TaskContext;
  */
 @ProtoTypeId(ProtoStreamTypeIds.DISTRIBUTED_SERVER_TASK)
 public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, T> {
-   @ProtoField(number = 1)
+   @ProtoField(1)
    final String taskName;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    final String cacheName;
 
    @ProtoField(number = 3, collectionImplementation = ArrayList.class)

@@ -59,13 +59,13 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       this.params = params;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    NumericVersion getNumericVersion() {
       EntryVersion version = version();
       return version instanceof NumericVersion ? (NumericVersion) version : null;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    SimpleClusteredVersion getClusteredVersion() {
       EntryVersion version = version();
       return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
@@ -121,7 +121,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
             .orElse(MetaMaxIdle.defaultValue()).get();
    }
 
-   @ProtoField(number = 7)
+   @ProtoField(7)
    public CounterConfiguration counterConfiguration() {
       return params.find(CounterConfigurationMetaParam.class).map(CounterConfigurationMetaParam::get).orElse(null);
    }

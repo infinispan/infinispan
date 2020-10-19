@@ -191,7 +191,7 @@ public final class MediaType {
       }
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String getTree() {
       return toString();
    }

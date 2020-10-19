@@ -106,7 +106,7 @@ public class CounterValue {
    /**
     * @return the counter's state.
     */
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public CounterState getState() {
       return state;
    }

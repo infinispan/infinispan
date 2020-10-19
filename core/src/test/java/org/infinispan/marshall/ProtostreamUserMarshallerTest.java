@@ -83,7 +83,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
 
    static class ExampleUserPojo {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String someString;
 
       @ProtoFactory
@@ -94,7 +94,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
 
    static class AnotherExampleUserPojo {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String anotherString;
 
       @ProtoFactory

@@ -266,7 +266,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       @ProtoField(number = 1, defaultValue = "false")
       final boolean throwExceptionOnNonFilterAndConverterMethods;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       final String convertedValue;
 
       @ProtoFactory

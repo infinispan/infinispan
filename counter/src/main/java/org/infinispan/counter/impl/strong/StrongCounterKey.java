@@ -58,7 +58,7 @@ public class StrongCounterKey implements CounterKey {
    }
 
    @Override
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public ByteString getCounterName() {
       return counterName;
    }

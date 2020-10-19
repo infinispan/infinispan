@@ -235,7 +235,7 @@ public abstract class AbstractInfinispanTest {
    }
 
    protected void eventually(Condition ec, long timeout, TimeUnit unit) {
-      eventually(() ->"Condition is still false after " + timeout + unit.toString(), ec, timeout, unit);
+      eventually(() -> "Condition is still false after " + timeout + " " + unit, ec, timeout, unit);
    }
 
    protected void eventually(String message, Condition ec, long timeout, TimeUnit unit) {

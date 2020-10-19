@@ -2,8 +2,6 @@ package org.infinispan.query.blackbox;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
-
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
@@ -80,9 +78,9 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
    // index name as in bug description
    @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity")
-   public static class ClassWithLongIndexName implements Serializable {
+   public static class ClassWithLongIndexName {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       String name;
 
       @ProtoFactory

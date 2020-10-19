@@ -48,7 +48,7 @@ public class JGroupsAddress implements Address {
       }
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    byte[] getBytes() throws IOException {
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
            DataOutputStream out = new DataOutputStream(baos)) {

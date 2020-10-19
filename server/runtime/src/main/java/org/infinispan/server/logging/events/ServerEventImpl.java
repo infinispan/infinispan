@@ -69,43 +69,43 @@ public final class ServerEventImpl implements EventLog {
       return when.toEpochMilli();
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    @Override
    public EventLogLevel getLevel() {
       return level;
    }
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    @Override
    public EventLogCategory getCategory() {
       return category;
    }
 
-   @ProtoField(number = 4)
+   @ProtoField(4)
    @Override
    public String getMessage() {
       return message;
    }
 
-   @ProtoField(number = 5)
+   @ProtoField(5)
    @Override
    public Optional<String> getDetail() {
       return Optional.ofNullable(detail);
    }
 
-   @ProtoField(number = 6)
+   @ProtoField(6)
    @Override
    public Optional<String> getWho() {
       return Optional.ofNullable(who);
    }
 
-   @ProtoField(number = 7)
+   @ProtoField(7)
    @Override
    public Optional<String> getContext() {
       return Optional.ofNullable(context);
    }
 
-   @ProtoField(number = 8)
+   @ProtoField(8)
    @Override
    public Optional<String> getScope() {
       return Optional.ofNullable(scope);
