@@ -1,21 +1,25 @@
-[id='protostream_types']
-= ProtoStream Types
-ProtoStream can handle the following types, as well as the unboxed equivalents
-in the case of primitive types, without any additional configuration:
+[id='protostream_types-{context}']
+= Supported Types
+{brandname} uses a ProtoStream API to encode and decode Java objects into
+Protocol Buffers (Protobuf); a language-neutral, backwards compatible format.
 
+ProtoStream can handle the following types for keys and values, as well as the
+unboxed equivalents in the case of primitive types:
+
+* `byte[]`
+* `Byte`
 * `String`
 * `Integer`
 * `Long`
 * `Double`
 * `Float`
 * `Boolean`
-* `byte[]`
-* `Byte`
 * `Short`
 * `Character`
 * `java.util.Date`
 * `java.time.Instant`
 
-To marshall any other Java objects, you must generate, or manually create,
-`SerializationContextInitializer` implementations that register `.proto`
-schemas and marshallers with a `SerializationContext`.
+.Reference
+
+* link:https://github.com/infinispan/protostream[{brandname} ProtoStream library]
+* link:https://developers.google.com/protocol-buffers[Protocol Buffers]

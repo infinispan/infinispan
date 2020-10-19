@@ -1,6 +1,6 @@
 [id='marshalling']
-:context: dev
-= Marshalling Java Objects
+:context: configuring_marshalling
+= Configuring {brandname} to Marshall Java Objects
 Marshalling converts Java objects into binary format so they can be transferred
 over the wire or stored to disk. The reverse process, unmarshalling, transforms
 data from binary format into Java objects.
@@ -9,25 +9,12 @@ data from binary format into Java objects.
 
 * Send data to other {brandname} nodes in a cluster.
 * Store data in persistent cache stores.
-* Store data in binary format to provide lazy deserialization capabilities.
+* Store data in binary format to provide deserialization capabilities.
 
-[NOTE]
-====
-{brandname} handles marshalling for all internal types. You need to configure
-marshalling only for the Java objects that you want to store.
-====
+include::{topics}/ref_protostream_types.adoc[leveloffset=+1]
+include::assembly_marshalling_user_types.adoc[leveloffset=+1]
+include::assembly_marshaller_implementations.adoc[leveloffset=+1]
 
-{brandname} uses ProtoStream as the default for marshalling Java objects to
-binary format. {brandname} also provides other Marshaller implementations you
-can use.
-
-include::{topics}/proc_using_protostream_marshaller.adoc[leveloffset=+1]
-include::{topics}/proc_using_jboss_marshaller.adoc[leveloffset=+1]
-include::{topics}/proc_using_java_serialization.adoc[leveloffset=+1]
-include::{topics}/proc_using_kyro_marshaller.adoc[leveloffset=+1]
-include::{topics}/proc_using_protostuff_marshaller.adoc[leveloffset=+1]
-include::{topics}/proc_using_custom_marshallers.adoc[leveloffset=+1]
-include::{topics}/proc_adding_deserialization_allowlist.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

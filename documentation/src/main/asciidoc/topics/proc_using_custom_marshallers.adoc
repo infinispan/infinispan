@@ -1,16 +1,22 @@
 [id='custom_marshallers']
 = Using Custom Marshallers
-{brandname} provides a `Marshaller` interface for custom marshallers.
+{brandname} provides a `Marshaller` interface that you can implement for custom marshallers.
 
-.Programmatic procedure
+.Procedure
 
+. Implement the `Marshaller` interface.
+. Configure {brandname} to use your marshaller.
+. Add your Java classes to the deserialization allowlist.
+
+* Programmatically:
++
 [source,java]
 ----
 include::code_examples/CustomMarshaller.java[]
 ----
 
-.Declarative procedure
-
+* Declaratively:
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/custom_marshaller.xml[]
@@ -25,3 +31,4 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 .Reference
 
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
+* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
