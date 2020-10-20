@@ -173,7 +173,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             }
             // We shouldn't be able to get into this state
             assert firstAddress > 0;
-            // We read the key before hashCode due to how off heap bytes are written (key requires reading metadata
+            // We read the key before hashCode due to how off-heap bytes are written (key requires reading metadata
             // which comes before hashCode, which should keep hashCode bytes in memory register in most cases)
             byte[] key = offHeapEntryFactory.getKey(firstAddress);
 

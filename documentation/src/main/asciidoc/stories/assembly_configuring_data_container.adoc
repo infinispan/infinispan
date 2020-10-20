@@ -1,13 +1,9 @@
 [id='memory']
 :context: config
-= Configuring the Data Container
+= Managing Memory
 Configure the data container where {brandname} stores entries. Specify the
-encoding for cache entries, store data in off-heap memory, and use eviction or 
+encoding for cache entries, store data in off-heap memory, and use eviction or
 expiration policies to keep only active entries in memory.
-
-include::{topics}/proc_configuring_cache_encoding.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_protobuf_encoding.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_memory_offheap.adoc[leveloffset=+1]
 
 //Overview
 include::{topics}/con_evict_vs_expire.adoc[leveloffset=+1]
@@ -25,6 +21,10 @@ include::{topics}/con_expiration_overview.adoc[leveloffset=+3]
 include::{topics}/con_expiration_reaper.adoc[leveloffset=+3]
 include::{topics}/con_expiration_maxidle.adoc[leveloffset=+3]
 include::{topics}/ref_expiration_examples.adoc[leveloffset=+3]
+
+//Off Heap
+include::{topics}/con_off_heap_memory.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_memory_offheap.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -453,7 +453,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       return cache.touch(ice.getKey(), segment, true)
             .thenApply(touched -> {
                if (touched) {
-                  // The ICE can be a copy in cases such as off heap - we need to update its time that is reported to the user
+                  // The ICE can be a copy in cases such as off-heap - we need to update its time that is reported to the user
                   ice.touch(currentTime);
                }
                return !touched;

@@ -1,29 +1,28 @@
 [id='configure_off_heap-{context}']
-= Configuring {brandname} to Store Cache Entries Off Heap
-{brandname} can use either JVM heap memory or off-heap native memory as the
-data container for cache entries. By default {brandname} stores cache entries
-in JVM heap memory.
-
-{brandname} can use off-heap storage with eviction based on the total number of
-entries or maximum amount of memory. When using off-heap, {brandname} stores
-cache entries in Protobuf format with the `application/x-protostream` encoding.
+= Using Off-Heap Memory
+Configure {brandname} to store cache entries in native memory outside the JVM
+heap space.
 
 .Procedure
 
-To store cache entries in off-heap memory, configure {brandname} in one of the
-following ways:
-
+. Create a configuration for any type of cache.
+. Store cache entries in off-heap memory.
++
 * Declaratively: Add the `storage="OFF_HEAP"` attribute to the `memory` element.
 * Programmatically: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
++
+. Configure eviction to limit the amount of off-heap memory that the cache can use. You can use eviction based on total number of entries (`max-count`) or maximum amount of memory (`max-size`).
+. Configure any binary encoding for cache entries. For optimal results, use the `application/x-protostream` MediaType to store entries in Protobuf format.
+. Create caches that use the configuration.
 
-.Declarative example
+.Declarative cache configuration
 
 [source,xml,options="nowrap"]
 ----
 include::config_examples/max_size_offheap.xml[]
 ----
 
-.Programmatic example
+.Programmatic cache configuration
 
 [source,java,options="nowrap"]
 ----

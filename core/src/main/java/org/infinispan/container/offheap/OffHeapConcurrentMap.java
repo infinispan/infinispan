@@ -153,7 +153,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       locks.lockAll();
       try {
          if (!sizeMemoryBuckets(INITIAL_SIZE)) {
-            throw new IllegalArgumentException("Unable to initialize off heap addresses as memory eviction is too low!");
+            throw new IllegalArgumentException("Unable to initialize off-heap addresses as memory eviction is too low!");
          }
       } finally {
          locks.unlockAll();
@@ -914,7 +914,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    private void actualClear() {
       checkDeallocation();
       if (trace) {
-         log.trace("Clearing off heap data");
+         log.trace("Clearing off-heap data");
       }
       LongConsumer removeEntries = address -> {
          while (address != 0) {
@@ -941,7 +941,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
 
       size.set(0);
       if (trace) {
-         log.trace("Cleared off heap data");
+         log.trace("Cleared off-heap data");
       }
    }
 
