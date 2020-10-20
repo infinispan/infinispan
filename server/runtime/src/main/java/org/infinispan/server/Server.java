@@ -10,12 +10,11 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivilegedActionException;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -163,7 +162,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private ExitHandler exitHandler = new DefaultExitHandler();
    private ConfigurationBuilderHolder defaultsHolder;
    private ConfigurationBuilderHolder configurationBuilderHolder;
-   private Map<String, DefaultCacheManager> cacheManagers;
+   private DefaultCacheManager cacheManager;
    private Map<String, ProtocolServer> protocolServers;
    private volatile ComponentStatus status;
    private ServerConfiguration serverConfiguration;
@@ -311,7 +310,6 @@ public class Server implements ServerManagement, AutoCloseable {
       if (status == ComponentStatus.RUNNING) {
          return r;
       }
-      cacheManagers = new LinkedHashMap<>(2);
       protocolServers = new ConcurrentHashMap<>(4);
       try {
          // Load any server extensions
@@ -319,11 +317,10 @@ public class Server implements ServerManagement, AutoCloseable {
          extensions.load(Thread.currentThread().getContextClassLoader());
 
          // Create the cache manager
-         DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
-         cacheManagers.put(cm.getName(), cm);
+         cacheManager = new DefaultCacheManager(configurationBuilderHolder, false);
 
          // Retrieve the server configuration
-         serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
+         serverConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager).module(ServerConfiguration.class);
          serverConfiguration.setServer(this);
 
          // Initialize the data sources
@@ -333,9 +330,9 @@ public class Server implements ServerManagement, AutoCloseable {
          }
 
          // Start the cache manager
-         SecurityActions.startCacheManager(cm);
+         SecurityActions.startCacheManager(cacheManager);
 
-         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
+         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
          blockingManager = bcr.getComponent(BlockingManager.class).running();
          cacheIgnoreManager = bcr.getComponent(CacheIgnoreManager.class).running();
 
@@ -343,12 +340,12 @@ public class Server implements ServerManagement, AutoCloseable {
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
          // the clustered locks.
          Path dataRoot = serverRoot.toPath().resolve(properties.getProperty(INFINISPAN_SERVER_DATA_PATH));
-         backupManager = new BackupManagerImpl(blockingManager, cm, cacheManagers, dataRoot);
+         backupManager = new BackupManagerImpl(blockingManager, cacheManager, Collections.singletonMap(cacheManager.getName(), cacheManager), dataRoot);
          backupManager.init();
 
          // Register the task manager
          taskManager = bcr.getComponent(TaskManager.class).running();
-         taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
+         taskManager.registerTaskEngine(extensions.getServerTaskEngine(cacheManager));
 
          // Start the protocol servers
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
@@ -359,7 +356,7 @@ public class Server implements ServerManagement, AutoCloseable {
                ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
                if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
                protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
-               SecurityActions.startProtocolServer(protocolServer, configuration, cm);
+               SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);
                ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
                if (protocolConfig.startTransport()) {
                   log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
@@ -384,7 +381,7 @@ public class Server implements ServerManagement, AutoCloseable {
          protocolServers.put("endpoint", endpointServer);
          log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
          log.endpointUrl(
-               Util.requireNonNullElse(cm.getAddress(), "local"),
+               Util.requireNonNullElse(cacheManager.getAddress(), "local"),
                singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
          );
          // Change status
@@ -425,28 +422,24 @@ public class Server implements ServerManagement, AutoCloseable {
 
    @Override
    public void serverStop(List<String> servers) {
-      for (DefaultCacheManager cacheManager : cacheManagers.values()) {
-         ClusterExecutor executor = cacheManager.executor();
-         if (servers != null && !servers.isEmpty()) {
-            // Find the actual addresses of the servers
-            List<Address> targets = cacheManager.getMembers().stream()
-                  .filter(a -> servers.contains(a.toString()))
-                  .collect(Collectors.toList());
-            executor = executor.filterTargets(targets);
-            // Tell all the target servers to exit
-            sendExitStatusToServers(executor, ExitStatus.SERVER_SHUTDOWN);
-         } else {
-            serverStopHandler(ExitStatus.SERVER_SHUTDOWN);
-         }
+      ClusterExecutor executor = cacheManager.executor();
+      if (servers != null && !servers.isEmpty()) {
+         // Find the actual addresses of the servers
+         List<Address> targets = cacheManager.getMembers().stream()
+               .filter(a -> servers.contains(a.toString()))
+               .collect(Collectors.toList());
+         executor = executor.filterTargets(targets);
+         // Tell all the target servers to exit
+         sendExitStatusToServers(executor, ExitStatus.SERVER_SHUTDOWN);
+      } else {
+         serverStopHandler(ExitStatus.SERVER_SHUTDOWN);
       }
    }
 
    @Override
    public void clusterStop() {
-      cacheManagers.values().forEach(cm -> {
-         cm.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cm, name));
-         sendExitStatusToServers(cm.executor(), ExitStatus.CLUSTER_SHUTDOWN);
-      });
+      cacheManager.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cacheManager, name));
+      sendExitStatusToServers(cacheManager.executor(), ExitStatus.CLUSTER_SHUTDOWN);
    }
 
    private void sendExitStatusToServers(ClusterExecutor clusterExecutor, ExitStatus exitStatus) {
@@ -465,7 +458,7 @@ public class Server implements ServerManagement, AutoCloseable {
       }
       // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
-      cacheManagers.values().forEach(SecurityActions::stopCacheManager);
+      SecurityActions.stopCacheManager(cacheManager);
       // Shutdown the context and all associated resources
       if (initialContextFactoryBuilder != null) {
          initialContextFactoryBuilder.close();
@@ -525,17 +518,12 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    @Override
-   public Set<String> cacheManagerNames() {
-      return cacheManagers.keySet();
+   public DefaultCacheManager getCacheManager() {
+      return cacheManager;
    }
 
    @Override
-   public DefaultCacheManager getCacheManager(String name) {
-      return cacheManagers.get(name);
-   }
-
-   @Override
-   public CacheIgnoreManager getIgnoreManager(String cacheManager) {
+   public CacheIgnoreManager getIgnoreManager() {
       return cacheIgnoreManager;
    }
 
@@ -545,10 +533,6 @@ public class Server implements ServerManagement, AutoCloseable {
 
    public File getServerRoot() {
       return serverRoot;
-   }
-
-   public Map<String, DefaultCacheManager> getCacheManagers() {
-      return cacheManagers;
    }
 
    public Map<String, ProtocolServer> getProtocolServers() {

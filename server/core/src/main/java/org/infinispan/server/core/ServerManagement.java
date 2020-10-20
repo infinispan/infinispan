@@ -3,7 +3,6 @@ package org.infinispan.server.core;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -21,11 +20,9 @@ public interface ServerManagement {
 
    void clusterStop();
 
-   Set<String> cacheManagerNames();
+   DefaultCacheManager getCacheManager();
 
-   DefaultCacheManager getCacheManager(String name);
-
-   CacheIgnoreManager getIgnoreManager(String cacheManager);
+   CacheIgnoreManager getIgnoreManager();
 
    Map<String, String> getLoginConfiguration();
 

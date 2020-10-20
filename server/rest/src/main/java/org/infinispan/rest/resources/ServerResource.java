@@ -67,7 +67,10 @@ public class ServerResource implements ResourceHandler {
       boolean add = restRequest.method().equals(POST);
 
       String cacheManagerName = restRequest.variables().get("cache-manager");
-      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
+      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager();
+      if (!cacheManager.getName().equals(cacheManagerName)) {
+         return completedFuture(builder.status(NOT_FOUND).build());
+      }
 
       if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
 
@@ -77,7 +80,7 @@ public class ServerResource implements ResourceHandler {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
       ServerManagement server = invocationHelper.getServer();
-      CacheIgnoreManager ignoreManager = server.getIgnoreManager(cacheManagerName);
+      CacheIgnoreManager ignoreManager = server.getIgnoreManager();
       if (add) {
          return ignoreManager.ignoreCache(cacheName).thenApply(r -> builder.build());
       } else {
@@ -87,16 +90,19 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> listIgnored(RestRequest restRequest) {
       String cacheManagerName = restRequest.variables().get("cache-manager");
-      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
+      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager();
+      if (!cacheManager.getName().equals(cacheManagerName)) {
+         return completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).status(NOT_FOUND).build());
+      }
 
       if (cacheManager == null) return notFoundResponseFuture();
-      CacheIgnoreManager ignoreManager = invocationHelper.getServer().getIgnoreManager(cacheManagerName);
+      CacheIgnoreManager ignoreManager = invocationHelper.getServer().getIgnoreManager();
       Set<String> ignored = ignoreManager.getIgnoredCaches();
       return asJsonResponseFuture(Json.make(ignored));
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {
-      return asJsonResponseFuture(Json.make(invocationHelper.getServer().cacheManagerNames()));
+      return asJsonResponseFuture(Json.make(Collections.singleton(invocationHelper.getServer().getCacheManager().getName())));
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
