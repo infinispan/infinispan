@@ -1,4 +1,8 @@
-<local-cache name="off_heap">
-  <encoding media-type="application/x-protostream"/>
-  <memory storage="OFF_HEAP" max-size="1.5GB" when-full="REMOVE"/>
-</local-cache>
+<infinispan>
+  <cache-container>
+    <distributed-cache name="off_heap" mode="SYNC">
+      <encoding media-type="application/x-protostream"/>
+      <memory storage="OFF_HEAP" max-size="1.5GB" when-full="REMOVE"/>
+    </distributed-cache>
+  </cache-container>
+</infinispan>

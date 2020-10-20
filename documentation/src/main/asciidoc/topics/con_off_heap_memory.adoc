@@ -1,0 +1,68 @@
+ [id='off_heap_memory']
+= Off-Heap Memory
+{brandname} can store cache entries in JVM heap memory or off-heap.
+Off-heap storage lets your Java objects occupy native memory outside the managed JVM memory space.
+
+Off-heap storage requires less overhead per entry than in JVM heap memory.
+In other words, off-heap storage uses less memory than heap storage for the same amount of data.
+
+Another benefit of off-heap storage is that it is not affected by Garbage Collector runs, which can improve overall JVM performance.
+However, there are some trade-offs with off-heap storage; for example, JVM heap dumps do not show entries stored in off-heap memory.
+
+Consider the following simplified illustration of memory space for a JVM process where {brandname} is running:
+
+image::offheap.svg[]
+
+.JVM heap memory
+
+The heap is divided into young and old generations that help keep referenced Java objects and other application data in memory.
+The Garbage Collector (GC) process reclaims space from unreachable objects, running more frequently on the young generation memory pool.
+
+When {brandname} stores cache entries in JVM heap memory, GC runs can take longer to complete as you start adding data to your caches.
+Because GC is a fairly intensive process, longer and more frequent runs can degrade application performance.
+
+.Off-heap memory
+
+Off-heap memory is native available system memory outside JVM memory management.
+The preceding diagram shows the `Metaspace` memory pool that holds class metadata and is allocated from native memory.
+The diagram also represents a section of native memory that holds {brandname} cache entries.
+
+.Storing data off-heap
+
+When you add entries to off-heap caches, {brandname} dynamically allocates native memory to your data.
+
+{brandname} hashes the serialized `byte[]` for each key into buckets that are similar to a standard Java `HashMap`.
+Buckets include address pointers that {brandname} use to locate entries that you store in off-heap memory.
+
+[NOTE]
+====
+{brandname} determines equality of Java objects in off-heap storage using the serialized byte[] representation of each object instead of the object instance.
+====
+
+The following diagram shows a set of keys with names, the hash for each key and bucket array of address pointers, as well as the entries with the name and phone number:
+
+image::offheap_hashmap.svg[]
+
+In cases where key hashes collide, {brandname} links entries.
+As in the preceding diagram, if the William Clay and Luke Cage keys have the same hash, then the first entry added to the cache is the first element in the bucket.
+
+[NOTE]
+====
+Even though {brandname} stores cache entries in native memory, run-time operations require JVM heap representations of those objects.
+For instance, `cache.get()` operations read objects into heap memory before returning.
+Likewise, state transfer operations hold subsets of objects in heap memory while they take place.
+====
+
+.Memory overhead
+
+Memory overhead is the additional memory that {brandname} uses to store entries.
+For off-heap storage, {brandname} uses 25 bytes for each entry in the cache.
+
+When you use eviction to create a bounded off-heap data container, memory overhead increases to a total of 61 bytes.
+This occurs because {brandname} creates an additional linked list to track entries in the cache and perform eviction.
+
+.Data consistency
+
+{brandname} uses an array of locks to protect off-heap address spaces.
+The number of locks is twice the number of cores and then rounded to the nearest power of two.
+This ensures that there is an even distribution of `ReadWriteLock` instances to prevent write operations from blocking read operations.

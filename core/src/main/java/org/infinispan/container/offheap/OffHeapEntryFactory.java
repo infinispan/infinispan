@@ -14,7 +14,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  */
 public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<WrappedBytes, WrappedBytes> {
    /**
-    * Creates an off heap entry using the provided key value and metadata
+    * Creates an off-heap entry using the provided key value and metadata
     * @param key the key to use
     * @param hashCode the hashCode of the key
     * @param ice the internal entry to use
@@ -61,9 +61,9 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
    byte[] getKey(long address);
 
    /**
-    * Create an entry from the off heap pointer
+    * Create an entry from the off-heap pointer
     * @param address the address of the entry to read
-    * @return the entry created on heap from off heap
+    * @return the entry created on heap from off-heap
     */
    InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address);
 

@@ -25,7 +25,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
       long memoryLocation = MEMORY.allocate(memoryLength);
       amountAllocated.add(estimatedMemoryLength);
       if (trace) {
-         log.tracef("Allocated off heap memory at 0x%016x with %d bytes. Total size: %d", memoryLocation,
+         log.tracef("Allocated off-heap memory at 0x%016x with %d bytes. Total size: %d", memoryLocation,
                estimatedMemoryLength, amountAllocated.sum());
       }
       return memoryLocation;
@@ -40,7 +40,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private void innerDeallocate(long memoryAddress, long estimatedSize) {
       amountAllocated.add(- estimatedSize);
       if (trace) {
-         log.tracef("Deallocating off heap memory at 0x%016x with %d bytes. Total size: %d", memoryAddress,
+         log.tracef("Deallocating off-heap memory at 0x%016x with %d bytes. Total size: %d", memoryAddress,
                estimatedSize, amountAllocated.sum());
       }
       MEMORY.free(memoryAddress);
