@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -38,6 +39,8 @@ import org.infinispan.server.infinispan.task.ServerTaskRegistry;
 import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactory;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactoryService;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
@@ -58,6 +61,7 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
 
     private final InjectedValue<GlobalConfiguration> configuration = new InjectedValue<>();
     private final InjectedValue<ServerTaskRegistry> serverTaskRegistry = new InjectedValue<>();
+    private final InjectedValue<DeployedMergePolicyFactory> deployedMergePolicyRegistry = new InjectedValue<>();
     private final List<String> aliases = new LinkedList<>();
     private final String name;
     private final String defaultCache;
@@ -76,9 +80,14 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
 
     @Override
     public ServiceBuilder<CacheContainer> build(ServiceTarget target) {
-        ServiceBuilder<CacheContainer> builder = target.addService(this.getServiceName(), this)
-                .addDependency(CacheContainerServiceName.CONFIGURATION.getServiceName(this.name), GlobalConfiguration.class, this.configuration)
-           .addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, this.serverTaskRegistry)
+        ServiceBuilder<CacheContainer> builder =
+              target.addService(this.getServiceName(), this)
+                    .addDependency(CacheContainerServiceName.CONFIGURATION.getServiceName(this.name),
+                                   GlobalConfiguration.class, this.configuration)
+                    .addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class,
+                                   this.serverTaskRegistry)
+                    .addDependency(DeployedMergePolicyFactoryService.SERVICE_NAME, DeployedMergePolicyFactory.class,
+                                   deployedMergePolicyRegistry)
         ;
         for (String alias : this.aliases) {
             builder.addAliases(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(alias));
@@ -100,8 +109,13 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
     public void start(StartContext context) {
         GlobalConfiguration config = this.configuration.getValue();
         this.container = new DefaultCacheContainer(config, this.defaultCache);
-        SecurityActions.getGlobalComponentRegistry(this.container).registerComponent(this.serverTaskRegistry.getValue(), ServerTaskRegistry.class);
+        SecurityActions.getGlobalComponentRegistry(this.container)
+                       .registerComponent(this.serverTaskRegistry.getValue(), ServerTaskRegistry.class);
         SecurityActions.registerAndStartContainer(this.container, this);
+        EntryMergePolicyFactoryRegistry mergePolicyRegistry =
+              SecurityActions.getGlobalComponentRegistry(this.container)
+                             .getComponent(EntryMergePolicyFactoryRegistry.class);
+        mergePolicyRegistry.addMergePolicyFactory(deployedMergePolicyRegistry.getValue());
         InfinispanLogger.ROOT_LOGGER.cacheContainerStarted(this.name);
     }
 

@@ -56,7 +56,8 @@ public class CustomEntryMergePolicyIT {
    @WithRunningServer({@RunningServer(name = "clustered-mergepolicies")})
    public void testIfDeployedCacheContainsProperValues() throws Exception {
       // If the custom merge policy does not exist then the cache will not sart
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-      assertNotNull(rcm.getCache());
+      try (RemoteCacheManager rcm = ITestUtils.createCacheManager(server)) {
+         assertNotNull(rcm.getCache());
+      }
    }
 }
