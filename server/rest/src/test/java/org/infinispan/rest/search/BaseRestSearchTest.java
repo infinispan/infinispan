@@ -342,14 +342,21 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    @Test
-   public void testIndexStats() throws Exception {
+   public void testIndexStats() {
       RestResponse response = join(cacheClient.indexStats());
 
       if (!getConfigBuilder().indexing().enabled()) {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         // TODO HSEARCH-3129 Restore support for statistics
+         Json stats = Json.read(response.getBody());
+         Json indexClassNames = stats.at("indexed_class_names");
+
+         String indexName = "org.infinispan.rest.search.entity.Person";
+         assertEquals(indexClassNames.at(0).asString(), indexName);
+         assertNotNull(stats.at("indexed_entities_count"));
+         //TODO: Index sizes are not currently exposed (HSEARCH-4056)
+         assertTrue(stats.at("index_sizes").at(indexName).asInteger() >= 0);
       }
    }
 

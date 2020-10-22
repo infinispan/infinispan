@@ -489,9 +489,68 @@ parameter.
 POST  /v2/caches/{cacheName}/search/indexes?action=clear
 ----
 
+[id='rest_v2_search_stats']
+= Retrieving Query and Index Statistics
+
+Obtain information about queries and indexes in caches with `GET` requests.
+
+[NOTE]
+Statistics must be enabled in the cache otherwise the results will be empty.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/stats
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`scope`
+|OPTIONAL
+|Use `cluster` to retrieve consolidated statistics for all members of the cluster. When omitted, {brandname} returns statistics for the local queries and indexes.
+|===
+
+{brandname} provides a JSON response such as the following:
+
+----
+include::json_examples/rest_search_stats.json[]
+----
+
+In the ```query``` section:
+
+* `indexed_local` Provides details about indexed queries.
+* `indexed_distributed` Provides details about distributed indexed queries.
+* `hybrid` Provides details about queries that used the index only partially.
+* `non_indexed` Provides details about queries that didn't use the index.
+* `entity_load` Provides details about cache operations to fetch objects after indexed queries execution.
+
+[NOTE]
+All time related statistics are in nanoseconds.
+
+In the ```index``` section:
+
+* `types` Provide details about each indexed type (class name or protobuf message) that is configured in the cache.
+** `count` The number of entities indexed for the type.
+** `size` Usage in bytes of the type.
+* `reindexing` If the value is `true`, the `Indexer` is running in the cache.
+
+[id='rest_v2_search_stats_clear']
+= Clearing Search Statistics
+
+Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}/search/stats?action=clear
+----
+
+Index statistics will not be cleared, but only query execution times.
+{brandname} clears query statistics for the local node only.
 
 [id='rest_v2_query_index_stats']
-= Retrieving Index Statistics
+= Retrieving Index Statistics (Deprecated)
 Obtain information about indexes in caches with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -513,7 +572,7 @@ include::json_examples/rest_index_stats.json[]
 
 
 [id='rest_v2_query_stats']
-= Retrieving Query Statistics
+= Retrieving Query Statistics (Deprecated)
 Get information about the queries that have been run in caches with `GET`
 requests.
 
@@ -541,7 +600,7 @@ include::json_examples/rest_query_stats.json[]
 
 
 [id='rest_v2_query_stats_clear']
-= Clearing Query Statistics
+= Clearing Query Statistics (Deprecated)
 Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]

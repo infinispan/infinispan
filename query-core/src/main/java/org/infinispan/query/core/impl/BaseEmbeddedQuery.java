@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.objectfilter.ObjectFilter.FilterResult;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -42,12 +43,15 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
    protected final AdvancedCache<?, ?> cache;
 
    protected final PartitionHandlingSupport partitionHandlingSupport;
+   protected final LocalQueryStatistics queryStatistics;
 
-   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
-                               String[] projection, long startOffset, int maxResults) {
+   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+                               Map<String, Object> namedParameters, String[] projection, long startOffset,
+                               int maxResults, LocalQueryStatistics queryStatistics) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
+      this.queryStatistics = queryStatistics;
    }
 
    @Override
@@ -59,10 +63,18 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       return execute().list();
    }
 
+   protected abstract void recordQuery(Long time);
+
    @Override
    public QueryResult<T> execute() {
       partitionHandlingSupport.checkCacheAvailable();
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
       List<T> results = listInternal(getComparator());
+
+      if (queryStatistics.isEnabled()) recordQuery(start);
+
       return new QueryResultImpl<>(results);
    }
 
@@ -87,15 +99,15 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
          } else {
             if (comparator == null) {
                results = StreamSupport.stream(spliteratorUnknownSize(new MappingIterator<>(iterator, s -> s).limit(maxResults).skip(startOffset), 0), false)
-                                      .map(this::mapFilterResult)
-                                      .collect(new TimedCollector<>(Collectors.toList(), timeout));
+                     .map(this::mapFilterResult)
+                     .collect(new TimedCollector<>(Collectors.toList(), timeout));
             } else {
                log.warnPerfSortedNonIndexed(queryString);
                // Collect and sort results in a PriorityQueue, in reverse order for now. We'll reverse them again before returning.
                // We keep the FilterResult wrapper in the queue rather than the actual value because we need FilterResult.getSortProjection() to perform sorting.
                PriorityQueue<FilterResult> queue = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
-                                                                .collect(new TimedCollector<>(Collector.of(() -> new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator)),
-                                                                                                           this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
+                     .collect(new TimedCollector<>(Collector.of(() -> new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator)),
+                           this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
 
                // trim the results that are outside of the requested range and reverse them
                if (queue.size() > startOffset) {

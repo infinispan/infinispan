@@ -10,6 +10,7 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.aggregation.RowGrouper;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
@@ -30,12 +31,13 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
 
    private final boolean twoPhaseAcc;
 
-   public AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
+   public AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache,
+                           String queryString, Map<String, Object> namedParameters,
                            int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                            ObjectFilter objectFilter,
                            long startOffset, int maxResults,
-                           BaseQuery<?> baseQuery) {
-      super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
+                           BaseQuery<?> baseQuery, LocalQueryStatistics queryStatistics) {
+      super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery, queryStatistics);
       if (!baseQuery.hasProjections()) {
          throw new IllegalArgumentException("Base query must use projections");
       }

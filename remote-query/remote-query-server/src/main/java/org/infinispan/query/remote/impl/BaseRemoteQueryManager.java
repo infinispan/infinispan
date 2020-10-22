@@ -13,6 +13,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -34,6 +35,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    private final boolean unknownMediaType;
 
    @Inject protected EncoderRegistry encoderRegistry;
+   @Inject protected LocalQueryStatistics queryStatistics;
 
    BaseRemoteQueryManager(AdvancedCache<?, ?> cache, QuerySerializers querySerializers, ComponentRegistry cr) {
       this.cache = cache;

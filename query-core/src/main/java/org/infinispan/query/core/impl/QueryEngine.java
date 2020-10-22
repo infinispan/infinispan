@@ -38,6 +38,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
@@ -66,12 +67,15 @@ public class QueryEngine<TypeMetadata> {
     */
    protected final QueryCache queryCache;
 
+   protected LocalQueryStatistics queryStatistics;
+
    protected static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    protected QueryEngine(AdvancedCache<?, ?> cache, Class<? extends Matcher> matcherImplClass) {
       this.cache = cache;
       this.matcherImplClass = matcherImplClass;
       this.queryCache = SecurityActions.getGlobalComponentRegistry(cache).getComponent(QueryCache.class);
+      this.queryStatistics = SecurityActions.getCacheComponentRegistry(cache).getComponent(LocalQueryStatistics.class);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
    }
@@ -154,7 +158,7 @@ public class QueryEngine<TypeMetadata> {
       if (parsingResult.getHavingClause() != null) {
          BooleanExpr normalizedHavingClause = booleanFilterNormalizer.normalize(parsingResult.getHavingClause());
          if (normalizedHavingClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(),
@@ -207,7 +211,7 @@ public class QueryEngine<TypeMetadata> {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
@@ -253,7 +257,7 @@ public class QueryEngine<TypeMetadata> {
       return new AggregatingQuery<>(queryFactory, cache, secondPhaseQueryStr, namedParameters,
             noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, baseQuery);
+            startOffset, maxResults, baseQuery, queryStatistics);
    }
 
    /**
@@ -350,7 +354,7 @@ public class QueryEngine<TypeMetadata> {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
@@ -394,7 +398,7 @@ public class QueryEngine<TypeMetadata> {
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            -1, -1, baseQuery);
+            -1, -1, baseQuery, queryStatistics);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -428,7 +432,7 @@ public class QueryEngine<TypeMetadata> {
       return new AggregatingQuery<>(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
             noOfGroupingColumns, thirdPhaseAccumulators, true,
             getObjectFilter(new RowMatcher(_columns), thirdPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, projectingAggregatingQuery);
+            startOffset, maxResults, projectingAggregatingQuery, queryStatistics);
    }
 
    protected BaseQuery<?> buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
@@ -464,10 +468,11 @@ public class QueryEngine<TypeMetadata> {
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
          // the query is a contradiction, there are no matches
-         return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+         return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
       }
 
-      return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
+      return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters,
+            parsingResult.getProjections(), startOffset, maxResults, queryStatistics);
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {

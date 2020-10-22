@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
-import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
+import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;
 
 class InfinispanTypeContextContainer implements InfinispanTypeContextProvider {
 
@@ -37,9 +37,15 @@ class InfinispanTypeContextContainer implements InfinispanTypeContextProvider {
    }
 
    @Override
+   public Map<String, Class<?>> getEntityClassByEntityName() {
+      Map<String, InfinispanIndexedTypeContextImpl<?>> indexedTypeContextsByEntityName = this.indexedTypeContextsByEntityName;
+      return indexedTypeContextsByEntityName.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, w -> w.getValue().javaClass()));
+   }
+
+   @Override
    public Collection<PojoRawTypeIdentifier<?>> allTypeIdentifiers() {
       return indexedTypeContextsByEntityName.values().stream()
-            .map(f -> f.getTypeIdentifier()).collect(Collectors.toList());
+            .map(InfinispanIndexedTypeContextImpl::getTypeIdentifier).collect(Collectors.toList());
    }
 
    InfinispanIndexedTypeContextImpl<?> getIndexedByEntityType(Class<?> entityType) {

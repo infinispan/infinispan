@@ -10,6 +10,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 
 /**
@@ -25,18 +26,21 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    protected final AdvancedCache<?, ?> cache;
    protected final PartitionHandlingSupport partitionHandlingSupport;
    protected QueryDefinition queryDefinition;
+   protected LocalQueryStatistics queryStatistics;
 
-   public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
+   public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
+      this.queryStatistics = queryStatistics;
    }
 
    /**
     * Create a CacheQueryImpl based on a SearchQuery.
     */
-   public IndexedQueryImpl(SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache) {
-      this(new QueryDefinition(searchQuery), cache);
+   public IndexedQueryImpl(String queryString, SearchQueryBuilder searchQuery,
+                           AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+      this(new QueryDefinition(queryString, searchQuery), cache, queryStatistics);
    }
 
    /**
@@ -65,11 +69,20 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       return this;
    }
 
+   private void recordQuery(String q, long took) {
+      queryStatistics.localIndexedQueryExecuted(q, took);
+   }
+
    public CloseableIterator<E> iterator() throws SearchException {
       partitionHandlingSupport.checkCacheAvailable();
       SearchQuery<?> searchQuery = queryDefinition.getSearchQuery().build();
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
 
       List<E> queryHits = (List<E>) searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+
+      if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
+
       return new FilterIterator<>(queryHits.iterator(), Objects::nonNull);
    }
 
@@ -77,8 +90,12 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    public List<E> list() throws SearchException {
       partitionHandlingSupport.checkCacheAvailable();
       SearchQuery<?> searchQuery = queryDefinition.getSearchQuery().build();
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
 
       List<?> searchResult = searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+
+      if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
 
       return (List<E>) searchResult;
    }

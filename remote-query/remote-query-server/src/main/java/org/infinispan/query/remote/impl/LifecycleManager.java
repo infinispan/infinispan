@@ -32,6 +32,8 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.EntityLoader;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -47,6 +49,7 @@ import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
+import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
@@ -128,7 +131,7 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       BasicComponentRegistry gcr = cr.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
-
+      LocalQueryStatistics queryStatistics = cr.getComponent(LocalQueryStatistics.class);
       if (PROTOBUF_METADATA_CACHE_NAME.equals(cacheName)) {
          // a protobuf metadata cache is starting, need to register the interceptor
          ProtobufMetadataManagerImpl protobufMetadataManager =
@@ -154,11 +157,14 @@ public final class LifecycleManager implements ModuleLifecycle {
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
 
             searchMapping = SerializationContextSearchMapping.buildMapping(commonBuilding,
-                  new EntityLoader<>(cache, keyTransformationHandler),
+                  new EntityLoader<>(queryStatistics, cache, keyTransformationHandler),
                   cache.getCacheConfiguration().indexing().indexedEntityTypes(), serCtx);
 
             if (searchMapping != null) {
                cr.registerComponent(searchMapping, SearchMapping.class);
+               BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+               bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
+               bcr.rewire();
             }
          }
 

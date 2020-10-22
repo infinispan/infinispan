@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
@@ -32,9 +33,9 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    private int firstResult = 0;
 
-   public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
-      super(queryDefinition, cache);
-      this.invoker = new ClusteredQueryInvoker(cache);
+   public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+      super(queryDefinition, cache, queryStatistics);
+      this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
    }
 
    @Override
@@ -71,7 +72,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
       Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-      return new DistributedIterator<>(queryDefinition.getSearchQuery().getLuceneSort(),
+      return new DistributedIterator<>(queryStatistics, queryDefinition.getSearchQuery().getLuceneSort(),
             maxResults, resultSize, maxResults,
             firstResult, topDocsResponses, cache);
 

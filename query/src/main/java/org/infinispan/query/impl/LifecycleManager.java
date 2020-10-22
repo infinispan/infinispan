@@ -4,9 +4,9 @@ import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +45,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.Indexer;
+import org.infinispan.query.Search;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -53,6 +54,8 @@ import org.infinispan.query.clustered.ClusteredQueryOperation;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -63,16 +66,17 @@ import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
-import org.infinispan.query.impl.externalizers.PojoRawTypeIdentifierExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTotalHitsExternalizer;
+import org.infinispan.query.impl.externalizers.PojoRawTypeIdentifierExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.logging.Log;
+import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
+import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -106,6 +110,7 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      LocalQueryStatistics queryStatistics = cr.getComponent(LocalQueryStatistics.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          SecurityActions.addCacheDependency(cache.getCacheManager(), cacheName, QueryCache.QUERY_CACHE_NAME);
@@ -122,14 +127,18 @@ public class LifecycleManager implements ModuleLifecycle {
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
 
-            searchMapping = createSearchMapping(cfg.indexing(), indexedClasses, cr, cache, keyTransformationHandler,
+            searchMapping = createSearchMapping(queryStatistics, cfg.indexing(), indexedClasses, cr, cache, keyTransformationHandler,
                   aggregatedClassLoader);
 
             createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, keyTransformationHandler);
 
-            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache,
-                  keyTransformationHandler);
+            Indexer massIndexer = new DistributedExecutorMassIndexer(cache, keyTransformationHandler);
             cr.registerComponent(massIndexer, Indexer.class);
+            if (searchMapping != null) {
+               BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+               bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
+               bcr.rewire();
+            }
          }
 
          cr.registerComponent(ObjectReflectionMatcher.create(
@@ -165,7 +174,7 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
-           Map<String, Class<?>> indexedClasses, KeyTransformationHandler keyTransformationHandler) {
+                                               Map<String, Class<?>> indexedClasses, KeyTransformationHandler keyTransformationHandler) {
       CONTAINER.registeringQueryInterceptor(cache.getName());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
@@ -180,7 +189,7 @@ public class LifecycleManager implements ModuleLifecycle {
             cfg.indexing().properties().get(HS5_CONF_STRATEGY_PROPERTY));
 
       QueryInterceptor queryInterceptor = new QueryInterceptor(keyTransformationHandler, manualIndexing, txOldValues,
-              cache, indexedClasses);
+            cache, indexedClasses);
 
       for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
          keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
@@ -227,8 +236,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchMapping, massIndexer);
-      stats.setStatisticsEnabled(configuration.statistics().enabled());
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(Search.getSearchStatistics(cache));
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
       registerQueryMBeans(cr, massIndexer, stats);
@@ -291,7 +299,8 @@ public class LifecycleManager implements ModuleLifecycle {
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchMapping createSearchMapping(IndexingConfiguration indexingConfiguration,
+   private SearchMapping createSearchMapping(LocalQueryStatistics queryStatistics,
+                                             IndexingConfiguration indexingConfiguration,
                                              Map<String, Class<?>> indexedClasses, ComponentRegistry cr,
                                              AdvancedCache<?, ?> cache,
                                              KeyTransformationHandler keyTransformationHandler,
@@ -328,12 +337,12 @@ public class LifecycleManager implements ModuleLifecycle {
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             CacheIdentifierBridge.getReference(), properties, aggregatedClassLoader, mappingProviders);
-      Set<Class<?>> types = new HashSet<>( indexedClasses.values() );
+      Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
          // use the common builder to create the mapping now
          SearchMappingBuilder builder = commonBuilding.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
-         builder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
+         builder.setEntityLoader(new EntityLoader<>(queryStatistics, cache, keyTransformationHandler));
          builder.addEntityTypes(types);
          searchMapping = builder.build();
          if (searchMapping != null) {

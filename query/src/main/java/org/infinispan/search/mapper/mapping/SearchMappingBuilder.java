@@ -69,13 +69,13 @@ public final class SearchMappingBuilder {
    }
 
    /**
-    * Register a type as an entity type with the default name, its simple class name.
+    * Register a type as an entity type with the default name, its class name.
     *
     * @param type The type to be considered as an entity type.
     * @return {@code this}, for call chaining.
     */
    public SearchMappingBuilder addEntityType(Class<?> type) {
-      return addEntityType(type, type.getSimpleName());
+      return addEntityType(type, type.getName());
    }
 
    /**

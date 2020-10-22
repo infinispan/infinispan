@@ -13,6 +13,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 
 
@@ -30,8 +31,8 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    public EmbeddedQuery(QueryEngine<?> queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                         String queryString, Map<String, Object> namedParameters, String[] projection,
-                        long startOffset, int maxResults) {
-      super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults);
+                        long startOffset, int maxResults, LocalQueryStatistics queryStatistics) {
+      super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults, queryStatistics);
       this.queryEngine = queryEngine;
    }
 
@@ -39,6 +40,11 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    public void resetQuery() {
       super.resetQuery();
       filter = null;
+   }
+
+   @Override
+   protected void recordQuery(Long time) {
+      queryStatistics.nonIndexedQueryExecuted(queryString, time);
    }
 
    private IckleFilterAndConverter<?, ?> createFilter() {

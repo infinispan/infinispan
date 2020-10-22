@@ -350,17 +350,23 @@ public interface RestCacheClient {
 
    /**
     * Obtain statistics about queries.
+    * @deprecated Use {@link #searchStats()} instead.
     */
+   @Deprecated
    CompletionStage<RestResponse> queryStats();
 
    /**
     * Obtain statistics about the indexes.
+    * @deprecated Use {@link #searchStats()} instead.
     */
+   @Deprecated
    CompletionStage<RestResponse> indexStats();
 
    /**
     * Clear runtime query statistics.
+    * @deprecated Use {@link #searchStats()} and {@link #clearSearchStats()}.
     */
+   @Deprecated
    CompletionStage<RestResponse> clearQueryStats();
 
 
@@ -369,5 +375,15 @@ public interface RestCacheClient {
     */
    CompletionStage<RestResponse> details();
 
+
+   /**
+    * Obtain query and indexing statistics for the cache.
+    */
+   CompletionStage<RestResponse> searchStats();
+
+   /**
+    * Clear search stats.
+    */
+   CompletionStage<RestResponse> clearSearchStats();
 
 }

@@ -1,16 +1,19 @@
 package org.infinispan.query.impl;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.hibernate.search.engine.Version;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.query.Indexer;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.core.stats.IndexInfo;
+import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.QueryStatistics;
+import org.infinispan.query.core.stats.SearchStatistics;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -21,236 +24,130 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
  * @since 6.1
  */
 @MBean(objectName = "Statistics", description = "Statistics for index based query")
-public final class InfinispanQueryStatisticsInfo implements JsonSerialization {
+public final class InfinispanQueryStatisticsInfo {
 
-   private final SearchMapping searchMapping;
-   private final Indexer massIndexer;
-   private final QueryStatistics queryStatistics = new QueryStatistics();
-   private final IndexStatistics indexStatistics = new IndexStatistics();
+   private final QueryStatistics queryStatistics;
+   private final IndexStatistics indexStatistics;
 
-   InfinispanQueryStatisticsInfo(SearchMapping searchMapping, Indexer massIndexer) {
-      this.searchMapping = searchMapping;
-      this.massIndexer = massIndexer;
+   InfinispanQueryStatisticsInfo(SearchStatistics searchStatistics) {
+      this.queryStatistics = searchStatistics.getQueryStatistics();
+      this.indexStatistics = searchStatistics.getIndexStatistics();
    }
 
    @ManagedOperation
    public void clear() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // searchIntegrator.getStatistics().clear();
+      queryStatistics.clear();
    }
 
    @ManagedAttribute
    public long getSearchQueryExecutionCount() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
-      return 0L;
+      return queryStatistics.getLocalIndexedQueryCount();
    }
 
    @ManagedAttribute
    public long getSearchQueryTotalTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchQueryTotalTime();
-      return 0L;
+      return queryStatistics.getLocalIndexedQueryTotalTime();
    }
 
    @ManagedAttribute
    public long getSearchQueryExecutionMaxTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
-      return 0L;
+      return queryStatistics.getLocalIndexedQueryMaxTime();
    }
 
    @ManagedAttribute
    public long getSearchQueryExecutionAvgTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
-      return 0L;
+      return ((Double) queryStatistics.getLocalIndexedQueryAvgTime()).longValue();
    }
 
    @ManagedAttribute
    public String getSearchQueryExecutionMaxTimeQueryString() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
-      return "";
+      String query = queryStatistics.getSlowestLocalIndexedQuery();
+      return query == null ? "" : query;
    }
 
    @ManagedAttribute
    public long getObjectLoadingTotalTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
-      return 0L;
+      return queryStatistics.getLoadCount();
    }
 
    @ManagedAttribute
    public long getObjectLoadingExecutionMaxTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
-      return 0L;
+      return queryStatistics.getLoadTotalTime();
    }
 
    @ManagedAttribute
    public long getObjectLoadingExecutionAvgTime() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
-      return 0L;
+      return ((Double) queryStatistics.getLoadAvgTime()).longValue();
    }
 
    @ManagedAttribute
    public long getObjectsLoadedCount() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getObjectsLoadedCount();
-      return 0L;
+      return queryStatistics.getLoadCount();
    }
 
-   @ManagedAttribute(writable = true)
+   @ManagedAttribute
    public boolean isStatisticsEnabled() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().isStatisticsEnabled();
-      return false;
-   }
-
-   public void setStatisticsEnabled(boolean isStatisticsEnabled) {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // searchIntegrator.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
+      return queryStatistics.isEnabled();
    }
 
    @ManagedAttribute
    public String getSearchVersion() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getSearchVersion();
-      return "";
+      return Version.versionString();
    }
 
    @ManagedAttribute
    public Set<String> getIndexedClassNames() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getIndexedClassNames();
-      return Collections.emptySet();
+      return indexStatistics.indexInfos().keySet();
    }
 
    @ManagedOperation
    public int getNumberOfIndexedEntities(String entity) {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
-      return 0;
+      return find(indexStatistics.indexInfos(), entity).map(IndexInfo::count).orElse(0L).intValue();
+   }
+
+   private Optional<IndexInfo> find(Map<String, IndexInfo> indexInfos, String entity) {
+      return indexInfos.entrySet().stream().filter(e -> e.getKey().equals(entity))
+            .map(Map.Entry::getValue).findFirst();
    }
 
    @ManagedOperation
    public Map<String, Integer> indexedEntitiesCount() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().indexedEntitiesCount();
-      return Collections.emptyMap();
+      return indexStatistics.indexInfos().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().count()));
    }
 
    @ManagedOperation
    public long getIndexSize(String indexName) {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().getIndexSize(indexName);
-      return 0L;
+      return find(indexStatistics.indexInfos(), indexName).map(IndexInfo::size).orElse(0L);
    }
 
    @ManagedOperation
    public Map<String, Long> indexSizes() {
-      // TODO HSEARCH-3129 Restore support for statistics
-      // return searchIntegrator.getStatistics().indexSizes();
-      return Collections.emptyMap();
+      return indexStatistics.indexInfos().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
    }
 
-   public QueryStatistics getQueryStatistics() {
-      return queryStatistics;
+   public Json getLegacyQueryStatistics() {
+      return Json.object()
+            .set("search_query_execution_count", getSearchQueryExecutionCount())
+            .set("search_query_total_time", getSearchQueryTotalTime())
+            .set("search_query_execution_max_time", getSearchQueryExecutionMaxTime())
+            .set("search_query_execution_avg_time", getSearchQueryExecutionAvgTime())
+            .set("object_loading_total_time", getObjectLoadingTotalTime())
+            .set("object_loading_execution_max_time", getObjectLoadingExecutionMaxTime())
+            .set("object_loading_execution_avg_time", getObjectLoadingExecutionAvgTime())
+            .set("objects_loaded_count", getObjectsLoadedCount())
+            .set("search_query_execution_max_time_query_string", getSearchQueryExecutionMaxTimeQueryString());
    }
 
-   public IndexStatistics getIndexStatistics() {
-      return indexStatistics;
+   public Json getLegacyIndexStatistics() {
+      Map<String, IndexInfo> indexStats = indexStatistics.indexInfos();
+      Map<String, Long> sizes = indexStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
+      return Json.object()
+            .set("indexed_class_names", Json.make(getIndexedClassNames()))
+            .set("indexed_entities_count", Json.make(indexStats.keySet()))
+            .set("index_sizes", Json.make(sizes))
+            .set("reindexing", indexStatistics.reindexing());
    }
 
-   @Override
-   public Json toJson() {
-      return null;
-   }
-
-   public final class IndexStatistics implements JsonSerialization {
-
-      public Set<String> getIndexedClassNames() {
-         return InfinispanQueryStatisticsInfo.this.getIndexedClassNames();
-      }
-
-      public int getNumberOfIndexedEntities(String entity) {
-         return InfinispanQueryStatisticsInfo.this.getNumberOfIndexedEntities(entity);
-      }
-
-      public Map<String, Integer> getIndexedEntitiesCount() {
-         return InfinispanQueryStatisticsInfo.this.indexedEntitiesCount();
-      }
-
-      public Map<String, Long> getIndexSizes() {
-         return InfinispanQueryStatisticsInfo.this.indexSizes();
-      }
-
-      public boolean getReindexing() {
-         return massIndexer.isRunning();
-      }
-
-      @Override
-      public Json toJson() {
-         return Json.object()
-               .set("indexed_class_names", Json.make(getIndexedClassNames()))
-               .set("indexed_entities_count", Json.make(getIndexedEntitiesCount()))
-               .set("index_sizes", Json.make(getIndexSizes()))
-               .set("reindexing", getReindexing());
-      }
-   }
-
-   public final class QueryStatistics implements JsonSerialization {
-
-      public long getSearchQueryExecutionCount() {
-         return InfinispanQueryStatisticsInfo.this.getSearchQueryExecutionCount();
-      }
-
-      public long getSearchQueryTotalTime() {
-         return InfinispanQueryStatisticsInfo.this.getSearchQueryTotalTime();
-      }
-
-      public long getSearchQueryExecutionMaxTime() {
-         return InfinispanQueryStatisticsInfo.this.getSearchQueryExecutionMaxTime();
-      }
-
-      public long getSearchQueryExecutionAvgTime() {
-         return InfinispanQueryStatisticsInfo.this.getSearchQueryExecutionAvgTime();
-      }
-
-      public String getSearchQueryExecutionMaxTimeQueryString() {
-         return InfinispanQueryStatisticsInfo.this.getSearchQueryExecutionMaxTimeQueryString();
-      }
-
-      public long getObjectLoadingTotalTime() {
-         return InfinispanQueryStatisticsInfo.this.getObjectLoadingTotalTime();
-      }
-
-      public long getObjectLoadingExecutionMaxTime() {
-         return InfinispanQueryStatisticsInfo.this.getObjectLoadingExecutionMaxTime();
-      }
-
-      public long getObjectLoadingExecutionAvgTime() {
-         return InfinispanQueryStatisticsInfo.this.getObjectLoadingExecutionAvgTime();
-      }
-
-      public long getObjectsLoadedCount() {
-         return InfinispanQueryStatisticsInfo.this.getObjectsLoadedCount();
-      }
-
-      @Override
-      public Json toJson() {
-         return Json.object()
-               .set("search_query_execution_count", getSearchQueryExecutionCount())
-               .set("search_query_total_time", getSearchQueryTotalTime())
-               .set("search_query_execution_max_time", getSearchQueryExecutionMaxTime())
-               .set("search_query_execution_avg_time", getSearchQueryExecutionAvgTime())
-               .set("object_loading_total_time", getObjectLoadingTotalTime())
-               .set("object_loading_execution_max_time", getObjectLoadingExecutionMaxTime())
-               .set("object_loading_execution_avg_time", getObjectLoadingExecutionAvgTime())
-               .set("objects_loaded_count", getObjectsLoadedCount())
-               .set("search_query_execution_max_time_query_string", getSearchQueryExecutionMaxTimeQueryString());
-      }
-   }
 }
