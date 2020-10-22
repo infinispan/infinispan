@@ -33,11 +33,13 @@ import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.EnsureNonBlockingStore;
@@ -75,7 +77,8 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    protected WaitNonBlockingStore<Object, Object> store;
    protected ControlledTimeService timeService;
-   protected InternalEntryFactory factory;
+   protected InternalEntryFactory internalEntryFactory;
+   protected MarshallableEntryFactory marshallableEntryFactory;
    protected Configuration configuration;
    protected int segmentCount;
    protected InitializationContext initializationContext;
@@ -98,8 +101,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       marshaller = new TestObjectStreamMarshaller(getSerializationContextInitializer());
       timeService = getTimeService();
-      factory = new InternalEntryFactoryImpl();
-      TestingUtil.inject(factory, timeService);
+      internalEntryFactory = new InternalEntryFactoryImpl();
+      TestingUtil.inject(internalEntryFactory, timeService);
+      marshallableEntryFactory = new MarshalledEntryFactoryImpl();
+      TestingUtil.inject(marshallableEntryFactory, marshaller);
       try {
          NonBlockingStore nonBlockingStore = createStore();
          // Make sure all store methods don't block when we invoke them
@@ -668,13 +673,13 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    protected final <K> InternalCacheEntry<K, Object> internalCacheEntry(K key, Object value, long lifespan) {
       Object transformedKey = keyToStorage(key);
       Object transformedValue = valueToStorage(value);
-      return TestInternalCacheEntryFactory.create(factory, (K) transformedKey, wrap(transformedKey, transformedValue), lifespan);
+      return TestInternalCacheEntryFactory.create(internalEntryFactory, (K) transformedKey, wrap(transformedKey, transformedValue), lifespan);
    }
 
    private InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan, long idle) {
       Object transformedKey = keyToStorage(key);
       Object transformedValue = valueToStorage(value);
-      return TestInternalCacheEntryFactory.create(factory, transformedKey, wrap(transformedKey, transformedValue), lifespan, idle);
+      return TestInternalCacheEntryFactory.create(internalEntryFactory, transformedKey, wrap(transformedKey, transformedValue), lifespan, idle);
    }
 
    private MarshallableEntry<Object, Object> marshalledEntry(String key, String value) {

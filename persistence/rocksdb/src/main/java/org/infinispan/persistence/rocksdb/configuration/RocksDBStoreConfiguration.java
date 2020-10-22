@@ -106,7 +106,7 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
    }
 
    /**
-    * @deprecated clearThreshold is no longer being used.
+    * @deprecated Since 12.0, no longer used. Will be removed in 15.0
     * @return the configured clear threshold
     */
    @Deprecated

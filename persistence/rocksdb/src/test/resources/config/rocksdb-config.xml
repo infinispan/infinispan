@@ -5,7 +5,7 @@
       <local-cache name="testCache">
          <persistence passivation="false">
             <rocksdb-store path="/tmp/rocksdb/52/data" shared="false" preload="true">
-                <expiration path="/tmp/rocksdb/52/expired" queue-size="11350"/>
+                <expiration path="/tmp/rocksdb/52/expired" />
             </rocksdb-store>
          </persistence>
       </local-cache>

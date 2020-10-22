@@ -50,11 +50,6 @@
             <xs:documentation>Cache size for the cache store.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="clear-threshold" type="xs:integer" default="${RocksDBStore.clearThreshold}">
-          <xs:annotation>
-            <xs:documentation>Cache store cache clear threshold.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -63,11 +58,6 @@
     <xs:attribute name="path" type="xs:string">
       <xs:annotation>
         <xs:documentation>The base directory in which to store expired cache state.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="queue-size" type="xs:integer" default="${RocksDBExpiration.queueSize}">
-      <xs:annotation>
-        <xs:documentation>Deprecated. The expiration queue is no longer used since 10.1</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>

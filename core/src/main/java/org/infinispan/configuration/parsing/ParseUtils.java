@@ -2,6 +2,7 @@ package org.infinispan.configuration.parsing;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.File;
 import java.util.Collections;
@@ -319,5 +320,13 @@ public final class ParseUtils {
         } else {
             return value.toString();
         }
+    }
+
+    public static void ignoreAttribute(XMLExtendedStreamReader reader, Enum<?> attribute) {
+       CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+    }
+
+    public static void ignoreElement(XMLExtendedStreamReader reader, Enum<?> element) {
+       CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
     }
 }

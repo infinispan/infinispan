@@ -81,6 +81,10 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       return self();
    }
 
+   /**
+    * @deprecated Since 12.0, no longer used. Will be removed in 15.0
+    */
+   @Deprecated
    public RocksDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
       attributes.attribute(CLEAR_THRESHOLD).set(clearThreshold);
       return self();
