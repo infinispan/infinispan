@@ -1,10 +1,14 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+      <!-- Create a property realm to manage credentials with the command line interface. -->
       <security-realm name="default">
          <properties-realm groups-attribute="Roles">
-            <user-properties path="users.properties" relative-to="infinispan.server.config.path" plain-text="false"/>
+            <!-- Add users and hashed passwords to a "users.properties" file in the server "conf" directory.. -->
+            <user-properties path="users.properties" relative-to="infinispan.server.config.path"/>
+            <!-- Map users to authorization roles in a "groups.properties" file in the server "conf" directory. -->
             <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
          </properties-realm>
       </security-realm>

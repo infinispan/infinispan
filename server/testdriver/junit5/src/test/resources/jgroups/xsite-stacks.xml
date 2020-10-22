@@ -15,7 +15,7 @@
       <FD_ALL3 timeout="3000"
                interval="1000"
                ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL"/>
-      <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <relay.RELAY2 site="${relay.site_name:LON}" max_site_masters="3" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="tcp">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>
@@ -49,7 +49,7 @@
       <FD_ALL3 timeout="3000"
                interval="1000"
                ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL"/>
-      <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <relay.RELAY2 site="${relay.site_name:LON}" max_site_masters="3" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="tcp">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>

@@ -1,7 +1,9 @@
+<!-- Configure endpoints to use socket bindings and security realms. -->
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
            xmlns="urn:infinispan:server:12.0"
            socket-binding="default" security-realm="default">
+   <!-- Configure Hot Rod and REST endpoint connectors to use Kerberos identities and authentication mechanisms that each protocol supports. -->
    <hotrod-connector name="hotrod">
       <authentication>
          <sasl mechanisms="GSSAPI GS2-KRB5" server-name="datagrid" server-principal="hotrod/datagrid@INFINISPAN.ORG"/>

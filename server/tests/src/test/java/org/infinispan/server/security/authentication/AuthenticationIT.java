@@ -19,7 +19,7 @@ public class AuthenticationIT {
 
    @ClassRule
    public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationExplicitTest.xml")
                                     .numServers(2)
                                     .build();
 }

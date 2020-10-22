@@ -1,9 +1,13 @@
+<!-- Map server endpoints to the network interface. -->
 <socket-bindings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
                  xmlns="urn:infinispan:server:12.0"
                  default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+   <!-- If enabled, bind the Memcached endpoint to a unique port. -->
    <socket-binding name="memcached" port="11221"/>
+   <!-- Create a default to bind Hot Rod and REST endpoints to port 11222. -->
    <socket-binding name="default" port="11222"/>
+   <!-- Additional bindings on different ports. -->
    <socket-binding name="alternate-1" port="11223"/>
    <socket-binding name="alternate-2" port="11224"/>
    <socket-binding name="alternate-3" port="11225"/>

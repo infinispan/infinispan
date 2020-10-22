@@ -1,9 +1,13 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+      <!-- Create a token realm so that external services handle authentication requests. Use any OAuth2 token provider that is compatible with RFC-7662 (OAuth2 Token Introspection). -->
       <security-realm name="default">
+         <!-- Add the location of the server that performs token authentication. -->
          <token-realm name="infinispan" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+            <!-- Add the location of the token introspection endpoint. Names the client identifier for the server along with the secret. -->
             <oauth2-introspection
                     introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                     client-id="infinispan-server" client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>

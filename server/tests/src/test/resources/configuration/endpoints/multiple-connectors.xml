@@ -2,13 +2,17 @@
            xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
            xmlns="urn:infinispan:server:12.0"
            socket-binding="default" security-realm="default">
+   <!-- A Hot Rod connector with implicit security derived from the realm capabilities -->
    <hotrod-connector />
+   <!-- An alternate Hot Rod connector with explicit security -->
    <hotrod-connector socket-binding="alternate-1">
       <authentication security-realm="alternate">
          <sasl mechanisms="PLAIN"/>
       </authentication>
    </hotrod-connector>
+   <!-- A REST connector with implicit security derived from the realm capabilities -->
    <rest-connector />
+   <!-- An alternate REST connector with explicit security -->
    <rest-connector socket-binding="alternate-2">
       <authentication security-realm="alternate" mechanisms="BASIC"/>
    </rest-connector>

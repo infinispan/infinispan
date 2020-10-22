@@ -1,6 +1,8 @@
+<!-- Configure the network interface that exposes server endpoints.-->
 <interfaces xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
         xmlns="urn:infinispan:server:12.0">
+   <!-- Use an inet-address strategy that binds to the IPv4 loopback address.-->
    <interface name="public">
       <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
    </interface>

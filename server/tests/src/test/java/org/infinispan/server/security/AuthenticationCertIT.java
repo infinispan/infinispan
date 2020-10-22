@@ -27,7 +27,7 @@ public class AuthenticationCertIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTrustTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationTrustTest.xml")
                                     .build();
 
    @Rule

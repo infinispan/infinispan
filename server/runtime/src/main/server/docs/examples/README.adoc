@@ -1,0 +1,15 @@
+[id='server_configuration_examples']
+= Server Configuration Examples
+
+The `$SERVER_HOME/docs/examples` directory provides configuration examples for different environments.
+Open each example configuration with any text editor to view inline comments that describe the configuration.
+
+To use the configuration examples, do the following:
+
+. Copy the configuration example to the `$SERVER_HOME/conf` directory.
+. Start the server with the `-c` switch, as follows:
++
+[source,bash]
+----
+$ bin/server.sh -c Authentication.xml
+----

@@ -1,7 +1,9 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+      <!-- Omit security realm configuration to disable authentication. This configuration is not secure and allows unrestricted access to stored data. Users without credentials can gain entry through any server endpoint, the command line interface, or the console. -->
       <security-realm name="default">
       </security-realm>
    </security-realms>

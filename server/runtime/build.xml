@@ -86,6 +86,25 @@
             <include name="xstream-bsd.txt"/>
          </fileset>
       </copy>
+      <pathconvert property="example.files" pathsep=" ">
+         <fileset dir="${examples.dir}">
+            <include name="AuthenticationExplicitTest.xml"/>
+            <include name="AuthenticationKerberosTest.xml"/>
+            <include name="AuthenticationKeyCloakTest.xml"/>
+            <include name="AuthenticationLDAPTest.xml"/>
+            <include name="AuthenticationServerMultipleEndpointsTest.xml"/>
+            <include name="AuthenticationTLSTest.xml"/>
+            <include name="AuthenticationTrustTest.xml"/>
+            <include name="AuthorizationKerberosTest.xml"/>
+            <include name="AuthorizationLDAPTest.xml"/>
+            <include name="AuthorizationPropertiesTest.xml"/>
+         </fileset>
+      </pathconvert>
+      <java classname="org.infinispan.tools.xml.XmlConfigFlattener">
+         <arg value="-o"/>
+         <arg value="${output.dir}/docs/examples"/>
+         <arg line="${example.files}"/>
+      </java>
    </target>
 
    <target name="default">

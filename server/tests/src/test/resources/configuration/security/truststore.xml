@@ -1,14 +1,18 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+      <!-- Create a trust store realm so the server exchanges SSL/TLS certificates with clients so they can mutally verify identities and establish encrypted connections-->
       <security-realm name="default">
+         <!-- Provide an SSL/TLS identity for the server. Servers present certificates, or certificate chains, to clients. -->
          <server-identities>
             <ssl>
                <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
                          alias="server"/>
             </ssl>
          </server-identities>
+         <!-- Provide a trust store that holds public certificates for clients. -->
          <truststore-realm path="trust.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"/>
       </security-realm>
    </security-realms>

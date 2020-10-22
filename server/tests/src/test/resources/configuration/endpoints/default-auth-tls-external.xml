@@ -1,7 +1,9 @@
+<!-- Configure endpoints to use socket bindings and security realms. -->
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
            xmlns="urn:infinispan:server:12.0"
            socket-binding="default" security-realm="default" require-ssl-client-auth="true">
+   <!-- Configure Hot Rod and REST endpoint connectors to use trust stores for SSL/TLS encryption. Specify authentication mechanisms that each protocol supports. -->
    <hotrod-connector name="hotrod">
       <authentication>
          <sasl mechanisms="EXTERNAL" server-name="infinispan"/>

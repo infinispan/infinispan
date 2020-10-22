@@ -314,6 +314,8 @@
                                   value="${project.basedir}/../../distribution/src/main/resources/template"/>
                         <property name="licenses.data.dir"
                                   value="${project.basedir}/../../distribution/src/main/resources/licenses"/>
+                        <property name="examples.dir"
+                                  value="${project.basedir}/../tests/src/test/resources/configuration"/>
 
                         <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
                            <filter token="infinispan.brand.name" value="${infinispan.brand.name}"/>

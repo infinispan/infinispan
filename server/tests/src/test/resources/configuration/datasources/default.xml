@@ -1,12 +1,16 @@
+<!-- Add shared connection and pooling configuration for datasources.-->
 <data-sources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
            xmlns="urn:infinispan:server:12.0">
+           <!-- Add a named datasource and export statistics. -->
    <data-source name="h2" jndi-name="jdbc/h2" statistics="true">
+      <!-- Specify datasource connection details.  -->
       <connection-factory driver="org.h2.Driver"
                           username="${org.infinispan.server.test.database.h2.username:test}"
                           password="${org.infinispan.server.test.database.h2.password:test}"
                           url="${org.infinispan.server.test.h2.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
+      <!-- Configure the connection pool for the datasource. -->
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">

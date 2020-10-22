@@ -30,7 +30,7 @@ public class AuthenticationTLSIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTLSTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationTLSTest.xml")
                                     .build();
 
    @Rule

@@ -1,9 +1,12 @@
+<!-- Create a Cache Manager that enforces user authorization. -->
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="urn:infinispan:config:12.0 https://infinispan.org/schemas/infinispan-config-fragment-12.0.xsd"
                  xmlns="urn:infinispan:config:12.0"
                  name="default">
-   <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
+   <!-- Set up cluster transport with a JGroups stack. -->
+   <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:xsite-tcp}"/>
    <security>
+      <!-- Grant user access to data using roles with different permissions. -->
       <authorization>
          <identity-role-mapper/>
          <role name="AdminRole" permissions="ALL"/>
@@ -21,3 +24,4 @@
       </backups>
    </distributed-cache>
 </cache-container>
+

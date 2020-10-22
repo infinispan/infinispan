@@ -1,10 +1,14 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+      <!-- Create an LDAP realm so the server can authenticate users with LDAP servers. -->
       <security-realm name="default">
+         <!-- Specify LDAP server connection details. -->
          <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+            <!-- Define how principals map to entries in the LDAP server. -->
             <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
                <attribute-mapping>
                   <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"

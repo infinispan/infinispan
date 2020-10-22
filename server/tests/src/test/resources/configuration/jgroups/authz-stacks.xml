@@ -15,6 +15,23 @@
          <remote-site name="NYC"/>
       </remote-sites>
    </stack>
+   <!-- Use JGroups inheritance to extend the default TCP stack. Adjust and tune specific cluster transport properties without the need to create full stack definitions. -->
+   <stack name="xsite-tcp" extends="tcp">
+      <!-- Add MPING configuration that replaces the default. -->
+      <MPING mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
+             mcast_port="${jgroups.xsite.mcast_port:46755}"
+             num_discovery_runs="3"
+             ip_ttl="${jgroups.udp.ip_ttl:2}"
+             ispn:stack.combine="REPLACE"
+      />
+      <!-- Add RELAY2 protocol to enable cross-site replication. Set the number of site masters for the local cluster. For optimal performance, configure all nodes as site masters. -->
+      <relay.RELAY2 site="${relay.site_name:LON}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <!-- Name all remote sites that act as backup locations for clusters. Use the default TCP stack for inter-cluster transport. -->
+      <remote-sites default-stack="tcp">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
    <stack name="test-udp" extends="udp">
       <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
       <FD_SOCK sock_conn_timeout="3000"/>
@@ -22,6 +39,39 @@
                interval="1000"
                ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL"/>
       <relay.RELAY2 site="LON" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <remote-sites default-stack="tcp">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+   <!-- Create a new UDP stack that extends the default. -->
+   <stack name="xsite-udp" extends="udp">
+      <!-- Use custom UDP configuration instead of the default. -->
+      <UDP bind_addr="${jgroups.bind.address,jgroups.udp.address:SITE_LOCAL}"
+           bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
+           mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
+           mcast_port="${jgroups.xsite.mcast_port:46755}"
+           tos="0"
+           ucast_send_buf_size="1m"
+           mcast_send_buf_size="1m"
+           ucast_recv_buf_size="20m"
+           mcast_recv_buf_size="25m"
+           ip_ttl="${jgroups.ip_ttl:2}"
+           thread_naming_pattern="pl"
+           enable_diagnostics="false"
+           bundler_type="no-bundler"
+           max_bundle_size="8500"
+
+           thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
+           thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
+           thread_pool.keep_alive_time="60000"
+
+           thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+           ispn:stack.combine="REPLACE"
+      />
+      <!-- Add RELAY2 protocol to enable cross-site replication. Set the number of site masters for the local cluster. For optimal performance, configure all nodes as site masters. -->
+      <relay.RELAY2 site="${relay.site_name:LON}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <!-- Name all remote sites that act as backup locations for clusters. Use the default TCP stack for inter-cluster transport. -->
       <remote-sites default-stack="tcp">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>

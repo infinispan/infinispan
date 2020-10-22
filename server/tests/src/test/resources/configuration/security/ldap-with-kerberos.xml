@@ -1,16 +1,22 @@
+<!-- Configure security realms to prevent network intrusion. -->
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
           xmlns="urn:infinispan:server:12.0">
    <security-realms>
+     <!-- Create an LDAP realm with Kerberos identities so the server can authenticate users with LDAP servers. -->
       <security-realm name="default">
+         <!-- Create Kerberos identities for the Hot Rod and HTTP protocols. -->
          <server-identities>
             <kerberos keytab-path="hotrod.keytab" principal="hotrod/datagrid@INFINISPAN.ORG" debug="true" required="true"/>
             <kerberos keytab-path="http.keytab" principal="HTTP/localhost@INFINISPAN.ORG" debug="true" required="true"/>
          </server-identities>
+         <!-- Specify LDAP server connection details. -->
          <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389" principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+            <!-- Add a regular expression that extracts the username from the principal. This formats the principal so the server can use it for Kerberos authentication. -->
             <name-rewriter>
                <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
             </name-rewriter>
+            <!-- Define how principals map to entries in the LDAP server. -->
             <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
                <attribute-mapping>
                   <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))" filter-dn="ou=Roles,dc=infinispan,dc=org" />

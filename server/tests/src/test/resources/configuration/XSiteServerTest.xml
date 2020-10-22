@@ -8,7 +8,7 @@
 
    <xi:include href="jgroups/xsite-stacks.xml"/>
 
-   <xi:include href="cache-container/clustered.xml"/>
+   <xi:include href="cache-container/clustered-xsite.xml"/>
 
    <server xmlns="urn:infinispan:server:12.0">
 
