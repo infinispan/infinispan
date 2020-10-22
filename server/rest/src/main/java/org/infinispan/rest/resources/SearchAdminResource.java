@@ -2,10 +2,12 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.util.List;
@@ -14,9 +16,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
+import org.infinispan.query.Search;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
@@ -49,10 +54,69 @@ public class SearchAdminResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").handleWith(this::indexStats)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").handleWith(this::queryStats)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/query/stats").withAction("clear").handleWith(this::clearStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").deprecated().handleWith(this::indexStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").deprecated().handleWith(this::queryStats)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/query/stats").deprecated().withAction("clear").handleWith(this::clearStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/stats").handleWith(this::searchStats)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/stats").withAction("clear").handleWith(this::clearSearchStats)
             .create();
+   }
+
+   private CompletionStage<RestResponse> searchStats(RestRequest restRequest) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      String cacheName = restRequest.variables().get("cacheName");
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
+      if (cache == null) {
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+         return null;
+      }
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      if (!cacheConfiguration.statistics().enabled()) {
+         responseBuilder.status(NOT_FOUND.code()).build();
+      }
+
+      String scopeParam = restRequest.getParameter("scope");
+
+      if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
+         CompletionStage<SearchStatistics> stats = Search.getClusteredSearchStatistics(cache);
+         return stats.thenApply(s -> asJsonResponse(makeJson(s)));
+      } else {
+         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         return asJsonResponseFuture(makeJson(searchStatistics));
+      }
+   }
+
+   private CompletionStage<RestResponse> clearSearchStats(RestRequest restRequest) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      String cacheName = restRequest.variables().get("cacheName");
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
+      if (cache == null) {
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+         return null;
+      }
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      if (!cacheConfiguration.statistics().enabled()) {
+         responseBuilder.status(NOT_FOUND.code()).build();
+      }
+
+      String scopeParam = restRequest.getParameter("scope");
+
+      //TODO: cluster clear
+      if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
+         throw new CacheException("NotImplemented");
+      } else {
+         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         searchStatistics.getQueryStatistics().clear();
+         return completedFuture(responseBuilder.build());
+      }
+   }
+
+   private Json makeJson(SearchStatistics searchStatistics) {
+      return Json.object()
+            .set("query", Json.make(searchStatistics.getQueryStatistics()))
+            .set("index", Json.make(searchStatistics.getIndexStatistics()));
    }
 
    private CompletionStage<RestResponse> reindex(RestRequest request) {
@@ -64,11 +128,21 @@ public class SearchAdminResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
-      return showStats(request, InfinispanQueryStatisticsInfo::getIndexStatistics);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
+      if (searchStats == null) return completedFuture(responseBuilder.build());
+
+      return asJsonResponseFuture(searchStats.getLegacyIndexStatistics(), responseBuilder);
    }
 
    private CompletionStage<RestResponse> queryStats(RestRequest request) {
-      return showStats(request, InfinispanQueryStatisticsInfo::getQueryStatistics);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
+      if (searchStats == null) return completedFuture(responseBuilder.build());
+
+      return asJsonResponseFuture(searchStats.getLegacyQueryStatistics(), responseBuilder);
    }
 
    private CompletionStage<RestResponse> clearStats(RestRequest request) {
@@ -127,15 +201,6 @@ public class SearchAdminResource implements ResourceHandler {
          }
          return null;
       }).thenApply(v -> responseBuilder.build());
-   }
-
-   private CompletionStage<RestResponse> showStats(RestRequest request, Function<InfinispanQueryStatisticsInfo, JsonSerialization> statExtractor) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-
-      InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
-      if (searchStats == null) return completedFuture(responseBuilder.build());
-
-      return asJsonResponseFuture(statExtractor.apply(searchStats).toJson(), responseBuilder);
    }
 
    private AdvancedCache<?, ?> lookupIndexedCache(RestRequest request, NettyRestResponse.Builder builder) {

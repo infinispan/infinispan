@@ -7,6 +7,7 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 
@@ -25,13 +26,17 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    protected final Query<S> baseQuery;
 
-   public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
-                      ObjectFilter objectFilter,
-                      long startOffset, int maxResults,
-                      Query<?> baseQuery) {
-      super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults);
+   public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+                      Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics) {
+      super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
+   }
+
+   @Override
+   protected void recordQuery(Long time) {
+      queryStatistics.hybridQueryExecuted(queryString, time);
    }
 
    @Override

@@ -362,7 +362,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       if (autoConfig() && !attributes.attribute(ENABLED).isModified()) {
          enable();
       }
-
+      this.resolvedIndexedClasses.clear();
+      this.resolvedIndexedClasses.addAll(template.indexedEntities());
       return this;
    }
 

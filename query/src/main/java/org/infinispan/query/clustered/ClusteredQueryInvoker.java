@@ -17,6 +17,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.hibernate.search.util.common.SearchTimeoutException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -33,14 +34,16 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 final class ClusteredQueryInvoker {
 
    private final RpcManager rpcManager;
+   private final LocalQueryStatistics queryStatistics;
    private final AdvancedCache<?, ?> cache;
    private final Address myAddress;
    private final RpcOptions rpcOptions;
    private final QueryPartitioner partitioner;
 
-   ClusteredQueryInvoker(AdvancedCache<?, ?> cache) {
+   ClusteredQueryInvoker(AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
       this.cache = cache;
       this.rpcManager = cache.getRpcManager();
+      this.queryStatistics = queryStatistics;
       this.myAddress = rpcManager.getAddress();
       long timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
@@ -56,6 +59,9 @@ final class ClusteredQueryInvoker {
     * @return the responses
     */
    List<QueryResponse> broadcast(ClusteredQueryOperation operation) {
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
       Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
       // invoke on own node
@@ -72,6 +78,11 @@ final class ClusteredQueryInvoker {
       try {
          results.add(await(localResponse.toCompletableFuture()));
          results.addAll(await(sequence(futureRemoteResponses)));
+
+         if (queryStatistics.isEnabled()) {
+            String queryString = operation.getQueryDefinition().getQueryString();
+            queryStatistics.distributedIndexedQueryExecuted(queryString, System.nanoTime() - start);
+         }
       } catch (InterruptedException e) {
          throw new SearchException("Interrupted while searching locally", e);
       } catch (ExecutionException e) {

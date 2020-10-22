@@ -12,6 +12,7 @@ import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -37,8 +38,11 @@ class DistributedIterator<E> implements CloseableIterator<E> {
    private final NodeTopDocs[] partialResults;
    private final int[] partialPositionNext;
    private final TopDocs mergedResults;
+   private final LocalQueryStatistics queryStatistics;
 
-   DistributedIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, Map<Address, NodeTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
+   DistributedIterator(LocalQueryStatistics queryStatistics, Sort sort, int fetchSize, int resultSize, int maxResults,
+                       int firstResult, Map<Address, NodeTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
+      this.queryStatistics = queryStatistics;
       this.fetchSize = fetchSize;
       this.resultSize = resultSize;
       this.maxResults = maxResults;
@@ -47,7 +51,7 @@ class DistributedIterator<E> implements CloseableIterator<E> {
       this.keyDataConversion = cache.getKeyDataConversion();
       final int parallels = topDocsResponses.size();
       this.partialResults = new NodeTopDocs[parallels];
-      boolean isFieldDocs = expectTopFieldDocs( topDocsResponses );
+      boolean isFieldDocs = expectTopFieldDocs(topDocsResponses);
       TopDocs[] partialTopDocs = isFieldDocs ? new TopFieldDocs[parallels] : new TopDocs[parallels];
       this.partialPositionNext = new int[parallels];
       int i = 0;
@@ -65,7 +69,7 @@ class DistributedIterator<E> implements CloseableIterator<E> {
 
    private boolean expectTopFieldDocs(Map<Address, NodeTopDocs> topDocsResponses) {
       Iterator<NodeTopDocs> it = topDocsResponses.values().iterator();
-      if ( it.hasNext() ) {
+      if (it.hasNext()) {
          return it.next().topDocs instanceof TopFieldDocs;
       }
       return false;
@@ -104,7 +108,14 @@ class DistributedIterator<E> implements CloseableIterator<E> {
    protected E fetchValue(int scoreIndex, NodeTopDocs nodeTopDocs) {
       Object[] keys = nodeTopDocs.keys;
       if (keys != null && keys.length > 0) {
-         return (E) cache.get(keyDataConversion.fromStorage(keys[scoreIndex]));
+         long start = 0;
+         if (queryStatistics.isEnabled()) start = System.nanoTime();
+
+         E value = (E) cache.get(keyDataConversion.fromStorage(keys[scoreIndex]));
+
+         if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
+
+         return value;
       }
       return (E) nodeTopDocs.projections[scoreIndex];
    }

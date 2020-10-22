@@ -237,7 +237,7 @@ public class LuceneTransformationTest {
    public void testWrongFieldName() {
       expectedException.expect(SearchException.class);
       expectedException.expectMessage("HSEARCH600000: Unknown field 'otherInfo'.\n" +
-            "Context: indexes [Employee]");
+            "Context: indexes [org.infinispan.query.dsl.embedded.impl.model.Employee]");
 
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.otherInfo = 'foo'");
    }

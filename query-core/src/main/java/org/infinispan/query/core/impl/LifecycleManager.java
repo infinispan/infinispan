@@ -1,5 +1,7 @@
 package org.infinispan.query.core.impl;
 
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
+
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -14,11 +16,17 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryResult;
 import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.impl.EmptyIndexStatistics;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
+import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 
@@ -33,6 +41,9 @@ public class LifecycleManager implements ModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
+         cr.registerComponent(EmptyIndexStatistics.INSTANCE, IndexStatistics.class);
+         cr.registerComponent(new LocalQueryStatistics(), LocalQueryStatistics.class);
+         cr.registerComponent(new SearchStatsRetriever(), SearchStatsRetriever.class);
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          cr.registerComponent(new ReflectionMatcher(aggregatedClassLoader), ReflectionMatcher.class);
@@ -111,6 +122,9 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.ICKLE_CACHE_EVENT_FILTER_CONVERTER, new IckleCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResult.Externalizer());
+
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(PERSISTENCE, new PersistenceContextInitializerImpl());
    }
 
    @Override

@@ -48,12 +48,12 @@ public final class QueryDefinition {
       this.queryEngineProvider = queryEngineProvider;
    }
 
-   public QueryDefinition(SearchQueryBuilder searchQuery) {
+   public QueryDefinition(String queryString, SearchQueryBuilder searchQuery) {
       if (searchQuery == null) {
          throw new IllegalArgumentException("query cannot be null");
       }
       this.searchQuery = searchQuery;
-      this.queryString = null;
+      this.queryString = queryString;
       this.queryEngineProvider = null;
    }
 

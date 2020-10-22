@@ -457,4 +457,18 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       builder.url(cacheUrl).get();
       return client.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> searchStats() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/search/stats");
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> clearSearchStats() {
+      Request.Builder builder = new Request.Builder();
+      builder.post(EMPTY_BODY).url(cacheUrl + "/search/stats?action=clear");
+      return client.execute(builder);
+   }
 }

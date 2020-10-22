@@ -9,8 +9,10 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
@@ -52,6 +54,14 @@ public final class ComponentRegistryUtils {
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
       ensureIndexed(cache);
       return getRequiredComponent(cache, QueryInterceptor.class);
+   }
+
+   public static LocalQueryStatistics getLocalQueryStatistics(Cache<?, ?> cache) {
+      return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(LocalQueryStatistics.class);
+   }
+
+   public static SearchStatsRetriever getSearchStatsRetriever(Cache<?, ?> cache) {
+      return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(SearchStatsRetriever.class);
    }
 
    public static KeyTransformationHandler getKeyTransformationHandler(Cache<?, ?> cache) {

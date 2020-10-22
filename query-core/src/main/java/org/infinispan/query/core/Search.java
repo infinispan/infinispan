@@ -1,9 +1,11 @@
 package org.infinispan.query.core;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
@@ -14,6 +16,8 @@ import org.infinispan.query.core.impl.QueryEngine;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.security.AuthorizationManager;
@@ -63,6 +67,15 @@ public final class Search {
     * Obtain the query factory for building DSL based Ickle queries.
     */
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
+      AdvancedCache<?, ?> advancedCache = getAdvancedCache(cache);
+      QueryEngine<?> queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
+      if (queryEngine == null) {
+         throw new IllegalStateException(QueryEngine.class.getName() + " not found in component registry");
+      }
+      return new EmbeddedQueryFactory(queryEngine);
+   }
+
+   private static AdvancedCache<?, ?> getAdvancedCache(Cache<?, ?> cache) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter must not be null");
       }
@@ -71,11 +84,7 @@ public final class Search {
          throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
       }
       checkBulkReadPermission(advancedCache);
-      QueryEngine<?> queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
-      if (queryEngine == null) {
-         throw new IllegalStateException(QueryEngine.class.getName() + " not found in component registry");
-      }
-      return new EmbeddedQueryFactory(queryEngine);
+      return advancedCache;
    }
 
    /**
@@ -91,4 +100,25 @@ public final class Search {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
    }
+
+   private static SearchStatsRetriever getStatsRetriever(Cache<?, ?> cache) {
+      AdvancedCache<?, ?> advancedCache = getAdvancedCache(cache);
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(advancedCache);
+      return registry.getComponent(SearchStatsRetriever.class);
+   }
+
+   /**
+    * @return {@link SearchStatistics} for the Cache.
+    */
+   public static SearchStatistics getSearchStatistics(Cache<?, ?> cache) {
+      return getStatsRetriever(cache).getSearchStatistics();
+   }
+
+   /**
+    * @return {@link SearchStatistics} for the whole cluster combined. The returned object is a snapshot.
+    */
+   public static CompletionStage<SearchStatistics> getClusteredSearchStatistics(Cache<?, ?> cache) {
+      return getStatsRetriever(cache).getDistributedSearchStatistics();
+   }
+
 }

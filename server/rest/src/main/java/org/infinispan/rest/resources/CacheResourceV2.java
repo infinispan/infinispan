@@ -44,8 +44,9 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
-import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
+import org.infinispan.query.Search;
+import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.rest.CacheEntryInputStream;
 import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.InvocationHelper;
@@ -329,9 +330,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       boolean statistics = configuration.statistics().enabled();
       int size = cache.getAdvancedCache().size();
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-      InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);
+      SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+      IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
-      boolean indexingInProgress = indexStatistics != null && indexStatistics.getReindexing();
+      boolean indexingInProgress = indexStatistics.reindexing();
       boolean indexed = configuration.indexing().enabled();
       boolean queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
 
@@ -351,14 +353,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.queryable = queryable;
 
       return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder()).build();
-   }
-
-   private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
-      if (!cache.getCacheConfiguration().indexing().enabled()) {
-         return null;
-      }
-
-      return ComponentRegistryUtils.getQueryStatistics(cache.getAdvancedCache()).getIndexStatistics();
    }
 
    private CompletionStage<RestResponse> getCacheConfig(RestRequest request) {

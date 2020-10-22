@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
 import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
@@ -27,8 +28,32 @@ final class CQCreateEagerQuery extends CQWorker {
       return nodeTopDocs.thenApply(QueryResponse::new);
    }
 
+   private LuceneSearchResult<?> fetchHits(SearchQueryBuilder query) {
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
+      LuceneSearchResult<?> result = query.build().fetch(queryDefinition.getMaxResults());
+
+      if (queryStatistics.isEnabled())
+         queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
+
+      return result;
+   }
+
+   private LuceneSearchResult<DocumentReference> fetchDocuments(SearchQueryBuilder query) {
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
+      LuceneSearchResult<DocumentReference> result = query.documentReference().fetch(queryDefinition.getMaxResults());
+
+      if (queryStatistics.isEnabled())
+         queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
+
+      return result;
+   }
+
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> query.documentReference().fetch(queryDefinition.getMaxResults()), "CQCreateEagerQuery#collectKeys")
+      return blockingManager.supplyBlocking(() -> fetchDocuments(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
                if (queryResult.total().hitCount() == 0L) return null;
 
@@ -41,12 +66,13 @@ final class CQCreateEagerQuery extends CQWorker {
    }
 
    private CompletionStage<NodeTopDocs> collectProjections(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> query.build().fetch(queryDefinition.getMaxResults()), "CQCreateEagerQuery#collectProjections").thenApply(queryResult -> {
-         if (queryResult.total().hitCount() == 0L) return null;
+      return blockingManager.supplyBlocking(() -> fetchHits(query), "CQCreateEagerQuery#collectProjections")
+            .thenApply(queryResult -> {
+               if (queryResult.total().hitCount() == 0L) return null;
 
-         List<?> hits = queryResult.hits();
-         Object[] projections = hits.toArray(new Object[0]);
-         return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), null, projections);
-      });
+               List<?> hits = queryResult.hits();
+               Object[] projections = hits.toArray(new Object[0]);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), null, projections);
+            });
    }
 }

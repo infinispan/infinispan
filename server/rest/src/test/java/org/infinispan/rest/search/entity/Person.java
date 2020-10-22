@@ -4,13 +4,14 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.search.annotations.Field;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
 /**
  * @since 9.2
  */
+@ProtoDoc("@Indexed")
 public class Person implements Serializable {
 
    private Integer id;
@@ -19,7 +20,7 @@ public class Person implements Serializable {
 
    private String surname;
 
-   @Field
+   @ProtoDoc("@Field")
    private Integer age;
 
    private Address address;

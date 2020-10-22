@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 
 /**
@@ -18,9 +19,14 @@ import org.infinispan.query.dsl.QueryFactory;
  */
 public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
-   public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
-                           long startOffset, int maxResults) {
-      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults);
+   public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+                           Map<String, Object> namedParameters, long startOffset, int maxResults,
+                           LocalQueryStatistics queryStatistics) {
+      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults, queryStatistics);
+   }
+
+   @Override
+   protected void recordQuery(Long time) {
    }
 
    @Override

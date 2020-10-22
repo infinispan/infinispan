@@ -58,7 +58,10 @@ public interface SearchMapping extends AutoCloseable {
 
    SearchIndexedEntity indexedEntity(String entityName);
 
+   //TODO: ISPN-12449 remove this method as it does not correctly return protobuf types
    Map<String, Class<?>> allIndexedTypes();
+
+   Map<String, Class<?>> getEntities();
 
    boolean isIndexedType(Object value);
 

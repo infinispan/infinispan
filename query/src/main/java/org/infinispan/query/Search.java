@@ -2,6 +2,7 @@ package org.infinispan.query;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -12,6 +13,7 @@ import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
@@ -78,16 +80,21 @@ public final class Search {
       return new ContinuousQueryImpl<>(cache);
    }
 
-   /**
-    * @return Obtain the {@link Indexer} instance for the cache.
-    * @since 11.0
-    */
-   public static <K, V> Indexer getIndexer(Cache<K, V> cache) {
+   private static <K, V> AdvancedCache<K, V> getAdvancedCache(Cache<K, V> cache) {
       AdvancedCache<K, V> advancedCache = Objects.requireNonNull(cache, "cache parameter must not be null").getAdvancedCache();
       if (advancedCache == null) {
          throw new IllegalArgumentException("The given cache must expose an AdvancedCache interface");
       }
       checkBulkReadPermission(advancedCache);
+      return advancedCache;
+   }
+
+   /**
+    * @return Obtain the {@link Indexer} instance for the cache.
+    * @since 11.0
+    */
+   public static <K, V> Indexer getIndexer(Cache<K, V> cache) {
+      AdvancedCache<K, V> advancedCache = getAdvancedCache(cache);
       return ComponentRegistryUtils.getIndexer(advancedCache);
    }
 
@@ -96,5 +103,13 @@ public final class Search {
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
+   }
+
+   public static <K, V> SearchStatistics getSearchStatistics(Cache<K, V> cache) {
+      return ComponentRegistryUtils.getSearchStatsRetriever(cache).getSearchStatistics();
+   }
+
+   public static CompletionStage<SearchStatistics> getClusteredSearchStatistics(Cache<?, ?> cache) {
+      return ComponentRegistryUtils.getSearchStatsRetriever(cache).getDistributedSearchStatistics();
    }
 }

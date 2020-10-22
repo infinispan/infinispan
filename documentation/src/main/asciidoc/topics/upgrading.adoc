@@ -46,7 +46,18 @@ Some operations that previously supported both `GET` and `POST` now support only
 * ```/v2/cache-managers/{name}/x-site/backups/{site}?action=start-push-state```
 * ```/v2/cache-managers/{name}/x-site/backups/{site}?action=cancel-push-state```
 
+* The following query statistics operation:
+
+** ```/v2/caches/{cacheName}/search/query/stats```
+** ```/v2/caches/{cacheName}/search/indexes/stats```
+
+have been deprecated and will be removed in a future version.
+
+Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. Please consult the REST API docs for more details.
+
 == Search
+
+* It's not possible anymore to enable or disable search statistics via JMX. Query and Index statistics are only exposed when the cache "statistics" configuration is enabled.
 
 * `MassIndexer`, `CacheQuery` and `SearchManager` were deprecated and are now removed.
 

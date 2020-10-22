@@ -18,6 +18,7 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -60,14 +61,27 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
 
+   private static final String PROTO_SCHEMA =
+         " /* @Indexed */                     \n" +
+               " message Entity {                   \n" +
+               "    /* @Field */                    \n" +
+               "    required int32 value=1;         \n" +
+               "    optional string description=2;  \n" +
+               " }                                  \n" +
+               " /* @Indexed */                     \n" +
+               " message Another {                  \n" +
+               "    /* @Field */                    \n" +
+               "    required int32 value=1;         \n" +
+               "    optional string description=2;  \n" +
+               " }";
+
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
       cm.defineConfiguration("proto", getProtoCacheBuilder().build());
 
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
-      metadataCache.putIfAbsent("sample.proto", proto);
+      metadataCache.putIfAbsent("sample.proto", PROTO_SCHEMA);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
@@ -91,8 +105,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.statistics().enable();
       builder.indexing().enable()
             .addIndexedEntity("Entity")
+            .addIndexedEntity("Another")
             .addProperty("directory.type", "local-heap")
             .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
@@ -251,7 +267,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCacheV2Stats() throws Exception {
+   public void testCacheV2Stats() {
       String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
       RestCacheClient cacheClient = client.cache("statCache");
 
@@ -442,7 +458,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testGetAllKeys() throws Exception {
+   public void testGetAllKeys() {
       RestResponse response = join(client.cache("default").keys());
       Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
       assertEquals(0, emptyKeys.size());
@@ -527,7 +543,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testProtobufMetadataManipulation() throws Exception {
+   public void testProtobufMetadataManipulation() {
       // Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
       String cache = PROTOBUF_METADATA_CACHE_NAME;
       putStringValueInCache(cache, "file1.proto", "message A{}");
@@ -620,6 +636,100 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).hasReturnedBytes(new ProtoStreamMarshaller().objectToByteBuffer(2));
    }
 
+   @Test
+   public void testSearchStatistics() {
+      RestCacheClient cacheClient = client.cache("indexedCache");
+      join(cacheClient.clear());
+
+      // Clear all stats
+      RestResponse response = join(cacheClient.clearSearchStats());
+      ResponseAssertion.assertThat(response).isOk();
+      response = join(cacheClient.searchStats());
+      Json statJson = Json.read(response.getBody());
+      assertIndexStatsEmpty(statJson.at("index"));
+      assertAllQueryStatsEmpty(statJson.at("query"));
+
+      // Insert some data
+      insertEntity(1, "Entity", 1, "One");
+      insertEntity(11, "Entity", 11, "Eleven");
+      insertEntity(21, "Entity", 21, "Twenty One");
+      insertEntity(3, "Another", 3, "Three");
+      insertEntity(33, "Another", 33, "Thirty Three");
+
+      response = join(cacheClient.size());
+      ResponseAssertion.assertThat(response).hasReturnedText("5");
+
+      response = join(cacheClient.searchStats());
+      ResponseAssertion.assertThat(response).isOk();
+
+      // All stats should be zero in the absence of query
+      statJson = Json.read(response.getBody());
+      assertAllQueryStatsEmpty(statJson.at("query"));
+
+      // Execute some indexed queries
+      String indexedQuery = "FROM Entity WHERE value > 5";
+      IntStream.range(0, 3).forEach(i -> join(cacheClient.query(indexedQuery)));
+      response = join(cacheClient.searchStats());
+      statJson = Json.read(response.getBody());
+
+      // Hybrid and non-indexed queries stats should be empty
+      assertEquals(0, statJson.at("query").at("hybrid").at("count").asLong());
+      assertEquals(0, statJson.at("query").at("non_indexed").at("count").asLong());
+
+      Json queryStats = statJson.at("query");
+      assertQueryStatEmpty(queryStats.at("hybrid"));
+      assertQueryStatEmpty(queryStats.at("non_indexed"));
+
+      // Indexed queries should be recorded
+      assertEquals(3, statJson.at("query").at("indexed_local").at("count").asLong());
+      assertTrue(statJson.at("query").at("indexed_local").at("average").asLong() > 0);
+      assertTrue(statJson.at("query").at("indexed_local").at("max").asLong() > 0);
+
+      assertEquals(3, statJson.at("query").at("indexed_distributed").at("count").asLong());
+      assertTrue(statJson.at("query").at("indexed_distributed").at("average").asLong() > 0);
+      assertTrue(statJson.at("query").at("indexed_distributed").at("max").asLong() > 0);
+
+      // Execute a hybrid query
+      String hybrid = "FROM Entity WHERE value > 5 AND description = 'One'";
+      join(cacheClient.query(hybrid));
+      response = join(cacheClient.searchStats());
+      statJson = Json.read(response.getBody());
+
+      // Hybrid queries should be recorded
+      assertEquals(1, statJson.at("query").at("hybrid").at("count").asLong());
+      assertTrue(statJson.at("query").at("hybrid").at("average").asLong() > 0);
+      assertTrue(statJson.at("query").at("hybrid").at("max").asLong() > 0);
+
+      // Check index stats
+      response = join(cacheClient.searchStats());
+      statJson = Json.read(response.getBody());
+      assertEquals(3, statJson.at("index").at("types").at("Entity").at("count").asInteger());
+      assertEquals(2, statJson.at("index").at("types").at("Another").at("count").asInteger());
+      //TODO: Index sizes are not currently exposed (HSEARCH-4056)
+      assertEquals(0, statJson.at("index").at("types").at("Entity").at("size").asInteger());
+      assertEquals(0, statJson.at("index").at("types").at("Another").at("size").asInteger());
+      assertEquals(0, statJson.at("index").at("types").at("Another").at("size").asInteger());
+      assertFalse(statJson.at("index").at("reindexing").asBoolean());
+   }
+
+   private void assertQueryStatEmpty(Json queryTypeStats) {
+      assertEquals(0, queryTypeStats.at("count").asInteger());
+      assertEquals(0, queryTypeStats.at("max").asInteger());
+      assertEquals(0.0, queryTypeStats.at("average").asDouble());
+      assertNull(queryTypeStats.at("slowest"));
+   }
+
+   private void assertAllQueryStatsEmpty(Json queryStats) {
+      queryStats.asJsonMap().forEach((name, s) -> assertQueryStatEmpty(s));
+   }
+
+   private void assertIndexStatsEmpty(Json indexStats) {
+      indexStats.at("types").asJsonMap().forEach((name, json) -> {
+         assertEquals(0, json.at("count").asInteger());
+         assertEquals(0, json.at("size").asInteger());
+      });
+   }
+
    private int checkCache(String name) {
       CompletionStage<RestResponse> response = client.cache(name).exists();
       return join(response).getStatus();
@@ -636,6 +746,15 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       RestCacheClient cacheClient = client.cache("indexedCache");
 
       return join(cacheClient.put(String.valueOf(key), restEntity, flags));
+   }
+
+
+   private void insertEntity(int cacheKey, String type, int intValue, String stringValue) {
+      Json json = Json.object().set("_type", type).set("value", intValue).set("description", stringValue);
+      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, json.toString());
+      RestCacheClient cacheClient = client.cache("indexedCache");
+      CompletionStage<RestResponse> response = cacheClient.put(String.valueOf(cacheKey), restEntity);
+      ResponseAssertion.assertThat(response).isOk();
    }
 
    private void assertIndexed(int value) {

@@ -10,6 +10,7 @@ import org.hibernate.search.engine.search.timeout.spi.TimeoutManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.search.mapper.common.EntityReference;
 
 /**
@@ -19,14 +20,17 @@ import org.infinispan.search.mapper.common.EntityReference;
  */
 public final class EntityLoader<E> implements QueryResultLoader<E> {
 
+   private final LocalQueryStatistics queryStatistics;
    private final AdvancedCache<?, E> cache;
    private final KeyTransformationHandler keyTransformationHandler;
    private final DataConversion keyDataConversion;
 
-   public EntityLoader(AdvancedCache<?, E> cache, KeyTransformationHandler keyTransformationHandler) {
+   public EntityLoader(LocalQueryStatistics queryStatistics, AdvancedCache<?, E> cache,
+                       KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
       this.keyTransformationHandler = keyTransformationHandler;
       this.keyDataConversion = cache.getKeyDataConversion();
+      this.queryStatistics = queryStatistics;
    }
 
    private Object decodeKey(EntityReference entityReference) {
@@ -40,7 +44,7 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
 
    @Override
    public List<E> loadBlocking(List<EntityReference> entityReferences, TimeoutManager timeoutManager) {
-      if(entityReferences.isEmpty()) return Collections.emptyList();
+      if (entityReferences.isEmpty()) return Collections.emptyList();
 
       int entitiesSize = entityReferences.size();
       LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
@@ -49,7 +53,13 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
       }
 
       // getAll instead of multiple gets to get all the results in the same call
+      long start = 0;
+      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
       Map<?, E> values = cache.getAll(keys);
+
+      if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
+
       ArrayList<E> result = new ArrayList<>(entityReferences.size());
       for (Object key : keys) {
          // if the entity was present at indexing time and

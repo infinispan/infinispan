@@ -1,0 +1,46 @@
+{
+  "query": {
+    "indexed_local": {
+      "count": 1,
+      "average": 12344.2,
+      "max": 122324,
+      "slowest": "FROM Entity WHERE field > 4"
+    },
+    "indexed_distributed": {
+      "count": 0,
+      "average": 0.0,
+      "max": -1,
+      "slowest": "FROM Entity WHERE field > 4"
+    },
+    "hybrid": {
+      "count": 0,
+      "average": 0.0,
+      "max": -1,
+      "slowest": "FROM Entity WHERE field > 4 AND desc = 'value'"
+    },
+    "non_indexed": {
+      "count": 0,
+      "average": 0.0,
+      "max": -1,
+      "slowest": "FROM Entity WHERE desc = 'value'"
+    },
+    "entity_load": {
+      "count": 123,
+      "average": 10.0,
+      "max": 120
+    }
+  },
+  "index": {
+    "types": {
+      "org.infinispan.same.test.Entity": {
+        "count": 5660001,
+        "size": 0
+      },
+      "org.infinispan.same.test.AnotherEntity": {
+        "count": 40,
+        "size": 345560
+      }
+    },
+    "reindexing": false
+  }
+}

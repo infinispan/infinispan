@@ -37,6 +37,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private final SearchIndexer searchIndexer;
 
    private final Map<String, Class<?>> allIndexedTypes;
+   private final Map<String, Class<?>> allTypes;
 
    private SearchIntegration integration;
    private boolean close = false;
@@ -50,6 +51,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.mappingSession = new InfinispanSearchSession(this, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer);
       this.allIndexedTypes = collectAllIndexedTypes();
+      this.allTypes = collectEntities();
    }
 
    @Override
@@ -140,6 +142,11 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    }
 
    @Override
+   public Map<String, Class<?>> getEntities() {
+      return allTypes;
+   }
+
+   @Override
    public boolean isIndexedType(Object value) {
       if (value == null) {
          return false;
@@ -164,6 +171,10 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
          entities.put(entityConverter.targetType().getName(), entityConverter.targetType());
       }
       return Collections.unmodifiableMap(entities);
+   }
+
+   private Map<String, Class<?>> collectEntities() {
+      return typeContextContainer.getEntityClassByEntityName();
    }
 
    private <E> SearchScopeImpl<E> getSearchScope(Collection<PojoRawTypeIdentifier<? extends E>> typeIdentifiers) {

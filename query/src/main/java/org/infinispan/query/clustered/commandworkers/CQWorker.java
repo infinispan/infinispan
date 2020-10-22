@@ -8,6 +8,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
@@ -30,10 +31,12 @@ abstract class CQWorker {
    protected UUID queryId;
    protected int docIndex;
    protected BlockingManager blockingManager;
+   protected LocalQueryStatistics queryStatistics;
 
    void initialize(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       this.cache = cache;
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      this.queryStatistics = ComponentRegistryUtils.getLocalQueryStatistics(cache);
       this.keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       if (queryDefinition != null) {
          this.queryDefinition = queryDefinition;
