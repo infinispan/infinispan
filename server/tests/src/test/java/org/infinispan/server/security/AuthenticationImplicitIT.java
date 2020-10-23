@@ -114,7 +114,7 @@ public class AuthenticationImplicitIT {
                .password("all");
       }
       if (mechanism.isEmpty()) {
-         Exceptions.expectException(RuntimeException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
+         Exceptions.expectException(SecurityException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
       } else {
          RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
          RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));

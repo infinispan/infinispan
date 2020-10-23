@@ -6,7 +6,7 @@ Hot Rod connector declarations enable Hot Rod servers.
 include::config_examples/endpoints_hotrod_connector.xml[]
 ----
 
-* `name="hotrod"` logically names the Hot Rod connector.
+* `name="hotrod"` logically names the Hot Rod connector. By default the name will be derived from the socket binding name, for example _hotrod-default_.
 * `topology-state-transfer` tunes the state transfer operations that provide Hot Rod clients with cluster topology.
 * `authentication` configures SASL authentication mechanisms.
 * `encryption` configures TLS settings for client connections.

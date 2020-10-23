@@ -2,7 +2,7 @@
            xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
            socket-binding="default" security-realm="default">
-   <rest-connector name="rest">
+   <rest-connector>
       <authentication mechanisms="SPNEGO" <1>
                       server-principal="HTTP/localhost@INFINISPAN.ORG"/> <2>
    </rest-connector>

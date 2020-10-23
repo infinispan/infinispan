@@ -277,7 +277,7 @@ public class JsonSerializationTest {
       Json authentication = restConnector.at("authentication");
       assertEquals("default", authentication.at("security-realm").asString());
       Json mechanisms = authentication.at("mechanisms");
-      assertEquals(6, mechanisms.asList().size());
+      assertEquals(2, mechanisms.asList().size());
 
       Iterator<Json> items = mechanisms.asJsonList().iterator();
       assertEquals("DIGEST", items.next().asString());

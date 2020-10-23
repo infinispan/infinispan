@@ -2,7 +2,7 @@
            xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
            socket-binding="default" security-realm="default"> <1>
-   <rest-connector name="rest">
+   <rest-connector>
       <authentication mechanisms="DIGEST BASIC"/> <2>
    </rest-connector>
 </endpoints>

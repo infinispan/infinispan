@@ -30,6 +30,7 @@ import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.client.rest.configuration.SslConfiguration;
+import org.infinispan.client.rest.impl.okhttp.auth.AbstractAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.AutoDetectAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.BasicAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.BearerAuthenticator;
@@ -50,6 +51,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -246,7 +248,18 @@ public class RestClientOkHttp implements RestClient {
       httpClient.newCall(request.build()).enqueue(new Callback() {
          @Override
          public void onFailure(Call call, IOException e) {
-            response.completeExceptionally(e);
+            if (e.getSuppressed().length > 0 && e.getSuppressed()[0] instanceof AbstractAuthenticator.AuthenticationException) {
+               Throwable t = e.getSuppressed()[0];
+               Response.Builder builder = new Response.Builder()
+                     .code(403)
+                     .body(ResponseBody.create(MediaType.parse("text/plain"), t.getMessage()))
+                     .request(call.request())
+                     .message(t.getMessage())
+                     .protocol(Protocol.HTTP_1_1); // Doesn't really matter
+               response.complete(new RestResponseOkHttp(builder.build()));
+            } else {
+               response.completeExceptionally(e);
+            }
          }
 
          @Override

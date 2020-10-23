@@ -3,7 +3,7 @@
            https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
            socket-binding="default" security-realm="default"> <1>
-   <hotrod-connector name="hotrod">
+   <hotrod-connector>
       <authentication>
          <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 <2>
                            SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384

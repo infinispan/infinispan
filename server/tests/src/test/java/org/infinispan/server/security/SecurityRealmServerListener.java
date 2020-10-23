@@ -14,7 +14,7 @@ import org.infinispan.server.test.core.InfinispanServerListener;
  **/
 public class SecurityRealmServerListener implements InfinispanServerListener {
 
-   final String realm;
+   private final String realm;
 
    public SecurityRealmServerListener(String realmName) {
       this.realm = realmName;
@@ -26,11 +26,15 @@ public class SecurityRealmServerListener implements InfinispanServerListener {
       // Create users and groups for individual permissions
       for (AuthorizationPermission permission : AuthorizationPermission.values()) {
          String name = permission.name().toLowerCase();
-         userTool.createUser(name + "_user", name, realm, UserTool.Encryption.DEFAULT, Collections.singletonList(name), null);
+         userTool.createUser(username(name + "_user"), name, realm, UserTool.Encryption.DEFAULT, Collections.singletonList(name), null);
       }
       // Create users with composite roles
       for (TestUser user : TestUser.values()) {
-         userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+         userTool.createUser(username(user.getUser()), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
       }
+   }
+
+   private String username(String name) {
+      return realm + "_" + name;
    }
 }

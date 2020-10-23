@@ -215,6 +215,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .expose(
                      11222, // Protocol endpoint
                      11221, // Memcached endpoint
+                     11223, // Alternate Hot Rod endpoint
+                     11224, // Alternate REST endpoint
+                     11225, // Alternate single port endpoint
                      7800,  // JGroups TCP
                      46655, // JGroups UDP
                      9999   // JMX Remoting

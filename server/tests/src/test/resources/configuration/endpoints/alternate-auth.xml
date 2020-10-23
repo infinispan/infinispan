@@ -1,0 +1,13 @@
+<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
+           xmlns="urn:infinispan:server:12.0"
+           socket-binding="alternate-2" security-realm="alternate" admin="false">
+   <hotrod-connector>
+      <authentication>
+         <sasl mechanisms="PLAIN"/>
+      </authentication>
+   </hotrod-connector>
+   <rest-connector>
+      <authentication mechanisms="BASIC"/>
+   </rest-connector>
+</endpoints>

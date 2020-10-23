@@ -2,8 +2,10 @@
                  xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
                  xmlns="urn:infinispan:server:12.0"
                  default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
-   <socket-binding name="default" port="11222"/>
    <socket-binding name="memcached" port="11221"/>
-   <socket-binding name="hotrod-alternate" port="11223"/>
-   <socket-binding name="rest-alternate" port="11224"/>
+   <socket-binding name="default" port="11222"/>
+   <socket-binding name="alternate-1" port="11223"/>
+   <socket-binding name="alternate-2" port="11224"/>
+   <socket-binding name="alternate-3" port="11225"/>
+   <socket-binding name="alternate-4" port="11226"/>
 </socket-bindings>

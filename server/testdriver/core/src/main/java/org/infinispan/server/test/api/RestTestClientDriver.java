@@ -1,5 +1,8 @@
 package org.infinispan.server.test.api;
 
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -10,9 +13,6 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 /**
  * REST operations for the testing framework
@@ -26,6 +26,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
    private TestServer testServer;
    private TestClient testClient;
+   private int port = 11222;
 
    public RestTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
@@ -43,13 +44,18 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       return this;
    }
 
+   public RestTestClientDriver withPort(int port) {
+      this.port = port;
+      return this;
+   }
+
    /**
     * Create and get a REST client.
     *
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get() {
-      return testClient.registerResource(testServer.newRestClient(clientConfiguration));
+      return testClient.registerResource(testServer.newRestClient(clientConfiguration, port));
    }
 
    /**
@@ -58,7 +64,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get(int n) {
-      return testClient.registerResource(testServer.newRestClient(clientConfiguration, n));
+      return testClient.registerResource(testServer.newRestClientForServer(clientConfiguration, port, n));
    }
 
    /**
@@ -80,10 +86,20 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
          future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
       RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
+      response.close();
       if (response.getStatus() != 200) {
-         response.close();
-         throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+         switch (response.getStatus()) {
+            case 401:
+            case 403:
+               throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
+            default:
+               throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+         }
       } else {
+         // If the request succeeded without authn but we were expecting to authenticate, it's an error
+         if (restClient.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
+            throw new SecurityException("Authentication expected but anonymous access succeeded");
+         }
          return restClient;
       }
    }

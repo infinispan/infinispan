@@ -28,7 +28,6 @@ import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.server.core.AbstractProtocolServer;
-import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyInitializers;
 
@@ -46,7 +45,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    private static final Log log = LogFactory.getLog(RestServer.class, Log.class);
 
-   private ServerManagement server;
    private RestDispatcher restDispatcher;
    private RestCacheManager<Object> restCacheManager;
    private InvocationHelper invocationHelper;
@@ -100,10 +98,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          }
       }
       super.stop();
-   }
-
-   public void setServer(ServerManagement server) {
-      this.server = server;
    }
 
    @Override

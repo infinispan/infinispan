@@ -39,8 +39,8 @@ public interface Log extends BasicLogger {
    void serverStopped(String name);
 
    @LogMessage(level = Logger.Level.INFO)
-   @Message(value = "Protocol %s listening on %s:%d", id = 80004)
-   void protocolStarted(String name, String host, int port);
+   @Message(value = "Connector %s (%s) listening on %s:%d", id = 80004)
+   void protocolStarted(String name, String socketBinding, String host, int port);
 
 //   @Message(value = "Duplicate path '%s'", id = 80005)
 //   CacheConfigurationException duplicatePath(String name);
@@ -83,7 +83,7 @@ public interface Log extends BasicLogger {
    void serverConfiguration(String name);
 
    @LogMessage(level = Logger.Level.INFO)
-   @Message(value = "Protocol %s (internal)", id = 80018)
+   @Message(value = "Started connector %s (internal)", id = 80018)
    void protocolStarted(String name);
 
 //   @LogMessage(level = Logger.Level.INFO)

@@ -278,8 +278,8 @@ public class Server implements ServerManagement, AutoCloseable {
          // Set the operation handler on all endpoints
          ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
          ServerConfigurationBuilder serverConfigurationBuilder = configurationBuilderHolder.getGlobalConfigurationBuilder().module(ServerConfigurationBuilder.class);
-         for(EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
-            for(ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
+         for (EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
+            for (ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
                connector.adminOperationsHandler(adminOperationsHandler);
             }
          }
@@ -363,12 +363,14 @@ public class Server implements ServerManagement, AutoCloseable {
                try {
                   Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                   ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
-                  if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
+                  if (endpoint.admin()) {
+                     protocolServer.setServer(this);
+                  }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cm);
                   ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
                   if (protocolConfig.startTransport()) {
-                     log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
+                     log.protocolStarted(protocolServer.getName(), configuration.socketBinding(), protocolConfig.host(), protocolConfig.port());
                   } else {
                      if (protocolServer instanceof HotRodServer) {
                         routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
@@ -379,8 +381,7 @@ public class Server implements ServerManagement, AutoCloseable {
                      log.protocolStarted(protocolServer.getName());
                   }
                } catch (Throwable t) {
-                  System.err.println(t.getMessage());
-                  t.printStackTrace();
+                  throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
                }
             });
 
@@ -389,7 +390,7 @@ public class Server implements ServerManagement, AutoCloseable {
             SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
             endpointServer.start(new RoutingTable(routes.keySet()));
             protocolServers.put("endpoint-" + singlePortRouter.host() + ":" + singlePortRouter.port(), endpointServer);
-            log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
+            log.protocolStarted(endpointServer.getName(), singlePortRouter.socketBinding(), singlePortRouter.host(), singlePortRouter.port());
             log.endpointUrl(
                   Util.requireNonNullElse(cm.getAddress(), "local"),
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()

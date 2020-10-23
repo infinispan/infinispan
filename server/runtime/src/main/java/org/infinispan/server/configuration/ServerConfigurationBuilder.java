@@ -106,6 +106,6 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
             throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
          }
       }
-      builder.host(host).port(port);
+      builder.socketBinding(bindingName).host(host).port(port);
    }
 }

@@ -19,10 +19,10 @@ public abstract class AbstractAuthenticator {
             return header;
          }
       }
-      throw new IllegalArgumentException("unsupported auth scheme: " + authHeaders);
+      throw new AuthenticationException("unsupported auth scheme: " + authHeaders);
    }
 
-   static class AuthenticationException extends IllegalStateException {
+   public static class AuthenticationException extends SecurityException {
       public AuthenticationException(String s) {
          super(s);
       }
