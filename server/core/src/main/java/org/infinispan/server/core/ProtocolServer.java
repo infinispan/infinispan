@@ -61,4 +61,9 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
     * Returns the transport for this server
     */
    Transport getTransport();
+
+   /**
+    * Sets the {@link ServerManagement} instance for this protocol server
+    */
+   void setServer(ServerManagement server);
 }

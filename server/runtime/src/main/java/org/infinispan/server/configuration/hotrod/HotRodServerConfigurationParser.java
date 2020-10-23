@@ -71,6 +71,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    private void parseHotRodConnector(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
+      boolean userDefinedName = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -86,6 +87,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
             case NAME: {
                builder.name(value);
+               userDefinedName = true;
                break;
             }
             case SOCKET_BINDING: {
@@ -98,6 +100,13 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
+         }
+      }
+      if (!userDefinedName) {
+         if (dedicatedSocketBinding) {
+            builder.name("hotrod-" + builder.socketBinding());
+         } else {
+            builder.name("hotrod-" + serverBuilder.endpoints().current().singlePort().socketBinding());
          }
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {

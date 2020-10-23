@@ -117,7 +117,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          parseDataSources(reader, builder);
          element = nextElement(reader);
       }
-      if (element == Element.ENDPOINTS) {
+      while (element == Element.ENDPOINTS) {
          parseEndpoints(reader, holder, builder);
          element = nextElement(reader);
       }
@@ -1102,7 +1102,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {
-
       holder.pushScope(ENDPOINTS_SCOPE);
       String socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
       EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
@@ -1113,6 +1112,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
          switch (attribute) {
             case SOCKET_BINDING:
                // Already seen
+               break;
+            case ADMIN:
+               endpoint.admin(Boolean.parseBoolean(value));
                break;
             case SECURITY_REALM:
                // Set the endpoint security realm and fall-through. Starting with 11.0 we also enable implicit authentication configuration

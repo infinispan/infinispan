@@ -38,6 +38,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    protected NettyTransport transport;
    protected EmbeddedCacheManager cacheManager;
    protected C configuration;
+   protected ServerManagement server;
    private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
@@ -75,6 +76,10 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
             throw log.cannotRegisterAdminOperationsHandler();
          }
       }
+   }
+
+   public void setServer(ServerManagement server) {
+      this.server = server;
    }
 
    protected boolean isCacheIgnored(String cache) {

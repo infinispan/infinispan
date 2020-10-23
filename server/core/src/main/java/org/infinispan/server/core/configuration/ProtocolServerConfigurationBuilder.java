@@ -139,6 +139,9 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       return this.self();
    }
 
+   public String socketBinding() {
+      return attributes.attribute(SOCKET_BINDING).get();
+   }
 
    @Override
    public void validate() {

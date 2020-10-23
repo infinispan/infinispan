@@ -88,4 +88,9 @@ public class RestResponseOkHttp implements RestResponse {
    public void close() {
       response.close();
    }
+
+   @Override
+   public boolean usedAuthentication() {
+      return !response.request().headers("Authorization").isEmpty();
+   }
 }

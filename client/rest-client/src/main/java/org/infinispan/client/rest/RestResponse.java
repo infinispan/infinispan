@@ -29,4 +29,6 @@ public interface RestResponse extends RestEntity, AutoCloseable {
    Protocol getProtocol();
 
    void close();
+
+   boolean usedAuthentication();
 }

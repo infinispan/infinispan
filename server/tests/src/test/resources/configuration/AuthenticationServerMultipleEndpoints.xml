@@ -18,6 +18,13 @@
 
       <xi:include href="security/properties-alternate.xml"/>
 
-      <xi:include href="endpoints/multiple-connectors.xml"/>
+      <!-- Port 11222 has explicit authentication and admin -->
+      <xi:include href="endpoints/default-auth-explicit.xml"/>
+
+      <!-- Port 11223 has no auth and admin is disabled -->
+      <xi:include href="endpoints/alternate.xml"/>
+
+      <!-- Port 11224 has plain auth with an alternate realm and admin is disabled -->
+      <xi:include href="endpoints/alternate-auth.xml"/>
    </server>
 </infinispan>

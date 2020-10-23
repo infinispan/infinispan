@@ -19,6 +19,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    private final TestServer testServer;
    private final TestClient testClient;
    private ConfigurationBuilder clientConfiguration;
+   private int port = 11222;
 
    public HotRodTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
@@ -57,6 +58,12 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       return this;
    }
 
+
+   public HotRodTestClientDriver withPort(int port) {
+      this.port = port;
+      return this;
+   }
+
    /**
     * Gets a cache with the name of the method where this method is being called from
     *
@@ -87,7 +94,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    }
 
    public RemoteCacheManager createRemoteCacheManager() {
-      return testClient.registerResource(testServer.newHotRodClient(clientConfiguration));
+      return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port));
    }
 
    @Override

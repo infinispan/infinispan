@@ -48,20 +48,24 @@ public class TestServer {
       return newHotRodClient(new ConfigurationBuilder());
    }
 
+   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
+      return newHotRodClient(builder, 11222);
+   }
+
    /**
     * @return a client configured against the Hot Rod endpoint exposed by the server
     */
-   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
+   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder, int port) {
       if(getDriver().getConfiguration().runMode() == ServerRunMode.CONTAINER) {
          ContainerInfinispanServerDriver containerDriver =  (ContainerInfinispanServerDriver) serverDriver;
          for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
             InfinispanGenericContainer container = containerDriver.getContainer(0);
             String hostIpAddress = DockerClientFactory.instance().dockerHostIpAddress();
-            builder.addServer().host(hostIpAddress).port(container.getMappedPort(11222));
+            builder.addServer().host(hostIpAddress).port(container.getMappedPort(port));
          }
       } else {
          for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-            InetSocketAddress serverAddress = getDriver().getServerSocket(i, 11222);
+            InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
             builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
          }
       }
@@ -70,9 +74,13 @@ public class TestServer {
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
+      return newRestClient(builder, 11222);
+   }
+
+   public RestClient newRestClient(RestClientConfigurationBuilder builder, int port) {
       // Add all known server addresses
       for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-         InetSocketAddress serverAddress = getDriver().getServerSocket(i, 11222);
+         InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       return RestClient.forConfiguration(builder.build());
@@ -125,8 +133,8 @@ public class TestServer {
     *
     * @return a client configured against the nth server
     */
-   public RestClient newRestClient(RestClientConfigurationBuilder builder, int n) {
-      InetSocketAddress serverAddress = getDriver().getServerSocket(n, 11222);
+   public RestClient newRestClientForServer(RestClientConfigurationBuilder builder, int port, int n) {
+      InetSocketAddress serverAddress = getDriver().getServerSocket(n, port);
       builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       return RestClient.forConfiguration(builder.build());
    }

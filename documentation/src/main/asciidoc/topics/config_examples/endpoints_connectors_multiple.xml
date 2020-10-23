@@ -1,0 +1,9 @@
+<endpoints socket-binding="public" security-realm="application-realm" admin="false">
+   <hotrod-connector/>
+   <rest-connector/>
+</endpoints>
+<endpoints socket-binding="private" security-realm="management-realm">
+   <hotrod-connector/>
+   <rest-connector/>
+</endpoints>
+

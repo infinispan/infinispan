@@ -6,7 +6,7 @@ REST connector declarations enable REST servers.
 include::config_examples/endpoints_rest_connector.xml[]
 ----
 
-* `name="rest"` logically names the REST connector.
+* `name="rest"` logically names the REST connector. By default the name will be derived from the socket binding name, for example _rest-default_.
 * `authentication` configures authentication mechanisms.
 * `cors-rules` specifies CORS (Cross Origin Resource Sharing) rules for cross-domain requests.
 * `encryption` configures TLS settings for client connections.
