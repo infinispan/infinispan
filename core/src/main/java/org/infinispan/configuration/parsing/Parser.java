@@ -1,5 +1,7 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
+import static org.infinispan.configuration.parsing.ParseUtils.ignoreElement;
 import static org.infinispan.configuration.parsing.Parser.NAMESPACE;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
@@ -781,14 +783,6 @@ public class Parser implements ConfigurationParser {
          }
       }
       holder.popScope();
-   }
-
-   private static void ignoreAttribute(XMLExtendedStreamReader reader, Attribute attribute) {
-      CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
-   }
-
-   private static void ignoreElement(XMLExtendedStreamReader reader, Element element) {
-      CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
    }
 
    private void parseGlobalSecurity(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {

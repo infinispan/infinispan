@@ -34,7 +34,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
@@ -77,6 +76,9 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   private static final byte[] BEGIN_KEY = createAndFillArray(1, (byte) 0x00);
+   private static final byte[] END_KEY = createAndFillArray(128, (byte) 0xff);
 
    static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
    static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
@@ -388,7 +390,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                .doOnEach(mirrorEntries)
                .doOnSubscribe(subscription -> log.tracef("Purging entries from RocksDBStore"));
          mirrorEntries.count()
-               .subscribe(count -> log.tracef("Purged %d entries from RocksDBStore"));
+               .subscribe(count -> log.tracef("Purged %d entries from RocksDBStore", count));
       }
 
       return expiredEntryFlowable;
@@ -737,48 +739,20 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       CompletionStage<Void> clear(IntSet segments) {
          return blockingManager.runBlocking(() -> {
-            long count = 0;
-            boolean destroyDatabase = false;
-            try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-               RocksIterator optionalIterator = wrapIterator(db, readOptions, -1);
-               if (optionalIterator != null && (configuration.clearThreshold() > 0 || segments == null)) {
-                  try (RocksIterator it = optionalIterator) {
+            if (segments == null) {
+               clearColumnFamily(defaultColumnFamilyHandle);
+            } else {
+               try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
+                  try (RocksIterator it = db.newIterator(defaultColumnFamilyHandle, readOptions)) {
                      for (it.seekToFirst(); it.isValid(); it.next()) {
                         byte[] keyBytes = it.key();
-                        if (segments != null) {
-                           Object key = unmarshall(keyBytes);
-                           int segment = keyPartitioner.getSegment(key);
-                           if (segments.contains(segment)) {
-                              db.delete(defaultColumnFamilyHandle, keyBytes);
-                           }
-                        } else {
+                        Object key = unmarshall(keyBytes);
+                        int segment = keyPartitioner.getSegment(key);
+                        if (segments.contains(segment)) {
                            db.delete(defaultColumnFamilyHandle, keyBytes);
-                           count++;
-
-                           if (count > configuration.clearThreshold()) {
-                              destroyDatabase = true;
-                              break;
-                           }
                         }
                      }
-                  } catch (RocksDBException e) {
-                     if (segments != null) {
-                        // Have to propagate error to user
-                        throw e;
-                     }
-                     // If was error and no segment specific just delete entire thing
-                     destroyDatabase = true;
                   }
-               } else {
-                  destroyDatabase = true;
-               }
-            } catch (Exception e) {
-               throw new PersistenceException(e);
-            }
-
-            if (destroyDatabase) {
-               try {
-                  reinitAllDatabases();
                } catch (Exception e) {
                   throw new PersistenceException(e);
                }
@@ -793,26 +767,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          db.close();
       }
 
-      protected void reinitAllDatabases() throws RocksDBException {
-         db.close();
-         expiredDb.close();
-         if (System.getProperty("os.name").startsWith("Windows")) {
-            // Force a GC to ensure that open file handles are released in Windows.
-            System.gc();
-         }
-         Path dataLocation = getLocation();
-         Util.recursiveFileRemove(dataLocation.toFile());
-         db = open(getLocation(), dataDbOptions());
-
-         Path expirationLocation = getExpirationLocation();
-         Util.recursiveFileRemove(expirationLocation.toFile());
-         expiredDb = openDatabase(expirationLocation, expiredDbOptions());
-      }
-
       protected RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
-         // Some Cache Store tests use clear and in case of the Rocks DB implementation
-         // this clears out internal references and results in throwing exceptions
-         // when getting an iterator. Unfortunately there is no nice way to check that...
          return db.newIterator(defaultColumnFamilyHandle, readOptions);
       }
 
@@ -905,52 +860,18 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       CompletionStage<Void> clear() {
          return blockingManager.runBlocking(() -> {
             for (int i = 0; i < handles.length(); ++i) {
-               if (!clearForSegment(i)) {
-                  recreateColumnFamily(i);
-               }
+               clearForSegment(i);
             }
          }, "rocksdb-clear");
       }
 
       /**
-       * Attempts to clear out the entries for a segment by using an iterator and deleting. If however an iterator
-       * goes above the clear threshold it will immediately stop and return false. If it was able to remove all
-       * the entries it will instead return true
+       * Clear out the entries for a segment
        * @param segment the segment to clear out
-       * @return whether it was able to clear all entries for the segment
        */
-      private boolean clearForSegment(int segment) {
-         int clearThreshold = configuration.clearThreshold();
-         // If we always have to recreate don't even create iterator
-         if (clearThreshold <= 0) {
-            return false;
-         }
-         try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-            RocksIterator optionalIterator = wrapIterator(db, readOptions, segment);
-            if (optionalIterator != null) {
-               ColumnFamilyHandle handle = handles.get(segment);
-               try (RocksIterator it = optionalIterator) {
-                  long count = 0;
-                  for (it.seekToFirst(); it.isValid(); it.next()) {
-                     byte[] keyBytes = it.key();
-                     db.delete(handle, keyBytes);
-
-                     if (++count > configuration.clearThreshold()) {
-                        return false;
-                     }
-                  }
-               } catch (RocksDBException e) {
-                  throw new PersistenceException(e);
-               }
-               return true;
-            } else {
-               // If optional iterator was null that means either we don't own this segment or it was just
-               // recrated - in either case we can consider that cleared
-               return true;
-            }
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         }
+      private void clearForSegment(int segment) {
+         ColumnFamilyHandle handle = handles.get(segment);
+         RocksDBStore.this.clearColumnFamily(handle);
       }
 
       @Override
@@ -963,19 +884,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          db.close();
-      }
-
-      private void recreateColumnFamily(int segment) {
-         ColumnFamilyHandle handle = handles.get(segment);
-         if (handle != null) {
-            try {
-               db.dropColumnFamily(handle);
-               handle = db.createColumnFamily(newDescriptor(byteArrayFromInt(segment)));
-               handles.set(segment, handle);
-            } catch (RocksDBException e) {
-               throw new PersistenceException(e);
-            }
-         }
       }
 
       @Override
@@ -1076,5 +984,36 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       } else {
          expiredDb.put(expiryBytes, entry.keyBytes);
       }
+   }
+
+   /*
+    * Instead of iterate in RocksIterator we use the first and last byte array
+    */
+   private void clearColumnFamily(ColumnFamilyHandle handle) {
+      try {
+         // when the data under a segment was removed, the handle will be null
+         if (handle != null) {
+            db.deleteRange(handle, BEGIN_KEY, END_KEY);
+            // We don't control the keys, the marshaller does.
+            // In theory it is possible that a custom marshaller would generate a key of 10k 0xff bytes
+            // That key would be after END_KEY, so the deleteRange call wouldn't remove it
+            // If there are remaining keys, remove.
+            try (ReadOptions iteratorOptions = new ReadOptions().setFillCache(false)) {
+               try (RocksIterator it = db.newIterator(handle, iteratorOptions)) {
+                  for (it.seekToFirst(); it.isValid(); it.next()) {
+                     db.delete(handle, it.key());
+                  }
+               }
+            }
+         }
+      } catch (RocksDBException e) {
+         throw new PersistenceException(e);
+      }
+   }
+
+   private static byte[] createAndFillArray(int length, byte value) {
+      byte[] array = new byte[length];
+      Arrays.fill(array, value);
+      return array;
    }
 }

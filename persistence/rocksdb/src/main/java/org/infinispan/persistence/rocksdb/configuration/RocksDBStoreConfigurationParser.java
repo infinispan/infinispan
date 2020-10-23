@@ -1,7 +1,7 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationParser.NAMESPACE;
-import static org.infinispan.util.logging.Log.CONFIG;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -65,8 +65,12 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case CLEAR_THRESHOLD: {
-               builder.clearThreshold(Integer.parseInt(value));
-               break;
+               if (!reader.getSchema().since(12, 0)) {
+                  ignoreAttribute(reader, Attribute.CLEAR_THRESHOLD);
+                  break;
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
             }
             case BLOCK_SIZE: {
                builder.blockSize(Integer.parseInt(value));
@@ -114,8 +118,12 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case QUEUE_SIZE: {
-               CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
-               break;
+               if (!reader.getSchema().since(12, 0)) {
+                  ignoreAttribute(reader, Attribute.CLEAR_THRESHOLD);
+                  break;
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
             }
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
