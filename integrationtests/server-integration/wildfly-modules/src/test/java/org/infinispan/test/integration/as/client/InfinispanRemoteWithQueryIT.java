@@ -1,9 +1,8 @@
-package org.infinispan.test.integration.as.remote;
+package org.infinispan.test.integration.as.client;
 
 import org.infinispan.commons.util.Version;
-import org.infinispan.test.integration.as.client.BaseHotRodQueryIT;
-import org.infinispan.test.integration.as.client.HotRodQueryIT;
-import org.infinispan.test.integration.as.client.Person;
+import org.infinispan.test.integration.data.Person;
+import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -20,7 +19,7 @@ import org.junit.runner.RunWith;
  * @since 9.0
  */
 @RunWith(Arquillian.class)
-public class InfinispanRemoteWithQueryIT extends BaseHotRodQueryIT {
+public class InfinispanRemoteWithQueryIT extends AbstractHotRodQueryIT {
 
    @Deployment
    public static Archive<?> deployment() {
@@ -30,7 +29,7 @@ public class InfinispanRemoteWithQueryIT extends BaseHotRodQueryIT {
 
       return ShrinkWrap
             .create(WebArchive.class, "query-remote.war")
-            .addClasses(HotRodQueryIT.class, BaseHotRodQueryIT.class, Person.class)
+            .addClasses(HotRodQueryIT.class, AbstractHotRodQueryIT.class, Person.class)
             .add(new StringAsset(manifest), "META-INF/MANIFEST.MF");
    }
 

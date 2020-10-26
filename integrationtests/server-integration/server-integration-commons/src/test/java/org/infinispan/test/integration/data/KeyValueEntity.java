@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as;
+package org.infinispan.test.integration.data;
 
 import java.io.Serializable;
 
