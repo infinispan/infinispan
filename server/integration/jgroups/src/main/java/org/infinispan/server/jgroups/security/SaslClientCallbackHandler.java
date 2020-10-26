@@ -13,12 +13,12 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.util.ByteIterator;
 
 /**
  * SaslClientCallbackHandler.
@@ -60,7 +60,7 @@ public class SaslClientCallbackHandler implements CallbackHandler {
                         password = ClearPassword.createRaw(ALGORITHM_CLEAR, credential.toCharArray());
                         break;
                     case ALGORITHM_DIGEST_MD5:
-                        byte[] decodedDigest = ByteIterator.ofBytes(credential.getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                        byte[] decodedDigest = ByteIterator.ofBytes(credential.getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
                         password = DigestPassword.createRaw(ALGORITHM_DIGEST_MD5, name, realm, decodedDigest);
                         break;
                     default:

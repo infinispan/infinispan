@@ -238,7 +238,7 @@
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>
-      <versionx.com.fasterxml.woodstox.woodstox-core>5.0.3</versionx.com.fasterxml.woodstox.woodstox-core>
+      <versionx.com.fasterxml.woodstox.woodstox-core>6.0.3</versionx.com.fasterxml.woodstox.woodstox-core>
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.github.javaparser.javaparser-core>${version.javaparser}</versionx.com.github.javaparser.javaparser-core>
       <versionx.com.github.javaparser.javaparser-symbol-solver-core>${version.javaparser}</versionx.com.github.javaparser.javaparser-symbol-solver-core>
@@ -258,7 +258,7 @@
       <versionx.com.mchange.c3p0>${version.c3p0}</versionx.com.mchange.c3p0>
       <versionx.com.mchange.mchange-commons-java>0.2.7</versionx.com.mchange.mchange-commons-java>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
-      <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
+      <versionx.com.sun.istack.istack-commons-runtime>3.0.10</versionx.com.sun.istack.istack-commons-runtime>
       <versionx.com.sun.mail.javax.mail>1.6.1</versionx.com.sun.mail.javax.mail>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
       <versionx.com.sun.xml.fastinfoset.FastInfoset>1.2.13</versionx.com.sun.xml.fastinfoset.FastInfoset>
@@ -266,9 +266,9 @@
       <versionx.com.thoughtworks.paranamer.paranamer>2.3</versionx.com.thoughtworks.paranamer.paranamer>
       <versionx.com.thoughtworks.xstream.xstream>1.4.11.1</versionx.com.thoughtworks.xstream.xstream>
       <versionx.com.zaxxer.HikariCP>2.4.6</versionx.com.zaxxer.HikariCP>
-      <versionx.commons-beanutils.commons-beanutils>1.9.3</versionx.commons-beanutils.commons-beanutils>
-      <versionx.commons-cli.commons-cli>1.4</versionx.commons-cli.commons-cli>
-      <versionx.commons-codec.commons-codec>1.10</versionx.commons-codec.commons-codec>
+      <versionx.commons-beanutils.commons-beanutils>1.9.4</versionx.commons-beanutils.commons-beanutils>
+      <versionx.commons-cli.commons-cli>1.3.1</versionx.commons-cli.commons-cli>
+      <versionx.commons-codec.commons-codec>1.14</versionx.commons-codec.commons-codec>
       <versionx.commons-collections.commons-collections>3.2.2</versionx.commons-collections.commons-collections>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-httpclient.commons-httpclient>3.1</versionx.commons-httpclient.commons-httpclient>
@@ -299,7 +299,7 @@
       <versionx.io.protostuff.protostuff-runtime>${version.protostuff}</versionx.io.protostuff.protostuff-runtime>
       <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
       <versionx.io.reactivex.rxjava2.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava2.rxjava>
-      <versionx.io.undertow.undertow-core>2.0.30.Final</versionx.io.undertow.undertow-core>
+      <versionx.io.undertow.undertow-core>2.0.31.Final</versionx.io.undertow.undertow-core>
       <versionx.jakarta-regexp.jakarta-regexp>1.4</versionx.jakarta-regexp.jakarta-regexp>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.activation.javax.activation-api>1.2.0</versionx.javax.activation.javax.activation-api>
@@ -331,15 +331,15 @@
       <versionx.net.minidev.json-smart>2.2.1</versionx.net.minidev.json-smart>
       <versionx.net.sf.jopt-simple.jopt-simple>5.0.2</versionx.net.sf.jopt-simple.jopt-simple>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
-      <versionx.org.aesh.aesh>1.7</versionx.org.aesh.aesh>
-      <versionx.org.aesh.aesh-extensions>1.6</versionx.org.aesh.aesh-extensions>
+      <versionx.org.aesh.aesh>2.4</versionx.org.aesh.aesh>
+      <versionx.org.aesh.aesh-extensions>1.8</versionx.org.aesh.aesh-extensions>
       <versionx.org.aesh.aesh-readline>1.10</versionx.org.aesh.aesh-readline>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.antlr.antlr4-runtime>4.7</versionx.org.antlr.antlr4-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
-      <versionx.org.apache.avro.avro>1.7.7</versionx.org.apache.avro.avro>
+      <versionx.org.apache.avro.avro>1.7.6</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-compress>1.18</versionx.org.apache.commons.commons-compress>
-      <versionx.org.apache.commons.commons-lang3>3.6</versionx.org.apache.commons.commons-lang3>
+      <versionx.org.apache.commons.commons-lang3>3.10</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.commons.commons-math3>3.2</versionx.org.apache.commons.commons-math3>
       <versionx.org.apache.directory.server.apacheds-all>2.0.0-M20</versionx.org.apache.directory.server.apacheds-all>
@@ -355,9 +355,9 @@
       <versionx.org.apache.geronimo.specs.geronimo-saaj_1.3_spec>1.1</versionx.org.apache.geronimo.specs.geronimo-saaj_1.3_spec>
       <versionx.org.apache.geronimo.specs.geronimo-stax-api_1.2_spec>1.2</versionx.org.apache.geronimo.specs.geronimo-stax-api_1.2_spec>
       <versionx.org.apache.httpcomponents.httpasyncclient>4.1.4</versionx.org.apache.httpcomponents.httpasyncclient>
-      <versionx.org.apache.httpcomponents.httpclient>4.5.4</versionx.org.apache.httpcomponents.httpclient>
-      <versionx.org.apache.httpcomponents.httpcore>4.4.5</versionx.org.apache.httpcomponents.httpcore>
-      <versionx.org.apache.httpcomponents.httpcore-nio>4.4.5</versionx.org.apache.httpcomponents.httpcore-nio>
+      <versionx.org.apache.httpcomponents.httpclient>4.5.12</versionx.org.apache.httpcomponents.httpclient>
+      <versionx.org.apache.httpcomponents.httpcore>4.4.13</versionx.org.apache.httpcomponents.httpcore>
+      <versionx.org.apache.httpcomponents.httpcore-nio>4.4.13</versionx.org.apache.httpcomponents.httpcore-nio>
       <versionx.org.apache.karaf.apache-karaf>${version.karaf}</versionx.org.apache.karaf.apache-karaf>
       <versionx.org.apache.karaf.diagnostic.org.apache.karaf.diagnostic.boot>${version.karaf}</versionx.org.apache.karaf.diagnostic.org.apache.karaf.diagnostic.boot>
       <versionx.org.apache.karaf.features.base>${version.karaf}</versionx.org.apache.karaf.features.base>
@@ -437,7 +437,7 @@
       <versionx.org.codehaus.plexus.plexus-component-annotations>1.7.1</versionx.org.codehaus.plexus.plexus-component-annotations>
       <versionx.org.codehaus.plexus.plexus-interpolation>1.24</versionx.org.codehaus.plexus.plexus-interpolation>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
-      <versionx.org.codehaus.woodstox.stax2-api>3.1.4</versionx.org.codehaus.woodstox.stax2-api>
+      <versionx.org.codehaus.woodstox.stax2-api>4.2</versionx.org.codehaus.woodstox.stax2-api>
       <versionx.org.conscrypt.conscrypt-openjdk>1.0.0</versionx.org.conscrypt.conscrypt-openjdk>
       <versionx.org.eclipse.aether.aether-api>${version.eclipse.aether}</versionx.org.eclipse.aether.aether-api>
       <versionx.org.eclipse.aether.aether-connector-basic>${version.eclipse.aether}</versionx.org.eclipse.aether.aether-connector-basic>
@@ -457,7 +457,7 @@
       <versionx.org.elasticsearch.elasticsearch>${version.elasticsearch}</versionx.org.elasticsearch.elasticsearch>
       <versionx.org.elasticsearch.jna>4.4.0-1</versionx.org.elasticsearch.jna>
       <versionx.org.elasticsearch.securesm>1.2</versionx.org.elasticsearch.securesm>
-      <versionx.org.fusesource.jansi.jansi>1.16</versionx.org.fusesource.jansi.jansi>
+      <versionx.org.fusesource.jansi.jansi>1.18</versionx.org.fusesource.jansi.jansi>
       <versionx.org.glassfish.javax.enterprise.concurrent>1.0</versionx.org.glassfish.javax.enterprise.concurrent>
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
       <versionx.org.glassfish.jaxb.txw2>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.txw2>
@@ -491,7 +491,7 @@
       <versionx.org.jboss.arquillian.container.arquillian-container-test-api>${version.arquillian}</versionx.org.jboss.arquillian.container.arquillian-container-test-api>
       <versionx.org.jboss.arquillian.container.arquillian-container-test-impl-base>${version.arquillian}</versionx.org.jboss.arquillian.container.arquillian-container-test-impl-base>
       <versionx.org.jboss.arquillian.container.arquillian-container-test-spi>${version.arquillian}</versionx.org.jboss.arquillian.container.arquillian-container-test-spi>
-      <versionx.org.jboss.arquillian.container.arquillian-weld-ee-embedded-1.1>1.0.0.CR3</versionx.org.jboss.arquillian.container.arquillian-weld-ee-embedded-1.1>
+      <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
       <versionx.org.jboss.arquillian.core.arquillian-core-api>${version.arquillian}</versionx.org.jboss.arquillian.core.arquillian-core-api>
       <versionx.org.jboss.arquillian.core.arquillian-core-impl-base>${version.arquillian}</versionx.org.jboss.arquillian.core.arquillian-core-impl-base>
       <versionx.org.jboss.arquillian.core.arquillian-core-spi>${version.arquillian}</versionx.org.jboss.arquillian.core.arquillian-core-spi>
@@ -512,13 +512,13 @@
       <versionx.org.jboss.byteman.byteman-bmunit>${version.byteman}</versionx.org.jboss.byteman.byteman-bmunit>
       <versionx.org.jboss.byteman.byteman-install>${version.byteman}</versionx.org.jboss.byteman.byteman-install>
       <versionx.org.jboss.byteman.byteman-submit>${version.byteman}</versionx.org.jboss.byteman.byteman-submit>
-      <versionx.org.jboss.classfilewriter.jboss-classfilewriter>1.2.3.Final</versionx.org.jboss.classfilewriter.jboss-classfilewriter>
-      <versionx.org.jboss.invocation.jboss-invocation>1.5.1.Final</versionx.org.jboss.invocation.jboss-invocation>
+      <versionx.org.jboss.classfilewriter.jboss-classfilewriter>1.2.4.Final</versionx.org.jboss.classfilewriter.jboss-classfilewriter>
+      <versionx.org.jboss.invocation.jboss-invocation>1.5.3.Final</versionx.org.jboss.invocation.jboss-invocation>
       <versionx.org.jboss.jandex>2.0.5.Final</versionx.org.jboss.jandex>
       <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-dmr>1.5.0.Final</versionx.org.jboss.jboss-dmr>
       <versionx.org.jboss.jboss-transaction-spi>7.6.0.Final</versionx.org.jboss.jboss-transaction-spi>
-      <versionx.org.jboss.jboss-vfs>3.2.14.Final</versionx.org.jboss.jboss-vfs>
+      <versionx.org.jboss.jboss-vfs>3.2.15.Final</versionx.org.jboss.jboss-vfs>
       <versionx.org.jboss.jbossts.jbossjta>4.16.4.Final</versionx.org.jboss.jbossts.jbossjta>
       <versionx.org.jboss.jdeparser.jdeparser>2.0.2.Final</versionx.org.jboss.jdeparser.jdeparser>
       <versionx.org.jboss.logging.commons-logging-jboss-logging>1.0.0.Final</versionx.org.jboss.logging.commons-logging-jboss-logging>
@@ -526,24 +526,24 @@
       <versionx.org.jboss.logging.jboss-logging-annotations>2.1.0.Final</versionx.org.jboss.logging.jboss-logging-annotations>
       <versionx.org.jboss.logging.jboss-logging-processor>2.1.0.Final</versionx.org.jboss.logging.jboss-logging-processor>
       <versionx.org.jboss.logging.jboss-logging-spi>2.1.0.GA</versionx.org.jboss.logging.jboss-logging-spi>
-      <versionx.org.jboss.logmanager.jboss-logmanager>2.1.5.Final</versionx.org.jboss.logmanager.jboss-logmanager>
+      <versionx.org.jboss.logmanager.jboss-logmanager>2.1.17.Final</versionx.org.jboss.logmanager.jboss-logmanager>
       <versionx.org.jboss.marshalling.jboss-marshalling>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling>
       <versionx.org.jboss.marshalling.jboss-marshalling-osgi>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-osgi>
       <versionx.org.jboss.marshalling.jboss-marshalling-river>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-river>
       <versionx.org.jboss.metadata.jboss-metadata-common>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-common>
       <versionx.org.jboss.metadata.jboss-metadata-ear>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-ear>
       <versionx.org.jboss.metadata.jboss-metadata-ejb>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-ejb>
-      <versionx.org.jboss.modules.jboss-modules>1.8.7.Final</versionx.org.jboss.modules.jboss-modules>
-      <versionx.org.jboss.msc.jboss-msc>1.4.5.Final</versionx.org.jboss.msc.jboss-msc>
+      <versionx.org.jboss.modules.jboss-modules>1.10.0.Final</versionx.org.jboss.modules.jboss-modules>
+      <versionx.org.jboss.msc.jboss-msc>1.4.11.Final</versionx.org.jboss.msc.jboss-msc>
       <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
       <versionx.org.jboss.narayana.compensations.compensations>${version.jboss.narayana}</versionx.org.jboss.narayana.compensations.compensations>
       <versionx.org.jboss.narayana.jta.narayana-jta>${version.jboss.narayana}</versionx.org.jboss.narayana.jta.narayana-jta>
       <versionx.org.jboss.narayana.jts.narayana-jts-idlj>${version.jboss.narayana}</versionx.org.jboss.narayana.jts.narayana-jts-idlj>
       <versionx.org.jboss.narayana.jts.narayana-jts-integration>${version.jboss.narayana}</versionx.org.jboss.narayana.jts.narayana-jts-integration>
-      <versionx.org.jboss.openjdk-orb.openjdk-orb>8.1.2.Final</versionx.org.jboss.openjdk-orb.openjdk-orb>
-      <versionx.org.jboss.remoting.jboss-remoting>5.0.8.Final</versionx.org.jboss.remoting.jboss-remoting>
-      <versionx.org.jboss.remotingjmx.remoting-jmx>3.0.0.Final</versionx.org.jboss.remotingjmx.remoting-jmx>
+      <versionx.org.jboss.openjdk-orb.openjdk-orb>8.1.4.Final</versionx.org.jboss.openjdk-orb.openjdk-orb>
+      <versionx.org.jboss.remoting.jboss-remoting>5.0.18.Final</versionx.org.jboss.remoting.jboss-remoting>
+      <versionx.org.jboss.remotingjmx.remoting-jmx>3.0.4.Final</versionx.org.jboss.remotingjmx.remoting-jmx>
       <versionx.org.jboss.resteasy.jaxrs-api>3.0.10.Final</versionx.org.jboss.resteasy.jaxrs-api>
       <versionx.org.jboss.security.jboss-negotiation-common>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-common>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
@@ -566,44 +566,41 @@
       <versionx.org.jboss.shrinkwrap.shrinkwrap-impl-base>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.shrinkwrap-impl-base>
       <versionx.org.jboss.shrinkwrap.shrinkwrap-spi>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.shrinkwrap-spi>
       <versionx.org.jboss.slf4j.slf4j-jboss-logging>1.1.0.Final</versionx.org.jboss.slf4j.slf4j-jboss-logging>
-      <versionx.org.jboss.slf4j.slf4j-jboss-logmanager>1.0.3.GA</versionx.org.jboss.slf4j.slf4j-jboss-logmanager>
+      <versionx.org.jboss.slf4j.slf4j-jboss-logmanager>1.0.4.GA</versionx.org.jboss.slf4j.slf4j-jboss-logmanager>
       <versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.2_spec>1.0.2.Final</versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.2_spec>
-      <versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>1.0.1.Final</versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>
-      <versionx.org.jboss.spec.javax.batch.jboss-batch-api_1.0_spec>1.0.1.Final</versionx.org.jboss.spec.javax.batch.jboss-batch-api_1.0_spec>
-      <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>1.0.1.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
-      <versionx.org.jboss.spec.javax.el.jboss-el-api_3.0_spec>1.0.12.Final</versionx.org.jboss.spec.javax.el.jboss-el-api_3.0_spec>
-      <versionx.org.jboss.spec.javax.enterprise.concurrent.jboss-concurrency-api_1.0_spec>1.0.2.Final</versionx.org.jboss.spec.javax.enterprise.concurrent.jboss-concurrency-api_1.0_spec>
+      <versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>2.0.1.Final</versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>
+      <versionx.org.jboss.spec.javax.batch.jboss-batch-api_1.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.batch.jboss-batch-api_1.0_spec>
+      <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
+      <versionx.org.jboss.spec.javax.el.jboss-el-api_3.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.el.jboss-el-api_3.0_spec>
+      <versionx.org.jboss.spec.javax.enterprise.concurrent.jboss-concurrency-api_1.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.enterprise.concurrent.jboss-concurrency-api_1.0_spec>
       <versionx.org.jboss.spec.javax.faces.jboss-jsf-api_2.2_spec>2.2.8</versionx.org.jboss.spec.javax.faces.jboss-jsf-api_2.2_spec>
-      <versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>1.0.1.Final</versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>
-      <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>1.0.2.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
+      <versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>
+      <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.javax.json.jboss-json-api_1.0_spec>1.0.0.Final</versionx.org.jboss.spec.javax.json.jboss-json-api_1.0_spec>
-      <versionx.org.jboss.spec.javax.management.j2ee.jboss-j2eemgmt-api_1.1_spec>1.0.2.Final</versionx.org.jboss.spec.javax.management.j2ee.jboss-j2eemgmt-api_1.1_spec>
-      <versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>1.0.1.Final</versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>
+      <versionx.org.jboss.spec.javax.management.j2ee.jboss-j2eemgmt-api_1.1_spec>2.0.0.Final</versionx.org.jboss.spec.javax.management.j2ee.jboss-j2eemgmt-api_1.1_spec>
+      <versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>2.0.0.Final</versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>
       <versionx.org.jboss.spec.javax.rmi.jboss-rmi-api_1.0_spec>1.0.6.Final</versionx.org.jboss.spec.javax.rmi.jboss-rmi-api_1.0_spec>
-      <versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>1.0.2.Final</versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
-      <versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>1.0.2.Final</versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>
+      <versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
+      <versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>2.0.0.Final</versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>
       <versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-      <versionx.org.jboss.spec.javax.servlet.jsp.jboss-jsp-api_2.3_spec>1.0.3.Final</versionx.org.jboss.spec.javax.servlet.jsp.jboss-jsp-api_2.3_spec>
+      <versionx.org.jboss.spec.javax.servlet.jsp.jboss-jsp-api_2.3_spec>2.0.0.Final</versionx.org.jboss.spec.javax.servlet.jsp.jboss-jsp-api_2.3_spec>
       <versionx.org.jboss.spec.javax.servlet.jstl.jboss-jstl-api_1.2_spec>1.1.2.Final</versionx.org.jboss.spec.javax.servlet.jstl.jboss-jstl-api_1.2_spec>
-      <versionx.org.jboss.spec.javax.websocket.jboss-websocket-api_1.1_spec>1.1.3.Final</versionx.org.jboss.spec.javax.websocket.jboss-websocket-api_1.1_spec>
+      <versionx.org.jboss.spec.javax.websocket.jboss-websocket-api_1.1_spec>2.0.0.Final</versionx.org.jboss.spec.javax.websocket.jboss-websocket-api_1.1_spec>
       <versionx.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.2_spec>1.0.4.Final</versionx.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.2_spec>
       <versionx.org.jboss.spec.javax.xml.soap.jboss-saaj-api_1.3_spec>1.0.6.Final</versionx.org.jboss.spec.javax.xml.soap.jboss-saaj-api_1.3_spec>
       <versionx.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.2_spec>2.0.2.Final</versionx.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.2_spec>
       <versionx.org.jboss.spec.jboss-javaee-7.0>1.0.2.Final</versionx.org.jboss.spec.jboss-javaee-7.0>
       <versionx.org.jboss.staxmapper>1.3.0.Final</versionx.org.jboss.staxmapper>
-      <versionx.org.jboss.stdio.jboss-stdio>1.0.2.GA</versionx.org.jboss.stdio.jboss-stdio>
-      <versionx.org.jboss.threads.jboss-threads>2.3.2.Final</versionx.org.jboss.threads.jboss-threads>
-      <versionx.org.jboss.weld.se.weld-se>2.3.4.Final</versionx.org.jboss.weld.se.weld-se>
-      <versionx.org.jboss.weld.se.weld-se-core>1.1.11.Final</versionx.org.jboss.weld.se.weld-se-core>
-      <versionx.org.jboss.weld.weld-api>3.0.SP4</versionx.org.jboss.weld.weld-api>
-      <versionx.org.jboss.weld.weld-core>2.3.4.Final</versionx.org.jboss.weld.weld-core>
-      <versionx.org.jboss.weld.weld-spi>3.0.SP4</versionx.org.jboss.weld.weld-spi>
+      <versionx.org.jboss.stdio.jboss-stdio>1.1.0.Final</versionx.org.jboss.stdio.jboss-stdio>
+      <versionx.org.jboss.threads.jboss-threads>2.3.3.Final</versionx.org.jboss.threads.jboss-threads>
+      <versionx.org.jboss.weld.se.weld-se-core>3.1.2.Final</versionx.org.jboss.weld.se.weld-se-core>
+      <versionx.org.jboss.weld.weld-core-impl>3.1.2.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.xnio.xnio-api>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-api>
       <versionx.org.jboss.xnio.xnio-nio>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-nio>
       <versionx.org.jgroups.aws.s3.native-s3-ping>0.9.5.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
-      <versionx.org.jgroups.azure.jgroups-azure>1.2.0.Final</versionx.org.jgroups.azure.jgroups-azure>
+      <versionx.org.jgroups.azure.jgroups-azure>1.2.1.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
-      <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.6.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
+      <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.13.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.jline.jline>3.6.2</versionx.org.jline.jline>
       <versionx.org.json.json>20140107</versionx.org.json.json>
       <versionx.org.jsoup.jsoup>1.8.3</versionx.org.jsoup.jsoup>
@@ -729,7 +726,6 @@
       <versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>
       <versionx.org.wildfly.client.wildfly-client-config>1.0.1.Final</versionx.org.wildfly.client.wildfly-client-config>
-      <versionx.org.wildfly.common.wildfly-common>1.4.0.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-cli>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-cli>
       <versionx.org.wildfly.core.wildfly-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller>
       <versionx.org.wildfly.core.wildfly-controller-client>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller-client>
@@ -741,7 +737,6 @@
       <versionx.org.wildfly.core.wildfly-deployment-repository>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-deployment-repository>
       <versionx.org.wildfly.core.wildfly-domain-http-interface>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-domain-http-interface>
       <versionx.org.wildfly.core.wildfly-domain-management>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-domain-management>
-      <versionx.org.wildfly.core.wildfly-elytron-integration>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-elytron-integration>
       <versionx.org.wildfly.core.wildfly-embedded>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-embedded>
       <versionx.org.wildfly.core.wildfly-host-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-host-controller>
       <versionx.org.wildfly.core.wildfly-io>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-io>
@@ -765,9 +760,7 @@
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
-      <versionx.org.wildfly.security.elytron-web.undertow-server>1.2.3.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
-      <versionx.org.wildfly.security.wildfly-elytron>1.6.1.Final</versionx.org.wildfly.security.wildfly-elytron>
-      <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.2.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
+      <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.13.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
       <versionx.org.wildfly.wildfly-clustering-common>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-common>
       <versionx.org.wildfly.wildfly-clustering-infinispan-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-infinispan-spi>
       <versionx.org.wildfly.wildfly-clustering-marshalling-api>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-marshalling-api>
@@ -775,15 +768,15 @@
       <versionx.org.wildfly.wildfly-clustering-service>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-service>
       <versionx.org.wildfly.wildfly-ee>${version.org.wildfly}</versionx.org.wildfly.wildfly-ee>
       <versionx.org.wildfly.wildfly-feature-pack>${version.org.wildfly}</versionx.org.wildfly.wildfly-feature-pack>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>1.0.12.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>1.0.12.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>1.0.12.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>
+      <versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>1.0.22.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>
+      <versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>1.0.22.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>
+      <versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>1.0.22.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>
       <versionx.org.wildfly.wildfly-iiop-openjdk>${version.org.wildfly}</versionx.org.wildfly.wildfly-iiop-openjdk>
       <versionx.org.wildfly.wildfly-naming>${version.org.wildfly}</versionx.org.wildfly.wildfly-naming>
-      <versionx.org.wildfly.wildfly-naming-client>1.0.9.Final</versionx.org.wildfly.wildfly-naming-client>
+      <versionx.org.wildfly.wildfly-naming-client>1.0.13.Final</versionx.org.wildfly.wildfly-naming-client>
       <versionx.org.wildfly.wildfly-security>${version.org.wildfly}</versionx.org.wildfly.wildfly-security>
       <versionx.org.wildfly.wildfly-transactions>${version.org.wildfly}</versionx.org.wildfly.wildfly-transactions>
-      <versionx.org.yaml.snakeyaml>1.18</versionx.org.yaml.snakeyaml>
+      <versionx.org.yaml.snakeyaml>1.26</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.xerces.xercesImpl>${version.xerces}</versionx.xerces.xercesImpl>
       <versionx.xml-apis.xml-apis>1.4.01</versionx.xml-apis.xml-apis>
@@ -2596,8 +2589,8 @@
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
-            <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-            <version>${versionx.org.jboss.arquillian.container.arquillian-weld-ee-embedded-1.1}</version>
+            <artifactId>arquillian-weld-embedded</artifactId>
+            <version>${versionx.org.jboss.arquillian.container.arquillian-weld-embedded}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -3122,26 +3115,8 @@
          </dependency>
          <dependency>
             <groupId>org.jboss.weld</groupId>
-            <artifactId>weld-api</artifactId>
-            <version>${versionx.org.jboss.weld.weld-api}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.weld</groupId>
-            <artifactId>weld-core</artifactId>
-            <version>${versionx.org.jboss.weld.weld-core}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.weld</groupId>
-            <artifactId>weld-spi</artifactId>
-            <version>${versionx.org.jboss.weld.weld-spi}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se</artifactId>
-            <version>${versionx.org.jboss.weld.se.weld-se}</version>
+            <artifactId>weld-core-impl</artifactId>
+            <version>${versionx.org.jboss.weld.weld-core-impl}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -3613,11 +3588,6 @@
             <version>${versionx.org.wildfly.client.wildfly-client-config}</version>
          </dependency>
          <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <version>${versionx.org.wildfly.common.wildfly-common}</version>
-         </dependency>
-         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-cli</artifactId>
             <version>${versionx.org.wildfly.core.wildfly-cli}</version>
@@ -3673,12 +3643,6 @@
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-domain-management</artifactId>
             <version>${versionx.org.wildfly.core.wildfly-domain-management}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-elytron-integration</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-elytron-integration}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.core</groupId>
@@ -3797,16 +3761,6 @@
             <artifactId>wildfly-legacy-versions</artifactId>
             <version>${versionx.org.wildfly.legacy.test.wildfly-legacy-versions}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron</artifactId>
-            <version>${versionx.org.wildfly.security.wildfly-elytron}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.security.elytron-web</groupId>
-            <artifactId>undertow-server</artifactId>
-            <version>${versionx.org.wildfly.security.elytron-web.undertow-server}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.transaction</groupId>
