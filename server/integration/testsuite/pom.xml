@@ -312,7 +312,6 @@
         <jvm.x64.args />
         <transport.stack>-Djboss.default.jgroups.stack=${infinispan.test.jgroups.protocol}</transport.stack>
 
-        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
         <node1.ip>127.0.0.1</node1.ip>
         <node2.ip>127.0.0.1</node2.ip>

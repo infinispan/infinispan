@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 
 /**
@@ -25,8 +26,8 @@ public class SecureTypeResolverBuilder extends ObjectMapper.DefaultTypeResolverB
    }
 
    protected TypeIdResolver idResolver(MapperConfig<?> config, JavaType baseType,
-                                       Collection<NamedType> subtypes, boolean forSer, boolean forDeser) {
-      TypeIdResolver result = super.idResolver(config, baseType, subtypes, forSer, forDeser);
+                                       PolymorphicTypeValidator subtypeValidator, Collection<NamedType> subtypes, boolean forSer, boolean forDeser) {
+      TypeIdResolver result = super.idResolver(config, baseType, subtypeValidator, subtypes, forSer, forDeser);
       return new SecureTypeIdResolver(result, whiteList);
    }
 }
