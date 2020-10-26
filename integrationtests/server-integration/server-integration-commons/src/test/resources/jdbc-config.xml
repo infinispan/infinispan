@@ -21,7 +21,7 @@
             <jdbc:timestamp-column name="T" type="BIGINT"/>
             <jdbc:segment-column name="S" type="BIGINT"/>
           </jdbc:string-keyed-table>
-          <jdbc:data-source jndi-url="java:jboss/datasources/ExampleDS"/>
+          <jdbc:data-source jndi-url="${infinispan.server.integration.data-source}"/>
         </jdbc:string-keyed-jdbc-store>
       </persistence>
     </local-cache>

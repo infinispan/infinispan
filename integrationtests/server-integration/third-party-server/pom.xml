@@ -89,6 +89,7 @@
                         <catalinaHome>${catalinaHome}</catalinaHome>
                         <jbossHome>${jbossHome}</jbossHome>
                         <server.jvm>${server.jvm}</server.jvm>
+                        <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
@@ -135,6 +136,7 @@
                 <catalinaHome>${project.build.directory}/tomcat</catalinaHome>
                 <!-- jws=jws-*/tomcat -->
                 <catalinaUnzipExpression>apache-tomcat-*</catalinaUnzipExpression>
+                <infinispan.server.integration.data-source>java:comp/env/datasources/ExampleDS</infinispan.server.integration.data-source>
             </properties>
             <dependencies>
                 <!-- there is no arquillian-tomcat-managed-9. we are using arquillian-tomcat-managed-8 -->
@@ -168,6 +170,7 @@
                                             <fileset dir="${tomcat.unzip.dir}"/>
                                         </move>
                                         <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${project.build.directory}/tomcat/conf" overwrite="true" />
+                                        <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${project.build.directory}/tomcat/conf" overwrite="true" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -189,6 +192,7 @@
             <properties>
                 <infinispan.server.integration.launch>wildfly</infinispan.server.integration.launch>
                 <jbossHome>${project.build.directory}/wildfly-${version.wildfly}</jbossHome>
+                <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
             </properties>
             <dependencies>
                 <dependency>

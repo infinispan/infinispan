@@ -1,8 +1,8 @@
-package org.infinispan.test.integration.as.client;
+package org.infinispan.test.integration.as.store;
 
 import org.infinispan.commons.util.Version;
-import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
-import org.infinispan.test.integration.data.Person;
+import org.infinispan.test.integration.protostream.ServerIntegrationSCI;
+import org.infinispan.test.integration.store.AbstractInfinispanStoreJpaIT;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -15,27 +15,29 @@ import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.runner.RunWith;
 
 /**
- * Test remote query.
+ * Test the Infinispan JPA CacheStore AS module integration
  *
- * @author anistor@redhat.com
- * @since 8.2
+ * @author Tristan Tarrant
+ * @since 7.0
  */
 @RunWith(Arquillian.class)
-public class HotRodQueryIT extends AbstractHotRodQueryIT {
+public class InfinispanStoreJpaIT extends AbstractInfinispanStoreJpaIT {
 
    @Deployment
    public static Archive<?> deployment() {
-      return ShrinkWrap
-            .create(WebArchive.class, "remote-query.war")
-            .addClasses(HotRodQueryIT.class, AbstractHotRodQueryIT.class, Person.class)
+      WebArchive war = ShrinkWrap
+            .create(WebArchive.class, "jpa.war")
+            .addClass(AbstractInfinispanStoreJpaIT.class)
+            .addClasses(ServerIntegrationSCI.CLASSES)
+            .addAsResource("META-INF/ispn-persistence.xml", "META-INF/persistence.xml")
+            .addAsResource("jpa-config.xml")
             .add(manifest(), "META-INF/MANIFEST.MF");
+      return war;
    }
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services")
-            .exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
    }
-
 }

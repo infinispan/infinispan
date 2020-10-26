@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.client;
+package org.infinispan.test.integration.remote;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -19,13 +19,15 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.test.integration.data.Person;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * @since 9.0
  */
-public class BaseHotRodQueryIT {
+public abstract class AbstractHotRodQueryIT {
 
    private RemoteCacheManager rcm;
 
@@ -104,6 +106,6 @@ public class BaseHotRodQueryIT {
             .having("name").eq("John")
             .orderBy("id")
             .build();
-      assertEquals(0, query.execute().list().size());
+      Assert.assertEquals(0, query.execute().list().size());
    }
 }

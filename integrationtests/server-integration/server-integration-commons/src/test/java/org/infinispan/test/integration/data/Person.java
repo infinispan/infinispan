@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.client;
+package org.infinispan.test.integration.data;
 
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -10,6 +10,9 @@ public class Person {
    @ProtoField(2)
    public Integer id;
 
+   public Person() {
+   }
+
    public Person(String name) {
       this.name = name;
    }
@@ -19,6 +22,11 @@ public class Person {
       this.id = id;
    }
 
-   public Person() {
+   public String getName() {
+      return name;
+   }
+
+   public Integer getId() {
+      return id;
    }
 }

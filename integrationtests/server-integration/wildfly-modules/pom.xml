@@ -26,6 +26,7 @@
       <server.jvm>${env.JAVA_HOME}</server.jvm>
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
       <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
+      <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
    </properties>
 
    <dependencies>
@@ -62,11 +63,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-runtime</artifactId>
          <scope>test</scope>
       </dependency>
@@ -82,32 +78,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rocksdb</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-jpa</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -142,11 +113,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>javax.persistence-api</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
@@ -178,17 +144,6 @@
       </testResources>
 
       <plugins>
-         <plugin>
-             <artifactId>maven-clean-plugin</artifactId>
-             <configuration>
-                 <filesets>
-                     <fileset>
-                         <directory>Infinispan-LevelDBStore</directory>
-                     </fileset>
-                 </filesets>
-             </configuration>
-         </plugin>
-
          <plugin>
             <groupId>org.wildfly.build</groupId>
             <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
@@ -293,6 +248,9 @@
                   <artifactId>maven-failsafe-plugin</artifactId>
                   <configuration>
                      <skipITs>${skipTests}</skipITs>
+                     <systemPropertyVariables>
+                        <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
+                     </systemPropertyVariables>
                   </configuration>
                </plugin>
             </plugins>

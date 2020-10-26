@@ -6,9 +6,9 @@
    <persistence-unit name="org.infinispan.persistence.jpa">
      <!-- This class is required to allow store metadata -->
      <class>org.infinispan.persistence.jpa.impl.MetadataEntity</class>
-     <class>org.infinispan.test.integration.as.KeyValueEntity</class>
+     <class>org.infinispan.test.integration.data.KeyValueEntity</class>
      <properties>
-       <property name="hibernate.connection.datasource" value="java:jboss/datasources/ExampleDS"/>
+       <property name="hibernate.connection.datasource" value="${infinispan.server.integration.data-source}"/>
        <!-- <property name="hibernate.dialect" value="${hibernate.dialect}" /> --> <!-- dialect is automatically determined by hibernate, uncomment to force the dialect -->
        <property name="hibernate.jdbc.batch_size" value="20" />
        <property name="hibernate.jdbc.fetch_size" value="20" />
