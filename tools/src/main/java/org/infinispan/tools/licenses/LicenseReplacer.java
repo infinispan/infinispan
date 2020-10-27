@@ -77,7 +77,7 @@ public class LicenseReplacer {
          exit(1);
       }
       if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs()) {
-         System.err.printf("Unable to create output file \"%s\"\n", outputFile.getAbsolutePath());
+         System.err.printf("Unable to create output file \"%s\"%n", outputFile.getAbsolutePath());
          exit(2);
       }
       if (replacer.overwriteArtifacts.isEmpty()) {
@@ -87,7 +87,7 @@ public class LicenseReplacer {
       try (OutputStream os = new FileOutputStream(outputFile)) {
          replacer.write(os);
          if (replacer.verbose) {
-            System.out.printf("Wrote merged licenses to %s\n", outputFile);
+            System.out.printf("Wrote merged licenses to %s%n", outputFile);
          }
       }
       removeEmptyLinesFromFile(outputFile);
@@ -110,7 +110,7 @@ public class LicenseReplacer {
                Node overwriteNode = overwriteArtifacts.get(dep.getArtifact());
                if (overwriteNode != null) {
                   if (verbose) {
-                     System.out.printf("Overwriting license information for \"%s\"\n", dep.getArtifact());
+                     System.out.printf("Overwriting license information for \"%s\"%n", dep.getArtifact());
                   }
                   findFirstChildByTagName(depNode, "licenses")
                         .ifPresent(depNode::removeChild);
@@ -127,16 +127,16 @@ public class LicenseReplacer {
    }
 
    void loadOverwriteXML(String fileName) throws IOException, SAXException {
-      System.out.printf("Loading XML with overwrites from \"%s\"\n", fileName);
+      System.out.printf("Loading XML with overwrites from \"%s\"%n", fileName);
       Document doc = docBuilder.parse(new File(fileName));
       if (doc == emptyDocument) {
-         System.err.printf("File \"%s\" is empty!\n", fileName);
+         System.err.printf("File \"%s\" is empty!%n", fileName);
       }
       ToolUtils.parseXMLDependencies(doc)
             .forEach(deo -> {
                overwriteArtifacts.put(deo.getArtifact(), deo.getNode());
                if (verbose) {
-                  System.out.printf("Found artifact %s to overwrite.\n", deo.getArtifact());
+                  System.out.printf("Found artifact %s to overwrite.%n", deo.getArtifact());
                }
             });
    }
@@ -146,10 +146,10 @@ public class LicenseReplacer {
    }
 
    private void loadLicenseFromXML(String fileName) throws Exception {
-      System.out.printf("Loading licenses from XML \"%s\"\n", fileName);
+      System.out.printf("Loading licenses from XML \"%s\"%n", fileName);
       licensesDoc = docBuilder.parse(new File(fileName));
       if (licensesDoc == emptyDocument) {
-         System.err.printf("File \"%s\" is empty!\n", fileName);
+         System.err.printf("File \"%s\" is empty!%n", fileName);
       }
    }
 }

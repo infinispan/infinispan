@@ -142,7 +142,7 @@ class RunningTestsRegistry {
             for (String pid : pids) {
                File dumpFile = new File(String.format("threaddump-%1$s-%2$tY%2$tm%2$td-%2$tH%2$tM-%3$s.log",
                                                       safeTestName, now, pid));
-               System.err.printf("Dumping threads of process %s to %s\n", pid, dumpFile.getAbsolutePath());
+               System.err.printf("Dumping threads of process %s to %s%n", pid, dumpFile.getAbsolutePath());
                Process jstack = new ProcessBuilder()
                                    .command(jstackFile.getAbsolutePath(), pid)
                                    .redirectOutput(dumpFile)
@@ -152,11 +152,11 @@ class RunningTestsRegistry {
          } else {
             File dumpFile = new File(String.format("threaddump-%1$s-%2$tY%2$tm%2$td-%2$tH%2$tM.log",
                                                    safeTestName, now));
-            System.err.printf("Cannot find jstack in %s, programmatically dumping thread stacks of testsuite process to %s\n", javaHome, dumpFile.getAbsolutePath());
+            System.err.printf("Cannot find jstack in %s, programmatically dumping thread stacks of testsuite process to %s%n", javaHome, dumpFile.getAbsolutePath());
             ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
             try (PrintWriter writer = new PrintWriter(new FileWriter(dumpFile))) {
                // 2019-02-05 14:03:11
-               writer.printf("%1$tF %1$tT\nTest thread dump:\n\n", now);
+               writer.printf("%1$tF %1$tT\nTest thread dump:%n%n", now);
                ThreadInfo[] threads = threadMXBean.dumpAllThreads(true, true);
                for (ThreadInfo thread : threads) {
                   dumpThread(writer, thread);
@@ -173,7 +173,7 @@ class RunningTestsRegistry {
       try {
          // Interrupt the test thread
          testThread.interrupt();
-         System.err.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
+         System.err.printf("Interrupted thread %s (%d).%n", testThread.getName(), testThread.getId());
 
          testThread.join(SECONDS.toMillis(1));
          if (testThread.isAlive()) {
@@ -200,7 +200,7 @@ class RunningTestsRegistry {
             }
             kill.waitFor(10, SECONDS);
             if (kill.exitValue() == 0) {
-               System.err.printf("Killed processes %s\n", String.join(" ", pids));
+               System.err.printf("Killed processes %s%n", String.join(" ", pids));
             } else {
                System.err.printf("Failed to kill processes, exit code %d from command %s\n", kill.exitValue(), command);
             }
@@ -219,9 +219,9 @@ class RunningTestsRegistry {
       //         - waiting on <0x00007fb2c4017ba0> (a java.util.LinkedList)
       //         - parking to wait for  <0x00007fc96bd87cf0> (a java.util.concurrent.CompletableFuture$Signaller)
       //         - locked <0x00007fb34c037e20> (a com.arjuna.ats.arjuna.coordinator.TransactionReaper)
-      writer.printf("\"%s\" #%s prio=0 tid=0x%x nid=NA %s\n", thread.getThreadName(), thread.getThreadId(),
+      writer.printf("\"%s\" #%s prio=0 tid=0x%x nid=NA %s%n", thread.getThreadName(), thread.getThreadId(),
                     thread.getThreadId(), thread.getThreadState().toString().toLowerCase());
-      writer.printf("   java.lang.Thread.State: %s\n", thread.getThreadState());
+      writer.printf("   java.lang.Thread.State: %s%n", thread.getThreadState());
       LockInfo blockedLock = thread.getLockInfo();
       StackTraceElement[] s = thread.getStackTrace();
       MonitorInfo[] monitors = thread.getLockedMonitors();
@@ -230,13 +230,13 @@ class RunningTestsRegistry {
          writer.printf("\tat %s\n", ste);
          if (i == 0 && blockedLock != null) {
             boolean parking = ste.isNativeMethod() && ste.getMethodName().equals("park");
-            writer.printf("\t- %s <0x%x> (a %s)\n", blockedState(thread, blockedLock, parking),
+            writer.printf("\t- %s <0x%x> (a %s)%n", blockedState(thread, blockedLock, parking),
                           blockedLock.getIdentityHashCode(), blockedLock.getClassName());
          }
          if (monitors != null) {
             for (MonitorInfo monitor : monitors) {
                if (monitor.getLockedStackDepth() == i) {
-                  writer.printf("\t- locked <0x%x> (a %s)\n", monitor.getIdentityHashCode(), monitor.getClassName());
+                  writer.printf("\t- locked <0x%x> (a %s)%n", monitor.getIdentityHashCode(), monitor.getClassName());
                }
             }
          }
@@ -247,7 +247,7 @@ class RunningTestsRegistry {
       if (synchronizers != null && synchronizers.length > 0) {
          writer.print("\n   Locked ownable synchronizers:\n");
          for (LockInfo synchronizer : synchronizers) {
-            writer.printf("\t- <0x%x> (a %s)\n", synchronizer.getIdentityHashCode(), synchronizer.getClassName());
+            writer.printf("\t- <0x%x> (a %s)%n", synchronizer.getIdentityHashCode(), synchronizer.getClassName());
          }
          writer.println();
       }

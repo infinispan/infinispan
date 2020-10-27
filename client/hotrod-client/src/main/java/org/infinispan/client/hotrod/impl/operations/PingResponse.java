@@ -16,7 +16,7 @@ import io.netty.buffer.ByteBuf;
 
 public class PingResponse {
 
-   public static PingResponse EMPTY = new PingResponse(null);
+   public static final PingResponse EMPTY = new PingResponse(null);
 
    private final short status;
    private final ProtocolVersion version;

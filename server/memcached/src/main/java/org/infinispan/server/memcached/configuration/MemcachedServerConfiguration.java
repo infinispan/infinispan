@@ -36,7 +36,7 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration {
       return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS, CLIENT_ENCODING);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("memcached-connector");
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("memcached-connector");
 
    MemcachedServerConfiguration(AttributeSet attributes, SslConfiguration ssl) {
       super(attributes, ssl);

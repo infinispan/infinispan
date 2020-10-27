@@ -22,7 +22,7 @@ public class IndexConfiguration implements ConfigurationInfo {
       return new AttributeSet(IndexConfiguration.class, INDEX_LOCATION, INDEX_QUEUE_LENGTH, INDEX_SEGMENTS, MIN_NODE_SIZE, MAX_NODE_SIZE);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEX.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEX.getLocalName());
 
    public IndexConfiguration(AttributeSet attributes) {
       this.attributes = attributes;

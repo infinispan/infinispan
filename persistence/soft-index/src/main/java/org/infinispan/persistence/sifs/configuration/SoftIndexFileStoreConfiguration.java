@@ -38,7 +38,7 @@ public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfi
       return new AttributeSet(SoftIndexFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), OPEN_FILES_LIMIT, COMPACTION_THRESHOLD);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SOFT_INDEX_FILE_STORE.getLocalName(), true, false);
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SOFT_INDEX_FILE_STORE.getLocalName(), true, false);
 
    @Override
    public ElementDefinition getElementDefinition() {

@@ -54,13 +54,13 @@ public class LicenseMerger {
                Document doc = docBuilder.parse(inputStream);
                xmls.put(ToolUtils.getBaseFileName(fileName), doc);
                if (verbose) {
-                  System.out.printf("Loaded license from JAR %s\n", fileName);
+                  System.out.printf("Loaded license from JAR %s%n", fileName);
                }
             }
          } else {
             xmls.put(ToolUtils.getBaseFileName(fileName), emptyDocument);
             if (verbose) {
-               System.out.printf("Empty license for JAR %s\n", fileName);
+               System.out.printf("Empty license for JAR %s%n", fileName);
             }
          }
       }
@@ -70,7 +70,7 @@ public class LicenseMerger {
       Document doc = docBuilder.parse(new File(fileName));
       xmls.put(ToolUtils.getBaseFileName(fileName), doc);
       if (verbose) {
-         System.out.printf("Loaded license from XML %s\n", fileName);
+         System.out.printf("Loaded license from XML %s%n", fileName);
       }
    }
 
@@ -85,7 +85,7 @@ public class LicenseMerger {
 
    public void write(boolean inclusiveMode, OutputStream os) throws TransformerException {
       if (verbose) {
-         System.out.printf("Inclusive mode %s\n", inclusiveMode);
+         System.out.printf("Inclusive mode %s%n", inclusiveMode);
       }
       Document aggregated = docBuilder.newDocument();
       Element aggregatedDependencies = (Element) aggregated
@@ -142,7 +142,7 @@ public class LicenseMerger {
       try (OutputStream os = new FileOutputStream(outputFile)) {
          licenseMerger.write(inclusiveMode, os);
          if (verbose) {
-            System.out.printf("Wrote merged licenses to %s\n",  outputFile);
+            System.out.printf("Wrote merged licenses to %s%n",  outputFile);
          }
       }
       ToolUtils.removeEmptyLinesFromFile(outputFile);

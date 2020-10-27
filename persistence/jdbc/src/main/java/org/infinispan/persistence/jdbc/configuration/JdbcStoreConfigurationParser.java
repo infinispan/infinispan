@@ -280,7 +280,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
       return column;
    }
 
-   class Column {
+   static class Column {
       String name;
       String type;
    }

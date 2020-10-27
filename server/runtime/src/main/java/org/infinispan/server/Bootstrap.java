@@ -146,25 +146,25 @@ public class Bootstrap extends Main {
 
    @Override
    public void help(PrintStream out) {
-      out.printf("Usage:\n");
-      out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
-      out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
-      out.printf("  -l, --logging-config=<config> %s\n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
-      out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName());
-      out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
-      out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack());
-      out.printf("  -k, --cluster-address=<name>  %s\n", MSG.serverHelpClusterAddress());
-      out.printf("  -n, --node-name=<name>        %s\n", MSG.serverHelpNodeName());
-      out.printf("  -o, --port-offset=<offset>    %s\n", MSG.serverHelpPortOffset());
-      out.printf("  -p, --bind-port=<port>        %s\n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
-      out.printf("  -s, --server-root=<path>      %s\n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
-      out.printf("  -v, --version                 %s\n", MSG.toolHelpVersion());
-      out.printf("  -D<name>=<value>              %s\n", MSG.serverHelpProperty());
+      out.printf("Usage:%n");
+      out.printf("  -b, --bind-address=<address>  %s%n", MSG.serverHelpBindAddress());
+      out.printf("  -c, --server-config=<config>  %s%n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
+      out.printf("  -l, --logging-config=<config> %s%n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
+      out.printf("  -g, --cluster-name=<name>     %s%n", MSG.serverHelpClusterName());
+      out.printf("  -h, --help                    %s%n", MSG.toolHelpHelp());
+      out.printf("  -j, --cluster-stack=<name>    %s%n", MSG.serverHelpClusterStack());
+      out.printf("  -k, --cluster-address=<name>  %s%n", MSG.serverHelpClusterAddress());
+      out.printf("  -n, --node-name=<name>        %s%n", MSG.serverHelpNodeName());
+      out.printf("  -o, --port-offset=<offset>    %s%n", MSG.serverHelpPortOffset());
+      out.printf("  -p, --bind-port=<port>        %s%n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
+      out.printf("  -s, --server-root=<path>      %s%n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
+      out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
+      out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
    }
 
    @Override
    public void version(PrintStream out) {
-      out.printf("%s Server %s (%s)\n", Version.getBrandName(), Version.getVersion(), Version.getCodename());
+      out.printf("%s Server %s (%s)%n", Version.getBrandName(), Version.getVersion(), Version.getCodename());
       out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
       out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
    }

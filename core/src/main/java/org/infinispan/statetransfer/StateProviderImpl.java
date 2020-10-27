@@ -108,10 +108,11 @@ public class StateProviderImpl implements StateProvider {
       // from one rebalance to the next.
       Set<Address> members = new HashSet<>(cacheTopology.getWriteConsistentHash().getMembers());
       synchronized (transfersByDestination) {
-         for (Iterator<Address> it = transfersByDestination.keySet().iterator(); it.hasNext(); ) {
-            Address destination = it.next();
-            if (!members.contains(destination)) {
-               List<OutboundTransferTask> transfers = transfersByDestination.get(destination);
+         for (Iterator<Map.Entry<Address, List<OutboundTransferTask>>> it = transfersByDestination.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Address, List<OutboundTransferTask>> destination = it.next();
+            Address address = destination.getKey();
+            if (!members.contains(address)) {
+               List<OutboundTransferTask> transfers = destination.getValue();
                it.remove();
                for (OutboundTransferTask outboundTransfer : transfers) {
                   outboundTransfer.cancel();

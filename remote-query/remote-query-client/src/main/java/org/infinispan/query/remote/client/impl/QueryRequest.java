@@ -44,7 +44,7 @@ public final class QueryRequest implements JsonSerialization {
    }
 
    public Long getStartOffset() {
-      return startOffset == null ? -1L : startOffset;
+      return startOffset == null ? Long.valueOf(-1) : startOffset;
    }
 
    public void setStartOffset(Long startOffset) {
@@ -52,7 +52,7 @@ public final class QueryRequest implements JsonSerialization {
    }
 
    public Integer getMaxResults() {
-      return maxResults == null ? -1 : maxResults;
+      return maxResults == null ? Integer.valueOf(-1) : maxResults;
    }
 
    public void setMaxResults(Integer maxResults) {
