@@ -375,7 +375,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       WeakCounterKey[] getPreferredKeys();
    }
 
-   private class LocalKeySelector implements KeySelector {
+   private static class LocalKeySelector implements KeySelector {
 
       private final Entry[] entries;
 

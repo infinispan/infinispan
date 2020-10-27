@@ -189,7 +189,7 @@ public class TopologyInfo {
    }
 
    public String formatLocation(DecimalFormat df, Location location, String prefix) {
-      return String.format("%s%s * %s: %s+%s \n", prefix, location.getName(), df.format(location.totalCapacity),
+      return String.format("%s%s * %s: %s+%s %n", prefix, location.getName(), df.format(location.totalCapacity),
                            df.format(location.expectedPrimarySegments),
                            df.format(location.getExpectedBackupSegments()));
    }

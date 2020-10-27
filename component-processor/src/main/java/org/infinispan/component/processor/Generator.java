@@ -61,36 +61,36 @@ public class Generator {
       String packageClassName = String.format("%s.%sPackageImpl", p.packageName, model.module.classPrefix);
       JavaFileObject packageFile = filer.createSourceFile(packageClassName, sourceElements);
       try (PrintWriter writer = new PrintWriter(packageFile.openWriter(), false)) {
-         writer.printf("package %s;\n\n", p.packageName);
-         writer.printf("import java.util.Arrays;\n");
-         writer.printf("import java.util.Collections;\n");
-         writer.printf("import javax.annotation.Generated;\n");
-         writer.printf("\n");
-         writer.printf("import org.infinispan.factories.impl.ComponentAccessor;\n");
-         writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;\n");
-         writer.printf("import org.infinispan.factories.impl.MBeanMetadata;\n");
-         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;\n");
-         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationMetadata;\n");
-         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationParameterMetadata;\n");
-         writer.printf("import org.infinispan.factories.impl.WireContext;\n");
-         writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;\n");
-         writer.printf("\n");
-         writer.printf("/**\n * @private \n */\n");
-         writer.printf("@Generated(value = \"%s\", date = \"%s\")\n", getClass().getName(), Instant.now().toString());
-         writer.printf("public final class %sPackageImpl {\n", model.module.classPrefix);
-         writer.printf("   public static void registerMetadata(ModuleMetadataBuilder.ModuleBuilder builder) {\n");
+         writer.printf("package %s;%n%n", p.packageName);
+         writer.printf("import java.util.Arrays;%n");
+         writer.printf("import java.util.Collections;%n");
+         writer.printf("import javax.annotation.Generated;%n");
+         writer.printf("%n");
+         writer.printf("import org.infinispan.factories.impl.ComponentAccessor;%n");
+         writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;%n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata;%n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;%n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationMetadata;%n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationParameterMetadata;%n");
+         writer.printf("import org.infinispan.factories.impl.WireContext;%n");
+         writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;%n");
+         writer.printf("%n");
+         writer.printf("/**%n * @private %n */%n");
+         writer.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
+         writer.printf("public final class %sPackageImpl {%n", model.module.classPrefix);
+         writer.printf("   public static void registerMetadata(ModuleMetadataBuilder.ModuleBuilder builder) {%n");
 
          for (Model.AnnotatedType c : p.annotatedTypes) {
-            writer.printf("//start %s\n", c.typeElement.getQualifiedName());
+            writer.printf("//start %s%n", c.typeElement.getQualifiedName());
 
             if (c.component != null) {
                writeComponentAccessor(writer, c);
-               writer.printf("\n");
+               writer.printf("%n");
             }
 
             if (c.mComponent != null) {
                writeMBeanMetadata(writer, c);
-               writer.printf("\n");
+               writer.printf("%n");
             }
          }
 
@@ -100,9 +100,9 @@ public class Generator {
             }
          }
 
-         writer.printf("//end\n");
-         writer.printf("   }\n");
-         writer.printf("}\n");
+         writer.printf("//end%n");
+         writer.printf("   }%n");
+         writer.printf("}%n");
       }
    }
 
@@ -119,80 +119,80 @@ public class Generator {
       CharSequence eagerDependencies = listLiteral(getEagerDependencies(c));
       CharSequence factoryComponents = listLiteral(c.factoryComponentNames);
 
-      writer.printf("      builder.registerComponentAccessor(\"%s\",\n", binaryName);
-      writer.printf("         %s,\n", factoryComponents);
+      writer.printf("      builder.registerComponentAccessor(\"%s\",%n", binaryName);
+      writer.printf("         %s,%n", factoryComponents);
 
       if (!c.hasDependenciesOrLifecycle() && !autoInstantiable) {
          // Component doesn't need an anonymous class, eagerDependencies is always empty
-         writer.printf("         new ComponentAccessor<%s>(\"%s\",\n" +
-                       "            %s, %s, %s,\n" +
-                       "            %s));\n",
+         writer.printf("         new ComponentAccessor<%s>(\"%s\",%n" +
+                       "            %s, %s, %s,%n" +
+                       "            %s));%n",
                        simpleClassName, binaryName, scopeLiteral, survivesRestarts,
                        superAccessor, eagerDependencies);
          return;
       }
 
-      writer.printf("         new ComponentAccessor<%s>(\"%s\",\n" +
-                    "            %s, %s, %s,\n" +
-                    "            %s) {\n",
+      writer.printf("         new ComponentAccessor<%s>(\"%s\",%n" +
+                    "            %s, %s, %s,%n" +
+                    "            %s) {%n",
                     simpleClassName, binaryName, scopeLiteral, survivesRestarts,
                     superAccessor, eagerDependencies);
 
       if (!c.injectFields.isEmpty() || !c.injectMethods.isEmpty()) {
-         writer.printf("         protected void wire(%s instance, WireContext context, boolean start) {\n",
+         writer.printf("         protected void wire(%s instance, WireContext context, boolean start) {%n",
                        simpleClassName);
          for (Model.InjectField injectField : c.injectFields) {
             String componentType = injectField.typeName;
             CharSequence componentName = injectField.componentName;
             String lazy = injectField.isComponentRef ? "Lazy" : "";
-            writer.printf("            instance.%s = context.get%s(\"%s\", %s.class, start);\n",
+            writer.printf("            instance.%s = context.get%s(\"%s\", %s.class, start);%n",
                           injectField.name, lazy, componentName, componentType);
          }
          for (Model.InjectMethod injectMethod : c.injectMethods) {
-            writer.printf("            instance.%s(\n", injectMethod.name);
+            writer.printf("            instance.%s(%n", injectMethod.name);
             List<Model.InjectField> parameters = injectMethod.parameters;
             for (int i = 0; i < parameters.size(); i++) {
                Model.InjectField parameter = parameters.get(i);
                String componentType = parameter.typeName;
                CharSequence componentName = parameter.componentName;
                String lazy = parameter.isComponentRef ? "Lazy" : "";
-               writer.printf("               context.get%s(\"%s\", %s.class, start)%s\n",
+               writer.printf("               context.get%s(\"%s\", %s.class, start)%s%n",
                              lazy, componentName, componentType, optionalComma(i, parameters.size()));
             }
-            writer.printf("            );\n");
+            writer.printf("            );%n");
          }
-         writer.printf("         }\n");
-         writer.printf("\n");
+         writer.printf("         }%n");
+         writer.printf("%n");
       }
 
       if (!c.startMethods.isEmpty() || !c.postStartMethods.isEmpty()) {
-         writer.printf("         protected void start(%s instance) throws Exception {\n", simpleClassName);
+         writer.printf("         protected void start(%s instance) throws Exception {%n", simpleClassName);
          writeLifecycleMethodInvocations(writer, c.startMethods);
          writeLifecycleMethodInvocations(writer, c.postStartMethods);
-         writer.printf("         }\n");
-         writer.printf("\n");
+         writer.printf("         }%n");
+         writer.printf("%n");
       }
 
       if (!c.stopMethods.isEmpty()) {
-         writer.printf("         protected void stop(%s instance) throws Exception {\n", simpleClassName);
+         writer.printf("         protected void stop(%s instance) throws Exception {%n", simpleClassName);
          writeLifecycleMethodInvocations(writer, c.stopMethods);
-         writer.printf("         }\n");
-         writer.printf("\n");
+         writer.printf("         }%n");
+         writer.printf("%n");
       }
 
       if (autoInstantiable) {
-         writer.printf("         protected %s newInstance() {\n", simpleClassName);
-         writer.printf("            return new %s();\n", simpleClassName);
-         writer.printf("         }\n");
-         writer.printf("\n");
+         writer.printf("         protected %s newInstance() {%n", simpleClassName);
+         writer.printf("            return new %s();%n", simpleClassName);
+         writer.printf("         }%n");
+         writer.printf("%n");
       }
 
-      writer.printf("      });\n");
+      writer.printf("      });%n");
    }
 
    private void writeLifecycleMethodInvocations(PrintWriter writer, List<Model.LifecycleMethod> methods) {
       for (Model.LifecycleMethod method : sortByPriority(methods)) {
-         writer.printf("            instance.%s();\n", method.name);
+         writer.printf("            instance.%s();%n", method.name);
       }
    }
 
@@ -227,10 +227,10 @@ public class Generator {
       List<Model.MAttribute> attributes = m.attributes;
       List<Model.MOperation> operations = m.operations;
 
-      writer.printf("      builder.registerMBeanMetadata(\"%s\",\n", binaryName);
+      writer.printf("      builder.registerMBeanMetadata(\"%s\",%n", binaryName);
 
       int count = attributes.size() + operations.size();
-      writer.printf("         MBeanMetadata.of(\"%s\", \"%s\", %s%s\n",
+      writer.printf("         MBeanMetadata.of(\"%s\", \"%s\", %s%s%n",
                     mbean.objectName(), mbean.description(), superMBeanName, optionalComma(-1, count));
 
       int i = 0;
@@ -243,19 +243,19 @@ public class Generator {
          // OperationMetadata(String methodName, String operationName, String description, String returnType,
          //    OperationParameterMetadata... methodParameters)
          List<Model.MParameter> parameters = method.parameters;
-         writer.printf("            new OperationMetadata(\"%s\", \"%s\", \"%s\", \"%s\"%s\n",
+         writer.printf("            new OperationMetadata(\"%s\", \"%s\", \"%s\", \"%s\"%s%n",
                        method.name, operation.name(), operation.description(),
                        method.returnType, optionalComma(-1, parameters.size()));
          for (int j = 0; j < parameters.size(); j++) {
             Model.MParameter parameter = parameters.get(j);
             // OperationParameterMetadata(String name, String type, String description)
-            writer.printf("               new OperationParameterMetadata(\"%s\", \"%s\", \"%s\")%s\n",
+            writer.printf("               new OperationParameterMetadata(\"%s\", \"%s\", \"%s\")%s%n",
                           parameter.name, parameter.type, parameter.description,
                           optionalComma(j, parameters.size()));
          }
-         writer.printf("            )%s\n", optionalComma(i++, count));
+         writer.printf("            )%s%n", optionalComma(i++, count));
       }
-      writer.printf("      ));\n");
+      writer.printf("      ));%n");
    }
 
    private String makeGetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
@@ -283,7 +283,7 @@ public class Generator {
    private void writeManagedAttribute(PrintWriter writer, CharSequence name, ManagedAttribute attribute,
                                       boolean useSetter, String type, boolean is, String getterFunction, String setterFunction, String comma) {
       // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction)
-      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s, %s)%s\n",
+      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s, %s)%s%n",
             name, attribute.description(), attribute.writable(), useSetter, type, is, getterFunction, setterFunction, comma);
    }
 
@@ -293,49 +293,49 @@ public class Generator {
       String moduleClassName = String.format("%s.%sModuleImpl", module.packageName, module.classPrefix);
       JavaFileObject moduleFile = filer.createSourceFile(moduleClassName, sourceElements);
       try (PrintWriter writer = new PrintWriter(moduleFile.openWriter(), false)) {
-         writer.printf("package %s;\n\n", module.packageName);
-         writer.printf("import java.util.Arrays;\n");
-         writer.printf("import java.util.Collection;\n");
-         writer.printf("import java.util.Collections;\n");
-         writer.printf("import javax.annotation.Generated;\n");
-         writer.printf("\n");
-         writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;\n");
-         writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;\n");
-         writer.printf("import org.infinispan.manager.ModuleRepository;\n");
-         writer.printf("\n");
-         writer.printf("/**\n * @private \n */\n");
-         writer.printf("@Generated(value = \"%s\", date = \"%s\")\n", getClass().getName(), Instant.now().toString());
-         writer.printf("public final class %sModuleImpl implements ModuleMetadataBuilder {\n", module.classPrefix);
+         writer.printf("package %s;%n%n", module.packageName);
+         writer.printf("import java.util.Arrays;%n");
+         writer.printf("import java.util.Collection;%n");
+         writer.printf("import java.util.Collections;%n");
+         writer.printf("import javax.annotation.Generated;%n");
+         writer.printf("%n");
+         writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;%n");
+         writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;%n");
+         writer.printf("import org.infinispan.manager.ModuleRepository;%n");
+         writer.printf("%n");
+         writer.printf("/**%n * @private %n */%n");
+         writer.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
+         writer.printf("public final class %sModuleImpl implements ModuleMetadataBuilder {%n", module.classPrefix);
 
-         writer.printf("//module %s\n", module.moduleClassName);
-         writer.printf("   public String getModuleName() {\n");
-         writer.printf("      return \"%s\";\n", moduleAnnotation.name());
-         writer.printf("   }\n");
-         writer.printf("\n");
+         writer.printf("//module %s%n", module.moduleClassName);
+         writer.printf("   public String getModuleName() {%n");
+         writer.printf("      return \"%s\";%n", moduleAnnotation.name());
+         writer.printf("   }%n");
+         writer.printf("%n");
 
-         writer.printf("   public Collection<String> getRequiredDependencies() {\n");
-         writer.printf("      return %s;\n", listLiteral(Arrays.asList(moduleAnnotation.requiredModules())));
-         writer.printf("   }\n");
-         writer.printf("\n");
+         writer.printf("   public Collection<String> getRequiredDependencies() {%n");
+         writer.printf("      return %s;%n", listLiteral(Arrays.asList(moduleAnnotation.requiredModules())));
+         writer.printf("   }%n");
+         writer.printf("%n");
 
-         writer.printf("   public Collection<String> getOptionalDependencies() {\n");
-         writer.printf("      return %s;\n", listLiteral(Arrays.asList(moduleAnnotation.optionalModules())));
-         writer.printf("   }\n");
-         writer.printf("\n");
+         writer.printf("   public Collection<String> getOptionalDependencies() {%n");
+         writer.printf("      return %s;%n", listLiteral(Arrays.asList(moduleAnnotation.optionalModules())));
+         writer.printf("   }%n");
+         writer.printf("%n");
 
-         writer.printf("   public ModuleLifecycle newModuleLifecycle() {\n");
-         writer.printf("      return new %s();\n", module.moduleClassName);
-         writer.printf("   }\n");
-         writer.printf("\n");
+         writer.printf("   public ModuleLifecycle newModuleLifecycle() {%n");
+         writer.printf("      return new %s();%n", module.moduleClassName);
+         writer.printf("   }%n");
+         writer.printf("%n");
 
-         writer.printf("   public void registerMetadata(ModuleBuilder builder) {\n");
+         writer.printf("   public void registerMetadata(ModuleBuilder builder) {%n");
          for (String packageName : model.packages.keySet()) {
-            writer.printf("//package %s\n", packageName);
-            writer.printf("      %s.%sPackageImpl.registerMetadata(builder);\n", packageName, module.classPrefix);
+            writer.printf("//package %s%n", packageName);
+            writer.printf("      %s.%sPackageImpl.registerMetadata(builder);%n", packageName, module.classPrefix);
          }
 
-         writer.printf("   }\n");
-         writer.printf("}\n");
+         writer.printf("   }%n");
+         writer.printf("}%n");
       }
    }
 

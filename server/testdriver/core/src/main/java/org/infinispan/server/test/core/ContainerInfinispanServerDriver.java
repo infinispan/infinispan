@@ -338,7 +338,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       InfinispanGenericContainer container = containers[server];
       container.pause();
       eventually("Container wasn't paused.", () -> container.isPaused());
-      System.out.printf("[%d] PAUSE \n", server);
+      System.out.printf("[%d] PAUSE %n", server);
    }
 
    @Override
@@ -346,7 +346,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       InfinispanGenericContainer container = containers[server];
       container.resume();
       eventually("Container didn't resume.", () -> isRunning(server));
-      System.out.printf("[%d] RESUME \n", server);
+      System.out.printf("[%d] RESUME %n", server);
    }
 
    @Override
@@ -358,7 +358,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          container.withLogConsumer(latch);
          container.stop();
          eventually("Container wasn't stopped.", () -> !isRunning(server));
-         System.out.printf("[%d] STOP \n", server);
+         System.out.printf("[%d] STOP %n", server);
       }
    }
 
@@ -369,7 +369,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       if (container != null) {
          container.kill();
          eventually("Container wasn't killed.", () -> !isRunning(server));
-         System.out.printf("[%d] KILL \n", server);
+         System.out.printf("[%d] KILL %n", server);
       }
    }
 

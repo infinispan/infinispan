@@ -41,7 +41,7 @@ import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 
 public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
 
-   public static ThrowableExternalizer INSTANCE = new ThrowableExternalizer();
+   public static final ThrowableExternalizer INSTANCE = new ThrowableExternalizer();
 
    private static final short UNKNOWN = -1;
    // Infinispan Exceptions

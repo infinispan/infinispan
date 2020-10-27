@@ -42,7 +42,7 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final CorsConfiguration cors;
    private final EncryptionConfiguration encryption;
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("rest-connector");
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("rest-connector");
 
    private final List<ConfigurationInfo> elements;
 

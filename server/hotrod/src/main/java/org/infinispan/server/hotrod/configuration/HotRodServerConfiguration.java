@@ -43,7 +43,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return Arrays.asList(topologyCache, authentication, encryption);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("hotrod-connector");
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("hotrod-connector");
 
    HotRodServerConfiguration(AttributeSet attributes,
                              TopologyCacheConfiguration topologyCache,

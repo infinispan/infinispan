@@ -268,8 +268,8 @@ public interface MetaParam<T> {
     */
    @Experimental
    final class MetaLoadedFromPersistence implements MetaParam<Boolean> {
-      public static MetaLoadedFromPersistence LOADED = new MetaLoadedFromPersistence(true);
-      public static MetaLoadedFromPersistence NOT_LOADED = new MetaLoadedFromPersistence(false);
+      public static final MetaLoadedFromPersistence LOADED = new MetaLoadedFromPersistence(true);
+      public static final MetaLoadedFromPersistence NOT_LOADED = new MetaLoadedFromPersistence(false);
 
       private boolean loaded;
 

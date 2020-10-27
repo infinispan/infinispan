@@ -29,7 +29,7 @@ public class JBossLoggingConsumer extends BaseConsumer<JBossLoggingConsumer> {
       switch (outputType) {
          case STDOUT:
          case STDERR:
-            System.out.printf("%s%s: %s\n", prefix, outputType, utf8String);
+            System.out.printf("%s%s: %s%n", prefix, outputType, utf8String);
             this.logger.tracef("%s%s: %s", prefix, outputType, utf8String);
          case END:
             return;

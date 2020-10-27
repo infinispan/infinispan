@@ -12,7 +12,7 @@ public class EnvironmentCheck {
       String jvmVersionRegex = System.getProperty("infinispan.test.jvm.version.regex");
       if (jvmVersionRegex != null) {
          if (!System.getProperty("java.version").matches(jvmVersionRegex)) {
-            String message = String.format("JVM version '%s' does not match '%s'\n", System.getProperty("java.version"), jvmVersionRegex);
+            String message = String.format("JVM version '%s' does not match '%s'%n", System.getProperty("java.version"), jvmVersionRegex);
             throw new RuntimeException(message);
          }
       }

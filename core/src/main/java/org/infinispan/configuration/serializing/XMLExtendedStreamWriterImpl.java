@@ -16,7 +16,7 @@ import javax.xml.stream.XMLStreamWriter;
  * @since 9.0
  */
 public final class XMLExtendedStreamWriterImpl implements XMLExtendedStreamWriter, XMLStreamConstants {
-   private static final String NO_NAMESPACE = new String();
+   private static final String NO_NAMESPACE = "";
    private final XMLStreamWriter delegate;
    private final ArrayDeque<ArgRunnable> attrQueue = new ArrayDeque<>();
    private int level;

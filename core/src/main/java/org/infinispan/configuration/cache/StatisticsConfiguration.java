@@ -14,8 +14,8 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class StatisticsConfiguration extends JMXStatisticsConfiguration implements Matchable<StatisticsConfiguration> {
 
-   public static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("statistics").build();
-   public static AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).xmlName("statistics-available").build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("statistics").build();
+   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).xmlName("statistics-available").build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StatisticsConfiguration.class, ENABLED, AVAILABLE);

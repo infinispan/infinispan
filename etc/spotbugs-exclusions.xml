@@ -9,4 +9,10 @@
    <Match>
       <Package name="~.*\.generated" />
    </Match>
+   <Match>
+      <Or>
+         <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleLexer"/>
+         <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleParser"/>
+      </Or>
+   </Match>
 </FindBugsFilter>

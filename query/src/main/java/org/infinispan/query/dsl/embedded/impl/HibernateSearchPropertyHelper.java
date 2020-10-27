@@ -19,8 +19,8 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 
 public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
-   public static String KEY = "__ISPN_Key";
-   public static String VALUE = "__HSearch_This";
+   public static final String KEY = "__ISPN_Key";
+   public static final String VALUE = "__HSearch_This";
 
    private final SearchMapping searchMapping;
 

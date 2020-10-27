@@ -26,7 +26,7 @@ public class TopologyCacheConfiguration implements ConfigurationInfo {
       return new AttributeSet(TopologyCacheConfiguration.class, TOPOLOGY_AWAIT_INITIAL_TRANSFER, TOPOLOGY_LOCK_TIMEOUT, TOPOLOGY_REPL_TIMEOUT, LAZY_RETRIEVAL);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("topology-state-transfer");
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("topology-state-transfer");
 
    TopologyCacheConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
