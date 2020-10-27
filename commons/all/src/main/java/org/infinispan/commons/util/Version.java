@@ -148,7 +148,12 @@ public class Version {
       if (versionString == null)
          throw new IllegalArgumentException("versionString is null");
 
-      String parts[] = getParts(versionString);
+      String parts[];
+      if (versionString.equals(String.format("${%s}", INFINISPAN_CORE_SCHEMA_VERSION))) {
+         parts = getParts(Version.getSchemaVersion());
+      } else {
+         parts = getParts(versionString);
+      }
       int a = 0;
       int b = 0;
       int c = 0;
