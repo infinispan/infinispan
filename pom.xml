@@ -2117,6 +2117,11 @@
                <groupId>com.github.spotbugs</groupId>
                <artifactId>spotbugs-maven-plugin</artifactId>
                <version>4.0.4</version>
+               <configuration>
+                  <addSourceDirs>true</addSourceDirs>
+                  <excludeFilterFile>${infinispan.root}/etc/spotbugs-exclusions.xml</excludeFilterFile>
+                  <threshold>medium</threshold>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.owasp</groupId>
@@ -2383,11 +2388,6 @@
          <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <configuration>
-               <addSourceDirs>true</addSourceDirs>
-               <excludeFilterFile>${infinispan.root}/etc/spotbugs-exclusions.xml</excludeFilterFile>
-               <threshold>medium</threshold>
-            </configuration>
          </plugin>
          <plugin>
             <groupId>org.owasp</groupId>

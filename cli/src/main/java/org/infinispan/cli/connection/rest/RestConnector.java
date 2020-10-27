@@ -56,7 +56,7 @@ public class RestConnector implements Connector {
             }
          }
          return new RestConnection(builder);
-      } catch (Exception e) {
+      } catch (Throwable e) {
          return null;
       }
    }

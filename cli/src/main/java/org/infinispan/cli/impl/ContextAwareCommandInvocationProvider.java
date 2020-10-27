@@ -14,7 +14,7 @@ public class ContextAwareCommandInvocationProvider implements CommandInvocationP
    private final Context context;
 
    public ContextAwareCommandInvocationProvider(Context context) {
-      Objects.nonNull(context);
+      Objects.requireNonNull(context);
       this.context = context;
    }
 

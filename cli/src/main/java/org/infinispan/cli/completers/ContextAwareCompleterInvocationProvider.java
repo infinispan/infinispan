@@ -14,7 +14,7 @@ public class ContextAwareCompleterInvocationProvider implements CompleterInvocat
    private final Context context;
 
    public ContextAwareCompleterInvocationProvider(Context context) {
-      Objects.nonNull(context);
+      Objects.requireNonNull(context);
       this.context = context;
    }
 

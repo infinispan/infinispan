@@ -133,7 +133,7 @@ public class PromptBuilder {
                                        }
                                     }
                                     for (Color sc : Color.values()) {
-                                       if (sc.name().equalsIgnoreCase(color == null ? "" : color.trim())) {
+                                       if (sc.name().equalsIgnoreCase(color.trim())) {
                                           c = sc;
                                           break;
                                        }

@@ -41,7 +41,7 @@ public class Migrate extends CliCommand {
    }
 
    @GroupCommandDefinition(name = Migrate.Cluster.CMD, description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
-   public class Cluster extends CliCommand {
+   public static class Cluster extends CliCommand {
 
       public static final String CMD = "cluster";
 

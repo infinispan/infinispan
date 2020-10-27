@@ -19,7 +19,7 @@ public class JsonReaderIterator implements Iterator<String>, AutoCloseable {
    private boolean eof = false;
 
    public JsonReaderIterator(Reader reader, Predicate<String> predicate) throws IllegalArgumentException, IOException {
-      Objects.nonNull(reader);
+      Objects.requireNonNull(reader);
       JsonFactory jsonFactory = new JsonFactory();
       this.parser = jsonFactory.createParser((reader instanceof BufferedReader) ? (BufferedReader) reader : new BufferedReader(reader));
       this.predicate = predicate;

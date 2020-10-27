@@ -15,7 +15,7 @@ public class ContextAwareCommandActivatorProvider implements CommandActivatorPro
    private final Context context;
 
    public ContextAwareCommandActivatorProvider(Context context) {
-      Objects.nonNull(context);
+      Objects.requireNonNull(context);
       this.context = context;
    }
 
