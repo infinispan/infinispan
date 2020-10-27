@@ -458,6 +458,7 @@ public class RestConnection implements Connection, Closeable {
                break;
             }
             case Ls.CMD: {
+               refreshServerInfo();
                Resource resource = activeResource;
                if (command.hasArg(CliCommand.PATH)) {
                   resource = pathToResource(command.arg(CliCommand.PATH));
