@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -18,19 +17,9 @@ public class ReaderIterator implements Iterator<String>, AutoCloseable {
    private final Pattern regex;
    private Matcher matcher;
 
-   public ReaderIterator(InputStream inputStream) {
-      this(inputStream, null);
-   }
-
    public ReaderIterator(InputStream inputStream, Pattern regex) {
-      Objects.nonNull(inputStream);
+      Objects.requireNonNull(inputStream);
       this.reader = new BufferedReader(new InputStreamReader(inputStream));
-      this.regex = regex;
-   }
-
-   public ReaderIterator(Reader reader, Pattern regex) {
-      Objects.nonNull(reader);
-      this.reader = (reader instanceof BufferedReader) ? (BufferedReader) reader : new BufferedReader(reader);
       this.regex = regex;
    }
 

@@ -124,17 +124,17 @@ public class BenchmarkOutputFormat implements OutputFormat {
       out.println("# Benchmark mode: " + params.getMode().longLabel());
       out.println("# Benchmark: " + params.getBenchmark());
       if (!params.getParamsKeys().isEmpty()) {
-         String s = "";
+         StringBuilder sb = new StringBuilder();
          boolean isFirst = true;
          for (String k : params.getParamsKeys()) {
             if (isFirst) {
                isFirst = false;
             } else {
-               s += ", ";
+               sb.append(", ");
             }
-            s += k + " = " + params.getParam(k);
+            sb.append(k).append(" = ").append(params.getParam(k));
          }
-         out.println("# Parameters: (" + s + ")");
+         out.println("# Parameters: (" + sb.toString() + ")");
       }
    }
 

@@ -28,10 +28,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aesh.io.FileResource;
-import org.infinispan.cli.commands.Abort;
 import org.infinispan.cli.commands.Add;
 import org.infinispan.cli.commands.Backup;
-import org.infinispan.cli.commands.Begin;
 import org.infinispan.cli.commands.Cache;
 import org.infinispan.cli.commands.Cas;
 import org.infinispan.cli.commands.Cd;
@@ -44,10 +42,7 @@ import org.infinispan.cli.commands.Create;
 import org.infinispan.cli.commands.Describe;
 import org.infinispan.cli.commands.Drop;
 import org.infinispan.cli.commands.Encoding;
-import org.infinispan.cli.commands.End;
-import org.infinispan.cli.commands.Evict;
 import org.infinispan.cli.commands.Get;
-import org.infinispan.cli.commands.Grant;
 import org.infinispan.cli.commands.Logging;
 import org.infinispan.cli.commands.Ls;
 import org.infinispan.cli.commands.Migrate;
@@ -55,13 +50,10 @@ import org.infinispan.cli.commands.Put;
 import org.infinispan.cli.commands.Query;
 import org.infinispan.cli.commands.Remove;
 import org.infinispan.cli.commands.Reset;
-import org.infinispan.cli.commands.Revoke;
-import org.infinispan.cli.commands.Rollback;
 import org.infinispan.cli.commands.Schema;
 import org.infinispan.cli.commands.Server;
 import org.infinispan.cli.commands.Shutdown;
 import org.infinispan.cli.commands.Site;
-import org.infinispan.cli.commands.Start;
 import org.infinispan.cli.commands.Stats;
 import org.infinispan.cli.commands.Task;
 import org.infinispan.cli.connection.Connection;
@@ -100,7 +92,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 10.0
  **/
 public class RestConnection implements Connection, Closeable {
-   public static String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
+   public static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
    private final RestClientConfigurationBuilder builder;
 
    private Resource activeResource;
@@ -279,7 +271,7 @@ public class RestConnection implements Connection, Closeable {
                      backupName = command.optionOrDefault(Backup.NAME, () -> {
                         // If the backup name has not been specified generate one based upon the Infinispan version and timestamp
                         LocalDateTime now = LocalDateTime.now();
-                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS\n", Version.getBrandName(), now);
+                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS%n", Version.getBrandName(), now);
                      });
 
                      sb.append("Creating backup '").append(backupName).append("'");
@@ -313,7 +305,7 @@ public class RestConnection implements Connection, Closeable {
                      String restoreName = command.optionOrDefault(Backup.NAME, () -> {
                         // If the restore name has not been specified generate one based upon the Infinispan version and timestamp
                         LocalDateTime now = LocalDateTime.now();
-                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS\n", Version.getBrandName(), now);
+                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS%n", Version.getBrandName(), now);
                      });
                      if (upload != null && upload) {
                         File file = resource.getFile();
@@ -666,16 +658,8 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
-            case Abort.CMD:
-            case Begin.CMD:
-            case End.CMD:
-            case Evict.CMD:
-            case Grant.CMD:
-            case Revoke.CMD:
-            case Rollback.CMD:
-            case Start.CMD:
             default:
-               break;
+               throw new IllegalArgumentException(command.name());
          }
          if (response != null) {
             RestResponse r = fetch(response);
@@ -704,6 +688,8 @@ public class RestConnection implements Connection, Closeable {
                case HEADERS:
                   sb.append(Json.make(parseHeaders(r)).toPrettyString());
                   break;
+               default:
+                  throw new IllegalArgumentException(responseMode.name());
             }
          }
       }
@@ -862,7 +848,7 @@ public class RestConnection implements Connection, Closeable {
          List<Map<String, Object>> definedCaches = (List<Map<String, Object>>) cacheManagerInfo.get("defined_caches");
          availableCaches = new ArrayList<>();
          definedCaches.forEach(m -> availableCaches.add((String) m.get("name")));
-         definedCaches.remove(PROTOBUF_METADATA_CACHE_NAME);
+         availableCaches.remove(PROTOBUF_METADATA_CACHE_NAME);
          List configurationList = parseBody(fetch(() -> client.cacheManager(containerName).cacheConfigurations()), List.class);
          availableConfigurations = new ArrayList<>(configurationList.size());
          for (Object item : configurationList) {

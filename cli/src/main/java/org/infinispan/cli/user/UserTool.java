@@ -53,7 +53,7 @@ public class UserTool {
    private static final String ALGORITHM_COMMENT_PREFIX = "$ALGORITHM=";
 
 
-   public static final List<String> DEFAULT_ALGORITHMS = Arrays.asList(
+   public static final List<String> DEFAULT_ALGORITHMS = Collections.unmodifiableList(Arrays.asList(
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_1,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
@@ -63,7 +63,7 @@ public class UserTool {
          DigestPassword.ALGORITHM_DIGEST_SHA_256,
          DigestPassword.ALGORITHM_DIGEST_SHA_384,
          DigestPassword.ALGORITHM_DIGEST_SHA_512
-   );
+   ));
 
    private final Path serverRoot;
    private final Path usersFile;
