@@ -24,11 +24,13 @@ import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -44,7 +46,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
-import org.infinispan.rest.CacheInputStream;
+import org.infinispan.rest.CacheEntryInputStream;
+import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
@@ -81,6 +84,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::streamEntries)
 
             // Info and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
@@ -177,8 +181,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
 
-      List<String> values = request.parameters().get("batch");
-      int batch = values == null || values.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(values.iterator().next());
+      String batchParam = request.getParameter("batch");
+      String limitParam = request.getParameter("limit");
+      int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+      int limit = limitParam == null || limitParam.isEmpty() ? -1 : Integer.parseInt(limitParam);
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
       if (cache == null)
@@ -187,7 +193,39 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       // Streaming over the cache is blocking
       return CompletableFuture.supplyAsync(() -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
+         CacheStream<?> stream = cache.keySet().stream();
+         if (limit > -1) {
+            stream = stream.limit(limit);
+         }
+         responseBuilder.entity(new CacheKeyInputStream(stream, batch));
+
+         responseBuilder.contentType(APPLICATION_JSON_TYPE);
+
+         return responseBuilder.build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> streamEntries(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      String limitParam = request.getParameter("limit");
+      String metadataParam = request.getParameter("metadata");
+      String batchParam = request.getParameter("batch");
+      int limit = limitParam == null ? -1 : Integer.parseInt(limitParam);
+      boolean metadata = metadataParam == null ? false : Boolean.parseBoolean(metadataParam);
+      int batch = batchParam == null ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
+      if (cache == null)
+         return notFoundResponseFuture();
+
+      // Streaming over the cache is blocking
+      return CompletableFuture.supplyAsync(() -> {
+         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         CacheStream<? extends Map.Entry<?, ?>> stream = cache.entrySet().stream();
+         if (limit > -1) {
+            stream = stream.limit(limit);
+         }
+         responseBuilder.entity(new CacheEntryInputStream(stream, batch, metadata));
 
          responseBuilder.contentType(APPLICATION_JSON_TYPE);
 

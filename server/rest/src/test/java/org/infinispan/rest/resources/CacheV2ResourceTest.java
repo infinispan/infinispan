@@ -460,6 +460,70 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       Set<?> keys = Json.read(response.getBody()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
       assertEquals(entries, keys.size());
       assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
+
+      response = join(client.cache("default").keys(5));
+      Set<?> keysLimited = Json.read(response.getBody()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
+      assertEquals(5, keysLimited.size());
+   }
+
+   @Test
+   public void testStreamEntries() {
+      RestResponse response = join(client.cache("default").entries());
+      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      assertEquals(0, emptyEntries.size());
+      putStringValueInCache("default", "key_0", "value_0");
+      response = join(client.cache("default").entries());
+      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      assertEquals(1, singleSet.size());
+      for (int i = 0; i < 20; i++) {
+         putStringValueInCache("default", "key_" + i, "value_" + i);
+      }
+      response = join(client.cache("default").entries());
+      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      assertEquals(20, jsons.size());
+
+      response = join(client.cache("default").entries(3));
+      jsons = Json.read(response.getBody()).asJsonList();
+      assertEquals(3, jsons.size());
+      Json first = jsons.get(0);
+      String entry = first.toPrettyString();
+      assertThat(entry).contains("\"key\" : \"key_");
+      assertThat(entry).contains("\"value\" : \"value_");
+      assertThat(entry).doesNotContain("lifespan");
+      assertThat(entry).doesNotContain("maxIdle");
+      assertThat(entry).doesNotContain("created");
+      assertThat(entry).doesNotContain("lastUsed");
+      assertThat(entry).doesNotContain("expireTime");
+   }
+
+   @Test
+   public void testStreamEntriesWithMetadata() {
+      RestResponse response = join(client.cache("default").entries(-1, true));
+      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      assertEquals(0, emptyEntries.size());
+      putStringValueInCache("default", "key_0", "value_0");
+      response = join(client.cache("default").entries(-1, true));
+      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      assertEquals(1, singleSet.size());
+      for (int i = 0; i < 20; i++) {
+         putStringValueInCache("default", "key_" + i, "value_" + i);
+      }
+      response = join(client.cache("default").entries(-1, true));
+      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      assertEquals(20, jsons.size());
+
+      response = join(client.cache("default").entries(3, true));
+      jsons = Json.read(response.getBody()).asJsonList();
+      assertEquals(3, jsons.size());
+      Json first = jsons.get(0);
+      String entry = first.toPrettyString();
+      assertThat(entry).contains("\"key\" : \"key_");
+      assertThat(entry).contains("\"value\" : \"value_");
+      assertThat(entry).contains("\"lifespan\" : -1");
+      assertThat(entry).contains("\"maxIdle\" : -1");
+      assertThat(entry).contains("\"created\" : -1");
+      assertThat(entry).contains("\"lastUsed\" : -1");
+      assertThat(entry).contains("\"expireTime\" : -1");
    }
 
    @Test

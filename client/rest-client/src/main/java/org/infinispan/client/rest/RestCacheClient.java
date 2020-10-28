@@ -16,7 +16,39 @@ public interface RestCacheClient {
     */
    String name();
 
+   /**
+    * Retrieve all keys
+    *
+    * @return Response with inputStream to get all the keys
+    */
    CompletionStage<RestResponse> keys();
+
+   /**
+    * Retrieve keys limited by count
+    *
+    * @param limit The maximum number of keys to retrieve
+    * @return Response with InputStream to get the keys
+    */
+   CompletionStage<RestResponse> keys(int limit);
+
+   /**
+    * Retrieves entries without metadata
+    @return Response with InputStream to get the entries
+    */
+   CompletionStage<RestResponse> entries();
+
+   /**
+    * Retrieves entries limited by count
+    * @param limit: The maximum number of entries to retrieve, or -1 to retrieve all
+    */
+   CompletionStage<RestResponse> entries(int limit);
+
+   /**
+    * Retrieves entries with limit and metadata
+    * @param limit: The maximum number of entries to retrieve, or -1 to retrieve all
+    * @param metadata: if true, includes the metadata for each entry
+    */
+   CompletionStage<RestResponse> entries(int limit, boolean metadata);
 
    /**
     * Retrieves all keys from the cache with a specific MediaType or list of MediaTypes.
