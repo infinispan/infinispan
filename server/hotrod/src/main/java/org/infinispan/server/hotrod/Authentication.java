@@ -40,6 +40,8 @@ import io.netty.handler.ssl.SslHandler;
 public class Authentication extends BaseRequestProcessor {
    private final static Log log = LogFactory.getLog(Authentication.class, Log.class);
 
+   private static final String FORCE_QOP = "org.infinispan.server.sasl.force.qop";
+
    private final HotRodServerConfiguration serverConfig;
    private final AuthenticationConfiguration authenticationConfig;
    private final boolean enabled;
@@ -153,7 +155,9 @@ public class Authentication extends BaseRequestProcessor {
 
       if (saslServer.isComplete()) {
          // Finally we setup the QOP handler if required
-         String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
+         String qop = authenticationConfig.mechProperties().containsKey(FORCE_QOP) ? // remove once ELY-2036 is fixed
+               authenticationConfig.mechProperties().get(FORCE_QOP) :
+               (String)saslServer.getNegotiatedProperty(Sasl.QOP);
          if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {
             channel.eventLoop().submit(() -> {
                writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
