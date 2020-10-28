@@ -11,7 +11,7 @@ import org.infinispan.CacheStream;
  *
  * @since 10.0
  */
-public class CacheInputStream extends InputStream {
+public class CacheKeyInputStream extends InputStream {
    private enum State {BEGIN, ITEM, SEPARATOR, END, EOF}
 
    private static final char STREAM_OPEN_CHAR = '[';
@@ -28,7 +28,7 @@ public class CacheInputStream extends InputStream {
 
    private State state = State.BEGIN;
 
-   public CacheInputStream(CacheStream<?> stream, int batchSize) {
+   public CacheKeyInputStream(CacheStream<?> stream, int batchSize) {
       this.batchSize = batchSize;
       this.stream = stream.distributedBatchSize(batchSize);
       this.iterator = stream.iterator();

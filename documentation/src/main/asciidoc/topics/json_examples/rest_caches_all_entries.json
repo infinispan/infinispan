@@ -1,0 +1,20 @@
+[
+    {
+        "key":1,
+        "value":"value1",
+        "lifespan":-1,
+        "maxIdle":-1,
+        "created":-1,
+        "lastUsed":-1,
+        "expireTime":-1
+    },
+    {
+        "key":2,
+        "value":"value2",
+        "lifespan":-1,
+        "maxIdle":-1,
+        "created":-1,
+        "lastUsed":-1,
+        "expireTime":-1
+    }
+]

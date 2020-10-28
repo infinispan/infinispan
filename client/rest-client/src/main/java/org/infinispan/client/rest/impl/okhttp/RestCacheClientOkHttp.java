@@ -265,6 +265,34 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> keys(int limit) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=keys&limit=" + limit).get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> entries() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=entries").get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> entries(int limit) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=entries&limit=" + limit).get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> entries(int limit, boolean metadata) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=entries&metadata=" + metadata + "&limit=" + limit).get();
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> keys(String mediaType) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=keys").get();

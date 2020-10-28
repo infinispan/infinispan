@@ -318,10 +318,53 @@ GET /rest/v2/caches/{cacheName}?action=keys
 |===
 |Parameter |Required or Optional |Value
 
-|`batch-size`
+|`limit`
+|OPTIONAL
+|Specifies the maximum number of keys to retrieve using an InputStream. A negative value retrieves all keys. The default value is `-1`.
+|`batch`
 |OPTIONAL
 |Specifies the internal batch size when retrieving the keys. The default value is `1000`.
 |===
+
+[id='rest_v2_get_entries']
+= Retrieving All Entries from Caches
+Invoke `GET` requests to retrieve all the entries in a cache in JSON format.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=entries
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`metadata`
+|OPTIONAL
+|Includes metadata for each entry in the response. The default value is `false`.
+|`limit`
+|OPTIONAL
+|Specifies the maximum number of keys to include in the response. A negative value retrieves all keys. The default value is `-1`.
+|`batch`
+|OPTIONAL
+|Specifies the internal batch size when retrieving the keys. The default value is `1000`.
+|===
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_caches_all_entries.json[]
+----
+
+* `key` The key for the entry.
+* `value` The value of the entry.
+* `lifespan` Lifespan, in milliseconds, or `Forever` if entries never expire. Returns a value of `-1` unless you set metadata="true".
+* `maxIdle` Maximum idle time, in milliseconds, or `Forever` if entries never expire. Returns a value of `-1` unless you set metadata="true".
+* `created` Time the entry was created. Returns a value of `-1` unless you set metadata="true".
+* `lastUsed` Last time an operation was performed on the entry. Returns a value of `-1` unless you set metadata="true".
+* `expireTime` Time when the entry expires or `Never` for immortal entries. Returns a value of `-1` unless you set metadata="true".
 
 
 [id='rest_v2_clear_cache']
