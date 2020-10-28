@@ -63,6 +63,7 @@ public enum ResponseWriter {
             HttpResponse res = response.getResponse();
             HttpUtil.setContentLength(res, randomAccessFile.length());
             accessLog.log(ctx, request, response.getResponse());
+            response.getResponse().headers().add(ResponseHeader.TRANSFER_ENCODING.getValue(), "chunked");
             ctx.write(res);
             ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(randomAccessFile, 0, randomAccessFile.length(), 8192)), ctx.newProgressivePromise());
          } catch (IOException e) {

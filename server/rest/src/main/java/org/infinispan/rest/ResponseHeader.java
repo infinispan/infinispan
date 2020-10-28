@@ -22,6 +22,7 @@ public enum ResponseHeader {
    LOCATION("location"),
    MAX_IDLE_TIME_HEADER("maxIdleTimeSeconds"),
    TIME_TO_LIVE_HEADER("timeToLiveSeconds"),
+   TRANSFER_ENCODING("Transfer-Encoding"),
    WWW_AUTHENTICATE_HEADER("WWW-Authenticate");
 
    private static final CharSequence[] ALL_VALUES = Arrays.stream(values()).map(ResponseHeader::getValue).toArray(String[]::new);
