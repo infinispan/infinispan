@@ -3,5 +3,6 @@
                     <policy>
                       <no-anonymous value="true" />
                     </policy>
+                    <property name="org.infinispan.server.sasl.force.qop">auth-conf</property>
                   </sasl>
                 </authentication>
