@@ -1,6 +1,7 @@
 package org.infinispan.rest.configuration;
 
 import static org.infinispan.rest.configuration.AuthenticationConfiguration.MECHANISMS;
+import static org.infinispan.rest.configuration.AuthenticationConfiguration.METRICS_AUTH;
 import static org.infinispan.rest.configuration.AuthenticationConfiguration.SECURITY_REALM;
 
 import java.util.List;
@@ -70,6 +71,12 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
 
    public boolean hasMechanisms() {
       return !attributes.attribute(MECHANISMS).get().isEmpty();
+   }
+
+
+   public AuthenticationConfigurationBuilder metricsAuth(boolean metricsAuth) {
+      attributes.attribute(METRICS_AUTH).set(metricsAuth);
+      return this;
    }
 
    @Override

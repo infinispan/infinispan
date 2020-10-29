@@ -102,7 +102,8 @@ public enum Attribute {
    BACKGROUND_VALIDATION,
    LEAK_DETECTION,
    IDLE_REMOVAL,
-   ADMIN;
+   ADMIN,
+   METRICS_AUTH;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

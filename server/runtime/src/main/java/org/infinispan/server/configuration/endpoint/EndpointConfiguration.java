@@ -19,13 +19,14 @@ public class EndpointConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).build();
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
    static final AttributeDefinition<Boolean> ADMIN = AttributeDefinition.builder("admin", true, Boolean.class).build();
+   static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder("metrics-auth", true, Boolean.class).build();
 
    private final List<ProtocolServerConfiguration> connectors;
    private final SinglePortRouterConfiguration singlePort;
 
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EndpointConfiguration.class, SOCKET_BINDING, SECURITY_REALM, ADMIN);
+      return new AttributeSet(EndpointConfiguration.class, SOCKET_BINDING, SECURITY_REALM, ADMIN, METRICS_AUTH);
    }
 
    private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.ENDPOINTS.toString());
@@ -58,6 +59,10 @@ public class EndpointConfiguration implements ConfigurationInfo {
 
    public boolean admin() {
       return attributes.attribute(ADMIN).get();
+   }
+
+   public boolean metricsAuth() {
+      return attributes.attribute(METRICS_AUTH).get();
    }
 
    @Override
