@@ -313,7 +313,12 @@
             </xs:attribute>
             <xs:attribute name="admin" type="xs:boolean" default="true">
                <xs:annotation>
-                  <xs:documentation>Enable/disable administrative features on this endpoint. Defaults to true.</xs:documentation>
+                  <xs:documentation>Enable administrative features on this endpoint. Defaults to true.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="metrics-auth" type="xs:boolean" default="true">
+               <xs:annotation>
+                  <xs:documentation>Enable metrics authentication on this endpoint. Defaults to true.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>

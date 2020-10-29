@@ -84,6 +84,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
          builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
       }
+      builder.authentication().metricsAuth(endpoint.metricsAuth());
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));

@@ -55,6 +55,15 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return attributes.attribute(EndpointConfiguration.ADMIN).get();
    }
 
+   public EndpointConfigurationBuilder metricsAuth(boolean auth) {
+      attributes.attribute(EndpointConfiguration.METRICS_AUTH).set(auth);
+      return this;
+   }
+
+   public boolean metricsAuth() {
+      return attributes.attribute(EndpointConfiguration.METRICS_AUTH).get();
+   }
+
    public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
       return connectorBuilders;
    }
