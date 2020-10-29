@@ -40,9 +40,11 @@ public final class MetricsResource implements ResourceHandler {
    private static final String METRICS_PATH = "/metrics";
 
    private final MetricsRequestHandler requestHandler = new MetricsRequestHandler();
+   private final boolean auth;
 
-   public MetricsResource() {
+   public MetricsResource(boolean auth) {
       registerBaseMetrics();
+      this.auth = auth;
    }
 
    // this is kept separate just in case Quarkus needs to replace it with nil
@@ -59,8 +61,8 @@ public final class MetricsResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET, OPTIONS).path(METRICS_PATH).handleWith(this::metrics)
-            .invocation().methods(GET, OPTIONS).path(METRICS_PATH + "/*").handleWith(this::metrics)
+            .invocation().methods(GET, OPTIONS).path(METRICS_PATH).anonymous(!auth).handleWith(this::metrics)
+            .invocation().methods(GET, OPTIONS).path(METRICS_PATH + "/*").anonymous(!auth).handleWith(this::metrics)
             .create();
    }
 

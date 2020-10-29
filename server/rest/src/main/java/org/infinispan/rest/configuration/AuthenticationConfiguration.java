@@ -20,6 +20,7 @@ import org.infinispan.rest.authentication.Authenticator;
 public class AuthenticationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("securityRealm", null, String.class).immutable().build();
    public static final AttributeDefinition<List<String>> MECHANISMS = AttributeDefinition.builder("mechanisms", null, (Class<List<String>>) (Class<?>) List.class).initializer(ArrayList::new).immutable().build();
+   public static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder("metrics-auth", true, Boolean.class).build();
 
    static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("authentication");
 
@@ -30,7 +31,7 @@ public class AuthenticationConfiguration implements ConfigurationInfo {
    private final AttributeSet attributes;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AuthenticationConfiguration.class, MECHANISMS, SECURITY_REALM);
+      return new AttributeSet(AuthenticationConfiguration.class, MECHANISMS, SECURITY_REALM, METRICS_AUTH);
    }
 
    AuthenticationConfiguration(AttributeSet attributes, Authenticator authenticator, Boolean enabled) {
@@ -60,6 +61,10 @@ public class AuthenticationConfiguration implements ConfigurationInfo {
 
    public Authenticator authenticator() {
       return authenticator;
+   }
+
+   public boolean metricsAuth() {
+      return attributes.attribute(METRICS_AUTH).get();
    }
 
    @Override

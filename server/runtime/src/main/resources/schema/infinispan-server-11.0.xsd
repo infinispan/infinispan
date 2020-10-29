@@ -311,6 +311,11 @@
                   <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="metrics" type="xs:boolean" default="true">
+               <xs:annotation>
+                  <xs:documentation>Enable/disable metrics authentication on this endpoint. Defaults to true.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
