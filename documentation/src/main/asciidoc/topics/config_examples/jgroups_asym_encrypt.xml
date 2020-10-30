@@ -1,0 +1,22 @@
+<infinispan>
+    <jgroups>
+         <stack name="encrypt-tcp" extends="tcp"> <1>
+           <SSL_KEY_EXCHANGE keystore_name="mykeystore.jks" <2>
+                             keystore_password="changeit" <3>
+                             stack.combine="INSERT_AFTER"
+                             stack.position="VERIFY_SUSPECT"/> <4>
+           <ASYM_ENCRYPT asym_keylength="2048" <5>
+                    asym_algorithm="RSA" <6>
+                    change_key_on_coord_leave = "false" <7>
+                    change_key_on_leave = "false" <8>
+                    use_external_key_exchange = "true" <9>
+                    stack.combine="INSERT_BEFORE"
+                    stack.position="pbcast.NAKACK2"/> <10>
+         </stack>
+    </jgroups>
+    <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name}"
+                 stack="encrypt-tcp" <11>
+                 node-name="${infinispan.node.name:}"/>
+   </cache-container>
+</infinispan>
