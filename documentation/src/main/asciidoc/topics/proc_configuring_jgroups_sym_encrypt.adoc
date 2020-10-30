@@ -1,0 +1,50 @@
+[id='configuring_jgroups_sym_encrypt-{context}']
+= Configuring Cluster Transport with Symmetric Encryption
+Configure {brandname} clusters to encrypt JGroups messages with secret keys from keystores that you provide.
+
+.Procedure
+
+. Create a keystore that contains a secret key.
+. Place the keystore on the classpath for each node in the cluster.
++
+For {brandname} Server, you put the keystore in the {server_home} directory.
++
+. Add the `SYM_ENCRYPT` protocol to a JGroups stack in your {brandname} configuration, as in the following example:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jgroups_sym_encrypt.xml[]
+----
++
+<1> Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack for {brandname}.
+<2> Names the keystore from which nodes obtain secret keys.
+<3> Specifies the keystore type. JGroups uses JCEKS by default.
+<4> Specifies the keystore password.
+<5> Specifies the secret key password.
+<6> Specifies the secret key alias.
+<7> Uses the `stack.combine` and `stack.position` attributes to insert `SYM_ENCRYPT` into the default TCP stack after the `VERIFY_SUSPECT` protocol.
+<8> Configures the {brandname} cluster to use the secure JGroups stack.
+
+.Verification
+
+When you start your {brandname} cluster, the following log message indicates that the cluster is using the secure JGroups stack:
+
+[source,bash,options="nowrap"]
+----
+[org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack <encrypted_stack_name>
+----
+
+{brandname} nodes can join the cluster only if they use `SYM_ENCRYPT` and can obtain the secret key from the shared keystore.
+Otherwise the following message is written to {brandname} logs:
+
+----
+[org.jgroups.protocols.SYM_ENCRYPT] <hostname>: received message without encrypt header from <hostname>; dropping it
+----
+
+.Reference
+
+The example `SYM_ENCRYPT` configuration in this procedure shows commonly used parameters.
+Refer to JGroups documentation for the full set of available parameters.
+
+* link:{jgroups_docs}[JGroups 4 Manual]
+* link:{jgroups_schema}[JGroups 4.2 Schema]

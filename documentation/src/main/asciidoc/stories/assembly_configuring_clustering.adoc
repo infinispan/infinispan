@@ -7,6 +7,7 @@ JGroups for inter-cluster and intra-cluster communication.
 
 include::assembly_cluster_transport.adoc[leveloffset=+1]
 include::assembly_cluster_discovery.adoc[leveloffset=+1]
+include::assembly_encrypting_cluster_traffic.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
