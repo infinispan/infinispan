@@ -238,6 +238,10 @@
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>
+      <!-- remove after EAP 7.3.4 is released -->
+      <versionx.com.fasterxml.jackson.datatype.jackson-datatype-jdk8>${version.jackson}</versionx.com.fasterxml.jackson.datatype.jackson-datatype-jdk8>
+      <versionx.com.fasterxml.jackson.datatype.jackson-datatype-jsr310>${version.jackson}</versionx.com.fasterxml.jackson.datatype.jackson-datatype-jsr310>
+      <!-- end -->
       <versionx.com.fasterxml.woodstox.woodstox-core>6.0.3</versionx.com.fasterxml.woodstox.woodstox-core>
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.github.javaparser.javaparser-core>${version.javaparser}</versionx.com.github.javaparser.javaparser-core>
@@ -760,6 +764,18 @@
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+
+      <!-- remove after EAP 7.3.4 is released -->
+      <versionx.org.wildfly.openssl.wildfly-openssl>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl>
+      <versionx.org.wildfly.openssl.wildfly-openssl-java>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-java>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>
+      <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>1.0.12.Final</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
+      <!-- end -->
+
       <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.13.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
       <versionx.org.wildfly.wildfly-clustering-common>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-common>
       <versionx.org.wildfly.wildfly-clustering-infinispan-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-infinispan-spi>
@@ -3819,6 +3835,61 @@
             <artifactId>xpp3_min</artifactId>
             <version>${versionx.xpp3.xpp3_min}</version>
          </dependency>
+
+         <!-- To be removed when EAP 7.3.4 is released -->
+         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+            <version>${versionx.com.fasterxml.jackson.datatype.jackson-datatype-jdk8}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${versionx.com.fasterxml.jackson.datatype.jackson-datatype-jsr310}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-java</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-java}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-linux-i386</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-i386}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-linux-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-solaris-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-windows-i386</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-i386}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-windows-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64}</version>
+         </dependency>
+         <!-- end -->
+
       </dependencies>
    </dependencyManagement>
 

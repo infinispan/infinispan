@@ -12,5 +12,40 @@
     <version-overrides>
         <version-override groupId="org.hibernate.gson-jbossmodules" artifactId="gson-jbossmodules" version="${version.gson.featurepack}" extension="zip"/>
         <version-override groupId="org.hibernate.lucene-jbossmodules" artifactId="lucene-jbossmodules" version="${version.lucene.featurepack}" extension="zip"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-java" version="${versionx.org.wildfly.openssl.wildfly-openssl-java}" />
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-linux-i386" version="${versionx.org.wildfly.openssl.wildfly-openssl-linux-i386}"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-linux-x86_64" version="${versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64}"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-macosx-x86_64" version="${versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64}"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-solaris-x86_64" version="${versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64}"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-windows-i386" version="${versionx.org.wildfly.openssl.wildfly-openssl-windows-i386}"/>
+        <version-override groupId="org.wildfly.openssl" artifactId="wildfly-openssl-windows-x86_64" version="${versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64}"/>
+        <version-override groupId="com.fasterxml.jackson.core" artifactId="jackson-annotations" version="${versionx.com.fasterxml.jackson.core.jackson-annotations}"/>
+        <version-override groupId="com.fasterxml.jackson.core" artifactId="jackson-core" version="${versionx.com.fasterxml.jackson.core.jackson-core}"/>
+        <version-override groupId="com.fasterxml.jackson.core" artifactId="jackson-databind" version="${versionx.com.fasterxml.jackson.core.jackson-databind}"/>
+        <version-override groupId="com.fasterxml.jackson.datatype" artifactId="jackson-datatype-jdk8" version="${versionx.com.fasterxml.jackson.datatype.jackson-datatype-jdk8}"/>
+        <version-override groupId="com.fasterxml.jackson.datatype" artifactId="jackson-datatype-jsr310" version="${versionx.com.fasterxml.jackson.datatype.jackson-datatype-jsr310}"/>
     </version-overrides>
+    <!-- copy from wildfly-core-feature-pack -->
+    <copy-artifacts>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-linux-x86_64" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="META-INF*" include="false"/>
+        </copy-artifact>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-linux-i386" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="META-INF*" include="false"/>
+        </copy-artifact>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-macosx-x86_64" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="META-INF*" include="false"/>
+        </copy-artifact>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-windows-i386" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="*.dll" include="true"/>
+            <filter pattern="*" include="false"/>
+        </copy-artifact>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-windows-x86_64" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="*.dll" include="true"/>
+            <filter pattern="*" include="false"/>
+        </copy-artifact>
+        <copy-artifact artifact="org.wildfly.openssl:wildfly-openssl-solaris-x86_64" to-location="modules/system/layers/base/org/wildfly/openssl/main/lib" extract="true">
+            <filter pattern="META-INF*" include="false"/>
+        </copy-artifact>
+    </copy-artifacts>
 </server-provisioning>
