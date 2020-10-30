@@ -1,0 +1,18 @@
+<infinispan>
+    <jgroups>
+         <stack name="encrypt-tcp" extends="tcp"> <1>
+           <SYM_ENCRYPT keystore_name="myKeystore.p12" <2>
+                        keystore_type="PKCS12" <3>
+                        store_password="changeit" <4>
+                        key_password="changeit" <5>
+                        alias="myKey" <6>
+                        stack.combine="INSERT_AFTER"
+                        stack.position="VERIFY_SUSPECT"/> <7>
+         </stack>
+    </jgroups>
+    <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name}"
+                 stack="encrypt-tcp" <8>
+                 node-name="${infinispan.node.name:}"/>
+   </cache-container>
+</infinispan>

@@ -3,5 +3,5 @@
 
 include::../{topics}/con_security.adoc[leveloffset=+1]
 include::{stories}/assembly_security_authorization.adoc[leveloffset=+1]
-include::{stories}/assembly_securing_jgroups.adoc[leveloffset=+1]
+include::{stories}/assembly_encrypting_cluster_traffic.adoc[leveloffset=+1]
 include::{stories}/assembly_ports_protocols.adoc[leveloffset=+1]

@@ -65,6 +65,8 @@
 
 :jgroups_docs: http://www.jgroups.org/manual4/index.html
 
+:jgroups_schema: http://www.jgroups.org/schema/jgroups-4.2.xsd
+
 //
 // Include topic-specific attributes
 //
