@@ -1,9 +1,0 @@
-[id='cluster_security']
-= Securing JGroups
-Configure JGroups to secure {brandname} clusters.
-
-include::{topics}/proc_configuring_jgroups_auth.adoc[leveloffset=+1]
-
-// Restore the parent context.
-ifdef::parent-context[:context: {parent-context}]
-ifndef::parent-context[:!context:]

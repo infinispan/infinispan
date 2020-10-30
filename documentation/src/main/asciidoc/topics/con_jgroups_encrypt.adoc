@@ -1,0 +1,48 @@
+[id='jgroups_encryption-{context}']
+= {brandname} Cluster Security
+To secure cluster traffic, you configure {brandname} nodes to encrypt JGroups message payloads with secret keys.
+
+{brandname} nodes can obtain secret keys from either:
+
+* The coordinator node (asymmetric encryption).
+* A shared keystore (symmetric encryption).
+
+.Retrieving secret keys from coordinator nodes
+
+You configure asymmetric encryption by adding the `ASYM_ENCRYPT` protocol to a JGroups stack in your {brandname} configuration.
+This allows {brandname} clusters to generate and distribute secret keys.
+
+[IMPORTANT]
+====
+When using asymmetric encryption, you should also provide keystores so that nodes can perform certificate authentication and securely exchange secret keys.
+This protects your cluster from man-in-the-middle (MitM) attacks.
+====
+
+Asymmetric encryption secures cluster traffic as follows:
+
+. The first node in the {brandname} cluster, the coordinator node, generates a secret key.
+. A joining node performs certificate authentication with the coordinator to mutually verify identity.
+. The joining node requests the secret key from the coordinator node. That request includes the public key for the joining node.
+. The coordinator node encrypts the secret key with the public key and returns it to the joining node.
+. The joining node decrypts and installs the secret key.
+. The node joins the cluster, encrypting and decrypting messages with the secret key.
+
+.Retrieving secret keys from shared keystores
+
+You configure symmetric encryption by adding the `SYM_ENCRYPT` protocol to a JGroups stack in your {brandname} configuration.
+This allows {brandname} clusters to obtain secret keys from keystores that you provide.
+
+. Nodes install the secret key from a keystore on the {brandname} classpath at startup.
+. Node join clusters, encrypting and decrypting messages with the secret key.
+
+.Comparison of asymmetric and symmetric encryption
+
+`ASYM_ENCRYPT` with certificate authentication provides an additional layer of encryption in comparison with `SYM_ENCRYPT`.
+You provide keystores that encrypt the requests to coordinator nodes for the secret key.
+{brandname} automatically generates that secret key and handles cluster traffic, while letting you specify when to generate secret keys.
+For example, you can configure clusters to generate new secret keys when nodes leave.
+This ensures that nodes cannot bypass certificate authentication and join with old keys.
+
+`SYM_ENCRYPT`, on the other hand, is faster than `ASYM_ENCRYPT` because nodes do not need to exchange keys with the cluster coordinator.
+A potential drawback to `SYM_ENCRYPT` is that there is no configuration to automatically generate new secret keys when cluster membership changes.
+Users are responsible for generating and distributing the secret keys that nodes use to encrypt cluster traffic.
