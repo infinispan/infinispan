@@ -44,3 +44,8 @@ message Papillon {
 message RoughCoatedCollie {
     optional Dog dog = 1;
 }
+
+message Blog {
+    optional string title = 1;
+    optional string body = 2;
+}
