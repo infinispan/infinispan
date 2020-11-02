@@ -7,6 +7,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 import domain.Beagle;
+import domain.Blog;
 import domain.BorderCollie;
 import domain.Chihuahua;
 import domain.Dachshund;
@@ -54,6 +55,7 @@ public class JCacheTckContextInitializer implements SerializationContextInitiali
       serCtx.registerMarshaller(new DogBreedMarshaller(Dachshund.class));
       serCtx.registerMarshaller(new DogBreedMarshaller(Papillon.class));
       serCtx.registerMarshaller(new DogBreedMarshaller(RoughCoatedCollie.class));
+      serCtx.registerMarshaller(new BlogMarshaller());
    }
 
    static class IdentityMarshaller implements MessageMarshaller<Identifier> {
@@ -175,6 +177,36 @@ public class JCacheTckContextInitializer implements SerializationContextInitiali
       @Override
       public String getTypeName() {
          return type(clazz.getSimpleName());
+      }
+   }
+
+   static class BlogMarshaller implements MessageMarshaller<Blog> {
+
+      @Override
+      public Blog readFrom(ProtoStreamReader reader) throws IOException {
+         try {
+            String title = reader.readString("title");
+            String body = reader.readString("body");
+            return new Blog(title, body);
+         } catch (Exception e) {
+            throw new IllegalStateException(e);
+         }
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, Blog blog) throws IOException {
+         writer.writeString("title", blog.getTitle());
+         writer.writeString("body", blog.getBody());
+      }
+
+      @Override
+      public Class<? extends Blog> getJavaClass() {
+         return Blog.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return type(Blog.class.getSimpleName());
       }
    }
 }

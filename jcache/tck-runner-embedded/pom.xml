@@ -33,6 +33,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache-commons</artifactId>
          <scope>test</scope>
       </dependency>
@@ -67,6 +72,20 @@
          <groupId>javax.cache</groupId>
          <artifactId>cdi-weld-annotations-test-harness</artifactId>
          <scope>test</scope>
+         <exclusions>
+            <!--
+             Exclude the reference implementation's CDI interceptors
+             in cache-annotations-ri-cdi.
+             Because of org.jboss.weld.se.archive.isolation=false,
+             Weld uses the beans.xml in this jar as well.
+             The RI interceptors are added to the test beans
+             and could make the tests pass even if our interceptors don't work.
+             -->
+            <exclusion>
+               <groupId>org.jsr107.ri</groupId>
+               <artifactId>cache-annotations-ri-cdi</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
    </dependencies>
 

@@ -363,6 +363,7 @@
       <versionx.org.jboss.threads.jboss-threads>2.3.3.Final</versionx.org.jboss.threads.jboss-threads>
       <versionx.org.jboss.weld.se.weld-se-core>3.1.2.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>3.1.2.Final</versionx.org.jboss.weld.weld-core-impl>
+      <versionx.org.jboss.weld.weld-api>3.1.SP1</versionx.org.jboss.weld.weld-api>
       <versionx.org.jboss.xnio.xnio-api>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-api>
       <versionx.org.jboss.xnio.xnio-nio>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-nio>
       <versionx.org.jgroups.aws.s3.native-s3-ping>0.9.5.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
@@ -1428,6 +1429,19 @@
             <groupId>org.jboss.threads</groupId>
             <artifactId>jboss-threads</artifactId>
             <version>${versionx.org.jboss.threads.jboss-threads}</version>
+         </dependency>
+         <!-- cdi-weld-annotations-test-harness requests weld-api and weld-spi, override the versions to match the impl -->
+         <dependency>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-api</artifactId>
+            <version>${versionx.org.jboss.weld.weld-api}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-spi</artifactId>
+            <version>${versionx.org.jboss.weld.weld-api}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.weld</groupId>
