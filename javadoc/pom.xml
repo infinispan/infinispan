@@ -211,6 +211,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss</groupId>
          <artifactId>jdk-misc</artifactId>
          <version>2.Final</version>
