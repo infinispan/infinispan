@@ -7,7 +7,7 @@ import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.TopologyIracVersion;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.marshall.protostream.impl.UUIDBridge;
+import org.infinispan.marshall.protostream.impl.UUIDAdapter;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -47,7 +47,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
             IracEntryVersion.MapEntry.class,
             TopologyIracVersion.class,
             IracMetadata.class,
-            UUIDBridge.class,
+            UUIDAdapter.class,
       },
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",
@@ -57,7 +57,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
    String PACKAGE_NAME = "org.infinispan.persistence.core";
 
-   static String getFqTypeName(Class clazz) {
+   static String getFqTypeName(Class<?> clazz) {
       return PACKAGE_NAME + "." + clazz.getSimpleName();
    }
 }
