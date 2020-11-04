@@ -89,7 +89,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TxDistributionInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    @Inject PartitionHandlingManager partitionHandlingManager;

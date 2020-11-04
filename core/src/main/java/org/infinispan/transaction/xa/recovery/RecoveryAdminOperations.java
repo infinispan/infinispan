@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryAdminOperations {
 
    private static final Log log = LogFactory.getLog(RecoveryAdminOperations.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final String SEPARATOR = ", ";
 

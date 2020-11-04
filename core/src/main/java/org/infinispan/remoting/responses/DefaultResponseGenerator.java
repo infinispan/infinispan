@@ -13,7 +13,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DefaultResponseGenerator implements ResponseGenerator {
    private static final Log log = LogFactory.getLog(DefaultResponseGenerator.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue instanceof Response)

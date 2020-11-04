@@ -63,7 +63,7 @@ import net.jcip.annotations.GuardedBy;
  */
 public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    private static final Log log = LogFactory.getLog(ScatteredStateConsumerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    protected static final long SKIP_OWNERSHIP_FLAGS = FlagBitSets.SKIP_OWNERSHIP_CHECK;
 

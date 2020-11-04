@@ -51,7 +51,7 @@ import static org.junit.Assert.assertFalse;
 public class PutFromLoadStressTestCase {
 
    static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(PutFromLoadStressTestCase.class);
-   static final boolean isTrace = log.isTraceEnabled();
+   final boolean isTrace = log.isTraceEnabled();
    static final int NUM_THREADS = 100;
    static final int WARMUP_TIME_SECS = 10;
    static final long RUNNING_TIME_SECS = Integer.getInteger("time", 60);

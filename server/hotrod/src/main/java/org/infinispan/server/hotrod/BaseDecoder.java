@@ -23,7 +23,7 @@ import io.netty.handler.codec.DecoderException;
 
 abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final static Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
-   protected final static boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;

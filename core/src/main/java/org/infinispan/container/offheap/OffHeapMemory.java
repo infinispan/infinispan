@@ -14,20 +14,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class OffHeapMemory {
    private static final Log log = LogFactory.getLog(OffHeapMemory.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
+   private final ConcurrentHashMap<Long, Long> allocatedBlocks = trace ? new ConcurrentHashMap<>() : null;
 
    private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
 
    static final OffHeapMemory INSTANCE = new OffHeapMemory();
    private static final int BYTE_ARRAY_BASE_OFFSET = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-
-   private static ConcurrentHashMap<Long, Long> allocatedBlocks;
-
-   static {
-      if (trace) {
-         allocatedBlocks = new ConcurrentHashMap<>();
-      }
-   }
 
    private OffHeapMemory() { }
 
@@ -138,14 +131,14 @@ class OffHeapMemory {
    /**
     * @deprecated Only use for debugging
     */
-   private static byte[] getBytes(long srcAddress, long srcOffset, int length) {
+   private byte[] getBytes(long srcAddress, long srcOffset, int length) {
       checkAddress(srcAddress, srcOffset + length);
       byte[] bytes = new byte[length];
       UNSAFE.copyMemory(null, srcAddress + srcOffset, bytes, BYTE_ARRAY_BASE_OFFSET, length);
       return bytes;
    }
 
-   private static void checkAddress(long address, long offset) {
+   private void checkAddress(long address, long offset) {
       if (!trace)
          return;
 

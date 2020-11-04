@@ -30,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class XaTransactionTable extends TransactionTable {
    private static final Log log = LogFactory.getLog(XaTransactionTable.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected RecoveryManager recoveryManager;
    @ComponentName(KnownComponentNames.CACHE_NAME)

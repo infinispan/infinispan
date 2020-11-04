@@ -43,7 +43,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataContainer<K, V> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    protected final AtomicReferenceArray<PeekableTouchableMap<K, V>> maps;
    protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;

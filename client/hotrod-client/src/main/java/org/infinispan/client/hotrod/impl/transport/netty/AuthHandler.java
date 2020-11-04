@@ -25,7 +25,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 class AuthHandler extends ActivationHandler {
    private static final Log log = LogFactory.getLog(AuthHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";

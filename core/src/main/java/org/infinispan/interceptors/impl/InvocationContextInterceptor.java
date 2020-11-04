@@ -42,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRegistry componentRegistry;
    @Inject TransactionTable txTable;

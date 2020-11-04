@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject RpcManager rpcManager;

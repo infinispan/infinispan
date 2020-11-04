@@ -76,7 +76,7 @@ import org.testng.annotations.Test;
 @Test(testName = "stress.AsyncStoreStressTest", groups = "stress")
 public class AsyncStoreStressTest extends AbstractInfinispanTest {
    static final Log log = LogFactory.getLog(AsyncStoreStressTest.class);
-   static final boolean trace = log.isTraceEnabled();
+   final boolean trace = log.isTraceEnabled();
 
    static final int CAPACITY = Integer.getInteger("size", 100000);
    static final int LOOP_FACTOR = 10;

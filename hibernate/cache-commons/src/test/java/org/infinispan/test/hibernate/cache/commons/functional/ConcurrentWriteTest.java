@@ -42,7 +42,7 @@ import static org.junit.Assert.assertNull;
  */
 public class ConcurrentWriteTest extends SingleNodeTest {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( ConcurrentWriteTest.class );
-	private static final boolean trace = log.isTraceEnabled();
+	private final boolean trace = log.isTraceEnabled();
 	/**
 	 * when USER_COUNT==1, tests pass, when >4 tests fail
 	 */

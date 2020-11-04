@@ -106,7 +106,7 @@ import net.jcip.annotations.GuardedBy;
 public class PersistenceManagerImpl implements PersistenceManager {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject GlobalConfiguration globalConfiguration;

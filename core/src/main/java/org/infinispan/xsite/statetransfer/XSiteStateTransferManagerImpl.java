@@ -64,7 +64,7 @@ import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
    @Inject ComponentRegistry componentRegistry;

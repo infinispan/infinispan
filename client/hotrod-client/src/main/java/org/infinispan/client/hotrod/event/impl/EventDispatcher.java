@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 public abstract class EventDispatcher<T> {
    static final Log log = LogFactory.getLog(EventDispatcher.class);
-   static final boolean trace = log.isTraceEnabled();
+   final boolean trace = log.isTraceEnabled();
    private static final AtomicReferenceFieldUpdater<EventDispatcher, DispatcherStatus> statusUpdater
          = AtomicReferenceFieldUpdater.newUpdater(EventDispatcher.class, DispatcherStatus.class, "status");
 

@@ -71,7 +71,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class QueryInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    static final Object UNKNOWN = new Object() {
       @Override

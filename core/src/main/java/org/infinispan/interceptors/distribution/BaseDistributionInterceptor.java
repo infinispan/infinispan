@@ -79,7 +79,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final Object LOST_PLACEHOLDER = new Object();
 
    @Inject protected RemoteValueRetrievedListener rvrl;

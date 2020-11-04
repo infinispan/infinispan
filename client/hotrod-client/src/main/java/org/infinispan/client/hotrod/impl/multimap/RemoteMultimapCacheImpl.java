@@ -37,7 +37,7 @@ import org.infinispan.commons.marshall.Marshaller;
 public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteMultimapCacheImpl.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InternalRemoteCache<K, Collection<V>> cache;
    private final RemoteCacheManager remoteCacheManager;

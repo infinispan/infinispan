@@ -17,7 +17,6 @@ import org.infinispan.util.logging.LogFactory;
 
 public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderInterceptor<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
 
    @Inject
    DataOperationOrderer orderer;
@@ -45,7 +44,7 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
       }
       return retrievalStage.whenComplete((value, t) -> {
          if (value != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Activating key: %s - not waiting for response", value.getKey());
             }
             // Note we don't wait on this to be removed, which allows the load to continue ahead. However

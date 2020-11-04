@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SemaphoreCompletionService<T> implements CompletionService<T> {
    private static final Log log = LogFactory.getLog(SemaphoreCompletionService.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Executor executor;
    private final CustomSemaphore semaphore;

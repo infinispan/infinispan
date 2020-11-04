@@ -15,7 +15,7 @@ import org.infinispan.query.dsl.impl.QueryStringCreator;
 final class RemoteQueryBuilder extends BaseQueryBuilder {
 
    private static final Log log = LogFactory.getLog(RemoteQueryBuilder.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;

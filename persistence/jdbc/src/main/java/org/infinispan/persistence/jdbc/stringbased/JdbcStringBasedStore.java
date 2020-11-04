@@ -89,7 +89,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V>, TransactionalCacheWriter<K,V> {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Map<Transaction, Connection> transactionConnectionMap = new ConcurrentHashMap<>();
    private JdbcStringBasedStoreConfiguration configuration;

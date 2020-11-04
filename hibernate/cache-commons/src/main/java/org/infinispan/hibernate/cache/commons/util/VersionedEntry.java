@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  */
 public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private static final Log log = LogFactory.getLog(VersionedEntry.class);
-	private static final boolean trace = log.isTraceEnabled();
+	private final boolean trace = log.isTraceEnabled();
 
 	public static final ExcludeEmptyFilter EXCLUDE_EMPTY_VERSIONED_ENTRY = new ExcludeEmptyFilter();
 	private final Object value;

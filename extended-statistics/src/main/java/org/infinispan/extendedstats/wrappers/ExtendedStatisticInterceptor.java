@@ -65,7 +65,7 @@ import org.infinispan.util.logging.LogFactory;
       "relevant to transactions.")
 public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject BasicComponentRegistry componentRegistry;
    @Inject TimeService timeService;

@@ -76,7 +76,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
 public class DefaultIracManager implements IracManager, Runnable {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject RpcManager rpcManager;
    @Inject Configuration config;

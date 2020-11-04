@@ -48,7 +48,7 @@ import net.jcip.annotations.GuardedBy;
 @Listener(observation = Listener.Observation.POST)
 public class PublisherHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, PublisherState> currentRequests = new ConcurrentHashMap<>();
 

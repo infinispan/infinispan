@@ -43,7 +43,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
    private static final Log log = LogFactory.getLog(AbstractCacheTransaction.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
    volatile boolean hasLocalOnlyModifications;

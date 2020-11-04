@@ -39,7 +39,7 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    private static final Log log =
          LogFactory.getLog(AbstractJCache.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    protected final MutableConfiguration<K, V> configuration;
    protected final ExpiryPolicy expiryPolicy;

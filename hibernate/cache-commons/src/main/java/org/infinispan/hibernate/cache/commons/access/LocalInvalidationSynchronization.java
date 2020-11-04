@@ -7,7 +7,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 public class LocalInvalidationSynchronization implements Synchronization {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationSynchronization.class);
-   private final static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Object lockOwner;
    private final PutFromLoadValidator validator;

@@ -74,7 +74,7 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.GLOBAL)
 public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport transport;
    @Inject

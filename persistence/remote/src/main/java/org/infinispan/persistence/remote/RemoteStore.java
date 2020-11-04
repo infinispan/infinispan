@@ -75,7 +75,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private RemoteStoreConfiguration configuration;
 

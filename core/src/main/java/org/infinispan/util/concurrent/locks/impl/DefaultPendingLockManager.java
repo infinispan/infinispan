@@ -49,7 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultPendingLockManager implements PendingLockManager {
 
    private static final Log log = LogFactory.getLog(DefaultPendingLockManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final int NO_PENDING_CHECK = -2;
    @Inject TransactionTable transactionTable;
    @Inject TimeService timeService;

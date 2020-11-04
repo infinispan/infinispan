@@ -17,7 +17,7 @@ import org.infinispan.commons.logging.LogFactory;
 public final class MarshallableTypeHints {
 
    private static final Log log = LogFactory.getLog(MarshallableTypeHints.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Cache of classes that are considered to be marshallable alongside their

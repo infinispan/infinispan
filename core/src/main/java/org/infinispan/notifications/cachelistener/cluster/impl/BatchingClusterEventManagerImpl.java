@@ -36,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject Configuration configuration;

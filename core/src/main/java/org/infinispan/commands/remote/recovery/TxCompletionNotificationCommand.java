@@ -31,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TxCompletionNotificationCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final int COMMAND_ID = 22;
 

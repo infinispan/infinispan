@@ -59,7 +59,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private static final Hash HASH_FUNCTION = MurmurHash3.getInstance();
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
-   private static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final EmbeddedCacheManager cacheManager;
    private final String cacheName;

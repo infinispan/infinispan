@@ -39,7 +39,7 @@ import org.infinispan.commons.CacheException;
 public class SyncModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final UUID uuid = UUID.randomUUID();
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;

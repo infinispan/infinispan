@@ -53,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 

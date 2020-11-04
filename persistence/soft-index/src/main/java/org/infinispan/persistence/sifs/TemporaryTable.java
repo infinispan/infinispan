@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TemporaryTable {
    private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private ConcurrentMap<Object, Entry> table;
 
    public TemporaryTable(int capacity) {

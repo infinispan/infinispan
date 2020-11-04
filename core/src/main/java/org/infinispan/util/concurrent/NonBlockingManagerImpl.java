@@ -20,7 +20,7 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.GLOBAL)
 public class NonBlockingManagerImpl implements NonBlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    @Inject ScheduledExecutorService scheduler;

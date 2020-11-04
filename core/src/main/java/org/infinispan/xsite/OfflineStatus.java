@@ -29,7 +29,7 @@ import net.jcip.annotations.ThreadSafe;
 public class OfflineStatus {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final long NO_FAILURE = -1;
 
    private final TimeService timeService;

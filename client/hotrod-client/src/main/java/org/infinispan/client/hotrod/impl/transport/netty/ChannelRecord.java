@@ -20,7 +20,7 @@ import io.netty.util.concurrent.GenericFutureListener;
  */
 public class ChannelRecord extends CompletableFuture<Channel> implements GenericFutureListener<ChannelFuture> {
    private static final Log log = LogFactory.getLog(ChannelRecord.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    static AttributeKey<ChannelRecord> KEY = AttributeKey.newInstance("activation");
 

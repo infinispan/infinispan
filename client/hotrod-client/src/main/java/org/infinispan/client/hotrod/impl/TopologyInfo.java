@@ -38,7 +38,7 @@ import org.infinispan.commons.util.Immutables;
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private Map<WrappedByteArray, Collection<InetSocketAddress>> servers = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();

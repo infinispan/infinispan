@@ -66,7 +66,7 @@ import net.jcip.annotations.GuardedBy;
  */
 public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V> implements Consumer<Flowable<AsyncNonBlockingStore.Modification>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final NonBlockingStore<K, V> actual;
 
    // Any non-null value can be passed to `onNext` when a new batch should be submitted - A value should only be

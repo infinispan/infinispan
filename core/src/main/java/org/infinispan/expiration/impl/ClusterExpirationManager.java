@@ -55,7 +55,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> {
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Defines the maximum number of allowed concurrent expirations. Any expirations over this must wait until

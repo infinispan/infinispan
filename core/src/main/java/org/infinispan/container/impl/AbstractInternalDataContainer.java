@@ -57,7 +57,7 @@ import com.github.benmanes.caffeine.cache.RemovalListener;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected TimeService timeService;
    @Inject protected EvictionManager<K, V> evictionManager;
@@ -391,11 +391,11 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       CompletableFuture<Operation> future = new CompletableFuture<>();
       CompletionStage<Operation> ordererStage = orderer != null ? orderer.orderOn(key, future) : null;
       if (ordererStage != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Encountered concurrent operation during eviction of %s", key);
          }
          return ordererStage.thenCompose(operation -> {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Concurrent operation during eviction of %s was %s", key, operation);
             }
             switch (operation) {
@@ -404,7 +404,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                case WRITE:
                   if (dataContainer.containsKey(key)) {
                      if (selfDelay != null) {
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            log.tracef("Delaying check for %s verify if passivation should occur as there was a" +
                                  " concurrent write", key);
                         }
@@ -432,7 +432,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    private static CompletionStage<Void> skipPassivation(DataOperationOrderer orderer, Object key,
          CompletableFuture<Operation> future, Operation op) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Skipping passivation for key %s due to %s", key, op);
       }
       orderer.completeOperation(key, future, Operation.READ);

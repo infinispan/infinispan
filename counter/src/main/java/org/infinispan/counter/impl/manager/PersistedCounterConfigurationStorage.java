@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 public class PersistedCounterConfigurationStorage implements CounterConfigurationStorage {
 
    private static final Log log = LogFactory.getLog(PersistedCounterConfigurationStorage.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Map<String, CounterConfiguration> storage;
    private final CounterConfigurationSerializer serializer;
    private final CounterConfigurationParser parser;

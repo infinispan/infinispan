@@ -38,7 +38,7 @@ import net.jcip.annotations.Immutable;
 public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> implements ChannelOperation {
 
    protected static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    private int retryCount = 0;
    private Set<SocketAddress> failedServers = null;

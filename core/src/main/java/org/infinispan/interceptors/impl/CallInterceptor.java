@@ -141,7 +141,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    // The amount in milliseconds of a buffer we allow the system clock to be off, but still allow expiration removal
    private static final int CLOCK_BUFFER = 100;

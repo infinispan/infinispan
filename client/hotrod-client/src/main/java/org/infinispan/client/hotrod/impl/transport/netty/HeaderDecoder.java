@@ -35,7 +35,7 @@ import io.netty.util.Signal;
 
 public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private static final Log log = LogFactory.getLog(HeaderDecoder.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    // used for HeaderOrEventDecoder, too, as the function is similar
    public static final String NAME = "header-decoder";
 

@@ -47,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class TransactionCoordinator {
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject CommandsFactory commandsFactory;
    @Inject ComponentRef<InvocationContextFactory> icf;

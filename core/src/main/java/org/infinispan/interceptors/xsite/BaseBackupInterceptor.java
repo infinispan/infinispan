@@ -40,7 +40,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    @Inject protected ClusteringDependentLogic clusteringDependentLogic;
 
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
    private final InvocationSuccessFunction<ClearCommand> handleClearReturn = this::handleClearReturn;
    private final InvocationSuccessFunction<RemoveExpiredCommand> handleBackupMaxIdle = this::handleBackupMaxIdle;
    private final InvocationSuccessAction<RemoveExpiredCommand> handleExpiredReturn = this::handleExpiredReturn;

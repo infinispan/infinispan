@@ -64,7 +64,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
 public class GlobalInboundInvocationHandler implements InboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(GlobalInboundInvocationHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11483
    @Inject @ComponentName(BLOCKING_EXECUTOR)

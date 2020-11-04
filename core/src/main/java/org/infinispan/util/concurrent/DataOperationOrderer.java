@@ -17,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DataOperationOrderer {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, CompletionStage<Operation>> objectStages = new ConcurrentHashMap<>();
 

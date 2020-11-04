@@ -20,7 +20,7 @@ import org.infinispan.lock.logging.Log;
 public class RequestExpirationScheduler {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ScheduledExecutorService scheduledExecutorService;
    private final ConcurrentMap<String, ScheduledRequest> scheduledRequests = new ConcurrentHashMap<>();

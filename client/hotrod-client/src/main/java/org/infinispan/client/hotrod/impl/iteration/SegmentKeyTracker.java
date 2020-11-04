@@ -23,7 +23,7 @@ import org.infinispan.commons.util.Util;
 class SegmentKeyTracker implements KeyTracker {
 
    private static final Log log = LogFactory.getLog(SegmentKeyTracker.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final AtomicReferenceArray<Set<WrappedByteArray>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;

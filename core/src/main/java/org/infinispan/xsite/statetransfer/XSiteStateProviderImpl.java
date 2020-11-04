@@ -56,7 +56,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private static final Log log = LogFactory.getLog(XSiteStateProviderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
    private final ConcurrentMap<String, StatePushTask> runningStateTransfer;

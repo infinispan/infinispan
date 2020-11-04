@@ -36,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InvocationHelper {
 
    private static final Log log = LogFactory.getLog(InvocationHelper.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected AsyncInterceptorChain invoker;
    @Inject protected InvocationContextFactory invocationContextFactory;

@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class OrderedClusteringDependentLogic implements ClusteringDependentLogic {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ClusteringDependentLogic cdl;
    private final boolean passivation;

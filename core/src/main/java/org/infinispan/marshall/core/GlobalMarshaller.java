@@ -55,7 +55,7 @@ import org.infinispan.util.logging.LogFactory;
 public class GlobalMarshaller implements StreamingMarshaller {
 
    private static final Log log = LogFactory.getLog(GlobalMarshaller.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final int NOT_FOUND                      = -1;
 

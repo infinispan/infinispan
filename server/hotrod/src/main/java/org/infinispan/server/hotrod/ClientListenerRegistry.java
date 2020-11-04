@@ -66,7 +66,7 @@ class ClientListenerRegistry {
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
-   private final static boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);

@@ -29,7 +29,7 @@ import net.jcip.annotations.ThreadSafe;
 public class StripedLock {
 
    private static final Log log = LogFactory.getLog(StripedLock.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final int DEFAULT_CONCURRENCY = 20;
    private final int lockSegmentMask;

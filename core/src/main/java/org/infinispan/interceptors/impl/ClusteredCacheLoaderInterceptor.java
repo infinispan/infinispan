@@ -24,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderInterceptor<K, V> {
 
    private static final Log log = LogFactory.getLog(ClusteredCacheLoaderInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject DistributionManager distributionManager;
 

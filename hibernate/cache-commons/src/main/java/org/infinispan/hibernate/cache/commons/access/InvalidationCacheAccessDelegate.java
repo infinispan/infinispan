@@ -21,7 +21,7 @@ import org.infinispan.AdvancedCache;
  */
 public abstract class InvalidationCacheAccessDelegate implements AccessDelegate {
 	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( InvalidationCacheAccessDelegate.class );
-	protected static final boolean trace = log.isTraceEnabled();
+	protected final boolean trace = log.isTraceEnabled();
 	protected final AdvancedCache cache;
 	protected final InfinispanDataRegion region;
 	protected final PutFromLoadValidator putValidator;
