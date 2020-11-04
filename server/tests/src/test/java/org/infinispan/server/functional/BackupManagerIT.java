@@ -334,7 +334,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       RestCacheClient cache = client.cache(cacheName);
       for (int i = 0; i < NUM_ENTRIES; i++) {
-         join(cache.put(String.valueOf(i), String.valueOf(i)));
+         join(cache.put(String.valueOf(i), "Val-"+ i));
       }
       assertEquals(NUM_ENTRIES, getCacheSize(cacheName, client));
 
@@ -354,7 +354,12 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void assertWildcardContent(RestClient client) {
       String cacheName = "cache1";
-      assertEquals(Integer.toString(NUM_ENTRIES), await(client.cache(cacheName).size()).getBody());
+      RestCacheClient cache = client.cache(cacheName);
+      assertEquals(Integer.toString(NUM_ENTRIES), await(cache.size()).getBody());
+      for (int i = 0; i < NUM_ENTRIES; i++) {
+         String index = String.valueOf(i);
+         assertEquals("Val-" + index, join(cache.get(index)).getBody());
+      }
 
       assertCounter(client, "weak-volatile", Element.WEAK_COUNTER, Storage.VOLATILE, 0);
       assertCounter(client, "weak-persistent", Element.WEAK_COUNTER, Storage.PERSISTENT, -100);
