@@ -27,8 +27,6 @@ public class DefaultCacheResolver implements CacheResolver {
    // Created by proxy
    @SuppressWarnings("unused")
    DefaultCacheResolver() {
-      CachingProvider provider = Caching.getCachingProvider();
-      defaultCacheManager = provider.getCacheManager(provider.getDefaultURI(), provider.getDefaultClassLoader());
    }
 
    @Override
@@ -39,12 +37,21 @@ public class DefaultCacheResolver implements CacheResolver {
    }
 
    private synchronized <K, V> Cache<K, V> getOrCreateCache(String cacheName) {
-      Cache<K, V> cache = defaultCacheManager.getCache(cacheName);
+      CacheManager manager = this.defaultCacheManager;
+      if (manager == null || manager.isClosed()) {
+         // Closing a CachingProvider closes the current cache managers, but it stays valid
+         // and can return new manager instances
+         CachingProvider provider = Caching.getCachingProvider();
+         manager = provider.getCacheManager(provider.getDefaultURI(), provider.getDefaultClassLoader());
+         // No need for synchronization here, because CachingProvider returns the same instance
+         this.defaultCacheManager = manager;
+      }
+      Cache<K, V> cache = this.defaultCacheManager.getCache(cacheName);
       if (cache != null)
          return cache;
 
-      return defaultCacheManager.createCache(cacheName,
-            new javax.cache.configuration.MutableConfiguration<K, V>());
+      return this.defaultCacheManager.createCache(cacheName,
+                                                  new javax.cache.configuration.MutableConfiguration<K, V>());
    }
 
 }
