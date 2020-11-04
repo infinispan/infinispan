@@ -30,7 +30,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class PingOperation extends HotRodOperation<PingResponse> implements ChannelOperation {
    private static final Log log = LogFactory.getLog(PingOperation.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final boolean releaseChannel;
    private final OperationsFactory operationsFactory;

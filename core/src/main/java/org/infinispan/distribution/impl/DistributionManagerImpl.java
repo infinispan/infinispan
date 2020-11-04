@@ -42,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport transport;
    @Inject KeyPartitioner keyPartitioner;

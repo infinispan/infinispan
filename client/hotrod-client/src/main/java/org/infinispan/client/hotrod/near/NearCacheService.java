@@ -34,7 +34,7 @@ import org.infinispan.commons.util.Util;
  */
 public class NearCacheService<K, V> implements NearCache<K, V> {
    private static final Log log = LogFactory.getLog(NearCacheService.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
@@ -248,7 +248,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       @ClientCacheFailover
       @SuppressWarnings("unused")
       public void handleFailover(ClientCacheFailoverEvent e) {
-         if (trace) log.trace("Clear near cache after fail-over of server");
+         if (log.isTraceEnabled()) log.trace("Clear near cache after fail-over of server");
          cache.clear();
       }
 

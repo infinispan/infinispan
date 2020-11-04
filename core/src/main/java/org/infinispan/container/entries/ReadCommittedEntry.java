@@ -30,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    private static final Log log = LogFactory.getLog(ReadCommittedEntry.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    protected K key;
    protected V value;

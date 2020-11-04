@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SegmentedEntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final ToIntFunction<Object> toIntFunction;

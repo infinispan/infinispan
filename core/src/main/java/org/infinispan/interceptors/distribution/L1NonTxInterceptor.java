@@ -65,7 +65,7 @@ import org.infinispan.util.logging.LogFactory;
 public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected L1Manager l1Manager;
    @Inject protected ClusteringDependentLogic cdl;

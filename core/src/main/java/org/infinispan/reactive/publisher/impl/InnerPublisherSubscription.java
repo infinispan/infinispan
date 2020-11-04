@@ -35,7 +35,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final static boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    private final ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent;
    private final int batchSize;

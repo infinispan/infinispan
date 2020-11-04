@@ -41,7 +41,7 @@ import net.jcip.annotations.ThreadSafe;
 @Listener(primaryOnly = true, observation = Listener.Observation.POST)
 public class RemoteClusterListener {
    private static final Log log = LogFactory.getLog(RemoteClusterListener.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final UUID id;
    private final Address origin;

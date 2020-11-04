@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleOrderManager {
 
    private static final Log log = LogFactory.getLog(TriangleOrderManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final TriangleSequencer[] sequencers;
    @Inject DistributionManager distributionManager;
 
@@ -71,7 +71,7 @@ public class TriangleOrderManager {
       }
    }
 
-   private static class TriangleSequencer {
+   private class TriangleSequencer {
       @GuardedBy("this")
       private int senderTopologyId = -1;
       @GuardedBy("this")

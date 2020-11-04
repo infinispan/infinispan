@@ -43,7 +43,7 @@ import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implements LogSupplier {
 
    private static final Log log = LogFactory.getLog(NonTxIracRemoteSiteInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final boolean needsVersions;
    private final InvocationSuccessAction<DataWriteCommand> setMetadataForOwnerAction = this::setIracMetadataForOwner;
    @Inject XSiteEntryMergePolicy<Object, Object> mergePolicy;

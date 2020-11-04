@@ -32,8 +32,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @Scope(Scopes.GLOBAL)
 public class BlockingManagerImpl implements BlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
-   private static final AtomicInteger id = trace ? new AtomicInteger() : null;
+   private final boolean trace = log.isTraceEnabled();
+   private final AtomicInteger id = trace ? new AtomicInteger() : null;
 
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    Executor nonBlockingExecutor;
@@ -50,7 +50,7 @@ public class BlockingManagerImpl implements BlockingManager {
       nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
    }
 
-   private static String nextTraceId() {
+   private String nextTraceId() {
       return id != null ? "-BlockingManagerImpl-" + id.getAndIncrement() : null;
    }
 

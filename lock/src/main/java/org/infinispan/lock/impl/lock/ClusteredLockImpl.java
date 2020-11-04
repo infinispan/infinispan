@@ -56,7 +56,7 @@ import org.infinispan.remoting.transport.Address;
  */
 public class ClusteredLockImpl implements ClusteredLock {
    private static final Log log = LogFactory.getLog(ClusteredLockImpl.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final String name;
    private final ClusteredLockKey lockKey;

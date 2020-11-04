@@ -75,7 +75,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final byte[] BEGIN_KEY = createAndFillArray(1, (byte) 0x00);
    private static final byte[] END_KEY = createAndFillArray(128, (byte) 0xff);

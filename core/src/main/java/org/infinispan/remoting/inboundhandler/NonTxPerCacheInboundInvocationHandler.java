@@ -37,7 +37,7 @@ public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundIn
       LockListener {
 
    private static final Log log = LogFactory.getLog(NonTxPerCacheInboundInvocationHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
 

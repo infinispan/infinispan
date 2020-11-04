@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
 public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteInterceptor {
 
    private static final Log log = LogFactory.getLog(OptimisticTxIracLocalSiteInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationSuccessAction<PrepareCommand> afterLocalPrepare = this::afterLocalTwoPhasePrepare;
    private final InvocationSuccessFunction<PrepareCommand> afterRemotePrepare = this::afterRemoteTwoPhasePrepare;

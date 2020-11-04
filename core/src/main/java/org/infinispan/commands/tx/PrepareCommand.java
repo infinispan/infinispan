@@ -63,7 +63,7 @@ import org.infinispan.util.logging.LogFactory;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-   private static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;
 

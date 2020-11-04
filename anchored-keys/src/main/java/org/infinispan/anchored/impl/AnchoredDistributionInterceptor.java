@@ -55,7 +55,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
 // TODO Investigate extending TriangleDistributionInterceptor instead of NonTxDistributionInterceptor
 
    private static final Log log = LogFactory.getLog(AnchoredDistributionInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject CommandsFactory commandsFactory;
    @Inject AnchorManager anchorManager;

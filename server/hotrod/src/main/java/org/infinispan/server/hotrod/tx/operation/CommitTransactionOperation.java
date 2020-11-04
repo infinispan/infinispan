@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CommitTransactionOperation extends BaseCompleteTransactionOperation {
 
    private static final Log log = LogFactory.getLog(CommitTransactionOperation.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {

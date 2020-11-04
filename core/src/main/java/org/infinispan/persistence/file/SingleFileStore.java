@@ -77,7 +77,7 @@ import io.reactivex.rxjava3.core.Flowable;
 @ConfiguredBy(SingleFileStoreConfiguration.class)
 public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final byte[] MAGIC_BEFORE_11 = new byte[]{'F', 'C', 'S', '1'}; //<11
    public static final byte[] MAGIC_11_0 = new byte[]{'F', 'C', 'S', '2'};

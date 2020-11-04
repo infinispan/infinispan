@@ -47,7 +47,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  */
 public class ExtendedStatisticRpcManager implements RpcManager {
    private static final Log log = LogFactory.getLog(ExtendedStatisticRpcManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final RpcManager actual;
    private final CacheStatisticManager cacheStatisticManager;
    private final org.infinispan.commons.marshall.StreamingMarshaller marshaller;

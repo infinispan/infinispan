@@ -40,7 +40,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
                                                                           IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                           SKIP_XSITE_BACKUP, IRAC_STATE);
    private static final Log log = LogFactory.getLog(XSiteStateConsumerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
    @Inject TransactionManager transactionManager;

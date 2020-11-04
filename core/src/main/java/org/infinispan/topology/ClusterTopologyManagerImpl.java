@@ -103,7 +103,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public static final int CLUSTER_RECOVERY_ATTEMPTS = 10;
 
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<CacheStatusResponseCollector> SKIP_RECOVERY_FUTURE =
          CompletableFutures.completedExceptionFuture(new IllegalStateException());
 

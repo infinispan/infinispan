@@ -82,7 +82,7 @@ import net.jcip.annotations.GuardedBy;
 public class BackupSenderImpl implements BackupSender {
 
    private static final Log log = LogFactory.getLog(BackupSenderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRef<Cache<Object,Object>> cache;
    @Inject RpcManager rpcManager;

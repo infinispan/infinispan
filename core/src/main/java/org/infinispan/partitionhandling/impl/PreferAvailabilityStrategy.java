@@ -24,7 +24,7 @@ import org.infinispan.util.logging.events.EventLogManager;
 
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;

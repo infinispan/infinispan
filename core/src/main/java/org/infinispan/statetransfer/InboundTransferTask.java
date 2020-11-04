@@ -38,7 +38,7 @@ import net.jcip.annotations.GuardedBy;
 public class InboundTransferTask {
 
    private static final Log log = LogFactory.getLog(InboundTransferTask.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("segments")
    private final IntSet segments;

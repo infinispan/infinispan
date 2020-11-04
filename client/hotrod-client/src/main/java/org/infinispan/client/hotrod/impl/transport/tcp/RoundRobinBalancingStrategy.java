@@ -19,7 +19,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private int index;
 

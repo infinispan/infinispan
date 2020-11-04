@@ -27,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvalidateVersionsCommand extends BaseRpcCommand {
    private static final Log log = LogFactory.getLog(InvalidateVersionsCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final int COMMAND_ID = 67;
 

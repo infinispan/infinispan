@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RequestRepository {
    private static final Log log = LogFactory.getLog(RequestRepository.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentHashMap<Long, Request<?>> requests;
    private final AtomicLong nextRequestId = new AtomicLong(1);

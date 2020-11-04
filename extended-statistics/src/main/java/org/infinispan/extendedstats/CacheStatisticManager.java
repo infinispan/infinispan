@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 public final class CacheStatisticManager {
 
    private static final Log log = LogFactory.getLog(CacheStatisticManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    /**
     * collects statistic for a remote transaction
     */

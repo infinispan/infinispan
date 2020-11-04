@@ -34,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ActivationManagerImpl implements ActivationManager {
 
    private static final Log log = LogFactory.getLog(ActivationManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final LongAdder activations = new LongAdder();
    private final LongAdder pendingActivations = new LongAdder();

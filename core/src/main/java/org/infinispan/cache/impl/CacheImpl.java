@@ -142,7 +142,7 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private static final Log log = LogFactory.getLog(CacheImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    public static final String OBJECT_NAME = "Cache";
    private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
 

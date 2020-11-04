@@ -51,7 +51,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 public class EmbeddedCounterManager implements CounterManager {
    public static final String OBJECT_NAME = "CounterManager";
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Map<String, Object> counters;
    private final CounterManagerNotificationManager notificationManager;

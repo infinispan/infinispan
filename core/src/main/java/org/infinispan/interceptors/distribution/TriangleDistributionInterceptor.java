@@ -97,7 +97,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TriangleDistributionInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    @Inject CommandAckCollector commandAckCollector;
    @Inject CommandsFactory commandsFactory;
    @Inject TriangleOrderManager triangleOrderManager;

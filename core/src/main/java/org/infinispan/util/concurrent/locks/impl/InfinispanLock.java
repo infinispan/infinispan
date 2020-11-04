@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanLock {
 
    private static final Log log = LogFactory.getLog(InfinispanLock.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final AtomicReferenceFieldUpdater<InfinispanLock, LockPlaceHolder> OWNER_UPDATER =
          newUpdater(InfinispanLock.class, LockPlaceHolder.class, "current");
    private static final AtomicReferenceFieldUpdater<LockPlaceHolder, LockState> STATE_UPDATER =

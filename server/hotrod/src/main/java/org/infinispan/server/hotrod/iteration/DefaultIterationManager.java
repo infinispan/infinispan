@@ -124,7 +124,7 @@ class DefaultIterationState implements IterationState, Closeable {
 public class DefaultIterationManager implements IterationManager {
 
    private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final com.github.benmanes.caffeine.cache.Cache<String, DefaultIterationState> iterationStateMap;
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =

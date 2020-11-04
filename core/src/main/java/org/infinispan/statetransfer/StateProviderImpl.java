@@ -65,7 +65,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class StateProviderImpl implements StateProvider {
 
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;

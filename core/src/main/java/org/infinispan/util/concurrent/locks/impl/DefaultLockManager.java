@@ -57,7 +57,7 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultLockManager implements LockManager {
 
    private static final Log log = LogFactory.getLog(DefaultLockManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final AtomicReferenceFieldUpdater<CompositeLockPromise, LockState> UPDATER =
          newUpdater(CompositeLockPromise.class, LockState.class, "lockState");
 

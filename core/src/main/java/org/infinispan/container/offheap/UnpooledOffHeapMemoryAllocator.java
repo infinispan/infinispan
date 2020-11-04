@@ -15,7 +15,7 @@ import sun.misc.Unsafe;
  */
 public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private final LongAdder amountAllocated = new LongAdder();
 

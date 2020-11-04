@@ -47,7 +47,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private static final int POLL_INTERVAL_MILLIS = 50;
 
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Set<Address> filter;
 

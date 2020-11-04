@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFutures.completedNull();
 
    /**

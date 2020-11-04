@@ -10,7 +10,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 public class Sync implements CacheTransactionSynchronization {
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(Sync.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final RegionFactory regionFactory;
    private long transactionStartTimestamp;

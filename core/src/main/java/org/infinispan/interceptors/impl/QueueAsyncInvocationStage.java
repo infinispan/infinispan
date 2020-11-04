@@ -33,7 +33,7 @@ import org.jgroups.annotations.GuardedBy;
 public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implements BiConsumer<Object, Throwable>,
       InvocationCallback {
    private static final Log log = LogFactory.getLog(QueueAsyncInvocationStage.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationContext ctx;
    private final VisitableCommand command;

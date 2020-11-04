@@ -40,7 +40,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private Object key;
 

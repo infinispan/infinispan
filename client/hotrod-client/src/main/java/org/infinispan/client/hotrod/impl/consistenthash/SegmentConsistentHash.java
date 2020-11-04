@@ -22,7 +22,7 @@ import org.infinispan.commons.util.Util;
 public final class SegmentConsistentHash implements ConsistentHash {
 
    private static final Log log = LogFactory.getLog(SegmentConsistentHash.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;

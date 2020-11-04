@@ -31,7 +31,7 @@ import org.infinispan.metadata.Metadata;
 public class CounterInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(CounterInterceptor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final Collection<Flag> FLAGS_TO_SKIP_PERSISTENCE = EnumSet
          .of(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
 

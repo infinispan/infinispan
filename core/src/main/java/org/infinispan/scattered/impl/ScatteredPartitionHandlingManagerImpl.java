@@ -15,7 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class ScatteredPartitionHandlingManagerImpl extends PartitionHandlingManagerImpl {
    private static final Log log = LogFactory.getLog(ScatteredPartitionHandlingManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Override
    public void doCheck(Object key, boolean isWrite, long flagBitSet) {

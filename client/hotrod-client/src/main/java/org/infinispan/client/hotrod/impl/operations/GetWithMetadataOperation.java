@@ -32,7 +32,7 @@ import net.jcip.annotations.Immutable;
 public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> implements RetryAwareCompletionStage<MetadataValue<V>> {
 
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final SocketAddress preferredServer;
 

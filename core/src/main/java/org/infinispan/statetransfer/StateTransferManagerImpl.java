@@ -70,7 +70,7 @@ import org.infinispan.xsite.irac.IracManager;
 public class StateTransferManagerImpl implements StateTransferManager {
 
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;

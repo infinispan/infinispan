@@ -34,7 +34,7 @@ import io.netty.channel.Channel;
 class ClientNotificationManager {
 
    private static final Log log = LogFactory.getLog(ClientNotificationManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Map<String, Handle<Listener>> counterListener;
    private final CounterManager counterManager;

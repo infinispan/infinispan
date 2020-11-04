@@ -42,7 +42,6 @@ import io.reactivex.rxjava3.core.Scheduler;
 public class PersistenceUtil {
 
    private static final Log log = LogFactory.getLog(PersistenceUtil.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    private static final int SEGMENT_NOT_PROVIDED = -1;
 
@@ -146,7 +145,7 @@ public class PersistenceUtil {
       } else {
          loaded = CompletionStages.join(persistenceManager.loadFromAllStores(key, context.isOriginLocal(), includeStores));
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }
       return loaded;

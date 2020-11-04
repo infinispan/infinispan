@@ -69,7 +69,7 @@ public class ChannelFactory {
 
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<ClusterSwitchStatus> NOT_SWITCHED_FUTURE = completedFuture(ClusterSwitchStatus.NOT_SWITCHED);
    private static final CompletableFuture<ClusterSwitchStatus> IN_PROGRESS_FUTURE = completedFuture(ClusterSwitchStatus.IN_PROGRESS);
    private static final CompletableFuture<ClusterSwitchStatus> SWITCHED_FUTURE = completedFuture(ClusterSwitchStatus.SWITCHED);

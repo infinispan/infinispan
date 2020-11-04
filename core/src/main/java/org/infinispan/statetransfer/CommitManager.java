@@ -36,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CommitManager {
 
    private static final Log log = LogFactory.getLog(CommitManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
 
    @Inject InternalDataContainer dataContainer;

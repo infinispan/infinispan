@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class LockingInterceptor extends NonTransactionalLockingInterceptor {
 	private static final Log log = LogFactory.getLog(LockingInterceptor.class);
-	private static final boolean trace = log.isTraceEnabled();
+	private final boolean trace = log.isTraceEnabled();
 
    protected final InvocationFinallyFunction<DataWriteCommand> unlockAllReturnCheckCompletableFutureHandler = (rCtx, rCommand, rv, throwable) -> {
       lockManager.unlockAll(rCtx);

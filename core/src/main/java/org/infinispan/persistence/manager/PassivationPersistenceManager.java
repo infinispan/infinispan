@@ -27,7 +27,7 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
    }
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, MarshallableEntry> map = new ConcurrentHashMap<>();
 

@@ -28,7 +28,7 @@ import net.jcip.annotations.Immutable;
 public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
 
    private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public PutIfAbsentOperation(Codec codec, ChannelFactory channelFactory,
                                Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,

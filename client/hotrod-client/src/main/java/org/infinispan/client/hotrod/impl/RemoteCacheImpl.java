@@ -76,7 +76,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements InternalRemoteCache<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private Marshaller defaultMarshaller;
    private final String name;

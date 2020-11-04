@@ -77,7 +77,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    //TODO think about the possibility of using JGroups RAFT instead of replicated cache?
 
    private static final Log log = LogFactory.getLog(GlobalTxTable.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<CacheXid, TxState> storage;
    private final FunctionalMap.ReadWriteMap<CacheXid, TxState> rwMap;

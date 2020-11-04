@@ -32,7 +32,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class PersistenceKeyStreamSupplier<K> implements AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, ?> cache;
    private final ToIntFunction<Object> toIntFunction;

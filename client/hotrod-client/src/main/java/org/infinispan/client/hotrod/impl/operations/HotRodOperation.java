@@ -39,7 +39,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public abstract class HotRodOperation<T> extends CompletableFuture<T> implements HotRodConstants, Runnable {
    private static final Log log = LogFactory.getLog(HotRodOperation.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final AtomicLong MSG_ID = new AtomicLong(1);
 

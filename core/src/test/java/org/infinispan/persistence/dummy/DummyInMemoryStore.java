@@ -58,7 +58,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    public static final int SLOW_STORE_WAIT = 100;
 
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final ConcurrentMap<String, AtomicReferenceArray<Map<Object, byte[]>>> stores = new ConcurrentHashMap<>();
    private static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
 

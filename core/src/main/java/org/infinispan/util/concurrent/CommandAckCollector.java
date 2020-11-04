@@ -58,7 +58,7 @@ import net.jcip.annotations.GuardedBy;
 public class CommandAckCollector {
 
    private static final Log log = LogFactory.getLog(CommandAckCollector.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -515,7 +515,7 @@ public class CommandAckCollector {
 
       @Override
       public void primaryResult(ValidResponse result, boolean success) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Received result for %d, topology %d: %s", parent.id, parent.topologyId, result);
          }
          resultFuture.complete(result);

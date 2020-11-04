@@ -49,7 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryManagerImpl implements RecoveryManager {
 
    private static final Log log = LogFactory.getLog(RecoveryManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private volatile RpcManager rpcManager;
    private volatile CommandsFactory commandFactory;

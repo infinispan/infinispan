@@ -41,7 +41,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Bootstrap bootstrap;
    private final SocketAddress unresolvedAddress;

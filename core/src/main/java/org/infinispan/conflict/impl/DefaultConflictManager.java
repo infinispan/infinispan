@@ -77,7 +77,7 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultConflictManager<K, V> implements InternalConflictManager<K, V> {
 
    private static Log log = LogFactory.getLog(DefaultConflictManager.class);
-   private static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final long localFlags = EnumUtil.bitSetOf(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK, Flag.SKIP_LOCKING);
    private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};

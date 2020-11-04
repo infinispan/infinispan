@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationSuccessFunction<LockControlCommand> localLockCommandWork =
          (rCtx, rCommand, rv) -> localLockCommandWork((TxInvocationContext) rCtx, rCommand);

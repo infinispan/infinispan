@@ -21,7 +21,7 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractJCachingProvider implements CachingProvider {
 
    private static final Log log = LogFactory.getLog(AbstractJCachingProvider.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Keeps track of cache managers. Each cache manager has to be tracked

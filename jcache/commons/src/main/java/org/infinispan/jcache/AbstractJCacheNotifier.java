@@ -41,7 +41,7 @@ public abstract class AbstractJCacheNotifier<K, V> implements Closeable {
    private static final Log log =
          LogFactory.getLog(AbstractJCacheNotifier.class, Log.class);
 
-   private static final boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    // Traversals are a not more common than mutations when it comes to
    // keeping track of registered listeners, so use copy-on-write lists.

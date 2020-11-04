@@ -30,7 +30,7 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
    public static final int COMMAND_ID = 19;
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
 

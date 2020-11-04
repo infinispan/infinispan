@@ -52,7 +52,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TransactionalExceptionEvictionInterceptor extends DDAsyncInterceptor implements
       InternalExpirationManager.ExpirationConsumer<Object, Object>, Consumer<Iterable<InternalCacheEntry<Object, Object>>> {
    private final static Log log = LogFactory.getLog(TransactionalExceptionEvictionInterceptor.class);
-   private final static boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    private final AtomicLong currentSize = new AtomicLong();
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();

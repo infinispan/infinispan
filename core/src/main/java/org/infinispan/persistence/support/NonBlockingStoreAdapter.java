@@ -41,8 +41,8 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
-   private static final AtomicInteger id = trace ? new AtomicInteger() : null;
+   private final boolean trace = log.isTraceEnabled();
+   private final AtomicInteger id = trace ? new AtomicInteger() : null;
 
    private final Lifecycle oldStoreImpl;
    private final Set<Characteristic> characteristics;
@@ -59,7 +59,7 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
       return oldStoreImpl;
    }
 
-   private static String nextTraceId(String operationName) {
+   private String nextTraceId(String operationName) {
       return id != null ? "StoreAdapter-" + operationName + "-" + id.getAndIncrement() : null;
    }
 

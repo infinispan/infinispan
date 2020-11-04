@@ -113,7 +113,7 @@ import io.reactivex.rxjava3.core.Single;
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor implements EntryLoader<K, V> {
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    protected final AtomicLong cacheLoads = new AtomicLong(0);
    protected final AtomicLong cacheMisses = new AtomicLong(0);

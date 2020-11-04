@@ -25,7 +25,7 @@ public class SingleRpcCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 1;
    private static final Log log = LogFactory.getLog(SingleRpcCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private VisitableCommand command;
 

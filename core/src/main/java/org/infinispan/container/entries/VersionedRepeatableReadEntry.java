@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V> {
 
    private static final Log log = LogFactory.getLog(VersionedRepeatableReadEntry.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public VersionedRepeatableReadEntry(K key, V value, Metadata metadata) {
       super(key, value, metadata);

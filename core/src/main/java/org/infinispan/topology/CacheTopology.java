@@ -31,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheTopology {
 
    private static Log log = LogFactory.getLog(CacheTopology.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final int topologyId;
    private final int rebalanceId;

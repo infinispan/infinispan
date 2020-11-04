@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 public class NumericVersionGenerator implements VersionGenerator {
 
    private static final Log log = LogFactory.getLog(NumericVersionGenerator.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    final AtomicInteger versionCounter = new AtomicInteger();

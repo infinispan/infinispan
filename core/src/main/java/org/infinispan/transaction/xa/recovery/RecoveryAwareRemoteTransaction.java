@@ -20,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements RecoveryAwareTransaction {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareRemoteTransaction.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private boolean prepared;
 
