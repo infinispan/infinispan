@@ -49,7 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteInterceptor {
 
    private static final Log log = LogFactory.getLog(NonTxIracLocalSiteInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationFinallyAction<WriteCommand> afterWriteCommand = this::handleWriteCommand;
 

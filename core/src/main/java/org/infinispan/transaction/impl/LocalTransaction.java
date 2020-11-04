@@ -37,7 +37,7 @@ import net.jcip.annotations.GuardedBy;
 public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private static final Log log = LogFactory.getLog(LocalTransaction.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private Set<Address> remoteLockedNodes;
 

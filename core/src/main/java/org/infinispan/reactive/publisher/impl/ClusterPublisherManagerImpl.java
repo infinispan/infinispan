@@ -87,7 +87,7 @@ import io.reactivex.rxjava3.processors.PublishProcessor;
 @Scope(Scopes.NAMED_CACHE)
 public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final static boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    @Inject PublisherHandler publisherHandler;
    @Inject LocalPublisherManager<K, V> localPublisherManager;

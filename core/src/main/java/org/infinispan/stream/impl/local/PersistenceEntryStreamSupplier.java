@@ -37,7 +37,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final InternalEntryFactory iceFactory;

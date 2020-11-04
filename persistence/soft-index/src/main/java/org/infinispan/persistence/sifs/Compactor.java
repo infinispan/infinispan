@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class Compactor extends Thread {
    private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<Integer, Stats>();
    private final BlockingQueue<Integer> scheduledCompaction = new LinkedBlockingQueue<Integer>();

@@ -93,7 +93,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private static final Log log = LogFactory.getLog(TransactionTable.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
 

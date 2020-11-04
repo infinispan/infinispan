@@ -48,7 +48,7 @@ public class TransactionImpl implements Transaction {
 
    private static final Log log = LogFactory.getLog(TransactionImpl.class);
    private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final List<Synchronization> syncs;
    private final List<Map.Entry<XAResource, Integer>> resources;
    private final Object xidLock = new Object();

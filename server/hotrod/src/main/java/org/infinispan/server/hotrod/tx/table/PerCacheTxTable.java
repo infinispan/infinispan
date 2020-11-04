@@ -24,7 +24,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 public class PerCacheTxTable {
 
    private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Map<XidImpl, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
    private final ClientAddress clientAddress;
 

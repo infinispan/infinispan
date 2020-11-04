@@ -107,7 +107,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    protected final Predicate<? super String> ignoreCache;
 
    private final static Log log = LogFactory.getLog(MemcachedDecoder.class, Log.class);
-   private final static boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    private static final int SecondsInAMonth = 60 * 60 * 24 * 30;
 

@@ -45,7 +45,7 @@ import net.jcip.annotations.ThreadSafe;
 @Scope(Scopes.NAMED_CACHE)
 public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K, V> {
    private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    protected ScheduledExecutorService executor;

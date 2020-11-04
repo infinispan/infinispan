@@ -53,7 +53,6 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
 
    public static final String COUNTER_CACHE_NAME = "org.infinispan.COUNTER";
    private static final Log log = LogFactory.getLog(CounterModuleLifecycle.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    private static Configuration createCounterCacheConfiguration(CounterManagerConfiguration config) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -86,7 +85,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
    }
 
    private static void registerCounterManager(EmbeddedCacheManager cacheManager, BasicComponentRegistry registry) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Registering counter manager.");
       EmbeddedCounterManager counterManager = new EmbeddedCounterManager(cacheManager);
       // This must happen before CacheManagerJmxRegistration starts

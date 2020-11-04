@@ -36,7 +36,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 public class AuthorizationHelper {
    private static final Log log = LogFactory.getLog(AuthorizationHelper.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final GlobalSecurityConfiguration globalConfiguration;
    private final AuditLogger audit;
    private final AuditContext context;

@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class CacheStatisticCollector {
    private final static Log log = LogFactory.getLog(CacheStatisticCollector.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final TimeService timeService;
    private final ConcurrentGlobalContainer globalContainer;
    private volatile EnumMap<PercentileStatistic, ReservoirSampler> percentiles;

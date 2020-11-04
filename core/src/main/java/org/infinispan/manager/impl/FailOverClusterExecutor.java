@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class FailOverClusterExecutor implements ClusterExecutor {
    private static final Log log = LogFactory.getLog(FailOverClusterExecutor.class);
-   private static final boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
    private final ClusterExecutor executor;
    private final int failOverCount;
 

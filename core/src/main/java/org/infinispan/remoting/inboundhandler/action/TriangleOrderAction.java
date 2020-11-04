@@ -15,7 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleOrderAction implements Action {
 
    private static final Log log = LogFactory.getLog(TriangleOrderAction.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final long sequenceNumber;
    private final TrianglePerCacheInboundInvocationHandler handler;
    private final int segmentId;

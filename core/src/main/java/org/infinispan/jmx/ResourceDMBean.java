@@ -46,7 +46,7 @@ import org.infinispan.util.logging.LogFactory;
 public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
    private static final Log log = LogFactory.getLog(ResourceDMBean.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Object obj;
    private final Class<?> objectClass;

@@ -29,7 +29,7 @@ import net.jcip.annotations.GuardedBy;
  */
 public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    private static final Log log = LogFactory.getLog(BasicComponentRegistryImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ModuleRepository moduleRepository;
    private final Scopes scope;

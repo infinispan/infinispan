@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecutor> {
 
    private static final Log log = LogFactory.getLog(SingleClusterExecutor.class);
-   private static final boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    SingleClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
          Transport transport, long time, TimeUnit unit, Executor localExecutor,

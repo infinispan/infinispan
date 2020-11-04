@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class IndexNode {
    private static final Log log = LogFactory.getLog(IndexNode.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final byte HAS_LEAVES = 1;
    private static final byte HAS_NODES = 2;
@@ -225,14 +225,14 @@ class IndexNode {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
             if (Arrays.equals(hak.getKey(), key)) {
                if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Found node on %d:%d but it is expired", leafNode.file, leafNode.offset);
                   }
                   return null;
                }
                return leafNode;
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
                }
             }
@@ -246,7 +246,7 @@ class IndexNode {
             if (Arrays.equals(hak.getKey(), key)) {
                return leafNode;
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
                }
                return null;
@@ -303,10 +303,11 @@ class IndexNode {
    public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       IndexNode node = root;
       Stack<Path> stack = new Stack<>();
+      boolean trace = log.isTraceEnabled();
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
          stack.push(new Path(node, insertionPoint));
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
          }
          node = node.innerNodes[insertionPoint].getIndexNode(root.segment);
@@ -912,7 +913,7 @@ class IndexNode {
                   if (offset < 0) return null;
                   node = new IndexNode(segment, offset, length);
                   reference = new SoftReference<>(node);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.trace("Loaded inner node from " + offset + " - " + length);
                   }
                }
@@ -978,6 +979,7 @@ class IndexNode {
             throw new IndexNodeOutdatedException(file + ":" + readOffset);
          }
          try {
+            boolean trace = log.isTraceEnabled();
             EntryRecord headerAndKey = getHeaderAndKey(fileProvider, handle);
             if (!Arrays.equals(key, headerAndKey.getKey())) {
                if (trace) {

@@ -22,7 +22,7 @@ public class RetryOnFailureXSiteCommand<O> {
 
    public static final RetryPolicy NO_RETRY = new MaxRetriesPolicy(0);
    private static final Log log = LogFactory.getLog(RetryOnFailureXSiteCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final XSiteBackup xSiteBackup;
    private final XSiteReplicateCommand<O> command;
    private final RetryPolicy retryPolicy;

@@ -98,7 +98,7 @@ import org.reactivestreams.Publisher;
 public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);

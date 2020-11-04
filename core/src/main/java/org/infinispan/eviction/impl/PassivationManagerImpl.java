@@ -33,7 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class PassivationManagerImpl extends AbstractPassivationManager {
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject PersistenceManager persistenceManager;
    @Inject CacheNotifier<Object, Object> notifier;

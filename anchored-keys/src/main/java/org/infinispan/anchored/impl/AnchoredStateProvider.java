@@ -23,7 +23,7 @@ import io.reactivex.rxjava3.core.Flowable;
 @Scope(Scopes.NAMED_CACHE)
 public class AnchoredStateProvider extends StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(AnchoredStateProvider.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject InternalEntryFactory internalEntryFactory;
 

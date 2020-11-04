@@ -48,7 +48,7 @@ import org.infinispan.topology.CacheTopology;
 public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    private static final Log log = LogFactory.getLog(StateReceiverImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(CACHE_NAME)
    @Inject String cacheName;

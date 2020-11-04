@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the

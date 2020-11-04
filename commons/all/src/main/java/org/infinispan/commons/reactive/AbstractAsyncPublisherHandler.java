@@ -48,7 +48,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialResponse, NextResponse> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final static boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    protected final int batchSize;
    protected final Supplier<Target> supplier;

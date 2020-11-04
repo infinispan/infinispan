@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();

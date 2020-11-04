@@ -36,7 +36,7 @@ import io.netty.util.internal.PlatformDependent;
 class ChannelPool {
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
 
    private final Deque<Channel> channels = PlatformDependent.newConcurrentDeque();

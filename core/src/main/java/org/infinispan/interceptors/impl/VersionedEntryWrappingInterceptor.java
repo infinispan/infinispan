@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected VersionGenerator versionGenerator;
 

@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    /**
     * It is really useful only if TM and client are in separate processes and TM fails. This is because a client might

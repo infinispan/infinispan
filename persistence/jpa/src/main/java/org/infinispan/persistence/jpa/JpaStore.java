@@ -74,7 +74,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(JpaStore.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private JpaStoreConfiguration configuration;
    private EntityManagerFactory emf;

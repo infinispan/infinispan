@@ -160,7 +160,7 @@ import org.reactivestreams.Publisher;
 @Scope(Scopes.NAMED_CACHE)
 public class CommandsFactoryImpl implements CommandsFactory {
    private static final Log log = LogFactory.getLog(CommandsFactoryImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject Configuration configuration;

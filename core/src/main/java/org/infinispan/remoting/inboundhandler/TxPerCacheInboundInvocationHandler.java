@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(TxPerCacheInboundInvocationHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
 

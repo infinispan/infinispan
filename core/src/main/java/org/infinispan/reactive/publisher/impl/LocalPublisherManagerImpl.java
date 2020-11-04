@@ -66,7 +66,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @Scope(Scopes.NAMED_CACHE)
 public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K, V> {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRef<Cache<K, V>> cacheComponentRef;
    @Inject DistributionManager distributionManager;
@@ -725,7 +725,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
    }
 
-   static class RemoveSegmentListener implements IntConsumer {
+   class RemoveSegmentListener implements IntConsumer {
       private final IntSet segments;
 
       RemoveSegmentListener(IntSet segments) {

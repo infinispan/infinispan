@@ -17,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 public final class XSiteStateTransferCollector {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferCollector.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Set<Address> collector;
    private boolean statusOk;
 

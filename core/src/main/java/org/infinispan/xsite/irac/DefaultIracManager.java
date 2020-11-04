@@ -72,7 +72,7 @@ import net.jcip.annotations.GuardedBy;
 public class DefaultIracManager implements IracManager {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject RpcManager rpcManager;
    @Inject TakeOfflineManager takeOfflineManager;

@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class TopologyManagementHelper {
    private static final Log log = LogFactory.getLog(TopologyManagementHelper.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private GlobalComponentRegistry gcr;
    private BasicComponentRegistry bcr;

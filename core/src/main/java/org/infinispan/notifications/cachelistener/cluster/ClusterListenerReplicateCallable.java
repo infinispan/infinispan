@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusterListenerReplicateCallable<K, V> implements Function<EmbeddedCacheManager, Void>,
       BiConsumer<EmbeddedCacheManager, Cache<K, V>> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final String cacheName;
    private final UUID identifier;

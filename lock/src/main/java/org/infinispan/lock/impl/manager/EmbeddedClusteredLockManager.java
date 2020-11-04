@@ -42,7 +42,7 @@ import org.infinispan.util.ByteString;
 public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    public static final String OBJECT_NAME = "ClusteredLockManager";
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    public static final String FORCE_RELEASE = "forceRelease";
    public static final String REMOVE = "remove";
    public static final String IS_DEFINED = "isDefined";

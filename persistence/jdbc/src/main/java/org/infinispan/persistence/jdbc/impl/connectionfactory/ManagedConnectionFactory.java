@@ -30,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ManagedConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private DataSource dataSource;
 

@@ -18,7 +18,7 @@ import io.netty.channel.Channel;
 
 class MultimapRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(MultimapRequestProcessor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    MultimapRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);

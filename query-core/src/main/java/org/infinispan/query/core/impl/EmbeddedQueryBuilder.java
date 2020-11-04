@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
 final class EmbeddedQueryBuilder extends BaseQueryBuilder {
 
    private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final QueryEngine<?> queryEngine;
 

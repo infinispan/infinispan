@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorService implements BlockingTaskAwareExecutorService {
 
    private static final Log log = LogFactory.getLog(BlockingTaskAwareExecutorServiceImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final Queue<BlockingRunnable> blockedTasks;
    private final ExecutorService executorService;
    private final TimeService timeService;

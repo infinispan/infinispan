@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationExceptionFunction<DataWriteCommand> handleDataWriteReturn = this::handleDataWriteReturn;
    private final InvocationExceptionFunction<WriteCommand> handleManyWriteReturn = this::handleManyWriteReturn;

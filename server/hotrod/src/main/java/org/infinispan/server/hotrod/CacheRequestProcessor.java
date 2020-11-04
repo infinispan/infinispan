@@ -33,7 +33,7 @@ import io.netty.channel.Channel;
 
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final ClientListenerRegistry listenerRegistry;
 

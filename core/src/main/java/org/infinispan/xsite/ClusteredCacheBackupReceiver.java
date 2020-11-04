@@ -95,7 +95,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
    private static final Log log = LogFactory.getLog(ClusteredCacheBackupReceiver.class);
-   private static final boolean trace = log.isDebugEnabled();
+   private final boolean trace = log.isDebugEnabled();
    private static final BiFunction<Object, Throwable, Void> CHECK_EXCEPTION = (o, throwable) -> {
       if (throwable == null || throwable instanceof DiscardUpdateException) {
          //for optimistic transaction, signals the update was discarded
@@ -348,7 +348,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    private static final class TransactionHandler extends AbstractVisitor {
 
       private static final Log log = LogFactory.getLog(TransactionHandler.class);
-      private static final boolean trace = log.isTraceEnabled();
+      private final boolean trace = log.isTraceEnabled();
 
       private final ConcurrentMap<GlobalTransaction, GlobalTransaction> remote2localTx;
 

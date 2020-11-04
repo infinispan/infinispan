@@ -167,7 +167,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       implements ClusterCacheNotifier<K, V> {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<>(16);
    private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners = new HashMap<>(4);
@@ -1673,7 +1673,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
     * This class is to be used with cluster listener invocations only when they have included current state.  Thus we
     * can assume all types are CacheEntryEvent, since it doesn't allow other types.
     */
-   protected static class ClusteredListenerInvocation<K, V> extends BaseCacheEntryListenerInvocation<K, V> {
+   protected class ClusteredListenerInvocation<K, V> extends BaseCacheEntryListenerInvocation<K, V> {
 
       private final QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler;
 
@@ -1708,7 +1708,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       }
    }
 
-   protected static class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
+   protected class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
 
       private final EncoderRegistry encoderRegistry;
       protected final ListenerInvocation<Event<K, V>> invocation;

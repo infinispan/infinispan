@@ -62,7 +62,7 @@ import io.netty.channel.Channel;
  */
 class Encoder2x implements VersionedEncoder {
    private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Override
    public void writeEvent(Events.Event e, ByteBuf buf) {

@@ -18,7 +18,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
  */
 public class InvalidationInvocation implements Invocation {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInvocation.class);
-   private final static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final Object lockOwner;
    private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;

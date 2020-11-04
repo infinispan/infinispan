@@ -29,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class Index {
    private static final Log log = LogFactory.getLog(Index.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final int GRACEFULLY = 0x512ACEF0;
    private static final int DIRTY = 0xD112770C;
    private static final int INDEX_FILE_HEADER_SIZE = 30;

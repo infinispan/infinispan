@@ -28,7 +28,7 @@ public class StreamSummaryContainer {
 
    private static final int MAX_CAPACITY = 100000;
    private static final Log log = LogFactory.getLog(StreamSummaryContainer.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private final String cacheName;
    private final String address;
    private final AtomicBoolean flushing;
@@ -259,7 +259,7 @@ public class StreamSummaryContainer {
       MOST_WRITE_SKEW_FAILED_KEYS
    }
 
-   private static class TopKeyWrapper {
+   private class TopKeyWrapper {
 
       private final BlockingQueue<Object> pendingOffers = new LinkedBlockingQueue<>();
       private volatile StreamSummary<Object> streamSummary;

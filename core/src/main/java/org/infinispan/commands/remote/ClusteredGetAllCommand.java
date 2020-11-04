@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private List<?> keys;
    private GlobalTransaction gtx;

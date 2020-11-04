@@ -28,7 +28,7 @@ import io.netty.channel.Channel;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
-   private static final boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);

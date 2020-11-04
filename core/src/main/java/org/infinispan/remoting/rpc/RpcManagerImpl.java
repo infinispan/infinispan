@@ -74,7 +74,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
 public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport t;
    @Inject Configuration configuration;

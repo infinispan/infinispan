@@ -114,7 +114,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean isPessimistic;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final long EVICT_FLAGS_BITSET =
          FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
 

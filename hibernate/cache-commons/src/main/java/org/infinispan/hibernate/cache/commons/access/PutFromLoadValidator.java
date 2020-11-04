@@ -86,7 +86,7 @@ import org.infinispan.util.ByteString;
  */
 public class PutFromLoadValidator {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(PutFromLoadValidator.class);
-	private static final boolean trace = log.isTraceEnabled();
+	private final boolean trace = log.isTraceEnabled();
 
 	/**
 	 * Period after which ongoing invalidation is removed. Value is retrieved from cache configuration.

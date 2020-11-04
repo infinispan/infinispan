@@ -16,7 +16,7 @@ import org.jgroups.logging.LogFactory;
 class FileChunkMapper {
 
    private static final Log log = LogFactory.getLog(FileChunkMapper.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final GridFile file;
    private final Cache<String, byte[]> cache;

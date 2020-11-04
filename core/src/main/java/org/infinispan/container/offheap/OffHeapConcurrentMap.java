@@ -96,7 +96,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    /* ---------------- Constants -------------- */
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    // We always have to have more buckets than locks
    public final static int INITIAL_SIZE = 256;

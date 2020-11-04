@@ -64,7 +64,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          = AtomicIntegerFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, "topologyId");
 
    protected static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject ComponentRegistry componentRegistry;

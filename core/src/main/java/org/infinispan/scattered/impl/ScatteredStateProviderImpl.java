@@ -37,7 +37,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class ScatteredStateProviderImpl extends StateProviderImpl implements ScatteredStateProvider {
    private static final Log log = LogFactory.getLog(ScatteredStateProviderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected ScatteredVersionManager svm;
 

@@ -130,7 +130,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private final static Log log = LogFactory.getLog(ScatteredDistributionInterceptor.class);
-   private final static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected ScatteredVersionManager<Object> svm;
    @Inject protected GroupManager groupManager;

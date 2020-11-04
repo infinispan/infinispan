@@ -99,7 +99,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    protected static final Log log = LogFactory.getLog(PrefetchInterceptor.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   protected final boolean trace = log.isTraceEnabled();
 
    protected static final long STATE_TRANSFER_FLAGS = FlagBitSets.PUT_FOR_STATE_TRANSFER |
          FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.SKIP_REMOTE_LOOKUP |

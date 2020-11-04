@@ -31,7 +31,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class RecoveryIterator {
 
    private static final Log log = LogFactory.getLog(RecoveryIterator.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private static final Xid[] NOTHING = new Xid[0];
    private final Set<Xid> uniqueFilter = Collections.synchronizedSet(new HashSet<>());

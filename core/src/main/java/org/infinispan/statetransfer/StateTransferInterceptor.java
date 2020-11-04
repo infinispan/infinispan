@@ -58,7 +58,7 @@ import org.infinispan.util.logging.LogFactory;
 public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationFinallyFunction<TransactionBoundaryCommand> handleTxReturn = this::handleTxReturn;
    private final InvocationFinallyFunction<WriteCommand> handleTxWriteReturn = this::handleTxWriteReturn;

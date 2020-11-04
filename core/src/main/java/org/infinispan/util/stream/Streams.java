@@ -22,7 +22,6 @@ import org.infinispan.util.logging.LogFactory;
 public class Streams {
 
    private static final Log log = LogFactory.getLog(Streams.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    /////////////////////////////////////////////////////////////////////////
    //                               Closing                               //
@@ -261,7 +260,7 @@ public class Streams {
       long total = 0;
       int read;
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("copying %s to %s with buffer size: %d", input, output, buffer.length);
       }
 
@@ -269,7 +268,7 @@ public class Streams {
          output.write(buffer, 0, read);
          total += read;
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("bytes read: %d; total bytes read: %d", read, total);
          }
       }
@@ -354,7 +353,7 @@ public class Streams {
       int read;
       int readLength;
 
-      boolean trace = Streams.trace;
+      boolean trace = log.isTraceEnabled();
 
       // setup the initial readLength, if length is less than the buffer
       // size, then we only want to read that much

@@ -27,7 +27,7 @@ import org.infinispan.lock.logging.Log;
 public class LockFunction implements Function<EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue>, Boolean> {
 
    private static final Log log = LogFactory.getLog(LockFunction.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final AdvancedExternalizer<LockFunction> EXTERNALIZER = new Externalizer();
    private final String requestId;

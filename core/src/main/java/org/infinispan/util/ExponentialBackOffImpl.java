@@ -23,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ExponentialBackOffImpl implements ExponentialBackOff {
 
    private static final Log log = LogFactory.getLog(ExponentialBackOffImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    //TODO currently only used by IRAC. If required, make it configurable (those 4 constants) to cover other uses cases.
    //multiplier value (2 == +100% per retry)

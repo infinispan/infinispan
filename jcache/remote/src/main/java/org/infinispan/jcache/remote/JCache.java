@@ -33,7 +33,7 @@ import org.infinispan.jcache.logging.Log;
 public class JCache<K, V> extends AbstractJCache<K, V> {
    private static final Log log =
          LogFactory.getLog(JCache.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private volatile boolean isClosed = false;
 

@@ -49,7 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class BiasManagerImpl implements BiasManager {
    private static Log log = LogFactory.getLog(BiasManager.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    // TODO: size bounding?
    // TODO: we could keep last access timestamp for local bias and refresh the lease
    // if this gets close to acquisition timestamp so that the primary owner does not withdraw it

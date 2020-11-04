@@ -25,7 +25,7 @@ import org.infinispan.commons.logging.LogFactory;
 public class AdaptiveBufferSizePredictor implements BufferSizePredictor {
 
    private static final Log log = LogFactory.getLog(AdaptiveBufferSizePredictor.class);
-   private static final boolean isTrace = log.isTraceEnabled();
+   private final boolean isTrace = log.isTraceEnabled();
 
    static final int DEFAULT_MINIMUM = 16;
    static final int DEFAULT_INITIAL = 512;

@@ -56,7 +56,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       LockListener, Action {
 
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @Inject LockManager lockManager;
    @Inject DistributionManager distributionManager;

@@ -36,7 +36,7 @@ import org.infinispan.counter.api.Handle;
  */
 public class NotificationManager {
    private static final Log log = LogFactory.getLog(NotificationManager.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Short> NO_ERROR_FUTURE = CompletableFuture.completedFuture((short) HotRodConstants.NO_ERROR_STATUS);
 
    private final byte[] listenerId;

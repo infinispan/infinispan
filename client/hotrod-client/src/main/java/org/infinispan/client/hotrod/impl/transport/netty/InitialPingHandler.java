@@ -9,7 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class InitialPingHandler extends ActivationHandler {
    private static final Log log = LogFactory.getLog(InitialPingHandler.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    static final String NAME = "initial-ping-handler";
 

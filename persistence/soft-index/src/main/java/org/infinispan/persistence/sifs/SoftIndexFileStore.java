@@ -113,7 +113,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object> {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    public static final String PREFIX_10_1 = "";
    public static final String PREFIX_11_0 = "ispn.";

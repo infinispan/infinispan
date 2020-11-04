@@ -67,7 +67,7 @@ import org.infinispan.util.logging.LogFactory;
 public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInterceptor {
 
    private static final Log log = LogFactory.getLog(PessimisticTxIracLocalInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
    private static final IracMetadataResponseCollector RESPONSE_COLLECTOR = new IracMetadataResponseCollector();
 
    @Inject CommandsFactory commandsFactory;

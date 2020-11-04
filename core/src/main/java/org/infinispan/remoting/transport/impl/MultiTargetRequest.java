@@ -26,7 +26,7 @@ import net.jcip.annotations.GuardedBy;
  */
 public class MultiTargetRequest<T> extends AbstractRequest<T> {
    private static final Log log = LogFactory.getLog(MultiTargetRequest.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("responseCollector")
    private final Address[] targets;

@@ -17,7 +17,7 @@ import javax.transaction.Status;
  */
 public class InvalidationSynchronization implements javax.transaction.Synchronization {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
-   private final static boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
 	private final Object lockOwner;
 	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;

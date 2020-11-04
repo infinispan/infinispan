@@ -18,7 +18,7 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final boolean trace = log.isTraceEnabled();
+   private final boolean trace = log.isTraceEnabled();
 
    private BlockingRejectedExecutionHandler() { }
 

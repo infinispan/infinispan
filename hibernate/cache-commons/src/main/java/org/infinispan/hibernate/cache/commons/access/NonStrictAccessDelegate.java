@@ -34,7 +34,7 @@ import org.infinispan.configuration.cache.Configuration;
  */
 public class NonStrictAccessDelegate implements AccessDelegate {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( NonStrictAccessDelegate.class );
-	private static final boolean trace = log.isTraceEnabled();
+	private final boolean trace = log.isTraceEnabled();
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	protected final InfinispanDataRegion region;
