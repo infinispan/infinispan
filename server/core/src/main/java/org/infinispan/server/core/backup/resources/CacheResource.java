@@ -149,7 +149,7 @@ public class CacheResource extends AbstractContainerResource {
                while (is.available() > 0) {
                   CacheBackupEntry entry = readMessageStream(serCtx, CacheBackupEntry.class, is);
                   Object key = keyMarshalling ? unmarshall(entry.key, userMarshaller) : scm.getKeyWrapper().wrap(entry.key);
-                  Object value = valueMarshalling ? unmarshall(entry.value, userMarshaller) : scm.getKeyWrapper().wrap(entry.value);
+                  Object value = valueMarshalling ? unmarshall(entry.value, userMarshaller) : scm.getValueWrapper().wrap(entry.value);
                   Metadata metadata = unmarshall(entry.metadata, persistenceMarshaller);
                   Metadata internalMetadataImpl = new InternalMetadataImpl(metadata, entry.created, entry.lastUsed);
 
@@ -213,7 +213,7 @@ public class CacheResource extends AbstractContainerResource {
                            .map(e -> {
                               CacheBackupEntry be = new CacheBackupEntry();
                               be.key = keyMarshalling ? marshall(e.getKey(), userMarshaller) : (byte[]) scm.getKeyWrapper().unwrap(e.getKey());
-                              be.value = valueMarshalling ? marshall(e.getValue(), userMarshaller) : (byte[]) scm.getValueWrapper().unwrap(e.getKey());
+                              be.value = valueMarshalling ? marshall(e.getValue(), userMarshaller) : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
                               be.metadata = marshall(e.getMetadata(), persistenceMarshaller);
                               be.internalMetadata = e.getInternalMetadata();
                               be.created = e.getCreated();
