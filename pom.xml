@@ -432,11 +432,6 @@
       <versionx.org.codehaus.jackson.jackson-mapper-asl>${version.codehaus.jackson}</versionx.org.codehaus.jackson.jackson-mapper-asl>
       <versionx.org.codehaus.mojo.animal-sniffer-annotations>1.14</versionx.org.codehaus.mojo.animal-sniffer-annotations>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
-      <versionx.org.codehaus.plexus.plexus-classworlds>2.5.2</versionx.org.codehaus.plexus.plexus-classworlds>
-      <versionx.org.codehaus.plexus.plexus-compiler-api>2.3</versionx.org.codehaus.plexus.plexus-compiler-api>
-      <versionx.org.codehaus.plexus.plexus-compiler-javac>2.3</versionx.org.codehaus.plexus.plexus-compiler-javac>
-      <versionx.org.codehaus.plexus.plexus-component-annotations>1.7.1</versionx.org.codehaus.plexus.plexus-component-annotations>
-      <versionx.org.codehaus.plexus.plexus-interpolation>1.24</versionx.org.codehaus.plexus.plexus-interpolation>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.woodstox.stax2-api>4.2</versionx.org.codehaus.woodstox.stax2-api>
       <versionx.org.conscrypt.conscrypt-openjdk>1.0.0</versionx.org.conscrypt.conscrypt-openjdk>
@@ -2008,33 +2003,6 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>animal-sniffer-annotations</artifactId>
             <version>${versionx.org.codehaus.mojo.animal-sniffer-annotations}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-classworlds</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-classworlds}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-compiler-api</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-compiler-api}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-compiler-javac</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-compiler-javac}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-component-annotations</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-component-annotations}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-interpolation</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-interpolation}</version>
          </dependency>
          <dependency>
             <groupId>org.codehaus.plexus</groupId>
@@ -3963,7 +3931,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>3.1.1</version>
+               <version>3.3.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
