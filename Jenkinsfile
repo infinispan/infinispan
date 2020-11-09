@@ -23,7 +23,7 @@ pipeline {
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
-                    env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
+                    env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 11')
                 }
 
