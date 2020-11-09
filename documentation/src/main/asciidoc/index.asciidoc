@@ -39,13 +39,6 @@ Written and maintained by the {brandname} community
 * link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
 
 [discrete]
-== Cloud
-
-[unstyled]
-* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide: Version 2.0.x (Dev)]
-* link:https://infinispan.org/infinispan-operator/1.1.x/operator.html[{brandname} Operator Guide: Version 1.1.x]
-
-[discrete]
 == Additional Resources
 
 Our link:titles/overview/overview.html[Technical Overview] illustrates different deployment scenarios and provides an FAQ. Although it is worth noting that the _Technical Overview_ is not always updated between releases so you might find details that do not apply to the version of {brandname} that you're using.
