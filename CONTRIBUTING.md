@@ -4,7 +4,7 @@ Guidelines for contributing to Infinispan
 Contributions from the community are essential in keeping Infinispan strong and successful.
 
 This guide focuses on how to contribute back to Infinispan using GitHub pull requests.
-If you need help with cloning, compiling or setting the project up in an IDE please refer to our [Contributing Guide](https://infinispan.org/docs/stable/titles/contributing/contributing.html).
+If you need help with cloning, compiling or setting the project up in an IDE please refer to our [Contributing Guide](https://infinispan.org/docs/dev/titles/contributing/contributing.html).
 
 ## Legal
 
@@ -50,7 +50,7 @@ Code away...
 
 ## Formatting rules and style conventions
 
-The Infinispan family projects share the same style conventions. Please refer to our [Contributing Guide](https://infinispan.org/docs/stable/titles/contributing/contributing.html) for more details.
+The Infinispan family projects share the same style conventions. Please refer to our [Contributing Guide](https://infinispan.org/docs/dev/titles/contributing/contributing.html) for more details.
 
 
 ## Commit

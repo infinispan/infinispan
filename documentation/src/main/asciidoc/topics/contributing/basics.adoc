@@ -14,7 +14,7 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 == Issue Management
 
-{brandname} uses JIRA for issue management, hosted on link:http://issues.jboss.org/browse/ISPN[issues.jboss.org].
+{brandname} uses JIRA for issue management, hosted on link:https://issues.redhat.com/projects/ISPN/issues[issues.redhat.com].
 You can log in using your jboss.org username and password.
 
 === Reporting Issues
@@ -51,13 +51,13 @@ Version numbers are defined as `${major}.${minor}.${micro}.${modifier}`.  For ex
 
 If the issue relates to a _Task_ or _Feature Request_, please ensure that the `.Final` version is included in the _Fixed In_ field.
 For example, a new feature should contain `4.1.0.Beta1`, `4.1.0.Final` if it is new for 4.1.0 and was first made public in beta1.
-For example, see link:https://issues.jboss.org/browse/ISPN-299[ISPN-299] .
+For example, see link:https://issues.redhat.com/browse/ISPN-299[ISPN-299] .
 
 If the issue relates to a bug which affected a previous Final version, then the _Fixed In_ field should also contain the Final version which contains the fix, in addition to any Alpha, Beta or CR release.
-For example, see link:https://issues.jboss.org/browse/ISPN-546[ISPN-546].
+For example, see link:https://issues.redhat.com/browse/ISPN-546[ISPN-546].
 If the issue pertains to a bug in the current release, then the Final version should not be in the _Fixed In_ field.
 For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be marked as fixed in 4.1.0.Alpha3, but not in 4.1.0.Final.
-For example, see link:https://issues.jboss.org/browse/ISPN-416[ISPN-416].
+For example, see link:https://issues.redhat.com/browse/ISPN-416[ISPN-416].
 
 == Version control
 {brandname} uses link:http://git-scm.com[git], hosted on link:http://github.com[GitHub], for version control.
@@ -181,7 +181,7 @@ If your comment does not follow this format, your commit may not be merged into 
 {brandname} follows the JBoss logging standards, which can be found link:https://community.jboss.org/wiki/LoggingStandards[here] .
 
 From {brandname} 5.0 onwards, {brandname} uses JBoss Logging to abstract over the logging backend.
-{brandname} supports localization of log message for categories of INFO or above as explained in link:http://community.jboss.org/docs/16738[the JBoss Logging guidelines] .
+{brandname} supports localization of log message for categories of INFO or above as explained in link:https://docs.jboss.org/process-guide/en/html/logging.html[the JBoss Logging guidelines] .
 As a developer, this means that for each INFO, WARN, ERROR and FATAL message your code emits, you need to modify the Log class in your module and add an explicit method for it with the right annotations.
 
 For example:

@@ -2,7 +2,6 @@
 :stories: ../../stories
 :topics: ../topics
 :imagesdir: ../{topics}/images
-:cli_help: ../../../../../cli/cli-client/src/main/resources/help/
 
 //Community doc attributes
 include::../{topics}/attributes/community-attributes.adoc[]
