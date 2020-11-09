@@ -223,6 +223,7 @@
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>8.32</versionx.com.puppycrawl.tools.checkstyle>
+      <versionx.net.sourceforge.pmd>6.29.0</versionx.net.sourceforge.pmd>
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>

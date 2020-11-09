@@ -1966,6 +1966,28 @@
                   <linkXRef>false</linkXRef>
                   <sourceEncoding>utf-8</sourceEncoding>
                </configuration>
+               <dependencies>
+                  <dependency>
+                     <groupId>net.sourceforge.pmd</groupId>
+                     <artifactId>pmd-core</artifactId>
+                     <version>${versionx.net.sourceforge.pmd}</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>net.sourceforge.pmd</groupId>
+                     <artifactId>pmd-java</artifactId>
+                     <version>${versionx.net.sourceforge.pmd}</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>net.sourceforge.pmd</groupId>
+                     <artifactId>pmd-javascript</artifactId>
+                     <version>${versionx.net.sourceforge.pmd}</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>net.sourceforge.pmd</groupId>
+                     <artifactId>pmd-jsp</artifactId>
+                     <version>${versionx.net.sourceforge.pmd}</version>
+                  </dependency>
+               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
