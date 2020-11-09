@@ -50,6 +50,11 @@
 :wildflybrandname: WildFly
 
 //
+// Path to CLI Help
+//
+:cli_help: ../../../../../cli/src/main/resources/help/
+
+//
 // Titles
 //
 
