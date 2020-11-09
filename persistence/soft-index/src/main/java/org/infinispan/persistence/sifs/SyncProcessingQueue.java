@@ -1,11 +1,15 @@
 package org.infinispan.persistence.sifs;
 
+import io.reactivex.rxjava3.internal.fuseable.SimpleQueue;
+import io.reactivex.rxjava3.internal.queue.MpscLinkedQueue;
+
 import java.util.ArrayDeque;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Multiple producer-single consumer queue. The producers are expected to call pushAndWait(),
- * the consumer should call pop() in a loop and if a null is returned (meaning that the queue is either empty
- * or the limit of elements processed in a loop has been reached, to call notifyAndWait().
+ * the consumer should call pop() in a loop and if a null is returned (meaning that the queue is either empty, to call notifyAndWait().
  *
  * Example:
  * while (running) {
@@ -21,99 +25,175 @@ import java.util.ArrayDeque;
  * queue.notifyNoWait();
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
+ * @author Francesco Nigro &lt;fnigro@redhat.com&gt;
  */
 public class SyncProcessingQueue<T> {
-   private final ArrayDeque<T> queue = new ArrayDeque<T>();
-   private final int maxPoppedInRow;
-   private final Object sync = new Object();
 
-   private volatile long popIndex = 0;
-   private long pushIndex = 0;
+   private static final int BUSY_SPIN = Runtime.getRuntime().availableProcessors() == 1? 0 : 10;
+   /**
+    * This value is based on a raw estimate on Thread::yield cost, but could have been turned into a timed
+    * Thread::onSpinWait loop as SynchronousQueue does - see SynchronousQueue.SPIN_FOR_TIMEOUT_THRESHOLD ie 1 us
+    */
+   private static final int YIELD_SPIN = 12;
 
-   private long processorPopIndex = 0;
-   private int poppedInRow = 0;
+   private static final Object COMPLETED = new Object();
+   private static final Object ERROR = new Object();
+
+   private final SimpleQueue<AtomicReference<Object>> queue;
+   private final ArrayDeque<AtomicReference<Object>> popped;
    private volatile boolean error;
+   private volatile Thread blockedConsumer;
 
    public SyncProcessingQueue() {
-      this(Integer.MAX_VALUE);
-   }
-
-   public SyncProcessingQueue(int maxPoppedInRow) {
-      this.maxPoppedInRow = maxPoppedInRow;
+      error = false;
+      queue = new MpscLinkedQueue<>();
+      popped = new ArrayDeque<>();
+      blockedConsumer = null;
    }
 
    public void pushAndWait(T element) throws InterruptedException {
-      waitFor(push(element));
-   }
-
-   public long push(T element) {
-      synchronized (queue) {
-         queue.push(element);
-         queue.notify();
-         pushIndex++;
-         return pushIndex;
-      }
-   }
-
-   protected void waitFor(long myIndex) throws InterruptedException {
-      synchronized (sync) {
-         while (myIndex > popIndex) {
-            sync.wait();
-            //Thread.yield();
-         }
-      }
       if (error) {
          throw new IllegalStateException("Exception in consumer");
+      }
+      // items could be reused, but need to take care of the completion conditions!
+      final AtomicReference<Object> holder = new AtomicReference<>();
+      holder.lazySet(element);
+      queue.offer(holder);
+      final Thread blockedConsumer = this.blockedConsumer;
+      if (blockedConsumer != null) {
+         LockSupport.unpark(blockedConsumer);
+      }
+      try {
+         for (int i = 0; i < BUSY_SPIN; i++) {
+            final Object e = holder.get();
+            if (e == null) {
+               return;
+            }
+            if (e == ERROR) {
+               throw new IllegalStateException("Exception in consumer");
+            }
+         }
+         for (int i = 0; i < YIELD_SPIN; i++) {
+            final Object e = holder.get();
+            if (e == null) {
+               return;
+            }
+            if (e == ERROR) {
+               throw new IllegalStateException("Exception in consumer");
+            }
+            Thread.yield();
+         }
+         synchronized (holder) {
+            Object e;
+            while ((e = holder.get()) != null) {
+               if (e == ERROR) {
+                  throw new IllegalStateException("Exception in consumer");
+               }
+               holder.wait();
+            }
+         }
+      } finally {
+         // the consumer slow path won't wait completion to happen!
+         holder.lazySet(COMPLETED);
       }
    }
 
    public T pop() {
-      if (poppedInRow >= maxPoppedInRow) {
-         return null;
-      }
-      T element;
-      synchronized (queue) {
-         element = queue.poll();
-      }
-      if (element == null) {
-         return null;
-      } else {
-         processorPopIndex++;
-         poppedInRow++;
-         return element;
-      }
+      return pop(false);
    }
 
-   public void notifyAndWait() {
-      poppedInRow = 0;
-      popIndex = processorPopIndex;
-      synchronized (sync) {
-         sync.notifyAll();
+   private T pop(boolean withError) {
+      assert error == withError;
+      AtomicReference<Object> holder = null;
+      try {
+         holder = queue.poll();
+      } catch (Throwable throwable) {
+         // IMPOSSIBLE, damn RxJava APIs!
+         assert false;
       }
-      synchronized (queue) {
-         if (queue.isEmpty()) {
-            try {
-               queue.wait();
-            } catch (InterruptedException e) {
-               return;
-            }
+      if (holder == null) {
+         return null;
+      }
+      final T e = (T) holder.get();
+      assert e != null && e != COMPLETED && e != ERROR;
+      if (withError) {
+         handleItem(holder, true);
+      } else {
+         final boolean alwaysTrue = popped.offer(holder);
+         assert alwaysTrue;
+      }
+      return e;
+   }
+
+   private void handleItem(AtomicReference<Object> holder, boolean withError) {
+      holder.lazySet(withError? ERROR : null);
+      // try save notifying producers
+      for (int i = 0; i < BUSY_SPIN; i++) {
+         if (holder.get() == COMPLETED) {
+            return;
          }
+      }
+      for (int i = 0; i < YIELD_SPIN; i++) {
+         if (holder.get() == COMPLETED) {
+            return;
+         }
+         Thread.yield();
+      }
+      if (holder.get() == COMPLETED) {
+         return;
+      }
+      synchronized (holder) {
+         holder.notify();
       }
    }
 
    public void notifyNoWait() {
-      poppedInRow = 0;
-      popIndex = processorPopIndex;
-      synchronized (sync) {
-         sync.notifyAll();
+      assert !error;
+      AtomicReference<Object> holder;
+      while ((holder = popped.poll()) != null) {
+         handleItem(holder, false);
       }
+   }
+
+   /**
+    * @return {code true} if not empty or {@code false} if the consumer Thread is interrupted
+    */
+   public boolean notifyAndWait() {
+      assert !error;
+      AtomicReference<Object> holder;
+      while ((holder = popped.poll()) != null) {
+         handleItem(holder, false);
+      }
+      final Thread currentThread = Thread.currentThread();
+      while (queue.isEmpty()) {
+         blockedConsumer = currentThread;
+         // StoreLoad here: some offers could have slipped in before perceiving
+         // any blockedConsumer, must check it before going to sleep for real
+         // or we risk to be parked forever
+         try {
+            if (!queue.isEmpty()) {
+               return true;
+            }
+            LockSupport.park();
+            if (currentThread.isInterrupted()) {
+               return false;
+            }
+         } finally {
+            blockedConsumer = null;
+         }
+      }
+      return true;
    }
 
    public void notifyError() {
       error = true;
-      popIndex = Long.MAX_VALUE;
-      synchronized (sync) {
-         sync.notifyAll();
+      // first cleanup already popped elements first
+      AtomicReference<Object> holder;
+      while ((holder = popped.poll()) != null) {
+         handleItem(holder, true);
+      }
+      // cleanup pending ones
+      while (pop(true) != null) {
       }
    }
 }
