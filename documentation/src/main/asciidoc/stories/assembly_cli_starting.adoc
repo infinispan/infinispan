@@ -4,7 +4,7 @@
 The command line interface (CLI) lets you remotely connect to {brandname}
 servers to access data and perform administrative functions.
 
-include::{topics}/proc_adding_credentials.adoc[leveloffset=+1]
+include::{topics}/proc_adding_users.adoc[leveloffset=+1]
 include::{topics}/proc_cli_connecting.adoc[leveloffset=+1]
 include::{topics}/proc_cli_navigating.adoc[leveloffset=+1]
 include::{topics}/ref_cli_resource_tree.adoc[leveloffset=+2]

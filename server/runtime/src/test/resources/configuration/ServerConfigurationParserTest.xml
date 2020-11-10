@@ -24,6 +24,11 @@
       </socket-bindings>
 
       <security>
+         <credential-stores>
+            <credential-store name="credentials" path="credentials.pfx">
+               <clear-text-credential clear-text="secret"/>
+            </credential-store>
+         </credential-stores>
          <security-realms>
             <security-realm name="default">
                <server-identities>
@@ -68,10 +73,39 @@
                                         introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                                         client-id="infinispan-server"
                                         client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
+
                </token-realm>
                <truststore-realm path="truststore.p12" provider="SunJSSE"
                                  relative-to="infinispan.server.config.path"
                                  keystore-password="secret"/>
+            </security-realm>
+
+            <security-realm name="using-credentials">
+               <server-identities>
+                  <ssl>
+                     <keystore path="ServerConfigurationParserTest-keystore.pfx"
+                               relative-to="infinispan.server.config.path"
+                               alias="server">
+                        <credential-reference store="credentials" alias="keystore"/>
+                     </keystore>
+                  </ssl>
+               </server-identities>
+               <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                           principal="uid=admin,ou=People,dc=infinispan,dc=org">
+                  <credential-reference store="credentials" alias="ldap"/>
+                  <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org"/>
+               </ldap-realm>
+               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+                  <oauth2-introspection host-name-verification-policy="ANY"
+                                        introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+                                        client-id="infinispan-server">
+                     <credential-reference store="credentials" alias="oauth2"/>
+                  </oauth2-introspection>
+               </token-realm>
+               <truststore-realm path="truststore.p12" provider="SunJSSE"
+                                 relative-to="infinispan.server.config.path">
+                  <credential-reference store="credentials" alias="trust"/>
+               </truststore-realm>
             </security-realm>
          </security-realms>
       </security>
@@ -80,6 +114,12 @@
          <data-source name="database" jndi-name="jdbc/database" statistics="true">
             <connection-factory driver="org.h2.Driver" username="test" password="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
                <connection-property name="someproperty">somevalue</connection-property>
+            </connection-factory>
+            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+         </data-source>
+         <data-source name="database-with-credential" jndi-name="jdbc/database-with-credential" statistics="true">
+            <connection-factory driver="org.h2.Driver" username="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
+               <credential-reference store="credentials" alias="db"/>
             </connection-factory>
             <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
          </data-source>

@@ -6,6 +6,7 @@ Configure authentication and encryption mechanisms to secure access to
 
 include::assembly_server_security_realm.adoc[leveloffset=+1]
 include::assembly_server_security_identity.adoc[leveloffset=+1]
+include::assembly_server_security_credentials.adoc[leveloffset=+1]
 include::assembly_server_endpoint_authentication.adoc[leveloffset=+1]
 include::{topics}/proc_disabling_server_authentication.adoc[leveloffset=+1]
 include::assembly_server_authorization.adoc[leveloffset=+1]

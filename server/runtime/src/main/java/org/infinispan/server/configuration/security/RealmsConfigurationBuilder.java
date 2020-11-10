@@ -16,7 +16,10 @@ import org.infinispan.server.security.ServerSecurityRealm;
  */
 public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> {
 
-   private Map<String, RealmConfigurationBuilder> securityRealms = new LinkedHashMap<>(2);
+   private final Map<String, RealmConfigurationBuilder> securityRealms = new LinkedHashMap<>(2);
+
+   public RealmsConfigurationBuilder() {
+   }
 
    public RealmConfigurationBuilder addSecurityRealm(String name) {
       RealmConfigurationBuilder realmConfigurationBuilder = new RealmConfigurationBuilder(name, this);
@@ -54,5 +57,4 @@ public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> 
    public void validate() {
       securityRealms.values().forEach(RealmConfigurationBuilder::validate);
    }
-
 }

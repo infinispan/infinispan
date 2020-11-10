@@ -103,7 +103,10 @@ public enum Attribute {
    LEAK_DETECTION,
    IDLE_REMOVAL,
    ADMIN,
-   METRICS_AUTH;
+   METRICS_AUTH,
+   CLEAR_TEXT,
+   STORE,
+   TYPE;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

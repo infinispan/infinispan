@@ -9,40 +9,35 @@ import org.infinispan.server.configuration.Element;
 import org.infinispan.server.configuration.PasswordSerializer;
 
 /**
- * @since 10.0
- */
-public class TrustStoreRealmConfiguration implements ConfigurationInfo {
+ * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
+ * @since 12.0
+ **/
+public class CredentialStoreConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<char[]> KEYSTORE_PASSWORD = AttributeDefinition.builder("keystorePassword", null, char[].class)
-         .serializer(PasswordSerializer.INSTANCE)
-         .build();
    static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class).build();
-   static final AttributeDefinition<String> PROVIDER = AttributeDefinition.builder("provider", null, String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).build();
-
-   static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TrustStoreRealmConfiguration.class, NAME, KEYSTORE_PASSWORD, PATH, PROVIDER, RELATIVE_TO);
-   }
-
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TRUSTSTORE_REALM.toString());
+   static final AttributeDefinition<String> TYPE = AttributeDefinition.builder("type", "pkcs12", String.class).build();
+   static final AttributeDefinition<String> CREDENTIAL = AttributeDefinition.builder("credential", null, String.class).serializer(PasswordSerializer.INSTANCE).build();
 
    private final AttributeSet attributes;
 
-   TrustStoreRealmConfiguration(AttributeSet attributes) {
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(CredentialStoreConfiguration.class, NAME, PATH, RELATIVE_TO, TYPE, CREDENTIAL);
+   }
+
+   private static final ElementDefinition<CredentialStoreConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.CREDENTIAL_STORE.toString());
+
+   CredentialStoreConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   public String name() {
-      return attributes.attribute(NAME).get();
    }
 
    @Override
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition<CredentialStoreConfiguration> getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 }

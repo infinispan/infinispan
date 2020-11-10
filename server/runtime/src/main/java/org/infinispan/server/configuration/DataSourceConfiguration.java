@@ -21,7 +21,7 @@ public class DataSourceConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> DRIVER = AttributeDefinition.builder("driver", null, String.class).build();
    static final AttributeDefinition<String> URL = AttributeDefinition.builder("url", null, String.class).build();
    static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder("username", null, String.class).build();
-   static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).build();
+   static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).serializer(PasswordSerializer.INSTANCE).build();
    static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder("initialSql", null, String.class).build();
    static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder("transactionIsolation", TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
 

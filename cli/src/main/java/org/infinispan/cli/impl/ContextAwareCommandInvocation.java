@@ -136,4 +136,18 @@ public class ContextAwareCommandInvocation<CI extends CommandInvocation> impleme
    public PrintStream getShellError() {
       return new PrintStream(new ShellOutputStreamAdapter(invocation.getShell()));
    }
+
+   public String getPasswordInteractively(String prompt, String confirmPrompt) throws InterruptedException {
+      String password = null;
+      while (password == null || password.isEmpty()) {
+         password = invocation.getShell().readLine(new Prompt(prompt, '*'));
+      }
+      if (confirmPrompt != null) {
+         String confirm = null;
+         while (confirm == null || !confirm.equals(password)) {
+            confirm = invocation.getShell().readLine(new Prompt(confirmPrompt, '*'));
+         }
+      }
+      return password;
+   }
 }

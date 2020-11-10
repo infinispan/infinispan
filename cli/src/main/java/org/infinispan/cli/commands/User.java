@@ -12,7 +12,6 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
-import org.aesh.readline.Prompt;
 import org.infinispan.cli.completers.EncryptionAlgorithmCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.user.UserTool;
@@ -42,18 +41,6 @@ public class User extends CliCommand {
       // This command serves only to wrap the sub-commands
       invocation.println(invocation.getHelpInfo());
       return CommandResult.FAILURE;
-   }
-
-   static String getPasswordInteractively(ContextAwareCommandInvocation invocation) throws InterruptedException {
-      String password = null;
-      while (password == null || password.isEmpty()) {
-         password = invocation.getShell().readLine(new Prompt(MSG.userToolPassword(), '*'));
-      }
-      String confirm = null;
-      while (confirm == null || !confirm.equals(password)) {
-         confirm = invocation.getShell().readLine(new Prompt(MSG.userToolPasswordConfirm(), '*'));
-      }
-      return password;
    }
 
    @CommandDefinition(name = Create.CMD, description = "Creates a user", aliases = "add")
@@ -87,7 +74,6 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
 
@@ -109,7 +95,7 @@ public class User extends CliCommand {
 
          if (password == null) { // Get the password interactively
             try {
-               password = getPasswordInteractively(invocation);
+               password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
             } catch (InterruptedException e) {
                return CommandResult.FAILURE;
             }
@@ -223,7 +209,7 @@ public class User extends CliCommand {
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          if (password == null) { // Get the password interactively
             try {
-               password = getPasswordInteractively(invocation);
+               password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
             } catch (InterruptedException e) {
                return CommandResult.FAILURE;
             }

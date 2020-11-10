@@ -1,6 +1,6 @@
 package org.infinispan.server.configuration.security;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -12,14 +12,18 @@ import org.infinispan.server.configuration.Element;
  * @since 10.0
  */
 public class SecurityConfiguration implements ConfigurationInfo {
-   private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SECURITY.toString());
+   private static final ElementDefinition<SecurityConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.SECURITY.toString());
 
    private final List<ConfigurationInfo> elements;
+   private final CredentialStoresConfiguration credentialStoresConfiguration;
    private final RealmsConfiguration realmsConfiguration;
 
-   SecurityConfiguration(RealmsConfiguration realmsConfiguration) {
+   SecurityConfiguration(CredentialStoresConfiguration credentialStoresConfiguration, RealmsConfiguration realmsConfiguration) {
+      this.credentialStoresConfiguration = credentialStoresConfiguration;
       this.realmsConfiguration = realmsConfiguration;
-      elements = Collections.singletonList(realmsConfiguration);
+      elements = new ArrayList<>();
+      elements.add(credentialStoresConfiguration);
+      elements.add(realmsConfiguration);
    }
 
    @Override
@@ -28,8 +32,12 @@ public class SecurityConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<SecurityConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
+   }
+
+   public CredentialStoresConfiguration credentialStores() {
+      return credentialStoresConfiguration;
    }
 
    public RealmsConfiguration realms() {

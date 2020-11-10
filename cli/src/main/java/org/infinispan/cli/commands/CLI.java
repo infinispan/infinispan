@@ -46,6 +46,7 @@ import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.provider.util.ProviderUtil;
 
@@ -70,6 +71,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Container.class,
             Counter.class,
             Create.class,
+            Credentials.class,
             Describe.class,
             Disconnect.class,
             Drop.class,
@@ -273,6 +275,7 @@ public class CLI extends CliCommand {
 
    public static void main(Shell shell, String[] args, Properties properties) {
       try {
+         SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
          CommandRuntime runtime = initialCommandRuntimeBuilder(shell, properties).build();
          AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
          Util.close((AutoCloseable) runtime.getAeshContext());
@@ -283,6 +286,7 @@ public class CLI extends CliCommand {
 
    public static void main(String[] args) {
       try {
+         SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
          CommandRuntime runtime = (AeshCommandRuntime) initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties()).build();
          AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
          Util.close((AutoCloseable) runtime.getAeshContext());
