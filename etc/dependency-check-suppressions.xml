@@ -18,10 +18,17 @@
       <notes><![CDATA[
       Suppress reports on WildFly OpenSSL which are for unrelated packages instead
       ]]></notes>
-      <packageUrl regex="true">^pkg:maven/org\.wildfly\.openssl/wildfly\-openssl\-java@.*$</packageUrl>
+      <packageUrl regex="true">^pkg:maven/org\.wildfly\.openssl/wildfly\-openssl.*$</packageUrl>
       <cpe>cpe:/a:openssl:openssl</cpe>
       <cpe>cpe:/a:redhat:openssl</cpe>
       <cpe>cpe:/a:redhat:wildfly</cpe>
       <cpe>cpe:/a:wildfly:wildfly</cpe>
+   </suppress>
+   <suppress>
+      <notes><![CDATA[
+      Suppress reports on the Docket Java API which are intended for Docker itself instead
+      ]]></notes>
+      <packageUrl regex="true">^pkg:maven/com\.github\.docker\-java/docker\-java.*$</packageUrl>
+      <cpe>cpe:/a:docker:docker</cpe>
    </suppress>
 </suppressions>
