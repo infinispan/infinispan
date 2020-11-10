@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.configuration.PasswordSerializer;
 
 /**
  * @since 10.0

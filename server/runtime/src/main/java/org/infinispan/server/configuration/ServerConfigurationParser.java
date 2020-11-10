@@ -21,6 +21,8 @@ import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
+import org.infinispan.server.configuration.security.CredentialStoreConfigurationBuilder;
+import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
 import org.infinispan.server.configuration.security.FileSystemRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.GroupsPropertiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.JwtConfigurationBuilder;
@@ -46,6 +48,8 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 
@@ -61,7 +65,7 @@ import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
       @Namespace(uri = "urn:infinispan:server:*", root = "server"),
 })
 public class ServerConfigurationParser implements ConfigurationParser {
-   private static org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
+   private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    public static String ENDPOINTS_SCOPE = "ENDPOINTS";
 
@@ -276,12 +280,100 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseSecurity(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
       Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_STORES) {
+         parseCredentialStores(reader, builder);
+         element = nextElement(reader);
+      }
       if (element == Element.SECURITY_REALMS) {
          parseSecurityRealms(reader, builder);
          element = nextElement(reader);
       }
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
+      }
+   }
+
+   private void parseCredentialStores(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+      CredentialStoresConfigurationBuilder credentialStores = builder.security().credentialStores();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case CREDENTIAL_STORE:
+               parseCredentialStore(reader, builder, credentialStores);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseCredentialStore(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, CredentialStoresConfigurationBuilder credentialStores) throws XMLStreamException {
+      String name = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH)[0];
+      CredentialStoreConfigurationBuilder credentialStoreBuilder = credentialStores.addCredentialStore(name);
+      credentialStoreBuilder.relativeTo((String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH));
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case NAME:
+               // Already seen.
+               break;
+            case PATH:
+               credentialStoreBuilder.path(value);
+               break;
+            case RELATIVE_TO:
+               credentialStoreBuilder.relativeTo(value);
+               break;
+            case TYPE:
+               credentialStoreBuilder.type(value);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE || element == Element.CLEAR_TEXT_CREDENTIAL) {
+         String credential = parseCredentialReference(reader, builder);
+         credentialStoreBuilder.credential(credential);
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
+   }
+
+   private String parseCredentialReference(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+      switch(Element.forName(reader.getLocalName())) {
+         case CREDENTIAL_REFERENCE: {
+            String store = null;
+            String alias = null;
+            for (int i = 0; i < reader.getAttributeCount(); i++) {
+               ParseUtils.requireNoNamespaceAttribute(reader, i);
+               String value = reader.getAttributeValue(i);
+               Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+               switch (attribute) {
+                  case STORE:
+                     store = value;
+                     break;
+                  case ALIAS:
+                     alias = value;
+                     break;
+                  default:
+                     throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+            }
+            ParseUtils.requireNoContent(reader);
+            PasswordCredential credential = builder.security().credentialStores().getCredential(store, alias, PasswordCredential.class);
+            return new String(credential.getPassword(ClearPassword.class).getPassword());
+         }
+         case CLEAR_TEXT_CREDENTIAL: {
+            String credential = ParseUtils.requireSingleAttribute(reader, Attribute.CLEAR_TEXT);
+            ParseUtils.requireNoContent(reader);
+            return credential;
+         }
+         default:
+            throw ParseUtils.unexpectedElement(reader);
       }
    }
 
@@ -304,7 +396,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       RealmConfigurationBuilder securityRealmBuilder = realms.addSecurityRealm(name);
       Element element = nextElement(reader);
       if (element == Element.SERVER_IDENTITIES) {
-         parseServerIdentities(reader, securityRealmBuilder);
+         parseServerIdentities(reader, builder, securityRealmBuilder);
          element = nextElement(reader);
       }
       if (element == Element.FILESYSTEM_REALM) {
@@ -312,7 +404,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          element = nextElement(reader);
       }
       if (element == Element.LDAP_REALM) {
-         parseLdapRealm(reader, securityRealmBuilder.ldapConfiguration());
+         parseLdapRealm(reader, builder, securityRealmBuilder.ldapConfiguration());
          element = nextElement(reader);
       }
       if (element == Element.LOCAL_REALM) {
@@ -328,7 +420,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          element = nextElement(reader);
       }
       if (element == Element.TRUSTSTORE_REALM) {
-         parseTrustStoreRealm(reader, securityRealmBuilder.trustStoreConfiguration());
+         parseTrustStoreRealm(reader, builder, securityRealmBuilder.trustStoreConfiguration());
          element = nextElement(reader);
       }
       if (element != null) {
@@ -441,17 +533,21 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseOauth2Introspection(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, OAuth2ConfigurationBuilder oauthBuilder) throws XMLStreamException {
-      String[] required = ParseUtils.requireAttributes(reader, Attribute.CLIENT_ID, Attribute.CLIENT_SECRET, Attribute.INTROSPECTION_URL);
-      oauthBuilder.clientId(required[0]).clientSecret(required[1]).introspectionUrl(required[2]);
+      String[] required = ParseUtils.requireAttributes(reader, Attribute.CLIENT_ID, Attribute.INTROSPECTION_URL);
+      oauthBuilder.clientId(required[0]).introspectionUrl(required[1]);
+      boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLIENT_ID:
-            case CLIENT_SECRET:
             case INTROSPECTION_URL:
                // Already seen
+               break;
+            case CLIENT_SECRET:
+               oauthBuilder.clientSecret(value);
+               credentialSet = true;
                break;
             case CLIENT_SSL_CONTEXT:
                oauthBuilder.clientSSLContext(value);
@@ -463,11 +559,27 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      ParseUtils.requireNoContent(reader);
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.OAUTH2_INTROSPECTION.toString(), Attribute.CLIENT_SECRET.toString());
+         }
+         String credential = parseCredentialReference(reader, serverBuilder);
+         oauthBuilder.clientSecret(credential);
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.OAUTH2_INTROSPECTION.toString(), Attribute.CLIENT_SECRET.toString());
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
    }
 
-   private void parseLdapRealm(XMLExtendedStreamReader reader, LdapRealmConfigurationBuilder ldapRealmConfigBuilder) throws XMLStreamException {
+   private void parseLdapRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, LdapRealmConfigurationBuilder ldapRealmConfigBuilder) throws XMLStreamException {
       ldapRealmConfigBuilder.name("ldap");
+      boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -484,6 +596,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case CREDENTIAL:
                ldapRealmConfigBuilder.credential(value);
+               credentialSet = true;
                break;
             case DIRECT_VERIFICATION:
                ldapRealmConfigBuilder.directEvidenceVerification(Boolean.parseBoolean(value));
@@ -514,6 +627,18 @@ public class ServerConfigurationParser implements ConfigurationParser {
          }
       }
       Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.LDAP_REALM.toString(), Attribute.CREDENTIAL.toString());
+         }
+         String credential = parseCredentialReference(reader, builder);
+         ldapRealmConfigBuilder.credential(credential);
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.LDAP_REALM.toString(), Attribute.CREDENTIAL.toString());
+      }
       if (element == Element.NAME_REWRITER) {
          parseNameRewriter(reader, ldapRealmConfigBuilder);
          element = nextElement(reader);
@@ -768,12 +893,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
       propertiesBuilder.build();
    }
 
-   private void parseServerIdentities(XMLExtendedStreamReader reader, RealmConfigurationBuilder securityRealmBuilder) throws
+   private void parseServerIdentities(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, RealmConfigurationBuilder securityRealmBuilder) throws
          XMLStreamException {
       ServerIdentitiesConfigurationBuilder identitiesBuilder = securityRealmBuilder.serverIdentitiesConfiguration();
       Element element = nextElement(reader);
       if (element == Element.SSL) {
-         parseSSL(reader, identitiesBuilder);
+         parseSSL(reader, builder, identitiesBuilder);
          element = nextElement(reader);
       }
       while (element == Element.KERBEROS) {
@@ -785,12 +910,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseSSL(XMLExtendedStreamReader reader, ServerIdentitiesConfigurationBuilder identitiesBuilder) throws
+   private void parseSSL(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, ServerIdentitiesConfigurationBuilder identitiesBuilder) throws
          XMLStreamException {
       SSLConfigurationBuilder serverIdentitiesBuilder = identitiesBuilder.addSslConfiguration();
       Element element = nextElement(reader);
       if (element == Element.KEYSTORE) {
-         parseKeyStore(reader, serverIdentitiesBuilder.keyStore());
+         parseKeyStore(reader, builder, serverIdentitiesBuilder.keyStore());
          element = nextElement(reader);
       }
       if (element == Element.ENGINE) {
@@ -821,12 +946,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseKeyStore(XMLExtendedStreamReader reader, KeyStoreConfigurationBuilder keyStoreBuilder) throws
+   private void parseKeyStore(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, KeyStoreConfigurationBuilder keyStoreBuilder) throws
          XMLStreamException {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
       keyStoreBuilder.path(attributes[0]);
       String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
       keyStoreBuilder.relativeTo(relativeTo);
+      boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -844,6 +970,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case KEYSTORE_PASSWORD:
                keyStoreBuilder.keyStorePassword(value.toCharArray());
+               credentialSet = true;
                break;
             case ALIAS:
                keyStoreBuilder.alias(value);
@@ -858,11 +985,26 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      ParseUtils.requireNoContent(reader);
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.KEYSTORE.toString(), Attribute.KEYSTORE_PASSWORD.toString());
+         }
+         String credential = parseCredentialReference(reader, builder);
+         keyStoreBuilder.keyStorePassword(credential.toCharArray());
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.KEYSTORE.toString(), Attribute.KEYSTORE_PASSWORD.toString());
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
       keyStoreBuilder.build();
    }
 
-   private void parseTrustStoreRealm(XMLExtendedStreamReader reader, TrustStoreRealmConfigurationBuilder trustStoreBuilder) throws
+   private void parseTrustStoreRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, TrustStoreRealmConfigurationBuilder trustStoreBuilder) throws
          XMLStreamException {
       String name = "trust";
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
@@ -870,6 +1012,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
       String keyStoreProvider = null;
       char[] keyStorePassword = null;
+      boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -886,6 +1029,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case KEYSTORE_PASSWORD:
                keyStorePassword = value.toCharArray();
+               credentialSet = true;
                break;
             case RELATIVE_TO:
                relativeTo = ParseUtils.requireAttributeProperty(reader, i);
@@ -894,8 +1038,23 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.TRUSTSTORE_REALM.toString(), Attribute.KEYSTORE_PASSWORD.toString());
+         }
+         String credential = parseCredentialReference(reader, builder);
+         keyStorePassword = credential.toCharArray();
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.TRUSTSTORE_REALM.toString(), Attribute.KEYSTORE_PASSWORD.toString());
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
       trustStoreBuilder.name(name).path(path).relativeTo(relativeTo).keyStorePassword(keyStorePassword).provider(keyStoreProvider);
-      ParseUtils.requireNoContent(reader);
       trustStoreBuilder.build();
    }
 
@@ -975,7 +1134,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case DATA_SOURCE: {
-               parseDataSource(reader, dataSources);
+               parseDataSource(reader, builder, dataSources);
                break;
             }
             default:
@@ -984,7 +1143,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseDataSource(XMLExtendedStreamReader reader, DataSourcesConfigurationBuilder dataSourcesBuilder) throws XMLStreamException {
+   private void parseDataSource(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, DataSourcesConfigurationBuilder dataSourcesBuilder) throws XMLStreamException {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.JNDI_NAME);
       String name = attributes[0];
       String jndiName = attributes[1];
@@ -1009,7 +1168,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (element != Element.CONNECTION_FACTORY) {
          throw ParseUtils.unexpectedElement(reader, element);
       }
-      parseDataSourceConnectionFactory(reader, dataSourceBuilder);
+      parseDataSourceConnectionFactory(reader, builder, dataSourceBuilder);
       element = nextElement(reader);
       if (element != Element.CONNECTION_POOL) {
          throw ParseUtils.unexpectedElement(reader, element);
@@ -1021,9 +1180,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseDataSourceConnectionFactory(XMLExtendedStreamReader reader, DataSourceConfigurationBuilder dataSourceBuilder) throws XMLStreamException {
+   private void parseDataSourceConnectionFactory(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, DataSourceConfigurationBuilder dataSourceBuilder) throws XMLStreamException {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.DRIVER);
       dataSourceBuilder.driver(attributes[0]);
+      boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -1037,6 +1197,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case PASSWORD:
                dataSourceBuilder.password(value);
+               credentialSet = true;
                break;
             case URL:
                dataSourceBuilder.url(value);
@@ -1051,17 +1212,25 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case CONNECTION_PROPERTY: {
-               dataSourceBuilder.addProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.CONNECTION_FACTORY.toString(), Attribute.PASSWORD.toString());
          }
+         String credential = parseCredentialReference(reader, builder);
+         dataSourceBuilder.password(credential);
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.CONNECTION_FACTORY.toString(), Attribute.PASSWORD.toString());
+      }
+      while (element == Element.CONNECTION_PROPERTY) {
+         dataSourceBuilder.addProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader);
       }
    }
 

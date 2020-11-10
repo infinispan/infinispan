@@ -262,7 +262,7 @@ public final class ParseUtils {
     public static String[] requireAttributes(final XMLStreamReader reader, final Enum<?>... attributes)
           throws XMLStreamException {
         String attributeNames[] = new String[attributes.length];
-        for(int i=0; i< attributes.length; i++) {
+        for (int i = 0; i < attributes.length; i++) {
             attributeNames[i] = attributes[i].toString();
         }
         return requireAttributes(reader, true, attributeNames);

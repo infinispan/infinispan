@@ -22,6 +22,11 @@
       </socket-bindings>
 
       <security>
+         <credential-stores>
+            <credential-store name="credentials" path="credentials.pfx">
+               <clear-text-credential clear-text="secret"/>
+            </credential-store>
+         </credential-stores>
          <security-realms>
             <security-realm name="default">
                <!-- Uncomment to enable TLS on the realm -->
@@ -41,8 +46,8 @@
       </security>
 
       <endpoints socket-binding="default" security-realm="default">
-         <hotrod-connector name="hotrod"/>
-         <rest-connector name="rest"/>
+         <hotrod-connector/>
+         <rest-connector/>
       </endpoints>
    </server>
 </infinispan>

@@ -24,7 +24,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    private final InterfacesConfigurationBuilder interfaces = new InterfacesConfigurationBuilder();
    private final SocketBindingsConfigurationBuilder socketBindings = new SocketBindingsConfigurationBuilder(this);
    private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder();
-   private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder(this);
+   private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder();
    private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {

@@ -26,7 +26,7 @@ public class SSLConfiguration implements ConfigurationInfo {
       this.subElements.addAll(Arrays.asList(keyStore, engine));
    }
 
-   KeyStoreConfiguration keyStore() {
+   public KeyStoreConfiguration keyStore() {
       return keyStore;
    }
 

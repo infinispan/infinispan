@@ -225,4 +225,16 @@ public interface Messages {
 
    @Message("A namespace was not specified and a default has not been set")
    IllegalStateException noDefaultNamespace();
+
+   @Message(value = "Enter the password for the credential keystore: ")
+   String credentialToolPassword();
+
+   @Message(value = "Confirm the password for the credential store: ")
+   String credentialToolPasswordConfirm();
+
+   @Message(value = "Set a credential for the alias: ")
+   String credentialToolCredential();
+
+   @Message(value = "Confirm the credential: ")
+   String credentialToolCredentialConfirm();
 }

@@ -11,10 +11,8 @@ import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 public class DataSourceConfigurationBuilder implements Builder<DataSourceConfiguration> {
 
    private final AttributeSet attributes;
-   private final ServerConfigurationBuilder server;
 
-   DataSourceConfigurationBuilder(ServerConfigurationBuilder server, String name, String jndiName) {
-      this.server = server;
+   DataSourceConfigurationBuilder(String name, String jndiName) {
       attributes = DataSourceConfiguration.attributeDefinitionSet();
       attributes.attribute(DataSourceConfiguration.NAME).set(name);
       attributes.attribute(DataSourceConfiguration.JNDI_NAME).set(jndiName);

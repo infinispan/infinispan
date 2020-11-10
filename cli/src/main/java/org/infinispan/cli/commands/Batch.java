@@ -23,6 +23,7 @@ import org.aesh.command.invocation.CommandInvocation;
             Container.class,
             Counter.class,
             Create.class,
+            Credentials.class,
             Describe.class,
             Disconnect.class,
             Drop.class,

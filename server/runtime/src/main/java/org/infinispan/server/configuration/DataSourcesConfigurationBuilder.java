@@ -14,13 +14,10 @@ import org.infinispan.server.Server;
 public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfiguration> {
 
    private final AttributeSet attributes;
-   private final ServerConfigurationBuilder server;
-
    private final Map<String, DataSourceConfigurationBuilder> dataSources = new LinkedHashMap<>(2);
    private final Set<String> jndiNames = new HashSet<>(2);
 
-   DataSourcesConfigurationBuilder(ServerConfigurationBuilder server) {
-      this.server = server;
+   DataSourcesConfigurationBuilder() {
       attributes = DataSourcesConfiguration.attributeDefinitionSet();
    }
 
@@ -31,7 +28,7 @@ public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfi
       if (jndiNames.contains(jndiName)) {
          throw Server.log.duplicateJndiName(jndiName);
       }
-      DataSourceConfigurationBuilder builder = new DataSourceConfigurationBuilder(server, name, jndiName);
+      DataSourceConfigurationBuilder builder = new DataSourceConfigurationBuilder(name, jndiName);
       dataSources.put(name, builder);
       jndiNames.add(jndiName);
       return builder;

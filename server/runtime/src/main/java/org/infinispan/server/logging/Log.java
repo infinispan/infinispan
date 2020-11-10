@@ -176,4 +176,22 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot have multiple endpoints bound to the same socket binding '%s'", id = 80045)
    CacheConfigurationException endpointSocketBindingConflict(String name);
+
+   @Message(value = "Unknown credential store '%s'", id = 80046)
+   IllegalArgumentException unknownCredentialStore(String store);
+
+   @Message(value = "Unknown credential '%s' in store '%s'", id = 80047)
+   IllegalArgumentException unknownCredential(String alias, String store);
+
+   @Message(value = "A credential store name is missing", id = 80048)
+   IllegalArgumentException missingCredentialStoreName();
+
+   @Message(value = "A credential alias must be specified if the store doesn't contain a single alias", id = 80049)
+   CacheConfigurationException unspecifiedCredentialAlias();
+
+   @Message(value = "Credential reference in element '%s' would override value specified in attribute '%s'", id = 80050)
+   CacheConfigurationException cannotOverrideCredential(String element, String attribute);
+
+   @Message(value = "Element '%s' is missing a credential attribute '%s' or a credential reference", id = 80051)
+   CacheConfigurationException missingCredential(String element, String attribute);
 }

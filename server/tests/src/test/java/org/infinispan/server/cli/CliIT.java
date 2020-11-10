@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -63,9 +64,7 @@ public class CliIT {
          terminal.readln("echo Hi");
          terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
          terminal.clear();
-         terminal.readln("connect " + hostAddress() + ":11222");
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
+         connect(terminal);
          terminal.readln("stats");
          terminal.assertContains("required_minimum_number_of_nodes");
          terminal.clear();
@@ -145,10 +144,7 @@ public class CliIT {
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()}, properties);
-         // connect
-         terminal.readln("connect " + hostAddress() + ":11222");
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
+         connect(terminal);
 
          terminal.readln("cd tasks");
          terminal.readln("ls");
@@ -165,14 +161,35 @@ public class CliIT {
    }
 
    @Test
+   public void testCliCredentials() {
+
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()}, properties);
+         String keyStore = Paths.get(System.getProperty("build.directory", ""), "key.store").toAbsolutePath().toString();
+
+         terminal.readln("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
+         terminal.readln("credentials add --path=" + keyStore + " --password=secret --credential=credential another");
+         terminal.clear();
+         terminal.readln("credentials ls --path=" + keyStore + " --password=secret");
+         terminal.assertContains("password");
+         terminal.assertContains("another");
+      }
+   }
+
+   private void connect(AeshTestConnection terminal) {
+      // connect
+      terminal.readln("connect " + hostAddress() + ":11222");
+      terminal.assertContains("//containers/default]>");
+      terminal.clear();
+   }
+
+   @Test
    public void testCliUploadProtobufSchemas() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
          // connect
-         terminal.readln("connect " + hostAddress() + ":11222");
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
+         connect(terminal);
 
          // upload
          terminal.readln("schema --upload=" + getCliResource("person.proto").getPath() + " person.proto");

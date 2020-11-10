@@ -125,6 +125,7 @@
 
    <xs:complexType name="data-source-connection-factory">
       <xs:all>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
          <xs:element type="tns:property" name="connection-property" minOccurs="0">
             <xs:annotation>
                <xs:documentation>Properties for the JDBC driver</xs:documentation>
@@ -229,8 +230,14 @@
 
    <xs:complexType name="security">
       <xs:sequence>
+         <xs:element type="tns:credential-stores" name="credential-stores" minOccurs="0">
+            <xs:unique name="security-credential-unique">
+               <xs:selector xpath="./tns:credential-store"/>
+               <xs:field xpath="@name"/>
+            </xs:unique>
+         </xs:element>
          <xs:element type="tns:security-realms" name="security-realms">
-            <xs:unique name="security-real-unique">
+            <xs:unique name="security-realm-unique">
                <xs:selector xpath="./tns:security-realm"/>
                <xs:field xpath="@name"/>
             </xs:unique>
@@ -818,6 +825,108 @@
       </xs:attribute>
    </xs:complexType>
 
+   <xs:complexType name="credential-stores">
+      <xs:annotation>
+         <xs:documentation>
+            Complex type to contain the definitions of the credential stores.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="credential-store" type="tns:credential-store" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="credential-reference">
+      <xs:annotation>
+         <xs:documentation>
+            Credential reference to be used by the configuration.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="store" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               Credential store name used to fetch credential with given 'alias' from.
+               Credential store name has to be defined elsewhere.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="alias" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               Alias of credential in the credential store.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="clear-text-credential">
+      <xs:annotation>
+         <xs:documentation>
+            A clear-text credential.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="clear-text" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The clear-text password.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="credential-store">
+      <xs:annotation>
+         <xs:documentation>
+            An individual credential store definition.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:choice>
+         <xs:element name="clear-text-credential" type="tns:clear-text-credential">
+            <xs:annotation>
+               <xs:documentation>
+                  Credential to be used by as protection parameter for the Credential Store.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="credential-reference" type="tns:credential-reference">
+            <xs:annotation>
+               <xs:documentation>
+                  Credential to be used by as protection parameter for the Credential Store.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:choice>
+      <xs:attribute name="name" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The name of this credential store.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="relative-to" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               A reference to a previously defined path that the file name is
+               relative to.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="path" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               File name of credential store storage.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="type" type="xs:string" default="pkcs12">
+         <xs:annotation>
+            <xs:documentation>
+               The type of the credential store file. Can be either pkcs12 or jceks. Defaults to pkcs12.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
    <xs:complexType name="security-realms">
       <xs:sequence>
          <xs:element type="tns:security-realm" name="security-realm" maxOccurs="unbounded"/>
@@ -877,9 +986,12 @@
       </xs:sequence>
    </xs:complexType>
    <xs:complexType name="security-realm-keystore">
+      <xs:sequence>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
+      </xs:sequence>
       <xs:attribute type="xs:string" name="path" use="required"/>
       <xs:attribute type="xs:string" name="relative-to"/>
-      <xs:attribute type="xs:string" name="keystore-password" use="required"/>
+      <xs:attribute type="xs:string" name="keystore-password"/>
       <xs:attribute type="xs:string" name="alias"/>
       <xs:attribute type="xs:string" name="key-password"/>
       <xs:attribute type="xs:string" name="generate-self-signed-certificate-host"/>
@@ -916,6 +1028,7 @@
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
          <xs:element type="tns:ldap-name-rewriter" name="name-rewriter" minOccurs="0"/>
          <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
@@ -1267,9 +1380,12 @@
    </xs:complexType>
 
    <xs:complexType name="oauth2-introspection">
-      <xs:attribute type="xs:string" name="client-id"/>
+      <xs:sequence>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="client-id" use="required"/>
       <xs:attribute type="xs:string" name="client-secret"/>
-      <xs:attribute type="xs:string" name="introspection-url"/>
+      <xs:attribute type="xs:string" name="introspection-url" use="required"/>
       <xs:attribute type="xs:string" name="client-ssl-context"/>
       <xs:attribute type="xs:string" name="host-name-verification-policy"/>
    </xs:complexType>
@@ -1396,9 +1512,12 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-truststore">
+      <xs:sequence>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
+      </xs:sequence>
       <xs:attribute type="xs:string" name="path" use="required"/>
       <xs:attribute type="xs:string" name="provider"/>
-      <xs:attribute type="xs:string" name="keystore-password" use="required"/>
+      <xs:attribute type="xs:string" name="keystore-password"/>
       <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.data.path"/>
    </xs:complexType>
 </xs:schema>
