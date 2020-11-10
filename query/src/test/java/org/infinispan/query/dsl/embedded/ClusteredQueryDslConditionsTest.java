@@ -1,15 +1,12 @@
 package org.infinispan.query.dsl.embedded;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-
-import java.util.HashMap;
-import java.util.Map;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.testng.annotations.Test;
@@ -38,12 +35,6 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       return cache2;
    }
 
-   protected Map<String, String> getIndexConfig() {
-      Map<String, String> configs = new HashMap<>();
-      configs.put(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
-      return configs;
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
@@ -55,11 +46,10 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass());
-
-      getIndexConfig().forEach(indexingConfigurationBuilder::addProperty);
 
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());
       manager(1).defineConfiguration(TEST_CACHE_NAME, cfg.build());

@@ -7,6 +7,7 @@ import java.io.File;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,11 +34,10 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.indexing().enable()
+            .storage(IndexStorage.FILESYSTEM).path(indexDirectory)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       createClusteredCaches(1, cfg);
    }

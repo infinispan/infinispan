@@ -49,6 +49,9 @@ import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.IndexMergeConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
+import org.infinispan.configuration.cache.IndexWriterConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
@@ -2739,6 +2742,12 @@ public class Parser implements ConfigurationParser {
                CONFIG.autoConfigDeprecated();
                builder.indexing().autoConfig(Boolean.parseBoolean(value));
                break;
+            case STORAGE:
+               builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));
+               break;
+            case PATH:
+               builder.indexing().path(value);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -2762,7 +2771,18 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case PROPERTY: {
+               if (reader.getSchema().since(12, 0)) {
+                  CONFIG.deprecatedIndexProperties();
+               }
                parseProperty(reader, indexingProperties);
+               break;
+            }
+            case INDEX_READER: {
+               parseIndexReader(reader, builder);
+               break;
+            }
+            case INDEX_WRITER: {
+               parseIndexWriter(reader, builder);
                break;
             }
             default: {
@@ -2770,7 +2790,9 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
-      builder.indexing().withProperties(indexingProperties);
+      if(!indexingProperties.isEmpty()) {
+         builder.indexing().withProperties(indexingProperties);
+      }
    }
 
    private void parseKeyTransformers(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
@@ -2804,6 +2826,94 @@ public class Parser implements ConfigurationParser {
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseIndexReader(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         if (attribute == Attribute.REFRESH_INTERVAL) {
+            builder.indexing().reader().refreshInterval(Long.parseLong(value));
+         } else {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseIndexWriter(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      IndexWriterConfigurationBuilder indexWriterBuilder = builder.indexing().writer();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         String value = reader.getAttributeValue(i);
+         switch (attribute) {
+            case THREAD_POOL_SIZE:
+               indexWriterBuilder.threadPoolSize(Integer.parseInt(value));
+               break;
+            case COMMIT_INTERVAL:
+               indexWriterBuilder.commitInterval(Integer.parseInt(value));
+               break;
+            case QUEUE_COUNT:
+               indexWriterBuilder.queueCount(Integer.parseInt(value));
+               break;
+            case QUEUE_SIZE:
+               indexWriterBuilder.queueSize(Integer.parseInt(value));
+               break;
+            case LOW_LEVEL_TRACE:
+               indexWriterBuilder.setLowLevelTrace(Boolean.parseBoolean(value));
+               break;
+            case MAX_BUFFERED_ENTRIES:
+               indexWriterBuilder.maxBufferedDocs(Integer.parseInt(value));
+               break;
+            case RAM_BUFFER_SIZE:
+               indexWriterBuilder.ramBufferSize(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
+         Element element = Element.forName(reader.getLocalName());
+         if (element == Element.INDEX_MERGE) {
+            parseIndexWriterMerge(reader, builder);
+         } else {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseIndexWriterMerge(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         String value = reader.getAttributeValue(i);
+         IndexMergeConfigurationBuilder mergeBuilder = builder.indexing().writer().merge();
+         switch (attribute) {
+            case MAX_ENTRIES:
+               mergeBuilder.maxDocs(Integer.parseInt(value));
+               break;
+            case CALIBRATE_BY_DELETES:
+               mergeBuilder.calibrateByDeletes(Boolean.parseBoolean(value));
+               break;
+            case FACTOR:
+               mergeBuilder.factor(Integer.parseInt(value));
+               break;
+            case MAX_FORCED_SIZE:
+               mergeBuilder.maxForcedSize(Integer.parseInt(value));
+               break;
+            case MAX_SIZE:
+               mergeBuilder.maxSize(Integer.parseInt(value));
+               break;
+            case MIN_SIZE:
+               mergeBuilder.minSize(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
          }
       }
       ParseUtils.requireNoContent(reader);

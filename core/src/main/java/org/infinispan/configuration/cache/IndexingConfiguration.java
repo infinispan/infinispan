@@ -2,15 +2,19 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.parsing.Element.INDEXING;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
@@ -39,9 +43,18 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<String>>) (Class<?>) Set.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashSet::new).immutable().build();
+   public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder("storage", IndexStorage.FILESYSTEM)
+         .serializer(new AttributeSerializer<IndexStorage, ConfigurationInfo, ConfigurationBuilderInfo>() {
+            @Override
+            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, ConfigurationBuilderInfo builderInfo) {
+               return IndexStorage.valueOf(attrValue.toString().replace("-","_").toUpperCase());
+            }
+         })
+         .immutable().build();
+   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, PATH);
    }
 
    static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
@@ -62,22 +75,37 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Attribute<Set<String>> indexedEntities;
    private final Set<Class<?>> resolvedIndexedClasses;
    private final Attribute<Boolean> enabled;
-   private final boolean isVolatile;
+   private final Attribute<IndexStorage> storage;
+   private final Attribute<String> path;
+   private final IndexReaderConfiguration readerConfiguration;
+   private final IndexWriterConfiguration writerConfiguration;
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
-   IndexingConfiguration(AttributeSet attributes, boolean isVolatile, Set<Class<?>> resolvedIndexedClasses) {
+   IndexingConfiguration(AttributeSet attributes, Set<Class<?>> resolvedIndexedClasses,
+                         IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration) {
       super(attributes);
-      this.isVolatile = isVolatile;
+      this.readerConfiguration = readerConfiguration;
+      this.writerConfiguration = writerConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
       keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
       indexedEntities = attributes.attribute(INDEXED_ENTITIES);
       enabled = attributes.attribute(ENABLED);
+      storage = attributes.attribute(STORAGE);
+      path = attributes.attribute(PATH);
+      subElements.add(readerConfiguration);
+      subElements.add(writerConfiguration);
    }
 
    @Override
    public ElementDefinition<IndexingConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    /**
@@ -90,8 +118,10 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
+    * @deprecated Since 12.0, indexing behaviour is defined by {@link #writer()} and {@link #reader()}.
     */
    @Override
+   @Deprecated
    public TypedProperties properties() {
       // Overridden to replace Javadoc
       return super.properties();
@@ -122,6 +152,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    @Deprecated
    public boolean autoConfig() {
       return autoConfig.get();
+   }
+
+   public IndexStorage storage() {
+      return storage.get();
+   }
+
+   public String path() {
+      return path.get();
    }
 
    /**
@@ -169,15 +207,27 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return false;
    }
 
+   public IndexReaderConfiguration reader() {
+      return readerConfiguration;
+   }
+
+   public IndexWriterConfiguration writer() {
+      return writerConfiguration;
+   }
+
    /**
     * Does the index use a provider that does not persist upon restart?
     */
    public boolean isVolatile() {
-      return isVolatile;
+      return storage.get().equals(IndexStorage.LOCAL_HEAP);
    }
 
    @Override
    public String toString() {
-      return "IndexingConfiguration [attributes=" + attributes + "]";
+      return "IndexingConfiguration{" +
+            "readerConfiguration=" + readerConfiguration +
+            ", writerConfiguration=" + writerConfiguration +
+            ", attributes=" + attributes +
+            '}';
    }
 }

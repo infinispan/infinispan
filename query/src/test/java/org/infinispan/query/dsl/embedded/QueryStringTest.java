@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.time.Instant;
@@ -16,7 +17,6 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
@@ -37,10 +37,10 @@ public class QueryStringTest extends AbstractQueryDslTest {
       cfg.transaction()
          .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing().enable()
+         .storage(LOCAL_HEAP)
          .addIndexedEntity(getModelFactory().getUserImplClass())
          .addIndexedEntity(getModelFactory().getAccountImplClass())
-         .addIndexedEntity(getModelFactory().getTransactionImplClass())
-         .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+         .addIndexedEntity(getModelFactory().getTransactionImplClass());
       createClusteredCaches(1, cfg);
    }
 

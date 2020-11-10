@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -34,8 +35,8 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
             .indexing().enable()
-            .addIndexedEntity("sample_bank_account.User")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);

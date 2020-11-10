@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -29,10 +30,10 @@ public class ObjectStorageLocalCacheTest extends LocalCacheTest {
             .encoding().value().mediaType(APPLICATION_OBJECT_TYPE)
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);

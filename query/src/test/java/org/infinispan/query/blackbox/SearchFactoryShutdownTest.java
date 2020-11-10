@@ -1,12 +1,12 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -34,7 +34,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
                .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
                .enable()
-               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+               .storage(LOCAL_HEAP)
                .addIndexedEntity(Person.class);
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();

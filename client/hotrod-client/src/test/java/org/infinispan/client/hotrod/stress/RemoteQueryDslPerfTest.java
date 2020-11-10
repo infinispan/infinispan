@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.stress;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -58,8 +59,8 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
-             .addIndexedEntity(UserHS.class)
-             .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(UserHS.class);
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
 
       cache = manager(0).getCache();

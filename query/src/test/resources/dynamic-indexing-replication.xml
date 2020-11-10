@@ -18,11 +18,10 @@
             <object size="-1"/>
          </memory>
          <expiration max-idle="-1" />
-         <indexing>
+         <indexing storage="local-heap">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-             <property name="directory.type">local-heap</property>
             <!-- Enable error safety net -->
             <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             <property name="lucene_version">LUCENE_CURRENT</property>

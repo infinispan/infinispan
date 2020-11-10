@@ -19,20 +19,17 @@ public class SearchMappingHelper {
    private SearchMappingHelper() {
    }
 
-   public static SearchMapping createSearchMappingForTests(Class<?> ... types) {
+   public static SearchMapping createSearchMappingForTests(Class<?>... types) {
       Map<String, Object> properties = new LinkedHashMap<>();
-      properties.put(BACKEND_PREFIX + ".type", "lucene");
       properties.put(BACKEND_PREFIX + ".analysis.configurer", new DefaultAnalysisConfigurer());
-      properties.put(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
-      properties.put(SearchConfig.THREAD_POOL_SIZE, "1");
-      properties.put(SearchConfig.QUEUE_COUNT, "1");
+      properties.put("directory.type", "local-heap");
 
       InfinispanBootstrapIntrospector introspector = SearchMappingBuilder.introspector(MethodHandles.lookup());
 
       // do not pass any entity loader nor identifier bridges
       return SearchMapping.builder(introspector, null, Collections.emptyList())
-            .setProperties(properties)
-            .addEntityTypes(new HashSet<>(Arrays.asList(types)))
-            .build();
+                   .setProperties(properties)
+                   .addEntityTypes(new HashSet<>(Arrays.asList(types)))
+                   .build();
    }
 }

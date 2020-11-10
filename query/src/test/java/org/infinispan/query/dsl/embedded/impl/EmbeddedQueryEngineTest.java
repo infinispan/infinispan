@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -32,7 +33,6 @@ import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
@@ -67,12 +67,12 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(UserHS.class)
             .addIndexedEntity(AccountHS.class)
             .addIndexedEntity(TransactionHS.class)
             .addIndexedEntity(TheEntity.class)
-            .addIndexedEntity(Book.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(Book.class);
       createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 

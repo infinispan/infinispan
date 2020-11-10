@@ -1,6 +1,0 @@
-  ...
-  <indexing>
-      <property name="org.infinispan.sample.Car.directory_provider">local-heap</property>
-  </indexing>
-...
-</infinispan>

@@ -6,11 +6,10 @@
 
    <cache-container default-cache="default" statistics="false">
       <local-cache-configuration name="base">
-         <indexing>
+         <indexing storage="local-heap">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
          </indexing>
       </local-cache-configuration>
       <local-cache name="default" configuration="base"/>
@@ -19,20 +18,17 @@
          <indexing enabled="false"/>
       </local-cache>
       <local-cache name="memory-searchable" configuration="base">
-         <indexing>
+         <indexing storage="local-heap">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable" configuration="base">
-         <indexing>
+         <indexing storage="filesystem" path="target/">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-filesystem</property>
-            <property name="directory.root">target/</property>
          </indexing>
       </local-cache>
    </cache-container>

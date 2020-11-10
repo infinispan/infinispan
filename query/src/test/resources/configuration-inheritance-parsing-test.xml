@@ -6,20 +6,18 @@
 
    <cache-container default-cache="default">
       <local-cache-configuration name="template">
-         <indexing>
+         <indexing storage="local-heap">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.indexedembedded.Book</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
          </indexing>
       </local-cache-configuration>
       <local-cache name="default" configuration="template" />
       <local-cache name="extended" configuration="template">
-         <indexing>
+         <indexing storage="local-heap">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
          </indexing>
       </local-cache>
    </cache-container>

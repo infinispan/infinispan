@@ -11,11 +11,10 @@
         <transport cluster="Infinispan-Query-Cluster"/>
 
         <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
-            <indexing>
+            <indexing storage="local-heap">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Transaction</indexed-entity>
                 </indexed-entities>
-                <property name="directory.type">local-heap</property>
                 <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             </indexing>
         </distributed-cache>

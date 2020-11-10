@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -20,7 +21,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
@@ -90,13 +90,10 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-            .addIndexedEntity("News")
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-            .addProperty(SearchConfig.IO_STRATEGY, SearchConfig.NEAR_REAL_TIME)
-            .addProperty(SearchConfig.COMMIT_INTERVAL, "500")
-            .addProperty(SearchConfig.IO_MERGE_FACTOR, "30")
-            .addProperty(SearchConfig.IO_MERGE_MAX_SIZE, "1024")
-            .addProperty(SearchConfig.IO_WRITER_RAM_BUFFER_SIZE, "256");
+            .storage(LOCAL_HEAP)
+            .writer().commitInterval(500).ramBufferSize(256)
+            .merge().factor(30).maxSize(1024)
+            .addIndexedEntity("News");
 
       builder.memory().storageType(storageType);
       if (evictionSize > 0) {

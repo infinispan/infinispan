@@ -1,5 +1,6 @@
 package org.infinispan.query.partitionhandling;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -13,7 +14,6 @@ import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -37,8 +37,8 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.indexing()
             .enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
       return configurationBuilder;
    }
 

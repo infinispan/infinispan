@@ -107,12 +107,11 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
                   "  <cache-container>" +
                   "     <local-cache name=\"" + CACHE_NAME + "\">\n" +
                   "        <encoding media-type=\"application/x-protostream\"/>\n" +
-                  "        <indexing>\n" +
+                  "        <indexing storage=\"local-heap\">\n" +
                   "           <indexed-entities>\n" +
                   "              <indexed-entity>Entity</indexed-entity>\n" +
                   "              <indexed-entity>EvilTwin</indexed-entity>\n" +
                   "           </indexed-entities>\n" +
-                  "           <property name=\"directory.type\">local-heap</property>\n" +
                   "          </indexing>" +
                   "       </local-cache>" +
                   "  </cache-container>" +

@@ -11,7 +11,7 @@
       <transport cluster="MyCluster"/>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
-         <indexing>
+         <indexing storage="local-heap">
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey3" transformer="org.infinispan.query.test.CustomKey3Transformer"/>
             </key-transformers>
@@ -19,7 +19,6 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
             <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
       </replicated-cache>

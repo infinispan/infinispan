@@ -11,7 +11,6 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.hibernate.search.engine.backend.index.IndexManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
@@ -28,11 +27,10 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <indexing>\n" +
+            "      <indexing storage=\"local-heap\">\n" +
             "         <indexed-entities>\n" +
             "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
             "         </indexed-entities>\n" +
-            "         <property name=\"" + SearchConfig.DIRECTORY_TYPE + "\">" + SearchConfig.HEAP + "</property>\n" +
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>"

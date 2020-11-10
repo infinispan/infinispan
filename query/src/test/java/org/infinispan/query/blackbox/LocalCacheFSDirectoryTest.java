@@ -7,6 +7,7 @@ import java.io.File;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
@@ -33,11 +34,10 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().enable()
+            .storage(IndexStorage.FILESYSTEM).path(indexDirectory)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return TestCacheManagerFactory.createCacheManager(cfg);
    }

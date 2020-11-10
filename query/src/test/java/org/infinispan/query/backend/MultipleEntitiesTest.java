@@ -1,5 +1,6 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertEquals;
 
 import java.util.Date;
@@ -31,9 +32,9 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Bond.class)
             .addIndexedEntity(Debenture.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }

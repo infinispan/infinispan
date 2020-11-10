@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
@@ -68,8 +69,8 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       // Add the test caches
       org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
       builder.indexing().enable()
-            .addIndexedEntity("Entity")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("Entity");
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
 
       // Wait for state transfer on the test caches

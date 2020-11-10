@@ -13,6 +13,7 @@ import org.apache.lucene.index.SegmentInfos;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,7 +25,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEven
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -170,10 +170,9 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             .persistence().passivation(true)
             .addSingleFileStore().preload(true)
             .indexing().enable()
+            .storage(IndexStorage.FILESYSTEM).path(indexDir.getAbsolutePath())
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(Car.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDir.getAbsolutePath());
+            .addIndexedEntity(Car.class);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, b);
    }
 

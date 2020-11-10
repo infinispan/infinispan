@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.hibernate.search.annotations.Field;
@@ -14,7 +15,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -46,9 +46,9 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
             clustering()
             .cacheMode(getCacheMode())
             .indexing()
+            .storage(LOCAL_HEAP)
             .enable()
-            .addIndexedEntity(ClassWithLongIndexName.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(ClassWithLongIndexName.class);
       return cacheCfg;
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
@@ -7,7 +8,6 @@ import java.util.List;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
@@ -38,8 +38,8 @@ public class KeyTypeTest extends SingleCacheManagerTest {
             .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
 
       person1 = new Person();

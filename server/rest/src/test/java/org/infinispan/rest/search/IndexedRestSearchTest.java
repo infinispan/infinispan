@@ -3,6 +3,7 @@ package org.infinispan.rest.search;
 import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_REQUEST_METHOD;
 import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
 import static io.netty.handler.codec.http.HttpHeaderNames.ORIGIN;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -29,8 +30,8 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()
             .enable()
-            .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("org.infinispan.rest.search.entity.Person");
       return configurationBuilder;
    }
 

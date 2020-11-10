@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.admin;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -33,7 +34,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -47,8 +47,8 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-             .addIndexedEntity("sample_bank_account.Transaction")
-             .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+             .storage(LOCAL_HEAP)
+             .addIndexedEntity("sample_bank_account.Transaction");
       createHotRodServers(2, builder);
    }
 

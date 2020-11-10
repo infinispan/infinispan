@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.transcoding;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,8 +18,8 @@ public class DataFormatIndexedTest extends DataFormatTest {
    protected ConfigurationBuilder buildCacheConfig() {
       ConfigurationBuilder parentBuilder = hotRodCacheConfiguration();
       parentBuilder.indexing().enable()
-            .addIndexedEntities("org.infinispan.test.client.DataFormatTest.ComplexValue")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntities("org.infinispan.test.client.DataFormatTest.ComplexValue");
       return parentBuilder;
    }
 }

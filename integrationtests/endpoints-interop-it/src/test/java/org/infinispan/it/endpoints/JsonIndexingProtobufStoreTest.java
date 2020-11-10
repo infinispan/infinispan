@@ -1,6 +1,7 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.IOException;
@@ -24,8 +25,8 @@ public class JsonIndexingProtobufStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
-                  .addIndexedEntity("org.infinispan.test.endpoint.it.CryptoCurrency")
-                  .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("org.infinispan.test.endpoint.it.CryptoCurrency");
 
       indexedCache.encoding().key().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       indexedCache.encoding().value().mediaType(APPLICATION_PROTOSTREAM_TYPE);

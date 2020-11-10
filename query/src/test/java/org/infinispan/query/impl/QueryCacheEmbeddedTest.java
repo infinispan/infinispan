@@ -1,5 +1,6 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -17,7 +18,6 @@ import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryParsingResult;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -39,8 +39,8 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .addIndexedEntity(UserHS.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(UserHS.class);
 
       return TestCacheManagerFactory.createCacheManager(cfg);
    }

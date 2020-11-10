@@ -1,5 +1,6 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.QueryTestSCI;
@@ -93,9 +93,9 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Entity1.class)
-            .addIndexedEntity(Entity2.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(Entity2.class);
 
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
       holder.getGlobalConfigurationBuilder()

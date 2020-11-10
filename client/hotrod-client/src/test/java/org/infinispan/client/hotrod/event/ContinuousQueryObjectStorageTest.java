@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -81,8 +82,8 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().enable()
-            .addIndexedEntities(UserHS.class)
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntities(UserHS.class);
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }

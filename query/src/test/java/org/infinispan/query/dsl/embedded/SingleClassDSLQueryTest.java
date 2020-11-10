@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertEquals;
 
 import java.util.List;
@@ -12,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -40,8 +40,8 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
 
    protected void configureCache(ConfigurationBuilder builder) {
       builder.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
    }
 
    @BeforeClass(alwaysRun = true)

@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.FILESYSTEM;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.TestingUtil;
@@ -26,17 +26,12 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
+            .storage(FILESYSTEM).path(indexDirectory)
             .addIndexedEntity("sample_bank_account.User")
             .addIndexedEntity("sample_bank_account.Account")
             .addIndexedEntity("sample_bank_account.Transaction")
-            .addProperty(SearchConfig.IO_STRATEGY, SearchConfig.NEAR_REAL_TIME)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
-            .addProperty(SearchConfig.IO_MERGE_FACTOR, "30")
-            .addProperty(SearchConfig.IO_MERGE_MAX_SIZE, "4096")
-            .addProperty(SearchConfig.IO_WRITER_RAM_BUFFER_SIZE, "220")
-            .addProperty(SearchConfig.NUMBER_OF_SHARDS, String.valueOf(NUM_SHARDS))
-            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH);
+            .writer().ramBufferSize(220)
+            .merge().factor(30).maxSize(4096);
 
       return builder;
    }

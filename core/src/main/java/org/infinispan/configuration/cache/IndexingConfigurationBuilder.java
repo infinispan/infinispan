@@ -6,11 +6,16 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
+import static org.infinispan.configuration.cache.IndexingConfiguration.PATH;
+import static org.infinispan.configuration.cache.IndexingConfiguration.STORAGE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -20,6 +25,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -27,13 +33,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
+public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements IndexingConfigurationChildBuilder, Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
 
-   private static final String DIRECTORY_PROVIDER_SUFFIX = "directory.type";
+   private static final String BACKEND_PREFIX = "hibernate.search.backend.";
 
-   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.backend.directory.type";
+   private static final String DIRECTORY_PROVIDER_KEY = BACKEND_PREFIX + "directory.type";
 
-   private static final String DIRECTORY_PROVIDER_KEY2 = "directory.type";
+   private static final String DIRECTORY_ROOT_KEY = BACKEND_PREFIX + "directory.root";
 
    private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
 
@@ -60,9 +66,22 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private final Set<Class<?>> resolvedIndexedClasses = new HashSet<>();
 
+   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
+   private final IndexReaderConfigurationBuilder readerConfigurationBuilder;
+   private final IndexWriterConfigurationBuilder writerConfigurationBuilder;
+
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = IndexingConfiguration.attributeDefinitionSet();
+      readerConfigurationBuilder = new IndexReaderConfigurationBuilder(this);
+      writerConfigurationBuilder = new IndexWriterConfigurationBuilder(this);
+      this.subElements.add(readerConfigurationBuilder);
+      this.subElements.add(writerConfigurationBuilder);
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return subElements;
    }
 
    public IndexingConfigurationBuilder enabled(boolean enabled) {
@@ -77,6 +96,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   public IndexReaderConfigurationBuilder reader() {
+      return readerConfigurationBuilder;
+   }
+
+   public IndexWriterConfigurationBuilder writer() {
+      return writerConfigurationBuilder;
+   }
+
    /**
     * Wipe out all indexing configuration settings and disable indexing.
     */
@@ -87,6 +114,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes.attribute(INDEXED_ENTITIES).reset();
       attributes.attribute(PROPERTIES).reset();
       attributes.attribute(KEY_TRANSFORMERS).reset();
+      attributes.attribute(STORAGE).reset();
+      attributes.attribute(PATH).reset();
    }
 
    public IndexingConfigurationBuilder enable() {
@@ -99,6 +128,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public boolean enabled() {
       return attributes.attribute(ENABLED).get();
+   }
+
+   public IndexingConfigurationBuilder path(String path) {
+      attributes.attribute(PATH).set(path);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder storage(IndexStorage storage) {
+      attributes.attribute(STORAGE).set(storage);
+      return this;
    }
 
    /**
@@ -136,7 +175,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @param key Property key
     * @param value Property value
     * @return <code>this</code>, for method chaining
+    * @deprecated Since 12.0, please use {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
+   @Deprecated
    public IndexingConfigurationBuilder addProperty(String key, String value) {
       return setProperty(key, value);
    }
@@ -153,7 +194,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @param key Property key
     * @param value Property value
     * @return <code>this</code>, for method chaining
+    * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
+   @Deprecated
    public IndexingConfigurationBuilder setProperty(String key, Object value) {
       TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
@@ -171,7 +214,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
     * @param props the properties
     * @return <code>this</code>, for method chaining
+    * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
+   @Deprecated
    public IndexingConfigurationBuilder withProperties(Properties props) {
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
@@ -281,23 +326,19 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
       }
 
-      ensureSingleIndexingProvider();
+      ensureSingleIndexingConfig();
    }
 
-   private void ensureSingleIndexingProvider() {
+   private void ensureSingleIndexingConfig() {
       TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
-      String defaultProvider = typedProperties.getProperty(DIRECTORY_PROVIDER_KEY1);
-      if (defaultProvider == null) {
-         defaultProvider = typedProperties.getProperty(DIRECTORY_PROVIDER_KEY2, FS_PROVIDER);
-      }
-      Set<String> providers = new HashSet<>();
-      providers.add(defaultProvider.trim().toLowerCase());
-      typedProperties.entrySet().stream()
-                     .filter(e -> ((String) e.getKey()).endsWith(DIRECTORY_PROVIDER_SUFFIX))
-                     .forEach(e -> providers.add(((String) e.getValue()).trim().toLowerCase()));
-
-      if (providers.size() > 1) {
-         throw CONFIG.foundMultipleDirectoryProviders();
+      boolean hasMultiIndexConfig =
+            typedProperties.keySet().stream()
+                  .map(Object::toString)
+                  .filter(k -> k.contains("."))
+                  .map(k -> k.substring(k.lastIndexOf('.')))
+                  .anyMatch(s -> typedProperties.keySet().stream().filter(k -> k.toString().endsWith(s)).count() > 1);
+      if (hasMultiIndexConfig) {
+         throw CONFIG.foundDifferentIndexConfigPerType();
       }
    }
 
@@ -315,7 +356,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    private void applyAutoConfig(TypedProperties properties) {
-      properties.putIfAbsent(DIRECTORY_PROVIDER_KEY1, FS_PROVIDER);
+      properties.putIfAbsent(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
       properties.putIfAbsent(EXCLUSIVE_INDEX_USE, "true");
       properties.putIfAbsent(INDEX_MANAGER, "near-real-time");
       properties.putIfAbsent(READER_STRATEGY, "shared");
@@ -324,29 +365,58 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public IndexingConfiguration create() {
       TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
+      if (typedProperties.size() > 0) {
+         CONFIG.indexingPropertiesDeprecated(typedProperties);
+         applyLegacyProperties(typedProperties);
+      }
       if (autoConfig()) {
          applyAutoConfig(typedProperties);
          attributes.attribute(PROPERTIES).set(typedProperties);
 
          // check that after autoConfig we still do not have multiple configured providers
-         ensureSingleIndexingProvider();
+         ensureSingleIndexingConfig();
       }
 
-      // check for presence of index providers that are not persistent upon restart
-      boolean isVolatile = typedProperties.entrySet().stream()
-                                     .anyMatch(e -> {
-                                        if (((String) e.getKey()).endsWith(DIRECTORY_PROVIDER_SUFFIX)) {
-                                           String directoryImplementationName = String.valueOf(e.getValue()).trim();
-                                           return LOCAL_HEAP_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
-                                                 || LOCAL_HEAP_DIRECTORY_PROVIDER_FQN.equalsIgnoreCase(directoryImplementationName)
-                                                 || RAM_DIRECTORY_PROVIDER.equals(directoryImplementationName);
-                                        }
-                                        return false;
-                                     });
-
       // todo [anistor] if storage media type is not configured then log a warning because this is not supported with indexing
+      if (enabled()) {
+         IndexStorage storage = attributes.attribute(STORAGE).get();
+         if (storage.equals(IndexStorage.LOCAL_HEAP)) {
+            typedProperties.put(DIRECTORY_PROVIDER_KEY, LOCAL_HEAP_DIRECTORY_PROVIDER);
+         } else {
+            typedProperties.put(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
+            String path = attributes.attribute(PATH).get();
+            if (path != null) {
+               typedProperties.put(DIRECTORY_ROOT_KEY, StringPropertyReplacer.replaceProperties(path));
+            }
+         }
+         typedProperties.putAll(readerConfigurationBuilder.asInternalProperties());
+         typedProperties.putAll(writerConfigurationBuilder.asInternalProperties());
+      }
 
-      return new IndexingConfiguration(attributes.protect(), isVolatile, resolvedIndexedClasses);
+      return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(), writerConfigurationBuilder.create());
+   }
+
+   /**
+    * Apply ISPN 11 index properties
+    */
+   private void applyLegacyProperties(TypedProperties properties) {
+      properties.forEach((k, v) -> {
+         String prop = k.toString();
+         String propValue = v.toString();
+         if (prop.endsWith(".directory_provider")) {
+            if (LOCAL_HEAP_DIRECTORY_PROVIDER.equals(propValue)) {
+               storage(IndexStorage.LOCAL_HEAP);
+            } else {
+               storage(IndexStorage.FILESYSTEM);
+            }
+         }
+         if (prop.endsWith(".indexBase")) path(propValue);
+         if (prop.endsWith(".merge_factor")) writer().merge().factor(Integer.parseInt(propValue));
+         if (prop.endsWith(".merge_max_size")) writer().merge().maxSize(Integer.parseInt(propValue));
+         if (prop.endsWith(".ram_buffer_size")) writer().ramBufferSize(Integer.parseInt(propValue));
+         if (prop.endsWith(".index_flush_interval")) writer().commitInterval(Integer.parseInt(propValue));
+         if (prop.endsWith(".reader.async_refresh_period_ms")) reader().refreshInterval(Long.parseLong(propValue));
+      });
    }
 
    @Override
@@ -364,6 +434,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       }
       this.resolvedIndexedClasses.clear();
       this.resolvedIndexedClasses.addAll(template.indexedEntities());
+      this.readerConfigurationBuilder.read(template.reader());
+      this.writerConfigurationBuilder.read(template.writer());
       return this;
    }
 
@@ -374,7 +446,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public String toString() {
-      return "IndexingConfigurationBuilder [attributes=" + attributes + "]";
+      return "IndexingConfigurationBuilder{" +
+            "attributes=" + attributes +
+            ", readerConfigurationBuilder=" + readerConfigurationBuilder +
+            ", writerConfigurationBuilder=" + writerConfigurationBuilder +
+            '}';
    }
 
    @Override

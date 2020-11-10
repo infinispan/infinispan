@@ -1,5 +1,6 @@
 package org.infinispan.query.persistence;
 
+import static org.infinispan.configuration.cache.IndexStorage.FILESYSTEM;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 
@@ -23,7 +24,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -88,9 +88,8 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
             .fetchPersistentState(true)
             .indexing()
             .enable()
+            .storage(FILESYSTEM).path(Paths.get(TMP_DIR, "idx").toString())
             .addIndexedEntity(SEntity.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, Paths.get(TMP_DIR, "idx").toString())
             .invocationBatching()
             .enable(batchingEnabled);
 

@@ -1,5 +1,7 @@
 package org.infinispan.query.api;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.SearchConfig;
@@ -20,9 +22,9 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, c);
    }

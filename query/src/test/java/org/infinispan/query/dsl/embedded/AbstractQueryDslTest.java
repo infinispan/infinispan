@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,7 +15,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.ModelFactoryHS;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -73,10 +74,10 @@ public abstract class AbstractQueryDslTest extends MultipleCacheManagersTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(getModelFactory().getTransactionImplClass());
       createClusteredCaches(1, cfg);
    }
 

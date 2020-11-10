@@ -13,12 +13,11 @@
             <memory>
                 <off-heap/>
             </memory>
-            <indexing>
+            <indexing storage="local-heap">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                     <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
                 </indexed-entities>
-                <property name="directory.type">local-heap</property>
                 <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             </indexing>
         </distributed-cache>

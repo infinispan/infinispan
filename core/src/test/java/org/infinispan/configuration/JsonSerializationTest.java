@@ -143,7 +143,11 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .security().authorization().role("ROLE").role("ROLA")
             .persistence().passivation(false)
             .expiration().lifespan(10).wakeUpInterval(123).maxIdle(1122)
-            .indexing().enable().addIndexedEntity("Entity").addProperty("v", "v")
+            .indexing().enable()
+            .reader().refreshInterval(1000)
+            .writer().ramBufferSize(100).maxBufferedDocs(123).queueSize(111).queueCount(12).setLowLevelTrace(true).commitInterval(12)
+            .merge().factor(12).minSize(12).maxSize(11).calibrateByDeletes(true)
+            .addIndexedEntity("Entity").addProperty("v", "v")
             .customInterceptors()
             .addInterceptor()
             .interceptorClass(AsyncInterceptor1.class)
@@ -350,7 +354,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("5000", tcp.at("thread_pool.keep_alive_time").asString());
       assertEquals("10000", tcp.at("thread_dumps_threshold").asString());
 
-      Json fdSock =  mping.at("FD_SOCK");
+      Json fdSock = mping.at("FD_SOCK");
       assertEquals(0, fdSock.asMap().size());
    }
 
@@ -421,7 +425,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(2, role1.asList().size());
       assertEquals(newSet("ADMIN", "READ"), asSet(role1));
 
-      Json role2 =  roles.at("role2");
+      Json role2 = roles.at("role2");
       assertEquals(1, role2.asList().size());
       assertEquals(newSet("WRITE"), asSet(role2));
    }

@@ -1,5 +1,6 @@
 package org.infinispan.query.persistence;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
@@ -13,7 +14,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
@@ -96,8 +96,8 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .preload(true)
          .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Country.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
          ;
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();

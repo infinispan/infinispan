@@ -2,6 +2,7 @@ package org.infinispan.rest.search;
 
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.util.concurrent.CompletionStage;
 
@@ -62,8 +63,8 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder configurationBuilder = getDefaultStandaloneCacheConfig(false);
       configurationBuilder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE).indexing().enable()
-            .addIndexedEntity("NonIndexed")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("NonIndexed");
       String config = new JsonWriter().toJSON(configurationBuilder.build());
       RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_JSON, config);
 

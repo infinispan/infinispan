@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.marshall;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -92,8 +93,8 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
-            .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class)
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class);
       return builder;
    }
 

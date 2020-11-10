@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.TransactionManager;
@@ -33,8 +34,8 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .cacheMode(CacheMode.LOCAL)
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       if (transactionsEnabled()) {

@@ -16,12 +16,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -54,12 +56,10 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.statistics().enable();
-      builder.indexing()
+      builder.indexing().storage(IndexStorage.LOCAL_HEAP)
             .enable()
             .addIndexedEntities(Person.class, AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, builder);
       cm.defineConfiguration(CACHE_NAME, builder.build());
@@ -170,10 +170,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          configureJmx(globalConfig2, TEST_JMX_DOMAIN, mBeanServerLookup);
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
-               .indexing().enable()
-               .addIndexedEntities(Person.class, AnotherGrassEater.class)
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("lucene_version", "LUCENE_CURRENT");
+               .indexing().enable().storage(IndexStorage.LOCAL_HEAP)
+               .addIndexedEntities(Person.class, AnotherGrassEater.class);
 
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfig2, defaultCacheConfig2);
          cm2.defineConfiguration(CACHE_NAME, defaultCacheConfig2.build());

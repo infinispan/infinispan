@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -74,8 +75,8 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }

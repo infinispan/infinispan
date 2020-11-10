@@ -2,7 +2,6 @@ package org.infinispan.query.config;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,8 +19,7 @@ public class ProgrammaticAutoConfigTest {
    public void testWithoutAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .indexing().enable().create();
-
-      assertTrue(cfg.properties().isEmpty());
+      assertEquals(cfg.properties().size(), 3);
    }
 
    @Test

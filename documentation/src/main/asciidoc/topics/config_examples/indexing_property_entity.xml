@@ -1,8 +1,0 @@
-    ...
-    <indexing>
-        <property name="default.directory_provider">infinispan</property>
-        <property name="boatIndex.directory_provider">local-heap</property>
-        <property name="org.infinispan.sample.Airplane.directory_provider">local-heap</property>
-    </indexing>
-    ...
-</infinispan>

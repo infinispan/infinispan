@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.helper.SearchConfig;
@@ -25,9 +27,9 @@ public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
       cacheCfg.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheCfg.indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       enhanceConfig(cacheCfg);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.infinispan.test.TestingUtil.orTimeout;
 import static org.testng.AssertJUnit.assertEquals;
@@ -58,9 +59,9 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       builder.clustering().hash().numSegments(1).numOwners(2).consistentHashFactory(chf);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
