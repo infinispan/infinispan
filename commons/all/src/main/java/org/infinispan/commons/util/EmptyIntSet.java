@@ -84,11 +84,6 @@ class EmptyIntSet extends AbstractImmutableIntSet {
    }
 
    @Override
-   public byte[] toBitSet() {
-      return Util.EMPTY_BYTE_ARRAY;
-   }
-
-   @Override
    public boolean equals(Object obj) {
       if (obj instanceof Set) {
          return ((Set) obj).size() == 0;

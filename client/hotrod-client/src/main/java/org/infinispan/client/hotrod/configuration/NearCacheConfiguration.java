@@ -6,17 +6,15 @@ public class NearCacheConfiguration {
    // TODO: Consider an option to configure key equivalence function for near cache (e.g. for byte arrays)
    private final NearCacheMode mode;
    private final int maxEntries;
-   private final boolean bloomFilter;
    private final Pattern cacheNamePattern;
 
-   public NearCacheConfiguration(NearCacheMode mode, int maxEntries, boolean bloomFilterOptimization) {
-      this(mode, maxEntries, bloomFilterOptimization, null);
+   public NearCacheConfiguration(NearCacheMode mode, int maxEntries) {
+      this(mode, maxEntries, null);
    }
 
-   public NearCacheConfiguration(NearCacheMode mode, int maxEntries, boolean bloomFilter, Pattern cacheNamePattern) {
+   public NearCacheConfiguration(NearCacheMode mode, int maxEntries, Pattern cacheNamePattern) {
       this.mode = mode;
       this.maxEntries = maxEntries;
-      this.bloomFilter = bloomFilter;
       this.cacheNamePattern = cacheNamePattern;
    }
 
@@ -28,10 +26,6 @@ public class NearCacheConfiguration {
       return mode;
    }
 
-   public boolean bloomFilter() {
-      return bloomFilter;
-   }
-
    public Pattern cacheNamePattern() {
       return cacheNamePattern;
    }
@@ -41,7 +35,6 @@ public class NearCacheConfiguration {
       return "NearCacheConfiguration{" +
             "mode=" + mode +
             ", maxEntries=" + maxEntries +
-            ", bloomFilter=" + bloomFilter +
             ", cacheNamePattern=" + cacheNamePattern +
             '}';
    }

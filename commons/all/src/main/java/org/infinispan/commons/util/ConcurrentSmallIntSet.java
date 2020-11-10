@@ -3,8 +3,6 @@ package org.infinispan.commons.util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -405,18 +403,6 @@ class ConcurrentSmallIntSet implements IntSet {
       }
 
       return (index == size) ? r : Arrays.copyOf(r, size);
-   }
-
-   @Override
-   public byte[] toBitSet() {
-      byte[] bytes = new byte[array.length() * 8];
-      ByteBuffer bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-      for (int i = 0; i < array.length(); ++i) {
-         int value = array.get(i);
-         bb.putInt(value);
-
-      }
-      return bb.array();
    }
 
    @Override

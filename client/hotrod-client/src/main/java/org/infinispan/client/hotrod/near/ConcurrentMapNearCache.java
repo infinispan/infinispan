@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.near;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -49,11 +47,5 @@ final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
 
    public static <K, V> NearCache<K, V> create() {
       return new ConcurrentMapNearCache<K, V>();
-   }
-
-
-   @Override
-   public Iterator<Map.Entry<K, MetadataValue<V>>> iterator() {
-      return cache.entrySet().iterator();
    }
 }

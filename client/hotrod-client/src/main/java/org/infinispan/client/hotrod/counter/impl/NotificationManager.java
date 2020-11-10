@@ -108,13 +108,13 @@ public class NotificationManager {
       });
    }
 
-   private CompletableFuture<Void> failover() {
+   private CompletableFuture<Short> failover() {
       dispatcher = null;
       Iterator<String> iterator = clientListeners.keySet().iterator();
       if (!iterator.hasNext()) {
-         return null;
+         return NO_ERROR_FUTURE;
       }
-      CompletableFuture<Void> cf = new CompletableFuture<>();
+      CompletableFuture<Short> cf = new CompletableFuture<>();
       String firstCounterName = iterator.next();
       AddListenerOperation op = factory.newAddListenerOperation(firstCounterName, listenerId, null);
       log.debugf("Lock %s", lock);
@@ -155,13 +155,13 @@ public class NotificationManager {
                                  cf.completeExceptionally(new IllegalStateException("Unexpected to use another channel for the same counter"));
                               }
                               if (counter.decrementAndGet() == 0) {
-                                 cf.complete(null);
+                                 cf.complete((short) 0);
                               }
                            }
                         });
                }
                if (counter.decrementAndGet() == 0) {
-                  cf.complete(null);
+                  cf.complete((short) 0);
                }
             }
          });
@@ -169,7 +169,7 @@ public class NotificationManager {
       } else {
          lock.unlock();
          log.debugf("UnLock %s", lock);
-         return null;
+         return NO_ERROR_FUTURE;
       }
    }
 

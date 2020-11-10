@@ -25,9 +25,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
-import org.infinispan.client.hotrod.impl.InternalRemoteCache;
-import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
-import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
+import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.commons.util.Util;
 
 public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
@@ -46,21 +44,17 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    private final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
 
-   private final ClientListenerOperation op;
-   private final InternalRemoteCache<?, ?> remoteCache;
+   private final AddClientListenerOperation op;
 
-   ClientEventDispatcher(ClientListenerOperation op, SocketAddress address, Map<Class<? extends Annotation>,
-         List<ClientListenerInvocation>> invocables, String cacheName, Runnable cleanup, InternalRemoteCache<?, ?> remoteCache) {
+   ClientEventDispatcher(AddClientListenerOperation op, SocketAddress address, Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables, String cacheName, Runnable cleanup) {
       super(cacheName, op.listener, op.listenerId, address, cleanup);
       this.op = op;
       this.invocables = invocables;
-      this.remoteCache = remoteCache;
    }
 
-   public static ClientEventDispatcher create(ClientListenerOperation op, SocketAddress address, Runnable cleanup,
-                                              InternalRemoteCache<?, ?> remoteCache) {
+   public static ClientEventDispatcher create(AddClientListenerOperation op, SocketAddress address, Runnable cleanup) {
       Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> invocables = findMethods(op.listener);
-      return new ClientEventDispatcher(op, address, invocables, op.getCacheName(), cleanup, remoteCache);
+      return new ClientEventDispatcher(op, address, invocables, op.getCacheName(), cleanup);
    }
 
    public static Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> findMethods(Object listener) {
@@ -128,15 +122,8 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    }
 
    @Override
-   public CompletableFuture<Void> executeFailover() {
-      CompletableFuture<SocketAddress> future = op.copy().execute();
-      if (remoteCache instanceof InvalidatedNearRemoteCache) {
-         future = future.thenApply(socketAddress -> {
-            ((InvalidatedNearRemoteCache<?, ?>) remoteCache).setBloomListenerAddress(socketAddress);
-            return socketAddress;
-         });
-      }
-      return future.thenApply(ignore -> null);
+   public CompletableFuture<Short> executeFailover() {
+      return op.copy().execute();
    }
 
    @Override

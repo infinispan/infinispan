@@ -7,17 +7,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.BloomFilter;
-import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.MurmurHash3BloomFilter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
@@ -36,8 +31,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private static final boolean trace = log.isTraceEnabled();
 
    private final ClientListenerRegistry listenerRegistry;
-
-   private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
@@ -66,47 +59,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       getInternal(header, cache, key);
    }
 
-   void updateBloomFilter(HotRodHeader header, Subject subject, byte[] bloomArray) {
-      try {
-         BloomFilter<byte[]> filter = bloomFilters.get(header.cacheName);
-         if (filter != null) {
-            if (trace) {
-               log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
-            }
-            filter.setBits(IntSets.from(bloomArray));
-            if (trace) {
-               log.tracef("Updated bloom filter %s for cache %s", filter, header.cacheName);
-            }
-            writeSuccess(header);
-         } else {
-            if (trace) {
-               log.tracef("There was no bloom filter for cache %s from client", header.cacheName);
-            }
-            writeNotExecuted(header);
-         }
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
-   }
-
    private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
          handleGet(header, get.join(), null);
       } else {
          get.whenComplete((result, throwable) -> handleGet(header, result, throwable));
-      }
-   }
-
-   void addToFilter(String cacheName, byte[] key) {
-      BloomFilter<byte[]> bloomFilter = bloomFilters.get(cacheName);
-      // TODO: Need to think harder about this because we could have a concurrent write as we are doing our get
-      // and we could have just have had an invalidation come through that didn't pass the bloom filter
-      // I believe this has to go at the beginning of the get command before we get a value or exception
-      // We can fix this by adding a temporary check that if a get is being performed and the listener checks the
-      // bloom filter for the key to return a bit saying to not cache the returned value
-      if (bloomFilter != null) {
-         bloomFilter.addToFilter(key);
       }
    }
 
@@ -151,13 +109,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
-         handleGetWithMetadata(header, offset, key, get.join(), null);
+         handleGetWithMetadata(header, offset, get.join(), null);
       } else {
-         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, key, ce, throwable));
+         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
       }
    }
 
-   private void handleGetWithMetadata(HotRodHeader header, int offset, byte[] key, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, int offset, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
       if (throwable != null) {
          writeException(header, throwable);
          return;
@@ -166,7 +124,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          writeNotExist(header);
       } else if (header.op == HotRodOperation.GET_WITH_METADATA) {
          assert offset == 0;
-         addToFilter(header.cacheName, key);
          writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel, entry));
       } else {
          if (entry == null) {
@@ -499,19 +456,11 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState,
-                          String filterFactory, List<byte[]> filterParams, String converterFactory,
-                          List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
+   void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState, String filterFactory, List<byte[]> filterParams, String converterFactory, List<byte[]> converterParams, boolean useRawData, int listenerInterests) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      BloomFilter<byte[]> bloomFilter = null;
-      if (bloomBits > 0) {
-         bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
-         BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-         assert priorFilter == null;
-      }
       CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
             includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
-            listenerInterests, bloomFilter);
+            listenerInterests);
       stage.whenComplete((ignore, cause) -> {
          if (cause != null) {
             log.trace("Failed to add listener", cause);

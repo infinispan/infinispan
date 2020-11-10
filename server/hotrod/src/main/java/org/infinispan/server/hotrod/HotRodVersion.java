@@ -22,7 +22,6 @@ public enum HotRodVersion {
    HOTROD_28(2, 8), // since 9.3
    HOTROD_29(2, 9), // since 9.4
    HOTROD_30(3, 0), // since 10.0
-   HOTROD_31(3, 1), // since 12.0
    ;
 
    private final int major;

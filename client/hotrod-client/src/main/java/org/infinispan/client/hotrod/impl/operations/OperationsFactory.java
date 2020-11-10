@@ -16,7 +16,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -126,14 +125,8 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
-      return newGetWithMetadataOperation(key, keyBytes, dataFormat, null);
-   }
-
-   public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat,
-                                                                      SocketAddress listenerServer) {
       return new GetWithMetadataOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics,
-            listenerServer);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public StatsOperation newStatsOperation() {
@@ -189,30 +182,19 @@ public class OperationsFactory implements HotRodConstants {
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, null, null, dataFormat, null);
+            listener, null, null, dataFormat);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(
          Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, filterFactoryParams, converterFactoryParams, dataFormat, null);
+            listener, filterFactoryParams, converterFactoryParams, dataFormat);
    }
 
    public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener) {
       return new RemoveClientListenerOperation(codec, channelFactory,
             cacheNameBytes, topologyId, flags(), cfg, listenerNotifier, listener);
-   }
-
-   public AddBloomNearCacheClientListenerOperation newAddNearCacheListenerOperation(Object listener, DataFormat dataFormat,
-         int bloomFilterBits, InternalRemoteCache<?, ?> remoteCache) {
-      return new AddBloomNearCacheClientListenerOperation(codec, channelFactory, cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, dataFormat, bloomFilterBits, remoteCache);
-   }
-
-   public UpdateBloomFilterOperation newUpdateBloomFilterOperation(SocketAddress address, byte[] bloomBytes) {
-      return new UpdateBloomFilterOperation(codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, address,
-            bloomBytes);
    }
 
    /**

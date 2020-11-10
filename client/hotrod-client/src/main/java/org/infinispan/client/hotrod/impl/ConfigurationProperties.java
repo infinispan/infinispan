@@ -95,7 +95,6 @@ public class ConfigurationProperties {
    // Near cache properties
    public static final String NEAR_CACHE_MAX_ENTRIES = ICH + "near_cache.max_entries";
    public static final String NEAR_CACHE_MODE = ICH + "near_cache.mode";
-   public static final String NEAR_CACHE_BLOOM_FILTER = ICH + "near_cache.bloom_filter";
    public static final String NEAR_CACHE_NAME_PATTERN = ICH + "near_cache.name_pattern";
    // Pool properties
    public static final String CONNECTION_POOL_MAX_ACTIVE = ICH + "connection_pool.max_active";

@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.near;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -88,11 +87,6 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
    @Override
    public int size() {
       return cache.size();
-   }
-
-   @Override
-   public Iterator<Map.Entry<K, MetadataValue<V>>> iterator() {
-      return cache.entrySet().iterator();
    }
 
    public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config) {

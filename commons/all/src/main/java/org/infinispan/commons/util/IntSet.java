@@ -200,16 +200,4 @@ public interface IntSet extends Set<Integer> {
       }
       return array;
    }
-
-   /**
-    * Returns a byte array that has a bit set for each int in this set where each byte represents 8 numbers. That is
-    * if the ints 2, 5 and 9 are set this will return a byte array consisting of 2 bytes in little-endian representation
-    * of those values.
-    * <p>
-    * Depending upon the implementation this array may or may not have trailing bytes and may be condensed to save space.
-    * @return a byte array containing a little-endian representation
-    *         of all the ints of this int set as bits
-    * @since 12.0
-    */
-   byte[] toBitSet();
 }

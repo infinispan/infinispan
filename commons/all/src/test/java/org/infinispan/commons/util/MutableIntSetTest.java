@@ -499,29 +499,4 @@ public class MutableIntSetTest {
 
       assertEquals(Util.asSet(1, 4, 7), results);
    }
-
-   @Test
-   public void testToByteSet() {
-      intSet.add(3);
-
-      intSet.add(16);
-
-      intSet.add(35);
-      intSet.add(34);
-      intSet.add(33);
-
-      byte[] bytes = intSet.toBitSet();
-      byte[] expectedBytes = new byte[] { 8, 0, 1, 0, 14};
-      if (bytes.length == expectedBytes.length) {
-         assertArrayEquals(expectedBytes, bytes);
-      } else {
-         for (int i = 0; i < expectedBytes.length; ++i) {
-            assertEquals("Byte at pos: " + i + " didn't match", expectedBytes[i], bytes[i]);
-         }
-         // Any extra bytes should be all 0
-         for (int i = expectedBytes.length; i < bytes.length; ++i) {
-            assertEquals("Byte at pos: " + i + " didn't match", 0, bytes[i]);
-         }
-      }
-   }
 }

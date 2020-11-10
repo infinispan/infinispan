@@ -7,14 +7,14 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 
-public class ReconnectTask implements Runnable, Consumer<Void> {
+public class ReconnectTask implements Runnable, Consumer<Short> {
    private static final Log log = LogFactory.getLog(ReconnectTask.class);
 
-   private final EventDispatcher<?> dispatcher;
+   private final EventDispatcher dispatcher;
    private ScheduledFuture<?> cancellationFuture;
    private boolean completed = false;
 
-   public ReconnectTask(EventDispatcher<?> dispatcher) {
+   public ReconnectTask(EventDispatcher dispatcher) {
       this.dispatcher = dispatcher;
    }
 
@@ -34,7 +34,7 @@ public class ReconnectTask implements Runnable, Consumer<Void> {
    }
 
    @Override
-   public synchronized void accept(Void address) {
+   public synchronized void accept(Short status) {
       ScheduledFuture<?> cancellationFuture = this.cancellationFuture;
       completed = true;
       if (cancellationFuture != null) {

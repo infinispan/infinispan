@@ -12,18 +12,18 @@ import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 
 public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> {
    private final ConcurrentMap<String, List<Consumer<HotRodCounterEvent>>> clientListeners;
-   private final Supplier<CompletableFuture<Void>> failover;
+   private final Supplier<CompletableFuture<Short>> failover;
 
    public CounterEventDispatcher(byte[] listenerId,
                                  ConcurrentMap<String, List<Consumer<HotRodCounterEvent>>> clientListeners,
-                                 SocketAddress address, Supplier<CompletableFuture<Void>> failover, Runnable cleanup) {
+                                 SocketAddress address, Supplier<CompletableFuture<Short>> failover, Runnable cleanup) {
       super("", null, listenerId, address, cleanup);
       this.clientListeners = clientListeners;
       this.failover = failover;
    }
 
    @Override
-   public CompletableFuture<Void> executeFailover() {
+   public CompletableFuture<Short> executeFailover() {
       return failover.get();
    }
 

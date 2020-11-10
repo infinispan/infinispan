@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
@@ -70,17 +69,6 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     */
    public RemoteCacheConfigurationBuilder nearCacheMaxEntries(int maxEntries) {
       attributes.attribute(NEAR_CACHE_MAX_ENTRIES).set(maxEntries);
-      return this;
-   }
-
-   /**
-    * Specifies whether bloom filter should be used for near cache to limit the number of write
-    * notifications for unrelated keys.
-    * @param enable whether to enable bloom filter
-    * @return an instance of this builder
-    */
-   public RemoteCacheConfigurationBuilder nearCacheUseBloomFilter(boolean enable) {
-      attributes.attribute(NEAR_CACHE_BLOOM_FILTER).set(enable);
       return this;
    }
 

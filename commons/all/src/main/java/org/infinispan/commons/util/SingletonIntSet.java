@@ -56,16 +56,6 @@ class SingletonIntSet extends AbstractImmutableIntSet {
       return new SingleIntIterator();
    }
 
-   @Override
-   public byte[] toBitSet() {
-      int offset = (value >>> 3);
-      byte[] array = new byte[offset + 1];
-      int lastBitOffset = value > 8 ? value % 8 : value;
-      // Need to use logical right shift to ensure other bits aren't set
-      array[offset] = (byte) (0x80 >>> (7 - lastBitOffset));
-      return array;
-   }
-
    private class SingleIntIterator implements PrimitiveIterator.OfInt {
       boolean available = true;
 

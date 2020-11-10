@@ -31,7 +31,6 @@ public interface HotRodConstants {
    byte VERSION_28 = 28;
    byte VERSION_29 = 29;
    byte VERSION_30 = 30;
-   byte VERSION_31 = 31;
 
    //requests
    byte ILLEGAL_OP_CODE = 0x00;
@@ -67,9 +66,9 @@ public interface HotRodConstants {
    byte PREPARE_REQUEST = 0x3B;
    byte COMMIT_REQUEST = 0x3D;
    byte ROLLBACK_REQUEST = 0x3F;
-
-   byte ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST = 0x41;
-   byte UPDATE_BLOOM_FILTER_REQUEST = 0x43;
+   byte FORGET_TX_REQUEST = 0x79;
+   byte FETCH_TX_RECOVERY_REQUEST = 0x7B;
+   byte PREPARE_TX_2_REQUEST = 0x7D;
 
    byte COUNTER_CREATE_REQUEST = 0x4B;
    byte COUNTER_GET_CONFIGURATION_REQUEST = 0x4D;
@@ -82,10 +81,6 @@ public interface HotRodConstants {
    byte COUNTER_REMOVE_LISTENER_REQUEST = 0x5C;
    byte COUNTER_REMOVE_REQUEST = 0x5E;
    byte COUNTER_GET_NAMES_REQUEST = 0x64;
-
-   byte FORGET_TX_REQUEST = 0x79;
-   byte FETCH_TX_RECOVERY_REQUEST = 0x7B;
-   byte PREPARE_TX_2_REQUEST = 0x7D;
 
    //responses
    byte PUT_RESPONSE = 0x02;
@@ -120,8 +115,6 @@ public interface HotRodConstants {
    byte PREPARE_RESPONSE = 0x3C;
    byte COMMIT_RESPONSE = 0x3E;
    byte ROLLBACK_RESPONSE = 0x40;
-   byte ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_RESPONSE= 0x42;
-   byte UPDATE_BLOOM_FILTER_RESPONSE = 0x44;
    byte FORGET_TX_RESPONSE = 0x7A;
    byte FETCH_TX_RECOVERY_RESPONSE = 0x7C;
    byte PREPARE_TX_2_RESPONSE = 0x7E;

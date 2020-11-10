@@ -105,7 +105,7 @@ public class ClientListenerNotifier {
       dispatcher.invokeFailoverEvent();
       // Re-execute adding client listener in one of the remaining nodes
 
-      dispatcher.executeFailover().whenComplete((ignore, throwable) -> {
+      dispatcher.executeFailover().whenComplete((status, throwable) -> {
          if (throwable != null) {
             if (throwable instanceof RejectedExecutionException) {
                log.debug("Client listener failover rejected, not retrying", throwable);

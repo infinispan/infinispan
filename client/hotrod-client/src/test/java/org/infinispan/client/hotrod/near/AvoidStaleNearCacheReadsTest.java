@@ -16,66 +16,28 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
-import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.near.AvoidStaleNearCacheReadsTest")
 public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
 
-   private int entryCount;
-   private boolean bloomFilter;
-
    @AfterMethod(alwaysRun=true)
    @Override
    protected void clearContent() {
       super.clearContent();
-      RemoteCache<?, ?> remoteCache = remoteCacheManager.getCache();
-      remoteCache.clear(); // Clear the near cache too
-      if (bloomFilter) {
-         CompletionStages.join(((InternalRemoteCache) remoteCache).updateBloomFilter());
-      }
+      remoteCacheManager.getCache().clear(); // Clear the near cache too
    }
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      NearCacheConfigurationBuilder nearCacheConfigurationBuilder = builder.nearCache()
-            .mode(NearCacheMode.INVALIDATED)
-            .maxEntries(entryCount)
-            .bloomFilter(bloomFilter);
+      builder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(-1);
       return new RemoteCacheManager(builder.build());
-   }
-
-   AvoidStaleNearCacheReadsTest entryCount(int entryCount) {
-      this.entryCount = entryCount;
-      return this;
-   }
-
-   AvoidStaleNearCacheReadsTest bloomFilter(boolean bloomFilter) {
-      this.bloomFilter = bloomFilter;
-      return this;
-   }
-
-   @Factory
-   public Object[] factory() {
-      return new Object[]{
-            new AvoidStaleNearCacheReadsTest().entryCount(-1),
-            new AvoidStaleNearCacheReadsTest().entryCount(20).bloomFilter(false),
-            new AvoidStaleNearCacheReadsTest().entryCount(20).bloomFilter(true),
-      };
-   }
-
-   @Override
-   protected String parameters() {
-      return "maxEntries=" + entryCount + ", bloomFilter=" + bloomFilter;
    }
 
    public void testAvoidStaleReadsAfterPutRemove() {
