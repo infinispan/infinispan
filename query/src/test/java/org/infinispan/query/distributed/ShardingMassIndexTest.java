@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
@@ -35,11 +36,9 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
       cacheCfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Car.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
-            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
-            .addProperty(SearchConfig.NUMBER_OF_SHARDS, "2");
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       waitForClusterToForm(getDefaultCacheName());

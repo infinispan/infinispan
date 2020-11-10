@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -38,8 +39,8 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
 
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();

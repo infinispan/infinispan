@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
@@ -33,20 +34,13 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
       cfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
+            .path(indexDirectory)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
-            .addProperty(SearchConfig.THREAD_POOL_SIZE, "6")
-            .addProperty(SearchConfig.QUEUE_COUNT, "6")
-            .addProperty(SearchConfig.QUEUE_SIZE, "4096")
-            .addProperty(SearchConfig.COMMIT_INTERVAL, "10000")
-            // changing the refresh interval would make the the test not working
-            //.addProperty(SearchConfig.REFRESH_INTERVAL, "10000")
-            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
-            .addProperty(SearchConfig.NUMBER_OF_SHARDS, "6")
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
+            .writer().threadPoolSize(6).queueCount(6).queueSize(4096);
 
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);

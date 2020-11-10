@@ -1,6 +1,5 @@
 <replicated-cache name="default">
-    <indexing>
+    <indexing storage="local-heap">
         <property name="default.indexmanager">near-real-time</property>
-        <property name="default.directory_provider">local-heap</property>
     </indexing>
 </replicated-cache>

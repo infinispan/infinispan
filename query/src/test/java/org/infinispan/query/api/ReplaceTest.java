@@ -1,5 +1,6 @@
 package org.infinispan.query.api;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
@@ -22,8 +23,8 @@ public class ReplaceTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }

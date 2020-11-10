@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
@@ -12,7 +13,6 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,8 +35,8 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.query.tx;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.test.TestingUtil.withTx;
 
 import java.util.concurrent.Callable;
@@ -9,7 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -31,9 +31,9 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(AnotherGrassEater.class);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 

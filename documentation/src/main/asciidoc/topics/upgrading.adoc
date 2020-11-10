@@ -66,6 +66,140 @@ Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. 
   Starting with version 12 this results in a fatal error preventing the cache to start.
   Please update your configurations accordingly.
 
+=== Indexing configuration
+
+Configuring indexing using the `property` element is deprecated and will be removed in a future version.
+Use the `<index-reader>` and `<index-writer>` configuration elements to define indexing behaviour.
+For the programmatic configuration, use `builder.indexing().reader()` and `builder.indexing().writer()`.
+
+To migrate your configuration, please refer to the sections below:
+
+==== Storage
+
+.Memory Storage
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+ <property name="default.directory_provider">local-heap</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing storage="local-heap">
+</indexing>
+----
+
+.Filesystem storage
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.directory_provider">filesystem</property>
+  <property name="default.indexBase">${java.io.tmpdir}/baseDir</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing storage="filesystem" path="${java.io.tmpdir}/baseDir"/>
+----
+
+==== Reader refresh
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.reader.async_refresh_period_ms">1000</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+  <index-reader refresh-interval="1000"/>
+</indexing>
+----
+
+==== IndexManager
+
+From 12.0, `near-real-time` is the default index manager and no configuration is needed:
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.indexmanager">near-real-time</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing enabled="true"/>
+----
+
+==== Worker sync/async
+
+The `default.worker.execution` is redundant as the indexing process is async by default:
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+   <property name="default.worker.execution">async</property>
+   <property name="default.index_flush_interval">500</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+   <index-writer commit-interval="500"/>
+</indexing>
+----
+
+==== Low level Lucene options
+
+The properties used previously to tune the Lucene index directly are now
+available under the `<index-writer>` element.
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+   <property name="default.indexwriter.merge_factor">30</property>
+   <property name="default.indexwriter.merge_max_size">1024</property>
+   <property name="default.indexwriter.ram_buffer_size">256</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+   <index-writer ram-buffer-size="256">
+       <index-merge factor="30" max-size="1024"/>
+   </index-writer>
+</indexing>
+----
+
+==== Supporting older indexes
+
+The property `lucene_version` is deprecated and will not be supported in a future version. It is recommended to re-index when migrating from older Infinispan versions instead of reusing the underlying indexes on disk created
+in an older Lucene version.
+
+==== Sharding
+
+Configuration of sharding through the property `default.sharding_strategy.nbr_of_shards` is deprecated and will be removed in a future version.
+
 == Cache Health
 A new status `FAILED` has been added to the cache health, to indicate that a cache failed to start with the
 provided configuration. The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING, DEGRADED and FAILED.

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -78,8 +79,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }
@@ -133,7 +134,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query<User> query = qf.<User>create("FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, User>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, User>> updated = new LinkedBlockingQueue<>();

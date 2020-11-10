@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -26,8 +27,8 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
       cacheCfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Car.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
             .clustering()
             .hash().numSegments(10 * NUM_NODES);

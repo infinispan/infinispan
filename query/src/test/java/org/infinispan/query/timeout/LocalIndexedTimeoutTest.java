@@ -1,11 +1,12 @@
 package org.infinispan.query.timeout;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.SearchTimeoutException;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -19,8 +20,8 @@ public class LocalIndexedTimeoutTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cacheCfg = getDefaultStandaloneCacheConfig(false);
       cacheCfg.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
       return TestCacheManagerFactory.createCacheManager(cacheCfg);
    }
 

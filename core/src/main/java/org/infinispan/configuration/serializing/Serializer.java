@@ -38,6 +38,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
+import org.infinispan.configuration.cache.IndexMergeConfiguration;
+import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
@@ -51,6 +53,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
+import org.infinispan.configuration.global.AllowListConfiguration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxConfiguration;
@@ -62,7 +65,6 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TemporaryGlobalStatePathConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
-import org.infinispan.configuration.global.AllowListConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.configuration.parsing.Parser.TransactionMode;
@@ -128,12 +130,12 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
                   writer.writeAttribute(Attribute.PATH, fileConfigurator.getPath());
                   writer.writeEndElement();
                } else if (configurator instanceof EmbeddedJGroupsChannelConfigurator) {
-                  EmbeddedJGroupsChannelConfigurator embeddedConfigurator = (EmbeddedJGroupsChannelConfigurator)configurator;
+                  EmbeddedJGroupsChannelConfigurator embeddedConfigurator = (EmbeddedJGroupsChannelConfigurator) configurator;
                   writer.writeStartElement(Element.STACK);
                   writer.writeAttribute(Attribute.NAME, embeddedConfigurator.getName());
-                  for(ProtocolConfiguration protocol : embeddedConfigurator.getProtocolStack()) {
+                  for (ProtocolConfiguration protocol : embeddedConfigurator.getProtocolStack()) {
                      writer.writeStartElement(protocol.getProtocolName());
-                     for(Entry<String, String> attr : protocol.getProperties().entrySet()) {
+                     for (Entry<String, String> attr : protocol.getProperties().entrySet()) {
                         writer.writeAttribute(attr.getKey(), attr.getValue());
                      }
                      writer.writeEndElement();
@@ -343,7 +345,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             }
          }
 
-         for(Role role : authorization.roles().values()) {
+         for (Role role : authorization.roles().values()) {
             writer.writeStartElement(Element.ROLE);
             writer.writeAttribute(Attribute.NAME, role.getName());
             writeCollectionAsAttribute(writer, Attribute.PERMISSIONS, role.getPermissions());
@@ -446,7 +448,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER_CLASS);
          SerializationConfiguration config = globalConfiguration.serialization();
          writeAdvancedSerializers(writer, config);
-         writeSerializationContextInitializers(writer,config);
+         writeSerializationContextInitializers(writer, config);
          writeClassAllowList(writer, config.allowList());
          writer.writeEndElement();
       }
@@ -577,14 +579,14 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeEncoding(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       MediaType keyDataType = configuration.encoding().keyDataType().mediaType();
       MediaType valueDataType = configuration.encoding().valueDataType().mediaType();
-      if(keyDataType != null || valueDataType != null) {
+      if (keyDataType != null || valueDataType != null) {
          writer.writeStartElement(Element.ENCODING);
-         if(keyDataType != null) {
+         if (keyDataType != null) {
             writer.writeStartElement(Element.KEY_DATA_TYPE);
             writer.writeAttribute(Attribute.MEDIA_TYPE, keyDataType.toString());
             writer.writeEndElement();
          }
-         if(valueDataType != null) {
+         if (valueDataType != null) {
             writer.writeStartElement(Element.VALUE_DATA_TYPE);
             writer.writeAttribute(Attribute.MEDIA_TYPE, valueDataType.toString());
             writer.writeEndElement();
@@ -651,6 +653,41 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.INDEXING);
          attributes.write(writer, IndexingConfiguration.AUTO_CONFIG, Attribute.AUTO_CONFIG);
          attributes.write(writer, IndexingConfiguration.ENABLED, Attribute.ENABLED);
+         attributes.write(writer, IndexingConfiguration.STORAGE, Attribute.STORAGE);
+         attributes.write(writer, IndexingConfiguration.PATH, Attribute.PATH);
+         long refreshInterval = indexing.reader().getRefreshInterval();
+         if (refreshInterval != 0) {
+            writer.writeStartElement(Element.INDEX_READER);
+            writer.writeAttribute(Attribute.REFRESH_INTERVAL, Long.toString(refreshInterval));
+            writer.writeEndElement();
+         }
+         IndexWriterConfiguration indexWriter = indexing.writer();
+         IndexMergeConfiguration indexMerge = indexWriter.merge();
+         AttributeSet writerAttributes = indexWriter.attributes();
+         AttributeSet mergeAttributes = indexMerge.attributes();
+         boolean indexWriterModified = writerAttributes.isModified();
+         boolean indexMergeModified = mergeAttributes.isModified();
+         if (indexWriterModified || indexMergeModified) {
+            writer.writeStartElement(Element.INDEX_WRITER);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_COMMIT_INTERVAL, Attribute.COMMIT_INTERVAL);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_LOW_LEVEL_TRACE, Attribute.LOW_LEVEL_TRACE);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_MAX_BUFFERED_DOCS, Attribute.MAX_BUFFERED_ENTRIES);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_QUEUE_COUNT, Attribute.QUEUE_COUNT);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_QUEUE_SIZE, Attribute.QUEUE_SIZE);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_THREAD_POOL_SIZE, Attribute.THREAD_POOL_SIZE);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_RAM_BUFFER_SIZE, Attribute.RAM_BUFFER_SIZE);
+            if (indexMergeModified) {
+               writer.writeStartElement(Element.INDEX_MERGE);
+               mergeAttributes.write(writer, IndexMergeConfiguration.CALIBRATE_BY_DELETES, Attribute.CALIBRATE_BY_DELETES);
+               mergeAttributes.write(writer, IndexMergeConfiguration.FACTOR, Attribute.FACTOR);
+               mergeAttributes.write(writer, IndexMergeConfiguration.MAX_DOCS, Attribute.MAX_ENTRIES);
+               mergeAttributes.write(writer, IndexMergeConfiguration.MIN_SIZE, Attribute.MIN_SIZE);
+               mergeAttributes.write(writer, IndexMergeConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
+               mergeAttributes.write(writer, IndexMergeConfiguration.MAX_FORCED_SIZE, Attribute.MAX_FORCED_SIZE);
+               writer.writeEndElement();
+            }
+            writer.writeEndElement();
+         }
          if (!indexing.indexedEntityTypes().isEmpty()) {
             writer.writeStartElement(Element.INDEXED_ENTITIES);
             for (String indexedEntity : indexing.indexedEntityTypes()) {

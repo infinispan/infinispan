@@ -1,6 +1,7 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,8 +21,8 @@ public class JsonPojoStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
-            .addIndexedEntities(CryptoCurrency.class)
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntities(CryptoCurrency.class);
 
       indexedCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       indexedCache.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);

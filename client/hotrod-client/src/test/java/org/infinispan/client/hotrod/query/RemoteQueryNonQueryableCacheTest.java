@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -12,7 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -56,10 +57,10 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
    private Configuration createIndexedCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity("sample_bank_account.User")
             .addIndexedEntity("sample_bank_account.Account")
-            .addIndexedEntity("sample_bank_account.Transaction")
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity("sample_bank_account.Transaction");
       return builder.build();
    }
 

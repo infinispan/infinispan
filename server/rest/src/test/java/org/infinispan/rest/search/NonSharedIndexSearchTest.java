@@ -1,5 +1,7 @@
 package org.infinispan.rest.search;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -16,8 +18,8 @@ public class NonSharedIndexSearchTest extends BaseRestSearchTest {
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.indexing().enable()
-             .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-             .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("org.infinispan.rest.search.entity.Person");
       return builder;
    }
 }

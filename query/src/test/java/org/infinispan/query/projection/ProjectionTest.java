@@ -1,6 +1,7 @@
 package org.infinispan.query.projection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.util.List;
 
@@ -15,7 +16,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,8 +30,8 @@ public class ProjectionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().enable()
-            .addIndexedEntity(Foo.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Foo.class);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
       queryFactory = Search.getQueryFactory(cache);

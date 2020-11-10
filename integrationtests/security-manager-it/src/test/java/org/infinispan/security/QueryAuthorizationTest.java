@@ -1,5 +1,6 @@
 package org.infinispan.security;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.security.Policy;
@@ -43,8 +44,8 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       builder
          .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
-            .addProperty("directory.type", "local-heap")
          .security()
             .authorization().enable().role("admin").role("query").role("noquery");
 

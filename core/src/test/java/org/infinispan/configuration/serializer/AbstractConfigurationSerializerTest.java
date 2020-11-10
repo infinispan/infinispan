@@ -21,6 +21,7 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -30,7 +31,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
-   @Test(dataProvider="configurationFiles")
+   @Test(dataProvider = "configurationFiles")
    public void configurationSerializationTest(Path config) throws Exception {
       Properties properties = new Properties();
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
@@ -38,7 +39,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = registry.parse(url);
       Map<String, Configuration> configurations = new HashMap<>();
-      for(Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
+      for (Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
          configurations.put(configuration.getKey(), configuration.getValue().build());
       }
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -69,7 +70,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.clustering().attributes(), configurationAfter.clustering().attributes());
       assertEquals(name, configurationBefore.memory(), configurationAfter.memory());
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
-      compareAttributeSets(name, configurationBefore.indexing().attributes(), configurationAfter.indexing().attributes());
+      compareIndexing(name, configurationBefore.indexing(), configurationAfter.indexing());
       compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
       compareAttributeSets(name, configurationBefore.statistics().attributes(), configurationAfter.statistics().attributes());
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
@@ -82,6 +83,13 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.transaction().attributes(), configurationAfter.transaction().attributes(), "transaction-manager-lookup");
 
       compareExtraConfiguration(name, configurationBefore, configurationAfter);
+   }
+
+   private void compareIndexing(String name, IndexingConfiguration before, IndexingConfiguration after) {
+      assertEquals(String.format("Indexing attributes for %s mismatch", name), before.attributes(), after.attributes());
+      assertEquals(String.format("Indexing reader for %s mismatch", name), before.reader(), after.reader());
+      assertEquals(String.format("Indexing writer for %s mismatch", name), before.writer(), after.writer());
+
    }
 
    @Test(dataProvider = "configurationFiles")

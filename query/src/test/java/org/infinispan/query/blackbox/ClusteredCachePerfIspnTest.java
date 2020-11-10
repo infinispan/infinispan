@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -25,20 +27,12 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.IO_STRATEGY, SearchConfig.NEAR_REAL_TIME)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-            .addProperty(SearchConfig.THREAD_POOL_SIZE, "6")
-            .addProperty(SearchConfig.QUEUE_COUNT, "6")
-            .addProperty(SearchConfig.QUEUE_SIZE, "4096")
-            .addProperty(SearchConfig.COMMIT_INTERVAL, "10000")
-            .addProperty(SearchConfig.IO_MERGE_FACTOR, "30")
-            .addProperty(SearchConfig.IO_MERGE_MAX_SIZE, "1024")
-            .addProperty(SearchConfig.IO_WRITER_RAM_BUFFER_SIZE, "54")
-            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
-            .addProperty(SearchConfig.NUMBER_OF_SHARDS, "6");
+            .writer().ramBufferSize(54).commitInterval(10000).queueCount(6).queueSize(4096).threadPoolSize(6)
+            .merge().factor(30).maxSize(1024);
 
       enhanceConfig(cacheCfg);
 

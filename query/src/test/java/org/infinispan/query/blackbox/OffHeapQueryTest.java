@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
 import static org.testng.Assert.assertEquals;
 
@@ -10,7 +11,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -26,8 +26,8 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.memory().storageType(StorageType.OFF_HEAP).size(10);
       cfg.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Person.class);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 

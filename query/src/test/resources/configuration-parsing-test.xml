@@ -11,23 +11,20 @@
       </local-cache>
       <local-cache name="simple" />
       <local-cache name="memory-searchable">
-         <indexing>
+         <indexing storage="local-heap">
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey" transformer="org.infinispan.query.test.CustomTransformer"/>
             </key-transformers>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-heap</property>
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable">
-         <indexing>
+         <indexing storage="filesystem" path="target/">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <property name="directory.type">local-filesystem</property>
-            <property name="directory.root">target/</property>
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">

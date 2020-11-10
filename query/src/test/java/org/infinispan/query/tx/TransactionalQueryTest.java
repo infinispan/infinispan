@@ -1,5 +1,6 @@
 package org.infinispan.query.tx;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
 import static org.infinispan.test.TestingUtil.withTx;
 
@@ -13,7 +14,6 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -28,8 +28,8 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .enable()
-            .addIndexedEntity(Session.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Session.class);
       return TestCacheManagerFactory.createCacheManager(new SCIImpl(), cfg);
    }
 

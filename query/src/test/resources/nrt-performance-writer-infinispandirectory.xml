@@ -20,7 +20,7 @@
          <memory>
             <object size="200"/>
          </memory>
-         <indexing>
+         <indexing storage="local-heap">
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey3" transformer="org.infinispan.query.test.CustomKey3Transformer"/>
             </key-transformers>
@@ -28,8 +28,6 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <!-- Write indexes in Infinispan -->
-            <property name="directory.type">local-heap</property>
             <!-- Enable sharding on writers -->
             <property name="sharding.strategy">hash</property>
             <property name="sharding.number_of_shards">6</property>

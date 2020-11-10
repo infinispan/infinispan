@@ -1,5 +1,6 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
@@ -61,9 +62,9 @@ public class ClusteredIT {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
          builder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addProperty("directory.type", "local-heap")
-                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
+               .storage(LOCAL_HEAP)
+               .addIndexedEntity("sample_bank_account.User")
+               .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 
       HotRodTestClientDriver hotRodTestClientDriver = testMethodRule.hotrod().withClientConfiguration(config);

@@ -896,6 +896,16 @@
         </xs:annotation>
         <xs:complexType>
           <xs:sequence>
+            <xs:element name="index-reader" type="tns:index-reader" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>Controls index reading parameters</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="index-writer" type="tns:index-writer" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>Controls index writing parameters</xs:documentation>
+              </xs:annotation>
+            </xs:element>
             <xs:element name="key-transformers" minOccurs="0" maxOccurs="1">
               <xs:annotation>
                 <xs:documentation>Defines the Transformers used to stringify keys for indexing with Lucene</xs:documentation>
@@ -939,6 +949,18 @@
               <xs:documentation>
                 Specify whether indexing is enabled or not. Defaults to false, but it auto-activates if the
                 indexing element is present and indexing is not explicitly disabled. It also auto-activates if 'auto-config' is set to 'true'.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="storage" type="tns:index-storage" default="filesystem">
+            <xs:annotation>
+              <xs:documentation>Specify index storage options.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="path" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Specifies a filesystem path for the index when storage is 'filesystem'.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -2295,6 +2317,171 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
+
+  <xs:simpleType name="index-storage">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="filesystem">
+        <xs:annotation>
+          <xs:documentation>Local filesystem index storage. This is the default.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="local-heap">
+        <xs:annotation>
+          <xs:documentation>JVM heap index storage, not persisted between restarts. Only suitable for small datasets
+            with low concurrency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="index-reader">
+    <xs:attribute name="refresh-interval" type="xs:long" default="0">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: Defines the internal in milliseconds to reopen the index reader.
+          By default, the index reader is refreshed on-demand during searches, if
+          new entries were indexed since the last refresh. Configuring with a value
+          larger than zero will make some queries results stale, but query throughput
+          will increase substantially, specially in write heavy scenarios.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="index-merge">
+    <xs:attribute name="max-entries" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: The maximum number of entries that a index segment can have before merging. Segments with more than
+          this number of entries will not be merged. Smaller values perform better on frequently changing indexes,
+          larger values provide better search performance if the index does not change often.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="factor" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The number of segments that are merged at once.
+          With smaller values, merging happens more often and thus uses more resources, but the total number of segments
+          will be lower on average, increasing read performance. Thus, larger values (&gt; 10) are best for heavy writing
+          scenarios.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="min-size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The minimum target size of segments, in MB, for background merges.
+          Segments smaller than this size are merged more aggressively.
+          Setting this too large might result in expensive merge operations, even tough they are less frequent.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The maximum size of segments, in MB, for background merges.
+          Segments larger than this size are never merged in the background.
+          Settings this to a lower value helps reduce memory requirements and avoids some merging operations at the
+          cost of optimal search speed. When forcefully merging an index, this value is ignored and max-forced-size is
+          used instead (see below).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-forced-size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The maximum size of segments, in MB, for forced merges. This is the equivalent of max-size for forceful
+          merges. You will generally want to set this to the same value as max-size or lower, but setting it too low
+          will degrade search performance as documents are deleted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="calibrate-by-deletes" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the number of deleted entries in an index should be taken into account when counting the entries in
+          the segment. Setting false will lead to more frequent merges caused by max-docs, but will more aggressively
+          merge segments with many deleted documents, improving search performance.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="index-writer">
+    <xs:sequence>
+      <xs:element name="index-merge" type="tns:index-merge" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Defines properties to control the merge of index segments. An index segment is
+            not related to an Infinispan segment, but represents a section of index in the storage.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="commit-interval" type="xs:int" default="1000">
+      <xs:annotation>
+        <xs:documentation>
+          Period in milliseconds that index changes that are buffered in memory are flushed to the index storage.
+          As this operation is costly, small values should be avoided.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="ram-buffer-size" type="xs:int" default="32">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: The maximum amount of RAM that may be used for buffering added entries and deletions before they are
+          flushed to the index storage. Large values mean faster indexing, but more RAM usage.
+          Generally for faster indexing performance it's best to use this setting rather than max-buffer-docs.
+          When used together with max-buffer-docs a flush occurs for whichever event happens first.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-buffered-entries" type="xs:int" default="32">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: The maximum number of entries that can be buffered in-memory before they are flushed to the index
+          storage. Large values mean faster indexing, but more RAM usage. When used together with ram-buffer-size a
+          flush occurs for whichever event happens first.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="thread-pool-size" type="xs:int" default="1">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: Number of threads to execute write operations to a certain index.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="queue-count" type="xs:int" default="1">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: Number of internal queues to use for each indexed type. Each queue holds a batch of modifications
+          that is applied to the index, and queues are processed in parallel. Increasing the number of queues will lead
+          to an increase of indexing throughput, but only if the bottleneck is CPU. For optimum results, avoid queue-count
+          larger than the thread-pool-size.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="queue-size" type="xs:int" default="1000">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: The maximum number of elements each queue can hold. The larger the queue-size, more memory will be
+          used during indexing operations. A value too small can increase the likelihood of blocking during indexing.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="low-level-trace" type="xs:boolean" default="false">
+      <xs:annotation>
+        <xs:documentation>
+          Advanced: Enables low level trace information about indexing operations. Cause a substantial performance
+          penalty and
+          should only be used as a last resources for troubleshooting.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
 
   <xs:simpleType name="eviction-strategy">
     <xs:restriction base="xs:token">

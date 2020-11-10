@@ -1,6 +1,7 @@
 package org.infinispan.query.tx;
 
 import static org.infinispan.commons.test.Exceptions.assertException;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -22,7 +23,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -53,9 +53,9 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder.transaction().lockingMode(lockingMode);
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(AnotherGrassEater.class);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 

@@ -176,6 +176,35 @@
             </indexed-entities>
          </indexing>
       </distributed-cache>
+      <distributed-cache name="indexed-memory">
+         <indexing storage="local-heap">
+            <index-reader refresh-interval="1000"/>
+            <indexed-entities>
+               <indexed-entity>TheEntity</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </distributed-cache>
+      <distributed-cache name="indexed-fs-full">
+         <indexing storage="filesystem" path="/temp">
+            <index-reader refresh-interval="0"/>
+            <index-writer commit-interval="2000" low-level-trace="false" max-buffered-entries="32"
+                          queue-count="40" queue-size="10000" ram-buffer-size="400" thread-pool-size="8">
+               <index-merge calibrate-by-deletes="true" factor="2" max-entries="2000" min-size="10" max-size="20"
+                            max-forced-size="30"/>
+            </index-writer>
+            <indexed-entities>
+               <indexed-entity>TheEntity</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </distributed-cache>
+      <distributed-cache name="indexed-fs-medium">
+         <indexing path="/temp">
+            <index-writer commit-interval="2000"/>
+            <indexed-entities>
+               <indexed-entity>TheEntity</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </distributed-cache>
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"

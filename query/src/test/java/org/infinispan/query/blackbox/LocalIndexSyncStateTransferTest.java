@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.helper.IndexAccessor;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -32,9 +33,9 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
    protected ConfigurationBuilder getBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(AnotherGrassEater.class);
       return builder;
    }
 

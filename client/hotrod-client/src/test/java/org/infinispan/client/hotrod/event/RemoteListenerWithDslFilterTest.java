@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -79,8 +80,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
       return cfgBuilder;
    }
 
@@ -132,7 +133,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+            .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
@@ -197,7 +198,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+            .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);

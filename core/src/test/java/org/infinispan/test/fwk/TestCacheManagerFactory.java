@@ -354,7 +354,7 @@ public class TestCacheManagerFactory {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(mode);
       if (indexing) {
-         builder.indexing().enabled(true).addProperty("lucene_version", "LUCENE_CURRENT");
+         builder.indexing().enabled(true);
       }
       if (mode.isClustered()) {
          return createClusteredCacheManager(globalBuilder, builder);

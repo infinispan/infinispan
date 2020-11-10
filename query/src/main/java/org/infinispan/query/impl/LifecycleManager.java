@@ -328,12 +328,10 @@ public class LifecycleManager implements ModuleLifecycle {
 
       // provide user defined properties
       for (Map.Entry<Object, Object> entry : indexingConfiguration.properties().entrySet()) {
-         if (entry.getKey() instanceof String) {
-            if (!(entry.getKey() instanceof String)) {
-               throw log.invalidPropertyKey(entry.getKey());
-            }
-            properties.put((String) entry.getKey(), entry.getValue());
+         if (!(entry.getKey() instanceof String)) {
+            throw log.invalidPropertyKey(entry.getKey());
          }
+         properties.put((String) entry.getKey(), entry.getValue());
       }
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
@@ -346,9 +344,7 @@ public class LifecycleManager implements ModuleLifecycle {
          builder.setEntityLoader(new EntityLoader<>(queryStatistics, cache, keyTransformationHandler));
          builder.addEntityTypes(types);
          searchMapping = builder.build();
-         if (searchMapping != null) {
-            cr.registerComponent(searchMapping, SearchMapping.class);
-         }
+         cr.registerComponent(searchMapping, SearchMapping.class);
       }
 
       if (searchMapping == null) {

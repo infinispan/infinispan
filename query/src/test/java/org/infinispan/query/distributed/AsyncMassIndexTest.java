@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.CompletableFuture;
@@ -36,8 +37,8 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       cacheCfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Transaction.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);

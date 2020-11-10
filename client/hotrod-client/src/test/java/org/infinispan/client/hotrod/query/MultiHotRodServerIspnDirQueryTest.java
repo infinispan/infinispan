@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -24,8 +25,8 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().enable()
-             .addIndexedEntity("sample_bank_account.User")
-             .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());

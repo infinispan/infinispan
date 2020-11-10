@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -85,8 +86,8 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
-            .addIndexedEntity("sample_bank_account.User")
-            .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User");
 
       return TestCacheManagerFactory.createServerModeCacheManager(TestDomainSCI.INSTANCE, builder);
    }

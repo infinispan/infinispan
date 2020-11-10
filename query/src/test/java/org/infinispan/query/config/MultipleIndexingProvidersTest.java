@@ -10,13 +10,13 @@ public class MultipleIndexingProvidersTest {
    /**
     * Ensure a single indexing provider per cache is accepted.
     */
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*ISPN000582: A single indexing directory provider is allowed.*")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*It is not allowed to have different indexing configuration.*")
    public void testIndexingProviders() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
-             .addIndexedEntity(TestEntity.class)
-             .addProperty("org.infinispan.query.config.MultipleIndexingProvidersTest$TestEntity.directory.type", "filesystem")
-             .addProperty("directory.type", "local-heap");
+            .addIndexedEntity(TestEntity.class)
+            .addProperty("org.infinispan.query.config.MultipleIndexingProvidersTest$TestEntity.directory_provider", "filesystem")
+            .addProperty("default.directory_provider", "local-heap");
 
       builder.build();
    }

@@ -1,12 +1,13 @@
 package org.infinispan.query.indexedembedded;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,8 +27,8 @@ public class BooksExampleTest extends SingleCacheManagerTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
             .enable()
-            .addIndexedEntity(Book.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Book.class);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 

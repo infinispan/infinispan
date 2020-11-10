@@ -1,5 +1,6 @@
 package org.infinispan.query.helper;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.ArrayList;
@@ -66,18 +67,12 @@ public class TestQueryHelperFactory {
 
       builder.indexing().enable().addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
-      if (isRamDirectoryProvider) {
-         builder.indexing()
-               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-               .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
-      } else {
-         builder.indexing()
-               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
-               .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
-         if (cacheMode.isClustered()) {
-            builder.clustering().stateTransfer().fetchInMemoryState(true);
-         }
+      builder.indexing().storage(LOCAL_HEAP).addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+
+      if (cacheMode.isClustered()) {
+         builder.clustering().stateTransfer().fetchInMemoryState(true);
       }
+
       for (Class<?> indexedType : indexedTypes) {
          builder.indexing().addIndexedEntity(indexedType);
       }

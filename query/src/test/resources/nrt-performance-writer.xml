@@ -19,14 +19,12 @@
          <memory>
             <object size="-1"/>
          </memory>
-         <indexing>
+         <indexing storage="filesystem" path="${java.io.tmpdir}/tunedConfDir">
+            <index-writer commit-interval="10000"/>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
             <!-- Enabled fastest writer: NRT backend -->
-            <property name="io.commit_interval">10000</property>
-            <property name="directory.root">${java.io.tmpdir}/tunedConfDir</property>
-
             <!-- Default is to write on FSDirectory; to write in a dedicated cache uncomment: -->
             <!-- Write indexes in Infinispan
              N.B. In this case you will probably want to change the ​locking_strategy as well

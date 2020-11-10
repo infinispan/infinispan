@@ -1,5 +1,6 @@
 package org.infinispan.query.queries.phrases;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashSet;
@@ -9,7 +10,6 @@ import java.util.Set;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Author;
 import org.infinispan.query.test.Book;
@@ -78,9 +78,9 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Book.class)
-            .addIndexedEntity(Author.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(Author.class);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 }

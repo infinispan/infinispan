@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
 
 import java.util.Collections;
@@ -14,6 +15,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
@@ -53,7 +55,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final boolean TX_ENABLED = false;
    private static final String MERGE_FACTOR = "30";
    private static final CacheMode CACHE_MODE = CacheMode.LOCAL;
-   private static final Provider DIRECTORY_PROVIDER = Provider.LOCAL_HEAP;
+   private static final IndexStorage INDEX_STORAGE = LOCAL_HEAP;
    /**
     * For status report during insertion
     */
@@ -73,10 +75,10 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
          cacheCfg.clustering().remoteTimeout(120000);
       }
       cacheCfg.indexing().enable()
+            .storage(INDEX_STORAGE)
             .addIndexedEntity(Transaction.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, DIRECTORY_PROVIDER.toString())
-            .addProperty(SearchConfig.IO_MERGE_FACTOR, MERGE_FACTOR)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
+            .writer().merge().factor(Integer.parseInt(MERGE_FACTOR));
 
       if (!local) {
          createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
@@ -146,21 +148,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private void info() {
       System.out.println("\rr: Run MassIndexer\nc: Cancel MassIndexer\ni: Put new entry\ns: Current index size\np: Purge indexes\nf: flush\nh: This menu\nx: Exit");
-   }
-
-   private enum Provider {
-      LOCAL_HEAP("local-heap"),
-      FILESYSTEM("local-filesystem");
-      private final String cfg;
-
-      Provider(String cfg) {
-         this.cfg = cfg;
-      }
-
-      @Override
-      public String toString() {
-         return cfg;
-      }
    }
 
    private enum IndexManager {

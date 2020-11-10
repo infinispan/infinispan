@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -117,7 +118,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
-                   .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
+            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
    }
@@ -125,11 +126,11 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-             .addIndexedEntity("sample_bank_account.User")
-             .addIndexedEntity("sample_bank_account.Account")
-             .addIndexedEntity("sample_bank_account.Transaction")
-             .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
-             .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User")
+            .addIndexedEntity("sample_bank_account.Account")
+            .addIndexedEntity("sample_bank_account.Transaction")
+            .addIndexedEntity("sample_bank_account.AnalyzerTestEntity");
       return builder;
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -15,12 +17,11 @@ public class RemoteQueryStringBroadcastHAIndexTest extends RemoteQueryStringBroa
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      cfgBuilder.indexing().enable()
-                .addIndexedEntity("sample_bank_account.User")
-                .addIndexedEntity("sample_bank_account.Account")
-                .addIndexedEntity("sample_bank_account.Transaction")
-                .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
-                .addProperty("directory.type", "local-heap");
+      cfgBuilder.indexing().enable().storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User")
+            .addIndexedEntity("sample_bank_account.Account")
+            .addIndexedEntity("sample_bank_account.Transaction")
+            .addIndexedEntity("sample_bank_account.AnalyzerTestEntity");
       return cfgBuilder;
    }
 }

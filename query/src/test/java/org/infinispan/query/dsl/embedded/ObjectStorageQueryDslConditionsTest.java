@@ -2,7 +2,7 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -22,10 +22,10 @@ public class ObjectStorageQueryDslConditionsTest extends QueryDslConditionsTest 
       cfg.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfg.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfg.indexing().enable()
+            .storage(IndexStorage.LOCAL_HEAP)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(getModelFactory().getTransactionImplClass());
       createClusteredCaches(1, cfg);
    }
 }

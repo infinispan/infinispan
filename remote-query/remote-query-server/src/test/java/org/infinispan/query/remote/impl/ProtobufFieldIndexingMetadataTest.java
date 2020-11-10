@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -65,9 +66,8 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .addIndexedEntity("User")
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("User");
       return TestCacheManagerFactory.createServerModeCacheManager(new TestSCI(), cfg);
    }
 

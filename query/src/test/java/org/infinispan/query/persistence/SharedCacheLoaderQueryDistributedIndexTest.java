@@ -1,7 +1,8 @@
 package org.infinispan.query.persistence;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.testng.annotations.Test;
 
 /**
@@ -15,7 +16,6 @@ public class SharedCacheLoaderQueryDistributedIndexTest extends SharedCacheLoade
    protected void configureCache(ConfigurationBuilder builder) {
       super.configureCache(builder);
 
-      builder.indexing().enable()
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+      builder.indexing().enable().storage(LOCAL_HEAP);
    }
 }

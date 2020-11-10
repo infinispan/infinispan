@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.configuration.cache.IndexStorage.FILESYSTEM;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
@@ -46,10 +47,9 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cb.indexing()
             .enable() //index also changes originated on other nodes, the index is not shared
+            .storage(FILESYSTEM).path(Paths.get(TMP_DIR, indexName).toString())
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
-            .addProperty(SearchConfig.DIRECTORY_ROOT, Paths.get(TMP_DIR,  indexName).toString())
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return cb;
    }

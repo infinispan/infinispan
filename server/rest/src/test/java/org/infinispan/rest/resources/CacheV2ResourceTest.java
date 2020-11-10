@@ -11,6 +11,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TY
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
@@ -108,9 +109,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.statistics().enable();
       builder.indexing().enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity("Entity")
             .addIndexedEntity("Another")
-            .addProperty("directory.type", "local-heap")
             .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
@@ -331,7 +332,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       // Indexed
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().addProperty("directory.type", "local-heap").enable();
+      builder.indexing().enable().storage(LOCAL_HEAP);
       builder.indexing().enable().addIndexedEntity("Entity");
       createCache(builder, "cacheIndexed");
       details = getCacheDetail("cacheIndexed");

@@ -15,6 +15,7 @@ import java.security.Permission;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -2079,4 +2080,20 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache configuration must not declare indexed entities if it is not indexed", id = 610)
    CacheConfigurationException indexableClassesDefined();
+
+   @Message(value = "Invalid index storage", id = 611)
+   CacheConfigurationException invalidIndexStorage();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Indexing configuration using properties has been deprecated and will be removed in a future " +
+         "version, please consult the docs for the replacements. The following properties have been found: '%s'", id = 612)
+   void indexingPropertiesDeprecated(Properties properties);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Indexing configuration using properties has been deprecated and will be removed in a future " +
+         "version, please use the <index-writer> and <index-reader> elements to configure indexing behavior.", id = 613)
+   void deprecatedIndexProperties();
+
+   @Message(value = "It is not allowed to have different indexing configuration for each indexed type in a cache.", id = 614)
+   CacheConfigurationException foundDifferentIndexConfigPerType();
 }

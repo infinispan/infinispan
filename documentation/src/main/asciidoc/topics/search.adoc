@@ -85,7 +85,7 @@ include::config_examples/indexed_entities_proto.xml[]
 [[query_index_storage]]
 === Index Storage
 
-{brandname} can store indexes in the file system or in memory (`local-heap`). File system is the recommended and the default configuration, and memory indexes should only be used for small to medium indexes that don't need to survive restart.
+{brandname} can store indexes in the file system or in memory. File system is the recommended and the default configuration, and memory indexes should only be used for small to medium indexes that don't need to survive restart.
 
 .Configuration for file system indexes:
 

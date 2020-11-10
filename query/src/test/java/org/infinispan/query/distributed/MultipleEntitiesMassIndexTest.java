@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -32,9 +33,9 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       cacheCfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Car.class)
             .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

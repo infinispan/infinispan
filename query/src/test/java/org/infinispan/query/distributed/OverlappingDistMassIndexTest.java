@@ -1,8 +1,9 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Block;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
@@ -24,9 +25,9 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
       cacheCfg
             .indexing()
             .enable()
+            .storage(LOCAL_HEAP)
             .addIndexedEntity(Transaction.class)
-            .addIndexedEntity(Block.class)
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+            .addIndexedEntity(Block.class);
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.dsl.Expression.avg;
 import static org.infinispan.query.dsl.Expression.count;
 import static org.infinispan.query.dsl.Expression.max;
@@ -108,10 +109,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-             .addIndexedEntity("sample_bank_account.User")
-             .addIndexedEntity("sample_bank_account.Account")
-             .addIndexedEntity("sample_bank_account.Transaction")
-             .addProperty("directory.type", "local-heap");
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity("sample_bank_account.User")
+            .addIndexedEntity("sample_bank_account.Account")
+            .addIndexedEntity("sample_bank_account.Transaction");
       return builder;
    }
 

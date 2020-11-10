@@ -1,7 +1,8 @@
 package org.infinispan.query.statetransfer;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
 import org.testng.annotations.Test;
 
 /**
@@ -15,8 +16,7 @@ public class PersistentStateTransferQueryDistributedIndexTest extends Persistent
    protected void configureCache(ConfigurationBuilder builder) {
       super.configureCache(builder);
 
-      builder.indexing().enable()
-            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
+      builder.indexing().enable().storage(LOCAL_HEAP);
 
    }
 }

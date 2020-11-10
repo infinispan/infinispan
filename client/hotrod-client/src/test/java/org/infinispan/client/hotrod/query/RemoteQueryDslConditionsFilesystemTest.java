@@ -7,6 +7,7 @@ import java.io.File;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -34,9 +35,7 @@ public class RemoteQueryDslConditionsFilesystemTest extends RemoteQueryDslCondit
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing()
-            .addProperty("directory.type", "local-filesystem")
-            .addProperty("directory.root", indexDirectory);
+      builder.indexing().storage(IndexStorage.FILESYSTEM).path(indexDirectory);
       return builder;
    }
 
