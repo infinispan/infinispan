@@ -22,7 +22,7 @@ public final class XMLExtendedStreamWriterImpl implements XMLExtendedStreamWrite
    private int level;
    private int state = START_DOCUMENT;
    private boolean indentEndElement = false;
-   private ArrayDeque<String> unspecifiedNamespaces = new ArrayDeque<>();
+   private final ArrayDeque<String> unspecifiedNamespaces = new ArrayDeque<>();
 
    public XMLExtendedStreamWriterImpl(final XMLStreamWriter delegate) {
       this.delegate = delegate;

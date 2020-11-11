@@ -50,7 +50,7 @@ public class TextProtocolUtil {
    public static final int LF = 10;
 
    public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("18446744073709551615");
-   public static final BigInteger MIN_UNSIGNED = new BigInteger("0");
+   public static final BigInteger MIN_UNSIGNED = BigInteger.ZERO;
 
    public static final Charset CHARSET = StandardCharsets.UTF_8;
 
