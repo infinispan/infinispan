@@ -1965,6 +1965,10 @@
                   <targetJdk>${version.java}</targetJdk>
                   <linkXRef>false</linkXRef>
                   <sourceEncoding>utf-8</sourceEncoding>
+                  <printFailingErrors>true</printFailingErrors>
+                  <excludeRoots>
+                     <excludeRoot>target/generated-sources</excludeRoot>
+                  </excludeRoots>
                </configuration>
                <dependencies>
                   <dependency>
@@ -2374,12 +2378,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <configuration>
-               <printFailingErrors>true</printFailingErrors>
-               <excludeRoots>
-                  <excludeRoot>target/generated-sources</excludeRoot>
-               </excludeRoots>
-            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

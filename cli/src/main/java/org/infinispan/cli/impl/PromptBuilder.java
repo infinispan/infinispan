@@ -119,15 +119,12 @@ public class PromptBuilder {
                                     while (i < expr.length) {
                                        switch (expr[i]) {
                                           case '\\':
-                                             if (i + 1 < expr.length) {
-                                                if (expr[i + 1] == 'c') {
-                                                   if ((i + 2 < expr.length) && expr[i + 2] == '{') {
-                                                      nextNodeColor = true;
-                                                   }
-                                                   break Capture;
+                                             if (i + 1 < expr.length && expr[i + 1] == 'c') {
+                                                if ((i + 2 < expr.length) && expr[i + 2] == '{') {
+                                                   nextNodeColor = true;
                                                 }
+                                                break Capture;
                                              }
-
                                           default:
                                              i++;
                                        }

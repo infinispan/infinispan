@@ -40,7 +40,7 @@ public class Backup extends CliCommand {
    public static final String COUNTERS = "counters";
    public static final String PROTO_SCHEMAS = "proto-schemas";
    public static final String SCRIPTS = "scripts";
-   static final String[] ALL_RESOURCE_TYPES = new String[]{CACHES, CACHE_CONFIGS, COUNTERS, PROTO_SCHEMAS, SCRIPTS};
+   private static final String[] ALL_RESOURCE_TYPES = new String[]{CACHES, CACHE_CONFIGS, COUNTERS, PROTO_SCHEMAS, SCRIPTS};
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;

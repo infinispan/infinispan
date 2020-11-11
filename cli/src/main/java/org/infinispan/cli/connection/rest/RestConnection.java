@@ -92,11 +92,9 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 10.0
  **/
 public class RestConnection implements Connection, Closeable {
-   public static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
+   private static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
    private final RestClientConfigurationBuilder builder;
-
    private Resource activeResource;
-
    private MediaType encoding = MediaType.TEXT_PLAIN;
    private Collection<String> availableConfigurations;
    private Collection<String> availableContainers;
