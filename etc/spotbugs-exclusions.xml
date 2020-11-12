@@ -7,12 +7,20 @@
       </Or>
    </Match>
    <Match>
-      <Package name="~.*\.generated" />
+      <Package name="~.*\.generated"/>
    </Match>
    <Match>
       <Or>
          <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleLexer"/>
          <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleParser"/>
       </Or>
+   </Match>
+   <Match>
+      <Or>
+         <Class name="org.infinispan.counter.impl.function.CreateAndAddFunction"/>
+         <Class name="org.infinispan.counter.impl.function.CreateAndCASFunction"/>
+         <Class name="org.infinispan.counter.impl.function.InitializeCounterFunction"/>
+      </Or>
+      <Bug code="DMI_NONSERIALIZABLE_OBJECT_WRITTEN"/>
    </Match>
 </FindBugsFilter>

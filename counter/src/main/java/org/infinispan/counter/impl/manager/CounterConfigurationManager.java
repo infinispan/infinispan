@@ -4,7 +4,6 @@ import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToCon
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -21,7 +20,6 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
@@ -34,7 +32,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Stores all the defined counter's configuration.
@@ -47,7 +44,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.2
  */
 public class CounterConfigurationManager {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    public static final String COUNTER_SCOPE = "counter";
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);

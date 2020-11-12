@@ -40,12 +40,9 @@ final class FunctionHelper {
                return CounterState.UPPER_BOUND_REACHED;
             }
          }
-         entry.set(CounterValue.newCounterValue(update, CounterState.VALID), metadata);
-         return retVal;
-
-      } else {
-         return retVal;
+         entry.set(newCounterValue(update, CounterState.VALID), metadata);
       }
+      return retVal;
    }
 
    static CounterValue add(EntryView.ReadWriteEntryView<?, CounterValue> entry,
@@ -125,7 +122,7 @@ final class FunctionHelper {
    }
 
    private static boolean noChange(long currentValue, long delta) {
-      return (currentValue == Long.MAX_VALUE && delta > 0) ||
-            (currentValue == Long.MIN_VALUE && delta < 0);
+      return currentValue == Long.MAX_VALUE && delta > 0 ||
+            currentValue == Long.MIN_VALUE && delta < 0;
    }
 }

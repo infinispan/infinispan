@@ -108,10 +108,13 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
    }
 
    private void doLoadAll() throws XMLStreamException, IOException {
-      try (FileInputStream fis = new FileInputStream(getPersistentFile())) {
+      File file = getPersistentFile();
+      try (FileInputStream fis = new FileInputStream(file)) {
          convertToMap(parser.parseConfigurations(fis));
       } catch (FileNotFoundException e) {
-         // Ignore
+         if (trace) {
+            log.tracef("File '%s' does not exist. Skip loading.", file.getAbsolutePath());
+         }
       }
    }
 
