@@ -5,9 +5,12 @@ import static org.infinispan.server.Server.INFINISPAN_SERVER_CONFIG_PATH;
 import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
@@ -101,8 +104,19 @@ public class Bootstrap extends Main {
          case "--port-offset":
             properties.setProperty(Server.INFINISPAN_PORT_OFFSET, parameter);
             break;
+         case "-P":
+            parameter = args.next();
+         case "--properties":
+            try(Reader r = Files.newBufferedReader(Paths.get(parameter))) {
+               Properties loaded = new Properties();
+               loaded.load(r);
+               loaded.forEach(properties::putIfAbsent);
+            } catch (IOException e) {
+               throw new IllegalArgumentException(e);
+            }
+            break;
          default:
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(command);
       }
    }
 
@@ -160,6 +174,7 @@ public class Bootstrap extends Main {
       out.printf("  -s, --server-root=<path>      %s%n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
       out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
       out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
+      out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
    }
 
    @Override
