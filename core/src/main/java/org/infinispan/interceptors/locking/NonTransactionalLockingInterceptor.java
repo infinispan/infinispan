@@ -9,6 +9,7 @@ import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationStage;
@@ -38,6 +39,15 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return visitNonTxDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
+      // Non-transactional invalidation caches only lock the key on the originator
+      if (!ctx.isOriginLocal())
+         return invokeNext(ctx, command);
+
+      return super.visitInvalidateCommand(ctx, command);
    }
 
    @Override

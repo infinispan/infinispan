@@ -11,9 +11,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
@@ -41,32 +39,25 @@ public class TxInvalidationLockingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      GlobalConfigurationBuilder globalConfig1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfig1.defaultCacheName("local")
-                  .globalState().configurationStorage(ConfigurationStorage.IMMUTABLE).disable();
-      GlobalConfigurationBuilder globalConfig2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfig2.defaultCacheName("local")
-                   .globalState().configurationStorage(ConfigurationStorage.IMMUTABLE).disable();
-      ConfigurationBuilder localConfig = new ConfigurationBuilder();
-      addClusterEnabledCacheManager(globalConfig1, localConfig);
-      addClusterEnabledCacheManager(globalConfig2, localConfig);
+      addClusterEnabledCacheManager();
+      addClusterEnabledCacheManager();
 
       defineCache(PESSIMISTIC_CACHE, LockingMode.PESSIMISTIC);
       defineCache(OPTIMISTIC_CACHE, LockingMode.OPTIMISTIC);
       waitForClusterToForm(PESSIMISTIC_CACHE, OPTIMISTIC_CACHE);
    }
 
-   private void defineCache(String cacheName, LockingMode pessimistic) {
-      ConfigurationBuilder pessimisticConfig = buildConfig(TransactionMode.TRANSACTIONAL, pessimistic);
-      manager(0).defineConfiguration(cacheName, pessimisticConfig.build());
-      manager(1).defineConfiguration(cacheName, pessimisticConfig.build());
+   private void defineCache(String cacheName, LockingMode lockingMode) {
+      ConfigurationBuilder config = buildConfig(lockingMode);
+      manager(0).defineConfiguration(cacheName, config.build());
+      manager(1).defineConfiguration(cacheName, config.build());
    }
 
-   private ConfigurationBuilder buildConfig(TransactionMode transactionMode, LockingMode lockingMode) {
+   private ConfigurationBuilder buildConfig(LockingMode lockingMode) {
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
       cacheConfig.clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
                  .stateTransfer().fetchInMemoryState(false)
-                 .transaction().transactionMode(transactionMode)
+                 .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
                  .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
                  .lockingMode(lockingMode)
                  .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
