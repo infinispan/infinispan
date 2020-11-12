@@ -3,9 +3,12 @@ package org.infinispan.server;
 import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
@@ -99,8 +102,19 @@ public class Bootstrap extends Main {
          case "--port-offset":
             properties.setProperty(Server.INFINISPAN_PORT_OFFSET, parameter);
             break;
+         case "-P":
+            parameter = args.next();
+         case "--properties":
+            try(Reader r = Files.newBufferedReader(Paths.get(parameter))) {
+               Properties loaded = new Properties();
+               loaded.load(r);
+               loaded.forEach(properties::putIfAbsent);
+            } catch (IOException e) {
+               throw new IllegalArgumentException(e);
+            }
+            break;
          default:
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(command);
       }
    }
 
@@ -145,20 +159,21 @@ public class Bootstrap extends Main {
 
    @Override
    public void help(PrintStream out) {
-      out.printf("Usage:\n");
-      out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
-      out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
-      out.printf("  -l, --logging-config=<config> %s\n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
-      out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName());
-      out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
-      out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack());
-      out.printf("  -k, --cluster-address=<name>  %s\n", MSG.serverHelpClusterAddress());
-      out.printf("  -n, --node-name=<name>        %s\n", MSG.serverHelpNodeName());
-      out.printf("  -o, --port-offset=<offset>    %s\n", MSG.serverHelpPortOffset());
-      out.printf("  -p, --bind-port=<port>        %s\n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
-      out.printf("  -s, --server-root=<path>      %s\n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
-      out.printf("  -v, --version                 %s\n", MSG.toolHelpVersion());
-      out.printf("  -D<name>=<value>              %s\n", MSG.serverHelpProperty());
+      out.printf("Usage:%n");
+      out.printf("  -b, --bind-address=<address>  %s%n", MSG.serverHelpBindAddress());
+      out.printf("  -c, --server-config=<config>  %s%n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
+      out.printf("  -l, --logging-config=<config> %s%n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
+      out.printf("  -g, --cluster-name=<name>     %s%n", MSG.serverHelpClusterName());
+      out.printf("  -h, --help                    %s%n", MSG.toolHelpHelp());
+      out.printf("  -j, --cluster-stack=<name>    %s%n", MSG.serverHelpClusterStack());
+      out.printf("  -k, --cluster-address=<name>  %s%n", MSG.serverHelpClusterAddress());
+      out.printf("  -n, --node-name=<name>        %s%n", MSG.serverHelpNodeName());
+      out.printf("  -o, --port-offset=<offset>    %s%n", MSG.serverHelpPortOffset());
+      out.printf("  -p, --bind-port=<port>        %s%n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
+      out.printf("  -s, --server-root=<path>      %s%n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
+      out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
+      out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
+      out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
    }
 
    @Override
