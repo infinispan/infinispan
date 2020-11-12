@@ -1,4 +1,4 @@
-[[clustered_counters]]
+[id='clustered_counters']
 = Clustered Counters
 
 _Clustered counters_ are counters which are distributed and shared among all nodes in the {brandname} cluster.
@@ -100,10 +100,13 @@ Its value *must be positive* and the default value is `16`.
 To list all the counters defined, the method `CounterManager.getCounterNames()` returns a collection of all counter
 names created cluster-wide.
 
-== The `CounterManager` interface.
+== `CounterManager` interface
 
-The `CounterManager` interface is the entry point to define, retrieve and remove a counter.
-It automatically listen to the creation of `EmbeddedCacheManager` and proceeds with the registration  of an
+The `CounterManager` interface is the entry point to define, retrieve and remove counters.
+
+.Embedded deployments
+
+`CounterManager` automatically listen to the creation of `EmbeddedCacheManager` and proceeds with the registration  of an
 instance of it per `EmbeddedCacheManager`.
 It starts the caches needed to store the counter state and configures the default counters.
 
@@ -116,7 +119,8 @@ as shown in the example below:
 include::code_examples/CounterManagerEmbedded.java[]
 ----
 
-For Hot Rod client, the `CounterManager` is registered in the RemoteCacheManager and it can be retrieved like:
+.Server deployments
+For Hot Rod clients, the `CounterManager` is registered in the RemoteCacheManager and can be retrieved as follows:
 
 [source,java]
 ----
@@ -124,8 +128,6 @@ include::code_examples/CounterManagerRemote.java[]
 ----
 
 === Remove a counter via CounterManager
-
-WARNING: use with caution.
 
 There is a difference between remove a counter via the `Strong/WeakCounter` interfaces and the `CounterManager`.
 The `CounterManager.remove(String)` removes the counter value from the cluster and removes all the listeners registered
