@@ -1,10 +1,12 @@
+[id='access_log_properties-{context}']
 = Access Log Properties
 
 The default format for access logs is as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-`%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
+%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] &quot;%X{method} %m
+%X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n
 ----
 
 The preceding format creates log entries such as the following:

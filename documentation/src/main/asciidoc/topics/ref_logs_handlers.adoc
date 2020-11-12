@@ -1,3 +1,4 @@
+[id='log_appenders-{context}']
 = Log Appenders
 
 Log appenders define how {brandname} records log messages.

@@ -1,3 +1,4 @@
+[id='enabling_json_logging-{context}']
 = Enabling and Configuring the JSON Log Handler
 {brandname} provides a JSON log handler to write messages in JSON format.
 

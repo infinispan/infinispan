@@ -1,3 +1,4 @@
+[id='log_categories-{context}']
 = {brandname} Log Categories
 
 {brandname} provides categories for `INFO`, `WARN`, `ERROR`, `FATAL` level messages that organize logs by functional area.

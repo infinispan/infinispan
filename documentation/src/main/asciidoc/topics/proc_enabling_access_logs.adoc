@@ -1,3 +1,4 @@
+[id='enabling_access_logs-{context}']
 = Enabling Access Logs
 
 Access logs for Hot Rod and REST endpoints are disabled by default.
