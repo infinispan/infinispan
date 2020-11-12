@@ -1,3 +1,4 @@
+[id='log_levels-{context}']
 = Log Levels
 
 Log levels indicate the nature and severity of messages.

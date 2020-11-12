@@ -1,3 +1,4 @@
+[id='log_pattern_formatters-{context}']
 = Log Patterns
 
 The `CONSOLE` and `FILE` appenders use a
