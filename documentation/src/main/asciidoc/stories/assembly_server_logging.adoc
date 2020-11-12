@@ -1,5 +1,5 @@
 [id='logs']
-:context: server
+:context: logging
 = Working with {brandname} Server Logs
 {brandname} uses Apache Log4j 2 to provide configurable logging mechanisms
 that capture details about the environment and record cache operations for

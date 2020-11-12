@@ -1,3 +1,4 @@
+[id='configuring_log_properties-{context}']
 = Configuring {brandname} Log Properties
 
 You configure {brandname} logs with `log4j2.xml`, which is described in the
