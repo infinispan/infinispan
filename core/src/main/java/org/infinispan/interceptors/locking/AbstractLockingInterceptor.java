@@ -141,7 +141,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
+   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
       if (hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
