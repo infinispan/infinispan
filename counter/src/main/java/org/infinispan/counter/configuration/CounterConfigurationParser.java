@@ -113,7 +113,7 @@ public class CounterConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case STRONG_COUNTER:
@@ -164,7 +164,7 @@ public class CounterConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          parserCommonCounterAttributes(reader, builder, i, attribute, value);
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case UPPER_BOUND:

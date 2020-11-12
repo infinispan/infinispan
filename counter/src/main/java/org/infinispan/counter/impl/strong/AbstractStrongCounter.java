@@ -124,7 +124,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    @Override
    public synchronized CounterEvent generate(CounterKey key, CounterValue value) {
       CounterValue newValue = value == null ?
-            CounterValue.newCounterValue(configuration) :
+            newCounterValue(configuration) :
             value;
       if (weakCounter == null || weakCounter.equals(newValue)) {
          weakCounter = newValue;
