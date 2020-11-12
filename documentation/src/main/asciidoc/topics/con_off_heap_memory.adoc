@@ -1,4 +1,4 @@
- [id='off_heap_memory']
+[id='off_heap_memory']
 = Off-Heap Memory
 {brandname} can store cache entries in JVM heap memory or off-heap.
 Off-heap storage lets your Java objects occupy native memory outside the managed JVM memory space.

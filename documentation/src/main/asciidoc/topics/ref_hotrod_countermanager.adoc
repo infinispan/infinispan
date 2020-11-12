@@ -1,0 +1,14 @@
+[id='remotecache_countermanager-{context}']
+= Counter API
+The `CounterManager` interface is the entry point to define, retrieve and remove counters.
+
+Hot Rod clients can retrieve the `CounterManager` interface as in the following example:
+
+[source,java]
+----
+include::code_examples/CounterManagerRemote.java[]
+----
+
+.Reference
+
+* link:{dev_docs}#clustered_counters[Clustered Counters]
