@@ -51,6 +51,9 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
             .mode(NearCacheMode.INVALIDATED)
             .maxEntries(entryCount)
             .bloomFilter(bloomFilter);
+      if (bloomFilter) {
+         builder.connectionPool().maxActive(1);
+      }
       return new RemoteCacheManager(builder.build());
    }
 

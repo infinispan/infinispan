@@ -80,6 +80,7 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
       NearCacheConfigurationBuilder nearCacheConfigurationBuilder = builder.nearCache().mode(getNearCacheMode())
             .maxEntries(entryCount);
       if (bloomFilter) {
+         builder.connectionPool().maxActive(1);
          nearCacheConfigurationBuilder.bloomFilter(true);
       }
       return AssertsNearCache.create(cache(), builder);

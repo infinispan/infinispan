@@ -85,6 +85,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    private <K, V> AssertsNearCache<K, V> createAssertClient() {
       ConfigurationBuilder builder = clientConfiguration();
+      builder.connectionPool().maxActive(1);
       return AssertsNearCache.create(this.cache(), builder);
    }
 

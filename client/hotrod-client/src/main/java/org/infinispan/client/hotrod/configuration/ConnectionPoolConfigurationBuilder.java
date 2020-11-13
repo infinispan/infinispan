@@ -34,6 +34,14 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    /**
+    * Returns the configured action when the pool has become exhausted.
+    * @return the action to perform
+    */
+   public ExhaustedAction exhaustedAction() {
+      return exhaustedAction;
+   }
+
+   /**
     * Controls the maximum number of connections per server that are allocated (checked out to
     * client threads, or idle in the pool) at one time. When non-positive, there is no limit to the
     * number of connections per server. When maxActive is reached, the connection pool for that
@@ -43,6 +51,15 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    public ConnectionPoolConfigurationBuilder maxActive(int maxActive) {
       this.maxActive = maxActive;
       return this;
+   }
+
+   /**
+    * Returns the number of configured maximum connections per server that can be allocated. When this is non-positive
+    * there is no limit to the number of connections.
+    * @return maximum number of open connections to a server
+    */
+   public int maxActive() {
+      return maxActive;
    }
 
    /**
