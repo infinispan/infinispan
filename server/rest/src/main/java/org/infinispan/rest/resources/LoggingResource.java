@@ -65,37 +65,18 @@ public final class LoggingResource implements ResourceHandler {
                   .addOptionalParameter("loggerName", loggerName)
                   .addOptionalParameter("level", level)
                   .addOptionalParameter("appenders", appenders)
-      ).handle((o, t) -> {
-         NettyRestResponse.Builder response = new NettyRestResponse.Builder();
-         if (t == null) {
-            response.status(HttpResponseStatus.NO_CONTENT);
-         } else {
-            while (t.getCause() != null) {
-               t = t.getCause();
-            }
-            if (t instanceof IllegalStateException) {
-               response.status(HttpResponseStatus.CONFLICT).entity(t.getMessage());
-            } else if (t instanceof IllegalArgumentException) {
-               response.status(HttpResponseStatus.BAD_REQUEST).entity(t.getMessage());
-            } else if (t instanceof NoSuchElementException) {
-               response.status(HttpResponseStatus.NOT_FOUND).entity(t.getMessage());
-            } else {
-               response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(t.getMessage());
-            }
-         }
-         return response.build();
-      });
+                  .subject(request.getSubject())
+      ).handle((o, t) -> handle(t));
    }
 
    private CompletionStage<RestResponse> deleteLogger(RestRequest request) {
       TaskManager taskManager = invocationHelper.getServer().getTaskManager();
       String loggerName = request.variables().get("loggerName");
-      return taskManager.runTask("@@logging@remove", new TaskContext().addParameter("loggerName", loggerName))
-            .thenApply(o -> {
-               NettyRestResponse.Builder response = new NettyRestResponse.Builder();
-               response.status(HttpResponseStatus.NO_CONTENT);
-               return response.build();
-            });
+      return taskManager.runTask("@@logging@remove",
+            new TaskContext()
+                  .addParameter("loggerName", loggerName)
+                  .subject(request.getSubject())
+            ).handle((o, t) -> handle(t));
    }
 
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {
@@ -123,5 +104,28 @@ public final class LoggingResource implements ResourceHandler {
       Json jsonMap = Json.object();
       appendersMap.forEach((key, value) -> jsonMap.set(key, Json.object().set("name", value.getName())));
       return asJsonResponseFuture(jsonMap);
+   }
+
+   private NettyRestResponse handle(Throwable t) {
+      NettyRestResponse.Builder response = new NettyRestResponse.Builder();
+      if (t == null) {
+         response.status(HttpResponseStatus.NO_CONTENT);
+      } else {
+         while (t.getCause() != null) {
+            t = t.getCause();
+         }
+         if (t instanceof IllegalStateException) {
+            response.status(HttpResponseStatus.CONFLICT).entity(t.getMessage());
+         } else if (t instanceof IllegalArgumentException) {
+            response.status(HttpResponseStatus.BAD_REQUEST).entity(t.getMessage());
+         } else if (t instanceof NoSuchElementException) {
+            response.status(HttpResponseStatus.NOT_FOUND).entity(t.getMessage());
+         } else if (t instanceof SecurityException) {
+            response.status(HttpResponseStatus.FORBIDDEN).entity(t.getMessage());
+         } else {
+            response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(t.getMessage());
+         }
+      }
+      return response.build();
    }
 }

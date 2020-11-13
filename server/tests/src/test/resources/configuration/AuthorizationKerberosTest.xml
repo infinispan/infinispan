@@ -6,7 +6,7 @@
         xmlns="urn:infinispan:config:12.0"
         xmlns:server="urn:infinispan:server:12.0">
 
-   <xi:include href="jgroups/stacks.xml"/>
+   <xi:include href="jgroups/authz-stacks.xml"/>
 
    <xi:include href="cache-container/clustered-authz.xml"/>
 

@@ -56,7 +56,7 @@ import org.testng.annotations.Test;
 public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    public static final String REALM = "ApplicationRealm";
    public static final Subject ADMIN_USER = TestingUtil.makeSubject("ADMIN", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
-   public static final Subject USER = TestingUtil.makeSubject("USER", ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
+   public static final Subject USER = TestingUtil.makeSubject("USER", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    protected RestClient client;

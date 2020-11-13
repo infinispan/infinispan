@@ -15,13 +15,12 @@ import javax.security.auth.Subject;
 import org.infinispan.commons.jdkspecific.CallerId;
 
 /**
- * Security. A simple class to implement caller privileges without a security manager and a
- * much faster implementations of the {@link Subject#doAs(Subject, PrivilegedAction)} and
- * {@link Subject#doAs(Subject, PrivilegedExceptionAction)} when interaction with the
- * {@link AccessControlContext} is not needed.
- *
- * N.B. this uses the caller's {@link Package}, this can easily be subverted by placing the
- * calling code within the org.infinispan hierarchy. However for most purposes this is ok.
+ * Security. A simple class to implement caller privileges without a security manager and a much faster implementations
+ * of the {@link Subject#doAs(Subject, PrivilegedAction)} and {@link Subject#doAs(Subject, PrivilegedExceptionAction)}
+ * when interaction with the {@link AccessControlContext} is not needed.
+ * <p>
+ * N.B. this uses the caller's {@link Package}, this can easily be subverted by placing the calling code within the
+ * org.infinispan hierarchy. However for most purposes this is ok.
  *
  * @author Tristan Tarrant
  * @since 7.0
@@ -36,7 +35,7 @@ public final class Security {
       // TODO: implement a better way
       String packageName = klass.getPackage().getName();
       return packageName.startsWith("org.infinispan") ||
-             packageName.startsWith("org.jboss.as.clustering.infinispan");
+            packageName.startsWith("org.jboss.as.clustering.infinispan");
    }
 
    public static <T> T doPrivileged(PrivilegedAction<T> action) {
@@ -71,13 +70,7 @@ public final class Security {
       }
    }
 
-   /**
-    * A "lightweight" implementation of {@link Subject#doAs(Subject, PrivilegedAction)} which uses a ThreadLocal
-    * {@link Subject} instead of modifying the current {@link AccessControlContext}.
-    *
-    * @see Subject#doAs(Subject, PrivilegedAction)
-    */
-   public static <T> T doAs(final Subject subject, final java.security.PrivilegedAction<T> action) {
+   private static Deque<Subject> pre(Subject subject) {
       Deque<Subject> stack = SUBJECT.get();
       if (stack == null) {
          stack = new ArrayDeque<>();
@@ -86,49 +79,60 @@ public final class Security {
       if (subject != null) {
          stack.push(subject);
       }
-      try {
-         return action.run();
-      } finally {
-         if (subject != null) {
-            stack.pop();
-            if (stack.isEmpty()) {
-               SUBJECT.remove();
-            }
+      return stack;
+   }
+
+   private static void post(Subject subject, Deque<Subject> stack) {
+      if (subject != null) {
+         stack.pop();
+         if (stack.isEmpty()) {
+            SUBJECT.remove();
          }
       }
    }
 
+   public static void doAs(final Subject subject, final Runnable action) {
+      Deque<Subject> stack = pre(subject);
+      try {
+         action.run();
+      } finally {
+         post(subject, stack);
+      }
+   }
+
    /**
-    * A "lightweight" implementation of {@link Subject#doAs(Subject, PrivilegedExceptionAction)} which uses a ThreadLocal
-    * {@link Subject} instead of modifying the current {@link AccessControlContext}.
+    * A "lightweight" implementation of {@link Subject#doAs(Subject, PrivilegedAction)} which uses a ThreadLocal {@link
+    * Subject} instead of modifying the current {@link AccessControlContext}.
+    *
+    * @see Subject#doAs(Subject, PrivilegedAction)
+    */
+   public static <T> T doAs(final Subject subject, final java.security.PrivilegedAction<T> action) {
+      Deque<Subject> stack = pre(subject);
+      try {
+         return action.run();
+      } finally {
+         post(subject, stack);
+      }
+   }
+
+   /**
+    * A "lightweight" implementation of {@link Subject#doAs(Subject, PrivilegedExceptionAction)} which uses a
+    * ThreadLocal {@link Subject} instead of modifying the current {@link AccessControlContext}.
     *
     * @see Subject#doAs(Subject, PrivilegedExceptionAction)
     */
    public static <T> T doAs(final Subject subject,
-         final java.security.PrivilegedExceptionAction<T> action)
+                            final java.security.PrivilegedExceptionAction<T> action)
          throws java.security.PrivilegedActionException {
-      Deque<Subject> stack = SUBJECT.get();
-      if (stack == null) {
-         stack = new ArrayDeque<>();
-         SUBJECT.set(stack);
-      }
-      if (subject != null) {
-         stack.push(subject);
-      }
+      Deque<Subject> stack = pre(subject);
       try {
          return action.run();
       } catch (Exception e) {
          throw new PrivilegedActionException(e);
       } finally {
-         if (subject != null) {
-            stack.pop();
-            if (stack.isEmpty()) {
-               SUBJECT.remove();
-            }
-         }
+         post(subject, stack);
       }
    }
-
 
    public static void checkPermission(CachePermission permission) throws AccessControlException {
       if (!isPrivileged()) {
@@ -141,9 +145,9 @@ public final class Security {
    }
 
    /**
-    * If using {@link Security#doAs(Subject, PrivilegedAction)} or
-    * {@link Security#doAs(Subject, PrivilegedExceptionAction)}, returns the {@link Subject} associated with the current thread
-    * otherwise it returns the {@link Subject} associated with the current {@link AccessControlContext}
+    * If using {@link Security#doAs(Subject, PrivilegedAction)} or {@link Security#doAs(Subject,
+    * PrivilegedExceptionAction)}, returns the {@link Subject} associated with the current thread otherwise it returns
+    * the {@link Subject} associated with the current {@link AccessControlContext}
     */
    public static Subject getSubject() {
       if (SUBJECT.get() != null) {

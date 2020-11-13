@@ -4,11 +4,14 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
  * SecurityActions for the org.infinispan.xsite package.
@@ -33,11 +36,13 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
-      if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(((SecureCacheImpl<K, V>) cache)::getDelegate);
-      } else {
-         return cache;
-      }
+   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
+      return doPrivileged(action);
+   }
+
+   static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
+      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
+      authzHelper.checkPermission(cacheManager.getSubject(), permission);
    }
 }

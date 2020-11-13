@@ -25,6 +25,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.security.AuthorizationPermission;
 
 /**
  * Manages the cache blacklisting for a given {@link EmbeddedCacheManager}
@@ -58,6 +59,7 @@ public final class CacheIgnoreManager {
    }
 
    public CompletableFuture<Void> unignoreCache(String cacheName) {
+      SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       synchronized (this) {
          ignored.caches.remove(cacheName);
          hasIgnores = !ignored.caches.isEmpty();
@@ -66,6 +68,7 @@ public final class CacheIgnoreManager {
    }
 
    public CompletableFuture<Void> ignoreCache(String cacheName) {
+      SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       synchronized (this) {
          ignored.caches.add(cacheName);
          hasIgnores = !ignored.caches.isEmpty();

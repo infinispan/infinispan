@@ -7,6 +7,7 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +20,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 
 /**
@@ -49,16 +51,16 @@ public class ClusterResource implements ResourceHandler {
       List<String> servers = restRequest.parameters().get("server");
 
       if (servers != null && !servers.isEmpty()) {
-         invocationHelper.getServer().serverStop(servers);
+         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
       } else {
-         invocationHelper.getServer().clusterStop();
+         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
       }
       return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
    }
 
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      Set<String> names = backupManager.getBackupNames();
+      Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getBackupNames);
       return asJsonResponseFuture(Json.make(names));
    }
 
@@ -69,7 +71,7 @@ public class ClusterResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      Set<String> names = backupManager.getRestoreNames();
+      Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getRestoreNames);
       return asJsonResponseFuture(Json.make(names));
    }
 

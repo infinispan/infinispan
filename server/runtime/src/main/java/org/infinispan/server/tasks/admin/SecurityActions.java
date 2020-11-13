@@ -1,23 +1,21 @@
-package org.infinispan.server.core;
+package org.infinispan.server.tasks.admin;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
- * SecurityActions for the org.infinispan.server.core package. Do not move and do not change class and method
+ * SecurityActions for the org.infinispan.server.tasks.admin package. Do not move and do not change class and method
  * visibility!
  *
  * @author Tristan Tarrant
- * @since 9.1
+ * @since 12.0
  */
 final class SecurityActions {
 
@@ -31,10 +29,6 @@ final class SecurityActions {
 
    static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
-   }
-
-   static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
