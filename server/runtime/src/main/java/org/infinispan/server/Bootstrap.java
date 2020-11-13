@@ -103,6 +103,10 @@ public class Bootstrap extends Main {
             // Fall through
          case "--port-offset":
             properties.setProperty(Server.INFINISPAN_PORT_OFFSET, parameter);
+            int offset = Integer.parseInt(parameter);
+            if (!properties.containsKey(Server.JGROUPS_BIND_PORT)) {
+               properties.setProperty(Server.JGROUPS_BIND_PORT, Integer.toString(Server.DEFAULT_JGROUPS_BIND_PORT + offset));
+            }
             break;
          case "-P":
             parameter = args.next();
