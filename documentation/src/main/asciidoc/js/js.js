@@ -2,7 +2,7 @@ $(document).ready(function() {
     var prefix = "/docs/"
     var path = document.location.pathname;
     var version = path.substring(prefix.length, path.indexOf("/", prefix.length));
-    $.ajax({type: 'GET', dataType: 'xml', url: '../../versions.xml',
+    $.ajax({type: 'GET', dataType: 'xml', url: '/docs/versions.xml',
             success: function(xml) {
                 $('#toctitle').before('<select id="vchooser"></select>');
                 $('#vchooser').append('<option>Choose version</option>');
@@ -39,4 +39,3 @@ $(document).ready(function() {
     $('#toctreeexpand').click(function() { $('#toctree').jstree('open_all'); });
     $('#toctreecollapse').click(function() { $('#toctree').jstree('close_all'); });
 });
-
