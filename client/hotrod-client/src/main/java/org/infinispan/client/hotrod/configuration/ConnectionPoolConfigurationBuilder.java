@@ -14,7 +14,7 @@ import org.infinispan.commons.util.TypedProperties;
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
-   private int maxActive = -1;
+   private int maxActive = 1;
    private long maxWait = -1;
    private int minIdle = 1;
    private long minEvictableIdleTime = 1800000;
