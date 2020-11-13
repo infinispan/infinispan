@@ -22,6 +22,8 @@ import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -43,6 +45,7 @@ public class BackupManagerImpl implements BackupManager {
    final BackupReader reader;
    final Lock backupLock;
    final Lock restoreLock;
+   private final EmbeddedCacheManager cacheManager;
    final Map<String, DefaultCacheManager> cacheManagers;
    final Map<String, BackupRequest> backupMap;
    final Map<String, CompletionStage<Void>> restoreMap;
@@ -51,6 +54,7 @@ public class BackupManagerImpl implements BackupManager {
                             Map<String, DefaultCacheManager> cacheManagers, Path dataRoot) {
       this.blockingManager = blockingManager;
       this.rootDir = dataRoot.resolve(WORKING_DIR);
+      this.cacheManager = cm;
       this.cacheManagers = cacheManagers;
       this.parserRegistry = new ParserRegistry();
       this.reader = new BackupReader(blockingManager, cacheManagers, parserRegistry);
@@ -67,16 +71,19 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public Set<String> getBackupNames() {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       return new HashSet<>(backupMap.keySet());
    }
 
    @Override
    public Status getBackupStatus(String name) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       return getBackupStatus(backupMap.get(name));
    }
 
    @Override
    public Path getBackupLocation(String name) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       BackupRequest request = backupMap.get(name);
       Status status = getBackupStatus(request);
       if (status != Status.COMPLETE)
@@ -102,6 +109,7 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public CompletionStage<Status> removeBackup(String name) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       BackupRequest request = backupMap.remove(name);
       Status status = getBackupStatus(request);
       switch (status) {
@@ -139,6 +147,7 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public CompletionStage<Path> create(String name, Path workingDir, Map<String, Resources> params) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       if (getBackupStatus(name) != Status.NOT_FOUND)
          return CompletableFutures.completedExceptionFuture(log.backupAlreadyExists(name));
 
@@ -171,6 +180,7 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public CompletionStage<Status> removeRestore(String name) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       CompletionStage<Void> stage = restoreMap.remove(name);
       Status status = getFutureStatus(stage);
       return CompletableFuture.completedFuture(status);
@@ -178,11 +188,13 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public Status getRestoreStatus(String name) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       return getFutureStatus(restoreMap.get(name));
    }
 
    @Override
    public Set<String> getRestoreNames() {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       return new HashSet<>(restoreMap.keySet());
    }
 
@@ -200,6 +212,7 @@ public class BackupManagerImpl implements BackupManager {
 
    @Override
    public CompletionStage<Void> restore(String name, Path backup, Map<String, Resources> params) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       if (getRestoreStatus(name) != Status.NOT_FOUND)
          return CompletableFutures.completedExceptionFuture(log.restoreAlreadyExists(name));
 

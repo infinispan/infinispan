@@ -14,9 +14,13 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 final class SecurityActions {
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
@@ -30,5 +34,15 @@ final class SecurityActions {
    static GlobalConfiguration getGlobalConfiguration(final EmbeddedCacheManager cacheManager) {
       GetCacheManagerConfigurationAction action = new GetCacheManagerConfigurationAction(cacheManager);
       return doPrivileged(action);
+   }
+
+   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
+      return doPrivileged(action);
+   }
+
+   static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
+      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
+      authzHelper.checkPermission(cacheManager.getSubject(), permission);
    }
 }
