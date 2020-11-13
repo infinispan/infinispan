@@ -40,8 +40,8 @@ public class ClusterResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
             .invocation().methods(POST).path("/v2/cluster").withAction("stop").handleWith(this::stop)
-            .invocation().methods(GET).path("/v2/cluster/backups").handleWith(this::getAllBackupNames)
-            .invocation().methods(DELETE, GET, POST).path("/v2/cluster/backups/{backupName}").handleWith(this::backup)
+            .invocation().methods(GET, HEAD).path("/v2/cluster/backups").handleWith(this::getAllBackupNames)
+            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cluster/backups/{backupName}").handleWith(this::backup)
             .invocation().methods(GET).path("/v2/cluster/restores").handleWith(this::getAllRestoreNames)
             .invocation().methods(DELETE, HEAD, POST).path("/v2/cluster/restores/{restoreName}").handleWith(this::restore)
             .create();

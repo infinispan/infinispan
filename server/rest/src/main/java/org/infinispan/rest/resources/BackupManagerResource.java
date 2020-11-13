@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,7 @@ import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.BackupManagerResources;
 import org.infinispan.util.function.TriConsumer;
@@ -62,10 +64,10 @@ class BackupManagerResource {
       Method method = request.method();
       switch (method) {
          case DELETE:
-            return handleDeleteBackup(name, backupManager);
+            return handleDeleteBackup(name, request, backupManager);
          case GET:
          case HEAD:
-            return handleGetBackup(name, backupManager, method);
+            return handleGetBackup(name, request, backupManager, method);
          case POST:
             return handleCreateBackup(name, request, backupManager, creationConsumer);
          default:
@@ -75,7 +77,7 @@ class BackupManagerResource {
 
    private static CompletionStage<RestResponse> handleCreateBackup(String name, RestRequest request, BackupManager backupManager,
                                                                    TriConsumer<String, Path, Json> creationConsumer) {
-      BackupManager.Status existingStatus = backupManager.getBackupStatus(name);
+      BackupManager.Status existingStatus = Security.doAs(request.getSubject(), (PrivilegedAction<BackupManager.Status>) () -> backupManager.getBackupStatus(name));
       if (existingStatus != BackupManager.Status.NOT_FOUND)
          return responseFuture(CONFLICT);
 
@@ -90,12 +92,13 @@ class BackupManagerResource {
       return responseFuture(ACCEPTED);
    }
 
-   private static CompletionStage<RestResponse> handleDeleteBackup(String name, BackupManager backupManager) {
-      return backupManager.removeBackup(name).handle(BackupManagerResource::handleDelete);
+   private static CompletionStage<RestResponse> handleDeleteBackup(String name, RestRequest request, BackupManager backupManager) {
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>)
+            () -> backupManager.removeBackup(name).handle(BackupManagerResource::handleDelete));
    }
 
-   private static CompletionStage<RestResponse> handleGetBackup(String name, BackupManager backupManager, Method method) {
-      BackupManager.Status status = backupManager.getBackupStatus(name);
+   private static CompletionStage<RestResponse> handleGetBackup(String name, RestRequest request, BackupManager backupManager, Method method) {
+      BackupManager.Status status = Security.doAs(request.getSubject(), (PrivilegedAction<BackupManager.Status>) () -> backupManager.getBackupStatus(name));
       switch (status) {
          case FAILED:
             return responseFuture(INTERNAL_SERVER_ERROR);
@@ -104,7 +107,7 @@ class BackupManagerResource {
          case IN_PROGRESS:
             return responseFuture(ACCEPTED);
          default:
-            File zip = backupManager.getBackupLocation(name).toFile();
+            File zip = Security.doAs(request.getSubject(), (PrivilegedAction<File>) () -> backupManager.getBackupLocation(name).toFile());
             NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
             responseBuilder
                   .contentType(MediaType.APPLICATION_ZIP)
@@ -123,9 +126,9 @@ class BackupManagerResource {
       Method method = request.method();
       switch (method) {
          case DELETE:
-            return handleDeleteRestore(name, backupManager);
+            return handleDeleteRestore(name, request, backupManager);
          case HEAD:
-            return handleRestoreStatus(name, backupManager);
+            return handleRestoreStatus(name, request, backupManager);
          case POST:
             return handleRestore(name, request, backupManager, function);
          default:
@@ -133,12 +136,12 @@ class BackupManagerResource {
       }
    }
 
-   static CompletionStage<RestResponse> handleDeleteRestore(String name, BackupManager backupManager) {
-      return backupManager.removeRestore(name).handle(BackupManagerResource::handleDelete);
+   static CompletionStage<RestResponse> handleDeleteRestore(String name, RestRequest request, BackupManager backupManager) {
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () -> backupManager.removeRestore(name).handle(BackupManagerResource::handleDelete));
    }
 
-   static CompletionStage<RestResponse> handleRestoreStatus(String name, BackupManager backupManager) {
-      BackupManager.Status status = backupManager.getRestoreStatus(name);
+   static CompletionStage<RestResponse> handleRestoreStatus(String name, RestRequest request, BackupManager backupManager) {
+      BackupManager.Status status = Security.doAs(request.getSubject(), (PrivilegedAction<BackupManager.Status>) () -> backupManager.getRestoreStatus(name));
       switch (status) {
          case NOT_FOUND:
             return responseFuture(NOT_FOUND);
@@ -154,7 +157,7 @@ class BackupManagerResource {
 
    static CompletionStage<RestResponse> handleRestore(String name, RestRequest request, BackupManager backupManager,
                                                       TriFunction<String, Path, Json, CompletionStage<Void>> function) {
-      BackupManager.Status existingStatus = backupManager.getRestoreStatus(name);
+      BackupManager.Status existingStatus = Security.doAs(request.getSubject(), (PrivilegedAction<BackupManager.Status>) () -> backupManager.getRestoreStatus(name));
       if (existingStatus != BackupManager.Status.NOT_FOUND)
          return responseFuture(CONFLICT);
 

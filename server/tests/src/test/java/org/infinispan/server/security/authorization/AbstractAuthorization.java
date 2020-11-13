@@ -287,6 +287,20 @@ public abstract class AbstractAuthorization {
       }
    }
 
+   @Test
+   public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
+      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().createBackup("backup")).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackup("backup", true)).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackupNames()).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteBackup("backup")).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().restore("restore", "somewhere")).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestoreNames()).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestore("restore")).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteRestore("restore")).getStatus());
+      }
+   }
+
    private RemoteCache<Object, Object> hotRodCreateAuthzCache(boolean explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
