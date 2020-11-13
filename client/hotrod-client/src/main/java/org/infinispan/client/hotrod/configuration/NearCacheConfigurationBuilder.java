@@ -89,6 +89,14 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
          } else if (maxEntries < 0 && bloomFilter) {
             throw HOTROD.nearCacheMaxEntriesPositiveWithBloom(maxEntries);
          }
+
+         if (bloomFilter) {
+            int maxActive = connectionPool().maxActive();
+            ExhaustedAction exhaustedAction = connectionPool().exhaustedAction();
+            if (maxActive != 1 || exhaustedAction != ExhaustedAction.WAIT) {
+               throw HOTROD.bloomFilterRequiresMaxActiveOneAndWait(maxEntries, exhaustedAction);
+            }
+         }
       }
    }
 

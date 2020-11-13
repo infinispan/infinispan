@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.CacheNotTransactionalException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -363,4 +364,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Near cache number of max entries must be a positive number when using bloom filter optimization, it was %d", id = 4102)
    CacheConfigurationException nearCacheMaxEntriesPositiveWithBloom(int maxEntries);
+
+   @Message(value = "Near cache with bloom filter requires pool max active to be 1, was %s, and exhausted action to be WAIT, was %s", id = 4103)
+   CacheConfigurationException bloomFilterRequiresMaxActiveOneAndWait(int maxActive, ExhaustedAction action);
 }

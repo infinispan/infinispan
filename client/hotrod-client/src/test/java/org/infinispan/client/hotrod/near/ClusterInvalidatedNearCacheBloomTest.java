@@ -86,6 +86,8 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
 
+      clientBuilder.connectionPool().maxActive(1);
+
       clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED)
             .maxEntries(NEAR_CACHE_SIZE)
             .bloomFilter(true);
