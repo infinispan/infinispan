@@ -20,6 +20,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.xsite.status.ContainerSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteStatus;
 
@@ -107,6 +108,7 @@ public class GlobalXSiteAdminOperations {
    }
 
    public final Map<String, SiteStatus> globalStatus() {
+      SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       final Iterator<CacheXSiteAdminOperation> iterator = collectXSiteAdminOperation().iterator();
       if (!iterator.hasNext()) {
          return Collections.emptyMap();
@@ -135,6 +137,7 @@ public class GlobalXSiteAdminOperations {
     * error message.
     */
    private Map<String, String> performMultiCacheOperation(Operation operation) {
+      SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       Collection<CacheXSiteAdminOperation> admOps = collectXSiteAdminOperation();
       if (admOps.isEmpty()) {
          return Collections.emptyMap();

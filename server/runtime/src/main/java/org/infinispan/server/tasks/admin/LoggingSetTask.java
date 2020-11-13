@@ -15,6 +15,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
 import org.infinispan.server.core.admin.AdminServerTask;
 import org.infinispan.tasks.TaskExecutionMode;
@@ -50,6 +51,7 @@ public class LoggingSetTask extends AdminServerTask<byte[]> {
 
    @Override
    protected byte[] execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
+      SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       String loggerName = getParameter(parameters, "loggerName");
       List<String> appenders = parameters.get("appenders");
       LoggerContext context = (LoggerContext) LogManager.getContext(false);
