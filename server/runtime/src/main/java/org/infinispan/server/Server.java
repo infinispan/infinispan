@@ -111,6 +111,8 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String INFINISPAN_NODE_NAME = "infinispan.node.name";
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
    public static final String JGROUPS_BIND_ADDRESS = "jgroups.bind.address";
+   public static final String JGROUPS_BIND_PORT = "jgroups.bind.port";
+
    /**
     * Property name indicating the path to the server installation. If unspecified, the current working directory will
     * be used
@@ -151,6 +153,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_CLUSTER_NAME = "cluster";
    public static final String DEFAULT_CLUSTER_STACK = "tcp";
    public static final int DEFAULT_BIND_PORT = 11222;
+   public static final int DEFAULT_JGROUPS_BIND_PORT = 7800;
 
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 
