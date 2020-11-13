@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -94,6 +95,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskUpload() throws Exception {
+      SkipTestNG.skipSinceJDK(12);
       RestTaskClient taskClient = client.tasks();
 
       String script = getResourceAsString("hello.js", getClass().getClassLoader());

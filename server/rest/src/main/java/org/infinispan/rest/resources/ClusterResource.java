@@ -15,6 +15,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.Security;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -41,10 +42,11 @@ public class ClusterResource implements ResourceHandler {
       HttpResponseStatus status = restRequest.method().equals(POST) ? NO_CONTENT: OK;
 
       if (servers != null && !servers.isEmpty()) {
-         invocationHelper.getServer().serverStop(servers);
+         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
       } else {
-         invocationHelper.getServer().clusterStop();
+         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
       }
+
       return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(status).build());
    }
 }

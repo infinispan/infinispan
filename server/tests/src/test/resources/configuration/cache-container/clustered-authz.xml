@@ -14,4 +14,10 @@
    </security>
 
    <distributed-cache name="predefined"/>
+
+   <distributed-cache name="xsite">
+      <backups>
+         <backup site="NYC"/>
+      </backups>
+   </distributed-cache>
 </cache-container>
