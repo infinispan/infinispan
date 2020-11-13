@@ -52,6 +52,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -424,6 +426,7 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public void serverStop(List<String> servers) {
       for (DefaultCacheManager cacheManager : cacheManagers.values()) {
+         SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
          ClusterExecutor executor = cacheManager.executor();
          if (servers != null && !servers.isEmpty()) {
             // Find the actual addresses of the servers
@@ -442,6 +445,7 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public void clusterStop() {
       cacheManagers.values().forEach(cm -> {
+         SecurityActions.checkPermission(cm.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
          cm.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cm, name));
          sendExitStatusToServers(cm.executor(), ExitStatus.CLUSTER_SHUTDOWN);
       });
@@ -564,6 +568,7 @@ public class Server implements ServerManagement, AutoCloseable {
 
    @Override
    public CompletionStage<Path> getServerReport() {
+      SecurityActions.checkPermission(cacheManagers.values().iterator().next().withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       OS os = OS.getCurrentOs();
       if (os != OS.LINUX) {
          return CompletableFutures.completedExceptionFuture(log.serverReportUnavailable(os));

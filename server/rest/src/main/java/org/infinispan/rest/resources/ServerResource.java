@@ -13,6 +13,7 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.io.IOException;
+import java.security.PrivilegedAction;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Set;
@@ -30,6 +31,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ServerManagement;
 
@@ -88,11 +90,10 @@ public class ServerResource implements ResourceHandler {
       }
       ServerManagement server = invocationHelper.getServer();
       CacheIgnoreManager ignoreManager = server.getIgnoreManager(cacheManagerName);
-      if (add) {
-         return ignoreManager.ignoreCache(cacheName).thenApply(r -> builder.build());
-      } else {
-         return ignoreManager.unignoreCache(cacheName).thenApply(r -> builder.build());
-      }
+      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+            add ? ignoreManager.ignoreCache(cacheName).thenApply(r -> builder.build()) :
+                  ignoreManager.unignoreCache(cacheName).thenApply(r -> builder.build())
+      );
    }
 
    private CompletionStage<RestResponse> listIgnored(RestRequest restRequest) {
@@ -130,25 +131,30 @@ public class ServerResource implements ResourceHandler {
    private CompletionStage<RestResponse> report(RestRequest restRequest) {
       ServerManagement server = invocationHelper.getServer();
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      return server.getServerReport().handle((path, t) -> {
-         if (t != null) {
-            return responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).build();
-         } else {
-            return responseBuilder
-                  .contentType(MediaType.fromString("application/gzip"))
-                  .header("Content-Disposition",
-                        String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
-                              Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
-                              invocationHelper.getRestCacheManager().getNodeName(),
-                              Calendar.getInstance())
-                  )
-                  .entity(path.toFile()).build();
-         }
-      });
+      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+            server.getServerReport().handle((path, t) -> {
+               if (t != null) {
+                  return responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).build();
+               } else {
+                  return responseBuilder
+                        .contentType(MediaType.fromString("application/gzip"))
+                        .header("Content-Disposition",
+                              String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
+                                    Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
+                                    invocationHelper.getRestCacheManager().getNodeName(),
+                                    Calendar.getInstance())
+                        )
+                        .entity(path.toFile()).build();
+               }
+            })
+      );
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
-      invocationHelper.getServer().serverStop(Collections.emptyList());
+      Security.doAs(restRequest.getSubject(), (PrivilegedAction) () -> {
+         invocationHelper.getServer().serverStop(Collections.emptyList());
+         return null;
+      });
 
       return CompletableFuture.completedFuture(new NettyRestResponse.Builder()
             .status(restRequest.method().equals(POST) ? NO_CONTENT : OK).build());

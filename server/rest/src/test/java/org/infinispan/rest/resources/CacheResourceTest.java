@@ -29,6 +29,7 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
+import java.security.PrivilegedAction;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -55,8 +56,11 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.search.entity.Person;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -272,11 +276,27 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       CompletionStage<RestResponse> response = cacheClient.get("K");
       assertThat(response).isOk();
 
-      restServer().ignoreCache("default");
+      if (security) {
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<Void>) () -> {
+            restServer().ignoreCache("default");
+            return null;
+         });
+      } else {
+         restServer().ignoreCache("default");
+      }
+
       response = cacheClient.get("K");
       assertThat(response).isServiceUnavailable();
 
-      restServer().unignoreCache("default");
+      if (security) {
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<Void>) () -> {
+            restServer().unignoreCache("default");
+            return null;
+         });
+      } else {
+         restServer().unignoreCache("default");
+      }
+
       response = cacheClient.get("K");
       assertThat(response).isOk();
    }

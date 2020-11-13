@@ -11,12 +11,14 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestCacheManagerClient;
@@ -32,8 +34,12 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -188,8 +194,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCachesWithIgnoreCache() throws Exception {
-      ignoreManager.ignoreCache("cache1");
+   public void testCachesWithIgnoreCache() throws JsonProcessingException {
+      if (security) {
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> ignoreManager.ignoreCache("cache1"));
+      } else {
+         ignoreManager.ignoreCache("cache1");
+      }
 
       RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
