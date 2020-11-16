@@ -46,7 +46,7 @@ class ChannelPool {
    private final ChannelInitializer newChannelInvoker;
    private final ExhaustedAction exhaustedAction;
    private final long maxWait;
-   private final int maxConnections;
+   private final int maxConnections = 1;
    private final int maxPendingRequests;
    private final AtomicInteger created = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
@@ -59,7 +59,6 @@ class ChannelPool {
       this.newChannelInvoker = newChannelInvoker;
       this.exhaustedAction = exhaustedAction;
       this.maxWait = maxWait;
-      this.maxConnections = maxConnections;
       this.maxPendingRequests = maxPendingRequests;
    }
 
