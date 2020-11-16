@@ -4,10 +4,12 @@ import static org.infinispan.marshall.protostream.impl.SerializationContextRegis
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -39,10 +41,12 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    @Start
    public void start() {
       // Add user configured SCIs
-      List<SerializationContextInitializer> scis = globalConfig.serialization().contextInitializers();
-      if (scis != null) {
-         scis.forEach(sci -> register(sci, user));
+      Collection<SerializationContextInitializer> initializers = globalConfig.serialization().contextInitializers();
+      if (initializers == null || initializers.isEmpty()) {
+         // If no SCIs have been explicitly configured, then load all available SCI services
+         initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfig.classLoader());
       }
+      initializers.forEach(sci -> register(sci, user));
 
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
