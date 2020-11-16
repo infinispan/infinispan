@@ -1,5 +1,9 @@
 #!/bin/sh
 
+setModularJdk() {
+  "$JAVA" --add-modules=java.se -version > /dev/null 2>&1 && MODULAR_JDK=true || MODULAR_JDK=false
+}
+
 # Use --debug to activate debug mode with an optional argument to specify the port.
 # Usage : server.sh --debug
 #         server.sh --debug 9797
@@ -251,18 +255,35 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         fi
     fi
 
+    # Set flag if JVM is modular
+    setModularJdk
+
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
-        NO_GC_LOG_ROTATE=`echo $JAVA_OPTS | $GREP "\-verbose:gc"`
+        mkdir -p "$ISPN_LOG_DIR"
+        NO_GC_LOG_ROTATE=$(echo $JAVA_OPTS | $GREP "\-Xlog\:\?gc")
         if [ "x$NO_GC_LOG_ROTATE" = "x" ]; then
             # backup prior gc logs
+            mv -f "$ISPN_LOG_DIR/gc.log" "$ISPN_LOG_DIR/backupgc.log" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.0" "$ISPN_LOG_DIR/backupgc.log.0" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.1" "$ISPN_LOG_DIR/backupgc.log.1" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.2" "$ISPN_LOG_DIR/backupgc.log.2" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.3" "$ISPN_LOG_DIR/backupgc.log.3" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.4" "$ISPN_LOG_DIR/backupgc.log.4" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR"/gc.log.*.current "$ISPN_LOG_DIR/backupgc.log.current" >/dev/null 2>&1
-            "$JAVA" $JVM_OPTVERSION -verbose:gc -Xloggc:"$ISPN_LOG_DIR/gc.log" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading -version >/dev/null 2>&1 && mkdir -p $ISPN_LOG_DIR && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -verbose:gc -Xloggc:\"$ISPN_LOG_DIR/gc.log\" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading"
+
+            "$JAVA" -Xverbosegclog:"$ISPN_LOG_DIR/gc.log" -version > /dev/null 2>&1 && OPEN_J9_JDK=true || OPEN_J9_JDK=false
+            if [ "$OPEN_J9_JDK" = "true" ]; then
+                TMP_PARAM="-Xverbosegclog:\"$ISPN_LOG_DIR/gc.log\""
+            elif [ "$MODULAR_JDK" = "true" ]; then
+                TMP_PARAM="-Xlog:gc*:file=\"$ISPN_LOG_DIR/gc.log\":time,uptimemillis:filecount=5,filesize=3M"
+            else
+                TMP_PARAM="-verbose:gc -Xloggc:\"$ISPN_LOG_DIR/gc.log\" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading"
+            fi
+
+            eval "$JAVA" $JVM_OPTVERSION $TMP_PARAM -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS $TMP_PARAM"
+            # Remove the gc.log file from the -version check
+            rm -f "$ISPN_LOG_DIR/gc.log" >/dev/null 2>&1
         fi
     fi
 
