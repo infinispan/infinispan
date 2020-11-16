@@ -1,18 +1,6 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -25,20 +13,32 @@ import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class KeyCloakServerRule implements TestRule {
-   public static final String KEYCLOAK_IMAGE = "jboss/keycloak:10.0.1";
+   public final String KEYCLOAK_IMAGE;
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer container;
 
-   public KeyCloakServerRule(String realmJsonFile) {
+   public KeyCloakServerRule(String realmJsonFile, String keycloakImage) {
       this.realmJsonFile = realmJsonFile;
+      this.KEYCLOAK_IMAGE = keycloakImage;
    }
 
    @Override
@@ -68,9 +68,10 @@ public class KeyCloakServerRule implements TestRule {
 
       final Map<String, String> environment = new HashMap<>();
       environment.put("DB_VENDOR", "h2");
-      environment.put("KEYCLOAK_USER", "keycloak");
-      environment.put("KEYCLOAK_PASSWORD", "keycloak");
+      environment.put("SSO_ADMIN_USERNAME", "keycloak");
+      environment.put("SSO_ADMIN_PASSWORD", "keycloak");
       environment.put("KEYCLOAK_IMPORT", keycloakImport.getAbsolutePath());
+      environment.put("JAVA_OPTS_APPEND","-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file="+keycloakImport.getAbsolutePath());
       container = new FixedHostPortGenericContainer(KEYCLOAK_IMAGE);
       container.withFixedExposedPort(14567, 8080)
             .withEnv(environment)

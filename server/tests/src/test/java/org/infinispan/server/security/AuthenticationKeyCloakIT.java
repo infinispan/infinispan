@@ -1,21 +1,21 @@
 package org.infinispan.server.security;
 
-import static org.infinispan.server.security.Common.sync;
-import static org.junit.Assert.assertEquals;
-
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.KeyCloakServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.infinispan.server.test.core.KeyCloakServerRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static org.infinispan.server.security.Common.sync;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -34,7 +34,7 @@ public class AuthenticationKeyCloakIT {
 
 
    @ClassRule
-   public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-keycloak-realm.json");
+   public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-rhsso-realm.json","registry.redhat.io/rh-sso-7/sso74-openshift-rhel8:7.4-5");
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);

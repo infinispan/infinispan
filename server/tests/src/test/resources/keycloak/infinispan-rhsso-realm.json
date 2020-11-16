@@ -1,0 +1,135 @@
+{
+    "id" : "infinispan",
+    "realm": "infinispan",
+    "enabled" : true,
+    "users" : [
+        {
+            "username" : "admin",
+            "enabled": true,
+            "email" : "sample-user@example",
+            "firstName": "Sample",
+            "lastName": "User",
+            "credentials" : [
+                { "type" : "password",
+                    "value" : "adminPassword" }
+            ],
+            "realmRoles": [ "user" ],
+            "clientRoles": {
+                "account": ["view-profile", "manage-account"]
+            }
+        }
+    ],
+    "roles" : {
+        "realm" : [
+            {
+                "id" : "2b1c1e6d-3c27-4e91-8878-9079bb793a45",
+                "name" : "offline_access",
+                "description" : "${role_offline-access}",
+                "composite" : false,
+                "clientRole" : false,
+                "containerId" : "infinispan",
+                "attributes" : { }
+            },
+            {
+                "id" : "3d6b6f71-99a6-438d-b1ef-6b5edd66cae2",
+                "name" : "admin",
+                "composite" : false,
+                "clientRole" : false,
+                "containerId" : "infinispan",
+                "attributes" : { }
+            }
+        ]
+    },
+    "scopeMappings" : [ {
+        "clientScope" : "offline_access",
+        "roles" : [ "offline_access" ]
+    } ],
+    "clients": [
+        {
+            "clientId": "infinispan-client",
+            "enabled": true,
+            "publicClient": false,
+            "consentRequired" : false,
+            "clientAuthenticatorType" : "client-secret",
+            "directAccessGrantsEnabled" : true,
+            "secret" : "8a43581d-62d7-47dc-9aa4-cd3af24b6083",
+            "redirectUris" : [ "*" ],
+            "webOrigins" : [ "*" ]
+        },
+        {
+            "id" : "d3b73ff6-dd3d-4ecd-a6a6-114d1408444c",
+            "clientId" : "infinispan-server",
+            "surrogateAuthRequired" : false,
+            "enabled" : true,
+            "alwaysDisplayInConsole" : false,
+            "clientAuthenticatorType" : "client-secret",
+            "secret" : "1fdca4ec-c416-47e0-867a-3d471af7050f",
+            "redirectUris" : [ "*" ],
+            "webOrigins" : [ "*" ],
+            "notBefore" : 0,
+            "bearerOnly" : true,
+            "consentRequired" : false,
+            "standardFlowEnabled" : true,
+            "implicitFlowEnabled" : false,
+            "directAccessGrantsEnabled" : true,
+            "serviceAccountsEnabled" : false,
+            "publicClient" : false,
+            "frontchannelLogout" : false,
+            "protocol" : "openid-connect",
+            "attributes" : {
+                "saml.assertion.signature" : "false",
+                "saml.force.post.binding" : "false",
+                "saml.multivalued.roles" : "false",
+                "saml.encrypt" : "false",
+                "saml.server.signature" : "false",
+                "saml.server.signature.keyinfo.ext" : "false",
+                "exclude.session.state.from.auth.response" : "false",
+                "saml_force_name_id_format" : "false",
+                "saml.client.signature" : "false",
+                "tls.client.certificate.bound.access.tokens" : "false",
+                "saml.authnstatement" : "false",
+                "display.on.consent.screen" : "false",
+                "saml.onetimeuse.condition" : "false"
+            },
+            "authenticationFlowBindingOverrides" : { },
+            "fullScopeAllowed" : true,
+            "nodeReRegistrationTimeout" : -1,
+            "defaultClientScopes" : [ "web-origins", "role_list", "profile", "roles", "email" ],
+            "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+        },
+        {
+            "id" : "24f3dbad-4b44-44be-9a30-c9a604316452",
+            "clientId" : "admin-cli",
+            "name" : "${client_admin-cli}",
+            "surrogateAuthRequired" : false,
+            "enabled" : true,
+            "alwaysDisplayInConsole" : false,
+            "clientAuthenticatorType" : "client-secret",
+            "secret" : "**********",
+            "redirectUris" : [ ],
+            "webOrigins" : [ ],
+            "notBefore" : 0,
+            "bearerOnly" : false,
+            "consentRequired" : false,
+            "standardFlowEnabled" : false,
+            "implicitFlowEnabled" : false,
+            "directAccessGrantsEnabled" : true,
+            "serviceAccountsEnabled" : false,
+            "publicClient" : true,
+            "frontchannelLogout" : false,
+            "protocol" : "openid-connect",
+            "attributes" : { },
+            "authenticationFlowBindingOverrides" : { },
+            "fullScopeAllowed" : false,
+            "nodeReRegistrationTimeout" : 0,
+            "defaultClientScopes" : [ "web-origins", "role_list", "profile", "roles", "email" ],
+            "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+        }
+    ],
+       "clientScopeMappings" : {
+        "account" : [ {
+            "client" : "account-console",
+            "roles" : [ "manage-account" ]
+        } ]
+    }
+}
