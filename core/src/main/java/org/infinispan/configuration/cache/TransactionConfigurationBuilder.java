@@ -147,11 +147,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    public TransactionMode transactionMode() {
-      if (attributes.attribute(TRANSACTION_MODE).isModified()) {
-         return attributes.attribute(TRANSACTION_MODE).get();
-      } else {
-         return null;
-      }
+      return attributes.attribute(TRANSACTION_MODE).get();
    }
 
    /**
