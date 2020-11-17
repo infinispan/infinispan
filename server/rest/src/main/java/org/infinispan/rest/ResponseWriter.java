@@ -56,7 +56,9 @@ public enum ResponseWriter {
    CHUNKED_FILE {
       @Override
       void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
-         try (RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r")) {
+         try {
+            // The file is closed by the ChunkedWriteHandler
+            RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r");
             HttpResponse res = response.getResponse();
             HttpUtil.setContentLength(res, randomAccessFile.length());
             accessLog.log(ctx, request, response.getResponse());
