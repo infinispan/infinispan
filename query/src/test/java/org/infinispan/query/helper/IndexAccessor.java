@@ -49,7 +49,7 @@ public class IndexAccessor {
 
       indexManager = (LuceneIndexManagerImpl) searchIndexedEntity.indexManager().unwrap(LuceneIndexManager.class);
       shardsForTests = indexManager.getShardsForTests();
-      indexAccessor = shardsForTests.get(0).getIndexAccessorForTests();
+      indexAccessor = shardsForTests.get(0).indexAccessorForTests();
    }
 
    public IndexManager getIndexManager() {

@@ -35,7 +35,6 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
             .addProperty(SearchConfig.IO_MERGE_FACTOR, "30")
             .addProperty(SearchConfig.IO_MERGE_MAX_SIZE, "4096")
             .addProperty(SearchConfig.IO_WRITER_RAM_BUFFER_SIZE, "220")
-            .addProperty(SearchConfig.DIRECTORY_LOCKING_STRATEGY, SearchConfig.NATIVE)
             .addProperty(SearchConfig.NUMBER_OF_SHARDS, String.valueOf(NUM_SHARDS))
             .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH);
 

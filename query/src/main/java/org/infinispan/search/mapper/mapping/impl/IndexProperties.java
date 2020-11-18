@@ -12,9 +12,6 @@ import org.hibernate.search.engine.cfg.spi.ConfigurationPropertySource;
  */
 public class IndexProperties {
 
-   private static final String INFINISPAN_BACKEND_NAME = "infinispan_backend";
-   private static final String BACKEND_PROPERTIES_PREFIX = EngineSettings.BACKENDS + "." + INFINISPAN_BACKEND_NAME;
-
    private final Map<String, Object> engineProperties = new HashMap<>();
    private final Map<String, Object> backendProperties = new HashMap<>();
 
@@ -31,14 +28,13 @@ public class IndexProperties {
    }
 
    public void setProperties(Map<String, Object> properties) {
-      properties.entrySet().stream()
-            .forEach(property -> setProperty(property.getKey(), property.getValue()) );
+      properties.forEach(this::setProperty);
    }
 
    public ConfigurationPropertySource createPropertySource(ConfigurationPropertyChecker propertyChecker) {
       ConfigurationPropertySource basePropertySource =
             propertyChecker.wrap(ConfigurationPropertySource.fromMap(backendProperties))
-                  .withPrefix(BACKEND_PROPERTIES_PREFIX);
+                  .withPrefix(EngineSettings.BACKEND);
       ConfigurationPropertySource propertySource =
             basePropertySource.withOverride(ConfigurationPropertySource.fromMap(engineProperties));
       defaultProperties();
@@ -46,10 +42,7 @@ public class IndexProperties {
    }
 
    private void defaultProperties() {
-      engineProperties.put("hibernate.search.default_backend", INFINISPAN_BACKEND_NAME);
       backendProperties.put("type", "lucene");
       backendProperties.put("analysis.configurer", new DefaultAnalysisConfigurer());
-      backendProperties.put("thread_pool.size", "1");
-      backendProperties.put("index_defaults.indexing.queue_count", "1");
    }
 }

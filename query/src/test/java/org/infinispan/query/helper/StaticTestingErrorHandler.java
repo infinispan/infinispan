@@ -18,12 +18,12 @@ public class StaticTestingErrorHandler implements FailureHandler {
 
    @Override
    public void handle(FailureContext context) {
-      faulty.compareAndSet(null, new ThrowableWrapper(context.getFailingOperation().toString(), context.getThrowable()));
+      faulty.compareAndSet(null, new ThrowableWrapper(context.failingOperation().toString(), context.throwable()));
    }
 
    @Override
    public void handle(EntityIndexingFailureContext context) {
-      faulty.compareAndSet(null, new ThrowableWrapper(context.getFailingOperation().toString(), context.getThrowable()));
+      faulty.compareAndSet(null, new ThrowableWrapper(context.failingOperation().toString(), context.throwable()));
    }
 
    private Object getAndReset() {

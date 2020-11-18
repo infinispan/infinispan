@@ -30,10 +30,10 @@ public class ProtobufMessageBinder implements TypeBinder {
 
    @Override
    public void bind(TypeBindingContext context) {
-      context.getDependencies().useRootOnly();
+      context.dependencies().useRootOnly();
       IndexReferenceHolder indexReferenceProvider = createIndexReferenceProvider(context, MAX_DEPTH);
       Descriptor descriptor = globalReferenceHolder.getDescriptor(rootMessageName);
-      context.setBridge(new ProtobufMessageBridge(indexReferenceProvider, descriptor));
+      context.bridge(new ProtobufMessageBridge(indexReferenceProvider, descriptor));
    }
 
    private IndexReferenceHolder createIndexReferenceProvider(TypeBindingContext context, int maxDepth) {
@@ -42,7 +42,7 @@ public class ProtobufMessageBinder implements TypeBinder {
 
       Stack<State> stack = new Stack();
       stack.push(new State(globalReferenceHolder.getMessageReferenceProviders().get(rootMessageName),
-            "", context.getIndexSchemaElement(), 0));
+            "", context.indexSchemaElement(), 0));
 
       while (!stack.isEmpty()) {
          State currentState = stack.pop();

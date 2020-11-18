@@ -27,8 +27,8 @@ import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesS
 import org.hibernate.search.engine.search.predicate.dsl.ExistsPredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.MatchPredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsStep;
-import org.hibernate.search.engine.search.predicate.dsl.PredicateBoostStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
+import org.hibernate.search.engine.search.predicate.dsl.PredicateScoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.RangePredicateFieldMoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.SimpleQueryFlag;
 import org.hibernate.search.engine.search.projection.SearchProjection;
@@ -221,8 +221,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       }
 
       PredicateFinalStep childPredicate = child.acceptVisitor(this);
-      if (childPredicate instanceof PredicateBoostStep) {
-         ((PredicateBoostStep) childPredicate).boost(boost);
+      if (childPredicate instanceof PredicateScoreStep) {
+         ((PredicateScoreStep) childPredicate).boost(boost);
       }
       return childPredicate;
    }

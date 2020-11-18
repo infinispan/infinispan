@@ -53,7 +53,7 @@ public class SearchQueryBuilder {
 
    public void routeOnSegments(BitSet segments) {
       routingKeys = segments.stream()
-            .mapToObj(segment -> String.valueOf(segment))
+            .mapToObj(String::valueOf)
             .collect(Collectors.toList());
    }
 
@@ -66,7 +66,7 @@ public class SearchQueryBuilder {
    }
 
    public Sort getLuceneSort() {
-      return documentReference().getLuceneSort();
+      return documentReference().luceneSort();
    }
 
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {
