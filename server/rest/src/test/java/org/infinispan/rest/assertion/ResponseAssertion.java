@@ -2,6 +2,7 @@ package org.infinispan.rest.assertion;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.MOVED_PERMANENTLY;
@@ -197,6 +198,11 @@ public class ResponseAssertion {
    public ResponseAssertion isUnauthorized() {
       Assertions.assertThat(response.getStatus()).isEqualTo(UNAUTHORIZED.code());
       Assertions.assertThat(response.headers().get(WWW_AUTHENTICATE_HEADER.getValue())).isNotNull().isNotEmpty();
+      return this;
+   }
+
+   public ResponseAssertion isForbidden() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(FORBIDDEN.code());
       return this;
    }
 

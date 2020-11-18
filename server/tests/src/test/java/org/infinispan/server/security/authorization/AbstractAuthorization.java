@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -267,6 +268,22 @@ public abstract class AbstractAuthorization {
          assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").bringBackupOnline("NYC")).getStatus());
          assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").takeOffline("NYC")).getStatus());
          assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").backupStatuses()).getStatus());
+      }
+   }
+
+   @Test
+   public void testRestNonAdminsMustNotPerformSearchActions() {
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      assertEquals(200, sync(getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().schemas().put("bank.proto", schema)).getStatus());
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.indexing().enable().addIndexedEntity("sample_bank_account.User");
+      getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
+      String indexedCache = getServerTest().getMethodName();
+
+      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats()).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex()).getStatus());
+         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex()).getStatus());
       }
    }
 

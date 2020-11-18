@@ -35,6 +35,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
@@ -643,6 +644,11 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       // Clear all stats
       RestResponse response = join(cacheClient.clearSearchStats());
+      if (security) {
+         RestClient adminClient = RestClient.forConfiguration(getClientConfig().security().authentication().username("admin").password("admin").build());
+         response = join(adminClient.cache("indexedCache").clearSearchStats());
+         Util.close(adminClient);
+      }
       ResponseAssertion.assertThat(response).isOk();
       response = join(cacheClient.searchStats());
       Json statJson = Json.read(response.getBody());

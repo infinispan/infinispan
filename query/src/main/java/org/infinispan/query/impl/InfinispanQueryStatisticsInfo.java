@@ -14,6 +14,8 @@ import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -28,14 +30,17 @@ public final class InfinispanQueryStatisticsInfo {
 
    private final QueryStatistics queryStatistics;
    private final IndexStatistics indexStatistics;
+   private final AuthorizationHelper authorizationHelper;
 
-   InfinispanQueryStatisticsInfo(SearchStatistics searchStatistics) {
+   InfinispanQueryStatisticsInfo(SearchStatistics searchStatistics, AuthorizationHelper authorizationHelper) {
       this.queryStatistics = searchStatistics.getQueryStatistics();
       this.indexStatistics = searchStatistics.getIndexStatistics();
+      this.authorizationHelper = authorizationHelper;
    }
 
    @ManagedOperation
    public void clear() {
+      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
       queryStatistics.clear();
    }
 

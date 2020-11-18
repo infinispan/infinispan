@@ -10,6 +10,8 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.stats.QueryStatistics;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
  *  Manages query statistics for a Cache.
@@ -37,6 +39,9 @@ public class LocalQueryStatistics implements QueryStatistics {
 
    @Inject
    Configuration configuration;
+
+   @Inject
+   AuthorizationHelper authorizationHelper;
 
 
    public LocalQueryStatistics() {
@@ -296,6 +301,7 @@ public class LocalQueryStatistics implements QueryStatistics {
 
    @Override
    public void clear() {
+      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
       localIndexedQueries.clear();
       distIndexedQueries.clear();
       nonIndexedQueries.clear();
