@@ -21,6 +21,8 @@
          thread_pool.min_threads="0"
          thread_pool.max_threads="8"
          thread_pool.keep_alive_time="60000"
+
+         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
 
    <!--<PING timeout="3000" num_initial_members="3"/>-->
