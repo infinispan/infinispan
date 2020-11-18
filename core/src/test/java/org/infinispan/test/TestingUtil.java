@@ -1726,7 +1726,7 @@ public class TestingUtil {
    }
 
    public static Subject makeSubject(String... principals) {
-      Set<Principal> set = new HashSet<>();
+      Set<Principal> set = new LinkedHashSet<>();
       for (String principal : principals) {
          set.add(new TestingUtil.TestPrincipal(principal));
       }

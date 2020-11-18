@@ -264,8 +264,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
-         administration.createCache(cacheName, finalCfgBuilder.build());
-         responseBuilder.status(OK);
+         try {
+            administration.createCache(cacheName, finalCfgBuilder.build());
+            responseBuilder.status(OK);
+         } catch (Throwable t) {
+            responseBuilder.status(BAD_REQUEST).entity(t.getMessage());
+         }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
    }

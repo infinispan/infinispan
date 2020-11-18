@@ -1,5 +1,6 @@
 package org.infinispan.server.test.api;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,7 +13,7 @@ import java.util.List;
  * @since 11
  */
 public enum TestUser {
-   ADMIN("admin", "strongPassword", Collections.singletonList("AdminRole")),
+   ADMIN("admin", "strongPassword", Arrays.asList("AdminRole", "___schema_manager", "___script_manager")),
    READER("reader", "password", Collections.singletonList("ReaderRole")),
    WRITER("writer", "somePassword", Collections.singletonList("WriterRole")),
    SUPERVISOR("supervisor", "lessStrongPassword", Collections.singletonList("SupervisorRole"));
