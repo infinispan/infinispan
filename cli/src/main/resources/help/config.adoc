@@ -46,24 +46,39 @@ Displays a help page for the command or sub-command.
 PROPERTIES
 ----------
 
-Available properties:
-
 *autoconnect-url*::
-Specifies the URL to which the CLI automatically connects on startup, for example:
-*config set autoconnect-url http://user:password:11222*
+Specifies the URL to which the CLI automatically connects on startup.
 
 *autoexec*::
-Specifies the path of a CLI batch file to execute on startup, for example:
-*config set autoexec /home/user/my-cli-batch-file*
+Specifies the path of a CLI batch file to execute on startup.
 
 *trustall*::
-Specifies whether to trust all server certificates without supplying a trust store, for example:
-*config set trustall true*
+Specifies whether to trust all server certificates. Values are `false` (default) and `true`.
 
 *truststore*::
-Specifies the path of a truststore to validate server certificates, for example:
-*config set truststore /home/user/my-trust-store.jks*
+Defines the path to a keystore that contains a certificate chain that verifies server identity.
 
 *truststore-password*::
-Specifies the password that corresponds to the truststore, for example:
-*config set truststore-password secret*
+Specifies a password to access the keystore.
+
+
+EXAMPLES
+--------
+
+`config set autoconnect-url http://192.0.2.0:11222` +
+Connects to a server at a custom IP address when you start the CLI.
+
+`config get autoconnect-url` +
+Returns the value for the `autoconnect-url` configuration property.
+
+`config set autoexec /path/to/mybatchfile` +
+Runs a batch file named "mybatchfile" when you start the CLI.
+
+`config set trustall true` +
+Trusts all server certificates.
+
+`config set truststore /home/user/my-trust-store.jks` +
+Specifies the path of a keystore named "my-trust-store.jks".
+
+`config set truststore-password secret` +
+Sets the keystore password, if required.
