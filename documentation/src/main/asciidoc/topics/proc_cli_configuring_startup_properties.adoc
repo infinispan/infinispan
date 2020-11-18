@@ -1,47 +1,34 @@
 [id='cli_configuring_startup_properties-{context}']
-= Configuring Startup Properties
-Configure {brandname} CLI to automatically connect to specific URLs on startup
-and run batch files.
+= Setting {brandname} CLI Properties and Persistent Storage
+Configure {brandname} CLI startup operations and customize the location for persistent storage.
 
 .Prerequisites
 
 * Add {brandname} credentials.
-* Optionally create CLI batch files to run at startup.
 
 .Procedure
 
-. Specify a hostname and port to which the CLI automatically connects.
+. Optionally set a custom path to the {brandname} CLI storage directory in one of the following ways:
 +
-For example, connect to the default server location when you start the CLI:
+* Using the `cli.dir` system property:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh config set autoconnect-url http://127.0.0.1:11222
-----
-+
-. If you want to run a batch file when you start the CLI, specify the path to it as follows:
-+
-----
-$ bin/cli.sh config set autoexec /path/to/batch/file
+$ bin/cli.sh -Dcli.dir=/path/to/cli/storage ...
 ----
 +
-. Verify your CLI configuration.
+* Using the `ISPN_CLI_DIR` environment variable:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh config get autoconnect-url
-autoconnect-url=http://127.0.0.1:11222
-
-$ bin/cli.sh config get autoexec
-autoexec=/path/to/batch/file
+export ISPN_CLI_DIR=/path/to/cli/storage
+$ bin/cli.sh ...
 ----
 +
-. Start the {brandname} CLI and enter your credentials when prompted.
+. Set values for configuration properties with the [command]`config set` command.
+. Verify configuration properties with the [command]`config get` command.
 +
-----
-$ bin/cli.sh
-
-[ //containers/default]>
-----
-
-.Reference
-
-link:{cli_docs}#batch_operations[Performing Batch Operations]
+[TIP]
+====
+Run [command]`help config` to review available configuration properties and get example usage.
+====

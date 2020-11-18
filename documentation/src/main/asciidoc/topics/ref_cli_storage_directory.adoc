@@ -1,0 +1,23 @@
+[id='cli_storage_directory-{context}']
+= {brandname} CLI Storage Directory
+
+{brandname} CLI stores configuration in the following default directory:
+
+|===
+|Operating System |Default Path
+
+|Linux/Unix
+|`$HOME/.config/{brandshortname}`
+
+|Microsoft Windows
+|`%APPDATA%/Sun/Java/{brandshortname}`
+
+|Mac OS
+|`$HOME/Library/Java/{brandshortname}`
+|===
+
+This directory contains the following files:
+
+`cli.properties`:: Stores values for CLI configuration properties.
+`aliases`:: Stores custom CLI aliases.
+`history`:: Stores CLI history.
