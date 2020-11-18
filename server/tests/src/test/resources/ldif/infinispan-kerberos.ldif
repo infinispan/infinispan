@@ -218,3 +218,17 @@ objectClass: groupOfNames
 cn: UnprivilegedRole
 description: the Infinispan unprivileged group
 member: uid=unprivileged,ou=People,dc=infinispan,dc=org
+
+dn: cn=___schema_manager,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: ___schema_manager
+description: the Infinispan schema managers
+member: uid=admin,ou=People,dc=infinispan,dc=org
+
+dn: cn=___script_manager,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: ___script_manager
+description: the Infinispan script managers
+member: uid=admin,ou=People,dc=infinispan,dc=org

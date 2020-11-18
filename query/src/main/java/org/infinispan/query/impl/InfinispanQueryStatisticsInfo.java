@@ -9,6 +9,8 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.query.Indexer;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -25,15 +27,18 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
    private final Indexer massIndexer;
    private final QueryStatistics queryStatistics = new QueryStatistics();
    private final IndexStatistics indexStatistics = new IndexStatistics();
+   private final AuthorizationHelper authorizationHelper;
 
-   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, Indexer massIndexer) {
+   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, Indexer massIndexer, AuthorizationHelper authorizationHelper) {
       this.searchIntegrator = searchIntegrator;
       this.massIndexer = massIndexer;
+      this.authorizationHelper = authorizationHelper;
    }
 
    @ManagedOperation
    @Override
    public void clear() {
+      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
       searchIntegrator.getStatistics().clear();
    }
 

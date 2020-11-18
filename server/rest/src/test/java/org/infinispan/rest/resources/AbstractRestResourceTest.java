@@ -134,7 +134,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             }).toArray(String[]::new));
             RestServerHelper restServerHelper = new RestServerHelper(cm);
             if (isSecurityEnabled()) {
-               BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(USER), REALM);
+               BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(ADMIN_USER, USER), REALM);
                restServerHelper.withAuthenticator(basicAuthenticator);
             }
             if (ssl) {
