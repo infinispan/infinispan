@@ -265,7 +265,7 @@
       <versionx.com.sun.xml.fastinfoset.FastInfoset>1.2.13</versionx.com.sun.xml.fastinfoset.FastInfoset>
       <versionx.com.tdunning.t-digest>3.0</versionx.com.tdunning.t-digest>
       <versionx.com.thoughtworks.paranamer.paranamer>2.3</versionx.com.thoughtworks.paranamer.paranamer>
-      <versionx.com.thoughtworks.xstream.xstream>1.4.11.1</versionx.com.thoughtworks.xstream.xstream>
+      <versionx.com.thoughtworks.xstream.xstream>1.4.14</versionx.com.thoughtworks.xstream.xstream>
       <versionx.com.zaxxer.HikariCP>2.4.6</versionx.com.zaxxer.HikariCP>
       <versionx.commons-beanutils.commons-beanutils>1.9.4</versionx.commons-beanutils.commons-beanutils>
       <versionx.commons-cli.commons-cli>1.3.1</versionx.commons-cli.commons-cli>
