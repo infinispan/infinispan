@@ -352,7 +352,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void tearDown() throws Exception {
       client.close();
       restServers.forEach(RestServerHelper::stop);

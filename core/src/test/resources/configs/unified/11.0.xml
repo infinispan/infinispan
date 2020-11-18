@@ -14,6 +14,7 @@
          <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"
               sock_conn_timeout="300" bundler_type="no-bundler"
               thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
+              thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
               xmlns="urn:org:jgroups"/>
          <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
                 mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
