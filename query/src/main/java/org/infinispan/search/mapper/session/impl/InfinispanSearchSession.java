@@ -58,7 +58,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
       if (typeContext == null) {
          throw new AssertionFailure("Document reference " + reference + " refers to an unknown index");
       }
-      Object id = typeContext.getIdentifierMapping().fromDocumentIdentifier(reference.getId(), this);
+      Object id = typeContext.getIdentifierMapping().fromDocumentIdentifier(reference.id(), this);
       return new EntityReferenceImpl(typeContext.getTypeIdentifier(), typeContext.getEntityName(), id);
    }
 

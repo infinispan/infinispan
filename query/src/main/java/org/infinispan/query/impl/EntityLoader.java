@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.engine.search.timeout.spi.TimeoutManager;
+import org.hibernate.search.engine.common.timing.spi.Deadline;
 import org.infinispan.AdvancedCache;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -43,7 +43,7 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
    }
 
    @Override
-   public List<E> loadBlocking(List<EntityReference> entityReferences, TimeoutManager timeoutManager) {
+   public List<E> loadBlocking(List<EntityReference> entityReferences, Deadline deadline) {
       if (entityReferences.isEmpty()) return Collections.emptyList();
 
       int entitiesSize = entityReferences.size();

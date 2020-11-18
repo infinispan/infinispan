@@ -126,7 +126,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       Optional<IndexFieldDescriptor> field = indexDescriptor.field(StringHelper.join(propertyPath));
-      return (field.isPresent()) ? field.get() : null;
+      return field.orElse(null);
    }
 
    private IndexDescriptor getIndexDescriptor(Class<?> type) {
@@ -149,19 +149,19 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       @Override
       public boolean isIndexed(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
-         return (field == null) ? false : field.isSearchable();
+         return field != null && field.searchable();
       }
 
       @Override
       public boolean isAnalyzed(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
-         return (field == null) ? false : field.analyzerName().isPresent();
+         return field != null && field.analyzerName().isPresent();
       }
 
       @Override
       public boolean isStored(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
-         return (field == null) ? false : field.isProjectable();
+         return field != null && field.projectable();
       }
 
       @Override

@@ -544,9 +544,10 @@ public class LuceneTransformationTest {
 
    @Test
    public void testIsNullQueryForEmbeddedEntity() {
+      // Meta-field added as part of HSEARCH-3905
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.author IS null",
-            "+(-(ConstantScore(NormsFieldExistsQuery [field=author.name]) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) ConstantScore(NormsFieldExistsQuery [field=author.address.city])) #*:*)");
+            "+(-((ConstantScore(NormsFieldExistsQuery [field=author.address.city]) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) __HSEARCH_field_names:author.address) ConstantScore(NormsFieldExistsQuery [field=author.name]) __HSEARCH_field_names:author) #*:*)");
    }
 
    @Test

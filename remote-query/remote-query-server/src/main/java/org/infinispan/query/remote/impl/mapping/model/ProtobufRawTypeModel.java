@@ -1,6 +1,8 @@
 package org.infinispan.query.remote.impl.mapping.model;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
@@ -58,9 +60,9 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
    }
 
    @Override
-   public Stream<PojoPropertyModel<?>> declaredProperties() {
+   public Collection<PojoPropertyModel<?>> declaredProperties() {
       // Properties are created by ProtobufMessageBinder
-      return Stream.empty();
+      return Collections.emptySet();
    }
 
    @Override

@@ -31,12 +31,12 @@
             <!-- Write indexes in Infinispan -->
             <property name="directory.type">local-heap</property>
             <!-- Enable sharding on writers -->
-            <property name="index_defaults.sharding.strategy">hash</property>
-            <property name="index_defaults.sharding.number_of_shards">6</property>
+            <property name="sharding.strategy">hash</property>
+            <property name="sharding.number_of_shards">6</property>
             <property name="thread_pool.size">6</property>
-            <property name="index_defaults.io.commit_interval">10000</property>
-            <property name="index_defaults.indexing.queue_count">6</property>
-            <property name="index_defaults.indexing.queue_size">4096</property>
+            <property name="io.commit_interval">10000</property>
+            <property name="indexing.queue_count">6</property>
+            <property name="indexing.queue_size">4096</property>
             <!-- Enable error safety net -->
             <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
