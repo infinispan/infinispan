@@ -55,6 +55,9 @@ public class ContextImpl implements Context, AeshContext {
       String userDir = properties.getProperty("user.dir");
       cwd = userDir != null ? new FileResource(userDir) : null;
       String cliDir = properties.getProperty("cli.dir");
+      if (cliDir == null) {
+         cliDir = System.getenv("ISPN_CLI_DIR");
+      }
       if (cliDir != null) {
          configPath = Paths.get(cliDir);
       } else {
