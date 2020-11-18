@@ -4,8 +4,7 @@
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
-        version="4.2.0">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
         enable_diagnostics="false"
@@ -17,6 +16,8 @@
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
         thread_pool.keep_alive_time="60000"
+
+        thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
    <org.jgroups.aws.s3.NATIVE_S3_PING
       region_name="${jgroups.s3.region_name}"

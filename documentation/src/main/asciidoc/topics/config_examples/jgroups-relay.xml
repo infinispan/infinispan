@@ -1,7 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
-        version="4.2.0">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
 
     <!-- Use TCP for inter-cluster transport. -->
     <TCP bind_addr="127.0.0.1"

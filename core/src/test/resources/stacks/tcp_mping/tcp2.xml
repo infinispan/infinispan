@@ -1,7 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
-        version="4.2.0">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
    <TCP bind_port="7800"
         port_range="30"
         recv_buf_size="20000000"
@@ -12,6 +11,8 @@
         thread_pool.min_threads="0"
         thread_pool.max_threads="25"
         thread_pool.keep_alive_time="5000"
+
+        thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
 
    <!--<TCPPING timeout="3000"-->
