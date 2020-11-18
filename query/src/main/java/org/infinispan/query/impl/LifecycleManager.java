@@ -79,6 +79,7 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
+import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 
@@ -236,7 +237,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(Search.getSearchStatistics(cache));
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(Search.getSearchStatistics(cache), SecurityActions.getCacheComponentRegistry(cache).getComponent(AuthorizationHelper.class));
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
       registerQueryMBeans(cr, massIndexer, stats);

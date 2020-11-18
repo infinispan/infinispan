@@ -22,6 +22,8 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -44,6 +46,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
    private final ClusterExecutor executor;
    private final BlockingManager blockingManager;
    private final IndexLock lock;
+   private final AuthorizationHelper authorizationHelper;
 
    private volatile boolean isRunning = false;
 
@@ -60,6 +63,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
       this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
             .getComponent(BlockingManager.class);
       this.lock = MassIndexerLockFactory.buildLock(cache);
+      this.authorizationHelper = cache.getComponentRegistry().getComponent(AuthorizationHelper.class);
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
@@ -74,6 +78,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
 
    @Override
    public CompletionStage<Void> run(Object... keys) {
+      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
       CompletableFuture<Void> future = null;
       Set<Object> keySet = new HashSet<>();
       for (Object key : keys) {
@@ -111,6 +116,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
    }
 
    private CompletionStage<Void> executeInternal(boolean skipIndex, Class<?>... entities) {
+      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
       CompletionStage<Boolean> lockStage = lock.lock();
       return lockStage.thenCompose(acquired -> {
          if (!acquired) {

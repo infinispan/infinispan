@@ -32,6 +32,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.Security;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -108,7 +109,7 @@ public class SearchAdminResource implements ResourceHandler {
          throw new CacheException("NotImplemented");
       } else {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
-         searchStatistics.getQueryStatistics().clear();
+         Security.doAs(restRequest.getSubject(), () -> searchStatistics.getQueryStatistics().clear());
          return completedFuture(responseBuilder.build());
       }
    }
