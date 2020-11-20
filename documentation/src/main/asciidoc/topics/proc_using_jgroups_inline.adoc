@@ -1,31 +1,16 @@
-[id='jgroups_inline-{context}']
+[id='using_jgroups_inline-{context}']
 = Using Inline JGroups Stacks
-Custom JGroups stacks can help you optimize network performance for {brandname}
-clusters compared to using the default stacks.
+You can insert complete JGroups stack definitions into `infinispan.xml` files.
 
 .Procedure
 
-* Embed your custom JGroups stack definitions in `infinispan.xml` as in the
-following example:
+* Embed a custom JGroups stack declaration in your `infinispan.xml` file.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/config_inline_jgroups.xml[]
 ----
-
-<1> root element of `infinispan.xml`.
-<2> contains JGroups stack definitions.
-<3> defines a JGroups stack named "prod".
-<4> configures a {brandname} Cache Manager and names the "replicatedCache" cache definition as the default.
-<5> uses the "prod" JGroups stack for cluster transport.
-
-[TIP]
-====
-Use inheritance with inline JGroups stacks to tune and customize specific
-transport properties.
-====
-
-.Reference
-
-* link:#jgroups_inheritance-configuring[Adjusting and Tuning JGroups Stacks]
-* link:{configdocroot}[{brandname} Configuration Schema]
++
+<1> Contains one or more JGroups stack definitions.
+<2> Defines a custom JGroups stack named "prod".
+<3> Configures {brandname} to use "prod" for cluster transport.

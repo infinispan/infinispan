@@ -1,8 +1,6 @@
 [id='preconfigured_jgroups_stacks-{context}']
 = Default JGroups Stacks
-Default JGroups stacks are included in `infinispan-core.jar` and on the
-classpath. You can locate the default JGroups stacks in the `default-configs`
-directory.
+Learn about default JGroups stacks that configure cluster transport.
 
 [%header,cols="2,1,3"]
 |===
@@ -39,5 +37,4 @@ directory.
 
 .Reference
 
-* link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol]
-* link:http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols[JGroups Discovery Protocols]
+* link:{jgroups_docs}#protlist[JGroups Protocols]

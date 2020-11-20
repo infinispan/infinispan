@@ -1,0 +1,17 @@
+[id='discovery_ping-{context}']
+= PING
+PING, or UDPPING is a generic JGroups discovery mechanism that uses dynamic multicasting with the UDP protocol.
+
+When joining, nodes send PING requests to an IP multicast address to discover other nodes already in the {brandname} cluster.
+Each node responds to the PING request with a packet that contains the address of the coordinator node and its own address. C=coordinator’s address and A=own address.
+If no nodes respond to the PING request, the joining node becomes the coordinator node in a new cluster.
+
+.PING configuration example
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ping.xml[]
+----
+
+.Reference
+
+* link:{jgroups_docs}#PING[JGroups PING]

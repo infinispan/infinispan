@@ -1,20 +1,20 @@
-= Shutting Down {brandname} Servers
-Gracefully shut down running {brandname} servers to passivate all entries to
-disk and persist state.
+[id='server_shutdown-{context}']
+= Shutting Down {brandname} Server
+Gracefully shut down running servers to passivate all entries to disk and persist state.
 
 .Procedure
 
 . Create a CLI connection to {brandname}.
-. Do one of the following:
+. Use the [command]`shutdown` command to stop server instances or entire clusters.
 +
 * Stop individual servers with the [command]`shutdown server` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> shutdown server $hostname
+[//containers/default]> shutdown server <server_hostname>
 ----
 +
-* Stop all nodes in the cluster with the [command]`shutdown cluster` command:
+* Stop clusters with the [command]`shutdown cluster` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----
@@ -23,7 +23,7 @@ disk and persist state.
 
 .Verification
 
-Check the server logs for the following messages:
+{brandname} logs the following messages when you shut down servers:
 
 [source,options="nowrap",subs=attributes+]
 ----

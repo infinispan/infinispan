@@ -2,3 +2,4 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_embedding.adoc[leveloffset=+1]
+include::{stories}/assembly_setting_up_clusters.adoc[leveloffset=+1]

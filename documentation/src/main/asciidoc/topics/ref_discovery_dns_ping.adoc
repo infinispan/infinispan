@@ -1,6 +1,7 @@
+[id='discovery_dnsping-{context}']
 = DNS_PING
-JGroups `DNS_PING` queries DNS servers to discover {brandname} cluster members
-in Kubernetes environments such as OKD and Red Hat OpenShift.
+JGroups DNS_PING queries DNS servers to discover {brandname} cluster members
+in Kubernetes environments such as OKD and {openshift}.
 
 .DNS_PING configuration example
 [source, xml]
@@ -10,5 +11,5 @@ include::config_examples/dnsping.xml[]
 
 .Reference
 
-* link:http://www.jgroups.org/manual4/index.html#_dns_ping[JGroups DNS_PING]
+* link:{jgroups_docs}#_dns_ping[JGroups DNS_PING]
 * link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods] (Kubernetes documentation for adding DNS entries)

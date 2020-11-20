@@ -1,0 +1,7 @@
+<config>
+  <MPING mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
+         mcast_port="${jgroups.mcast_port:46655}"
+         num_discovery_runs="3"
+         ip_ttl="${jgroups.udp.ip_ttl:2}"/>
+  ...
+</config>

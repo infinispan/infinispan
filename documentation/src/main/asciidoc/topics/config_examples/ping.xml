@@ -1,0 +1,4 @@
+<config>
+  <PING num_discovery_runs="3"/>
+  ...
+</config>

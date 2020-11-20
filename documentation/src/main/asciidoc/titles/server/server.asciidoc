@@ -14,6 +14,11 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 :context: server
 
+//
+// Conditional statements
+//
+:server_mode:
+
 //Title
 = Deploying and Configuring {brandname} {infinispanversion} Servers
 
