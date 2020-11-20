@@ -1,1 +1,0 @@
-$ unzip infinispan-server-${version}.zip

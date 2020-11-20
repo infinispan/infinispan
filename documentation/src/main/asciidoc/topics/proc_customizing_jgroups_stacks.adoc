@@ -1,0 +1,85 @@
+[id='using_jgroups_inheritance-{context}']
+= Customizing JGroups Stacks
+Adjust and tune properties to create a cluster transport configuration that works for your network requirements.
+
+{brandname} provides attributes that let you extend the default JGroups stacks for easier configuration.
+You can inherit properties from the default stacks while combining, removing, and replacing other properties.
+
+.Procedure
+
+. Create a new JGroups stack declaration in your `infinispan.xml` file.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+  <jgroups>
+    <stack name="my-stack"> <1>
+    </stack>
+  </jgroups>
+</infinispan>
+----
++
+<1> Creates a custom JGroups stack named "my-stack".
++
+. Add the `extends` attribute and specify a JGroups stack to inherit properties from.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+  <jgroups>
+    <stack name="my-stack" extends="tcp"> <1>
+    </stack>
+  </jgroups>
+</infinispan>
+----
++
+<1> Inherits from the default TCP stack.
++
+. Use the `stack.combine` attribute to modify properties for protocols configured in the inherited stack.
+. Use the `stack.position` attribute to define the location for your custom stack.
++
+For example, you might evaluate using a Gossip router and symmetric encryption with the default TCP stack as follows:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_jgroups_extends.xml[]
+----
++
+<1> Uses the `TCPGOSSIP` protocol as the discovery mechanism instead of `MPING`.
+<2> Removes the `FD_SOCK` protocol from the stack.
+<3> Modifies the timeout value for the `VERIFY_SUSPECT` protocol.
+<4> Adds the `SYM_ENCRYPT` protocol to the stack after the `VERIFY_SUSPECT` protocol.
++
+. Specify the stack name as the value for the `stack` attribute in the `transport` configuration.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+  <jgroups>
+    <stack name="my-stack" extends="tcp">
+     ...
+    </stack>
+    <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name}"
+                 stack="my-stack" <1>
+                 node-name="${infinispan.node.name:}"/>
+   </cache-container>
+  </jgroups>
+</infinispan>
+----
++
+<1> Configures {brandname} to use "my-stack" for cluster transport.
++
+. Check {brandname} logs to ensure it uses the stack.
++
+[source,options="nowrap",subs=attributes+]
+----
+[org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack my-stack
+----
+
+//RH KCS article
+ifdef::productized[]
+.Reference
+
+* link:https://access.redhat.com/solutions/5608391[JGroups cluster transport configuration for {brandname} 8.x] ({RedHat} knowledgebase article)
+endif::productized[]

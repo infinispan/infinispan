@@ -7,7 +7,7 @@ Server, the CLI can validate server certificates to verify the identity.
 .Prerequisites
 
 * Set up an SSL identity for {brandname} Server.
-* Add {brandname} credentials.
+* Create at least one {brandname} user.
 
 .Procedure
 

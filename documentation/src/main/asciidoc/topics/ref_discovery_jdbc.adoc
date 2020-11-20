@@ -1,7 +1,23 @@
+[id='discovery_jdbcping-{context}']
 = JDBC_PING
-`JDBC_PING` uses JDBC connections to shared databases, such as Amazon RDS on
-EC2, to store information about {brandname} nodes.
+JDBC_PING uses shared databases to store information about {brandname} clusters.
+This protocol supports any database that can use a JDBC connection.
+
+Nodes write their IP addresses to the shared database so joining nodes can find the {brandname} cluster on the network.
+When nodes leave {brandname} clusters, they delete their IP addresses from the shared database.
+
+.JDBC_PING configuration example
+[source, xml]
+----
+include::config_examples/jdbc_ping.xml[]
+----
+
+[IMPORTANT]
+====
+Add the appropriate JDBC driver to the classpath so {brandname} can use JDBC_PING.
+====
 
 .Reference
 
-link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki]
+* link:{jgroups_docs}#_jdbc_ping[JDBC_PING]
+* link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki]

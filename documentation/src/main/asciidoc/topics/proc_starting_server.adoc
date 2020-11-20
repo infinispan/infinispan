@@ -1,39 +1,40 @@
-= Starting {brandname} Servers
-Launch {brandname} server with the startup script.
+[id='starting_servers-{context}']
+= Starting {brandname} Server
+Run {brandname} Server on your local host.
 
 .Prerequisites
 
-* Add {brandname} credentials.
+* Create at least one {brandname} user.
 
 .Procedure
 
 . Open a terminal in `{server_home}`.
-. Start {brandname} with the `server` script.
-+
+. Run {brandname} Server with the `server` script.
+
 Linux::
 +
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_nix.adoc[]
 ----
-+
+
 Microsoft Windows::
 +
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_win.adoc[]
 ----
-+
-Server logs display the following messages:
-+
+
+{brandname} Server is running successfully when it logs the following messages:
+
 [source,options="nowrap",subs=attributes+]
 ----
 ISPN080004: Protocol SINGLE_PORT listening on 127.0.0.1:11222
 ISPN080034: Server '...' listening on http://127.0.0.1:11222
-ISPN080001: {brandname} Server <$version> started in <mm>ms
+ISPN080001: {brandname} Server <version> started in <mm>ms
 ----
 
-_Hello {brandname}!_
+.Verification
 
-* Open `127.0.0.1:11222` in any browser, enter your credentials, and then
-access the {brandname} console.
+. Open link:http://127.0.0.1:11222/console/[`127.0.0.1:11222/console/`] in any browser.
+. Enter your credentials at the prompt then continue to {brandname} Console.

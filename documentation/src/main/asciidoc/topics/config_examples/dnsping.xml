@@ -1,6 +1,4 @@
-<stack name="dns-ping">
-...
-    <dns.DNS_PING
-      dns_query="myservice.myproject.svc.cluster.local" />
-...
-</stack>
+<config>
+  <dns.DNS_PING dns_query="myservice.myproject.svc.cluster.local" />
+  ...
+</config>

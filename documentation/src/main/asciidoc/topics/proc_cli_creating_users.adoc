@@ -1,0 +1,47 @@
+[id='user_create-{context}']
+= Creating and Modifying Users
+{brandname} Server requires users to authenticate against a default property realm.
+Before you can access {brandname} Server, you must add credentials by creating at least one user and a password.
+You can also add and modify the security authorization groups to which users belong.
+
+.Procedure
+
+. Open a terminal in `{server_home}`.
+. Create and modify {brandname} users with the [command]`user` command.
+
+[TIP]
+====
+Run [command]`help user` for more details about using the command.
+====
+
+.Creating users and passwords
+
+* Linux
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_nix.adoc[]
+----
+
+* Microsoft Windows
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_win.adoc[]
+----
+
+.Creating users with group membership
+
+* Linux
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_authz_nix.adoc[]
+----
+
+* Microsoft Windows
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_authz_win.adoc[]
+----

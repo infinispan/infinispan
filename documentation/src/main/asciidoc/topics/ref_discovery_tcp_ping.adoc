@@ -1,17 +1,16 @@
+[id='discovery_tcpping-{context}']
 = TCPPING
-`TCPPING` is a generic JGroups discovery mechanism that uses a static list of IP
-addresses for cluster members.
+TCPPING is a generic JGroups discovery mechanism that uses a list of static addresses for cluster members.
 
-To use `TCPPING`, you must add the list of static IP addresses to the JGroups
-configuration file for each {brandname} node. However, the drawback to
-`TCPPING` is that it does not allow nodes to dynamically join {brandname}
-clusters.
+With TCPPING, you manually specify the IP address or hostname of each node in the {brandname} cluster as part of the JGroups stack, rather than letting nodes discover each other dynamically.
 
 .TCPPING configuration example
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/tcpping.xml[]
 ----
+<1> For reliable discovery, Red Hat recommends `port-range=0`.
 
 .Reference
-link:http://community.jboss.org/wiki/JGroupsTCPPING[JGroups TCPPING]
+
+* link:{jgroups_docs}#TCPPING_Prot[JGroups TCPPING]

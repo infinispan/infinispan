@@ -14,4 +14,4 @@ include::code_examples/CustomJChannel.java[]
 
 .Reference
 
-link:http://www.jgroups.org/manual4/index.html#JChannel[JGroups JChannel]
+link:{jgroups_docs}#JChannel[JGroups JChannel]

@@ -1,6 +1,0 @@
-<config>
-    <TCP bind_addr="${match-interface:eth.*}" />
-    <kubernetes.KUBE_PING />
-...
-...
-</config>
