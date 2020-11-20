@@ -1,6 +1,6 @@
-<infinispan> <1>
-  <jgroups> <2>
-    <stack name="prod"> <3>
+<infinispan>
+  <jgroups> <1>
+    <stack name="prod"> <2>
       <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
       <MPING break_on_coord_rsp="true"
              mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
@@ -22,8 +22,8 @@
       <FRAG3 />
     </stack>
   </jgroups>
-  <cache-container default-cache="replicatedCache"> <4>
-    <transport stack="prod" /> <5>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="prod" /> <3>
     ...
   </cache-container>
 </infinispan>

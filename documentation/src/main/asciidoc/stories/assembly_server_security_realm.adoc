@@ -5,7 +5,7 @@ Security realms provide identity, encryption, authentication, and authorization
 information to {brandname} server endpoints.
 
 include::{topics}/ref_server_realm_property.adoc[leveloffset=+1]
-include::{topics}/proc_adding_users.adoc[leveloffset=+2]
+include::{topics}/proc_cli_creating_users.adoc[leveloffset=+2]
 include::{topics}/ref_server_realm_ldap.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_ldap_rewrite.adoc[leveloffset=+2]
 include::{topics}/ref_server_realm_trust.adoc[leveloffset=+1]

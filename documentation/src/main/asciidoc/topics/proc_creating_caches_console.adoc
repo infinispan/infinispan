@@ -5,7 +5,7 @@ Dynamically add caches from templates or configuration files through the
 
 .Prerequisites
 
-Add {brandname} credentials and start at least one {brandname} server instance.
+Create a user and start at least one {brandname} server instance.
 
 .Procedure
 

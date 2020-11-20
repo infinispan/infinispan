@@ -1,0 +1,30 @@
+[id='using_jgroups_system_properties-{context}']
+= Using JGroups System Properties
+Pass system properties to {brandname} at startup to tune cluster transport.
+
+.Procedure
+
+* Use `-D<property-name>=<property-value>` arguments to set JGroups system properties as required.
+
+For example, set a custom bind port and IP address as follows:
+
+ifdef::embedded_mode[]
+[source,options="nowrap",subs=attributes+]
+----
+$ java -cp ... -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
+----
+
+[NOTE]
+====
+When you embed {brandname} clusters in clustered {wildflybrandname} applications, JGroups system properties can clash or override each other.
+
+For example, you do not set a unique bind address for either your {brandname} cluster or your {wildflybrandname} application.
+In this case both {brandname} and your {wildflybrandname} application use the JGroups default property and attempt to form clusters using the same bind address.
+====
+endif::embedded_mode[]
+ifdef::server_mode[]
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/server.sh -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
+----
+endif::server_mode[]

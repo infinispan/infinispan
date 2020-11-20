@@ -1,34 +1,43 @@
 [id='verify_cluster_discovery-{context}']
-= Verifying {brandname} Cluster Discovery
-{brandname} servers running on the same network discover each other with the
-`MPING` protocol and automatically form clusters. This procedure demonstrates
-that capability with two locally running {brandname} server instances.
+= Verifying Cluster Views
+{brandname} nodes on the same network automatically discover each other and form clusters.
+
+Complete this procedure to observe cluster discovery with the `MPING` protocol in the default `TCP` stack with locally running {brandname} Server instances.
+If you want to adjust cluster transport for custom network requirements, see the documentation for setting up {brandname} clusters.
+
+[NOTE]
+====
+This procedure is intended to demonstrate the principle of cluster discovery and is not intended for production environments.
+Doing things like specifying a port offset on the command line is not a reliable way to configure cluster transport for production.
+====
 
 .Prerequisites
 
-Start a locally running {brandname} server instance.
+Have one instance of {brandname} Server running.
 
 .Procedure
 
-. Create a new {brandname} server instance.
-.. Open a terminal in `{server_home}`.
-.. Copy the root directory to `server2`.
+. Open a terminal in `{server_home}`.
+. Copy the root directory to `server2`.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 $ cp -r server server2
 ----
 +
-. Specify a port offset and the location of the `server2` root directory.
+. Specify a port offset and the `server2` directory.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/start_server2.adoc[]
 ----
 
+
 .Verification
 
-Check server logs for the following messages:
+You can view cluster membership in the console at link:http://127.0.0.1:11222/console/cluster-membership[`127.0.0.1:11222/console/cluster-membership`].
+
+{brandname} also logs the following messages when nodes join clusters:
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -39,3 +48,8 @@ ISPN000094: Received new cluster view for channel cluster:
 INFO  [org.infinispan.CLUSTER] (jgroups-11,<server_hostname>)
 ISPN100000: Node <server2_hostname> joined the cluster
 ----
+
+
+.Reference
+
+link:#setting_up_clusters[Setting Up {brandname} Clusters]

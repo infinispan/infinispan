@@ -1,0 +1,34 @@
+[id='jgroups_inheritance_attributes-{context}']
+= Inheritance Attributes
+When you extend a JGroups stack, inheritance attributes let you adjust protocols and properties in the stack you are extending.
+
+* `stack.position` specifies protocols to modify.
+* `stack.combine` uses the following values to extend JGroups stacks:
++
+[%header,cols="1,2"]
+|===
+
+| Value
+| Description
+
+| `COMBINE`
+| Overrides protocol properties.
+
+| `REPLACE`
+| Replaces protocols.
+
+| `INSERT_AFTER`
+| Adds a protocol into the stack after another protocol.
+Does not affect the protocol that you specify as the insertion point.
+
+Protocols in JGroups stacks affect each other based on their location in the stack.
+For example, you should put a protocol such as `NAKACK2` after the `SYM_ENCRYPT` or `ASYM_ENCRYPT` protocol so that `NAKACK2` is secured.
+
+| `INSERT_BEFORE`
+| Inserts a protocols into the stack before another protocol.
+Affects the protocol that you specify as the insertion point.
+
+| `REMOVE`
+| Removes protocols from the stack.
+
+|===

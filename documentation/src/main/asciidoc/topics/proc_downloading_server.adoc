@@ -1,22 +1,11 @@
+[id='downloading_servers-{context}']
 = Downloading Server Distributions
 The {brandname} server distribution is an archive of Java libraries (`JAR` files), configuration files, and a `data` directory.
 
 .Procedure
 //Community
 ifndef::productized[]
-Download the {brandname} {infinispanversion} server from link:{download_url}[{brandname} downloads].
-endif::productized[]
-//Product
-ifdef::productized[]
-. Access the {portal}.
-. Download the {FullProductName} {ProductVersion} server from the link:{download_url}[software downloads section].
-endif::productized[]
-
-.Verification
-Use the checksum to verify the integrity of your download.
-
-//Community
-ifndef::productized[]
+. Download {brandname} {infinispanversion} Server from link:{download_url}[{brandname} downloads].
 . Run the `sha1sum` command with the server download archive as the argument, for example:
 +
 [source,options="nowrap",subs=attributes+]
@@ -28,6 +17,8 @@ include::cmd_examples/sha_ispn_server.adoc[]
 endif::productized[]
 //Product
 ifdef::productized[]
+. Access the {portal}.
+. Download {FullProductName} {ProductVersion} Server from the link:{download_url}[software downloads section].
 . Run the `md5sum` or `sha256sum` command with the server download archive as the argument, for example:
 +
 [source,options="nowrap",subs=attributes+]
@@ -35,7 +26,7 @@ ifdef::productized[]
 include::cmd_examples/sha_rhdg_server.adoc[]
 ----
 +
-. Compare with the `MD5` or `SHA-256` checksum value on the {ProductName} *Software Details* page.
+. Compare with the `MD5` or `SHA-256` checksum value on the {brandname} *Software Details* page.
 endif::productized[]
 
 .Reference
