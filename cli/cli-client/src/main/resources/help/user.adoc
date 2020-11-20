@@ -28,46 +28,32 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Manage (list, create, describe, remove, modify) users stored in a property security realm.
-Note: this command cannot interact with other security realms.
+Note: You can use this command only with property realms.
 
 
 COMMAND SYNOPSIS
 ----------------
 
-List users in the property security realm
-
 *user ls*::
-Lists the users or groups which are present in the property files.
-
-Create a user
+Lists the users or groups which are present in the property file.
 
 *user create* 'username'::
-Creates a user. The command will prompt for a password and confirmation.
-
-Describes a user
+Creates a user after prompting for a password.
 
 *user describe* 'username'::
 Describes a user, including its username, realm and any groups it belongs to.
 
-Remove a user
-
 *user remove* 'username'::
-Removes the specified user frp,the property files.
-
-Sets a user's password
+Removes the specified user from the property file.
 
 *user password* 'username'::
-Changes a user's password.
-
-Set the groups a user belongs to.
+Changes the password for a user.
 
 *user groups* 'username'::
-Sets a user's groups.
-
-Encrypt all of the passwords in a plain-text user property file.
+Sets the groups to which a user belongs.
 
 *user encrypt-all*::
-Encrypt all passwords.
+Encrypt all passwords in a plain-text user property file.
 
 
 COMMON OPTIONS

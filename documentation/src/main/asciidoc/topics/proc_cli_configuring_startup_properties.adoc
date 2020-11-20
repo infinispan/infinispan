@@ -4,7 +4,7 @@ Configure {brandname} CLI startup operations and customize the location for pers
 
 .Prerequisites
 
-* Add {brandname} credentials.
+Create at least one {brandname} user.
 
 .Procedure
 

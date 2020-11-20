@@ -5,7 +5,7 @@ suitable HTTP client.
 
 .Prerequisites
 
-Add {brandname} credentials and start at least one {brandname} server instance.
+Create a user and start at least one {brandname} server instance.
 
 .Procedure
 

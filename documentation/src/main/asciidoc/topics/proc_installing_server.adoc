@@ -1,20 +1,18 @@
+[id='installing_servers-{context}']
 = Installing {brandname} Server
-Extract the {brandname} server archive to any directory on your host.
+Install the {brandname} Server distribution on a host system.
+
+.Prerequisites
+
+Download a {brandname} Server distribution archive.
 
 .Procedure
-Use any extraction tool with the server archive, for example:
 
-ifndef::productized[]
+* Use any appropriate tool to extract the {brandname} Server archive to the host filesystem.
+
 [source,options="nowrap",subs=attributes+]
 ----
-include::cmd_examples/extract_ispn_server.adoc[]
+include::cmd_examples/extract_server_distribution.adoc[]
 ----
-endif::productized[]
-ifdef::productized[]
-[source,options="nowrap",subs=attributes+]
-----
-include::cmd_examples/extract_ispn_server.adoc[]
-----
-endif::productized[]
 
 The resulting directory is your `{server_home}`.

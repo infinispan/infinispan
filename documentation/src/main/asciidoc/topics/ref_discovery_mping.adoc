@@ -1,0 +1,16 @@
+[id='discovery_mping-{context}']
+= MPING
+MPING uses IP multicast to discover the initial membership of {brandname} clusters.
+
+You can use MPING to replace TCPPING discovery with TCP stacks and use multicasing for discovery instead of static lists of initial hosts.
+However, you can also use MPING with UDP stacks.
+
+.MPING configuration example
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/mping.xml[]
+----
+
+.Reference
+
+* link:{jgroups_docs}#MPING[JGroups MPING]

@@ -1,11 +1,6 @@
 [id='jgroups_system_props-{context}']
-= System Properties for Default JGroups Stacks
-Use system properties with default JGroups stacks.
-
-.Common Properties
-
-The following system properties apply to all JGroups stacks, including
-`default-jgroups-udp.xml` and `default-jgroups-tcp.xml`:
+= System Properties for JGroups Stacks
+Set system properties that configure JGroups cluster transport stacks.
 
 [%header,cols="1,3,2,1"]
 |===
@@ -55,12 +50,17 @@ The following system properties apply to all JGroups stacks, including
 | 2000
 | Optional
 
+|`jgroups.thread_dumps_threshold`
+| Number of times a thread pool needs to be full before a thread dump is logged.
+| 10000
+| Optional
+
 |===
 
 
 .Amazon EC3
 
-The following system properties apply to `default-jgroups-ec2.xml`:
+The following system properties apply only to `default-jgroups-ec2.xml`:
 
 [%header,cols="1,3,2,1"]
 |===
@@ -89,7 +89,7 @@ The following system properties apply to `default-jgroups-ec2.xml`:
 
 .Kubernetes
 
-The following system properties apply to `default-jgroups-kubernetes.xml`:
+The following system properties apply only to `default-jgroups-kubernetes.xml`:
 
 [%header,cols="1,3,2,1"]
 |===
@@ -101,14 +101,14 @@ The following system properties apply to `default-jgroups-kubernetes.xml`:
 
 | `jgroups.dns.query`
 | Sets the DNS record that returns cluster members.
-| N/A
-| Required if you do not set the `dns_query` parameter.
+| No default value.
+| Required
 
 |===
 
 .Google Cloud Platform
 
-The following system properties apply to `default-jgroups-google.xml`:
+The following system properties apply only to `default-jgroups-google.xml`:
 
 [%header,cols="1,3,2,1"]
 |===
@@ -120,12 +120,12 @@ The following system properties apply to `default-jgroups-google.xml`:
 
 | `jgroups.google.bucket_name`
 | Name of the Google Compute Engine bucket. The name must exist and be unique.
-| N/A
-| Required if you do not set the `dns_query` parameter.
+| No default value.
+| Required
 
 |===
 
 .Reference
 
-* link:http://www.jgroups.org/manual4/index.html#SystemProperties[JGroups System Properties]
-* link:http://jgroups.org/manual/html/protlist.html[JGroups Protocol List]
+* link:{jgroups_docs}#SystemProperties[JGroups System Properties]
+* link:{jgroups_docs}#protlist[JGroups Protocol List]

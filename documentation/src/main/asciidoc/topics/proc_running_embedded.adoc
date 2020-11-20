@@ -34,12 +34,6 @@ some more cache definitions, put some data into the cache, or configure
 .Reference
 
 * link:{config_docs}#programmatic-configuring[Configuring {brandname} Programmatically]
-* link:{config_docs}#cluster_transport[Setting Up Cluster Transport]
-* link:{javadocroot}/org/infinispan/Cache.html[org.infinispan.Cache]
-* link:{javadocroot}/org/infinispan/commons/api/CacheContainerAdmin.html[org.infinispan.commons.api.CacheContainerAdmin]
-* link:{javadocroot}/org/infinispan/configuration/cache/CacheMode.html[org.infinispan.configuration.cache.CacheMode]
-* link:{javadocroot}/org/infinispan/configuration/cache/Configuration.html[org.infinispan.configuration.cache.Configuration]
-* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html[org.infinispan.configuration.global.GlobalConfigurationBuilder]
-* link:{javadocroot}/org/infinispan/manager/DefaultCacheManager.html[org.infinispan.manager.DefaultCacheManager]
 * link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[org.infinispan.manager.EmbeddedCacheManager]
+* link:{javadocroot}/org/infinispan/Cache.html[org.infinispan.Cache]

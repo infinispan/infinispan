@@ -1,0 +1,23 @@
+[id='cluster_discovery-{context}']
+= Cluster Discovery Protocols
+{brandname} supports different protocols that allow nodes to automatically find each other on the network and form clusters.
+
+There are two types of discovery mechanisms that {brandname} can use:
+
+* Generic discovery protocols that work on most networks and do not rely on external services.
+* Discovery protocols that rely on external services to store and retrieve topology information for {brandname} clusters. +
+For instance the DNS_PING protocol performs discovery through DNS server records.
+
+[NOTE]
+====
+Running {brandname} on hosted platforms requires using discovery mechanisms that are adapted to network constraints that individual cloud providers impose.
+====
+
+
+.Reference
+
+* link:{jgroups_docs}#DiscoveryProtocols[JGroups Discovery Protocols]
+//RH KCS article
+ifdef::productized[]
+* link:https://access.redhat.com/solutions/5608391[JGroups cluster transport configuration for {brandname} 8.x] ({RedHat} knowledgebase article)
+endif::productized[]

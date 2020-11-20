@@ -1,4 +1,5 @@
-= Gossip Router
+[id='discovery_tcpgossip-{context}']
+= TCPGOSSIP
 Gossip routers provide a centralized location on the network from which your
 {brandname} cluster can retrieve addresses of other nodes.
 
@@ -14,4 +15,5 @@ include::config_examples/tcpgossip.xml[]
 ----
 
 .Reference
-link:http://community.jboss.org/docs/DOC-10890[JGroups Gossip Router]
+
+* link:{jgroups_docs}#TCPGOSSIP_Prot[JGroups Gossip Router]
