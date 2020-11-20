@@ -40,7 +40,7 @@ public enum ProtocolVersion {
    // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
 
    // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
-   PROTOCOL_VERSION_AUTO(3, 0, new Codec31()),
+   PROTOCOL_VERSION_AUTO(3, 1, new Codec31()),
    ;
 
    private static final ProtocolVersion[] VERSIONS = values();
