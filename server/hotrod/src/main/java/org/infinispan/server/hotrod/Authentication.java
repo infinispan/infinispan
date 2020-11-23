@@ -77,7 +77,12 @@ public class Authentication extends BaseRequestProcessor {
                authInternal(header, mech, response);
             } catch (Throwable t) {
                disposeSaslServer();
-               writeException(header, t);
+               String message = t.getMessage();
+               if (message.startsWith("ELY05055") || message.startsWith("ELY05051")) { // wrong credentials
+                  writeException(header, log.authenticationException(t));
+               } else {
+                  writeException(header, t);
+               }
             }
          });
       }
