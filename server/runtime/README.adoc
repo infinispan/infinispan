@@ -1,8 +1,7 @@
 [id='server_readme']
 = Infinispan Server
 
-Infinispan server provides fast, reliable, and secure access to your data.
-The main features are:
+Infinispan Server provides fast, reliable, and secure access to your data.
 
 * Small code-base with minimal duplication of existing functionality (e.g. configuration).
 * Embeddable: the server should allow for easy testability in both single and clustered configurations.
@@ -24,7 +23,7 @@ Server distributions have the following directory structure:
 - `/server/log`: server log files.
 
 == Server Paths
-Servers use the following _paths_:
+Infinispan Server uses the following _paths_ on the host filesystem:
 
 * `infinispan.server.home` defaults to the directory that contains the server
 distribution.

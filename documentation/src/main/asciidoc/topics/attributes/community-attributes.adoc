@@ -20,7 +20,7 @@
 :server_home: $ISPN_HOME
 :server_root: ${infinispan.server.root}
 :server_config: ${infinispan.server.configuration}
-:runtime_readme: https://github.com/infinispan/infinispan/blob/master/server/runtime/README.adoc
+:server_readme: ../../../../../server/runtime/
 
 
 //
@@ -64,6 +64,7 @@
 
 //Server
 :server_docs: ../server/server.html
+:runtime_readme: {server_docs}#server_readme
 
 //REST
 :rest_docs: ../rest/rest.html
