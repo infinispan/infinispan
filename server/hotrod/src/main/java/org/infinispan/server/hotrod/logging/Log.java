@@ -106,4 +106,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Removed unclosed iterator '%s'", id = 28026)
    void removedUnclosedIterator(String iteratorId);
+
+   @Message(value = "Invalid credentials", id = 28027)
+   SecurityException authenticationException(@Cause Throwable cause);
 }
