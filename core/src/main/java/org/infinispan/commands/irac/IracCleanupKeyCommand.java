@@ -26,6 +26,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
    public static final byte COMMAND_ID = 122;
 
    private ByteString cacheName;
+   private int segment;
    private Object key;
    private Object lockOwner;
    private IracMetadata tombstone;
@@ -38,8 +39,9 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracCleanupKeyCommand(ByteString cacheName, Object key, Object lockOwner, IracMetadata tombstone) {
+   public IracCleanupKeyCommand(ByteString cacheName, int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       this.cacheName = cacheName;
+      this.segment = segment;
       this.key = key;
       this.lockOwner = lockOwner;
       this.tombstone = tombstone;
@@ -52,7 +54,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync(ComponentRegistry componentRegistry) {
-      componentRegistry.getIracManager().running().cleanupKey(key, lockOwner, tombstone);
+      componentRegistry.getIracManager().running().cleanupKey(segment, key, lockOwner, tombstone);
       return CompletableFutures.completedNull();
    }
 
@@ -68,6 +70,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      output.writeInt(segment);
       output.writeObject(key);
       boolean cId = lockOwner instanceof CommandInvocationId;
       output.writeBoolean(cId);
@@ -80,6 +83,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      this.segment = input.readInt();
       this.key = input.readObject();
       boolean cId = input.readBoolean();
       if (cId) {

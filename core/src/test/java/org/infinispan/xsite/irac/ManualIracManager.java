@@ -1,16 +1,14 @@
 package org.infinispan.xsite.irac;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -28,6 +26,7 @@ public class ManualIracManager extends ControlledIracManager {
    private final Map<Object, Object> pendingKeys;
    @GuardedBy("this")
    private boolean enabled;
+   @Inject KeyPartitioner keyPartitioner;
 
    private ManualIracManager(IracManager actual) {
       super(actual);
@@ -43,30 +42,11 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
-   public synchronized void trackUpdatedKey(Object key, Object lockOwner) {
+   public synchronized void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       if (enabled) {
          pendingKeys.put(key, lockOwner);
       } else {
-         super.trackUpdatedKey(key, lockOwner);
-      }
-   }
-
-   @Override
-   public synchronized <K> void trackUpdatedKeys(Collection<K> keys, Object lockOwner) {
-      if (enabled) {
-         keys.forEach(k -> pendingKeys.put(k, lockOwner));
-      } else {
-         super.trackUpdatedKeys(keys, lockOwner);
-      }
-   }
-
-   @Override
-   public synchronized void trackKeysFromTransaction(Stream<WriteCommand> modifications, GlobalTransaction lockOwner) {
-      if (enabled) {
-         asDefaultIracManager()
-               .ifPresent(im -> im.keysFromMods(modifications).forEach(k -> pendingKeys.put(k, lockOwner)));
-      } else {
-         super.trackKeysFromTransaction(modifications, lockOwner);
+         super.trackUpdatedKey(segment, key, lockOwner);
       }
    }
 
@@ -74,12 +54,12 @@ public class ManualIracManager extends ControlledIracManager {
    public synchronized void requestState(Address origin, IntSet segments) {
       //send the state for the keys we have pending in this instance!
       asDefaultIracManager()
-            .ifPresent(im -> pendingKeys.forEach((k, lo) -> im.sendStateIfNeeded(origin, segments, k, lo)));
+            .ifPresent(im -> pendingKeys.forEach((k, lo) -> im.sendStateIfNeeded(origin, segments, keyPartitioner.getSegment(k), k, lo)));
       super.requestState(origin, segments);
    }
 
    public synchronized void sendKeys() {
-      pendingKeys.forEach(super::trackUpdatedKey);
+      pendingKeys.forEach((key, lockOwner) -> super.trackUpdatedKey(keyPartitioner.getSegment(key), key, lockOwner));
       pendingKeys.clear();
    }
 

@@ -684,9 +684,9 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner,
-         IracMetadata tombstone) {
-      return actual.buildIracCleanupKeyCommand(key, lockOwner, tombstone);
+   public IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner,
+                                                           IracMetadata tombstone) {
+      return actual.buildIracCleanupKeyCommand(segment, key, lockOwner, tombstone);
    }
 
    @Override
@@ -700,8 +700,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone) {
-      return actual.buildIracStateResponseCommand(key, lockOwner, tombstone);
+   public IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+      return actual.buildIracStateResponseCommand(segment, key, lockOwner, tombstone);
    }
 
    @Override

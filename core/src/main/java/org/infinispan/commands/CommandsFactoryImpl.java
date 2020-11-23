@@ -720,8 +720,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner, IracMetadata tombstone) {
-      return new IracCleanupKeyCommand(cacheName, key, lockOwner, tombstone);
+   public IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+      return new IracCleanupKeyCommand(cacheName, segment, key, lockOwner, tombstone);
    }
 
    @Override
@@ -735,8 +735,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone) {
-      return new IracStateResponseCommand(cacheName, key, lockOwner, tombstone);
+   public IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+      return new IracStateResponseCommand(cacheName, segment, key, lockOwner, tombstone);
    }
 
    @Override

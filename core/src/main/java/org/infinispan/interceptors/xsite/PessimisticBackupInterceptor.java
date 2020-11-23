@@ -25,7 +25,7 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @SuppressWarnings("rawtypes")
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
       }
@@ -40,7 +40,8 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          //for async, all nodes need to keep track of the updates keys after it is applied locally.
-         iracManager.trackKeysFromTransaction(Arrays.stream(rCommand.getModifications()), rCommand.getGlobalTransaction());
+         keysFromMods(Arrays.stream(rCommand.getModifications()))
+               .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
          return stage.thenReturn(rCtx, rCommand, rv);
       });
    }

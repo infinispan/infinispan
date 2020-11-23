@@ -24,6 +24,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
    public static final byte COMMAND_ID = 120;
 
    private ByteString cacheName;
+   private int segment;
    private Object key;
    private Object lockOwner;
    private IracMetadata tombstone;
@@ -36,16 +37,17 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracStateResponseCommand(ByteString cacheName, Object key, Object lockOwner, IracMetadata tombstone) {
+   public IracStateResponseCommand(ByteString cacheName, int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       this(cacheName);
+      this.segment = segment;
       this.key = key;
       this.lockOwner = lockOwner;
       this.tombstone = tombstone;
    }
 
    @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-      registry.getIracManager().wired().receiveState(key, lockOwner, tombstone);
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
+      registry.getIracManager().wired().receiveState(segment, key, lockOwner, tombstone);
       return CompletableFutures.completedNull();
    }
 
@@ -61,6 +63,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      output.writeInt(segment);
       output.writeObject(key);
       boolean cId = lockOwner instanceof CommandInvocationId;
       output.writeBoolean(cId);
@@ -78,6 +81,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      this.segment = input.readInt();
       this.key = input.readObject();
       if (input.readBoolean()) {
          lockOwner = CommandInvocationId.readFrom(input);

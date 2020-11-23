@@ -16,7 +16,7 @@ import org.infinispan.interceptors.InvocationStage;
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       //if this is a read-only tx or state transfer tx, no point replicating it to other sites
       if (!shouldInvokeRemoteTxCommand(ctx) || isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
@@ -27,7 +27,7 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
       }
@@ -44,13 +44,13 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          //we need to track the keys only after it is applied in the local node!
-         iracManager.trackKeysFromTransaction(getModificationsFrom(rCommand), rCommand.getGlobalTransaction());
+         keysFromMods(getModificationsFrom(rCommand)).forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
          return stage.thenReturn(rCtx, rCommand, rv);
       });
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
       if (!shouldRollbackRemoteTxCommand(ctx))
          return invokeNext(ctx, command);
 
