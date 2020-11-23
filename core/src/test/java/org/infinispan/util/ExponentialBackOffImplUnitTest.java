@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class ExponentialBackOffImplUnitTest extends AbstractInfinispanTest {
 
    public void test() {
-      ExponentialBackOffImpl backOff = new ExponentialBackOffImpl();
+      ExponentialBackOffImpl backOff = new ExponentialBackOffImpl(null); // async back off not used
       assertInterval(backOff.nextBackOffMillis(), 250, 750); //500
       assertInterval(backOff.nextBackOffMillis(), 500, 1500); //1000
       assertInterval(backOff.nextBackOffMillis(), 1000, 3000); //2000

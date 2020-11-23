@@ -1,17 +1,13 @@
 package org.infinispan.xsite.irac;
 
-import java.util.Collection;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * It manages the keys changed in the local cluster and sends to all asynchronous backup configured.
@@ -28,26 +24,11 @@ public interface IracManager {
    /**
     * Sets the {@code key} as changed by the {@code lockOwner}.
     *
+    * @param segment   The key's segment.
     * @param key       The key changed.
     * @param lockOwner The lock owner who updated the key.
     */
-   void trackUpdatedKey(Object key, Object lockOwner);
-
-   /**
-    * Sets all the keys in {@code keys} as changed by the {@code lockOwner}.
-    *
-    * @param keys      A {@link Collection} of keys changed.
-    * @param lockOwner The lock owner who updated the keys.
-    */
-   <K> void trackUpdatedKeys(Collection<K> keys, Object lockOwner);
-
-   /**
-    * Sets all keys affected by the transaction as changed.
-    *
-    * @param modifications The {@link Stream} of modifications made by the transaction.
-    * @param lockOwner     The {@link GlobalTransaction}.
-    */
-   void trackKeysFromTransaction(Stream<WriteCommand> modifications, GlobalTransaction lockOwner);
+   void trackUpdatedKey(int segment, Object key, Object lockOwner);
 
    /**
     * Sets all keys as removed.
@@ -59,11 +40,12 @@ public interface IracManager {
     * <p>
     * If {@code lockOwner} isn't the last one who updated the key, this method is a no-op.
     *
+    * @param segment   The key's segment.
     * @param key       The key.
     * @param lockOwner The lock owner who updated the key.
     * @param tombstone The tombstone (can be {@code null}).
     */
-   void cleanupKey(Object key, Object lockOwner, IracMetadata tombstone);
+   void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    /**
     * Notifies a topology changed.
@@ -84,14 +66,17 @@ public interface IracManager {
    /**
     * Receives the state related to the {@code key}.
     *
+    * @param segment   The key's segment.
     * @param key       The key modified.
     * @param lockOwner The last {@code lockOwner}.
     * @param tombstone The tombstone (can be {@code null})
     */
-   void receiveState(Object key, Object lockOwner, IracMetadata tombstone);
+   void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    /**
-    * Checks if the given key is expired on all other sites. If the key is expired on all other sites this will return true
+    * Checks if the given key is expired on all other sites. If the key is expired on all other sites this will return
+    * true
+    *
     * @param key The key to check if it is expired or not
     * @return Whether this key is expired on all other sites
     */

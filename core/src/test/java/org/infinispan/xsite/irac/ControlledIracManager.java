@@ -1,19 +1,14 @@
 package org.infinispan.xsite.irac;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * An {@link IracManager} implementation that can be controlled for testing purpose.
@@ -30,24 +25,9 @@ public class ControlledIracManager implements IracManager {
       this.actual = actual;
    }
 
-   @Stop
-   public void stop() {
-      asDefaultIracManager().ifPresent(DefaultIracManager::stop);
-   }
-
    @Override
-   public void trackUpdatedKey(Object key, Object lockOwner) {
-      actual.trackUpdatedKey(key, lockOwner);
-   }
-
-   @Override
-   public <K> void trackUpdatedKeys(Collection<K> keys, Object lockOwner) {
-      actual.trackUpdatedKeys(keys, lockOwner);
-   }
-
-   @Override
-   public void trackKeysFromTransaction(Stream<WriteCommand> modifications, GlobalTransaction lockOwner) {
-      actual.trackKeysFromTransaction(modifications, lockOwner);
+   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+      actual.trackUpdatedKey(segment, key, lockOwner);
    }
 
    @Override
@@ -56,8 +36,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.cleanupKey(key, lockOwner, tombstone);
+   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+      actual.cleanupKey(segment, key, lockOwner, tombstone);
    }
 
    @Override
@@ -71,8 +51,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void receiveState(Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.receiveState(key, lockOwner, tombstone);
+   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+      actual.receiveState(segment, key, lockOwner, tombstone);
    }
 
    @Override

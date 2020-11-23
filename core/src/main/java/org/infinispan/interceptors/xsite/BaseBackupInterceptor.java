@@ -4,15 +4,18 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.SegmentAwareKey;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
@@ -38,6 +41,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    @Inject protected TransactionTable txTable;
    @Inject protected IracManager iracManager;
    @Inject protected ClusteringDependentLogic clusteringDependentLogic;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
@@ -87,7 +91,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    private void handleExpiredReturn(InvocationContext context, RemoveExpiredCommand command, Object returnValue) {
       if (command.isSuccessful()) {
-         iracManager.trackUpdatedKey(command.getKey(), command.getCommandInvocationId());
+         iracManager.trackUpdatedKey(command.getSegment(), command.getKey(), command.getCommandInvocationId());
       }
    }
 
@@ -100,7 +104,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
       // ISPN-2362: For backups, we should only replicate to the remote site if there are modifications to replay.
       boolean shouldBackupRemotely =
             ctx.isOriginLocal() && ctx.hasModifications() && !ctx.getCacheTransaction().isFromStateTransfer();
-      getLog().tracef("Should backup remotely? %s", shouldBackupRemotely);
+      log.tracef("Should backup remotely? %s", shouldBackupRemotely);
       return shouldBackupRemotely;
    }
 
@@ -108,13 +112,21 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
       return command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP);
    }
 
-   protected Log getLog() {
-      return log;
+   private static boolean backupToRemoteSite(WriteCommand command) {
+      return !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP);
+   }
+
+   private Stream<SegmentAwareKey<?>> keyStream(WriteCommand command) {
+      return command.getAffectedKeys().stream().map(key -> SegmentSpecificCommand.extractSegmentAwareKey(command, key, keyPartitioner));
    }
 
    private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) {
       iracManager.trackClear();
       return backupSender.backupClear(rCommand).thenReturn(ctx, rCommand, rv);
+   }
+
+   private boolean isWriteOwner(SegmentAwareKey<?> key) {
+      return clusteringDependentLogic.getCacheTopology().isSegmentWriteOwner(key.getSegment());
    }
 
    protected Stream<WriteCommand> getModificationsFrom(CommitCommand cmd) {
@@ -133,5 +145,13 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
       } else {
          return localTx.getModifications().stream();
       }
+   }
+
+   public Stream<SegmentAwareKey<?>> keysFromMods(Stream<WriteCommand> modifications) {
+      return modifications
+            .filter(WriteCommand::isSuccessful)
+            .filter(BaseBackupInterceptor::backupToRemoteSite)
+            .flatMap(this::keyStream)
+            .filter(this::isWriteOwner);
    }
 }

@@ -1,6 +1,10 @@
 package org.infinispan.util;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
@@ -33,8 +37,10 @@ public class ExponentialBackOffImpl implements ExponentialBackOff {
 
    //the current retry timeout. If a retry occurs, it will wait for this time +- RANDOMIZATION_FACTOR (%)
    private int currentIntervalMillis;
+   private final ScheduledExecutorService delayer;
 
-   public ExponentialBackOffImpl() {
+   public ExponentialBackOffImpl(ScheduledExecutorService delayer) {
+      this.delayer = delayer;
       this.currentIntervalMillis = INITIAL_INTERVAL_MILLIS;
    }
 
@@ -54,17 +60,19 @@ public class ExponentialBackOffImpl implements ExponentialBackOff {
       return Math.min(randomIntervalMillis, MAX_INTERVAL_MILLIS);
    }
 
-   @Override
-   public void backoffSleep() throws InterruptedException {
-      long sleepTime = nextBackOffMillis();
-      if (trace) {
-         log.tracef("backing-off for %s.", Util.prettyPrintTime(sleepTime));
-      }
-      Thread.sleep(sleepTime);
-   }
-
    public void reset() {
       this.currentIntervalMillis = INITIAL_INTERVAL_MILLIS;
+   }
+
+   @Override
+   public CompletionStage<Void> asyncBackOff() {
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+      long sleepTime = nextBackOffMillis();
+      if (trace) {
+         log.tracef("async backing-off for %s.", Util.prettyPrintTime(sleepTime));
+      }
+      delayer.schedule(() -> cf.complete(null), sleepTime, TimeUnit.MILLISECONDS);
+      return cf;
    }
 
    private void incrementCurrentInterval() {

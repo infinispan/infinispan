@@ -135,7 +135,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment);
       if (dInfo.isWriteOwner()) {
          //all owners has to keep track of the updates even if the primary owner is the only one who sends it.
-         iracManager.trackUpdatedKey(dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
+         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
       }
       if (dInfo.isPrimary()) { //primary owner sends for sync backups
          CacheEntry<?,?> entry = ctx.lookupEntry(dataWriteCommand.getKey());
@@ -173,7 +173,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       for (Object key : writeCommand.getAffectedKeys()) {
          DistributionInfo info = localizedCacheTopology.getDistribution(key);
          if (info.isWriteOwner()) { //all owners need to keep track.
-            iracManager.trackUpdatedKey(key, writeCommand.getCommandInvocationId());
+            iracManager.trackUpdatedKey(info.segmentId(), key, writeCommand.getCommandInvocationId());
          }
          if (!info.isPrimary()) {
             if (trace) {

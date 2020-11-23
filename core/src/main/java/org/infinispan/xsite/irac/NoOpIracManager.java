@@ -1,17 +1,13 @@
 package org.infinispan.xsite.irac;
 
-import java.util.Collection;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -33,17 +29,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void trackUpdatedKey(Object key, Object lockOwner) {
-      //no-op
-   }
-
-   @Override
-   public <K> void trackUpdatedKeys(Collection<K> keys, Object lockOwner) {
-      //no-op
-   }
-
-   @Override
-   public void trackKeysFromTransaction(Stream<WriteCommand> modifications, GlobalTransaction lockOwner) {
+   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       //no-op
    }
 
@@ -53,7 +39,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(Object key, Object lockOwner, IracMetadata tombstone) {
+   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       //no-op
    }
 
@@ -68,7 +54,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void receiveState(Object key, Object lockOwner, IracMetadata tombstone) {
+   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       //no-op
    }
 

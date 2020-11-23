@@ -302,7 +302,6 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
    private ManualIracManager createManualIracManager(Cache<String, Object> cache) {
       ManualIracManager manager = ManualIracManager.wrapCache(cache);
       manager.enable();
-      cleanupTask.add(manager::stop);
       return manager;
    }
 

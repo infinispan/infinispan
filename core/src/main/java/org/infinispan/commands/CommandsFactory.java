@@ -635,13 +635,13 @@ public interface CommandsFactory {
 
    IracClearKeysCommand buildIracClearKeysCommand();
 
-   IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner, IracMetadata tombstone);
+   IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment, IracEntryVersion versionSeen);
 
    IracRequestStateCommand buildIracRequestStateCommand(IntSet segments);
 
-   IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone);
+   IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata);

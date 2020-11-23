@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -137,6 +138,7 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
 
       private final BlockingDeque<Event> backOffEvents;
       private final Semaphore semaphore;
+      private volatile CompletableFuture<Void> backOff = new CompletableFuture<>();
 
       private ControlledExponentialBackOff() {
          backOffEvents = new LinkedBlockingDeque<>();
@@ -144,22 +146,26 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public void backoffSleep() throws InterruptedException {
-         backOffEvents.add(Event.BACK_OFF);
-         semaphore.acquire(1);
-      }
-
-      @Override
       public void reset() {
          backOffEvents.add(Event.RESET);
       }
 
+      @Override
+      public CompletionStage<Void> asyncBackOff() {
+         backOffEvents.add(Event.BACK_OFF);
+         return backOff;
+      }
+
       void release() {
          semaphore.release(1);
+         backOff.complete(null);
+         this.backOff = new CompletableFuture<>();
       }
 
       void drainPermits() {
          semaphore.drainPermits();
+         backOff.complete(null);
+         this.backOff = new CompletableFuture<>();
       }
 
       void cleanupEvents() {
