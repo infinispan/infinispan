@@ -224,7 +224,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    public void validate() {
       if (enabled) {
          if (callbackHandler == null && clientSubject == null && username == null && token == null && !EXTERNAL_MECH.equals(saslMechanism)) {
-            throw HOTROD.invalidCallbackHandler();
+            throw HOTROD.invalidAuthenticationConfiguration();
          }
          if (OAUTHBEARER_MECH.equals(saslMechanism) && callbackHandler == null && token == null) {
             throw HOTROD.oauthBearerWithoutToken();
