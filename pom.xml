@@ -114,6 +114,7 @@
       <module>server/core</module>
       <module>server/memcached</module>
       <module>server/hotrod</module>
+      <module>server/resp</module>
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
@@ -751,6 +752,11 @@
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
             <version>${versionx.io.reactivex.rxjava3.rxjava}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>${version.io.lettuce}</version>
          </dependency>
          <dependency>
             <groupId>jakarta.persistence</groupId>
