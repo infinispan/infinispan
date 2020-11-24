@@ -1,0 +1,19 @@
+# This script allows you to run Infinispan Server as a systemd service.
+# Modify environment properties in this script as appropriate.
+# Copy this script to the following location: /etc/systemd/system
+# Activate with 'systemctl daemon-reload'
+#               'systemctl start|enable infinispan'
+
+[Unit]
+Description=Infinispan Server Service
+After=network.target
+
+[Service]
+Environment="INFINISPAN_HOME=/opt/infinispan"
+#Environment="JAVA_HOME=/usr/java/jdk-11.0.8"
+ExecStart=/bin/bash -c ${INFINISPAN_HOME}/bin/server.sh
+Type=simple
+User=infinispan
+
+[Install]
+WantedBy=multi-user.target

@@ -1,14 +1,10 @@
 [id='server_reference']
-:context: server
+:context: server-info
 = Reference
 
-//Community
-ifndef::productized[]
-include::{server_readme}/README.adoc[leveloffset=+1]
-endif::productized[]
 //Downstream
 ifdef::productized[]
-include::{topics}/readmes/server/runtime/README.adoc[leveloffset=+1]
+include::{server_readme}[leveloffset=+1]
 endif::productized[]
 
 // Restore the parent context.

@@ -1,15 +1,19 @@
 package org.infinispan.server.loader;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -32,6 +36,11 @@ public class Loader {
     * directory under the server home.
     */
    public static final String INFINISPAN_SERVER_ROOT_PATH = "infinispan.server.root.path";
+   /**
+    * Property name indicating the paths to the server lib directories. If unspecified, defaults to the <i>lib</i>
+    * directory under the server root.
+    */
+   public static final String INFINISPAN_SERVER_LIB_PATH = "infinispan.server.lib.path";
 
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
 
@@ -43,11 +52,9 @@ public class Loader {
       if (args.length == 0) {
          System.err.println("You must specify a classname to launch");
       }
-      String home = properties.getProperty(INFINISPAN_SERVER_HOME_PATH, properties.getProperty("user.dir"));
-      ClassLoader bootClassLoader = Loader.class.getClassLoader();
-      ClassLoader serverClassLoader = classLoaderFromPath(Paths.get(home, "lib"), bootClassLoader);
-      // Scan the arguments looking for -s or --server-root=
+      // Scan the arguments looking for -s, --server-root=, -P, --properties=
       String root = null;
+      String propertyFile = null;
       for (int i = 0; i < args.length; i++) {
          if ("-s".equals(args[i]) && i < args.length - 1) {
             root = args[i + 1];
@@ -55,21 +62,41 @@ public class Loader {
          } else if (args[i].startsWith("--server-root=")) {
             root = args[i].substring(args[i].indexOf('=') + 1);
             break;
+         } else if ("-P".equals(args[i]) && i < args.length - 1) {
+            propertyFile = args[i + 1];
+            break;
+         } else if (args[i].startsWith("--properties=")) {
+            propertyFile = args[i].substring(args[i].indexOf('=') + 1);
+            break;
          }
       }
+      if (propertyFile != null) {
+         try(Reader r = Files.newBufferedReader(Paths.get(propertyFile))) {
+            Properties loaded = new Properties();
+            loaded.load(r);
+            loaded.forEach(properties::putIfAbsent);
+         } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+         }
+      }
+      String home = properties.getProperty(INFINISPAN_SERVER_HOME_PATH, properties.getProperty("user.dir"));
+      ClassLoader bootClassLoader = Loader.class.getClassLoader();
+      ClassLoader serverClassLoader = classLoaderFromPath(Paths.get(home, "lib"), bootClassLoader);
+
       if (root == null) {
          root = properties.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
       }
-      Path rootLib = Paths.get(root, "lib");
-      ClassLoader rootClassLoader;
-      if (rootLib.toFile().exists()) {
-         rootClassLoader = classLoaderFromPath(rootLib, serverClassLoader);
+      String lib = properties.getProperty(INFINISPAN_SERVER_LIB_PATH);
+      if (lib != null) {
+         for(String item : lib.split(File.pathSeparator)) {
+            serverClassLoader = classLoaderFromPath(Paths.get(item), serverClassLoader);
+         }
       } else {
-         rootClassLoader = serverClassLoader;
+         serverClassLoader = classLoaderFromPath(Paths.get(root, "lib"), serverClassLoader);
       }
-      Thread.currentThread().setContextClassLoader(rootClassLoader);
+      Thread.currentThread().setContextClassLoader(serverClassLoader);
       try {
-         Class<?> mainClass = rootClassLoader.loadClass(args[0]);
+         Class<?> mainClass = serverClassLoader.loadClass(args[0]);
          Method mainMethod = mainClass.getMethod("main", String[].class);
          String[] mainArgs = new String[args.length - 1];
          System.arraycopy(args, 1, mainArgs, 0, mainArgs.length);
@@ -82,21 +109,27 @@ public class Loader {
 
    public static ClassLoader classLoaderFromPath(Path path, ClassLoader parent) {
       try {
-         Map<String, URL> jars = new HashMap<>();
-         Files.walk(path)
-               .filter(f -> f.toString().endsWith(".jar"))
-               .forEach(jar -> {
-                  try {
-                     String artifact = extractArtifactName(jar.getFileName().toString());
-                     if (jars.containsKey(artifact)) {
-                        throw new IllegalArgumentException("Duplicate JARs:\n" + jar + "\n" + jars.get(artifact));
-                     } else {
-                        jars.put(artifact, jar.toUri().toURL());
-                     }
-                  } catch (MalformedURLException e) {
+         if (!Files.exists(path)) {
+            return parent;
+         }
+         Map<String, URL> urls = new LinkedHashMap<>();
+         Files.find(path, Integer.MAX_VALUE, (p, a) -> p.toString().endsWith(".jar") || a.isDirectory(), FileVisitOption.FOLLOW_LINKS).forEach(p -> {
+            try {
+               if (p.toString().endsWith(".jar")) {
+                  String artifact = extractArtifactName(p.getFileName().toString());
+                  if (urls.containsKey(artifact)) {
+                     throw new IllegalArgumentException("Duplicate JARs:\n" + p.toAbsolutePath().normalize() + "\n" + urls.get(artifact));
+                  } else {
+                     urls.put(artifact, p.toUri().toURL());
                   }
-               });
-         final URL[] array = jars.values().toArray(new URL[jars.size()]);
+               } else {
+                  // It's a directory
+                  urls.put(p.toString(), p.toUri().toURL());
+               }
+            } catch (MalformedURLException e) {
+            }
+         });
+         final URL[] array = urls.values().toArray(new URL[urls.size()]);
          return AccessController.doPrivileged(
                (PrivilegedAction<URLClassLoader>) () -> {
                   if (parent == null)
