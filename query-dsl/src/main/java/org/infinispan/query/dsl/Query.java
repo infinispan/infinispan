@@ -110,7 +110,8 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
 
    /**
     *  Set the timeout for this query. If the query hasn't finished processing before the timeout,
-    *  a {@link SearchTimeoutException} will be thrown.
+    *  a {@link SearchTimeoutException} will be thrown. For queries that use the index, the timeout
+    *  is handled on a best effort basis, and the supplied time is rounded to the nearest millisecond.
     */
    Query<T> timeout(long timeout, TimeUnit timeUnit);
 }

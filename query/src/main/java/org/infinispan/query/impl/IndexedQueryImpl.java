@@ -9,6 +9,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.FilterIterator;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
@@ -79,7 +80,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       long start = 0;
       if (queryStatistics.isEnabled()) start = System.nanoTime();
 
-      List<E> queryHits = (List<E>) searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+      List<E> queryHits = fetchHits(searchQuery);
 
       if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
 
@@ -93,11 +94,19 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       long start = 0;
       if (queryStatistics.isEnabled()) start = System.nanoTime();
 
-      List<?> searchResult = searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+      List<E> searchResult = fetchHits(searchQuery);
 
       if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
 
-      return (List<E>) searchResult;
+      return searchResult;
+   }
+
+   private List<E> fetchHits(SearchQuery<?> searchQuery) {
+      try {
+         return (List<E>) searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+      } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
+         throw new SearchTimeoutException();
+      }
    }
 
    @Override

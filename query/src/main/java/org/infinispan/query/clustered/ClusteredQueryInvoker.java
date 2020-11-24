@@ -13,10 +13,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.search.TimeLimitingCollector.TimeExceededException;
 import org.hibernate.search.util.common.SearchException;
-import org.hibernate.search.util.common.SearchTimeoutException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -87,8 +88,9 @@ final class ClusteredQueryInvoker {
          throw new SearchException("Interrupted while searching locally", e);
       } catch (ExecutionException e) {
          Throwable rootCause = Util.getRootCause(e);
-         if (rootCause instanceof SearchTimeoutException) {
-            throw (SearchTimeoutException) rootCause;
+         if (rootCause instanceof org.hibernate.search.util.common.SearchTimeoutException ||
+               rootCause instanceof TimeExceededException) {
+            throw new SearchTimeoutException("Query exceeded timeout");
          }
          throw new SearchException("Exception while searching locally", e);
       }
