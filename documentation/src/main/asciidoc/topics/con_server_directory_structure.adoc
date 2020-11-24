@@ -1,4 +1,4 @@
-[id='server_directory_structure-{context}']
+[id='server_directory_structure']
 = {brandname} Server Filesystem
 {brandname} Server uses the following folders on the host filesystem under `{server_home}`:
 
@@ -12,35 +12,35 @@
 └── static
 ----
 
-== `server` folder
-
-Besides resources in the `docs` folder, the only folder you need to interact with is the `server` folder.
-
 [TIP]
 ====
-See the _Server README_ for descriptions of the other folders in your `{server_home}` directory.
-
-The _Server README_ also describes system properties you can use to customize the {brandname} Server filesystem.
+//Community
+ifndef::productized[]
+See the {brandname} Server README, available in the distribution, for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
+endif::productized[]
+//Downstream
+ifdef::productized[]
+See the link:{runtime_readme}[{brandname} Server README] for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
+endif::productized[]
 ====
 
-You can create multiple nodes under the same `{server_home}` directory, but each {brandname} Server instance must have its own `server` folder.
-For example, the filesystem for a cluster of 5 nodes could be as follows:
+== Server Root Directory
+
+Apart from resources in the `docs` folder, the only folder under `{server_home}` that you should interact with is the server root directory, which is named `server` by default.
+
+You can create multiple nodes under the same `{server_home}` directory or in different directories, but each {brandname} Server instance must have its own server root directory.
+For example, a cluster of 5 nodes could have the following server root directories on the filesystem:
 
 [source,options="nowrap",subs=attributes+]
 ----
-├── bin
-├── boot
-├── docs
-├── lib
 ├── server
 ├── server1
 ├── server2
 ├── server3
-├── server4
-└── static
+└── server4
 ----
 
-Each `server*` folder should contain the following subdirectories:
+Each server root directory should contain the following folders:
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -51,7 +51,8 @@ Each `server*` folder should contain the following subdirectories:
 │   └── log
 ----
 
-== `server/conf` folder
+[discrete]
+== `server/conf`
 Holds `infinispan.xml` configuration files for a {brandname} Server instance.
 
 {brandname} separates configuration into two layers:
@@ -61,27 +62,29 @@ Dynamic:: Create mutable cache configurations for data scalability. +
 Each joining node receives a complete cluster state that {brandname} Server synchronizes across all nodes whenever changes occur.
 Static:: Add configuration to `infinispan.xml` for underlying server mechanisms such as cluster transport, security, and shared datasources.
 
-== `server/data` folder
+[discrete]
+== `server/data`
 Provides internal storage that {brandname} Server uses to maintain cluster state.
 
 [IMPORTANT]
 ====
-Users should never directly delete or modify content in `server/data`.
+Never directly delete or modify content in `server/data`.
 
 Modifying files such as `caches.xml` while the server is running can cause corruption.
 Deleting content can result in an incorrect state, which means clusters cannot restart after shutdown.
 ====
 
-== `server/lib` folder
+[discrete]
+== `server/lib`
 Contains extension `JAR` files for custom filters, custom event listeners, JDBC drivers, custom `ServerTask` implementations, and so on.
 
-== `server/log` folder
+[discrete]
+== `server/log`
 Holds {brandname} Server log files.
 
+ifdef::productized[]
 .Reference
 
 * link:{runtime_readme}[{brandname} Server README]
-* link:#logs[Working with {brandname} Server Logs]
-ifdef::productized[]
-* link:https://access.redhat.com/solutions/5455731[What is stored in the <server>/data directory used by a RHDG server] (:RedHat: Knowledgebase)
+* link:https://access.redhat.com/solutions/5455731[What is stored in the <server>/data directory used by a RHDG server] (Red Hat Knowledgebase)
 endif::productized[]

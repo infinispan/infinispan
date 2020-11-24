@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
@@ -27,8 +28,8 @@ import org.infinispan.server.tool.Main;
  **/
 public class Bootstrap extends Main {
    private final ExitHandler exitHandler;
-   private File configurationFile;
-   private File loggingFile;
+   private Path configurationFile;
+   private Path loggingFile;
 
    static {
       System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.selector.BasicContextSelector");
@@ -52,13 +53,13 @@ public class Bootstrap extends Main {
             parameter = args.next();
             // Fall through
          case "--server-config":
-            configurationFile = new File(parameter);
+            configurationFile = Paths.get(parameter);
             break;
          case "-l":
             parameter = args.next();
             // Fall through
          case "--logging-config":
-            loggingFile = new File(parameter);
+            loggingFile = Paths.get(parameter);
             break;
          case "-s":
             parameter = args.next();
@@ -129,32 +130,30 @@ public class Bootstrap extends Main {
          serverRoot = serverRoot.getAbsoluteFile();
       }
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
-      File confDir = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
+      Path confDir = Paths.get(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
       if (configurationFile == null) {
-         configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
-      } else if (!configurationFile.isAbsolute()) {
-         configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
+         configurationFile = Paths.get(Server.DEFAULT_CONFIGURATION_FILE);
       }
       properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, Server.DEFAULT_SERVER_LOG).getAbsolutePath());
       if (loggingFile == null) {
-         loggingFile = new File(confDir, Server.DEFAULT_LOGGING_FILE);
+         loggingFile = confDir.resolve(Server.DEFAULT_LOGGING_FILE);
       } else if (!loggingFile.isAbsolute()) {
-         loggingFile = Paths.get(confDir.getPath(), loggingFile.getPath()).toFile();
+         loggingFile = confDir.resolve(loggingFile);
       }
 
-      System.setProperty("log4j.configurationFile", loggingFile.getAbsolutePath());
-      if (!loggingFile.canRead()) {
+      if (!Files.isReadable(loggingFile)) {
          stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
+      System.setProperty("log4j.configurationFile", loggingFile.toAbsolutePath().toString());
 
       logJVMInformation();
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
       Server.log.serverStarting(Version.getBrandName());
-      Server.log.serverConfiguration(configurationFile.getAbsolutePath());
-      Server.log.loggingConfiguration(loggingFile.getAbsolutePath());
-      try (Server server = new Server(serverRoot, configurationFile, properties)) {
+      Server.log.serverConfiguration(configurationFile.toString());
+      Server.log.loggingConfiguration(loggingFile.toString());
+      try (Server server = new Server(serverRoot, configurationFile.toFile(), properties)) {
          server.setExitHandler(exitHandler);
          server.run().get();
       } catch (Exception e) {

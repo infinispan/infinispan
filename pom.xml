@@ -350,6 +350,7 @@
       <versionx.org.jboss.remoting.jboss-remoting>5.0.16.Final</versionx.org.jboss.remoting.jboss-remoting>
       <versionx.org.jboss.remotingjmx.remoting-jmx>3.0.3.Final</versionx.org.jboss.remotingjmx.remoting-jmx>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
+      <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
       <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>${version.jboss.shrinkwrap.descriptors}</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>
       <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>
       <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>
@@ -1364,6 +1365,13 @@
             <groupId>org.jboss.security</groupId>
             <artifactId>jboss-negotiation-extras</artifactId>
             <version>${versionx.org.jboss.security.jboss-negotiation-extras}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-depchain</artifactId>
+            <version>${versionx.org.jboss.shrinkwrap.depchain}</version>
+            <type>pom</type>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
