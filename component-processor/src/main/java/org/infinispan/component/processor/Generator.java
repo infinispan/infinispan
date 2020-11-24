@@ -57,9 +57,11 @@ public class Generator {
    }
 
    private void writePackageClass(Model.Package p) throws IOException {
-      TypeElement[] sourceElements = p.typeElements.toArray(new TypeElement[0]);
       String packageClassName = String.format("%s.%sPackageImpl", p.packageName, model.module.classPrefix);
-      JavaFileObject packageFile = filer.createSourceFile(packageClassName, sourceElements);
+      // IntelliJ will delete the generated file before compilation if any of the source elements has changed
+      // We need the old PackageImpl source to parse the accessors of any classes not compiled in this round,
+      // so we don't set any source elements.
+      JavaFileObject packageFile = filer.createSourceFile(packageClassName);
       try (PrintWriter writer = new PrintWriter(packageFile.openWriter(), false)) {
          writer.printf("package %s;\n\n", p.packageName);
          writer.printf("import java.util.Arrays;\n");

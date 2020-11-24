@@ -34,13 +34,15 @@ public class Model {
 
    public static class Module {
       final InfinispanModule moduleAnnotation;
+      final TypeElement typeElement;
       final String moduleClassName;
       final String packageName;
       final String classPrefix;
 
-      public Module(InfinispanModule moduleAnnotation, String moduleClassName, String packageName, String classPrefix) {
+      public Module(InfinispanModule moduleAnnotation, TypeElement typeElement, String packageName, String classPrefix) {
          this.moduleAnnotation = moduleAnnotation;
-         this.moduleClassName = moduleClassName;
+         this.typeElement = typeElement;
+         this.moduleClassName = typeElement.getQualifiedName().toString();
          this.packageName = packageName;
          this.classPrefix = classPrefix;
       }

@@ -139,12 +139,12 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
 
             generator.writePackageClasses();
 
-            TypeElement[] moduleSourceTypes =
-               Stream.concat(model.annotatedTypes.values().stream().map(t -> t.typeElement),
-                             model.parsedTypes.values().stream().map(t -> t.typeElement))
-                     .toArray(TypeElement[]::new);
-            generator.writeModuleClass(moduleSourceTypes);
-            generator.writeServiceFile(moduleSourceTypes);
+            // IntelliJ will delete the generated file before compilation if any of the source elements has changed
+            // We make the module impl and service fine depend only on the module class,
+            // so we know either they are present on disk or the module class is being compiled.
+            TypeElement[] sourceElements = {model.module.typeElement};
+            generator.writeModuleClass(sourceElements);
+            generator.writeServiceFile(sourceElements);
          }
       } catch (Throwable t) {
          uncaughtException(t);
@@ -345,7 +345,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          validateModule(e, moduleAnnotation);
 
          String modulePackageName = elements().getPackageOf(e).getQualifiedName().toString();
-         module = new Model.Module(moduleAnnotation, e.getQualifiedName().toString(), modulePackageName, classPrefix);
+         module = new Model.Module(moduleAnnotation, e, modulePackageName, classPrefix);
       }
 
       private void validateModule(TypeElement e, InfinispanModule moduleAnnotation) {
