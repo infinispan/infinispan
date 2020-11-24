@@ -2,9 +2,9 @@ package org.infinispan.query.timeout;
 
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.util.common.SearchTimeoutException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -26,7 +26,7 @@ public class LocalIndexedTimeoutTest extends SingleCacheManagerTest {
 
    @BeforeMethod
    public void populate() {
-      TestHelper.populate(cache, 10);
+      TestHelper.populate(cache, 10000);
    }
 
    @Test(expectedExceptions = SearchTimeoutException.class)
