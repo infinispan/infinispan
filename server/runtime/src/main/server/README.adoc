@@ -1,0 +1,278 @@
+[id='server_readme']
+= ${infinispan.brand.name} Server ${infinispan.brand.version}
+
+Welcome to ${infinispan.brand.name} Server!
+
+== Requirements
+${infinispan.brand.name} Server requires JDK 11 or later.
+
+== Starting servers
+Use the `server` script to run ${infinispan.brand.name} Server instances.
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat
+----
+
+[TIP]
+====
+Include the `--help` or `-h` option to view command arguments.
+====
+
+== Stopping servers
+Use the [command]`shutdown` command with the CLI to perform a graceful shutdown.
+
+Alternatively, enter Ctrl-C from the terminal to interrupt the server process or kill it via the TERM signal.
+
+== Configuration
+Server configuration extends ${infinispan.brand.name} configuration with the following server-specific elements:
+
+`cache-container`:: Defines cache containers for managing cache lifecycles.
+`endpoints`:: Enables and configures endpoint connectors for client protocols.
+`security`:: Configures endpoint security realms.
+`socket-bindings`:: Maps endpoint connectors to interfaces and ports.
+
+The default configuration file is `<SERVER_HOME>/server/conf/infinispan.xml`.
+
+Use different configuration files with the `-c` argument, as in the following example that starts a server without clustering capabilities:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -c infinispan-local.xml
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -c infinispan-local.xml
+----
+
+== Bind address
+${infinispan.brand.name} Server binds to the loopback IP address `localhost` on your network by default.
+
+Use the `-b` argument to set a different IP address, as in the following example that binds to all network interfaces:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -b 0.0.0.0
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -b 0.0.0.0
+----
+
+== Bind port
+${infinispan.brand.name} Server listens on port `11222` by default.
+
+Use the `-p` argument to set an alternative port:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -p 30000
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -p 30000
+----
+
+== Clustering address
+${infinispan.brand.name} Server configuration defines cluster transport so multiple instances on the same network discover each other and automatically form clusters.
+
+Use the `-k` argument to change the IP address for cluster traffic:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -k 192.168.1.100
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -k 192.168.1.100
+----
+
+== Cluster stacks
+JGroups stacks configure the protocols for cluster transport.
+${infinispan.brand.name} Server uses the `tcp` stack by default.
+
+Use alternative cluster stacks with the `-j` argument, as in the following example that uses UDP for cluster transport:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -j udp
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -j udp
+----
+
+== Authentication
+${infinispan.brand.name} Server requires authentication.
+
+Create a username and password with the CLI as follows:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/cli.sh user create username -p "qwer1234!"
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\cli.bat user create username -p "qwer1234!"
+----
+
+== Server home directory
+
+${infinispan.brand.name} Server uses the `infinispan.server.home` path to locate the contents of the server distribution on the host filesystem.
+
+The server home directory, referred to as `<SERVER_HOME>`, contains the following folders:
+
+[source,options="nowrap",subs=attributes+]
+----
+├── bin
+├── boot
+├── docs
+├── lib
+├── server
+└── static
+----
+
+[%header,cols=2*]
+|===
+|Folder
+|Description
+
+|`/bin`
+|Contains scripts to start servers and CLI.
+
+|`/boot`
+|Contains `JAR` files to boot servers.
+
+|`/docs`
+|Provides configuration examples, schemas, component licenses, and other resources.
+
+|`/lib`
+|Contains `JAR` files that servers require internally. +
+Do not place custom `JAR` files in this folder.
+
+|`/server`
+|Provides a root folder for ${infinispan.brand.name} Server instances.
+
+|`/static`
+|Contains static resources for ${infinispan.brand.name} Console.
+
+|===
+
+== Server root directory
+
+${infinispan.brand.name} Server uses the `infinispan.server.root` path to locate configuration files and data for ${infinispan.brand.name} Server instances.
+
+You can create multiple server root folders in the same directory or in different directories and then specify the locations with the `-s` or `--server-root` argument, as in the following example:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh -s server2
+----
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat -s server2
+----
+
+Each server root directory contains the following folders:
+
+[source,options="nowrap",subs=attributes+]
+----
+├── server
+│   ├── conf
+│   ├── data
+│   ├── lib
+│   └── log
+----
+
+[%header,cols=3*]
+|===
+|Folder
+|Description
+|System property override
+
+|`/server/conf`
+|Contains server configuration files.
+|`infinispan.server.config.path`
+
+|`/server/data`
+|Contains data files organized by container name.
+|`infinispan.server.data.path`
+
+|`/server/lib`
+|Contains server extension files. +
+This directory is scanned recursively and used as a classpath.
+|`infinispan.server.lib.path` +
+Separate multiple paths with the following delimiters: +
+`:` on Unix / Linux +
+`;` on Windows
+
+|`/server/log`
+|Contains server log files.
+|`infinispan.server.log.path`
+
+|===
+
+== Logging
+Configure ${infinispan.brand.name} Server logging with the `log4j2.xml` file in the `server/conf` folder.
+
+Use the `--logging-config=<path_to_logfile>` argument to use custom paths, as follows:
+
+.Unix / Linux
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>/bin/server.sh --logging-config=/path/to/log4j2.xml
+----
+
+TIP: To ensure custom paths take effect, do not use the `~` shortcut.
+
+.Windows
+
+[source,options="nowrap",subs=attributes+]
+----
+<SERVER_HOME>\bin\server.bat --logging-config=path\to\log4j2.xml
+----
