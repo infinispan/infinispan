@@ -20,8 +20,6 @@
 :server_home: $ISPN_HOME
 :server_root: ${infinispan.server.root}
 :server_config: ${infinispan.server.configuration}
-:server_readme: ../../../../../server/runtime/
-
 
 //
 // Operator
@@ -69,7 +67,6 @@
 
 //Server
 :server_docs: ../server/server.html
-:runtime_readme: {server_docs}#server_readme
 
 //REST
 :rest_docs: ../rest/rest.html

@@ -30,7 +30,8 @@
 :server_home: $RHDG_HOME
 :server_root: ${rhdg.server.root}
 :server_config: ${rhdg.server.configuration}
-:runtime_readme: #server_readme
+:server_readme: {topics}/generated/server/runtime/readme.adoc
+:runtime_readme: {server_docs}#server_readme
 
 //
 // Operator

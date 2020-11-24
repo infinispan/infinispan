@@ -40,4 +40,11 @@ endif::productized[]
 
 .Reference
 
+//Community
+ifndef::productized[]
+The {brandname} Server README, available in the distribution, provides example commands for running the server, describes folders in the `{server_home}` directory, and lists system properties you can use to customize the filesystem.
+endif::productized[]
+//Downstream
+ifdef::productized[]
 * link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.
+endif::productized[]

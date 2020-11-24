@@ -162,6 +162,7 @@
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.9.8.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
+      <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.1.3</version.jboss.shrinkwrap.resolver>
       <version.jboss.xnio>3.7.7.Final</version.jboss.xnio>
