@@ -1,7 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.parsing.Element.TRANSACTION;
-import static org.infinispan.configuration.parsing.Parser.TransactionMode.fromConfiguration;
+import static org.infinispan.configuration.parsing.CacheParser.TransactionMode.fromConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;

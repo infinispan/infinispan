@@ -46,17 +46,13 @@ manager = new RemoteCacheManager(builder.build());
 ----
 private void createCacheWithXMLConfiguration() {
     String cacheName = "CacheWithXMLConfiguration";
-    String xml = String.format("<infinispan>" +
-                                  "<cache-container>" +
-                                  "<distributed-cache name=\"%s\" mode=\"SYNC\"
+    String xml = String.format("<distributed-cache name=\"%s\" mode=\"SYNC\"
                                   statistics=\"true\">" +
-                                    "<locking isolation=\"READ_COMMITTED\"/>" +
-                                    "<transaction mode=\"NON_XA\"/>" +
-                                    "<expiration lifespan=\"60000\" interval=\"20000\"/>" +
-                                  "</distributed-cache>" +
-                                  "</cache-container>" +
-                                "</infinispan>"
-                                , cacheName);
+                                 "<locking isolation=\"READ_COMMITTED\"/>" +
+                                 "<transaction mode=\"NON_XA\"/>" +
+                                 "<expiration lifespan=\"60000\" interval=\"20000\"/>" +
+                               "</distributed-cache>" +
+                               , cacheName);
     manager.administration().getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
     System.out.println("Cache created or already exists.");
 }

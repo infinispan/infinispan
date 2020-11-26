@@ -41,7 +41,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @param name the name of the cache to create
     * @param configuration a concrete configuration that will be sent to the server. The XML representation of this
     *                      configuration must use the Infinispan embedded configuration schema in a version supported
-    *                      by the server.
+    *                      by the server. A cache configuration fragment on its own is valid XML.
     * @return the cache
     * @throws HotRodClientException
     */
@@ -79,7 +79,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @param name the name of the cache to create
     * @param configuration a concrete configuration that will be sent to the server. The XML representation of this
     *                      configuration must use the Infinispan embedded configuration schema in a version supported
-    *                      by the server.
+    *                      by the server. A cache configuration fragment on its own is valid XML.
     * @return the cache
     * @throws HotRodClientException
     */
