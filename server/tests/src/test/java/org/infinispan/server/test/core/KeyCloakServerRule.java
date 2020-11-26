@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @since 10.0
  **/
 public class KeyCloakServerRule implements TestRule {
-   public static final String KEYCLOAK_IMAGE = "jboss/keycloak:10.0.1";
+   public static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:10.0.1";
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer container;
