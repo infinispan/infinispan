@@ -93,9 +93,9 @@ public class SecondLevelCacheStressTestCase {
       StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().enableAutoClose()
               .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
               .applySetting( Environment.USE_QUERY_CACHE, "true" )
-              .applySetting( Environment.DRIVER, "com.mysql.jdbc.Driver" )
-              .applySetting( Environment.URL, "jdbc:mysql://localhost:3306/hibernate" )
-              .applySetting( Environment.DIALECT, "org.hibernate.dialect.MySQL5InnoDBDialect" )
+              .applySetting( Environment.DRIVER, "org.mariadb.jdbc.Driver" )
+              .applySetting( Environment.URL, "jdbc:mariadb://localhost:3306/hibernate" )
+              .applySetting( Environment.DIALECT, "org.hibernate.dialect.MariaDB103Dialect" )
               .applySetting( Environment.USER, "root" )
               .applySetting( Environment.PASS, "password" )
               .applySetting( Environment.HBM2DDL_AUTO, "create-drop" );

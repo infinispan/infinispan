@@ -73,9 +73,9 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
-         <version>${versionx.com.mysqldatabase.mysql}</version>
+         <groupId>org.mariadb.jdbc</groupId>
+         <artifactId>mariadb-java-client</artifactId>
+         <version>${versionx.mariadb.mariadb-java-client}</version>
          <scope>test</scope>
       </dependency>
       <dependency>

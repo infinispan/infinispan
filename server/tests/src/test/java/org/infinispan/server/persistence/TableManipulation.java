@@ -18,8 +18,6 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 
-import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
-
 public class TableManipulation implements AutoCloseable {
 
    private ConnectionFactory connectionFactory;
@@ -95,9 +93,6 @@ public class TableManipulation implements AutoCloseable {
       while (drivers.hasMoreElements()) {
          try {
             driver = drivers.nextElement();
-            if(driver instanceof com.mysql.cj.jdbc.Driver) {
-               AbandonedConnectionCleanupThread.checkedShutdown();
-            }
             DriverManager.deregisterDriver(driver);
          } catch (SQLException ex) {
             ex.printStackTrace();

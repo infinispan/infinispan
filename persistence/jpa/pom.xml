@@ -152,11 +152,11 @@
          </build>
       </profile>
       <profile>
-         <id>mysql</id>
+         <id>mariadb</id>
          <dependencies>
             <dependency>
-               <groupId>mysql</groupId>
-               <artifactId>mysql-connector-java</artifactId>
+               <groupId>org.mariadb.jdbc</groupId>
+               <artifactId>mariadb-java-client</artifactId>
                <scope>test</scope>
             </dependency>
          </dependencies>
@@ -167,8 +167,8 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
                      <systemPropertyVariables>
-                        <connection.url>jdbc:mysql://localhost:3306/ispn_jpa_test</connection.url>
-                        <driver.class>com.mysql.jdbc.Driver</driver.class>
+                        <connection.url>jdbc:mariadb://localhost:3306/ispn_jpa_test</connection.url>
+                        <driver.class>org.mariadb.jdbc.Driver</driver.class>
                         <db.username>${db.username}</db.username>
                         <db.password>${db.password}</db.password>
                      </systemPropertyVariables>

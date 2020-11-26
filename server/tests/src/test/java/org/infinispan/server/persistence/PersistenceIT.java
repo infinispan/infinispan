@@ -21,7 +21,7 @@ import org.junit.runners.Suite;
 })
 public class PersistenceIT {
 
-   public static final DatabaseServerListener DATABASE = new DatabaseServerListener("h2", "mysql", "postgres");
+   public static final DatabaseServerListener DATABASE = new DatabaseServerListener("h2", "mariadb", "postgres");
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
@@ -29,7 +29,7 @@ public class PersistenceIT {
                                     .numServers(1)
                                     .runMode(ServerRunMode.CONTAINER)
                                     .mavenArtifacts("com.h2database:h2:1.4.199",
-                                                    "mysql:mysql-connector-java:8.0.17",
+                                                    "org.mariadb.jdbc:mariadb-java-client:2.7.1",
                                                     "org.postgresql:postgresql:jar:42.2.8")
                                     .addListener(DATABASE)
                                     .build();

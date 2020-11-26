@@ -291,7 +291,7 @@
       <versionx.javax.persistence.javax.persistence-api>${version.javax.persistence}</versionx.javax.persistence.javax.persistence-api>
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
       <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
-      <versionx.mysql.mysql-connector-java>8.0.16</versionx.mysql.mysql-connector-java>
+      <versionx.mariadb.mariadb-java-client>2.7.1</versionx.mariadb.mariadb-java-client>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
       <versionx.org.aesh.aesh>2.6</versionx.org.aesh.aesh>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
@@ -777,9 +777,9 @@
             <version>${versionx.junit.junit5}</version>
          </dependency>
          <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${versionx.mysql.mysql-connector-java}</version>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${versionx.mariadb.mariadb-java-client}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

@@ -89,8 +89,6 @@ public class ThreadLeakChecker {
                       "|OkHttp ConnectionPool" +
                        // OkHttp uses daemon threads for HTTP/2
                       "|OkHttp Http2Connection" +
-                      // The mysql driver uses a daemon thread to check for connection leaks
-                      "|mysql-cj-abandoned-connection-cleanup" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";

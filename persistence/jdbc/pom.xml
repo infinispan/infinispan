@@ -47,10 +47,10 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- for testing against MySQL -->
+      <!-- for testing against Mariadb -->
       <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
+         <groupId>org.mariadb.jdbc</groupId>
+         <artifactId>mariadb-java-client</artifactId>
          <scope>test</scope>
       </dependency>
 

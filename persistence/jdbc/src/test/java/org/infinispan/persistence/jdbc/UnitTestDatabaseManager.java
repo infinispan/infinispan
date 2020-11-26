@@ -31,11 +31,11 @@ public class UnitTestDatabaseManager {
    private static final DatabaseType dt;
 
    static {
-      String driver = "";
+      String driver;
       try {
-         if (DB_TYPE.equalsIgnoreCase("mysql")) {
-            driver = com.mysql.jdbc.Driver.class.getName();
-            dt = DatabaseType.MYSQL;
+         if (DB_TYPE.equalsIgnoreCase("mariadb")) {
+            driver = org.mariadb.jdbc.Driver.class.getName();
+            dt = DatabaseType.MARIA_DB;
          } else {
             driver = H2_DRIVER;
             dt = DatabaseType.H2;
@@ -53,21 +53,21 @@ public class UnitTestDatabaseManager {
 
    public static ConnectionFactoryConfigurationBuilder<?> configureUniqueConnectionFactory(AbstractJdbcStoreConfigurationBuilder<?, ?> store) {
       switch (dt) {
-      case H2:
-         return store
-            .connectionPool()
-               .driverClass(org.h2.Driver.class)
-               .connectionUrl(String.format("jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1", extractTestName() + userIndex.incrementAndGet()))
-               .username("sa");
-      case MYSQL:
-         return store
-            .simpleConnection()
-               .driverClass(com.mysql.jdbc.Driver.class)
-               .connectionUrl("jdbc:mysql://localhost/infinispan?user=ispn&password=ispn")
-               .username("ispn")
-               .password("ispn");
-      default:
-         throw new RuntimeException("Cannot configure connection for database type "+dt);
+         case H2:
+            return store
+                  .connectionPool()
+                  .driverClass(org.h2.Driver.class)
+                  .connectionUrl(String.format("jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1", extractTestName() + userIndex.incrementAndGet()))
+                  .username("sa");
+         case MARIA_DB:
+            return store
+                  .simpleConnection()
+                  .driverClass(org.mariadb.jdbc.Driver.class)
+                  .connectionUrl("jdbc:maridb://localhost/infinispan?user=ispn&password=ispn")
+                  .username("ispn")
+                  .password("ispn");
+         default:
+            throw new RuntimeException("Cannot configure connection for database type " + dt);
       }
    }
 

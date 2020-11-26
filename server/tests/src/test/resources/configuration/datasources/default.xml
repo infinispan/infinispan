@@ -9,11 +9,11 @@
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
-   <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">
-      <connection-factory driver="com.mysql.cj.jdbc.Driver"
-                          username="${org.infinispan.server.test.database.mysql.username:test}"
-                          password="${org.infinispan.server.test.database.mysql.password:test}"
-                          url="${org.infinispan.server.test.mysql.jdbcUrl}"
+   <data-source name="mariadb" jndi-name="jdbc/mariadb" statistics="true">
+      <connection-factory driver="org.mariadb.jdbc.Driver"
+                          username="${org.infinispan.server.test.database.mariadb.username:test}"
+                          password="${org.infinispan.server.test.database.mariadb.password:test}"
+                          url="${org.infinispan.server.test.mariadb.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
