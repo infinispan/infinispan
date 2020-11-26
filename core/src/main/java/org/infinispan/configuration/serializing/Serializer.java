@@ -67,7 +67,7 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.configuration.parsing.Parser.TransactionMode;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.group.Grouper;
@@ -524,10 +524,10 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = transaction.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.TRANSACTION);
-         TransactionMode mode = TransactionMode.fromConfiguration(transaction, configuration.invocationBatching().enabled());
+         CacheParser.TransactionMode mode = CacheParser.TransactionMode.fromConfiguration(transaction, configuration.invocationBatching().enabled());
          writer.writeAttribute(Attribute.MODE, mode.toString());
          attributes.write(writer);
-         if (mode != TransactionMode.NONE) {
+         if (mode != CacheParser.TransactionMode.NONE) {
             attributes.write(writer, TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP);
          }
          if (transaction.recovery().enabled())

@@ -142,6 +142,16 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateWithXMLConfigurationTest(Method m) {
       String cacheName = m.getName();
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"><encoding><key media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>", cacheName);
+      cacheCreateWithXMLConfiguration(cacheName, xml);
+   }
+
+   public void cacheCreateWithXMLFragmentConfigurationTest(Method m) {
+      String cacheName = m.getName();
+      String xml = String.format("<distributed-cache name=\"%s\"><encoding><key media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache>", cacheName);
+      cacheCreateWithXMLConfiguration(cacheName, xml);
+   }
+
+   private void cacheCreateWithXMLConfiguration(String cacheName, String xml) {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
@@ -154,6 +164,16 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateWithXMLConfigurationAndGetCacheTest(Method m) {
       String cacheName = m.getName();
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
+      cacheCreateWithXMLConfigurationAndGetCache(cacheName, xml);
+   }
+
+   public void cacheCreateWithReducedXMLConfigurationAndGetCacheTest(Method m) {
+      String cacheName = m.getName();
+      String xml = String.format("<distributed-cache name=\"%s\"/>", cacheName);
+      cacheCreateWithXMLConfigurationAndGetCache(cacheName, xml);
+   }
+
+   private void cacheCreateWithXMLConfigurationAndGetCache(String cacheName, String xml) {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, new XMLStringConfiguration(xml));
       final RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
       assertNotNull(cache);
