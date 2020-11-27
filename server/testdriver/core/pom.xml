@@ -44,24 +44,25 @@
          <artifactId>testcontainers</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.jboss.shrinkwrap</groupId>
+         <artifactId>shrinkwrap-depchain</artifactId>
+         <type>pom</type>
+      </dependency>
+      <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-api</artifactId>
-         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
-         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>net.spy</groupId>
