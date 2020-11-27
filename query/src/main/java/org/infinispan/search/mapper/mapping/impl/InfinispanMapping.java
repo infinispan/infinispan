@@ -36,8 +36,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private final SearchSession mappingSession;
    private final SearchIndexer searchIndexer;
 
-   private final Map<String, Class<?>> allIndexedTypes;
-   private final Map<String, Class<?>> allTypes;
+   private final Collection<Class<?>> allIndexedEntityJavaClasses;
 
    private SearchIntegration integration;
    private boolean close = false;
@@ -50,8 +49,8 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.entityConverter = entityConverter;
       this.mappingSession = new InfinispanSearchSession(this, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer);
-      this.allIndexedTypes = collectAllIndexedTypes();
-      this.allTypes = collectEntities();
+      this.allIndexedEntityJavaClasses = typeContextContainer.getAllIndexed().stream()
+            .map(SearchIndexedEntity::javaClass).collect(Collectors.toList());
    }
 
    @Override
@@ -73,29 +72,22 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    }
 
    @Override
-   public SearchScope<?> scopeFromJavaClasses(Collection<Class<?>> javaClasses) {
-      if (entityConverter == null || !javaClasses.contains(entityConverter.targetType())) {
-         return createScope(javaClasses);
-      }
-
-      List<PojoRawTypeIdentifier<?>> targetedTypes = typeContextContainer.allTypeIdentifiers().stream()
-            .filter(typeIdentifier -> typeIdentifier.javaClass()
-                  .equals(entityConverter.convertedType()) || javaClasses.contains(typeIdentifier.javaClass()))
-            .collect(Collectors.toList());
-
-      return getSearchScope(targetedTypes);
-   }
-
-   @Override
    public SearchMapping toConcreteType() {
       return this;
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public <E> SearchScopeImpl<E> createScope(Collection<? extends Class<? extends E>> classes) {
+      Class<?> converterTargetType = entityConverter == null ? null : entityConverter.targetType();
       List<PojoRawTypeIdentifier<? extends E>> typeIdentifiers = new ArrayList<>(classes.size());
       for (Class<? extends E> clazz : classes) {
-         typeIdentifiers.add(PojoRawTypeIdentifier.of(clazz));
+         if (clazz.equals(converterTargetType)) {
+            // Include all protobuf types
+            typeIdentifiers.add((PojoRawTypeIdentifier<? extends E>) entityConverter.convertedTypeIdentifier());
+         } else {
+            typeIdentifiers.add(PojoRawTypeIdentifier.of(clazz));
+         }
       }
 
       return getSearchScope(typeIdentifiers);
@@ -137,22 +129,27 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    }
 
    @Override
-   public Map<String, Class<?>> allIndexedTypes() {
-      return allIndexedTypes;
+   public Collection<? extends SearchIndexedEntity> allIndexedEntities() {
+      return typeContextContainer.getAllIndexed();
    }
 
    @Override
-   public Map<String, Class<?>> getEntities() {
-      return allTypes;
+   public Collection<Class<?>> allIndexedEntityJavaClasses() {
+      return allIndexedEntityJavaClasses;
    }
 
    @Override
-   public boolean isIndexedType(Object value) {
+   public Class<?> toConvertedEntityJavaClass(Object value) {
       if (value == null) {
-         return false;
+         return null;
       }
       Class<?> c = value.getClass();
-      return allIndexedTypes.containsValue(c);
+      if ( entityConverter != null && c.equals(entityConverter.targetType()) ) {
+         return entityConverter.convertedTypeIdentifier().javaClass();
+      }
+      else {
+         return c;
+      }
    }
 
    @Override
@@ -162,19 +159,6 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    public void setIntegration(SearchIntegration integration) {
       this.integration = integration;
-   }
-
-   private Map<String, Class<?>> collectAllIndexedTypes() {
-      Map<String, Class<?>> entities = typeContextContainer.getAllIndexed().stream()
-            .collect(Collectors.toMap((a) -> a.javaClass().getName(), SearchIndexedEntity::javaClass));
-      if (entityConverter != null) {
-         entities.put(entityConverter.targetType().getName(), entityConverter.targetType());
-      }
-      return Collections.unmodifiableMap(entities);
-   }
-
-   private Map<String, Class<?>> collectEntities() {
-      return typeContextContainer.getEntityClassByEntityName();
    }
 
    private <E> SearchScopeImpl<E> getSearchScope(Collection<PojoRawTypeIdentifier<? extends E>> typeIdentifiers) {

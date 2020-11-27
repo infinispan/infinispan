@@ -2,10 +2,9 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.configuration.cache.IndexStorage.FILESYSTEM;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -41,9 +40,11 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
       SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
       // we have indexing for remote query!
-      assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.User"));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.Account"));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.Transaction"));
 
       // we have some indexes for this cache
-      assertEquals(2, searchMapping.allIndexedTypes().size());
+      assertEquals(3, searchMapping.allIndexedEntities().size());
    }
 }

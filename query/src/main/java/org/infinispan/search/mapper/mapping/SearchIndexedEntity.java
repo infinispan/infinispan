@@ -13,6 +13,11 @@ public interface SearchIndexedEntity {
    Class<?> javaClass();
 
    /**
+    * @return The name of the entity.
+    */
+   String name();
+
+   /**
     * @return The index manager this entity is indexed in.
     */
    IndexManager indexManager();

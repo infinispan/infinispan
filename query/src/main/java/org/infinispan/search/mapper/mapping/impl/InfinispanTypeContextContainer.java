@@ -21,8 +21,8 @@ class InfinispanTypeContextContainer implements InfinispanTypeContextProvider {
    private InfinispanTypeContextContainer(Builder builder) {
       for (InfinispanIndexedTypeContextImpl.Builder<?> contextBuilder : builder.indexedTypeContextBuilders) {
          InfinispanIndexedTypeContextImpl<?> indexedTypeContext = contextBuilder.build();
-         indexedTypeContextsByEntityName.put(indexedTypeContext.getEntityName(), indexedTypeContext);
-         indexedTypeContextsByJavaType.put(indexedTypeContext.getTypeIdentifier().javaClass(), indexedTypeContext);
+         indexedTypeContextsByEntityName.put(indexedTypeContext.name(), indexedTypeContext);
+         indexedTypeContextsByJavaType.put(indexedTypeContext.typeIdentifier().javaClass(), indexedTypeContext);
       }
    }
 
@@ -37,15 +37,9 @@ class InfinispanTypeContextContainer implements InfinispanTypeContextProvider {
    }
 
    @Override
-   public Map<String, Class<?>> getEntityClassByEntityName() {
-      Map<String, InfinispanIndexedTypeContextImpl<?>> indexedTypeContextsByEntityName = this.indexedTypeContextsByEntityName;
-      return indexedTypeContextsByEntityName.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, w -> w.getValue().javaClass()));
-   }
-
-   @Override
    public Collection<PojoRawTypeIdentifier<?>> allTypeIdentifiers() {
       return indexedTypeContextsByEntityName.values().stream()
-            .map(InfinispanIndexedTypeContextImpl::getTypeIdentifier).collect(Collectors.toList());
+            .map(InfinispanIndexedTypeContextImpl::typeIdentifier).collect(Collectors.toList());
    }
 
    InfinispanIndexedTypeContextImpl<?> getIndexedByEntityType(Class<?> entityType) {

@@ -259,9 +259,8 @@ public class LifecycleManager implements ModuleLifecycle {
          return;
       }
 
-      Collection<Class<?>> indexedTypes = searchMapping.allIndexedTypes().values();
       for (Class<?> c : indexedEntities) {
-         if (!indexedTypes.contains(c)) {
+         if (searchMapping.indexedEntity(c) == null) {
             throw CONTAINER.classNotIndexable(c.getName());
          }
       }

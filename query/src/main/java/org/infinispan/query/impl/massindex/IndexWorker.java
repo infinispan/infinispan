@@ -75,7 +75,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                   }
                   int segment = keyPartitioner.getSegment(storedKey);
 
-                  if (value != null && indexedTypes.contains(value.getClass())) {
+                  if (value != null && indexedTypes.contains(indexUpdater.toConvertedEntityJavaClass(value))) {
                      progressState.addItem(entry.getKey(), value,
                            indexUpdater.updateIndex(entry.getKey(), value, segment));
                   }

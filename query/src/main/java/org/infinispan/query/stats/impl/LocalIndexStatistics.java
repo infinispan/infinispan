@@ -11,6 +11,7 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.IndexStatisticSnapshot;
+import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -30,11 +31,12 @@ public class LocalIndexStatistics implements IndexStatistics {
    @Override
    public Map<String, IndexInfo> indexInfos() {
       SearchSession session = searchMapping.getMappingSession();
-      return searchMapping.getEntities().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> {
-               SearchScope<?> scope = e.getValue() == byte[].class ?
-                     session.scope(e.getValue(), e.getKey()) :
-                     session.scope(e.getValue());
+      return searchMapping.allIndexedEntities().stream()
+            .collect(Collectors.toMap(SearchIndexedEntity::name, e -> {
+               Class<?> javaClass = e.javaClass();
+               SearchScope<?> scope = javaClass == byte[].class ?
+                     session.scope(javaClass, e.name()) :
+                     session.scope(javaClass);
                long count = session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount();
                return new IndexInfo(count, 0);
             }));

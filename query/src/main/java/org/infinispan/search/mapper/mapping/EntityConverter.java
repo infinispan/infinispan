@@ -1,5 +1,7 @@
 package org.infinispan.search.mapper.mapping;
 
+import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
+
 /**
  * Can convert an entity before indexing it.
  *
@@ -15,7 +17,7 @@ public interface EntityConverter {
    /**
     * @return The resulting converted type
     */
-   Class<?> convertedType();
+   PojoRawTypeIdentifier<?> convertedTypeIdentifier();
 
    /**
     * Perform the conversion.

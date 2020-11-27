@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.Cache;
@@ -77,10 +78,10 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {
-      assertThat(searchMapping.allIndexedTypes()).doesNotContainValue(type);
+      assertNull(searchMapping.indexedEntity(type));
    }
 
    private void verifyClassIsIndexed(SearchMapping searchMapping, Class<?> type) {
-      assertThat(searchMapping.allIndexedTypes()).containsValue(type);
+      assertNotNull(searchMapping.indexedEntity(type));
    }
 }

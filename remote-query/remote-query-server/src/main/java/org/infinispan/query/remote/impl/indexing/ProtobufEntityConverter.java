@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -13,6 +14,8 @@ import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 
 public class ProtobufEntityConverter implements EntityConverter {
+
+   private final static PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
 
    private final SerializationContext serializationContext;
    private final Set<String> indexedMessageTypes;
@@ -28,8 +31,8 @@ public class ProtobufEntityConverter implements EntityConverter {
    }
 
    @Override
-   public Class<?> convertedType() {
-      return byte[].class;
+   public PojoRawTypeIdentifier<?> convertedTypeIdentifier() {
+      return BYTE_ARRAY_TYPE_IDENTIFIER;
    }
 
    @Override

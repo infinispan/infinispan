@@ -99,7 +99,7 @@ public class SearchIndexerImpl implements SearchIndexer {
       private Object value;
 
       public ConvertedValue(InfinispanIndexedTypeContext<?> typeContext, Object value) {
-         this.typeIdentifier = typeContext.getTypeIdentifier();
+         this.typeIdentifier = typeContext.typeIdentifier();
          this.value = value;
       }
    }
