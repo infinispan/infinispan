@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.Assert.assertEquals;
@@ -32,6 +33,11 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "query.distributed.StatsTest")
 public class StatsTest extends MultipleCacheManagersTest {
+
+   // Wild guess: an empty index shouldn't be more than this many bytes
+   private static final long MAX_EMPTY_INDEX_SIZE = 300L;
+   // Wild guess: a non-empty index (populated with addData) should be more than this many bytes
+   private static final long MIN_NON_EMPTY_INDEX_SIZE = 1000L;
 
    private Cache<String, Object> cache0;
    private Cache<String, Object> cache1;
@@ -68,11 +74,12 @@ public class StatsTest extends MultipleCacheManagersTest {
    @BeforeMethod
    public void setUp() {
       cache0.clear();
-      addData();
    }
 
    @Test
    public void testQueryStats() {
+      addData();
+
       testNonIndexedQueryStats();
       testIndexedQueryStats();
       testHybridQueryStats();
@@ -80,30 +87,65 @@ public class StatsTest extends MultipleCacheManagersTest {
    }
 
    @Test
-   public void testIndexStats() {
+   public void testEmptyIndexStats() {
+      Set<String> expectedEntities = new HashSet<>(Arrays.asList(Person.class.getName(), Transaction.class.getName()));
+
+      Set<String> totalEntities = new HashSet<>();
+      for (int i = 0; i < cacheManagers.size(); i++) {
+         SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
+         Map<String, IndexInfo> indexInfos = searchStatistics.getIndexStatistics().indexInfos();
+         totalEntities.addAll(indexInfos.keySet());
+         for (IndexInfo indexInfo : indexInfos.values()) {
+            assertEquals(indexInfo.count(), 0L);
+            assertThat(indexInfo.size()).isLessThan(MAX_EMPTY_INDEX_SIZE);
+         }
+      }
+      assertEquals(totalEntities, expectedEntities);
+
+      SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
+      Map<String, IndexInfo> classIndexInfoMap = clusteredStats.getIndexStatistics().indexInfos();
+      assertEquals(classIndexInfoMap.keySet(), expectedEntities);
+
+      Long reduceCount = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);
+      assertEquals(reduceCount.intValue(), 0L);
+
+      Long reduceSize = classIndexInfoMap.values().stream().map(IndexInfo::size).reduce(0L, Long::sum);
+      assertThat(reduceSize.longValue()).isLessThan(MAX_EMPTY_INDEX_SIZE * 2); // 2 indexes
+   }
+
+   @Test
+   public void testNonEmptyIndexStats() {
+      addData();
+
       Set<String> expectedEntities = new HashSet<>(Arrays.asList(Person.class.getName(), Transaction.class.getName()));
       int expectDocuments = cacheManagers.size() * cache0.getCacheConfiguration().clustering().hash().numOwners();
 
       Set<String> totalEntities = new HashSet<>();
       int totalCount = 0;
+      long totalSize = 0L;
       for (int i = 0; i < cacheManagers.size(); i++) {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
          Map<String, IndexInfo> indexInfos = searchStatistics.getIndexStatistics().indexInfos();
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
             totalCount += indexInfo.count();
+            totalSize += indexInfo.size();
          }
       }
       assertEquals(totalEntities, expectedEntities);
       assertEquals(totalCount, expectDocuments);
+      assertThat(totalSize).isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
 
       SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
       Map<String, IndexInfo> classIndexInfoMap = clusteredStats.getIndexStatistics().indexInfos();
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
-      Long reduce = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);
-      int i = cacheManagers.size() * cache0.getCacheConfiguration().clustering().hash().numOwners();
-      assertEquals(reduce.intValue(), i);
 
+      Long reduceCount = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);
+      int clusteredExpectDocuments = cacheManagers.size() * cache0.getCacheConfiguration().clustering().hash().numOwners();
+      assertEquals(reduceCount.intValue(), clusteredExpectDocuments);
+
+      Long reduceSize = classIndexInfoMap.values().stream().map(IndexInfo::size).reduce(0L, Long::sum);
+      assertThat(reduceSize.longValue()).isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
    }
 
    private void testClean() {

@@ -61,6 +61,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
+   // Wild guess: an empty index shouldn't be more than this many bytes
+   private static final long MAX_EMPTY_INDEX_SIZE = 300L;
+   // Wild guess: a non-empty index (populated with addData) should be more than this many bytes
+   private static final long MIN_NON_EMPTY_INDEX_SIZE = 1000L;
+
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
 
    private static final String PROTO_SCHEMA =
@@ -734,10 +739,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       statJson = Json.read(response.getBody());
       assertEquals(3, statJson.at("index").at("types").at("Entity").at("count").asInteger());
       assertEquals(2, statJson.at("index").at("types").at("Another").at("count").asInteger());
-      //TODO: Index sizes are not currently exposed (HSEARCH-4056)
-      assertEquals(0, statJson.at("index").at("types").at("Entity").at("size").asInteger());
-      assertEquals(0, statJson.at("index").at("types").at("Another").at("size").asInteger());
-      assertEquals(0, statJson.at("index").at("types").at("Another").at("size").asInteger());
+      assertThat(statJson.at("index").at("types").at("Entity").at("size").asLong())
+            .isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
+      assertThat(statJson.at("index").at("types").at("Another").at("size").asLong())
+              .isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
       assertFalse(statJson.at("index").at("reindexing").asBoolean());
    }
 
@@ -755,7 +760,15 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    private void assertIndexStatsEmpty(Json indexStats) {
       indexStats.at("types").asJsonMap().forEach((name, json) -> {
          assertEquals(0, json.at("count").asInteger());
-         assertEquals(0, json.at("size").asInteger());
+         // TODO Restore this assertion when Infinispan forces a merge after clearing a cache.
+         //   Currently the index size remains high after the cache was cleared,
+         //   because Infinispan doesn't force a merge. We're left with segments
+         //   where all documents have been marked for deletion.
+         //   In real-world usage that's no big deal, since Lucene will automatically
+         //   trigger a merge some time later, but for tests it means we can't require
+         //   that indexes are small *just* after a clear.
+//         assertThat(json.at("size").asLong()).isLessThan(MAX_EMPTY_INDEX_SIZE);
+         assertThat(json.at("size").asLong()).isGreaterThanOrEqualTo(0L);
       });
    }
 
