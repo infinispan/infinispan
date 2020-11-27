@@ -10,9 +10,9 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
  */
 public interface InfinispanTypeContextProvider {
 
-   InfinispanIndexedTypeContext getTypeContextByEntityType(Class<?> entityType);
+   InfinispanIndexedTypeContext<?> getTypeContextByEntityType(Class<?> entityType);
 
-   InfinispanIndexedTypeContext getTypeContextByEntityName(String indexName);
+   InfinispanIndexedTypeContext<?> getTypeContextByEntityName(String indexName);
 
    Map<String, Class<?>> getEntityClassByEntityName();
 

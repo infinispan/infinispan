@@ -40,7 +40,7 @@ public class ProtobufMessageBinder implements TypeBinder {
       final Map<String, IndexFieldReference<?>> fieldReferenceMap = new HashMap<>();
       final Map<String, IndexObjectFieldReference> objectReferenceMap = new HashMap<>();
 
-      Stack<State> stack = new Stack();
+      Stack<State> stack = new Stack<>();
       stack.push(new State(globalReferenceHolder.getMessageReferenceProviders().get(rootMessageName),
             "", context.indexSchemaElement(), 0));
 

@@ -73,7 +73,7 @@ public class SearchIndexerImpl implements SearchIndexer {
       }
 
       if (entityConverter == null || !entity.getClass().equals(entityConverter.targetType())) {
-         InfinispanIndexedTypeContext typeContext = typeContextProvider.getTypeContextByEntityType(entity.getClass());
+         InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.getTypeContextByEntityType(entity.getClass());
          if (typeContext == null) {
             return null;
          }
@@ -86,7 +86,7 @@ public class SearchIndexerImpl implements SearchIndexer {
          return null;
       }
 
-      InfinispanIndexedTypeContext typeContext = typeContextProvider.getTypeContextByEntityName(converted.entityName());
+      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.getTypeContextByEntityName(converted.entityName());
       if (typeContext == null) {
          return null;
       }
@@ -98,7 +98,7 @@ public class SearchIndexerImpl implements SearchIndexer {
       private PojoRawTypeIdentifier<?> typeIdentifier;
       private Object value;
 
-      public ConvertedValue(InfinispanIndexedTypeContext typeContext, Object value) {
+      public ConvertedValue(InfinispanIndexedTypeContext<?> typeContext, Object value) {
          this.typeIdentifier = typeContext.getTypeIdentifier();
          this.value = value;
       }

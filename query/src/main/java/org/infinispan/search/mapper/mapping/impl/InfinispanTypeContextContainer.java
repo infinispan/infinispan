@@ -20,7 +20,7 @@ class InfinispanTypeContextContainer implements InfinispanTypeContextProvider {
 
    private InfinispanTypeContextContainer(Builder builder) {
       for (InfinispanIndexedTypeContextImpl.Builder<?> contextBuilder : builder.indexedTypeContextBuilders) {
-         InfinispanIndexedTypeContextImpl indexedTypeContext = contextBuilder.build();
+         InfinispanIndexedTypeContextImpl<?> indexedTypeContext = contextBuilder.build();
          indexedTypeContextsByEntityName.put(indexedTypeContext.getEntityName(), indexedTypeContext);
          indexedTypeContextsByJavaType.put(indexedTypeContext.getTypeIdentifier().javaClass(), indexedTypeContext);
       }

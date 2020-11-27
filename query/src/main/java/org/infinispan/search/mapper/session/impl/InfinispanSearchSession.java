@@ -19,7 +19,7 @@ import org.infinispan.search.mapper.session.SearchSession;
 /**
  * @author Fabio Massimo Ercoli
  */
-public class InfinispanSearchSession extends AbstractPojoSearchSession implements SearchSession,
+public class InfinispanSearchSession extends AbstractPojoSearchSession<EntityReference> implements SearchSession,
       DocumentReferenceConverter<EntityReference>, EntityReferenceFactory<EntityReference> {
 
    private final InfinispanSearchSessionMappingContext mappingContext;
@@ -83,7 +83,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
    }
 
    @Override
-   public EntityReferenceFactory entityReferenceFactory() {
+   public EntityReferenceFactory<EntityReference> entityReferenceFactory() {
       return this;
    }
 
