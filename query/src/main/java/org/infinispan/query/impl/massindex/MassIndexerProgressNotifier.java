@@ -10,6 +10,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.common.EntityReference;
+import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,7 +55,7 @@ class MassIndexerProgressNotifier {
       contextBuilder.failingOperation(log.massIndexerIndexingInstance(type.getSimpleName()));
       // Add more information here, but information that may not be available if the session completely broke down
       // (we're being extra careful here because we don't want to throw an exception while handling and exception)
-      EntityReference entityReference = EntityReference.withDefaultName(type, id);
+      EntityReference entityReference = EntityReferenceImpl.withDefaultName(type, id);
       if (entityReference != null) {
          contextBuilder.entityReference(entityReference);
          recordedFailure.entityReference = entityReference;

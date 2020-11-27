@@ -1,7 +1,5 @@
 package org.infinispan.search.mapper.common;
 
-import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
-import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 
 /**
@@ -9,24 +7,20 @@ import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
  */
 public interface EntityReference {
 
-   static EntityReference withDefaultName(Class<?> type, Object id) {
-      return new EntityReferenceImpl(PojoRawTypeIdentifier.of(type), type.getSimpleName(), id);
-   }
-
    /**
     * @return The type of the referenced entity.
     */
-   Class<?> getType();
+   Class<?> type();
 
    /**
     * @return The name of the referenced entity in the Hibernate Search mapping.
     * @see SearchMappingBuilder#addEntityType(Class, String)
     */
-   String getName();
+   String name();
 
    /**
-    * @return The identifier of the referenced entity, i.e. the value of the property marked as {@code @DocumentId}.
+    * @return The key of the referenced entity.
     */
-   Object getId();
+   Object key();
 
 }
