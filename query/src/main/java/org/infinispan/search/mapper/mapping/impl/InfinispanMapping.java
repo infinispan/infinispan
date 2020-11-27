@@ -1,12 +1,5 @@
 package org.infinispan.search.mapper.mapping.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.engine.search.loading.spi.EntityLoader;
@@ -15,20 +8,31 @@ import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.util.common.impl.Closer;
+import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.search.mapper.common.EntityReference;
+import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.impl.SearchScopeImpl;
 import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 import org.infinispan.search.mapper.session.impl.InfinispanSearchSession;
 import org.infinispan.search.mapper.session.impl.InfinispanSearchSessionMappingContext;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.search.mapper.work.impl.SearchIndexerImpl;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
       implements SearchMapping, InfinispanSearchSessionMappingContext {
+
+   private static final Log log = LoggerFactory.make( Log.class, MethodHandles.lookup() );
 
    private final InfinispanTypeContextContainer typeContextContainer;
    private final EntityLoader<EntityReference, ?> entityLoader;
@@ -49,7 +53,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.entityConverter = entityConverter;
       this.mappingSession = new InfinispanSearchSession(this, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer);
-      this.allIndexedEntityJavaClasses = typeContextContainer.getAllIndexed().stream()
+      this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::javaClass).collect(Collectors.toList());
    }
 
@@ -68,7 +72,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    @Override
    public SearchScope<?> scopeAll() {
-      return getSearchScope(typeContextContainer.allTypeIdentifiers());
+      return doCreateScope(typeContextContainer.allTypeIdentifiers());
    }
 
    @Override
@@ -89,18 +93,16 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
             typeIdentifiers.add(PojoRawTypeIdentifier.of(clazz));
          }
       }
-
-      return getSearchScope(typeIdentifiers);
+      return doCreateScope(typeIdentifiers);
    }
 
    @Override
    public <E> SearchScopeImpl<E> createScope(Class<E> expectedSuperType, Collection<String> entityNames) {
       List<PojoRawTypeIdentifier<? extends E>> typeIdentifiers = new ArrayList<>(entityNames.size());
       for (String entityName : entityNames) {
-         typeIdentifiers.add(PojoRawTypeIdentifier.of(expectedSuperType, entityName));
+         typeIdentifiers.add(entityTypeIdentifier(expectedSuperType, entityName));
       }
-
-      return getSearchScope(typeIdentifiers);
+      return doCreateScope(typeIdentifiers);
    }
 
    @Override
@@ -120,17 +122,17 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    @Override
    public SearchIndexedEntity indexedEntity(Class<?> entityType) {
-      return typeContextContainer.getIndexedByEntityType(entityType);
+      return typeContextContainer.indexedForExactType(entityType);
    }
 
    @Override
    public SearchIndexedEntity indexedEntity(String entityName) {
-      return typeContextContainer.getIndexedByEntityName(entityName);
+      return typeContextContainer.indexedForEntityName(entityName);
    }
 
    @Override
    public Collection<? extends SearchIndexedEntity> allIndexedEntities() {
-      return typeContextContainer.getAllIndexed();
+      return typeContextContainer.allIndexed();
    }
 
    @Override
@@ -161,11 +163,27 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.integration = integration;
    }
 
-   private <E> SearchScopeImpl<E> getSearchScope(Collection<PojoRawTypeIdentifier<? extends E>> typeIdentifiers) {
+   private <E> SearchScopeImpl<E> doCreateScope(Collection<PojoRawTypeIdentifier<? extends E>> typeIdentifiers) {
       PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> pojoScopeDelegate =
             delegate().createPojoScope(this, typeIdentifiers,
                   // Store the type identifier as additional metadata
                   typeIdentifier -> typeIdentifier);
       return new SearchScopeImpl(this, pojoScopeDelegate, this.entityLoader);
+   }
+
+   private <T> PojoRawTypeIdentifier<? extends T> entityTypeIdentifier(Class<T> expectedSuperType, String entityName) {
+      InfinispanIndexedTypeContext<?> typeContext = typeContextContainer.indexedForEntityName(entityName);
+      if (typeContext == null) {
+         throw log.invalidEntityName(entityName);
+      }
+      PojoRawTypeIdentifier<?> typeIdentifier = typeContext.typeIdentifier();
+      Class<?> actualJavaType = typeIdentifier.javaClass();
+      if (!expectedSuperType.isAssignableFrom(actualJavaType)) {
+         throw log.invalidEntitySuperType(entityName, expectedSuperType, actualJavaType);
+      }
+      // The cast below is safe because we just checked above that the type extends "expectedSuperType", which extends T
+      @SuppressWarnings("unchecked")
+      PojoRawTypeIdentifier<? extends T> castedTypeIdentifier = (PojoRawTypeIdentifier<? extends T>) typeIdentifier;
+      return castedTypeIdentifier;
    }
 }

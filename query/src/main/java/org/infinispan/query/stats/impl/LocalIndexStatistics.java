@@ -34,9 +34,7 @@ public class LocalIndexStatistics implements IndexStatistics {
       return searchMapping.allIndexedEntities().stream()
             .collect(Collectors.toMap(SearchIndexedEntity::name, e -> {
                Class<?> javaClass = e.javaClass();
-               SearchScope<?> scope = javaClass == byte[].class ?
-                     session.scope(javaClass, e.name()) :
-                     session.scope(javaClass);
+               SearchScope<?> scope = session.scope(javaClass, e.name());
                long count = session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount();
                return new IndexInfo(count, 0);
             }));
