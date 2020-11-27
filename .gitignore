@@ -18,6 +18,7 @@ dependency-reduced-pom.xml
 *.ipr
 *.iws
 .idea
+*.attach_pid*
 atlassian-ide-plugin.xml
 maven-ant-tasks.jar
 test-output
