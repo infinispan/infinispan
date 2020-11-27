@@ -29,10 +29,9 @@ public final class ClassLoaderServiceImpl implements ClassResolver, ResourceReso
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public <T> Class<T> classForName(String className) {
+   public Class<?> classForName(String className) {
       try {
-         return (Class<T>) Class.forName(className, true, classLoader);
+         return Class.forName(className, true, classLoader);
       } catch (Exception | LinkageError e) {
          throw log.unableToLoadTheClass( className, e );
       }
