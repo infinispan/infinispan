@@ -10,10 +10,10 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
  */
 public interface InfinispanIndexedTypeContext<E> {
 
-   PojoRawTypeIdentifier<E> getTypeIdentifier();
+   PojoRawTypeIdentifier<E> typeIdentifier();
 
-   String getEntityName();
+   String name();
 
-   IdentifierMapping getIdentifierMapping();
+   IdentifierMapping identifierMapping();
 
 }

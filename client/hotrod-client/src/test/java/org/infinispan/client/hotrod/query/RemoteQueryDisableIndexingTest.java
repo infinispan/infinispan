@@ -5,7 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.List;
 
@@ -24,7 +24,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.AbstractQueryDslTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
@@ -114,10 +113,12 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
       SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
       // we have indexing for remote query!
-      assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.User"));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.Account"));
+      assertNotNull(searchMapping.indexedEntity("sample_bank_account.Transaction"));
 
       // we have some indexes for this cache
-      assertEquals(2, searchMapping.allIndexedTypes().size());
+      assertEquals(3, searchMapping.allIndexedEntities().size());
    }
 
    public void testEqNonIndexedType() {

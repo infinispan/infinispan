@@ -41,7 +41,7 @@ public class IndexUpdater {
       }
 
       LOG.flushingIndex(javaClasses.toString());
-      getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().flush();
+      getSearchMapping().scope(javaClasses).workspace().flush();
    }
 
    public void refresh(Collection<Class<?>> javaClasses) {
@@ -50,7 +50,7 @@ public class IndexUpdater {
       }
 
       LOG.flushingIndex(javaClasses.toString());
-      getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().refresh();
+      getSearchMapping().scope(javaClasses).workspace().refresh();
    }
 
    public void purge(Collection<Class<?>> javaClasses) {
@@ -59,11 +59,15 @@ public class IndexUpdater {
       }
 
       LOG.purgingIndex(javaClasses.toString());
-      getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().purge();
+      getSearchMapping().scope(javaClasses).workspace().purge();
    }
 
    public Collection<Class<?>> allJavaClasses() {
-      return getSearchMapping().allIndexedTypes().values();
+      return getSearchMapping().allIndexedEntityJavaClasses();
+   }
+
+   public Class<?> toConvertedEntityJavaClass(Object value) {
+      return getSearchMapping().toConvertedEntityJavaClass(value);
    }
 
    public CompletableFuture<?> updateIndex(Object key, Object value, int segment) {

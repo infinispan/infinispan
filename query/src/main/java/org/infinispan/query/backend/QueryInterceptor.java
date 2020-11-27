@@ -1,17 +1,5 @@
 package org.infinispan.query.backend;
 
-import static java.util.concurrent.CompletableFuture.allOf;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -55,6 +43,18 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import static java.util.concurrent.CompletableFuture.allOf;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -392,7 +392,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
                operation = removeFromIndexes(key, segment);
             }
-         } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+         } else if (isPotentiallyIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             operation = removeFromIndexes(oldValue, key, segment);
          } else if (log.isTraceEnabled()) {
@@ -401,7 +401,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (log.isTraceEnabled()) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
-      if (isIndexedType(newValue)) {
+      if (isPotentiallyIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             operation = operation.thenCompose(r -> updateIndexes(skipIndexCleanup, newValue, key, segment));
@@ -430,7 +430,20 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return stopping.get();
    }
 
-   private boolean isIndexedType(Object value) {
-      return (searchMapping != null) && searchMapping.isIndexedType(value);
+   /**
+    * @param value An entity.
+    * @return {@code true} if there is a chance that this entity is of an indexed types.
+    * For protobuf entities which are not yet deserialized,
+    * this returns {@code true} even though we don't know the exact type until the entity is deserialized.
+    * The {@link org.infinispan.search.mapper.mapping.EntityConverter entity converter}
+    * that takes care of deserialization will take care of cancelling indexing
+    * if it turns out the actual type of the entity is not one that should be indexed.
+    */
+   private boolean isPotentiallyIndexedType(Object value) {
+      if (searchMapping == null) {
+         return false;
+      }
+      Class<?> convertedType = searchMapping.toConvertedEntityJavaClass(value);
+      return searchMapping.allIndexedEntityJavaClasses().contains(convertedType);
    }
 }

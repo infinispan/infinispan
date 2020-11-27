@@ -1,14 +1,13 @@
 package org.infinispan.search.mapper.mapping;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public interface SearchMapping extends AutoCloseable {
 
@@ -36,8 +35,6 @@ public interface SearchMapping extends AutoCloseable {
 
    SearchScope<?> scopeAll();
 
-   SearchScope<?> scopeFromJavaClasses(Collection<Class<?>> types);
-
    FailureHandler getFailureHandler();
 
    @Override
@@ -58,12 +55,33 @@ public interface SearchMapping extends AutoCloseable {
 
    SearchIndexedEntity indexedEntity(String entityName);
 
-   //TODO: ISPN-12449 remove this method as it does not correctly return protobuf types
-   Map<String, Class<?>> allIndexedTypes();
+   /**
+    * @return A collection containing one {@link SearchIndexedEntity} for each indexed entity
+    */
+   Collection<? extends SearchIndexedEntity> allIndexedEntities();
 
-   Map<String, Class<?>> getEntities();
+   //TODO: ISPN-12449 replace with a method with a method returning entity names.
+   // Currently this method returns java type, using byte[] to represents *all* protobuf types.
+   // So if we use java types, we can't discriminate between two protobuf types,
+   // which means for example that we can't reindex just one protobuf type;
+   // see the callers for more details.
+   Collection<Class<?>> allIndexedEntityJavaClasses();
 
-   boolean isIndexedType(Object value);
+   /**
+    * @param value An entity.
+    * @return The internal Java class for this entity after conversion,
+    * i.e. the Java class that will be returned by {@link #allIndexedEntityJavaClasses()}
+    * if this entity is potentially indexed.
+    * In practice, this is only useful to handle protobuf type: if an instance of ProtobufValueWrapper is passed,
+    * this will return byte[] because that's the type we use for protobuf values internally.
+    * For all other types, this just returns value.getClass().
+    * @see EntityConverter
+    */
+   //TODO: ISPN-12449 this would be really simpler if we were just using entity names.
+   // see allIndexedEntityJavaClasses.
+   // However, there's a challenge here: we don't know the type of a ProtobufValueWrapper until it's deserialized,
+   // and deserializing is costly so we don't want to deserialize it until we know we need to index it...
+   Class<?> toConvertedEntityJavaClass(Object value);
 
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders) {

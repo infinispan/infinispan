@@ -1,7 +1,6 @@
 package org.infinispan.search.mapper.session.impl;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 
@@ -13,8 +12,6 @@ public interface InfinispanTypeContextProvider {
    InfinispanIndexedTypeContext<?> getTypeContextByEntityType(Class<?> entityType);
 
    InfinispanIndexedTypeContext<?> getTypeContextByEntityName(String indexName);
-
-   Map<String, Class<?>> getEntityClassByEntityName();
 
    Collection<PojoRawTypeIdentifier<?>> allTypeIdentifiers();
 
