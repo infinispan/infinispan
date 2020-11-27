@@ -3,6 +3,7 @@ package org.infinispan.query.stats.impl;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.hibernate.search.backend.lucene.index.LuceneIndexManager;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -36,7 +37,8 @@ public class LocalIndexStatistics implements IndexStatistics {
                Class<?> javaClass = e.javaClass();
                SearchScope<?> scope = session.scope(javaClass, e.name());
                long count = session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount();
-               return new IndexInfo(count, 0);
+               long size = e.indexManager().unwrap(LuceneIndexManager.class).computeSizeInBytes();
+               return new IndexInfo(count, size);
             }));
    }
 
