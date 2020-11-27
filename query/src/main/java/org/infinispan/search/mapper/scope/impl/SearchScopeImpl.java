@@ -59,6 +59,6 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
    public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(
          BackendSessionContext sessionContext, DocumentReferenceConverter<EntityReference> documentReferenceConverter) {
       return delegate.search(sessionContext,
-            new InfinispanLoadingContext.Builder(documentReferenceConverter, entityLoader));
+            new InfinispanLoadingContext.Builder<>(documentReferenceConverter, entityLoader));
    }
 }
