@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -24,18 +23,15 @@ public class IndexUpdater {
    private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
 
    private final AdvancedCache<?, ?> cache;
-   private final KeyTransformationHandler keyTransformationHandler;
 
    private SearchMapping searchMapping;
 
-   public IndexUpdater(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
+   public IndexUpdater(AdvancedCache<?, ?> cache) {
       this.cache = cache;
-      this.keyTransformationHandler = keyTransformationHandler;
    }
 
-   public IndexUpdater(SearchMapping searchMapping, KeyTransformationHandler keyTransformationHandler) {
+   public IndexUpdater(SearchMapping searchMapping) {
       this.cache = null;
-      this.keyTransformationHandler = keyTransformationHandler;
       this.searchMapping = searchMapping;
    }
 
@@ -75,8 +71,7 @@ public class IndexUpdater {
          return CompletableFuture.completedFuture(null);
       }
 
-      final String idInString = keyTransformationHandler.keyToString(key);
-      return getSearchMapping().getSearchIndexer().addOrUpdate(idInString, String.valueOf(segment), value);
+      return getSearchMapping().getSearchIndexer().addOrUpdate(key, String.valueOf(segment), value);
    }
 
    private SearchMapping getSearchMapping() {

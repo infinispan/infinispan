@@ -19,7 +19,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -54,11 +53,10 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       AdvancedCache<Object, Object> reindexCache = valueFilterable ? cache.withStorageMediaType() : cache;
 
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
-      KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
 
       MassIndexerProgressNotifier notifier = new MassIndexerProgressNotifier(searchMapping, timeService);
-      IndexUpdater indexUpdater = new IndexUpdater(searchMapping, keyTransformationHandler);
+      IndexUpdater indexUpdater = new IndexUpdater(searchMapping);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
       DataConversion keyDataConversion = reindexCache.getKeyDataConversion();

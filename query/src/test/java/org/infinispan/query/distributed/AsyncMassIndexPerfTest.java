@@ -247,8 +247,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void flushIndex() {
-      IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchMapping(cache1),
-            ComponentRegistryUtils.getKeyTransformationHandler(cache1));
+      IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchMapping(cache1));
       indexUpdater.flush(Collections.singleton(Transaction.class));
    }
 

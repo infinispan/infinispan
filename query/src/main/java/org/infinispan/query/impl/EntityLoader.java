@@ -34,7 +34,7 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
    }
 
    private Object decodeKey(EntityReference entityReference) {
-      return keyDataConversion.fromStorage(keyTransformationHandler.stringToKey((String) entityReference.key()));
+      return keyDataConversion.fromStorage(entityReference.key());
    }
 
    @Override

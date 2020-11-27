@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
-import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * Returns the results of a node to create an eager distributed iterator.
@@ -40,11 +40,11 @@ final class CQCreateEagerQuery extends CQWorker {
       return result;
    }
 
-   private LuceneSearchResult<DocumentReference> fetchDocuments(SearchQueryBuilder query) {
+   private LuceneSearchResult<EntityReference> fetchReferences(SearchQueryBuilder query) {
       long start = 0;
       if (queryStatistics.isEnabled()) start = System.nanoTime();
 
-      LuceneSearchResult<DocumentReference> result = query.documentReference().fetch(queryDefinition.getMaxResults());
+      LuceneSearchResult<EntityReference> result = query.entityReference().fetch(queryDefinition.getMaxResults());
 
       if (queryStatistics.isEnabled())
          queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
@@ -53,13 +53,12 @@ final class CQCreateEagerQuery extends CQWorker {
    }
 
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> fetchDocuments(query), "CQCreateEagerQuery#collectKeys")
+      return blockingManager.supplyBlocking(() -> fetchReferences(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
                if (queryResult.total().hitCount() == 0L) return null;
 
                Object[] keys = queryResult.hits().stream()
-                     .map(DocumentReference::id)
-                     .map(this::stringToKey)
+                     .map(EntityReference::key)
                      .toArray(Object[]::new);
                return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), keys, null);
             });

@@ -127,13 +127,16 @@ public class LifecycleManager implements ModuleLifecycle {
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
+            for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
+               keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
+            }
 
-            searchMapping = createSearchMapping(queryStatistics, cfg.indexing(), indexedClasses, cr, cache, keyTransformationHandler,
-                  aggregatedClassLoader);
+            searchMapping = createSearchMapping(queryStatistics, cfg.indexing(), indexedClasses, cr, cache,
+                  keyTransformationHandler, aggregatedClassLoader);
 
-            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, keyTransformationHandler);
+            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses);
 
-            Indexer massIndexer = new DistributedExecutorMassIndexer(cache, keyTransformationHandler);
+            Indexer massIndexer = new DistributedExecutorMassIndexer(cache);
             cr.registerComponent(massIndexer, Indexer.class);
             if (searchMapping != null) {
                BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
@@ -175,7 +178,7 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
-                                               Map<String, Class<?>> indexedClasses, KeyTransformationHandler keyTransformationHandler) {
+                                               Map<String, Class<?>> indexedClasses) {
       CONTAINER.registeringQueryInterceptor(cache.getName());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
@@ -189,12 +192,7 @@ public class LifecycleManager implements ModuleLifecycle {
       boolean manualIndexing = HS5_CONF_STRATEGY_MANUAL.equals(
             cfg.indexing().properties().get(HS5_CONF_STRATEGY_PROPERTY));
 
-      QueryInterceptor queryInterceptor = new QueryInterceptor(keyTransformationHandler, manualIndexing, txOldValues,
-            cache, indexedClasses);
-
-      for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
-         keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
-      }
+      QueryInterceptor queryInterceptor = new QueryInterceptor(manualIndexing, txOldValues, cache, indexedClasses);
 
       AsyncInterceptorChain ic = bcr.getComponent(AsyncInterceptorChain.class).wired();
 
@@ -335,7 +333,8 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
-            CacheIdentifierBridge.getReference(), properties, aggregatedClassLoader, mappingProviders);
+            KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
+            properties, aggregatedClassLoader, mappingProviders);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
