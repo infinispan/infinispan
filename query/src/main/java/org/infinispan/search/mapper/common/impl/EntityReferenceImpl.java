@@ -7,6 +7,10 @@ import org.infinispan.search.mapper.common.EntityReference;
 
 public class EntityReferenceImpl implements EntityReference {
 
+   public static EntityReference withDefaultName(Class<?> type, Object id) {
+      return new EntityReferenceImpl(PojoRawTypeIdentifier.of(type), type.getSimpleName(), id);
+   }
+
    private final PojoRawTypeIdentifier<?> typeIdentifier;
    private final String name;
    private final Object id;
@@ -18,17 +22,17 @@ public class EntityReferenceImpl implements EntityReference {
    }
 
    @Override
-   public Class<?> getType() {
+   public Class<?> type() {
       return typeIdentifier.javaClass();
    }
 
    @Override
-   public String getName() {
+   public String name() {
       return name;
    }
 
    @Override
-   public Object getId() {
+   public Object key() {
       return id;
    }
 
