@@ -19,7 +19,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
@@ -56,9 +55,9 @@ public class DistributedExecutorMassIndexer implements Indexer {
       }
    };
 
-   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
+   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache) {
       this.cache = cache;
-      this.indexUpdater = new IndexUpdater(cache, keyTransformationHandler);
+      this.indexUpdater = new IndexUpdater(cache);
       this.executor = cache.getCacheManager().executor();
       this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
             .getComponent(BlockingManager.class);

@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
@@ -24,8 +23,6 @@ abstract class CQWorker {
 
    protected AdvancedCache<?, ?> cache;
 
-   private KeyTransformationHandler keyTransformationHandler;
-
    // the query
    protected QueryDefinition queryDefinition;
    protected UUID queryId;
@@ -37,7 +34,6 @@ abstract class CQWorker {
       this.cache = cache;
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.queryStatistics = ComponentRegistryUtils.getLocalQueryStatistics(cache);
-      this.keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       if (queryDefinition != null) {
          this.queryDefinition = queryDefinition;
          this.queryDefinition.initialize(cache);
@@ -56,16 +52,5 @@ abstract class CQWorker {
       } else {
          searchQuery.noRouting();
       }
-   }
-
-   /**
-    * Utility to extract the cache key of a DocumentExtractor and use the KeyTransformationHandler to turn the string
-    * into the actual key object.
-    *
-    * @param documentId
-    * @return
-    */
-   Object stringToKey(String documentId) {
-      return keyTransformationHandler.stringToKey(documentId);
    }
 }

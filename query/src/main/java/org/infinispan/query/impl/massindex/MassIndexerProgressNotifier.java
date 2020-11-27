@@ -51,15 +51,10 @@ class MassIndexerProgressNotifier {
 
       EntityIndexingFailureContext.Builder contextBuilder = EntityIndexingFailureContext.builder();
       contextBuilder.throwable(throwable);
-      // Add minimal information here, but information we're sure we can get
       contextBuilder.failingOperation(log.massIndexerIndexingInstance(type.getSimpleName()));
-      // Add more information here, but information that may not be available if the session completely broke down
-      // (we're being extra careful here because we don't want to throw an exception while handling and exception)
       EntityReference entityReference = EntityReferenceImpl.withDefaultName(type, id);
-      if (entityReference != null) {
-         contextBuilder.entityReference(entityReference);
-         recordedFailure.entityReference = entityReference;
-      }
+      contextBuilder.entityReference(entityReference);
+      recordedFailure.entityReference = entityReference;
 
       if (failureHandler == null) {
          failureHandler = searchMapping.getFailureHandler();

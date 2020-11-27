@@ -83,7 +83,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject BlockingManager blockingManager;
    @Inject protected KeyPartitioner keyPartitioner;
 
-   private final KeyTransformationHandler keyTransformationHandler;
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
    private final DataConversion valueDataConversion;
@@ -98,10 +97,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SearchMapping searchMapping;
    private SegmentListener segmentListener;
 
-   public QueryInterceptor(KeyTransformationHandler keyTransformationHandler,
-                           boolean isManualIndexing, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
+   public QueryInterceptor(boolean isManualIndexing, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
                            AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses) {
-      this.keyTransformationHandler = keyTransformationHandler;
       this.isManualIndexing = isManualIndexing;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
@@ -343,21 +340,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Remove entries from all indexes by key.
     */
    CompletableFuture<?> removeFromIndexes(Object key, int segment) {
-      return getSearchIndexer().purge(keyToString(key), String.valueOf(segment));
+      return getSearchIndexer().purge(key, String.valueOf(segment));
    }
 
    // Method that will be called when data needs to be removed from Lucene.
    private CompletableFuture<?> removeFromIndexes(Object value, Object key, int segment) {
-      return getSearchIndexer().delete(keyToString(key), String.valueOf(segment), value);
+      return getSearchIndexer().delete(key, String.valueOf(segment), value);
    }
 
    private CompletableFuture<?> updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, int segment) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
       if (usingSkipIndexCleanupFlag) {
-         return getSearchIndexer().add(keyToString(key), String.valueOf(segment), value);
+         return getSearchIndexer().add(key, String.valueOf(segment), value);
       } else {
-         return getSearchIndexer().addOrUpdate(keyToString(key), String.valueOf(segment), value);
+         return getSearchIndexer().addOrUpdate(key, String.valueOf(segment), value);
       }
    }
 
@@ -381,14 +378,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private Object extractKey(Object storedKey) {
       return keyDataConversion.extractIndexable(storedKey);
-   }
-
-   private String keyToString(Object key) {
-      return keyTransformationHandler.keyToString(key);
-   }
-
-   public KeyTransformationHandler getKeyTransformationHandler() {
-      return keyTransformationHandler;
    }
 
    CompletableFuture<?> processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue) {
