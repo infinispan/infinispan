@@ -2339,7 +2339,7 @@
     <xs:attribute name="refresh-interval" type="xs:long" default="0">
       <xs:annotation>
         <xs:documentation>
-          Advanced: Defines the internal in milliseconds to reopen the index reader.
+          Advanced: Defines the interval in milliseconds to reopen the index reader.
           By default, the index reader is refreshed on-demand during searches, if
           new entries were indexed since the last refresh. Configuring with a value
           larger than zero will make some queries results stale, but query throughput
