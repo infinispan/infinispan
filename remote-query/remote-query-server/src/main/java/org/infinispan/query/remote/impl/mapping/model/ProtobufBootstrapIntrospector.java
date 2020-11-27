@@ -19,7 +19,7 @@ public class ProtobufBootstrapIntrospector implements PojoBootstrapIntrospector 
 
    @Override
    public PojoRawTypeModel<?> typeModel(String name) {
-      return new ProtobufRawTypeModel(name);
+      return new ProtobufRawTypeModel(typeModel(byte[].class), name);
    }
 
    @Override

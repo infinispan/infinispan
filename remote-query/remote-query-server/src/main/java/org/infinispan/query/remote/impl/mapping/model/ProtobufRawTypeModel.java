@@ -16,10 +16,12 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 
 public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
 
+   private final PojoRawTypeModel<byte[]> superType;
    private final PojoRawTypeIdentifier<byte[]> typeIdentifier;
    private final PojoCaster<byte[]> caster;
 
-   public ProtobufRawTypeModel(String name) {
+   public ProtobufRawTypeModel(PojoRawTypeModel<byte[]> superType, String name) {
+      this.superType = superType;
       this.typeIdentifier = PojoRawTypeIdentifier.of(byte[].class, name);
       this.caster = new JavaClassPojoCaster<>(byte[].class);
    }
@@ -37,20 +39,17 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
 
    @Override
    public boolean isSubTypeOf(MappableTypeModel superTypeCandidate) {
-      // Protocol Buffers does not support inheritance.
-      return equals(superTypeCandidate);
+      return equals(superTypeCandidate) || superType.isSubTypeOf(superTypeCandidate);
    }
 
    @Override
    public Stream<? extends PojoRawTypeModel<? super byte[]>> ascendingSuperTypes() {
-      // Protocol Buffers does not support inheritance.
-      return Stream.of(this);
+      return Stream.concat(Stream.of(this), superType.ascendingSuperTypes());
    }
 
    @Override
    public Stream<? extends PojoRawTypeModel<? super byte[]>> descendingSuperTypes() {
-      // Protocol Buffers does not support inheritance.
-      return Stream.of(this);
+      return Stream.concat(superType.descendingSuperTypes(), Stream.of(this));
    }
 
    @Override
