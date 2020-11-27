@@ -73,7 +73,7 @@ public class SearchIndexerImpl implements SearchIndexer {
       }
 
       if (entityConverter == null || !entity.getClass().equals(entityConverter.targetType())) {
-         InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.getTypeContextByEntityType(entity.getClass());
+         InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.indexedForExactType(entity.getClass());
          if (typeContext == null) {
             return null;
          }
@@ -86,7 +86,7 @@ public class SearchIndexerImpl implements SearchIndexer {
          return null;
       }
 
-      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.getTypeContextByEntityName(converted.entityName());
+      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.indexedForEntityName(converted.entityName());
       if (typeContext == null) {
          return null;
       }

@@ -54,7 +54,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession<EntityRef
    @Override
    public EntityReference fromDocumentReference(DocumentReference reference) {
       InfinispanIndexedTypeContext<?> typeContext =
-            typeContextProvider.getTypeContextByEntityName(reference.typeName());
+            typeContextProvider.indexedForEntityName(reference.typeName());
       if (typeContext == null) {
          throw new AssertionFailure("Document reference " + reference + " refers to an unknown index");
       }
@@ -89,7 +89,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession<EntityRef
 
    @Override
    public EntityReference createEntityReference(String typeName, Object identifier) {
-      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.getTypeContextByEntityName(typeName);
+      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.indexedForEntityName(typeName);
       if (typeContext == null) {
          throw new AssertionFailure(
                "Type name " + typeName + " refers to an unknown type"

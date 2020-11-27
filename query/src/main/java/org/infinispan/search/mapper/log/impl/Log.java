@@ -32,4 +32,12 @@ public interface Log extends BasicLogger {
    @Message(id = 14504, value = "Unable to load class [%1$s]")
    ClassLoadingException unableToLoadTheClass(String className, @Cause Throwable cause);
 
+   @Message(id = 14505, value = "Unknown entity name: '%1$s'.")
+   SearchException invalidEntityName(String entityName);
+
+   @Message(id = 14506, value = "Invalid type for '%1$s': the entity type must extend '%2$s'," +
+         " but entity type '%3$s' does not.")
+   SearchException invalidEntitySuperType(String entityName,
+         @FormatWith(ClassFormatter.class) Class<?> expectedSuperType,
+         @FormatWith(ClassFormatter.class) Class<?> actualJavaType);
 }
