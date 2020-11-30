@@ -348,7 +348,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
-      log.debugf("Starting with topology %d", initialTopology);
+      log.debugf("Starting with topology %d", initialTopology.getTopologyId());
 
       doAnswer(invocation -> {
          int viewId = (Integer) invocation.getArguments()[0];
@@ -399,7 +399,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
-      log.debugf("Starting with topology %d", initialTopology);
+      log.debugf("Starting with topology %d", initialTopology.getTopologyId());
 
       doAnswer(invocation -> {
          int viewId = (Integer) invocation.getArguments()[0];
