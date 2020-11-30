@@ -3,7 +3,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>11.0.7.Final</version>
+      <version>11.0.0-SNAPSHOT</version>
       <relativePath>../build-configuration/bom/pom.xml</relativePath>
    </parent>
    <modelVersion>4.0.0</modelVersion>
