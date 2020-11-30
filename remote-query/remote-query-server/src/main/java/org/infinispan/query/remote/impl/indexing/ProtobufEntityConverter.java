@@ -57,7 +57,7 @@ public class ProtobufEntityConverter implements EntityConverter {
       return new ProtobufConvertedEntity(skip, entityName, messageBytes);
    }
 
-   private class ProtobufConvertedEntity implements ConvertedEntity {
+   private static class ProtobufConvertedEntity implements ConvertedEntity {
       private final boolean skip;
       private final String entityName;
       private final byte[] value;
