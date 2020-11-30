@@ -95,7 +95,6 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
    private static final Log log = LogFactory.getLog(ClusteredCacheBackupReceiver.class);
-   private final boolean trace = log.isDebugEnabled();
    private static final BiFunction<Object, Throwable, Void> CHECK_EXCEPTION = (o, throwable) -> {
       if (throwable == null || throwable instanceof DiscardUpdateException) {
          //for optimistic transaction, signals the update was discarded
@@ -159,7 +158,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
       final Address localAddress = rpcManager.getAddress();
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.", cmd);
       }
 
@@ -176,7 +175,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          if (entry.getValue() == null || entry.getValue().isEmpty()) {
             continue;
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Node '%s' will apply %s", entry.getKey(), entry.getValue());
          }
          StatePushTask task = new StatePushTask(entry.getValue(), entry.getKey(), endTime);
@@ -187,7 +186,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       //help gc. this is safe because the chunks was already sent
       primaryOwnersChunks.clear();
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Local node '%s' will apply %s", localAddress, localChunks);
       }
 
@@ -348,7 +347,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    private static final class TransactionHandler extends AbstractVisitor {
 
       private static final Log log = LogFactory.getLog(TransactionHandler.class);
-      private final boolean trace = log.isTraceEnabled();
 
       private final ConcurrentMap<GlobalTransaction, GlobalTransaction> remote2localTx;
 
@@ -414,7 +412,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          if (!isTransactional()) {
             log.cannotRespondToCommit(command.getGlobalTransaction(), backupCache.getName());
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Committing remote transaction %s", command.getGlobalTransaction());
             }
             try {
@@ -429,7 +427,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          if (!isTransactional()) {
             log.cannotRespondToRollback(command.getGlobalTransaction(), backupCache.getName());
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Rolling back remote transaction %s", command.getGlobalTransaction());
             }
             try {
@@ -461,7 +459,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          TransactionManager txManager = txManager();
          txManager.resume(localTx.getTransaction());
          if (!localTx.isEnlisted()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("%s isn't enlisted! Removing it manually.", localTx);
             }
             transactionTable.removeLocalTransaction(localTx);
@@ -488,12 +486,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
                if (onePhaseCommit) {
                   if (replaySuccessful) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
                      }
                      tm.commit();
                   } else {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());
                      }
                      tm.rollback();
@@ -538,12 +536,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
             }
 
             if (rpcManager.getMembers().contains(this.address) && !rpcManager.getAddress().equals(this.address)) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef(throwable, "An exception was sent by %s. Retrying!", this.address);
                }
                executeRemote(); //retry remote
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef(throwable, "An exception was sent by %s. Retrying locally!", this.address);
                }
                //if the node left the cluster, we apply the missing state. This avoids the site provider to re-send the
@@ -551,7 +549,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
                executeLocal(); //retry locally
             }
          } else if (response == CacheNotFoundResponse.INSTANCE) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Cache not found in node '%s'. Retrying locally!", address);
             }
             if (isShouldGiveUp()) {

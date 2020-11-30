@@ -18,7 +18,6 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class NonBlockingRejectedExecutionHandler implements RejectedExecutionHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private NonBlockingRejectedExecutionHandler() { }
 
@@ -37,7 +36,7 @@ public class NonBlockingRejectedExecutionHandler implements RejectedExecutionHan
       if (currentThread.getThreadGroup() instanceof NonBlockingResource) {
          r.run();
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Current thread will wait until task %s is placed into the queue of %s", r, executor);
          }
          try {

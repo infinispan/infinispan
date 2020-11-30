@@ -107,7 +107,6 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    protected final Predicate<? super String> ignoreCache;
 
    private final static Log log = LogFactory.getLog(MemcachedDecoder.class, Log.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    private static final int SecondsInAMonth = 60 * 60 * 24 * 30;
 
@@ -175,7 +174,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    private void decodeDispatch(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws MemcachedException {
       try {
-         if (isTrace) // To aid debugging
+         if (log.isTraceEnabled()) // To aid debugging
             log.tracef("Decode using instance @%x", System.identityHashCode(this));
          MemcachedDecoderState state = state();
          switch (state) {
@@ -426,7 +425,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       List<String> args = readSplitLine(b);
       boolean endOfOp = false;
       if (args.size() != 0) {
-         if (isTrace) log.tracef("Operation parameters: %s", args);
+         if (log.isTraceEnabled()) log.tracef("Operation parameters: %s", args);
          try {
             switch (header.operation) {
                case PutRequest:
@@ -898,7 +897,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    protected Object writeResponse(Channel ch, Object response) {
       try {
          if (response != null) {
-            if (isTrace) log.tracef("Write response %s", response);
+            if (log.isTraceEnabled()) log.tracef("Write response %s", response);
             if (response instanceof ByteBuf[]) {
                for (ByteBuf buf : (ByteBuf[]) response) {
                   ch.write(buf, ch.voidPromise());
@@ -1063,7 +1062,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    private MemcachedOperation toRequest(String commandName, Boolean endOfOp, ByteBuf buffer) throws UnknownOperationException {
-      if (isTrace) log.tracef("Operation: '%s'", commandName);
+      if (log.isTraceEnabled()) log.tracef("Operation: '%s'", commandName);
       switch (commandName) {
          case "get":
             return MemcachedOperation.GetRequest;

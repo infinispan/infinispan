@@ -43,7 +43,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataContainer<K, V> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    protected final AtomicReferenceArray<PeekableTouchableMap<K, V>> maps;
    protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;
@@ -235,7 +234,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Override
    public void addSegments(IntSet segments) {
       if (shouldStopSegments) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Ensuring segments %s are started", segments);
          }
          // Without this we will get a boxing and unboxing from int to Integer and back to int
@@ -246,7 +245,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Override
    public void removeSegments(IntSet segments) {
       if (shouldStopSegments) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Removing segments: %s from container", segments);
          }
          for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {

@@ -31,7 +31,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TxCompletionNotificationCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final int COMMAND_ID = 22;
 
@@ -76,7 +75,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Processing completed transaction %s", gtx);
       RemoteTransaction remoteTx = null;
       RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
@@ -108,7 +107,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
     */
    private void forwardCommandRemotely(StateTransferManager stateTransferManager, RemoteTransaction remoteTx) {
       Set<Object> affectedKeys = remoteTx.getAffectedKeys();
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %s", gtx,
                toStr(affectedKeys));
       stateTransferManager.forwardCommandIfNeeded(this, affectedKeys, remoteTx.getGlobalTransaction().getAddress());

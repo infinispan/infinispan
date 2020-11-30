@@ -12,7 +12,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TemporaryTable {
    private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private ConcurrentMap<Object, Entry> table;
 
    public TemporaryTable(int capacity) {
@@ -28,7 +27,7 @@ public class TemporaryTable {
                   continue;
                } else if (entry.isLocked()) {
                   try {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Waiting for lock on %s", key);
                      }
                      entry.wait();

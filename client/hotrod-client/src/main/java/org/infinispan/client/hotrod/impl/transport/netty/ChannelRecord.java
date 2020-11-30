@@ -20,7 +20,6 @@ import io.netty.util.concurrent.GenericFutureListener;
  */
 public class ChannelRecord extends CompletableFuture<Channel> implements GenericFutureListener<ChannelFuture> {
    private static final Log log = LogFactory.getLog(ChannelRecord.class);
-   private final boolean trace = log.isTraceEnabled();
 
    static AttributeKey<ChannelRecord> KEY = AttributeKey.newInstance("activation");
 
@@ -50,7 +49,7 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
 
    @Override
    public void operationComplete(ChannelFuture future) throws Exception {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          if (!future.isSuccess()) {
             log.tracef(future.cause(), "Channel %s is closed, see exception for details", get());
          }

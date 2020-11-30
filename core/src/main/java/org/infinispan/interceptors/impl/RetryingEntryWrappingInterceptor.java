@@ -29,7 +29,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationExceptionFunction<DataWriteCommand> handleDataWriteReturn = this::handleDataWriteReturn;
    private final InvocationExceptionFunction<WriteCommand> handleManyWriteReturn = this::handleManyWriteReturn;
@@ -42,7 +41,7 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
    Object handleDataWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(throwable, "Retrying %s after concurrent change", dataWriteCommand);
          }
          ctx.removeLookedUpEntry(dataWriteCommand.getKey());
@@ -60,7 +59,7 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
    Object handleManyWriteReturn(InvocationContext ctx, WriteCommand command, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(throwable, "Retrying %s after concurrent change", command);
          }
          // Note: this is similar to what EWI does when RETRY flag is set, but we have to check entry.isCommitted()

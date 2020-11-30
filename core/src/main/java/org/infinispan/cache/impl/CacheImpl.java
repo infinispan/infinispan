@@ -142,7 +142,6 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private static final Log log = LogFactory.getLog(CacheImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    public static final String OBJECT_NAME = "Cache";
    private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
 
@@ -1774,7 +1773,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          transactionManager.begin();
          final Transaction transaction = getOngoingTransaction(true);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Implicit transaction started! Transaction: %s", transaction);
          }
       } catch (RuntimeException e) {
@@ -1788,7 +1787,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          if (transactionManager != null) transactionManager.rollback();
       } catch (Throwable t) {
-         if (trace) log.trace("Could not rollback", t);//best effort
+         if (log.isTraceEnabled()) log.trace("Could not rollback", t);//best effort
       }
    }
 
@@ -1796,7 +1795,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (transactionManager == null) {
          return;
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction(true));
       try {
          transactionManager.commit();

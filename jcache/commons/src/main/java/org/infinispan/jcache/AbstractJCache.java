@@ -39,7 +39,6 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    private static final Log log =
          LogFactory.getLog(AbstractJCache.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    protected final MutableConfiguration<K, V> configuration;
    protected final ExpiryPolicy expiryPolicy;
@@ -117,7 +116,7 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    }
 
    protected List<K> filterLoadAllKeys(Set<? extends K> keys, boolean replaceExistingValues, boolean cacheEvict) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Before filtering, keys to load: %s", keys);
 
       // Filter null keys out and keys to be overridden optionally
@@ -134,7 +133,7 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
             keysToLoad.add(key);
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("After filtering, keys to load: %s", keysToLoad);
 
       return keysToLoad;

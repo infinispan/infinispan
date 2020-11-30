@@ -37,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
 public class RollbackTransactionOperation extends BaseCompleteTransactionOperation {
 
    private static final Log log = LogFactory.getLog(RollbackTransactionOperation.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {
@@ -76,7 +75,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
 
    @Override
    public void addCache(ByteString cacheName, Status status) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Collected cache %s status %s", xid, cacheName, status);
       }
       switch (status) {
@@ -125,7 +124,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
          //all caches involved decided to commit
          xaCode = XAException.XA_HEURCOM;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Sending reply %s", xid, xaCode);
       }
       reply.accept(header, xaCode);
@@ -153,16 +152,6 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
             hasErrors = true;
          }
       }, this);
-   }
-
-   @Override
-   Log log() {
-      return log;
-   }
-
-   @Override
-   boolean isTraceEnabled() {
-      return trace;
    }
 
 }

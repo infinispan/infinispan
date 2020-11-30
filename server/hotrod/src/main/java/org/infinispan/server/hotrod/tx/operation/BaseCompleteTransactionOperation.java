@@ -33,6 +33,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A base class to complete a transaction (commit or rollback).
@@ -53,6 +54,8 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @since 9.4
  */
 abstract class BaseCompleteTransactionOperation implements CacheNameCollector, Runnable {
+
+   private static final Log log = LogFactory.getLog(BaseCompleteTransactionOperation.class, Log.class);
 
    final XidImpl xid;
    final GlobalTxTable globalTxTable;
@@ -86,8 +89,8 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
 
    @Override
    public final void noTransactionFound() {
-      if (isTraceEnabled()) {
-         log().tracef("[%s] No caches found.", xid);
+      if (log.isTraceEnabled()) {
+         log.tracef("[%s] No caches found.", xid);
       }
       //no transactions
       reply.accept(header, XAException.XAER_NOTA);
@@ -129,17 +132,13 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     */
    abstract CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout);
 
-   abstract Log log();
-
-   abstract boolean isTraceEnabled();
-
    /**
     * Invoked every time a cache is found to be involved in a transaction.
     */
    void notifyCacheCollected() {
       int result = expectedCaches.decrementAndGet();
-      if (isTraceEnabled()) {
-         log().tracef("[%s] Cache collected. Missing=%s.", xid, result);
+      if (log.isTraceEnabled()) {
+         log.tracef("[%s] Cache collected. Missing=%s.", xid, result);
       }
       if (result == 0) {
          onCachesCollected();
@@ -150,8 +149,8 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     * Invoked when all caches are ready to complete the transaction.
     */
    private void onCachesCollected() {
-      if (isTraceEnabled()) {
-         log().tracef("[%s] All caches collected: %s", xid, cacheNames);
+      if (log.isTraceEnabled()) {
+         log.tracef("[%s] All caches collected: %s", xid, cacheNames);
       }
       int size = cacheNames.size();
       if (size == 0) {
@@ -181,18 +180,18 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       AdvancedCache<?, ?> cache = server.cache(cacheInfo, header, subject);
       RpcManager rpcManager = cache.getRpcManager();
       if (rpcManager == null || rpcManager.getAddress().equals(state.getOriginator())) {
-         if (isTraceEnabled()) {
-            log().tracef("[%s] Completing local executed transaction.", xid);
+         if (log.isTraceEnabled()) {
+            log.tracef("[%s] Completing local executed transaction.", xid);
          }
          return asyncCompleteLocalTransaction(cache, state.getTimeout());
       } else if (rpcManager.getMembers().contains(state.getOriginator())) {
-         if (isTraceEnabled()) {
-            log().tracef("[%s] Forward remotely executed transaction to %s.", xid, state.getOriginator());
+         if (log.isTraceEnabled()) {
+            log.tracef("[%s] Forward remotely executed transaction to %s.", xid, state.getOriginator());
          }
          return forwardCompleteCommand(cacheName, rpcManager, state);
       } else {
-         if (isTraceEnabled()) {
-            log().tracef("[%s] Originator, %s, left the cluster.", xid, state.getOriginator());
+         if (log.isTraceEnabled()) {
+            log.tracef("[%s] Originator, %s, left the cluster.", xid, state.getOriginator());
          }
          return completeWithRemoteCommand(cache, rpcManager, state);
       }

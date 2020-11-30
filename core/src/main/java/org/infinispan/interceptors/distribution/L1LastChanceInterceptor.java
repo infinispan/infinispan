@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1LastChanceInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject L1Manager l1Manager;
    @Inject ClusteringDependentLogic cdl;
@@ -146,7 +145,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       Object key1 = (key = writeCommand.getKey());
       if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
             cdl.getCacheTopology().isWriteOwner(key1)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Sending additional invalidation for requestors if necessary.");
          }
          // Send out a last attempt L1 invalidation in case if someone cached the L1
@@ -193,7 +192,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             }
          }
          if (!toInvalidate.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.trace("Sending additional invalidation for requestors if necessary.");
             }
             CompletableFuture<?> f = l1Manager.flushCache(toInvalidate, rCtx.getOrigin(), true);
@@ -232,7 +231,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private CompletableFuture<?> handleLastChanceL1InvalidationOnCommit(TxInvocationContext<?> ctx) {
       if (shouldFlushL1(ctx)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Sending additional invalidation for requestors if necessary.");
          }
          return l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);

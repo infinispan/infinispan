@@ -47,7 +47,6 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  */
 public class ExtendedStatisticRpcManager implements RpcManager {
    private static final Log log = LogFactory.getLog(ExtendedStatisticRpcManager.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private final RpcManager actual;
    private final CacheStatisticManager cacheStatisticManager;
    private final org.infinispan.commons.marshall.StreamingMarshaller marshaller;
@@ -228,13 +227,13 @@ public class ExtendedStatisticRpcManager implements RpcManager {
          commandSizeStat = ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
          globalTransaction = null;
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Does not update stats for command %s. The command is not needed", command);
          }
          return;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Update stats for command %s. Is sync? %s. Duration stat is %s, counter stats is %s, " +
                           "recipient size stat is %s", command, sync, durationStat, counterStat, recipientSizeStat);
       }

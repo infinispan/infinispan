@@ -20,8 +20,6 @@ import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A {@link PerCacheInboundInvocationHandler} implementation for non-total order caches.
@@ -30,9 +28,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.1
  */
 public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
-
-   private static final Log log = LogFactory.getLog(TxPerCacheInboundInvocationHandler.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
 
@@ -90,16 +85,6 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
       } catch (Throwable throwable) {
          reply.reply(exceptionHandlingCommand(command, throwable));
       }
-   }
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
-   protected boolean isTraceEnabled() {
-      return trace;
    }
 
    private BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply,

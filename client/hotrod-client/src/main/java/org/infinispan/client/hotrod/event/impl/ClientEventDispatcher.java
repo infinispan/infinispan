@@ -100,7 +100,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    @Override
    public void invokeEvent(ClientEvent clientEvent) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Event %s received for listener with id=%s", clientEvent, Util.printArray(listenerId));
 
       switch (clientEvent.getType()) {

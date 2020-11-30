@@ -48,7 +48,6 @@ import net.jcip.annotations.GuardedBy;
 @Listener(observation = Listener.Observation.POST)
 public class PublisherHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, PublisherState> currentRequests = new ConcurrentHashMap<>();
 
@@ -111,7 +110,7 @@ public class PublisherHandler {
          }
          // We have a previous state that is already completed - this is most likely due to a failover and our node
          // now owns another segment but the async thread hasn't yet cleaned up our state.
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Closing prior state for %s to make room for a new request", requestId);
          }
          previousState.cancel();
@@ -151,7 +150,7 @@ public class PublisherHandler {
    public void closePublisher(String requestId) {
       PublisherState state;
       if ((state = currentRequests.remove(requestId)) != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Closed publisher using requestId %s", requestId);
          }
          state.cancel();
@@ -165,11 +164,11 @@ public class PublisherHandler {
     */
    private void closePublisher(String requestId, PublisherState state) {
       if (currentRequests.remove(requestId, state)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Closed publisher from completion using requestId %s", requestId);
          }
          state.cancel();
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("A concurrent request already closed the prior state for %s", requestId);
       }
    }
@@ -316,7 +315,7 @@ public class PublisherHandler {
       void prepareResponse(boolean complete) {
          PublisherResponse response = generateResponse(complete);
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Response ready %s with id %s for requestor %s", response, requestId, origin);
          }
 
@@ -336,7 +335,7 @@ public class PublisherHandler {
                   PublisherResponse prevResponse = futureResponse.join();
                   PublisherResponse newResponse = mergeResponses(prevResponse, response);
                   futureResponse = CompletableFuture.completedFuture(newResponse);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Received additional response, merged responses together %d for request id %s", System.identityHashCode(futureResponse), requestId);
                   }
                } else {
@@ -345,13 +344,13 @@ public class PublisherHandler {
                }
             } else {
                futureResponse = CompletableFuture.completedFuture(response);
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Eager response completed %d for request id %s", System.identityHashCode(futureResponse), requestId);
                }
             }
          }
          if (futureToComplete != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Completing waiting future %d for request id %s", System.identityHashCode(futureToComplete), requestId);
             }
             // Complete this outside of synchronized block
@@ -424,7 +423,7 @@ public class PublisherHandler {
             // Note this is not done in synchronized block in case if executor is within thread
             nonBlockingExecutor.execute(this);
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Retrieved future %d for request id %s", System.identityHashCode(currentFuture), requestId);
          }
          return currentFuture;
@@ -436,12 +435,12 @@ public class PublisherHandler {
        */
       @Override
       public void run() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Running handler for request id %s", requestId);
          }
          if (!complete) {
             int requestAmount = batchSize;
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Requesting %d additional entries for %s", requestAmount, requestId);
             }
             requestMore(upstream, requestAmount);
@@ -449,7 +448,7 @@ public class PublisherHandler {
             synchronized (this) {
                if (futureResponse == null) {
                   closePublisher(requestId, this);
-               } else if (trace) {
+               } else if (log.isTraceEnabled()) {
                   log.tracef("Skipping run as handler is complete, but still has some results for id %s", requestId);
                }
             }
@@ -541,7 +540,7 @@ public class PublisherHandler {
                                  // be tracked, so complete any segment tied to it if possible
                                  Integer segment = keySegmentCompletions.remove(originalValue);
                                  if (segment != null) {
-                                    if (trace) {
+                                    if (log.isTraceEnabled()) {
                                        log.tracef("Completing segment %s due to empty resulting value of %s for %s",
                                              segment, originalValue, requestId);
                                     }
@@ -589,7 +588,7 @@ public class PublisherHandler {
 
       @Override
       public void onComplete() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Completed state for %s", requestId);
          }
          super.onComplete();
@@ -610,7 +609,7 @@ public class PublisherHandler {
 
          Integer segmentToComplete = keySegmentCompletions.remove(key);
          if (segmentToComplete != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Completing segment %s from key %s for %s", segmentToComplete, key, requestId);
             }
             actualCompleteSegment(segmentToComplete);
@@ -681,12 +680,12 @@ public class PublisherHandler {
          // This means the consumer was sent the value immediately - this is most likely caused by the transformer
          // didn't have flatMap or anything else fancy (or we had an empty segment)
          if (keyForSegmentCompletion == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Completing segment %s for %s", segment, requestId);
             }
             actualCompleteSegment(segment);
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Delaying segment completion for %s until key %s is fully consumed for %s", segment,
                      keyForSegmentCompletion, requestId);
             }

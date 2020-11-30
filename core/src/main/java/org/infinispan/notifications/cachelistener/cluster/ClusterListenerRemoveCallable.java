@@ -24,7 +24,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusterListenerRemoveCallable implements Function<EmbeddedCacheManager, Void> {
    private static final Log log = LogFactory.getLog(ClusterListenerRemoveCallable.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final String cacheName;
    private final UUID identifier;
@@ -43,7 +42,7 @@ public class ClusterListenerRemoveCallable implements Function<EmbeddedCacheMana
          if (listener instanceof RemoteClusterListener) {
             RemoteClusterListener clusterListener = (RemoteClusterListener)listener;
             if (identifier.equals(clusterListener.getId())) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Removing local cluster listener due to parent cluster listener was removed : %s", identifier);
                }
                clusterListener.removeListener();

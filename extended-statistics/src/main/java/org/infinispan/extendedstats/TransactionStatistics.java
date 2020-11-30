@@ -27,7 +27,6 @@ public abstract class TransactionStatistics {
    //Here the elements which are common for local and remote transactions
    protected final long initTime;
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   protected final boolean trace = log.isTraceEnabled();
    protected final TimeService timeService;
    private final ExtendedStatisticsContainer container;
    private boolean readOnly;
@@ -39,7 +38,7 @@ public abstract class TransactionStatistics {
       this.initTime = timeService.time();
       this.readOnly = true; //as far as it does not tries to perform a put operation
       this.container = container;
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created transaction statistics. Start time=%s", initTime);
       }
    }
@@ -79,7 +78,7 @@ public abstract class TransactionStatistics {
     */
    public final void addValue(ExtendedStatistic stat, double value) {
       container.addValue(stat, value);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Add %s to %s", value, stat);
       }
    }
@@ -91,7 +90,7 @@ public abstract class TransactionStatistics {
     */
    public final double getValue(ExtendedStatistic stat) throws ExtendedStatisticNotFoundException {
       double value = container.getValue(stat);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Value of %s is %s", stat, value);
       }
       return value;
@@ -109,7 +108,7 @@ public abstract class TransactionStatistics {
     * cache statistics.
     */
    public final void terminateTransaction() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Terminating transaction. Is read only? %s. Is commit? %s", readOnly, committed);
       }
       long execTime = timeService.timeDuration(initTime, NANOSECONDS);
@@ -138,7 +137,7 @@ public abstract class TransactionStatistics {
     * Merges this statistics in the global container.
     */
    public final void flushTo(ConcurrentGlobalContainer globalContainer) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Flush this [%s] to %s", this, globalContainer);
       }
       container.mergeTo(globalContainer);

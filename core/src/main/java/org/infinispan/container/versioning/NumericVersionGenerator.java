@@ -38,7 +38,6 @@ import org.infinispan.util.logging.LogFactory;
 public class NumericVersionGenerator implements VersionGenerator {
 
    private static final Log log = LogFactory.getLog(NumericVersionGenerator.class);
-   private final boolean trace = log.isTraceEnabled();
 
    // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    final AtomicInteger versionCounter = new AtomicInteger();
@@ -125,7 +124,7 @@ public class NumericVersionGenerator implements VersionGenerator {
       public void calculateRank(ViewChangedEvent e) {
          long rank = NumericVersionGenerator.this
                .calculateRank(e.getLocalAddress(), e.getNewMembers(), e.getViewId());
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Calculated rank based on view %s and result was %d", e, rank);
       }
 

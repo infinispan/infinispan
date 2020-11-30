@@ -33,7 +33,6 @@ import org.infinispan.jcache.logging.Log;
 public class JCache<K, V> extends AbstractJCache<K, V> {
    private static final Log log =
          LogFactory.getLog(JCache.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private volatile boolean isClosed = false;
 
@@ -330,7 +329,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // verify that under contended access, one of the threads should "wait"
       // for the other, hence the use locks.
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoke entry processor %s for key=%s", entryProcessor, key);
 
       // Get old value skipping any listeners to impacting

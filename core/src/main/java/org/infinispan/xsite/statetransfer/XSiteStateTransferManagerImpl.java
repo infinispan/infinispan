@@ -64,8 +64,6 @@ import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
-   private static final boolean debug = log.isDebugEnabled();
 
    @Inject ComponentRegistry componentRegistry;
    @Inject RpcManager rpcManager;
@@ -142,10 +140,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
             CacheRpcCommand command = commandsFactory.buildXSiteStateTransferStartSendCommand(siteName, currentTopologyId());
             controlStateTransferOnLocalSite(command);
          } else {
-            if (debug) {
-               log.debugf("Not start sending keys to site '%s' while rebalance in progress. Wait until it is finished!",
+            log.debugf("Not start sending keys to site '%s' while rebalance in progress. Wait until it is finished!",
                           siteName);
-            }
          }
       } catch (Throwable throwable) {
          handleFailure(xSiteBackup);
@@ -171,7 +167,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Override
    public void cancelPushState(String siteName) throws Throwable {
       if (!siteCollector.containsKey(siteName)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Tried to cancel push state to '%s' but it does not exist.", siteName);
          }
          return;
@@ -257,7 +253,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @TopologyChanged
    public <K, V> CompletionStage<Void> handleTopology(TopologyChangedEvent<K, V> topologyChangedEvent) {
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Topology change detected! %s", topologyChangedEvent);
       }
       if (topologyChangedEvent.isPre()) {
@@ -307,7 +303,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    private void startCoordinating(Collection<String> sitesName, Collection<Address> members) {
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Becoming the x-site state transfer coordinator for %s", sitesName);
       }
       for (String siteName : sitesName) {
@@ -325,7 +321,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    private void handleFailure(XSiteBackup xSiteBackup) {
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Handle start state transfer failure to %s", xSiteBackup.getSiteName());
       }
       siteCollector.remove(xSiteBackup.getSiteName());
@@ -333,7 +329,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(xSiteBackup.getSiteName());
          controlStateTransferOnLocalSite(command);
       } catch (Exception e) {
-         if (debug) {
+         if (log.isDebugEnabled()) {
             log.debugf(e, "Exception while cancel sending to remote site %s", xSiteBackup.getSiteName());
          }
       }
@@ -341,7 +337,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          XSiteReplicateCommand command = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(null);
          controlStateTransferOnRemoteSite(xSiteBackup, command, null);
       } catch (Throwable throwable) {
-         if (debug) {
+         if (log.isDebugEnabled()) {
             log.debugf(throwable, "Exception while cancel receiving in remote site %s", xSiteBackup.getSiteName());
          }
       }

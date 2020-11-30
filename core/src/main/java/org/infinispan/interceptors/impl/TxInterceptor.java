@@ -98,7 +98,6 @@ import org.reactivestreams.Publisher;
 public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
@@ -161,7 +160,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (!ctx.isOriginLocal()) {
          GlobalTransaction gtx = ctx.getGlobalTransaction();
          if (txTable.isTransactionCompleted(gtx)) {
-            if (trace) log.tracef("Transaction %s already completed, skipping commit", gtx);
+            if (log.isTraceEnabled()) log.tracef("Transaction %s already completed, skipping commit", gtx);
             return null;
          }
 
@@ -510,12 +509,12 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       boolean canRollback = command instanceof PrepareCommand && !((PrepareCommand) command).isOnePhaseCommit() ||
             command instanceof LockControlCommand;
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Verifying transaction: alreadyCompleted=%s", alreadyCompleted);
       }
 
       if (alreadyCompleted) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Rolling back remote transaction %s because it was already completed",
                        globalTransaction);
          }
@@ -539,7 +538,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       // was not received by local node because it was executed on the previous key owners. We need to re-prepare
       // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
       RemoteTransaction remoteTx = ctx.getCacheTransaction();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(), topologyId);
       }
       if (remoteTx.lookedUpEntriesTopology() < topologyId) {
@@ -551,7 +550,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          }
          prepareCommand.markTransactionAsRemote(true);
          prepareCommand.setOrigin(ctx.getOrigin());
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Replaying the transactions received as a result of state transfer %s",
                   prepareCommand);
          }

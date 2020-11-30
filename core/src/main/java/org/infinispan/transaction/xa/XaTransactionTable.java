@@ -30,7 +30,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class XaTransactionTable extends TransactionTable {
    private static final Log log = LogFactory.getLog(XaTransactionTable.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected RecoveryManager recoveryManager;
    @ComponentName(KnownComponentNames.CACHE_NAME)
@@ -65,7 +64,7 @@ public class XaTransactionTable extends TransactionTable {
    public LocalXaTransaction getLocalTransaction(XidImpl xid) {
       LocalXaTransaction localTransaction = this.xid2LocalTx.get(xid);
       if (localTransaction == null) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("no tx found for %s", xid);
       }
       return localTransaction;
@@ -155,17 +154,17 @@ public class XaTransactionTable extends TransactionTable {
       //transform in our internal format in order to be able to serialize
       localTransaction.setXid(xid);
       addLocalTransactionMapping(localTransaction);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("start called on tx %s", localTransaction.getGlobalTransaction());
    }
 
    void end(LocalXaTransaction localTransaction) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("end called on tx %s(%s)", localTransaction.getGlobalTransaction(), cacheName);
    }
 
    CompletionStage<Void> forget(XidImpl xid) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("forget called for xid %s", xid);
       if (isRecoveryEnabled()) {
          return recoveryManager.removeRecoveryInformation(null, xid, null, false)
@@ -176,7 +175,7 @@ public class XaTransactionTable extends TransactionTable {
                   throw new CompletionException(xe);
                });
       } else {
-         if (trace)
+         if (log.isTraceEnabled())
             log.trace("Recovery not enabled");
       }
       return CompletableFutures.completedNull();

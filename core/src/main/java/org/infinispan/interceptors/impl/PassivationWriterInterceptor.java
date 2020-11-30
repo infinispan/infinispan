@@ -20,7 +20,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class PassivationWriterInterceptor extends DDAsyncInterceptor {
-   private final boolean trace = getLog().isTraceEnabled();
    @Inject protected PersistenceManager persistenceManager;
 
    private static final Log log = LogFactory.getLog(PassivationWriterInterceptor.class);
@@ -39,7 +38,7 @@ public class PassivationWriterInterceptor extends DDAsyncInterceptor {
 
    protected boolean isStoreEnabled(FlagAffectedCommand command) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Skipping cache store since the call contain a skip cache store flag");
          }
          return false;

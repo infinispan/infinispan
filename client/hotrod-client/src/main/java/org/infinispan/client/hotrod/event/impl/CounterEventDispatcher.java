@@ -29,7 +29,7 @@ public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> 
 
    @Override
    protected void invokeEvent(HotRodCounterEvent event) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Received counter event %s", event);
       }
       clientListeners.getOrDefault(event.getCounterName(), Collections.emptyList())

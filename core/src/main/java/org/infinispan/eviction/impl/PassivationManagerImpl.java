@@ -33,7 +33,6 @@ import org.infinispan.util.logging.LogFactory;
 
 public class PassivationManagerImpl extends AbstractPassivationManager {
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject PersistenceManager persistenceManager;
    @Inject CacheNotifier<Object, Object> notifier;
@@ -72,7 +71,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    }
 
    private CompletionStage<Boolean> doPassivate(Object key, InternalCacheEntry<?, ?> entry) {
-      if (trace) log.tracef("Passivating entry %s", toStr(key));
+      if (log.isTraceEnabled()) log.tracef("Passivating entry %s", toStr(key));
       MarshallableEntry<?, ?> marshalledEntry = marshalledEntryFactory.create((InternalCacheEntry) entry);
       CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
          return stage.handle((v, t) -> {

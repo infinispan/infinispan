@@ -58,7 +58,6 @@ import org.infinispan.util.logging.LogFactory;
 public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationFinallyFunction<TransactionBoundaryCommand> handleTxReturn = this::handleTxReturn;
    private final InvocationFinallyFunction<WriteCommand> handleTxWriteReturn = this::handleTxWriteReturn;
@@ -85,7 +84,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
-      if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
+      if (log.isTraceEnabled()) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
 
       updateTopologyId(command);
       return invokeNextAndHandle(ctx, command, handleTxReturn);
@@ -203,7 +202,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     *
     */
    private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) {
-      if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
+      if (log.isTraceEnabled()) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
       updateTopologyId(command);
 
       return invokeNextAndHandle(ctx, command, handleTxReturn);
@@ -259,7 +258,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command) {
-      if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
+      if (log.isTraceEnabled()) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
 
       updateTopologyId(command);
       return invokeNextAndHandle(ctx, command, handleTxWriteReturn);
@@ -301,7 +300,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * the {@code CACHE_MODE_LOCAL} flag.
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) {
-      if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
+      if (log.isTraceEnabled()) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
       updateTopologyId(command);
 
@@ -327,7 +326,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // OutdatedTopologyException again.
       int currentTopologyId = currentTopologyId();
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Retrying command because of %s, current topology is %d (requested: %d): %s",
                ce, currentTopologyId, newTopologyId, writeCommand);
       writeCommand.setTopologyId(newTopologyId);
@@ -358,7 +357,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx,
                                                 VisitableCommand command, Address origin) {
-      if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
+      if (log.isTraceEnabled()) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
       updateTopologyId((TopologyAffectedCommand) command);
       return invokeNext(ctx, command);

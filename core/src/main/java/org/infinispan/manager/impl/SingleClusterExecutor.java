@@ -35,7 +35,6 @@ import org.infinispan.util.logging.LogFactory;
 class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecutor> {
 
    private static final Log log = LogFactory.getLog(SingleClusterExecutor.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    SingleClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
          Transport transport, long time, TimeUnit unit, Executor localExecutor,
@@ -71,7 +70,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
    public void execute(Runnable runnable) {
       Address target = findTarget();
       if (target != null) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
          if (target == me) {
@@ -94,7 +93,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       if (target == null) {
          return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
       }
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
       CompletableFuture<Void> future = new CompletableFuture<>();
@@ -124,7 +123,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       if (target == null) {
          return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
       }
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
       if (target == me) {

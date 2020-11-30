@@ -15,7 +15,6 @@ import sun.misc.Unsafe;
  */
 public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private final LongAdder amountAllocated = new LongAdder();
 
@@ -24,7 +23,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
       long estimatedMemoryLength = estimateSizeOverhead(memoryLength);
       long memoryLocation = MEMORY.allocate(memoryLength);
       amountAllocated.add(estimatedMemoryLength);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Allocated off-heap memory at 0x%016x with %d bytes. Total size: %d", memoryLocation,
                estimatedMemoryLength, amountAllocated.sum());
       }
@@ -39,7 +38,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
 
    private void innerDeallocate(long memoryAddress, long estimatedSize) {
       amountAllocated.add(- estimatedSize);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Deallocating off-heap memory at 0x%016x with %d bytes. Total size: %d", memoryAddress,
                estimatedSize, amountAllocated.sum());
       }

@@ -23,7 +23,6 @@ import io.reactivex.rxjava3.core.Flowable;
 @Scope(Scopes.NAMED_CACHE)
 public class AnchoredStateProvider extends StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(AnchoredStateProvider.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject InternalEntryFactory internalEntryFactory;
 
@@ -43,7 +42,7 @@ public class AnchoredStateProvider extends StateProviderImpl implements StatePro
       if (ice.getMetadata() instanceof RemoteMetadata) {
          return ice;
       } else {
-         if (trace) log.tracef("Replaced state transfer value for key %s: %s", ice.getKey(), rpcManager.getAddress());
+         if (log.isTraceEnabled()) log.tracef("Replaced state transfer value for key %s: %s", ice.getKey(), rpcManager.getAddress());
          RemoteMetadata metadata = new RemoteMetadata(rpcManager.getAddress(), null);
          return internalEntryFactory.create(ice.getKey(), null, metadata);
       }

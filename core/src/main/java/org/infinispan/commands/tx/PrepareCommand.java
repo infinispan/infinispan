@@ -63,7 +63,6 @@ import org.infinispan.util.logging.LogFactory;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;
 
@@ -104,7 +103,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
          return CompletableFutures.completedNull();
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
       CacheNotifier notifier = registry.getCacheNotifier().running();
       CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);

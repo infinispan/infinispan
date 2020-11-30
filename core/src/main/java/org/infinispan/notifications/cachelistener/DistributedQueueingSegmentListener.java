@@ -126,7 +126,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    public CompletionStage<Void> delayProcessing() {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (justCompletedSegments != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Segments %s completed for listener", justCompletedSegments);
          }
          // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on

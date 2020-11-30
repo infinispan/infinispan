@@ -39,7 +39,6 @@ import org.infinispan.commons.CacheException;
 public class SyncModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final UUID uuid = UUID.randomUUID();
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;
@@ -50,23 +49,13 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
    }
 
    @Override
-   Log getLog() {
-      return log;
-   }
-
-   @Override
-   boolean isTraceLogEnabled() {
-      return trace;
-   }
-
-   @Override
    public <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx) {
       assertStartedAndReturnFactory();
       //registers a synchronization if it isn't done yet.
       SynchronizationAdapter adapter = registeredTransactions.computeIfAbsent(tx, constructor);
       //registers the cache.
       TransactionContext<K, V> context = adapter.registerCache(txRemoteCache);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Xid=%s retrieving context: %s", adapter.xid, context);
       }
       return context;
@@ -82,7 +71,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
       } catch (RollbackException | SystemException e) {
          throw new CacheException(e);
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Registered synchronization for transaction %s. Sync=%s", transaction, adapter);
       }
       return adapter;
@@ -110,7 +99,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void beforeCompletion() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("BeforeCompletion(xid=%s, remote-caches=%s)", xid, registeredCaches.keySet());
          }
          if (isMarkedRollback()) {
@@ -134,7 +123,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void afterCompletion(int status) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("AfterCompletion(xid=%s, status=%s, remote-caches=%s)", xid, transactionStatusToString(status),
                   registeredCaches.keySet());
          }
@@ -173,7 +162,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
       }
 
       private <K, V> TransactionContext<K, V> createTxContext(TransactionalRemoteCacheImpl<K, V> remoteCache) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), xid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),

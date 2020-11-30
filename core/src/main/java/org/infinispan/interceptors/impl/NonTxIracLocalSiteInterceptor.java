@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteInterceptor {
 
    private static final Log log = LogFactory.getLog(NonTxIracLocalSiteInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationFinallyAction<WriteCommand> afterWriteCommand = this::handleWriteCommand;
 
@@ -151,7 +150,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
 
    @Override
    public boolean isTraceEnabled() {
-      return trace;
+      return log.isTraceEnabled();
    }
 
    @Override
@@ -206,7 +205,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
          metadata = iracVersionGenerator.generateNewMetadata(segment, versionSeen);
       }
       updateCommandMetadata(key, command, metadata);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] New metadata for key '%s' is %s. Command=%s", key, metadata, command);
       }
    }

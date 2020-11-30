@@ -120,7 +120,6 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.NAMED_CACHE)
 public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    protected static final int NO_STATE_TRANSFER_IN_PROGRESS = -1;
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                         IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
@@ -217,7 +216,7 @@ public class StateConsumerImpl implements StateConsumer {
     */
    @Override
    public void stopApplyingState(int topologyId) {
-      if (trace) log.tracef("Stop keeping track of changed keys for state transfer in topology %d", topologyId);
+      if (log.isTraceEnabled()) log.tracef("Stop keeping track of changed keys for state transfer in topology %d", topologyId);
       commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
    }
 
@@ -266,7 +265,7 @@ public class StateConsumerImpl implements StateConsumer {
       final boolean wasMember = previousWriteCh != null &&
                                 previousWriteCh.getMembers().contains(rpcManager.getAddress());
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName,
                     isRebalance, isMember, cacheTopology);
 
@@ -285,7 +284,7 @@ public class StateConsumerImpl implements StateConsumer {
             !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
       boolean startRebalance = isRebalance || (addedPendingCH && !startConflictResolution);
       if (startRebalance && !isRebalance) {
-         if (trace) log.tracef("Forcing startRebalance = true");
+         if (log.isTraceEnabled()) log.tracef("Forcing startRebalance = true");
       }
       CompletionStage<Void> stage = CompletableFutures.completedNull();
       if (startRebalance) {
@@ -324,7 +323,7 @@ public class StateConsumerImpl implements StateConsumer {
          // state transfer or conflict resolution updates
          // Tracking is stopped once the subsequent rebalance completes
          if (startRebalance || startConflictResolution) {
-            if (trace) log.tracef("Start keeping track of keys for rebalance");
+            if (log.isTraceEnabled()) log.tracef("Start keeping track of keys for rebalance");
             commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
             commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
          }
@@ -360,7 +359,7 @@ public class StateConsumerImpl implements StateConsumer {
             removedSegments = IntSets.immutableEmptySet();
             addedSegments = IntSets.immutableEmptySet();
 
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
             }
          } else {
@@ -378,7 +377,7 @@ public class StateConsumerImpl implements StateConsumer {
             addedSegments = IntSets.mutableCopyFrom(newWriteSegments);
             addedSegments.removeAll(previousSegments);
 
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("On cache %s we have: new segments: %s; old segments: %s", cacheName, newWriteSegments,
                           previousSegments);
                log.tracef("On cache %s we have: added segments: %s; removed segments: %s", cacheName,
@@ -409,7 +408,7 @@ public class StateConsumerImpl implements StateConsumer {
       });
       stage = stage.thenCompose(ignored -> {
          int stateTransferTopologyId = this.stateTransferTopologyId.get();
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
                        (Object) stateTransferTopologyId, startRebalance, cacheTopology.getPendingCH());
          if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startRebalance &&
@@ -436,7 +435,7 @@ public class StateConsumerImpl implements StateConsumer {
          return CompletableFutures.completedNull();
       });
       return handleAndCompose(stage, (ignored, throwable) -> {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
          }
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
@@ -537,7 +536,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected boolean notifyEndOfStateTransferIfNeeded() {
       if (waitingForState.get()) {
          if (hasActiveTransfers()) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("No end of state transfer notification, active transfers still exist");
             return false;
          }
@@ -547,11 +546,11 @@ public class StateConsumerImpl implements StateConsumer {
             stopApplyingState(topologyId);
             stateTransferFuture.complete(null);
          }
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("No end of state transfer notification, waitingForState already set to false by another thread");
          return false;
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("No end of state transfer notification, waitingForState already set to false by another thread");
       return true;
    }
@@ -568,7 +567,7 @@ public class StateConsumerImpl implements StateConsumer {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
       if (!wCh.getMembers().contains(rpcManager.getAddress())) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Ignoring received state because we are no longer a member of cache %s", cacheName);
          }
          return CompletableFutures.completedNull();
@@ -588,14 +587,14 @@ public class StateConsumerImpl implements StateConsumer {
          return CompletableFutures.completedNull();
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName,
                     dataContainer.sizeIncludingExpired());
       }
       IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
       Iterator<StateChunk> iterator = stateChunks.iterator();
       return applyStateIteration(sender, pushTransfer, mySegments, iterator).whenComplete((v, t) -> {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
                        dataContainer.sizeIncludingExpired());
             synchronized (transferMapsLock) {
@@ -657,7 +656,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (cacheEntries == null || cacheEntries.isEmpty())
          return CompletableFutures.completedNull();
 
-      if (trace) log.tracef(
+      if (log.isTraceEnabled()) log.tracef(
             "Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",
             segmentId, cacheName, sender, cacheEntries.size());
 
@@ -767,7 +766,7 @@ public class StateConsumerImpl implements StateConsumer {
                      // Force this node to replay the given transaction data by making it think it is 1 behind
                      ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
                   } catch (Throwable t) {
-                     if (trace)
+                     if (log.isTraceEnabled())
                         log.tracef(t, "Failed to create remote transaction %s", gtx);
                   }
                }
@@ -800,7 +799,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Stop(priority = 0)
    @Override
    public void stop() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Shutting down StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       running = false;
@@ -962,7 +961,7 @@ public class StateConsumerImpl implements StateConsumer {
          int topologyId, List<Address> sources) {
       // Try the first member. If the request fails, fall back to the second member and so on.
       if (sources.isEmpty()) {
-         if (trace) // TODO Ignore self again
+         if (log.isTraceEnabled()) // TODO Ignore self again
             log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
          return CompletableFuture.completedFuture(Collections.emptySet());
       }
@@ -972,7 +971,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (sources.get(0).equals(rpcManager.getAddress())) {
          return getClusterListeners(topologyId, sources.subList(1, sources.size()));
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Requesting cluster listeners of cache %s from node %s", cacheName, sources);
 
       CacheRpcCommand cmd = commandsFactory.buildStateTransferGetListenersCommand(topologyId);
@@ -995,7 +994,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private CompletionStage<Response> getTransactions(Address source, IntSet segments, int topologyId) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Requesting transactions from node %s for segments %s", source, segments);
       }
       // get transactions and locks
@@ -1012,7 +1011,7 @@ public class StateConsumerImpl implements StateConsumer {
       for (Map.Entry<Address, IntSet> e : sources.entrySet()) {
          addTransfer(e.getKey(), e.getValue());
       }
-      if (trace) log.tracef("Finished adding inbound state transfer for segments %s", segments, cacheName);
+      if (log.isTraceEnabled()) log.tracef("Finished adding inbound state transfer for segments %s", segments, cacheName);
    }
 
    /**
@@ -1090,7 +1089,7 @@ public class StateConsumerImpl implements StateConsumer {
                      })
                      .toCompletionStage(null)
                      .thenRun(() -> {
-                        if (trace) log.tracef("Removed %d keys, data container now has %d keys",
+                        if (log.isTraceEnabled()) log.tracef("Removed %d keys, data container now has %d keys",
                                               removedEntriesCounter.get(), dataContainer.sizeIncludingExpired());
                      });
    }
@@ -1124,14 +1123,14 @@ public class StateConsumerImpl implements StateConsumer {
             Map.Entry<Address, List<InboundTransferTask>> entry = it.next();
             Address source = entry.getKey();
             if (!members.contains(source)) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Removing inbound transfers from source %s for cache %s", source, cacheName);
                }
                List<InboundTransferTask> inboundTransfers = entry.getValue();
                it.remove();
                for (InboundTransferTask inboundTransfer : inboundTransfers) {
                   // these segments will be restarted if they are still in new write CH
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Removing inbound transfers from node %s for segments %s", source, inboundTransfer.getSegments());
                   }
                   IntSet unfinishedSegments = inboundTransfer.getUnfinishedSegments();
@@ -1157,12 +1156,12 @@ public class StateConsumerImpl implements StateConsumer {
       final InboundTransferTask inboundTransfer;
 
       synchronized (transferMapsLock) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
          }
          segmentsFromSource.removeAll(transfersBySegment.keySet());  // already in progress segments are excluded
          if (segmentsFromSource.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("All segments are already in progress, skipping");
             }
             return null;
@@ -1195,7 +1194,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected boolean removeTransfer(InboundTransferTask inboundTransfer) {
       boolean found = false;
       synchronized (transferMapsLock) {
-         if (trace) log.tracef("Removing inbound transfers from node %s for segments %s",
+         if (log.isTraceEnabled()) log.tracef("Removing inbound transfers from node %s for segments %s",
                inboundTransfer.getSegments(), inboundTransfer.getSource(), cacheName);
          List<InboundTransferTask> transfers = transfersBySource.get(inboundTransfer.getSource());
          if (transfers != null && (found = transfers.remove(inboundTransfer)) && transfers.isEmpty()) {
@@ -1213,7 +1212,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    protected void onTaskCompletion(final InboundTransferTask inboundTransfer) {
-      if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
+      if (log.isTraceEnabled()) log.tracef("Inbound transfer finished: %s", inboundTransfer);
       if (inboundTransfer.isCompletedSuccessfully()) {
          removeTransfer(inboundTransfer);
          notifyEndOfStateTransferIfNeeded();

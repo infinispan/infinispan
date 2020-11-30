@@ -66,7 +66,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @Scope(Scopes.NAMED_CACHE)
 public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K, V> {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRef<Cache<K, V>> cacheComponentRef;
    @Inject DistributionManager distributionManager;
@@ -295,7 +294,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    @Override
    public void segmentsLost(IntSet lostSegments) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Notifying listeners of lost segments %s", lostSegments);
       }
       changeListener.forEach(lostSegments::forEach);
@@ -735,7 +734,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       @Override
       public void accept(int segment) {
          if (segments.remove(segment)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Listener %s lost segment %d", this, segment);
             }
          }
@@ -745,7 +744,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
             int segment = segmentIterator.nextInt();
             if (!localizedCacheTopology.isSegmentReadOwner(segment)) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Listener %s lost segment %d before invocation", this, segment);
                }
                segmentIterator.remove();
@@ -767,7 +766,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       @Override
       public void accept(int segment) {
          if (segments.contains(segment)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Listener %s lost segment %d", this, segment);
             }
             segmentsLost.set(segment);

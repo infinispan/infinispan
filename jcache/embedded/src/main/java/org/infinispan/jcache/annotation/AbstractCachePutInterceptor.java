@@ -19,8 +19,6 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  */
 public abstract class AbstractCachePutInterceptor implements Serializable {
-   private final boolean trace = getLog().isTraceEnabled();
-
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
@@ -30,7 +28,7 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
    }
 
    public Object cachePut(InvocationContext invocationContext) throws Exception {
-      if (trace) {
+      if (getLog().isTraceEnabled()) {
          getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
       }
 
@@ -44,7 +42,7 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
 
       if (!cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
-         if (trace) {
+         if (getLog().isTraceEnabled()) {
             getLog().tracef("Value '%s' cached in cache '%s' with key '%s' before method invocation", valueToCache, cache.getName(), cacheKey);
          }
       }
@@ -53,7 +51,7 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
 
       if (cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
-         if (trace) {
+         if (getLog().isTraceEnabled()) {
             getLog().tracef("Value '%s' cached in cache '%s' with key '%s' after method invocation", valueToCache, cache.getName(), cacheKey);
          }
       }

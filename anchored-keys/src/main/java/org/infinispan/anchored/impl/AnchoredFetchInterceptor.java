@@ -67,7 +67,6 @@ import org.infinispan.util.logging.LogFactory;
 public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(AnchoredFetchInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject CommandsFactory cf;
    @Inject EntryFactory entryFactory;

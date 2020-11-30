@@ -48,7 +48,6 @@ import org.infinispan.topology.CacheTopology;
 public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    private static final Log log = LogFactory.getLog(StateReceiverImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(CACHE_NAME)
    @Inject String cacheName;
@@ -77,7 +76,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @Override
    public void cancelRequests() {
-      if (trace) log.tracef("Cache %s stop() called on StateReceiverImpl", cacheName);
+      if (log.isTraceEnabled()) log.tracef("Cache %s stop() called on StateReceiverImpl", cacheName);
       for (SegmentRequest request : requestMap.values()) {
          request.cancel(null);
       }
@@ -87,7 +86,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @SuppressWarnings("WeakerAccess")
    public void onDataRehash(DataRehashedEvent<K, V> dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
-         if (trace) log.tracef("Cache %s received event: %s", cacheName, dataRehashedEvent);
+         if (log.isTraceEnabled()) log.tracef("Cache %s received event: %s", cacheName, dataRehashedEvent);
          for (SegmentRequest request : requestMap.values())
             request.cancel(new CacheException("Cancelling replica request as the owners of the requested " +
                "segment have changed."));
@@ -102,7 +101,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Override
    public void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       if (stateChunks.isEmpty()) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Cache %s ignoring received state from %s because stateChunks are empty", cacheName, sender);
          return;
       }
@@ -110,11 +109,11 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       int segmentId = stateChunks.iterator().next().getSegmentId();
       SegmentRequest request = requestMap.get(segmentId);
       if (request == null) {
-         if (trace) log.tracef("Cache %s ignoring received state because the associated request was completed or cancelled", cacheName);
+         if (log.isTraceEnabled()) log.tracef("Cache %s ignoring received state because the associated request was completed or cancelled", cacheName);
          return;
       }
 
-      if (trace) log.tracef("Cache %s received state for %s", cacheName, request);
+      if (log.isTraceEnabled()) log.tracef("Cache %s received state for %s", cacheName, request);
       request.receiveState(sender, topologyId, stateChunks);
    }
 
@@ -150,18 +149,18 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> requestState() {
          if (future != null) {
             assert future.isCompletedExceptionally();
-            if (trace) log.tracef("Cache %s already cancelled replicas request for segment %s from %s with topology %s",
+            if (log.isTraceEnabled()) log.tracef("Cache %s already cancelled replicas request for segment %s from %s with topology %s",
                                   cacheName, segmentId, replicaHosts, topology);
             return future;
          }
 
-         if (trace) log.tracef("Cache %s attempting to receive replicas for segment %s from %s with topologyId=%s, timeout=%d",
+         if (log.isTraceEnabled()) log.tracef("Cache %s attempting to receive replicas for segment %s from %s with topologyId=%s, timeout=%d",
                cacheName, segmentId, replicaHosts, topology.getTopologyId(), timeout);
 
          future = new CompletableFuture<>();
          future.whenComplete((v, t) -> {
             if (t != null) {
-               if (trace) log.tracef("Cache %s segment request(s) cancelled due to exception=%s", cacheName, t);
+               if (log.isTraceEnabled()) log.tracef("Cache %s segment request(s) cancelled due to exception=%s", cacheName, t);
                // If an exception has occurred, possibly a CancellationException, we must must cancel all ongoing transfers
                cancel(t);
             }
@@ -190,7 +189,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
                      return;
 
                   transferTask.requestSegments().exceptionally(throwable -> {
-                     if (trace) log.tracef(throwable, "Cache %s exception when processing InboundTransferTask", cacheName);
+                     if (log.isTraceEnabled()) log.tracef(throwable, "Cache %s exception when processing InboundTransferTask", cacheName);
                      cancel(throwable);
                      return null;
                   });
@@ -208,7 +207,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
       synchronized void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
          if (topologyId < topology.getTopologyId()) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Cache %s discarding state response with old topology id %d, the smallest allowed topology id is %d",
                      topologyId, topology.getTopologyId(), cacheName);
             return;
@@ -216,12 +215,12 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
          InboundTransferTask transferTask = transferTaskMap.get(sender);
          if (transferTask == null) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Cache %s state received for an unknown request. No record of a state request exists for node %s", cacheName, sender);
             return;
          }
 
-         if (trace) log.tracef("Cache %s state chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
+         if (log.isTraceEnabled()) log.tracef("Cache %s state chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
          for (StateChunk chunk : stateChunks) {
             boolean isLastChunk = chunk.isLastChunk();
             chunk.getCacheEntries().forEach(ice -> addKeyToReplicaMap(sender, (CacheEntry<K, V>) ice));

@@ -27,14 +27,11 @@ import org.infinispan.util.logging.Log;
  * @since 7.0
  */
 abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implements QueueingSegmentListener<K, V, E> {
-   protected final boolean trace;
-
    protected final AtomicBoolean completed = new AtomicBoolean(false);
    protected final ConcurrentMap<K, Object> notifiedKeys;
 
    protected BaseQueueingSegmentListener() {
       this.notifiedKeys = new ConcurrentHashMap<>();
-      trace = getLog().isTraceEnabled();
    }
 
    @Override
@@ -43,7 +40,7 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
       // of taking the last one
       Object value = notifiedKeys.put(key, NOTIFIED);
       if (value != null) {
-         if (trace) {
+         if (getLog().isTraceEnabled()) {
             getLog().tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
          }
       }

@@ -74,7 +74,6 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.GLOBAL)
 public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport transport;
    @Inject
@@ -116,7 +115,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport
    @Start(priority = 100)
    public void start() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
       }
       if (persistentUUID == null) {
@@ -134,7 +133,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    // Need to stop after ClusterTopologyManagerImpl and before the JGroupsTransport
    @Stop(priority = 110)
    public void stop() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());
       }
       running = false;
@@ -631,7 +630,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
                Throwable t = CompletableFutures.extractException(throwable);
                if (t instanceof SuspectException) {
-                  if (trace) log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
+                  if (log.isTraceEnabled()) log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
                   int newViewId = Math.max(viewId + 1, transport.getViewId());
                   return executeOnCoordinatorRetry(command, newViewId, endNanos);
                } else {
@@ -702,7 +701,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                              .remapAddresses(persistentUUIDManager.addressToPersistentUUID());
       remappedCH.toScopedState(cacheState);
       globalStateManager.writeScopedState(cacheState);
-      if (trace) log.tracef("Written CH state, checksum=%s: %s", cacheState.getChecksum(), remappedCH);
+      if (log.isTraceEnabled()) log.tracef("Written CH state, checksum=%s: %s", cacheState.getChecksum(), remappedCH);
    }
 
    private int getGlobalTimeout() {

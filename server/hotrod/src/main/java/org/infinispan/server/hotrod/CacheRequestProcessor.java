@@ -33,7 +33,6 @@ import io.netty.channel.Channel;
 
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final ClientListenerRegistry listenerRegistry;
 
@@ -70,16 +69,16 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       try {
          BloomFilter<byte[]> filter = bloomFilters.get(header.cacheName);
          if (filter != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
             }
             filter.setBits(IntSets.from(bloomArray));
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Updated bloom filter %s for cache %s", filter, header.cacheName);
             }
             writeSuccess(header);
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("There was no bloom filter for cache %s from client", header.cacheName);
             }
             writeNotExecuted(header);
@@ -460,7 +459,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void bulkGetInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int size) {
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("About to create bulk response count = %d", size);
          }
          writeResponse(header, header.encoder().bulkGetResponse(header, server, channel, size, cache.entrySet()));
@@ -476,7 +475,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void bulkGetKeysInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int scope) {
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("About to create bulk get keys response scope = %d", scope);
          }
          writeResponse(header, header.encoder().bulkGetKeysResponse(header, server, channel, cache.keySet().iterator()));

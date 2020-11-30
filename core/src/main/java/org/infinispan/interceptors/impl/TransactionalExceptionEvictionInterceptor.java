@@ -52,7 +52,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TransactionalExceptionEvictionInterceptor extends DDAsyncInterceptor implements
       InternalExpirationManager.ExpirationConsumer<Object, Object>, Consumer<Iterable<InternalCacheEntry<Object, Object>>> {
    private final static Log log = LogFactory.getLog(TransactionalExceptionEvictionInterceptor.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    private final AtomicLong currentSize = new AtomicLong();
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();
@@ -117,7 +116,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    public void expired(Object key, Object value, Metadata metadata, PrivateMetadata privateMetadata) {
       // If this is null it means it was from the store, so we don't care about that
       if (value != null) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Key %s found to have expired", key);
          }
          increaseSize(- calculator.calculateSize(key, value, metadata, privateMetadata));
@@ -141,7 +140,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          long targetSize = size + increaseAmount;
          if (targetSize <= maxSize) {
             if (currentSize.compareAndSet(size, size + increaseAmount)) {
-               if (isTrace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Increased exception based size by %d to %d", increaseAmount, size + increaseAmount);
                }
                return true;
@@ -187,7 +186,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       if (rCommand.isSuccessful()) {
          if (dm == null || dm.getCacheTopology().getSegmentDistribution(rCommand.getSegment()).isWriteOwner()) {
             MVCCEntry<?, ?> entry = (MVCCEntry<?, ?>) rCtx.lookupEntry(rKey);
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Key %s was removed via expiration", rKey);
             }
 
@@ -201,7 +200,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Clear command encountered, resetting size to %d", minSize);
       }
       // Clear is never invoked in the middle of a transaction with others so just set the size
@@ -227,7 +226,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
                InternalCacheEntry<Object, Object> containerEntry = container.peek(key);
                Object value = containerEntry != null ? containerEntry.getValue() : null;
                if (value != null) {
-                  if (isTrace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Key %s was removed", key);
                   }
                   changeAmount -= calculator.calculateSize(key, value, entry.getMetadata(), entry.getInternalMetadata());
@@ -236,7 +235,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
                // We check the container directly - this is to handle entries that are expired as the command
                // won't think it replaced a value
                InternalCacheEntry<Object, Object> containerEntry = container.peek(key);
-               if (isTrace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Key %s was put into cache, replacing existing %s", key, containerEntry != null);
                }
                // Create and replace both add for the new value
@@ -265,7 +264,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       Long size = pendingSize.remove(ctx.getGlobalTransaction());
       if (size != null) {
          long newSize = currentSize.addAndGet(-size);
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Rollback encountered subtracting exception size by %d to %d", size.longValue(), newSize);
          }
       }

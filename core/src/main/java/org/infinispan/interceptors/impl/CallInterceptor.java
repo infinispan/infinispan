@@ -141,7 +141,6 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    // The amount in milliseconds of a buffer we allow the system clock to be off, but still allow expiration removal
    private static final int CLOCK_BUFFER = 100;
@@ -174,7 +173,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoking: %s", command.getClass().getSimpleName());
       return command.acceptVisitor(ctx, this);
    }
@@ -579,22 +578,22 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                // of now. This along with the fact that entries are not normally access immediately when they
                // expire should give a good enough buffer range to not create a false positive.
                if (ExpiryHelper.isExpiredMortal(lifespan, e.getCreated(), timeService.wallClockTime() + CLOCK_BUFFER)) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Removing entry as its lifespan and value match and it created on %s with a current time of %s",
                            e.getCreated(), timeService.wallClockTime());
                   }
                   e.setExpired(true);
                   return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, metadata, false, command);
-               } else if (trace) {
+               } else if (log.isTraceEnabled()) {
                   log.tracef("Cannot remove entry due to it not being expired - this can be caused by different " +
                         "clocks on nodes or a concurrent write");
                }
             }
-         } else if (trace) {
+         } else if (log.isTraceEnabled()) {
             log.trace("Cannot remove entry as its lifespan or value do not match");
          }
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Nothing to remove since the entry doesn't exist in the context or it is already removed - assume command was successful");
          }
          return true;
@@ -629,7 +628,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(command.getKey());
       if (entry.isRemoved()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
          }
          return null;
@@ -658,14 +657,14 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             throw new IllegalStateException("Entry for key " + toStr(key) + " not found");
          }
          if (entry.isNull()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Entry for key %s is null in current context", toStr(key));
             }
             map.put(key, null);
             continue;
          }
          if (entry.isRemoved()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Entry for key %s has been deleted and is of type %s", toStr(key), entry.getClass().getSimpleName());
             }
             map.put(key, null);
@@ -680,14 +679,14 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             } else {
                copy = entry;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Found entry %s -> %s", toStr(key), entry);
                log.tracef("Returning copied entry %s", copy);
             }
             map.put(key, copy);
          } else {
             Object value = entry.getValue();
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Found %s -> %s", toStr(key), toStr(value));
             }
             map.put(key, value);
@@ -740,7 +739,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
       Object[] keys = invalidateCommand.getKeys();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Invalidating keys %s", toStr(Arrays.asList(keys)));
       }
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
@@ -766,7 +765,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
       Object[] keys = invalidateL1Command.getKeys();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
       }
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
@@ -778,7 +777,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          if (ice != null) {
             boolean isLocal = distributionManager.getCacheTopology().isWriteOwner(key);
             if (!isLocal) {
-               if (trace) log.tracef("Invalidating key %s.", key);
+               if (log.isTraceEnabled()) log.tracef("Invalidating key %s.", key);
                MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
                e.setRemoved(true);
                e.setChanged(true);
@@ -1125,7 +1124,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object key = command.getKey();
       InternalCacheEntry<?, ?> ice = dataContainer.peek(segment, key);
       if (ice == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry was not in the container to touch for key %s", key);
          }
          return Boolean.FALSE;
@@ -1134,12 +1133,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       if (command.isTouchEvenIfExpired() || !ice.isExpired(currentTime)) {
          boolean touched = dataContainer.touch(segment, key, currentTime);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry was touched: %s for key %s.", touched, key);
          }
          return touched;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Entry was expired for key %s and we could not touch it.", key);
       }
       return Boolean.FALSE;

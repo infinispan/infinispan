@@ -35,7 +35,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected VersionGenerator versionGenerator;
 
@@ -129,7 +128,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
             CacheEntry<?, ?> entry = ctx.lookupEntry(key);
             PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(entry.getInternalMetadata());
             entry.setInternalMetadata(builder.entryVersion(entryVersion).build());
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Updated entry from state transfer: %s", entry);
             }
          }

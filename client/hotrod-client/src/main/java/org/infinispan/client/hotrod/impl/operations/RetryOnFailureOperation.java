@@ -38,7 +38,6 @@ import net.jcip.annotations.Immutable;
 public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> implements ChannelOperation {
 
    protected static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
-   protected final boolean trace = log.isTraceEnabled();
 
    private int retryCount = 0;
    private Set<SocketAddress> failedServers = null;
@@ -56,7 +55,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       assert !isDone();
       try {
          currentClusterName = channelFactory.getCurrentClusterName();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Requesting channel for operation %s", this);
          }
          fetchChannelAndInvoke(retryCount, failedServers);
@@ -70,7 +69,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    @Override
    public void invoke(Channel channel) {
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("About to start executing operation %s on %s", this, channel);
          }
          executeOperation(channel);
@@ -91,7 +90,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    private void retryIfNotDone() {
       if (isDone()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Not retrying as done (exceptionally=%s), retryCount=%d", this.isCompletedExceptionally(), retryCount);
          }
       } else {
@@ -116,7 +115,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          failedServers = new HashSet<>();
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Add %s to failed servers", address);
 
       failedServers.add(address);
@@ -193,7 +192,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    protected void logAndRetryOrFail(Throwable e, boolean canSwitchCluster) {
       if (retryCount < channelFactory.getMaxRetries() && channelFactory.getMaxRetries() >= 0) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(e, "Exception encountered in %s. Retry %d out of %d", this, retryCount, channelFactory.getMaxRetries());
          }
          retryCount++;

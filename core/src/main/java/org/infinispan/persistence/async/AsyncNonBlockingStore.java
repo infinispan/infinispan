@@ -66,7 +66,6 @@ import net.jcip.annotations.GuardedBy;
  */
 public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V> implements Consumer<Flowable<AsyncNonBlockingStore.Modification>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
    private final NonBlockingStore<K, V> actual;
 
    // Any non-null value can be passed to `onNext` when a new batch should be submitted - A value should only be
@@ -141,7 +140,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public CompletionStage<Void> stop() {
       CompletionStage<Void> asyncStage;
       if (submissionFlowable != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Stopping async store containing store %s", actual);
          }
          submissionFlowable = null;
@@ -157,7 +156,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          asyncStage = CompletableFutures.completedNull();
       }
       return asyncStage.thenCompose(ignore -> {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Stopping store %s from async store", actual);
          }
          return actual.stop();
@@ -175,21 +174,21 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       if (stage == null) {
          return CompletableFutures.completedNull();
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Must wait until prior batch completes for %s", actual);
       }
       return stage.thenCompose(ignore -> awaitQuiescence());
    }
 
    private synchronized void putModification(Object key, Modification modification) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Adding modification %s to %s", modification, System.identityHashCode(pendingModifications));
       }
       pendingModifications.put(key, modification);
    }
 
    private synchronized void putClearModification() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Clear modification encountered for %s", System.identityHashCode(pendingModifications));
       }
       pendingModifications.clear();
@@ -207,7 +206,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
             RxJavaInterop.emptyConsumer(),
             () -> {
                Map<Object, Modification> newMap = new HashMap<>();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Starting new batch with id %s", System.identityHashCode(newMap));
                }
                boolean ourClearToReplicate;
@@ -225,7 +224,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
                CompletionStage<Void> asyncBatchStage;
                if (ourClearToReplicate) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Sending clear to underlying store for id %s", System.identityHashCode(ourModificationsToReplicate));
                   }
                   asyncBatchStage = retry(actual::clear, persistenceConfiguration.connectionAttempts()).whenComplete((ignore, t) -> {
@@ -239,7 +238,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
                if (!ourModificationsToReplicate.isEmpty()) {
                   asyncBatchStage = asyncBatchStage.thenCompose(ignore -> {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Sending batch write/remove operations %s to underlying store with id %s", ourModificationsToReplicate.values(),
                               System.identityHashCode(ourModificationsToReplicate));
                      }
@@ -252,7 +251,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
                }
 
                asyncBatchStage.whenComplete((ignore, t) -> {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Async operations completed for id %s", System.identityHashCode(ourModificationsToReplicate));
                   }
                   boolean submitNewBatch;
@@ -268,7 +267,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
                      future.complete(null);
                   }
                   if (submitNewBatch) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.trace("Submitting new batch after completion of prior");
                      }
                      requestFlowable.onNext(requestFlowable);
@@ -362,7 +361,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
       return Flowable.defer(() -> {
          assertNotStopped();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Publisher subscribed to retrieve entries for segments %s", segments);
          }
          return abstractPublish(segments, filter, PutModification::getEntry, MarshallableEntry::getKey,
@@ -374,7 +373,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
       return Flowable.defer(() -> {
          assertNotStopped();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Publisher subscribed to retrieve keys for segments %s", segments);
          }
          return abstractPublish(segments, filter, putModification -> putModification.<K, Object>getEntry().getKey(),
@@ -399,7 +398,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
       // We had a clear so skip actually asking the store
       if (entryModifications.getKey()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Only utilizing pending modifications as clear a was found");
          }
          return modPublisher;
@@ -515,7 +514,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       }
 
       if (startNewBatch) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Requesting a new async batch operation to be ran!");
          }
          // Any old object will work
@@ -525,7 +524,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    private synchronized CompletionStage<Void> asyncOrThrottledStage() {
       if (pendingModifications.size() > modificationQueueSize) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Operation will not return immediately, must wait until current batch completes");
          }
          // We could have multiple waiting on the stage, so make sure we can don't block the thread

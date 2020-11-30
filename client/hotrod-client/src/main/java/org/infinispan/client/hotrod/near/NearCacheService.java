@@ -34,7 +34,6 @@ import org.infinispan.commons.util.Util;
  */
 public class NearCacheService<K, V> implements NearCache<K, V> {
    private static final Log log = LogFactory.getLog(NearCacheService.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
@@ -99,7 +98,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    public void stop(RemoteCache<K, V> remote) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Stop near cache, remove underlying listener id %s", Util.printArray(listenerId));
 
       // Remove listener
@@ -123,7 +122,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    public void put(K key, MetadataValue<V> value) {
        cache.put(key, value);
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Put key=%s and value=%s in near cache (listenerId=%s)",
                key, value, Util.printArray(listenerId));
    }
@@ -132,7 +131,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    public void putIfAbsent(K key, MetadataValue<V> value) {
       cache.putIfAbsent(key, value);
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Conditionally put key=%s and value=%s if absent in near cache (listenerId=%s)",
                key, value, Util.printArray(listenerId));
    }
@@ -144,7 +143,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          if (invalidationCallback != null) {
             invalidationCallback.run();
          }
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Removed key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
       } else {
          log.tracef("Received false positive remove for key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
@@ -160,13 +159,13 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       boolean listenerConnected = isConnected();
       if (listenerConnected) {
          MetadataValue<V> value = cache.get(key);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Get key=%s returns value=%s (listenerId=%s)", key, value, Util.printArray(listenerId));
 
          return value;
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Near cache disconnected from server, returning null for key=%s (listenedId=%s)",
                key, Util.printArray(listenerId));
 
@@ -176,7 +175,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    @Override
    public void clear() {
       cache.clear();
-      if (trace) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
+      if (log.isTraceEnabled()) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
    }
 
    @Override

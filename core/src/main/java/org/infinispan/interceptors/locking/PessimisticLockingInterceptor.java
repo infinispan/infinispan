@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationSuccessFunction<LockControlCommand> localLockCommandWork =
          (rCtx, rCommand, rv) -> localLockCommandWork((TxInvocationContext) rCtx, rCommand);
@@ -180,12 +179,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (needBackupLocks && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
             if (localTx.getAffectedKeys().containsAll(command.getKeys())) {
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
                return true;
             }
          } else {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Single key %s and local, skipping remote call", command.getSingleKey());
             return localLockCommandWork(ctx, command);
          }
@@ -222,7 +221,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().containsAll(keys);
          if (!needRemoteLock) {
-            if (trace) log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
+            if (log.isTraceEnabled()) log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
          }
       }
       return needRemoteLock;
@@ -236,11 +235,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().contains(key);
          if (!needRemoteLock) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
          }
       } else {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Don't need backup locks for key %s", key);
       }
       return needRemoteLock;

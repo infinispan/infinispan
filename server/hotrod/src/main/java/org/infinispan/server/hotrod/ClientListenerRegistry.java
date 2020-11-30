@@ -67,7 +67,6 @@ class ClientListenerRegistry {
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
@@ -296,11 +295,11 @@ class ClientListenerRegistry {
       boolean isSendEvent(CacheEntryEvent<byte[], byte[]> event) {
          if (super.isSendEvent(event)) {
             if (bloomFilter.possiblyPresent(event.getKey())) {
-               if (isTrace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Event %s passed bloom filter", event);
                }
                return true;
-            } else if (isTrace) {
+            } else if (log.isTraceEnabled()) {
                log.tracef("Event %s didn't pass bloom filter", event);
             }
          }
@@ -357,7 +356,7 @@ class ClientListenerRegistry {
          while (!eventQueue.isEmpty() && ch.isWritable()) {
             eventSize.decrementAndGet();
             Events.Event event = eventQueue.remove();
-            if (isTrace) log.tracef("Write event: %s to channel %s", event, ch);
+            if (log.isTraceEnabled()) log.tracef("Write event: %s to channel %s", event, ch);
             CompletableFuture<Void> cf = event.eventFuture;
             // We can just check instance equality as this is used to symbolize the event was not blocked below
             if (cf != CompletableFutures.<Void>completedNull()) {
@@ -423,7 +422,7 @@ class ClientListenerRegistry {
          boolean forceWait = size >= maxQueueSize;
          final CompletableFuture<Void> cf;
          if (forceWait) {
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Pending event size is %s which is forcing %s to delay operation until it is sent", size, event);
             }
 
@@ -433,7 +432,7 @@ class ClientListenerRegistry {
          }
          Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event, cf);
 
-         if (isTrace)
+         if (log.isTraceEnabled())
             log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, size - 1);
          eventQueue.add(remoteEvent);
 

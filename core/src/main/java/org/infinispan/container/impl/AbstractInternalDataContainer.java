@@ -57,7 +57,6 @@ import com.github.benmanes.caffeine.cache.RemovalListener;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected TimeService timeService;
    @Inject protected EvictionManager<K, V> evictionManager;
@@ -128,7 +127,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          }
          InternalCacheEntry<K, V> e = entries.get(k);
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s", e, metadata, toStr(v));
          }
          final InternalCacheEntry<K, V> copy;
@@ -148,7 +147,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          }
 
          copy.setInternalMetadata(internalMetadata);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Store %s=%s in container", k, copy);
          entries.put(k, copy);
       } else {
@@ -185,7 +184,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          InternalCacheEntry<K, V> e = entries.remove(k);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Removed %s=%s from container", k, e);
          }
 
@@ -235,7 +234,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             return null;
          }
          computeEntryWritten(k, newEntry);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Store %s in container", newEntry);
          return newEntry;
       }) : null;
@@ -298,7 +297,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
             if (!entry.canExpire()) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Return next entry %s", entry);
                }
                return entry;
@@ -308,16 +307,16 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                   initializedTime = true;
                }
                if (!entry.isExpired(now) || !expirationManager.entryExpiredInMemoryFromIteration(entry, now)) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Return next entry %s", entry);
                   }
                   return entry;
-               } else if (trace) {
+               } else if (log.isTraceEnabled()) {
                   log.tracef("%s is expired", entry);
                }
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Return next null");
          }
          return null;

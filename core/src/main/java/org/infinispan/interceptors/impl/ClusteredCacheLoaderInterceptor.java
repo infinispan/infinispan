@@ -24,7 +24,6 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderInterceptor<K, V> {
 
    private static final Log log = LogFactory.getLog(ClusteredCacheLoaderInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject DistributionManager distributionManager;
 
@@ -53,7 +52,7 @@ public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderIntercepto
                   return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
                }
                if (!distributionManager.getCacheTopology().getDistribution(key).isPrimary()) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, toStr(key));
                   }
                   return true;
@@ -66,7 +65,7 @@ public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderIntercepto
                // TODO [Dan] I'm not sure using the write CH is OK here
                DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
                if (!info.isPrimary() && (!info.isWriteOwner() || ctx.isOriginLocal())) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Skip load for command %s. This node is neither the primary owner nor non-origin backup of %s", cmd, toStr(key));
                   }
                   return true;

@@ -113,7 +113,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object> {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final String PREFIX_10_1 = "";
    public static final String PREFIX_11_0 = "ispn.";
@@ -238,7 +237,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
                while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
                }
                Object key = marshaller.objectFromByteBuffer(serializedKey);
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
                }
                try {
@@ -274,7 +273,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
             entry = index.getInfo(key, serializedKey);
          }
          if (entry == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Did not found position for %s", key);
             }
             return false;
@@ -290,7 +289,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
                if (header == null) {
                   throw new IOException("Cannot read " + entry.file + ":" + entryOffset);
                }
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("SeqId on %d:%d is %d", entry.file, entry.offset, header.seqId());
                }
                return seqId < header.seqId();
@@ -505,7 +504,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
    private MarshallableEntry<Object, Object> readEntry(FileProvider.Handle handle, EntryHeader header, int offset, Object key, boolean nonNull)
          throws IOException {
       if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, handle.getFileId(), offset);
          }
          return nonNull ?
@@ -514,13 +513,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       }
       ByteBuffer serializedKey = readAndCheckKey(handle, header, offset);
       if (header.valueLength() <= 0) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, handle.getFileId(), offset);
          }
          return nonNull ? marshallableEntryFactory.create(serializedKey, (ByteBuffer) null) : null;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded", key, handle.getFileId(), offset);
       }
 

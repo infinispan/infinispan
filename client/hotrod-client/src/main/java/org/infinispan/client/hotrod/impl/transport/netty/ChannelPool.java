@@ -36,7 +36,6 @@ import io.netty.util.internal.PlatformDependent;
 class ChannelPool {
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
 
    private final Deque<Channel> channels = PlatformDependent.newConcurrentDeque();
@@ -91,7 +90,7 @@ class ChannelPool {
       while (current < maxConnections) {
          if (created.compareAndSet(current, current + 1)) {
             int currentActive = active.incrementAndGet();
-            if (trace) log.tracef("Creating new channel, created = %d, active = %d", current + 1, currentActive);
+            if (log.isTraceEnabled()) log.tracef("Creating new channel, created = %d, active = %d", current + 1, currentActive);
             // create new connection and apply callback
             createAndInvoke(callback);
             return;
@@ -107,7 +106,7 @@ class ChannelPool {
          case CREATE_NEW:
             int currentCreated = created.incrementAndGet();
             int currentActive = active.incrementAndGet();
-            if (trace) log.tracef("Creating new channel, created = %d, active = %d", currentCreated, currentActive);
+            if (log.isTraceEnabled()) log.tracef("Creating new channel, created = %d, active = %d", currentCreated, currentActive);
             createAndInvoke(callback);
             return;
          default:
@@ -147,7 +146,7 @@ class ChannelPool {
                assert currentActive >= 0;
                int currentCreated = created.decrementAndGet();
                assert currentCreated >= 0;
-               if (trace) log.tracef(throwable, "Channel could not be created, created = %d, active = %d",
+               if (log.isTraceEnabled()) log.tracef(throwable, "Channel could not be created, created = %d, active = %d",
                                      currentCreated, currentActive);
                callback.cancel(address, throwable);
             } else {
@@ -157,7 +156,7 @@ class ChannelPool {
       } catch (Throwable t) {
          int currentActive = active.decrementAndGet();
          int currentCreated = created.decrementAndGet();
-         if (trace) log.tracef(t, "Channel could not be created, created = %d, active = %d",
+         if (log.isTraceEnabled()) log.tracef(t, "Channel could not be created, created = %d, active = %d",
                                currentCreated, currentActive);
          if (currentCreated < 0) {
             HOTROD.warnf("Invalid created count after channel create failure");
@@ -180,12 +179,12 @@ class ChannelPool {
       }
 
       if (record.setIdleAndIsClosed()) {
-         if (trace) log.tracef("Attempt to release already closed channel %s, active = %d", channel, active.get());
+         if (log.isTraceEnabled()) log.tracef("Attempt to release already closed channel %s, active = %d", channel, active.get());
          return;
       }
 
       int currentActive = active.decrementAndGet();
-      if (trace) log.tracef("Released channel %s, active = %d", channel, currentActive);
+      if (log.isTraceEnabled()) log.tracef("Released channel %s, active = %d", channel, currentActive);
       if (currentActive < 0) {
          HOTROD.warnf("Invalid active count after releasing channel %s", channel);
       }
@@ -219,7 +218,7 @@ class ChannelPool {
 
       int currentCreated = created.decrementAndGet();
       int currentActive = !idle ? active.decrementAndGet() : active.get();
-      if (trace) log.tracef("Closed channel %s, created = %s, idle = %b, active = %d",
+      if (log.isTraceEnabled()) log.tracef("Closed channel %s, created = %s, idle = %b, active = %d",
                             channel, currentCreated, idle, currentActive);
       if (currentCreated < 0) {
          HOTROD.warnf("Invalid created count after closing channel %s", channel);
@@ -232,7 +231,7 @@ class ChannelPool {
    private void activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
       assert channel.isActive() : "Channel " + channel + " is not active";
       int currentActive = active.incrementAndGet();
-      if (trace) log.tracef("Activated record %s, created = %d, active = %d", channel, created.get(), currentActive);
+      if (log.isTraceEnabled()) log.tracef("Activated record %s, created = %d, active = %d", channel, created.get(), currentActive);
       ChannelRecord record = ChannelRecord.of(channel);
       record.setAcquired();
       if (useExecutor) {

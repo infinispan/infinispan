@@ -39,7 +39,6 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public abstract class TransactionManagerImpl implements TransactionManager {
    private static final Log log = LogFactory.getLog(TransactionManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    private static ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
    protected final UUID transactionManagerId = UUID.randomUUID();
 
@@ -101,7 +100,7 @@ public abstract class TransactionManagerImpl implements TransactionManager {
    public Transaction suspend() throws SystemException {
       Transaction tx = getTransaction();
       dissociateTransaction();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Suspending tx %s", tx);
       }
       return tx;
@@ -109,7 +108,7 @@ public abstract class TransactionManagerImpl implements TransactionManager {
 
    @Override
    public void resume(Transaction tx) throws InvalidTransactionException, IllegalStateException, SystemException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Resuming tx %s", tx);
       }
       associateTransaction(tx);

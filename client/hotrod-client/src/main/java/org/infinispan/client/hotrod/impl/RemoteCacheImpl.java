@@ -76,7 +76,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements InternalRemoteCache<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private Marshaller defaultMarshaller;
    private final String name;
@@ -94,7 +93,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService, NearCacheService<K, V> nearCacheService) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
@@ -104,7 +103,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    protected RemoteCacheImpl(RemoteCacheManager rcm, String name, ClientStatistics clientStatistics) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
@@ -260,7 +259,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)", map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
       Map<byte[], byte[]> byteMap = new HashMap<>();
@@ -308,7 +307,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
       PutOperation<V> op = operationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key),
@@ -466,7 +465,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
       assertRemoteCacheManagerIsStarted();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to getAll entries (%s)", keys);
       }
       Set<byte[]> byteKeys = new HashSet<>(keys.size());
@@ -567,7 +566,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       byte[] keyBytes = keyToBytes(key);
       GetOperation<V> gco = operationsFactory.newGetKeyOperation(keyAsObjectIfNeeded(key), keyBytes, dataFormat);
       CompletableFuture<V> result = gco.execute();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          result.thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
       }
 

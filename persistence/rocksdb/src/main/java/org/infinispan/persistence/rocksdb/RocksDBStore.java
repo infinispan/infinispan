@@ -75,7 +75,6 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final byte[] BEGIN_KEY = createAndFillArray(1, (byte) 0x00);
    private static final byte[] END_KEY = createAndFillArray(128, (byte) 0xff);
@@ -383,7 +382,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          }
       });
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          // Note this tracing only works properly for one subscriber
          FlowableProcessor<MarshallableEntry<K, V>> mirrorEntries = UnicastProcessor.create();
          expiredEntryFlowable = expiredEntryFlowable
@@ -932,7 +931,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                .filter(segment -> handles.get(segment) == null);
 
          return blockingManager.subscribeBlockingConsumer(segmentFlowable, segment -> {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Creating column family for segment %d", segment);
             }
             byte[] cfName = byteArrayFromInt(segment);
@@ -954,7 +953,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                }).ofType(ColumnFamilyHandle.class);
 
          return blockingManager.subscribeBlockingConsumer(handleFlowable, handle -> {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Dropping column family %s", handle);
             }
             try {

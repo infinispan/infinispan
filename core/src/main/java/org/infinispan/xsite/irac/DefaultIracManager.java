@@ -72,7 +72,6 @@ import net.jcip.annotations.GuardedBy;
 public class DefaultIracManager implements IracManager {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject RpcManager rpcManager;
    @Inject TakeOfflineManager takeOfflineManager;
@@ -115,7 +114,7 @@ public class DefaultIracManager implements IracManager {
       transport.checkCrossSiteAvailable();
       String localSiteName = transport.localSiteName();
       asyncBackups.removeIf(xSiteBackup -> localSiteName.equals(xSiteBackup.getSiteName()));
-      if (trace) {
+      if (log.isTraceEnabled()) {
          String b = asyncBackups.stream().map(XSiteBackup::getSiteName).collect(Collectors.joining(", "));
          log.tracef("Async remote sites found: %s", b);
       }
@@ -124,7 +123,7 @@ public class DefaultIracManager implements IracManager {
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Tracking key for %s: %s", lockOwner, key);
       }
       updatedKeys.put(key, new State(segment, key, lockOwner));
@@ -133,7 +132,7 @@ public class DefaultIracManager implements IracManager {
 
    @Override
    public void trackClear() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Tracking clear request");
       }
       hasClear = true;
@@ -150,7 +149,7 @@ public class DefaultIracManager implements IracManager {
 
    @Override
    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("[IRAC] Topology Updated. Checking pending keys.");
       }
       Address local = rpcManager.getAddress();
@@ -195,7 +194,7 @@ public class DefaultIracManager implements IracManager {
 
    @Override
    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Checking remote backup sites to see if key %s has been touched recently", key);
       }
       IracTouchKeyCommand command = commandsFactory.buildIracTouchCommand(key);
@@ -205,22 +204,22 @@ public class DefaultIracManager implements IracManager {
       AggregateCompletionStage<AtomicBoolean> collector = CompletionStages.aggregateCompletionStage(expired);
       for (XSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Skipping %s as it is offline", backup.getSiteName());
             }
             continue; //backup is offline
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Sending irac touch key command to %s", backup);
          }
          XSiteResponse<Boolean> response = sendToRemoteSite(backup, command);
          collector.dependsOn(response.thenAccept(touched -> {
             if (touched) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Key %s was recently touched on a remote site %s", key, backup);
                }
                expired.set(false);
-            } else if (trace) {
+            } else if (log.isTraceEnabled()) {
                log.tracef("Entry %s was expired on remote site %s", key, backup);
             }
          }));
@@ -241,7 +240,7 @@ public class DefaultIracManager implements IracManager {
 
    private CompletionStage<Void> run() {
       //this run on a blocking thread!
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Sending keys to remote site(s). Has clear? %s, keys: %s", hasClear, updatedKeys.keySet());
       }
       if (hasClear) {
@@ -310,7 +309,7 @@ public class DefaultIracManager implements IracManager {
    }
 
    private void onRoundCompleted(IracResponseCollector.Result result, Throwable throwable, boolean isClear) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Round completed (is clear? %s). Result: %s (throwable=%s)", isClear, result, throwable);
       }
       if (throwable != null) {
@@ -355,7 +354,7 @@ public class DefaultIracManager implements IracManager {
    }
 
    private void removeStateFromCluster(State state) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Replication completed for key '%s'. Lock Owner='%s'", state.key, state.owner);
       }
       //removes the key from the "updated keys map" in all owners.
@@ -368,7 +367,7 @@ public class DefaultIracManager implements IracManager {
    private void removeStateFromLocal(State state) {
       boolean removed = updatedKeys.remove(state.key, state);
       iracVersionGenerator.removeTombstone(state.key, state.tombstone);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.tombstone, removed);
       }
    }
@@ -425,7 +424,7 @@ public class DefaultIracManager implements IracManager {
       }
 
       synchronized boolean canSend() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[IRAC] State.canSend for key %s (status=%s)", key, stateStatus);
          }
          if (stateStatus == StateStatus.NEW) {
@@ -436,7 +435,7 @@ public class DefaultIracManager implements IracManager {
       }
 
       synchronized void discard() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[IRAC] State.onDiscard for key %s (status=%s)", key, stateStatus);
          }
          stateStatus = StateStatus.COMPLETED;
@@ -444,7 +443,7 @@ public class DefaultIracManager implements IracManager {
       }
 
       public synchronized void sendFail() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[IRAC] State.sendFail for key %s (status=%s)", key, stateStatus);
          }
          if (stateStatus == StateStatus.SENDING) {
@@ -473,7 +472,7 @@ public class DefaultIracManager implements IracManager {
          } else {
             synchronized (this) {
                //send succeed.
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
                }
                if (stateStatus != StateStatus.SENDING) {

@@ -56,7 +56,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       LockListener, Action {
 
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject LockManager lockManager;
    @Inject DistributionManager distributionManager;
@@ -139,16 +138,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       //in the interface.
    }
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
-   protected boolean isTraceEnabled() {
-      return trace;
-   }
-
    private void handleStateRequestCommand(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       if (executeOnExecutorService(order, command)) {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
@@ -208,12 +197,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private void sendExceptionAck(CommandInvocationId id, Throwable throwable, int topologyId, long flagBitSet) {
       final Address origin = id.getAddress();
       if (skipBackupAck(flagBitSet)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skipping ack for command %s.", id);
          }
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Sending exception ack for command %s. Originator=%s.", id, origin);
       }
       if (origin.equals(localAddress)) {
@@ -226,13 +215,13 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private void sendBackupAck(CommandInvocationId id, int topologyId, long flagBitSet) {
       final Address origin = id.getAddress();
       if (skipBackupAck(flagBitSet)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skipping ack for command %s.", id);
          }
          return;
       }
       boolean isLocal = localAddress.equals(origin);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Sending ack for command %s. isLocal? %s.", id, isLocal);
       }
       if (isLocal) {
@@ -277,12 +266,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private void sendMultiKeyAck(CommandInvocationId id, int topologyId, int segment, long flagBitSet) {
       final Address origin = id.getAddress();
       if (skipBackupAck(flagBitSet)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skipping ack for command %s.", id);
          }
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       if (id.getAddress().equals(localAddress)) {

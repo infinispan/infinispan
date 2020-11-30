@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class OffHeapMemory {
    private static final Log log = LogFactory.getLog(OffHeapMemory.class);
-   private final boolean trace = log.isTraceEnabled();
-   private final ConcurrentHashMap<Long, Long> allocatedBlocks = trace ? new ConcurrentHashMap<>() : null;
+   private final ConcurrentHashMap<Long, Long> allocatedBlocks = log.isTraceEnabled() ? new ConcurrentHashMap<>() : null;
 
    private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
 
@@ -27,7 +26,7 @@ class OffHeapMemory {
    byte getByte(long srcAddress, long offset) {
       checkAddress(srcAddress, offset + 1);
       byte value = UNSAFE.getByte(srcAddress + offset);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Read byte value 0x%02x from address 0x%016x+%d", value, srcAddress, offset);
       }
       return value;
@@ -35,7 +34,7 @@ class OffHeapMemory {
 
    void putByte(long destAddress, long offset, byte value) {
       checkAddress(destAddress, offset + 1);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Wrote byte value 0x%02x to address 0x%016x+%d", value, destAddress, offset);
       }
       UNSAFE.putByte(destAddress + offset, value);
@@ -44,7 +43,7 @@ class OffHeapMemory {
    int getInt(long srcAddress, long offset) {
       checkAddress(srcAddress, offset + 4);
       int value = UNSAFE.getInt(srcAddress + offset);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Read int value 0x%08x from address 0x%016x+%d", value, srcAddress, offset);
       }
       return value;
@@ -52,7 +51,7 @@ class OffHeapMemory {
 
    void putInt(long destAddress, long offset, int value) {
       checkAddress(destAddress, offset + 4);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Wrote int value 0x%08x to address 0x%016x+%d", value, destAddress, offset);
       }
       UNSAFE.putInt(destAddress + offset, value);
@@ -64,7 +63,7 @@ class OffHeapMemory {
 
    long getAndSetLong(long destAddress, long offset, long value) {
       checkAddress(destAddress, offset + 8);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Get and setting long value 0x%016x to address 0x%016x+%d", value, destAddress, offset);
       }
       return UNSAFE.getAndSetLong(null, destAddress + offset, value);
@@ -74,7 +73,7 @@ class OffHeapMemory {
       checkAddress(destAddress, offset + 8);
       long previous = UNSAFE.getAndSetLong(null, destAddress + offset, value);
       if (previous != 0) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Get and set long value 0x%016x to address 0x%016x+%d was 0x%016x", value, destAddress, offset, previous);
          }
       }
@@ -88,7 +87,7 @@ class OffHeapMemory {
    private long getLong(long srcAddress, long offset, boolean alwaysTrace) {
       checkAddress(srcAddress, offset + 8);
       long value = UNSAFE.getLong(srcAddress + offset);
-      if (trace && (alwaysTrace || value != 0)) {
+      if (log.isTraceEnabled() && (alwaysTrace || value != 0)) {
          log.tracef("Read long value 0x%016x from address 0x%016x+%d", value, srcAddress, offset);
       }
       return value;
@@ -96,7 +95,7 @@ class OffHeapMemory {
 
    void putLong(long destAddress, long offset, long value) {
       checkAddress(destAddress, offset + 8);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Wrote long value 0x%016x to address 0x%016x+%d", value, destAddress, offset);
       }
       UNSAFE.putLong(destAddress + offset, value);
@@ -104,7 +103,7 @@ class OffHeapMemory {
 
    void getBytes(long srcAddress, long srcOffset, byte[] destArray, long destOffset, long length) {
       checkAddress(srcAddress, srcOffset + length);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Read %d bytes from address 0x%016x+%d into array %s+%d", length, srcAddress, srcOffset, destArray, destOffset);
       }
       UNSAFE.copyMemory(null, srcAddress + srcOffset, destArray, BYTE_ARRAY_BASE_OFFSET + destOffset, length);
@@ -112,7 +111,7 @@ class OffHeapMemory {
 
    void putBytes(byte[] srcArray, long srcOffset, long destAddress, long destOffset, long length) {
       checkAddress(destAddress, destOffset + length);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Wrote %d bytes from array %s+%d to address 0x%016x+%d", length, srcArray, srcOffset, destAddress, destOffset);
       }
       UNSAFE.copyMemory(srcArray, BYTE_ARRAY_BASE_OFFSET + srcOffset, null, destAddress + destOffset, length);
@@ -122,7 +121,7 @@ class OffHeapMemory {
       checkAddress(srcAddress, srcOffset + length);
       checkAddress(destAddress, destOffset + length);
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Copying %d bytes from address 0x%016x+%d to address 0x%016x+%d", length, srcAddress, srcOffset, destAddress, destOffset);
       }
       UNSAFE.copyMemory(srcAddress + srcOffset, destAddress + destOffset, length);
@@ -139,7 +138,7 @@ class OffHeapMemory {
    }
 
    private void checkAddress(long address, long offset) {
-      if (!trace)
+      if (!log.isTraceEnabled())
          return;
 
       Long blockSize = allocatedBlocks.get(address);
@@ -151,7 +150,7 @@ class OffHeapMemory {
 
    long allocate(long size) {
       long address = UNSAFE.allocateMemory(size);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          Long prev = allocatedBlocks.put(address, size);
          if (prev != null) {
             throw new IllegalArgumentException();
@@ -161,7 +160,7 @@ class OffHeapMemory {
    }
 
    void free(long address) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          Long prev = allocatedBlocks.remove(address);
          if (prev == null) {
             throw new IllegalArgumentException();

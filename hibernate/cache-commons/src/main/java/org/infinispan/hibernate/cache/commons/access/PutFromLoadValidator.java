@@ -86,7 +86,6 @@ import org.infinispan.util.ByteString;
  */
 public class PutFromLoadValidator {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(PutFromLoadValidator.class);
-	private final boolean trace = log.isTraceEnabled();
 
 	/**
 	 * Period after which ongoing invalidation is removed. Value is retrieved from cache configuration.
@@ -295,7 +294,7 @@ public class PutFromLoadValidator {
 	 *         can proceed; <code>null</code> if the data should not be cached
 	 */
 	public Lock acquirePutFromLoadLock(Object session, Object key, long txTimestamp) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef("acquirePutFromLoadLock(%s#%s, %d)", cache.getName(), key, txTimestamp);
 		}
 		boolean locked = false;
@@ -314,7 +313,7 @@ public class PutFromLoadValidator {
 								pending.releaseLock();
 								locked = false;
 								pending = null;
-								if (trace) {
+								if (log.isTraceEnabled()) {
 									log.tracef("Record removed when waiting for the lock.");
 								}
 								continue;
@@ -346,13 +345,13 @@ public class PutFromLoadValidator {
 								pending.releaseLock();
 								locked = false;
 							}
-							if (trace) {
+							if (log.isTraceEnabled()) {
 								log.tracef("acquirePutFromLoadLock(%s#%s, %d) ended with %s, valid: %s", cache.getName(), key, txTimestamp, pending, valid);
 							}
 						}
 					}
 					else {
-						if (trace) {
+						if (log.isTraceEnabled()) {
 							log.tracef("acquirePutFromLoadLock(%s#%s, %d) failed to lock", cache.getName(), key, txTimestamp);
 						}
 						// oops, we have leaked record for this owner, but we don't want to wait here
@@ -362,13 +361,13 @@ public class PutFromLoadValidator {
 				else {
 					long regionInvalidationTimestamp = this.regionInvalidationTimestamp;
 					if (txTimestamp <= regionInvalidationTimestamp) {
-						if (trace) {
+						if (log.isTraceEnabled()) {
 							log.tracef("acquirePutFromLoadLock(%s#%s, %d) failed due to region invalidated at %d", cache.getName(), key, txTimestamp, regionInvalidationTimestamp);
 						}
 						return null;
 					}
 					else {
-						if (trace) {
+						if (log.isTraceEnabled()) {
 							log.tracef("Region invalidated at %d, this transaction started at %d", regionInvalidationTimestamp, txTimestamp);
 						}
 					}
@@ -407,7 +406,7 @@ public class PutFromLoadValidator {
 	 * @param key the key
 	 */
 	public void releasePutFromLoadLock(Object key, Lock lock) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef("releasePutFromLoadLock(%s#%s, %s)", cache.getName(), key, lock);
 		}
 		final PendingPutMap pending = (PendingPutMap) lock;
@@ -431,7 +430,7 @@ public class PutFromLoadValidator {
 	 *         caller should treat as an exception condition)
 	 */
 	public boolean beginInvalidatingRegion() {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.trace("Started invalidating region " + cache.getName());
 		}
 		boolean ok = true;
@@ -477,12 +476,12 @@ public class PutFromLoadValidator {
 		synchronized (this) {
 			if (--regionInvalidations == 0) {
 				regionInvalidationTimestamp = timeSource.nextTimestamp();
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("Finished invalidating region %s at %d", cache.getName(), regionInvalidationTimestamp);
 				}
 			}
 			else {
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("Finished invalidating region %s, but there are %d ongoing invalidations", cache.getName(), regionInvalidations);
 				}
 			}
@@ -504,7 +503,7 @@ public class PutFromLoadValidator {
 	public void registerPendingPut(Object session, Object key, long txTimestamp) {
 		long invalidationTimestamp = this.regionInvalidationTimestamp;
 		if (txTimestamp <= invalidationTimestamp) {
-			if (trace) {
+			if (log.isTraceEnabled()) {
 				log.tracef("registerPendingPut(%s#%s, %d) skipped due to region invalidation (%d)", cache.getName(), key, txTimestamp, invalidationTimestamp);
 			}
 			return;
@@ -519,7 +518,7 @@ public class PutFromLoadValidator {
 				if (existing.acquireLock(10, TimeUnit.SECONDS)) {
 					try {
 						if (existing.isRemoved()) {
-							if (trace) {
+							if (log.isTraceEnabled()) {
 								log.tracef("Record removed when waiting for the lock.");
 							}
 							continue;
@@ -531,19 +530,19 @@ public class PutFromLoadValidator {
 					finally {
 						existing.releaseLock();
 					}
-					if (trace) {
+					if (log.isTraceEnabled()) {
 						log.tracef("registerPendingPut(%s#%s, %d) ended with %s", cache.getName(), key, txTimestamp, existing);
 					}
 				}
 				else {
-					if (trace) {
+					if (log.isTraceEnabled()) {
 						log.tracef("registerPendingPut(%s#%s, %d) failed to acquire lock", cache.getName(), key, txTimestamp);
 					}
 					// Can't get the lock; when we come back we'll be a "naked put"
 				}
 			}
 			else {
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("registerPendingPut(%s#%s, %d) registered using putIfAbsent: %s", cache.getName(), key, txTimestamp, pendingForKey);
 				}
 			}
@@ -579,13 +578,13 @@ public class PutFromLoadValidator {
 			if (pending.acquireLock(60, TimeUnit.SECONDS)) {
 				try {
 					if (pending.isRemoved()) {
-						if (trace) {
+						if (log.isTraceEnabled()) {
 							log.tracef("Record removed when waiting for the lock.");
 						}
 						continue;
 					}
 					long now = timeSource.nextTimestamp();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("beginInvalidatingKey(%s#%s, %s) remove invalidator from %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
                }
 					pending.invalidate(now);
@@ -594,7 +593,7 @@ public class PutFromLoadValidator {
 				finally {
 					pending.releaseLock();
 				}
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("beginInvalidatingKey(%s#%s, %s) ends with %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
 				}
 				return true;
@@ -621,7 +620,7 @@ public class PutFromLoadValidator {
 	public boolean endInvalidatingKey(Object lockOwner, Object key, boolean doPFER) {
 		PendingPutMap pending = pendingPuts.get(key);
 		if (pending == null) {
-			if (trace) {
+			if (log.isTraceEnabled()) {
 				log.tracef("endInvalidatingKey(%s#%s, %s) could not find pending puts", cache.getName(), key, lockOwnerToString(lockOwner));
 			}
 			return true;
@@ -636,13 +635,13 @@ public class PutFromLoadValidator {
 			}
 			finally {
 				pending.releaseLock();
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("endInvalidatingKey(%s#%s, %s) ends with %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
 				}
 			}
 		}
 		else {
-			if (trace) {
+			if (log.isTraceEnabled()) {
 				log.tracef("endInvalidatingKey(%s#%s, %s) failed to acquire lock", cache.getName(), key, lockOwnerToString(lockOwner));
 			}
 			return false;

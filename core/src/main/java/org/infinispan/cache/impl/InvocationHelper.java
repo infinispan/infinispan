@@ -36,7 +36,6 @@ import org.infinispan.util.logging.LogFactory;
 public class InvocationHelper {
 
    private static final Log log = LogFactory.getLog(InvocationHelper.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected AsyncInterceptorChain invoker;
    @Inject protected InvocationContextFactory invocationContextFactory;
@@ -250,7 +249,7 @@ public class InvocationHelper {
       try {
          transactionManager.begin();
          final Transaction transaction = getOngoingTransaction();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Implicit transaction started! Transaction: %s", transaction);
          }
          return transaction;
@@ -267,7 +266,7 @@ public class InvocationHelper {
             transactionManager.rollback();
          }
       } catch (Throwable t) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Could not rollback", t);//best effort
          }
       }
@@ -277,7 +276,7 @@ public class InvocationHelper {
       if (transactionManager == null) {
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction());
       }
       try {

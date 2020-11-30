@@ -18,14 +18,13 @@ import io.netty.channel.Channel;
 
 class MultimapRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(MultimapRequestProcessor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    MultimapRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Call get");
       }
       WrappedByteArray keyWrappped = new WrappedByteArray(key);
@@ -49,7 +48,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
    }
 
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Call getWithMetadata");
       }
       WrappedByteArray keyWrappped = new WrappedByteArray(key);
@@ -78,7 +77,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
    }
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Call put");
       }
       WrappedByteArray keyWrappped = new WrappedByteArray(key);
@@ -93,7 +92,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeKey(HotRodHeader header, Subject subject, byte[] key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Call removeKey");
       }
       WrappedByteArray keyWrappped = new WrappedByteArray(key);

@@ -22,7 +22,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 class Compactor extends Thread {
    private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<Integer, Stats>();
    private final BlockingQueue<Integer> scheduledCompaction = new LinkedBlockingQueue<Integer>();
@@ -179,7 +178,7 @@ class Compactor extends Thread {
                   EntryPosition entry = temporaryTable.get(key);
                   if (entry != null) {
                      synchronized (entry) {
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            log.tracef("Key for %d:%d was found in temporary table on %d:%d",
                                  scheduledFile, scheduledOffset, entry.file, entry.offset);
                         }
@@ -205,7 +204,7 @@ class Compactor extends Thread {
                         assert header.valueLength() > 0;
                         // live record with data
                         truncate = header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime();
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            log.tracef("Is %d:%d expired? %s, numRecords? %d", scheduledFile, scheduledOffset, truncate, info.numRecords);
                         }
                         if (!truncate || info.numRecords > 1) {
@@ -215,13 +214,13 @@ class Compactor extends Thread {
                      } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
                         // just tombstone but there are more non-compacted records for this key so we have to keep it
                         drop = false;
-                     } else if (trace) {
+                     } else if (log.isTraceEnabled()) {
                         log.tracef("Key for %d:%d was found in index on %d:%d, %d record => drop",
                               scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                      }
                   }
                   if (drop) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Drop %d:%d (%s)", scheduledFile, (Object)scheduledOffset,
                               header.valueLength() > 0 ? "record" : "tombstone");
                      }
@@ -259,7 +258,7 @@ class Compactor extends Thread {
                      EntryRecord.writeEntry(logFile.fileChannel, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                      TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
                      if (lockedEntry == null) {
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            log.trace("Found entry in temporary table");
                         }
                      } else {
@@ -272,7 +271,7 @@ class Compactor extends Thread {
                            } else {
                               update = info.file == scheduledFile && info.offset == indexedOffset;
                            }
-                           if (trace) {
+                           if (log.isTraceEnabled()) {
                               log.tracef("In index the key is on %d:%d (%s)", info.file, info.offset, String.valueOf(update));
                            }
                         } finally {
@@ -283,7 +282,7 @@ class Compactor extends Thread {
                            }
                         }
                      }
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, indexedOffset,
                               logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
                      }

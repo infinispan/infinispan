@@ -45,7 +45,6 @@ import net.jcip.annotations.ThreadSafe;
 @Scope(Scopes.NAMED_CACHE)
 public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K, V> {
    private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    protected ScheduledExecutorService executor;
@@ -98,7 +97,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       long start = 0;
       if (!Thread.currentThread().isInterrupted()) {
          try {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.trace("Purging data container of expired entries");
                start = timeService.time();
             }
@@ -110,7 +109,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                   entryExpiredInMemory(e, currentTimeMillis, false);
                }
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Purging data container completed in %s",
                           Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
             }
@@ -235,11 +234,11 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry<K, V> ice, int segment, boolean isWrite) {
       long currentTime = timeService.wallClockTime();
       if (ice.isExpired(currentTime)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Retrieved entry for key %s was expired locally, attempting expiration removal", ice.getKey());
          }
          CompletableFuture<Boolean> expiredStage = entryExpiredInMemory(ice, currentTime, isWrite);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             expiredStage = expiredStage.thenApply(expired -> {
                if (expired == Boolean.FALSE) {
                   log.tracef("Retrieved entry for key %s was found to not be expired.", ice.getKey());
@@ -289,11 +288,11 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    class ScheduledTask implements Runnable {
       @Override
       public void run() {
-         LogFactory.pushNDC(cacheName, trace);
+         LogFactory.pushNDC(cacheName, log.isTraceEnabled());
          try {
             processExpiration();
          } finally {
-            LogFactory.popNDC(trace);
+            LogFactory.popNDC(log.isTraceEnabled());
          }
       }
    }

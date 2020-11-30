@@ -18,7 +18,6 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private BlockingRejectedExecutionHandler() { }
 
@@ -38,7 +37,7 @@ public class BlockingRejectedExecutionHandler implements RejectedExecutionHandle
          throw new IllegalLifecycleStateException();
       }
       if (Thread.currentThread().getThreadGroup() instanceof NonBlockingResource) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Task %s was rejected from %s when submitted from non blocking thread", r, executor);
          }
          throw new CacheBackpressureFullException();

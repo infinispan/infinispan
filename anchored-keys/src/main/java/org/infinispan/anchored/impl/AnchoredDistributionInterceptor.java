@@ -55,7 +55,6 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
 // TODO Investigate extending TriangleDistributionInterceptor instead of NonTxDistributionInterceptor
 
    private static final Log log = LogFactory.getLog(AnchoredDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject CommandsFactory commandsFactory;
    @Inject AnchorManager anchorManager;
@@ -63,7 +62,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
    @Override
    protected Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {
       if (!command.isSuccessful()) {
-         if (trace) log.tracef(
+         if (log.isTraceEnabled()) log.tracef(
                "Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",
                command);
          return localResult;

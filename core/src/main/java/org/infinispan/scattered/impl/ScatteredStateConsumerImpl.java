@@ -63,7 +63,6 @@ import net.jcip.annotations.GuardedBy;
  */
 public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    private static final Log log = LogFactory.getLog(ScatteredStateConsumerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    protected static final long SKIP_OWNERSHIP_FLAGS = FlagBitSets.SKIP_OWNERSHIP_CHECK;
 
@@ -148,7 +147,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          inboundSegments = IntSets.mutableFrom(addedSegments);
       }
       chunkCounter.set(0);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Revoking all segments, chunk counter reset to 0");
 
       CacheRpcCommand command = commandsFactory.buildScatteredStateConfirmRevokeCommand(cacheTopology.getTopologyId(), addedSegments);
@@ -216,7 +215,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    protected void onTaskCompletion(InboundTransferTask inboundTransfer) {
       // a bit of overkill since we start these tasks for single segment
       IntSet completedSegments = IntSets.immutableEmptySet();
-      if (trace) log.tracef("Inbound transfer finished %s: %s", inboundTransfer,
+      if (log.isTraceEnabled()) log.tracef("Inbound transfer finished %s: %s", inboundTransfer,
             inboundTransfer.isCompletedSuccessfully() ? "successfully" : "unsuccessfuly");
       synchronized (transferMapsLock) {
          // transferMapsLock is held when all the tasks are added so we see that all of them are done
@@ -235,7 +234,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                transfers.remove(inboundTransfer);
                if (transfers.isEmpty()) {
                   transfersBySegment.remove(segment);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("All transfer tasks for segment %d have completed.", segment);
                   }
                   svm.notifyKeyTransferFinished(segment, inboundTransfer.isCompletedSuccessfully(), inboundTransfer.isCancelled());
@@ -345,7 +344,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // we must not remove the transfer before the requests for values are sent
       // as we could notify the end of rebalance too soon
       removeTransfer(inboundTransfer);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Inbound transfer removed, chunk counter is %s", chunkCounter.get());
       if (chunkCounter.get() == 0) {
          notifyEndOfStateTransferIfNeeded();
@@ -396,7 +395,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // Theoretically we can just send these invalidations asynchronously, but we'd prefer to have old copies
       // removed when state transfer completes.
       long incrementedCounter = chunkCounter.incrementAndGet();
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invalidating versions on %s, chunk counter incremented to %d", member, incrementedCounter);
       InvalidateVersionsCommand ivc = commandsFactory.buildInvalidateVersionsCommand(cacheTopology.getTopologyId(), keys, topologyIds, versions, true);
       rpcManager.invokeCommand(member, ivc, SingleResponseCollector.validOnly(), rpcManager.getSyncRpcOptions())
@@ -405,7 +404,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                       log.failedInvalidatingRemoteCache(t);
                    }
                    long decrementedCounter = chunkCounter.decrementAndGet();
-                   if (trace)
+                   if (log.isTraceEnabled())
                       log.tracef("Versions invalidated on %s, chunk counter decremented to %d", member, decrementedCounter);
                    if (decrementedCounter == 0) {
                       notifyEndOfStateTransferIfNeeded();
@@ -423,7 +422,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
    private void backupEntries(List<InternalCacheEntry<?, ?>> entries) {
       long incrementedCounter = chunkCounter.incrementAndGet();
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Backing up entries, chunk counter is %d", incrementedCounter);
       Map<Object, InternalCacheValue<?>> map = new HashMap<>();
       for (InternalCacheEntry<?, ?> entry : entries) {
@@ -440,7 +439,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             }
          } finally {
             long decrementedCounter = chunkCounter.decrementAndGet();
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Backed up entries, chunk counter is %d", decrementedCounter);
             if (decrementedCounter == 0) {
                notifyEndOfStateTransferIfNeeded();
@@ -461,7 +460,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    private void getValuesAndApply(Address address, List<Object> keys) {
       // TODO: throttle the number of commands sent, otherwise we could DDoS self
       long incrementedCounter = chunkCounter.incrementAndGet();
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Retrieving values, chunk counter is %d", incrementedCounter);
       ClusteredGetAllCommand<?, ?> command = commandsFactory.buildClusteredGetAllCommand(keys, SKIP_OWNERSHIP_FLAGS, null);
       command.setTopologyId(rpcManager.getTopologyId());
@@ -478,7 +477,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                throw t;
             } finally {
                long decrementedCounter = chunkCounter.decrementAndGet();
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Applied values, chunk counter is %d", decrementedCounter);
                if (decrementedCounter == 0) {
                   notifyEndOfStateTransferIfNeeded();

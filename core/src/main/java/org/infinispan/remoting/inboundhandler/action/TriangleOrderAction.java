@@ -15,7 +15,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleOrderAction implements Action {
 
    private static final Log log = LogFactory.getLog(TriangleOrderAction.class);
-   private final boolean trace = log.isTraceEnabled();
    private final long sequenceNumber;
    private final TrianglePerCacheInboundInvocationHandler handler;
    private final int segmentId;
@@ -28,7 +27,7 @@ public class TriangleOrderAction implements Action {
 
    @Override
    public ActionStatus check(ActionState state) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Checking if next for segment %s and sequence %s", segmentId, sequenceNumber);
       }
       return handler.getTriangleOrderManager().isNext(segmentId, sequenceNumber, state.getCommandTopologyId()) ?

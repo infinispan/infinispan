@@ -113,7 +113,6 @@ import io.reactivex.rxjava3.core.Single;
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor implements EntryLoader<K, V> {
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    protected final AtomicLong cacheLoads = new AtomicLong(0);
    protected final AtomicLong cacheMisses = new AtomicLong(0);
@@ -372,7 +371,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       // If another thread is completing the request, then resume on a different CPU thread so we don't have to
       // wait until the other command completes
       if (otherCF != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Piggybacking on concurrent cache loader for key %s", key);
          }
          return otherCF.thenAcceptAsync(action, nonBlockingExecutor);
@@ -403,7 +402,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          includeStores = false;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Loading entry for key %s", key);
       }
       CompletionStage<InternalCacheEntry<K, V>> resultStage = persistenceManager.<K, V>loadFromAllStores(key, segment,
@@ -413,7 +412,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             if (getStatisticsEnabled()) {
                cacheLoads.incrementAndGet();
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Loaded entry: %s for key %s from store and attempting to insert into data container",
                      ice, key);
             }
@@ -429,7 +428,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             dataContainer.compute(segment, (K) key, putIfAbsentOrExpired);
             return ice;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Missed entry load for key %s from store", key);
             }
             if (getStatisticsEnabled()) {
@@ -457,26 +456,26 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Entry is not in the context.", cmd);
          }
          return true;
       }
       if (e.getValue() != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Entry %s (skipLookup=%s) has non-null value.", cmd, e, e.skipLookup());
          }
          return true;
       }
       if (e.skipLookup()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Entry %s (skipLookup=%s) is set to skip lookup.", cmd, e, e.skipLookup());
          }
          return true;
       }
 
       if (!cmd.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK) && !canLoad(key)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Cannot load the key.", cmd);
          }
          return true;
@@ -485,13 +484,13 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       boolean skip;
       if (cmd instanceof WriteCommand) {
          skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for write command %s? %s", cmd, skip);
          }
       } else {
          //read command
          skip = hasSkipLoadFlag(cmd);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s?. %s", cmd, skip);
          }
       }

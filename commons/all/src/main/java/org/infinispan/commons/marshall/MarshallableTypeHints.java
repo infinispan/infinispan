@@ -17,7 +17,6 @@ import org.infinispan.commons.logging.LogFactory;
 public final class MarshallableTypeHints {
 
    private static final Log log = LogFactory.getLog(MarshallableTypeHints.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Cache of classes that are considered to be marshallable alongside their
@@ -42,7 +41,7 @@ public final class MarshallableTypeHints {
          if (prev != null) {
             marshallingType = prev;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Cache a buffer size predictor for '%s' assuming " +
                      "its serializability is unknown", type.getName());
             }
@@ -100,12 +99,12 @@ public final class MarshallableTypeHints {
       if (marshallableUpdateRequired(isMarshallable, marshallType)) {
          boolean replaced = typeHints.replace(type, marshallType, new MarshallingType(
                Boolean.valueOf(isMarshallable), marshallType.sizePredictor));
-         if (replaced && trace) {
+         if (replaced && log.isTraceEnabled()) {
             log.tracef("Replacing '%s' type to be marshallable=%b",
                   type.getName(), isMarshallable);
          }
       } else if (marshallType == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cache '%s' type to be marshallable=%b",
                   type.getName(), isMarshallable);
          }

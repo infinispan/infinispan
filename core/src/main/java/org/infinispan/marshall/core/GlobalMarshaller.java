@@ -55,7 +55,6 @@ import org.infinispan.util.logging.LogFactory;
 public class GlobalMarshaller implements StreamingMarshaller {
 
    private static final Log log = LogFactory.getLog(GlobalMarshaller.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final int NOT_FOUND                      = -1;
 
@@ -128,14 +127,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
       classLoader = globalCfg.classLoader();
       internalExts = InternalExternalizers.load(gcr, cmdFactory);
       reverseInternalExts = internalExts.reverseMap(Ids.MAX_ID);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Internal class to externalizer ids: %s", internalExts);
          log.tracef("Internal reverse externalizers: %s", reverseInternalExts);
       }
 
       externalExts = ExternalExternalizers.load(globalCfg);
       reverseExternalExts = externalExts.reverseMap();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("External class to externalizer ids: %s", externalExts);
          log.tracef("External reverse externalizers: %s", reverseExternalExts);
       }
@@ -248,7 +247,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       boolean containsMarshallable = marshallableTypeHints.isKnownMarshallable(clazz);
       if (containsMarshallable) {
          boolean marshallable = marshallableTypeHints.isMarshallable(clazz);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Marshallable type '%s' known and is marshallable=%b",
                   clazz.getName(), marshallable);
 

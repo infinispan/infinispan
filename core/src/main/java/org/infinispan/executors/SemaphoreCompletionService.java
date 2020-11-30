@@ -26,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SemaphoreCompletionService<T> implements CompletionService<T> {
    private static final Log log = LogFactory.getLog(SemaphoreCompletionService.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Executor executor;
    private final CustomSemaphore semaphore;
@@ -67,7 +66,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
     * to make the permit available again.
     */
    public void continueTaskInBackground() {
-      if (trace) log.tracef("Moving task to background, available permits %d", semaphore.availablePermits());
+      if (log.isTraceEnabled()) log.tracef("Moving task to background, available permits %d", semaphore.availablePermits());
       // Prevent other tasks from running with this task's permit
       semaphore.removePermit();
    }
@@ -79,12 +78,12 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
    public Future<T> backgroundTaskFinished(final Callable<T> cleanupTask) {
       QueueingTask futureTask = null;
       if (cleanupTask != null) {
-         if (trace) log.tracef("Background task finished, executing cleanup task");
+         if (log.isTraceEnabled()) log.tracef("Background task finished, executing cleanup task");
          futureTask = new QueueingTask(cleanupTask);
          executor.execute(futureTask);
       } else {
          semaphore.release();
-         if (trace) log.tracef("Background task finished, available permits %d", semaphore.availablePermits());
+         if (log.isTraceEnabled()) log.tracef("Background task finished, available permits %d", semaphore.availablePermits());
          executeFront();
       }
       return futureTask;
@@ -117,7 +116,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
          }
       } else {
          queue.add(futureTask);
-         if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(),
+         if (log.isTraceEnabled()) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(),
                semaphore.availablePermits());
          executeFront();
       }
@@ -192,11 +191,11 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
 
       private void runInternal() {
          try {
-            if (trace) log.tracef("Task started, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
+            if (log.isTraceEnabled()) log.tracef("Task started, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
             super.run();
          } finally {
             completionQueue.offer(this);
-            if (trace) log.tracef("Task finished, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
+            if (log.isTraceEnabled()) log.tracef("Task finished, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
          }
       }
    }

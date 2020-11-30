@@ -106,7 +106,6 @@ import net.jcip.annotations.GuardedBy;
 public class PersistenceManagerImpl implements PersistenceManager {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject GlobalConfiguration globalConfiguration;
@@ -292,7 +291,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     * @return stage that signals that all store availability checks are done
     */
    protected CompletionStage<Void> pollStoreAvailability() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Polling Store availability");
       }
       // This maybe will always be empty - used when all stores are available
@@ -665,7 +664,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Purging entries from stores");
          }
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
@@ -691,7 +690,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Clearing all stores");
                }
                return Flowable.fromIterable(stores)
@@ -712,7 +711,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Deleting entry for key %s from stores", key);
                }
                return Flowable.fromIterable(stores)
@@ -746,7 +745,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Flowable.using(this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Publishing entries for segments %s", segments);
                }
                for (StoreStatus storeStatus : stores) {
@@ -776,7 +775,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Flowable.using(this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Publishing keys for segments %s", segments);
                }
                for (StoreStatus storeStatus : stores) {
@@ -809,7 +808,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Loading entry for key %s with segment %d", key, segment);
                }
                return Flowable.fromIterable(stores)
@@ -850,7 +849,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Obtaining size from stores");
          }
          NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
@@ -872,7 +871,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Obtaining size from stores for segments %s", segments);
          }
          NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
@@ -901,7 +900,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Writing entry %s for with segment: %d", marshalledEntry, segment);
                }
                return Flowable.fromIterable(stores)
@@ -944,7 +943,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Committing transaction %s to stores", txInvocationContext);
                }
                return Flowable.fromIterable(stores)
@@ -963,7 +962,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Rolling back transaction %s for stores", txInvocationContext);
                }
                return Flowable.fromIterable(stores)
@@ -987,7 +986,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Writing entries to stores");
                }
                return Flowable.fromIterable(stores)
@@ -1044,7 +1043,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Writing batch to stores");
                }
 
@@ -1054,7 +1053,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                         Flowable<MVCCEntry<K, V>> flowableToUse;
                         boolean shared = storeStatus.config.shared();
                         if (shared) {
-                           if (trace) {
+                           if (log.isTraceEnabled()) {
                               log.tracef("Store %s is shared, checking skip shared stores and ignoring entries not" +
                                     " primarily owned by this node", storeStatus.store);
                            }
@@ -1110,7 +1109,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          flowable = Flowable.just(SingleSegmentPublisher.singleSegment(keyRemoveFlowable));
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          flowable = flowable.doOnSubscribe(sub ->
                log.tracef("Store %s has subscribed to remove batch", storeStatus.store));
          flowable = flowable.map(sp -> {
@@ -1156,7 +1155,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          flowable = Flowable.just(SingleSegmentPublisher.singleSegment(entryWriteFlowable));
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          flowable = flowable.doOnSubscribe(sub ->
                log.tracef("Store %s has subscribed to write batch", storeStatus.store));
          flowable = flowable.map(sp -> {
@@ -1276,7 +1275,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Adding segments %s to stores", segments);
                }
                return Flowable.fromIterable(stores)
@@ -1293,7 +1292,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Removing segments %s from stores", segments);
                }
                return Flowable.fromIterable(stores)

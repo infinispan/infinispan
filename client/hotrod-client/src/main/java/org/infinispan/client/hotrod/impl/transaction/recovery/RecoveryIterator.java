@@ -31,7 +31,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class RecoveryIterator {
 
    private static final Log log = LogFactory.getLog(RecoveryIterator.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final Xid[] NOTHING = new Xid[0];
    private final Set<Xid> uniqueFilter = Collections.synchronizedSet(new HashSet<>());
@@ -45,7 +44,7 @@ public class RecoveryIterator {
 
    public Xid[] next() {
       if (inDoubtTransactions.isEmpty()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("RecoveryIterator.next() = []");
          }
          return NOTHING;
@@ -53,7 +52,7 @@ public class RecoveryIterator {
 
       Collection<Xid> txs = new ArrayList<>(inDoubtTransactions.size());
       inDoubtTransactions.drainTo(txs);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("RecoveryIterator.next() = %s", txs);
       }
       return txs.toArray(NOTHING);
@@ -63,7 +62,7 @@ public class RecoveryIterator {
       try {
          remoteRequest.get(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Exception while waiting for prepared transaction from server.", e);
          }
       }
@@ -72,7 +71,7 @@ public class RecoveryIterator {
    private void add(Collection<Xid> transactions) {
       for (Xid xid : transactions) {
          if (uniqueFilter.add(xid)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("RecoveryIterator new xid=%s", xid);
             }
             inDoubtTransactions.add(xid);

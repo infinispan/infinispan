@@ -29,7 +29,6 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
@@ -145,11 +144,11 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
          GlobalTransaction gtx = rTx.getGlobalTransaction();
          if (gtx.getInternalId() == internalId) {
-            if (trace) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
+            if (log.isTraceEnabled()) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
             return gtx.getXid();
          }
       }
-      if (trace) log.tracef("Could not find remote transactions matching internal id %s", internalId);
+      if (log.isTraceEnabled()) log.tracef("Could not find remote transactions matching internal id %s", internalId);
       return null;
    }
 

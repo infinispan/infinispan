@@ -51,7 +51,6 @@ import org.infinispan.util.concurrent.BlockingManager;
 public class EmbeddedCounterManager implements CounterManager {
    public static final String OBJECT_NAME = "CounterManager";
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Map<String, Object> counters;
    private final CounterManagerNotificationManager notificationManager;
@@ -79,7 +78,7 @@ public class EmbeddedCounterManager implements CounterManager {
 
    @Start
    public void start() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Starting EmbeddedCounterManager");
       }
       notificationManager.useBlockingManager(blockingManager);
@@ -90,7 +89,7 @@ public class EmbeddedCounterManager implements CounterManager {
 
    @Stop(priority = 9) //lower than default priority to avoid creating the counters cache.
    public void stop() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Stopping EmbeddedCounterManager");
       }
       started = false;

@@ -31,7 +31,6 @@ public class PooledConnectionFactory extends ConnectionFactory {
 
    private static final String PROPERTIES_PREFIX = "org.infinispan.agroal.";
    private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
-   private static boolean trace = log.isTraceEnabled();
 
    private AgroalDataSource dataSource;
 
@@ -77,7 +76,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
    public void stop() {
       if (dataSource != null) {
          dataSource.close();
-         if (trace) log.debug("Successfully stopped PooledConnectionFactory.");
+         if (log.isTraceEnabled()) log.debug("Successfully stopped PooledConnectionFactory.");
       }
    }
 
@@ -118,7 +117,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void log(Connection connection, boolean checkout, boolean before) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          String stage = before ? "before" : "after";
          String operation = checkout ? "checkout" : "release";
          log.tracef("DataSource %s %s (Active Connections) : %d", stage, operation, getActiveConnections());

@@ -77,7 +77,6 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    //TODO think about the possibility of using JGroups RAFT instead of replicated cache?
 
    private static final Log log = LogFactory.getLog(GlobalTxTable.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<CacheXid, TxState> storage;
    private final FunctionalMap.ReadWriteMap<CacheXid, TxState> rwMap;
@@ -114,24 +113,24 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    }
 
    public Status update(CacheXid key, TxFunction function, long timeoutMillis) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Updating with function: %s", key, function);
       }
       try {
          CompletableFuture<Byte> cf = rwMap.eval(key, function);
          Status status = Status.valueOf(cf.get(timeoutMillis, TimeUnit.MILLISECONDS));
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[%s] Return value is %s", key, status);
          }
          return status;
       } catch (InterruptedException e) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[%s] Interrupted!", key);
          }
          Thread.currentThread().interrupt();
          return Status.ERROR;
       } catch (ExecutionException | TimeoutException e) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(e, "[%s] Error!", key);
          }
          return Status.ERROR;
@@ -148,21 +147,21 @@ public class GlobalTxTable implements Runnable, Lifecycle {
 
    public TxState getState(CacheXid xid) {
       TxState state = storage.get(xid);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Get TxState = %s", xid, state);
       }
       return state;
    }
 
    public void remove(CacheXid cacheXid) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Removed!", cacheXid);
       }
       storage.remove(cacheXid);
    }
 
    public void forgetTransaction(XidImpl xid) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Forgetting transaction.", xid);
       }
       storage.keySet().parallelStream()
@@ -213,7 +212,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       for (Map.Entry<CacheXid, TxState> entry : storage.entrySet()) {
          XidImpl xid = entry.getKey().getXid();
          TxState state = entry.getValue();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Checking transaction xid=%s for recovery. TimedOut?=%s, Recoverable?=%s, Status=%s",
                   xid, state.hasTimedOut(currentTimestamp), state.isRecoverable(), state.getStatus());
          }
@@ -361,11 +360,11 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    }
 
    private void markTx(XidImpl xid, boolean commit, CacheNameCollector collector) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Set Transaction Decision to %s", xid, commit ? "Commit" : "Rollback");
       }
       final List<CacheXid> cacheXids = getKeys(xid);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Fetched CacheXids=%s", xid, cacheXids);
       }
       final int size = cacheXids.size();

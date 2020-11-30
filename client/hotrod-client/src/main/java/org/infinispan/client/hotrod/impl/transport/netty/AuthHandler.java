@@ -25,7 +25,6 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 class AuthHandler extends ActivationHandler {
    private static final Log log = LogFactory.getLog(AuthHandler.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";
@@ -50,7 +49,7 @@ class AuthHandler extends ActivationHandler {
          if (!serverMechs.contains(authentication.saslMechanism())) {
             throw HOTROD.unsupportedMech(authentication.saslMechanism(), serverMechs);
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Authenticating using mech: %s", authentication.saslMechanism());
          }
          byte response[];

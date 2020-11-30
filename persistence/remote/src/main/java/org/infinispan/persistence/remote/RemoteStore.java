@@ -75,7 +75,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private RemoteStoreConfiguration configuration;
 
@@ -178,7 +177,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                   dataFormatBuilder.valueMarshaller(localValueStorageType.isBinary() ? IdentityMarshaller.INSTANCE : marshaller);
                }
                DataFormat dataFormat = dataFormatBuilder.build();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Data format for RemoteStore on cache %s is %s", cacheName, dataFormat);
                }
                remoteCache = remoteCache.withDataFormat(dataFormat);
@@ -320,7 +319,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Adding entry: %s", entry);
       }
       Metadata metadata = entry.getMetadata();
@@ -387,7 +386,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    private long toSeconds(long millis, Object key, String desc) {
       if (millis > 0 && millis < 1000) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Adjusting %s time for key %s from %d millis to 1 sec, as milliseconds are not supported by HotRod",
                   desc, key, millis);
          }

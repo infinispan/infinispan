@@ -64,7 +64,6 @@ import org.infinispan.util.logging.LogFactory;
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final PutMapHelper putMapHelper = new PutMapHelper(this::createRemoteCallback);
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper(this::createRemoteCallback);

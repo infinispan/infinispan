@@ -48,7 +48,6 @@ public class TransactionImpl implements Transaction {
 
    private static final Log log = LogFactory.getLog(TransactionImpl.class);
    private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
-   private final boolean trace = log.isTraceEnabled();
    private final List<Synchronization> syncs;
    private final List<Map.Entry<XAResource, Integer>> resources;
    private final Object xidLock = new Object();
@@ -97,7 +96,7 @@ public class TransactionImpl implements Transaction {
    @Override
    public void commit()
          throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
@@ -117,7 +116,7 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public void rollback() throws IllegalStateException, SystemException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transaction.rollback() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
@@ -134,7 +133,7 @@ public class TransactionImpl implements Transaction {
          throw systemException;
       } catch (RollbackException e) {
          //ignored
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("RollbackException thrown while rolling back", e);
          }
       }
@@ -147,7 +146,7 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public void setRollbackOnly() throws IllegalStateException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transaction.setRollbackOnly() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
@@ -178,7 +177,7 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public boolean enlistResource(XAResource resource) throws RollbackException, IllegalStateException, SystemException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transaction.enlistResource(%s) invoked in transaction with Xid=%s", resource, xid);
       }
       checkStatusBeforeRegister("resource");
@@ -200,7 +199,7 @@ public class TransactionImpl implements Transaction {
       }
 
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.start() invoked in transaction with Xid=%s", xid);
          }
          resource.start(xid, XAResource.TMNOFLAGS);
@@ -242,11 +241,11 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transaction.registerSynchronization(%s) invoked in transaction with Xid=%s", sync, xid);
       }
       checkStatusBeforeRegister("synchronization");
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization handler %s", sync);
       }
       synchronized (xidLock) {
@@ -259,7 +258,7 @@ public class TransactionImpl implements Transaction {
    }
 
    public boolean runPrepare() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("runPrepare() invoked in transaction with Xid=%s", xid);
       }
       notifyBeforeCompletion();
@@ -276,7 +275,7 @@ public class TransactionImpl implements Transaction {
 
          //note: it is safe to return even if we don't prepare all the resources. rollback will be invoked.
          try {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("XaResource.prepare() for %s", res);
             }
             // Need to check return value: the only possible values are XA_OK or XA_RDONLY.
@@ -284,7 +283,7 @@ public class TransactionImpl implements Transaction {
             int lastStatus = res.prepare(xid);
             resourceStatusEntry.setValue(lastStatus);
          } catch (XAException e) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.trace("The resource wants to rollback!", e);
             }
             markRollbackOnly(newRollbackException(format("XaResource.prepare() for %s wants to rollback.", res), e));
@@ -310,7 +309,7 @@ public class TransactionImpl implements Transaction {
     */
    public synchronized void runCommit(boolean forceRollback) //synch because of client transactions
          throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);
       }
       if (forceRollback) {
@@ -401,7 +400,7 @@ public class TransactionImpl implements Transaction {
          final XAResource res = resourceStatusEntry.getKey();
          try {
             if (commit) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("XaResource.commit() for %s", res);
                }
                if (resourceStatusEntry.getValue() == XAResource.XA_RDONLY) {
@@ -411,7 +410,7 @@ public class TransactionImpl implements Transaction {
                //we only do 2-phase commits
                res.commit(xid, false);
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("XaResource.rollback() for %s", res);
                }
                res.rollback(xid);
@@ -483,7 +482,7 @@ public class TransactionImpl implements Transaction {
 
    private void notifyBeforeCompletion() {
       for (Synchronization s : getEnlistedSynchronization()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Synchronization.beforeCompletion() for %s", s);
          }
          try {
@@ -498,7 +497,7 @@ public class TransactionImpl implements Transaction {
 
    private void notifyAfterCompletion(int status) {
       for (Synchronization s : getEnlistedSynchronization()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Synchronization.afterCompletion() for %s", s);
          }
          try {
@@ -512,7 +511,7 @@ public class TransactionImpl implements Transaction {
 
    private void endResources() {
       for (XAResource resource : getEnlistedResources()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XAResource.end() for %s", resource);
          }
          try {

@@ -55,7 +55,6 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> {
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Defines the maximum number of allowed concurrent expirations. Any expirations over this must wait until
@@ -101,7 +100,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       int removedEntries = 0;
       AtomicInteger errors = new AtomicInteger();
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Purging data container on cache %s for topology %d", cacheName, topology.getTopologyId());
             start = timeService.time();
          }
@@ -187,7 +186,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    private void printResults(String message, long start, int removedEntries, AtomicInteger errors) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef(message, cacheName, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)), removedEntries, errors.get());
       }
    }
@@ -235,7 +234,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       return handleEitherExpiration(entry.getKey(), entry.getValue(), true, entry.getMaxIdle(), isWrite)
               .thenCompose(expired -> {
                  if (!expired) {
-                    if (trace) {
+                    if (log.isTraceEnabled()) {
                        log.tracef("Entry was not actually expired via max idle - touching on all nodes");
                     }
                     // TODO: what do we do if another node couldn't touch the value?
@@ -254,7 +253,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
       CompletableFuture<Boolean> previousFuture = expiring.putIfAbsent(key, completableFuture);
       if (previousFuture == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Submitting expiration removal for key: %s which is maxIdle: %s of: %s", toStr(key), maxIdle, time);
          }
          try {
@@ -283,7 +282,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             throw t;
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("There is a pending expiration removal for key %s, waiting until it completes.", key);
       }
       // This means there was another thread that found it had expired via max idle or we have optimistic tx
@@ -353,14 +352,14 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // the TimeoutException to the caller of the write command as it is unrelated.
             // Note that the remove expired command is never "retried" itself.
             if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Encountered timeout exception in remove expired invocation - need to retry!");
                }
                // Have to try the command ourselves as the prior one timed out (this could be valid if a read based
                // remove expired couldn't acquire the try lock
                return entryExpiredInMemory(entry, currentTime, isWrite);
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef(t, "Encountered exception in remove expired invocation - propagating!");
                }
                return CompletableFutures.<Boolean>completedExceptionFuture(cause);
@@ -436,7 +435,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                if (t != null) {
                   Throwable innerT = CompletableFutures.extractException(t);
                   if (innerT instanceof OutdatedTopologyException) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Touch received OutdatedTopologyException, retrying");
                      }
                      return attemptTouchAndReturnIfExpired(ice, segment, currentTime);

@@ -89,7 +89,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V>, TransactionalCacheWriter<K,V> {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Map<Transaction, Connection> transactionConnectionMap = new ConcurrentHashMap<>();
    private JdbcStringBasedStoreConfiguration configuration;
@@ -149,7 +148,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                     e.getClass().getName());
          throw new IllegalStateException("This should not happen.", e);
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Using key2StringMapper: %s", key2StringMapper.getClass().getName());
       }
       if (configuration.preload()) {
@@ -232,7 +231,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          PERSISTENCE.sqlFailureStoringKey(keyStr, ex);
          throw new PersistenceException(String.format("Error while storing string key to database; key: '%s'", keyStr), ex);
       } catch (InterruptedException e) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Interrupted while marshalling to store");
          }
          Thread.currentThread().interrupt();
@@ -257,7 +256,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          throws InterruptedException, SQLException {
       PreparedStatement ps = null;
       String sql = tableManager.getUpsertRowSql();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
       } try {
          ps = connection.prepareStatement(sql);
@@ -271,7 +270,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    private void executeLegacyUpdate(Connection connection, MarshallableEntry entry, String keyStr, int segment)
          throws InterruptedException, SQLException {
       String sql = tableManager.getSelectIdRowSql();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
       }
       PreparedStatement ps = null;
@@ -287,7 +286,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          }
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
@@ -470,7 +469,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       String keyStr = key2Str(key);
       try {
          String sql = tableManager.getDeleteRowSql();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Running sql '%s' on %s", sql, keyStr);
          }
          connection = connectionFactory.getConnection();
@@ -519,7 +518,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
 
             if (affectedRows > 0) {
                int[] result = batchDelete.executeBatch();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Successfully purged %d rows.", result.length);
                }
             }
@@ -559,7 +558,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          } else {
             sql = tableManager.getLoadNonExpiredAllRowsSql();
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Running sql %s", sql);
          }
          return new FlowableConnection(connectionFactory, sql);

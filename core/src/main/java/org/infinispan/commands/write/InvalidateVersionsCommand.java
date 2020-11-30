@@ -27,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvalidateVersionsCommand extends BaseRpcCommand {
    private static final Log log = LogFactory.getLog(InvalidateVersionsCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final int COMMAND_ID = 67;
 
@@ -67,13 +66,13 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
          if (topologyId >= 0 && distributionManager != null) {
             int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
             if (topologyId > currentTopologyId) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Delaying command %s, current topology id %d", this, currentTopologyId);
                }
                return stateTransferLock.topologyFuture(topologyId).thenCompose(nil -> invokeAsync(componentRegistry));
             } else if (topologyId < currentTopologyId) {
                log.ignoringInvalidateVersionsFromOldTopology(this.topologyId, currentTopologyId);
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Ignored command is %s", this);
                }
                return CompletableFutures.completedNull();

@@ -47,8 +47,6 @@ public class OutboundTransferTask {
 
    private static final Log log = LogFactory.getLog(OutboundTransferTask.class);
 
-   private final boolean trace = log.isTraceEnabled();
-
    private final Consumer<Collection<StateChunk>> onChunkReplicated;
 
    private final int topologyId;
@@ -197,7 +195,7 @@ public class OutboundTransferTask {
       if (chunks.isEmpty())
          return CompletableFutures.completedNull();
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          if (isLast) {
             log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination,
                        entries.size(), segments);
@@ -250,7 +248,7 @@ public class OutboundTransferTask {
     */
    void cancelSegments(IntSet cancelledSegments) {
       if (segments.removeAll(cancelledSegments)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cancelling outbound transfer to node %s, segments %s (remaining segments %s)",
                        destination, cancelledSegments, segments);
          }

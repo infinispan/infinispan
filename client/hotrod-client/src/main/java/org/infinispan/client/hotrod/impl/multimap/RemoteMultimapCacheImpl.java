@@ -37,7 +37,6 @@ import org.infinispan.commons.marshall.Marshaller;
 public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteMultimapCacheImpl.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InternalRemoteCache<K, Collection<V>> cache;
    private final RemoteCacheManager remoteCacheManager;
@@ -59,7 +58,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    }
 
    public RemoteMultimapCacheImpl(RemoteCacheManager rcm, RemoteCache<K, Collection<V>> cache) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Creating multimap remote cache: %s", cache.getName());
       }
       this.cache = (RemoteCacheImpl<K, Collection<V>>) cache;
@@ -68,7 +67,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Void> put(K key, V value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, defaultLifespan, defaultMaxIdleTime);
       }
       assertRemoteCacheManagerIsStarted();
@@ -83,7 +82,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Collection<V>> get(K key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to call get (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
@@ -96,7 +95,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<MetadataCollection<V>> getWithMetadata(K key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to call getWithMetadata (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
@@ -109,7 +108,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> remove(K key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to remove (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
@@ -121,7 +120,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> remove(K key, V value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to remove (K,V): (%s, %s)", key, value);
       }
       assertRemoteCacheManagerIsStarted();
@@ -134,7 +133,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> containsKey(K key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to call contains (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
@@ -146,7 +145,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> containsValue(V value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to call contains (V): (%s)", value);
       }
       assertRemoteCacheManagerIsStarted();
@@ -157,7 +156,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> containsEntry(K key, V value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("About to call contais(K,V): (%s, %s)", key, value);
       }
       assertRemoteCacheManagerIsStarted();
@@ -170,7 +169,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
 
    @Override
    public CompletableFuture<Long> size() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("About to call size");
       }
       assertRemoteCacheManagerIsStarted();

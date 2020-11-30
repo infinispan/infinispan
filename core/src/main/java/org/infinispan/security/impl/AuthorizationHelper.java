@@ -36,7 +36,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 public class AuthorizationHelper {
    private static final Log log = LogFactory.getLog(AuthorizationHelper.class);
-   private final boolean trace = log.isTraceEnabled();
    private final GlobalSecurityConfiguration globalConfiguration;
    private final AuditLogger audit;
    private final AuditContext context;
@@ -123,7 +122,7 @@ public class AuthorizationHelper {
 
          int permissionMask = requiredPermission.getMask();
          boolean authorized = subjectACL.matches(permissionMask) && (requestedRole != null ? subjectACL.containsRole(requestedRole) : true);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Check subject '%s' with ACL '%s' has permission '%s' and role '%s' = %b", subject, subjectACL, requiredPermission, requestedRole, authorized);
          }
          return authorized;
@@ -152,7 +151,7 @@ public class AuthorizationHelper {
             }
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Subject '%s' has roles '%s' and permission mask %d", subject, allRoles, subjectMask);
       }
       return new SubjectACL(allRoles, subjectMask);

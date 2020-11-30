@@ -77,7 +77,6 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private static final Log log = LogFactory.getLog(CacheWriterInterceptor.class);
-   private final boolean trace = getLog().isTraceEnabled();
 
    @Inject protected PersistenceManager persistenceManager;
    @Inject InternalEntryFactory entryFactory;
@@ -119,7 +118,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
          // this is a commit call.
          GlobalTransaction tx = ctx.getGlobalTransaction();
-         if (trace) getLog().tracef("Calling loader.commit() for transaction %s", tx);
+         if (log.isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
 
          Transaction xaTx = null;
          try {
@@ -129,7 +128,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             resumeRunningTx(xaTx);
          }
       } else {
-         if (trace) getLog().trace("Commit called with no modifications; ignoring.");
+         if (log.isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
          return null;
       }
    }
@@ -165,7 +164,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Object key = removeCommand.getKey();
          CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(), BOTH);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             stage = stage.thenAccept(removed ->
                   getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
          }
@@ -208,7 +207,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          CompletionStage<?> resultStage;
          if(rv == null) {
             CompletionStage<Boolean> stage = persistenceManager.deleteFromAllStores(key, computeCommand.getSegment(), BOTH);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                resultStage = stage.thenAccept(removed ->
                      getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
             } else {
@@ -295,17 +294,17 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                if (entry != null) {
                   if (entry.isRemoved()) {
                      stage = persistenceManager.deleteFromAllStores(key, dataWriteCommand.getSegment(), BOTH);
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         stage = stage.thenAccept(removed ->
                               getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
                      }
                   } else if (entry.isChanged()) {
                      stage = storeEntry(rCtx, key, dataWriteCommand);
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         stage = stage.thenAccept(removed ->
                               getLog().tracef("Stored entry for key %s in CacheStore", key));
                      }
-                  } else if (trace) {
+                  } else if (log.isTraceEnabled()) {
                      getLog().tracef("Skipping write for key %s as entry wasn't changed");
                   }
                }
@@ -362,7 +361,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                      if (entry.isRemoved()) {
                         CompletionStage<?> innerStage = persistenceManager.deleteFromAllStores(key,
                               keyPartitioner.getSegment(key), BOTH);
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            innerStage = innerStage.thenAccept(removed ->
                                  getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
                         }
@@ -393,11 +392,11 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
       int modificationSize = modifications.size();
       if (modificationSize == 0) {
-         if (trace) getLog().trace("Transaction has not logged any modifications!");
+         if (log.isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
          return null;
       }
 
-      if (trace) getLog().tracef("Cache store modification list: %s", modifications);
+      if (log.isTraceEnabled()) getLog().tracef("Cache store modification list: %s", modifications);
 
       CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, o) -> isProperWriter(ctx, writeCommand, o)));
       if (getStatisticsEnabled()) {
@@ -454,7 +453,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          CompletionStage<Void> stage = persistenceManager.writeToAllNonTxStores(entry,
                SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
                skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
-         if (trace) {
+         if (log.isTraceEnabled()) {
             stage = stage.thenAccept(ignore ->
                getLog().tracef("Stored entry %s under key %s", entry.getValue(), key));
          }

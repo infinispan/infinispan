@@ -29,7 +29,6 @@ import net.jcip.annotations.ThreadSafe;
 public class OfflineStatus {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final long NO_FAILURE = -1;
 
    private final TimeService timeService;
@@ -143,7 +142,7 @@ public class OfflineStatus {
       long minFailures = takeOffline.afterFailures();
       if (minFailures > 0) {
          if (minFailures <= failureCount) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Site is failed: min failures (%s) reached (count=%s).", minFailures, failureCount);
             }
             listener.siteOffline();
@@ -151,7 +150,7 @@ public class OfflineStatus {
          }
          //else, afterFailures() not reached yet.
       } else if (hasMinWait) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
          }
          listener.siteOffline();
@@ -167,7 +166,7 @@ public class OfflineStatus {
          throw new IllegalStateException("Cannot invoke this method if minTimeToWait is not enabled");
       long millis = internalMillisSinceFirstFailure();
       if (millis >= minTimeToWait) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("The minTimeToWait has passed: minTime=%s, timeSinceFirstFailure=%s",
                   minTimeToWait, millis);
          }

@@ -16,7 +16,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RequestRepository {
    private static final Log log = LogFactory.getLog(RequestRepository.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentHashMap<Long, Request<?>> requests;
    private final AtomicLong nextRequestId = new AtomicLong(1);
@@ -45,7 +44,7 @@ public class RequestRepository {
    public void addResponse(long requestId, Address sender, Response response) {
       Request<?> request = requests.get(requestId);
       if (request == null) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Ignoring response for non-existent request %d from %s: %s", requestId, sender, response);
          return;
       }

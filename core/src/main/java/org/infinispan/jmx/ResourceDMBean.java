@@ -46,7 +46,6 @@ import org.infinispan.util.logging.LogFactory;
 public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
    private static final Log log = LogFactory.getLog(ResourceDMBean.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Object obj;
    private final Class<?> objectClass;
@@ -92,7 +91,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          atts.put(attributeName, info);
          attInfos[i++] = info.attributeInfo;
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", attributeName,
                   info.attributeInfo.isReadable(), info.attributeInfo.isWritable(),
                   info.attributeInfo.isIs(), info.attributeInfo.getType());
@@ -106,7 +105,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          opNames[i] = operation.getOperationName();
          MBeanOperationInfo op = toJmxInfo(operation);
          opInfos[i++] = op;
-         if (trace) log.tracef("Operation %s %s", op.getReturnType(), op.getName());
+         if (log.isTraceEnabled()) log.tracef("Operation %s %s", op.getReturnType(), op.getName());
       }
    }
 
@@ -316,7 +315,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       if (i != null) {
          try {
             result = new Attribute(name, i.invoke(null));
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
                      name, i.attributeInfo.isReadable(), i.attributeInfo.isWritable(), i.attributeInfo.isIs(), result.getValue());
          } catch (Exception e) {

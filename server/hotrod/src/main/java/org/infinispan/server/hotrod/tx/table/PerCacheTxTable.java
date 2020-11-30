@@ -24,7 +24,6 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 public class PerCacheTxTable {
 
    private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private final Map<XidImpl, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
    private final ClientAddress clientAddress;
 
@@ -49,7 +48,7 @@ public class PerCacheTxTable {
     */
    public void removeLocalTx(XidImpl xid) {
       EmbeddedTransaction tx = localTxTable.remove(xid);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] Removed tx=%s", xid, tx);
       }
    }
@@ -59,7 +58,7 @@ public class PerCacheTxTable {
     */
    public void createLocalTx(XidImpl xid, EmbeddedTransaction tx) {
       localTxTable.put(xid, tx);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[%s] New tx=%s", xid, tx);
       }
    }
@@ -68,7 +67,7 @@ public class PerCacheTxTable {
     * testing only
     */
    public boolean isEmpty() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Active Transactions: %s", localTxTable.keySet());
       }
       return localTxTable.isEmpty();

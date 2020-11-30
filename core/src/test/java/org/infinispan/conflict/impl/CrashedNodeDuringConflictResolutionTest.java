@@ -46,7 +46,6 @@ import org.testng.annotations.Test;
 public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest {
 
    private static final Log log = LogFactory.getLog(CrashedNodeDuringConflictResolutionTest.class);
-   private static boolean trace = log.isTraceEnabled();
 
    private static final String PARTITION_0_VAL = "A";
    private static final String PARTITION_1_VAL = "B";
@@ -107,7 +106,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       partition(0).merge(partition(1), false);
       blockedStateRequest.get(60, TimeUnit.SECONDS);
 
-      if (trace) log.trace("crashCacheManager(2)");
+      if (log.isTraceEnabled()) log.trace("crashCacheManager(2)");
       TestingUtil.crashCacheManagers(manager(2));
       // Once the JGroups view has been updated to remove manager(index), then the CR should be restarted when the
       // coordinator continues to recover the cluster state

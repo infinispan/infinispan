@@ -30,7 +30,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    private static final Log log = LogFactory.getLog(ReadCommittedEntry.class);
-   private final boolean trace = log.isTraceEnabled();
 
    protected K key;
    protected V value;
@@ -162,7 +161,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
 
    private boolean shouldCommit() {
       if (isChanged()) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s value=%s metadata=%s internalMetadata=%s)",
                   toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata(), internalMetadata);
          return true;

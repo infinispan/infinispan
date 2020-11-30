@@ -36,7 +36,6 @@ import org.infinispan.counter.api.Handle;
  */
 public class NotificationManager {
    private static final Log log = LogFactory.getLog(NotificationManager.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Short> NO_ERROR_FUTURE = CompletableFuture.completedFuture((short) HotRodConstants.NO_ERROR_STATUS);
 
    private final byte[] listenerId;
@@ -54,7 +53,7 @@ public class NotificationManager {
    }
 
    public <T extends CounterListener> Handle<T> addListener(String counterName, T listener) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Add listener for counter '%s'", counterName);
       }
 
@@ -90,7 +89,7 @@ public class NotificationManager {
    }
 
    private void removeListener(String counterName, HandleImpl<?> handle) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Remove listener for counter '%s'", counterName);
       }
       clientListeners.computeIfPresent(counterName, (name, list) -> {

@@ -99,7 +99,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    protected static final Log log = LogFactory.getLog(PrefetchInterceptor.class);
-   protected final boolean trace = log.isTraceEnabled();
 
    protected static final long STATE_TRANSFER_FLAGS = FlagBitSets.PUT_FOR_STATE_TRANSFER |
          FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.SKIP_REMOTE_LOOKUP |
@@ -212,7 +211,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    private InvocationStage lookupLocalAndRetrieveRemote(InvocationContext ctx, Object key, DataCommand cmd, int segment) {
       // We need to lookup the dataContainer directly as GetCacheEntryCommand won't return entry with null value
       InternalCacheEntry entry = dataContainer.get(segment, key);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Locally prefetched entry %s", entry);
       }
       Metadata metadata = entry != null ? entry.getMetadata() : null;
@@ -232,7 +231,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    private InvocationStage retrieveRemoteValue(InvocationContext ctx, Collection<Address> targets, Object key, int segment,
                                                                    DataCommand dataCommand) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Prefetching entry for key %s from %s", key, targets);
       }
       ClusteredGetCommand command = commandsFactory.buildClusteredGetCommand(key, segment, FlagBitSets.SKIP_OWNERSHIP_CHECK);
@@ -273,7 +272,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             }
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Prefetched value is %s", maxValue);
       }
       DataCommand dataCommand = (DataCommand) command;
@@ -293,7 +292,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    // TODO: this is not completely aligned with single-entry prefetch
    private <C extends VisitableCommand & TopologyAffectedCommand> InvocationStage retrieveRemoteValues(InvocationContext ctx, C originCommand, List<?> keys) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Prefetching entries for keys %s using broadcast", keys);
       }
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
@@ -334,7 +333,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                map.put(keys.get(i), maxValues[i]);
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Prefetched values are %s", map);
          }
          if (map.isEmpty()) {

@@ -10,6 +10,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.impl.transaction.operations.CompleteTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.operations.ForgetTransactionOperation;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * A Base {@link TransactionTable} with common logic.
@@ -21,6 +22,8 @@ import org.infinispan.client.hotrod.logging.Log;
  * @since 10.0
  */
 abstract class AbstractTransactionTable implements TransactionTable {
+
+   private static final Log log = LogFactory.getLog(AbstractTransactionTable.class, Log.class);
 
    private final long timeout;
    private volatile TransactionOperationFactory operationFactory;
@@ -42,14 +45,10 @@ abstract class AbstractTransactionTable implements TransactionTable {
    TransactionOperationFactory assertStartedAndReturnFactory() {
       TransactionOperationFactory tmp = operationFactory;
       if (tmp == null) {
-         throw getLog().transactionTableNotStarted();
+         throw log.transactionTableNotStarted();
       }
       return tmp;
    }
-
-   abstract Log getLog();
-
-   abstract boolean isTraceLogEnabled();
 
    final long getTimeout() {
       return timeout;
@@ -70,7 +69,7 @@ abstract class AbstractTransactionTable implements TransactionTable {
          CompleteTransactionOperation operation = factory.newCompleteTransactionOperation(xid, commit);
          return operation.execute().get();
       } catch (Exception e) {
-         getLog().debug("Exception while commit/rollback.", e);
+         log.debug("Exception while commit/rollback.", e);
          return XAException.XA_HEURRB; //heuristically rolled-back
       }
    }
@@ -89,8 +88,8 @@ abstract class AbstractTransactionTable implements TransactionTable {
          // the server reaper will cleanup the completed transactions after a while. (default 1 min)
          operation.execute();
       } catch (Exception e) {
-         if (isTraceLogEnabled()) {
-            getLog().tracef(e, "Exception in forget transaction xid=%s", xid);
+         if (log.isTraceEnabled()) {
+            log.tracef(e, "Exception in forget transaction xid=%s", xid);
          }
       }
    }
@@ -105,8 +104,8 @@ abstract class AbstractTransactionTable implements TransactionTable {
          TransactionOperationFactory factory = assertStartedAndReturnFactory();
          return factory.newRecoveryOperation().execute();
       } catch (Exception e) {
-         if (isTraceLogEnabled()) {
-            getLog().trace("Exception while fetching prepared transactions", e);
+         if (log.isTraceEnabled()) {
+            log.trace("Exception while fetching prepared transactions", e);
          }
          return CompletableFuture.completedFuture(Collections.emptyList());
       }

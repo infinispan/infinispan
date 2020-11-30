@@ -29,7 +29,6 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryAdminOperations {
 
    private static final Log log = LogFactory.getLog(RecoveryAdminOperations.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final String SEPARATOR = ", ";
 
@@ -38,7 +37,7 @@ public class RecoveryAdminOperations {
    @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed", displayName="Show in doubt transactions")
    public String showInDoubtTransactions() {
       Set<InDoubtTxInfo> info = getRecoveryInfoFromCluster();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Found in doubt transactions: %s", info.size());
       }
       StringBuilder result = new StringBuilder();
@@ -57,7 +56,7 @@ public class RecoveryAdminOperations {
 
    @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by internal id")
    public String forceCommit(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Forces the commit of an in-doubt transaction: %s", internalId);
       return completeBasedOnInternalId(internalId, true);
    }

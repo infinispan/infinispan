@@ -67,7 +67,6 @@ import org.infinispan.util.logging.LogFactory;
 public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInterceptor {
 
    private static final Log log = LogFactory.getLog(PessimisticTxIracLocalInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final IracMetadataResponseCollector RESPONSE_COLLECTOR = new IracMetadataResponseCollector();
 
    @Inject CommandsFactory commandsFactory;
@@ -177,7 +176,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
 
    @Override
    public boolean isTraceEnabled() {
-      return trace;
+      return log.isTraceEnabled();
    }
 
    @Override
@@ -228,7 +227,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
    }
 
    private Object onLocalPrepare(LocalTxInvocationContext ctx, PrepareCommand command) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] On local prepare for tx %s", command.getGlobalTransaction());
       }
 

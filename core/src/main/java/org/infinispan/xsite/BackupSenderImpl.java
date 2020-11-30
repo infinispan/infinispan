@@ -82,7 +82,6 @@ import net.jcip.annotations.GuardedBy;
 public class BackupSenderImpl implements BackupSender {
 
    private static final Log log = LogFactory.getLog(BackupSenderImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRef<Cache<Object,Object>> cache;
    @Inject RpcManager rpcManager;
@@ -305,7 +304,7 @@ public class BackupSenderImpl implements BackupSender {
 
       @Override
       public void onCompleted(XSiteBackup backup, long sendTimeNanos, long durationNanos, Throwable throwable) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Backup response from site %s completed for command %s. throwable=%s", command, backup,
                   throwable);
          }

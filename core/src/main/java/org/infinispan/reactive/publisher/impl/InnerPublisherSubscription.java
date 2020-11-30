@@ -35,7 +35,6 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final boolean trace = log.isTraceEnabled();
 
    private final ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent;
    private final int batchSize;
@@ -115,7 +114,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
             alreadyCreated = false;
             target = supplier.get();
             if (target == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Completing processor %s", flowableProcessor);
                }
                flowableProcessor.onComplete();
@@ -142,14 +141,14 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
                return;
             }
             try {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   // Note the size of the array may not be the amount of entries as it isn't resized (can contain nulls)
                   log.tracef("Received %s for id %s from %s", values, parent.requestId, address);
                }
 
                IntSet completedSegments = values.getCompletedSegments();
                if (completedSegments != null) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Completed segments %s for id %s from %s", completedSegments, parent.requestId, address);
                   }
                   completedSegments.forEach((IntConsumer) parent::completeSegment);
@@ -158,7 +157,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
 
                IntSet lostSegments = values.getLostSegments();
                if (lostSegments != null) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Lost segments %s for id %s from %s", completedSegments, parent.requestId, address);
                   }
                   lostSegments.forEach((IntConsumer) segments::remove);
@@ -251,7 +250,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
    // the requestors "lock" to invoke this
    private boolean checkCancelled() {
       if (cancelled) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Subscription %s was cancelled, terminating early", this);
          }
          return true;

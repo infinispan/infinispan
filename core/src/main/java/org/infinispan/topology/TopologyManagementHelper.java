@@ -26,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
 
 public class TopologyManagementHelper {
    private static final Log log = LogFactory.getLog(TopologyManagementHelper.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private GlobalComponentRegistry gcr;
    private BasicComponentRegistry bcr;
@@ -46,7 +45,7 @@ public class TopologyManagementHelper {
       // Then invoke the command on the local node
       CompletionStage<?> localFuture;
       try {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Attempting to execute command on self: %s", command);
          bcr.wireDependencies(command, true);
          localFuture = invokeAsync(command);
@@ -68,7 +67,7 @@ public class TopologyManagementHelper {
 
       // invoke the command on the local node
       try {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Attempting to execute command on self: %s", command);
          bcr.wireDependencies(command, true);
          invokeAsync(command);
@@ -83,7 +82,7 @@ public class TopologyManagementHelper {
       Address coordinator = transport.getCoordinator();
       if (transport.getAddress().equals(coordinator)) {
          try {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Attempting to execute command on self: %s", command);
             bcr.wireDependencies(command, true);
             responseStage = invokeAsync(command).thenApply(v -> makeResponse(v, null, transport.getAddress()));
@@ -105,7 +104,7 @@ public class TopologyManagementHelper {
 
    public void executeOnCoordinatorAsync(Transport transport, AbstractCacheControlCommand command) throws Exception {
       if (transport.isCoordinator()) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Attempting to execute command on self: %s", command);
          try {
             // ignore the result

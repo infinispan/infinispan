@@ -25,7 +25,6 @@ import org.infinispan.commons.logging.LogFactory;
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
 
    private static final Log log = LogFactory.getLog(FastCopyHashMap.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Serialization ID

@@ -26,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 class FailOverClusterExecutor implements ClusterExecutor {
    private static final Log log = LogFactory.getLog(FailOverClusterExecutor.class);
-   private final boolean isTrace = log.isTraceEnabled();
    private final ClusterExecutor executor;
    private final int failOverCount;
 
@@ -43,7 +42,7 @@ class FailOverClusterExecutor implements ClusterExecutor {
    }
 
    private void submit(Runnable command, CompletableFuture<Void> future, int retriesLeft) {
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable %s retries left %d", command, retriesLeft);
       }
       executor.submit(command).whenComplete((v, t) -> {
@@ -76,7 +75,7 @@ class FailOverClusterExecutor implements ClusterExecutor {
    private <V> void submitConsumer(Function<? super EmbeddedCacheManager, ? extends V> function,
          TriConsumer<? super Address, ? super V, ? super Throwable> triConsumer, CompletableFuture<Void> future,
          int retriesLeft) {
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Submitting function %d  retries left %d",
                function, retriesLeft);
       }

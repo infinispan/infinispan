@@ -7,7 +7,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 public class LocalInvalidationSynchronization implements Synchronization {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationSynchronization.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Object lockOwner;
    private final PutFromLoadValidator validator;
@@ -25,7 +24,7 @@ public class LocalInvalidationSynchronization implements Synchronization {
 
    @Override
    public void afterCompletion(int status) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("After completion callback with status %d", status);
       }
       validator.endInvalidatingKey(lockOwner, key, status == Status.STATUS_COMMITTED || status == Status.STATUS_COMMITTING);

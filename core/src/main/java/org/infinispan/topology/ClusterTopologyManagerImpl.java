@@ -103,7 +103,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public static final int CLUSTER_RECOVERY_ATTEMPTS = 10;
 
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<CacheStatusResponseCollector> SKIP_RECOVERY_FUTURE =
          CompletableFutures.completedExceptionFuture(new IllegalStateException());
 
@@ -212,7 +211,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (joinerViewId <= viewId && clusterManagerStatus != ClusterManagerStatus.RECOVERING_CLUSTER) {
          viewStage = CompletableFutures.completedNull();
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Delaying join request from %s until view %s is installed (and cluster status is recovered)",
                        joiner, joinerViewId);
          }
@@ -480,7 +479,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
          boolean isCoordinator = transport.isCoordinator();
          boolean becameCoordinator = isCoordinator && !clusterManagerStatus.isCoordinator();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Received new cluster view: %d, isCoordinator = %s, old status = %s", (Object) newViewId,
                   isCoordinator, clusterManagerStatus);
          }
@@ -546,7 +545,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private CompletionStage<CacheStatusResponseCollector> fetchClusterStatus(int newViewId) {
       int attemptCount = recoveryAttemptCount.getAndIncrement();
-      if (trace)
+      if (log.isTraceEnabled())
          log.debugf("Recovering cluster status for view %d, attempt %d", newViewId, attemptCount);
       ReplicableCommand command = new CacheStatusRequestCommand(newViewId);
       CacheStatusResponseCollector responseCollector = new CacheStatusResponseCollector();
@@ -555,12 +554,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             helper.executeOnClusterSync(transport, command, timeout, responseCollector);
       return CompletionStages.handleAndCompose(remoteStage, (collector, throwable) -> {
          if (newViewId < transport.getViewId()) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Ignoring cluster state responses for view %d, we already have view %d",
                           newViewId, transport.getViewId());
             return SKIP_RECOVERY_FUTURE;
          } else if (throwable == null) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Received valid cluster state responses for view %d", newViewId);
             if (!collector.getSuspectedMembers().isEmpty()) {
                // We got a CacheNotFoundResponse but the view is still the same, assume the JGroups stack

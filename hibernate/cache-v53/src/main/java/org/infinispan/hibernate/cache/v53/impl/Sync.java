@@ -10,7 +10,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 public class Sync implements CacheTransactionSynchronization {
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(Sync.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final RegionFactory regionFactory;
    private long transactionStartTimestamp;
@@ -53,7 +52,7 @@ public class Sync implements CacheTransactionSynchronization {
 
    @Override
    public void transactionCompleting() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          int done = 0, notDone = 0;
          for (int i = 0; i < index; ++i) {
             Object task = tasks[i];
@@ -84,7 +83,7 @@ public class Sync implements CacheTransactionSynchronization {
             log.tracef("Not waiting for %08x %s", System.identityHashCode(task), task);
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Finished %d tasks before completion", count);
       }
    }
@@ -121,7 +120,7 @@ public class Sync implements CacheTransactionSynchronization {
             waiting++;
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Invoked %d tasks after completion, %d are synchronous.", invoked, waiting);
       }
    }

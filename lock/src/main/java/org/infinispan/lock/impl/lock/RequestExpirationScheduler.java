@@ -20,7 +20,6 @@ import org.infinispan.lock.logging.Log;
 public class RequestExpirationScheduler {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final ScheduledExecutorService scheduledExecutorService;
    private final ConcurrentMap<String, ScheduledRequest> scheduledRequests = new ConcurrentHashMap<>();
@@ -57,7 +56,7 @@ public class RequestExpirationScheduler {
     */
    public void scheduleForCompletion(String requestId, CompletableFuture<Boolean> request, long time, TimeUnit unit) {
       if (request.isDone()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Request[%s] is not scheduled because is already done", requestId);
          }
          return;
@@ -69,7 +68,7 @@ public class RequestExpirationScheduler {
          throw new IllegalStateException(message);
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Request[%s] being scheduled to be completed in [%d, %s]", requestId, time, unit);
       }
 
@@ -97,7 +96,7 @@ public class RequestExpirationScheduler {
     * @param force,     force abort
     */
    public void abortScheduling(String requestId, boolean force) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Request[%s] abort scheduling", requestId);
       }
       ScheduledRequest scheduledRequest = scheduledRequests.get(requestId);

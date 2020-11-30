@@ -17,7 +17,6 @@ import javax.transaction.Status;
  */
 public class InvalidationSynchronization implements javax.transaction.Synchronization {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
-   private final boolean trace = log.isTraceEnabled();
 
 	private final Object lockOwner;
 	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
@@ -35,7 +34,7 @@ public class InvalidationSynchronization implements javax.transaction.Synchroniz
 
 	@Override
 	public void afterCompletion(int status) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef("After completion callback with status %d", status);
 		}
 		nonTxPutFromLoadInterceptor.endInvalidating(key, lockOwner, status == Status.STATUS_COMMITTED || status == Status.STATUS_COMMITTING);

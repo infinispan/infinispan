@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject RpcManager rpcManager;
@@ -128,7 +127,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
 
          // No need to invalidate at all if there is no one to invalidate!
          boolean multicast = isUseMulticast(nodes);
-         if (trace) log.tracef("Invalidating keys %s on nodes %s. Use multicast? %s", keys, invalidationAddresses, multicast);
+         if (log.isTraceEnabled()) log.tracef("Invalidating keys %s on nodes %s. Use multicast? %s", keys, invalidationAddresses, multicast);
 
          // L1 invalidations can ignore a member leaving while sending invalidation
          MapResponseCollector collector = MapResponseCollector.ignoreLeavers();
@@ -141,7 +140,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
          }
          return request.toCompletableFuture();
       } else {
-         if (trace) log.tracef("No L1 caches to invalidate for keys %s", keys);
+         if (log.isTraceEnabled()) log.tracef("No L1 caches to invalidate for keys %s", keys);
          return null;
       }
    }
@@ -180,7 +179,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    @Override
    public void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync) {
       if (synchronizers.put(key, sync) != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Replaced existing L1 write synchronizer for key %s as there was a concurrent L1 attempt to " +
                              "update", key);
          }

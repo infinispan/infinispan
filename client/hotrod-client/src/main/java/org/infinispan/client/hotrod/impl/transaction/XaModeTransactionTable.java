@@ -41,7 +41,6 @@ import org.infinispan.commons.CacheException;
 public class XaModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(XaModeTransactionTable.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Map<Transaction, XaAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final RecoveryManager recoveryManager = new RecoveryManager();
@@ -59,16 +58,6 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
    public XAResource getXaResource() {
       return new XaAdapter(null, getTimeout());
-   }
-
-   @Override
-   Log getLog() {
-      return log;
-   }
-
-   @Override
-   boolean isTraceLogEnabled() {
-      return trace;
    }
 
    private XaAdapter createTransactionData(Transaction transaction) {
@@ -107,7 +96,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void start(Xid xid, int flags) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.start(%s, %s)", xid, flags);
          }
          switch (flags) {
@@ -133,7 +122,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void end(Xid xid, int flags) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.end(%s, %s)", xid, flags);
          }
          assertStartInvoked();
@@ -142,7 +131,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public int prepare(Xid xid) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.prepare(%s)", xid);
          }
          assertStartInvoked();
@@ -152,7 +141,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void commit(Xid xid, boolean onePhaseCommit) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.commit(%s, %s)", xid, onePhaseCommit);
          }
          if (currentXid == null) {
@@ -175,7 +164,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void rollback(Xid xid) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.rollback(%s)", xid);
          }
          boolean ignoreNoTx = true;
@@ -195,7 +184,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public boolean isSameRM(XAResource xaResource) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.isSameRM(%s)", xaResource);
          }
          return xaResource instanceof XaAdapter && Objects.equals(transaction, ((XaAdapter) xaResource).transaction);
@@ -203,7 +192,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public void forget(Xid xid) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.forget(%s)", xid);
          }
          recoveryManager.forgetTransaction(xid);
@@ -212,7 +201,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
 
       @Override
       public Xid[] recover(int flags) throws XAException {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("XaResource.recover(%s)", flags);
          }
          RecoveryIterator it = this.iterator;
@@ -367,7 +356,7 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
       }
 
       private <K, V> TransactionContext<K, V> createTxContext(TransactionalRemoteCacheImpl<K, V> remoteCache) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), currentXid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),

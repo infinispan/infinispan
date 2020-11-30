@@ -37,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class LockingInterceptor extends NonTransactionalLockingInterceptor {
 	private static final Log log = LogFactory.getLog(LockingInterceptor.class);
-	private final boolean trace = log.isTraceEnabled();
 
    protected final InvocationFinallyFunction<DataWriteCommand> unlockAllReturnCheckCompletableFutureHandler = (rCtx, rCommand, rv, throwable) -> {
       lockManager.unlockAll(rCtx);
@@ -79,7 +78,7 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
    @Override
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       try {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             Ownership ownership = cdl.getCacheTopology().getDistribution(command.getKey()).writeOwnership();
             log.tracef( "Am I owner for key=%s ? %s", command.getKey(), ownership);
          }

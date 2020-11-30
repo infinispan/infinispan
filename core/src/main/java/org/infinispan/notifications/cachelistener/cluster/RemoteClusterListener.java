@@ -41,7 +41,6 @@ import net.jcip.annotations.ThreadSafe;
 @Listener(primaryOnly = true, observation = Listener.Observation.POST)
 public class RemoteClusterListener {
    private static final Log log = LogFactory.getLog(RemoteClusterListener.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final UUID id;
    private final Address origin;
@@ -74,7 +73,7 @@ public class RemoteClusterListener {
    @ViewChanged
    public CompletionStage<Void> viewChange(ViewChangedEvent event) {
       if (!event.getNewMembers().contains(origin)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Origin %s storing cluster listener is gone, removing local listener", origin);
          }
          return removeListener();
@@ -106,7 +105,7 @@ public class RemoteClusterListener {
          events.add(event);
       }  else {
          // Send event back to origin who has the cluster listener
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Passing Event to manager %s to send to %s", event, origin);
          }
          // Non tx event batching is keyed by the invoking thread.
@@ -124,7 +123,7 @@ public class RemoteClusterListener {
          for (CacheEntryEvent cacheEvent : events) {
             eventsToSend.add(ClusterEvent.fromEvent(cacheEvent));
             // Send event back to origin who has the cluster listener
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Passing Event(s) to manager %s to send to %s", eventsToSend, origin);
             }
          }

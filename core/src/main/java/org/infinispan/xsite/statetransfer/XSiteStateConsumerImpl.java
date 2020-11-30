@@ -40,8 +40,6 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
                                                                           IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                           SKIP_XSITE_BACKUP, IRAC_STATE);
    private static final Log log = LogFactory.getLog(XSiteStateConsumerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
-   private static final boolean debug = log.isDebugEnabled();
 
    @Inject TransactionManager transactionManager;
    @Inject InvocationContextFactory invocationContextFactory;
@@ -54,9 +52,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    @Override
    public void startStateTransfer(String sendingSite) {
-      if (debug) {
-         log.debugf("Starting state transfer. Receiving from %s", sendingSite);
-      }
+      log.debugf("Starting state transfer. Receiving from %s", sendingSite);
       if (this.sendingSite.compareAndSet(null, sendingSite)) {
          commitManager.startTrack(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
       } else {
@@ -66,7 +62,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    @Override
    public void endStateTransfer(String sendingSite) {
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Ending state transfer from %s", sendingSite);
       }
       String currentSendingSite = this.sendingSite.get();
@@ -83,7 +79,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    @Override
    public void applyState(XSiteState[] chunk) throws Exception {
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Received state: %s keys", chunk.length);
       }
       if (transactionManager != null) {
@@ -106,12 +102,12 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          ((TxInvocationContext<?>) ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_X_SITE_STATE_TRANSFER);
          for (XSiteState siteState : chunk) {
             interceptorChain.invoke(ctx, createPut(siteState));
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Successfully applied key'%s'", siteState);
             }
          }
          transactionManager.commit();
-         if (debug) {
+         if (log.isDebugEnabled()) {
             log.debugf("Successfully applied state. %s keys inserted", chunk.length);
          }
       } catch (Exception e) {
@@ -130,11 +126,11 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          ctx.setLockOwner(command.getKeyLockOwner());
          interceptorChain.invoke(ctx, command);
          ctx.resetState(); //re-use same context. Old context is not longer needed
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Successfully applied key'%s'", siteState);
          }
       }
-      if (debug) {
+      if (log.isDebugEnabled()) {
          log.debugf("Successfully applied state. %s keys inserted", chunk.length);
       }
    }
@@ -152,7 +148,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          transactionManager.rollback();
       } catch (Exception e) {
          //ignored!
-         if (debug) {
+         if (log.isDebugEnabled()) {
             log.debug("Error rollbacking transaction.", e);
          }
       }

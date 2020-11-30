@@ -38,7 +38,6 @@ import org.infinispan.commons.util.Immutables;
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private Map<WrappedByteArray, Collection<InetSocketAddress>> servers = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();
@@ -116,7 +115,7 @@ public final class TopologyInfo {
       }
       WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
       consistentHashes.put(wrappedName, hash);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("(1) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
       }
       topologyIds.put(wrappedName, topologyId);
@@ -135,7 +134,7 @@ public final class TopologyInfo {
          consistentHashes.put(wrappedName, hash);
       }
       segmentsByCache.put(wrappedName, numSegments);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("(2) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
       }
       topologyIds.put(wrappedName, topologyId);
@@ -147,7 +146,7 @@ public final class TopologyInfo {
          ConsistentHash consistentHash = consistentHashes.get(new WrappedByteArray(cacheName));
          if (consistentHash != null) {
             server = Optional.of(consistentHash.getServer(key));
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
          }
@@ -160,7 +159,7 @@ public final class TopologyInfo {
    public boolean isTopologyValid(byte[] cacheName) {
       Integer id = topologyIds.get(new WrappedByteArray(cacheName)).get();
       Boolean valid = id == null || id.intValue() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Is topology id (%s) valid? %b", id, valid);
 
       return valid;
@@ -189,7 +188,7 @@ public final class TopologyInfo {
 
    public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
       WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Creating topology for %s (absent ? %s) id=%d", wrappedName, topologyIds.get(wrappedName), topologyId);
       }
       return topologyIds.computeIfAbsent(wrappedName, c -> new AtomicInteger(topologyId));
@@ -198,7 +197,7 @@ public final class TopologyInfo {
    public void setTopologyId(byte[] cacheName, int topologyId) {
       WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
       AtomicInteger id = topologyIds.get(wrappedName);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Setting topology for %s: %d -> %d", wrappedName, id.get(), topologyId);
       }
       id.set(topologyId);

@@ -130,7 +130,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private final static Log log = LogFactory.getLog(ScatteredDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected ScatteredVersionManager<Object> svm;
    @Inject protected GroupManager groupManager;
@@ -220,7 +219,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             // TODO [ISPN-3918]: the previous value is unreliable as this could be second invocation
             return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
                if (!cmd.isSuccessful()) {
-                  if (trace) log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", cmd);
+                  if (log.isTraceEnabled()) log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", cmd);
                   return singleWriteResponse(rCtx, cmd, rv);
                }
 
@@ -284,7 +283,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                                              RepeatableReadEntry cacheEntry, Object seenValue, EntryVersion seenVersion,
                                              CacheTopology cacheTopology, DistributionInfo info) {
       if (!command.isSuccessful()) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
          return rv;
       }
@@ -360,7 +359,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          // Note that this does not happen to write commands as these are not processed until we receive the topology
          // these request.
          throw OutdatedTopologyException.RETRY_SAME_TOPOLOGY;
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("%s has topology %d (current is %d)", command, command.getTopologyId(), cacheTopology.getTopologyId());
       }
       return cacheTopology;
@@ -394,7 +393,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private CompletionStage<Void> commitOperation(RepeatableReadEntry entry, Predicate<RepeatableReadEntry> wasCommitted,
                                                  InvocationContext ctx, VisitableCommand command) {
       if (!entry.isChanged()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry has not changed, not committing");
          }
       } else if (entry.isRemoved()) {
@@ -447,12 +446,12 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          Metadata newMetadata = entry.getMetadata();
          if (oldEntry == null) {
             if (entry.getValue() == null && newMetadata == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("No previous record and this is a removal, not committing anything.");
                }
                return null;
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Committing new entry " + entry);
                }
                entry.setCommitted();
@@ -464,7 +463,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (oldMetadata == null || oldMetadata.version() == null || newMetadata == null || newMetadata.version() == null
                || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
                || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Committing entry %s, replaced %s", entry, oldEntry);
             }
             entry.setCommitted();
@@ -474,7 +473,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                return null;
             }
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Not committing %s, current entry is %s", entry, oldEntry);
             }
             return oldEntry;
@@ -495,18 +494,18 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          Metadata newMetadata = entry.getMetadata();
          if (oldEntry == null) {
             if (entry.getOldValue() != null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Non-null value in context, not committing");
                }
                throw new ConcurrentChangeException();
             }
             if (entry.getValue() == null && newMetadata == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("No previous record and this is a removal, not committing anything.");
                }
                return null;
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Committing new entry " + entry);
                }
                entry.setCommitted();
@@ -519,24 +518,24 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          EntryVersion seenVersion = seenMetadata == null ? null : seenMetadata.version();
          if (oldVersion == null) {
             if (seenVersion != null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Current version is null but seen version is %s, throwing", seenVersion);
                }
                throw new ConcurrentChangeException();
             }
          } else if (seenVersion == null) {
             if (oldEntry.canExpire() && oldEntry.isExpired(timeService.wallClockTime())) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.trace("Current entry is expired and therefore we haven't seen it");
                }
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Current version is %s but seen version is null, throwing", oldVersion);
                }
                throw new ConcurrentChangeException();
             }
          } else if (seenVersion.compareTo(oldVersion) != InequalVersionComparisonResult.EQUAL) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Current version is %s but seen version is %s, throwing", oldVersion, seenVersion);
             }
             throw new ConcurrentChangeException();
@@ -545,7 +544,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (oldVersion == null || newMetadata == null || newMetadata.version() == null
                || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
                || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Committing entry %s, replaced %s", entry, oldEntry);
             }
             entry.setCommitted();
@@ -555,7 +554,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                return null;
             }
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Not committing %s, current entry is %s", entry, oldEntry);
             }
             return oldEntry;
@@ -624,12 +623,12 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       if (info.isPrimary()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("In topology %d this is primary owner", cacheTopology.getTopologyId());
          }
          return invokeNext(ctx, command);
       } else if (command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.trace("Ignoring ownership");
          }
          return invokeNext(ctx, command);

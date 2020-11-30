@@ -24,7 +24,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SegmentedKeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final ToIntFunction<Object> toIntFunction;
@@ -41,7 +40,7 @@ public class SegmentedKeyStreamSupplier<K, V> implements AbstractLocalCacheStrea
    public Stream<K> buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel) {
       Stream<K> stream;
       if (keysToFilter != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // Make sure we aren't going remote to retrieve these
@@ -50,13 +49,13 @@ public class SegmentedKeyStreamSupplier<K, V> implements AbstractLocalCacheStrea
          stream = (Stream<K>) (parallel ? keysToFilter.parallelStream() : keysToFilter.stream())
                .filter(advancedCache::containsKey);
          if (segmentsToFilter != null && toIntFunction != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Applying segment filter %s", segmentsToFilter);
             }
             stream = stream.filter(k -> {
                int segment = toIntFunction.applyAsInt(k);
                boolean isPresent = segmentsToFilter.contains(segment);
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Is key %s present in segment %d? %b", k, segment, isPresent);
                return isPresent;
             });

@@ -43,7 +43,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
    private static final Log log = LogFactory.getLog(AbstractCacheTransaction.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
    volatile boolean hasLocalOnlyModifications;
@@ -189,7 +188,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void notifyOnTransactionFinished() {
-      if (trace) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
+      if (log.isTraceEnabled()) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
       if (!txCompleted.isDone()) {
          txCompleted.complete(null);
          cleanupBackupLocks();
@@ -206,14 +205,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (backupKeyLocks == null) {
          backupKeyLocks = new HashMap<>();
       }
-      if (trace) log.tracef("Transaction %s added backup lock: %s", tx, toStr(key));
+      if (log.isTraceEnabled()) log.tracef("Transaction %s added backup lock: %s", tx, toStr(key));
       backupKeyLocks.put(key, new CompletableFuture<>());
    }
 
    public void registerLockedKey(Object key) {
       // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
       final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY)) : value);
-      if (trace) log.tracef("Transaction %s added lock: %s", tx, toStr(key));
+      if (log.isTraceEnabled()) log.tracef("Transaction %s added lock: %s", tx, toStr(key));
       keys.add(key);
    }
 
@@ -230,7 +229,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void clearLockedKeys() {
-      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
+      if (log.isTraceEnabled()) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
       lockedKeys.set(null);
    }
 
@@ -271,7 +270,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          versionsSeenMap = new HashMap<>();
       }
       if (!versionsSeenMap.containsKey(key)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Transaction %s read %s with version %s", getGlobalTransaction().globalId(), key, version);
          }
          versionsSeenMap.put(key, (IncrementableEntryVersion) version);
@@ -335,7 +334,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public synchronized void cleanupBackupLocks() {
       if (backupKeyLocks != null) {
-         if (trace) log.tracef("Transaction %s removing all backup locks: %s", tx, toStr(backupKeyLocks.keySet()));
+         if (log.isTraceEnabled()) log.tracef("Transaction %s removing all backup locks: %s", tx, toStr(backupKeyLocks.keySet()));
          for (CompletableFuture<Void> cf : backupKeyLocks.values()) {
             cf.complete(null);
          }
@@ -349,7 +348,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          for (Object key : keys) {
             CompletableFuture<Void> cf = backupKeyLocks.remove(key);
             if (cf != null) {
-               if (trace) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
+               if (log.isTraceEnabled()) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
                cf.complete(null);
             }
          }
@@ -360,7 +359,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (backupKeyLocks != null) {
          CompletableFuture<Void> cf = backupKeyLocks.remove(key);
          if (cf != null) {
-            if (trace) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
+            if (log.isTraceEnabled()) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
             cf.complete(null);
          }
       }

@@ -56,7 +56,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          getLog().tracef("Skipping topology check for command %s", command);
          return cacheTopology;
       }
-      if (trace) {
+      if (getLog().isTraceEnabled()) {
          getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
       }
       if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {

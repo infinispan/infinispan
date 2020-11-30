@@ -43,7 +43,6 @@ import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implements LogSupplier {
 
    private static final Log log = LogFactory.getLog(NonTxIracRemoteSiteInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    private final boolean needsVersions;
    private final InvocationSuccessAction<DataWriteCommand> setMetadataForOwnerAction = this::setIracMetadataForOwner;
    @Inject XSiteEntryMergePolicy<Object, Object> mergePolicy;
@@ -85,7 +84,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
 
    @Override
    public boolean isTraceEnabled() {
-      return trace;
+      return log.isTraceEnabled();
    }
 
    @Override
@@ -141,7 +140,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
          IracMetadata localMetadata) {
       IracMetadata remoteMetadata = command.getInternalMetadata().iracMetadata();
       assert remoteMetadata != null;
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Comparing local and remote metadata: %s and %s", localMetadata, remoteMetadata);
       }
       IracEntryVersion localVersion = localMetadata.getVersion();
@@ -159,7 +158,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
 
    private CompletionStage<Boolean> resolveConflict(CacheEntry<?, ?> entry, IracPutKeyValueCommand command,
          IracMetadata localMetadata, IracMetadata remoteMetadata) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Conflict found between local and remote metadata: %s and %s", localMetadata,
                remoteMetadata);
       }
@@ -168,7 +167,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       SiteEntry<Object> remoteSiteEntry = command.createSiteEntry(remoteMetadata.getSite());
 
       return mergePolicy.merge(entry.getKey(), localSiteEntry, remoteSiteEntry).thenApply(resolved -> {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[IRAC] resolve(%s, %s) = %s", localSiteEntry, remoteSiteEntry, resolved);
          }
          //fast track, it is the same entry as stored already locally. do nothing!
@@ -193,7 +192,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
 
    private IncrementableEntryVersion generateWriteSkewVersion(CacheEntry<?, ?> entry) {
       IncrementableEntryVersion version = WriteSkewHelper.incrementVersion(entry, versionGenerator);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Generated Write Skew version for %s=%s", entry.getKey(), version);
       }
       return version;

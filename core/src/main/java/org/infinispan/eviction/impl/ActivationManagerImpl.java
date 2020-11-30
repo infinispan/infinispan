@@ -34,7 +34,6 @@ import org.infinispan.util.logging.LogFactory;
 public class ActivationManagerImpl implements ActivationManager {
 
    private static final Log log = LogFactory.getLog(ActivationManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final LongAdder activations = new LongAdder();
    private final LongAdder pendingActivations = new LongAdder();
@@ -59,7 +58,7 @@ public class ActivationManagerImpl implements ActivationManager {
       if (!passivation) {
          return CompletableFutures.completedNull();
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Activating entry for key %s", key);
       }
       if (statisticsEnabled) {
