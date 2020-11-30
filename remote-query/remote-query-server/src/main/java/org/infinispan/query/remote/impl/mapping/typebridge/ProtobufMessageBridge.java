@@ -10,7 +10,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.indexing.IndexingTagHandler;
 import org.infinispan.query.remote.impl.mapping.reference.IndexReferenceHolder;
 
-public class ProtobufMessageBridge implements TypeBridge {
+public class ProtobufMessageBridge implements TypeBridge<byte[]> {
 
    private final IndexReferenceHolder indexReferenceHolder;
    private final Descriptor descriptor;
@@ -21,8 +21,7 @@ public class ProtobufMessageBridge implements TypeBridge {
    }
 
    @Override
-   public void write(DocumentElement target, Object bridgedElement, TypeBridgeWriteContext context) {
-      byte[] messageBytes = (byte[]) bridgedElement;
+   public void write(DocumentElement target, byte[] messageBytes, TypeBridgeWriteContext context) {
       IndexingTagHandler tagHandler = new IndexingTagHandler(descriptor, target, indexReferenceHolder);
 
       try {

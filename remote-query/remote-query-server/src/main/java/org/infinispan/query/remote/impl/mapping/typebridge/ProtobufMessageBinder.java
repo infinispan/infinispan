@@ -33,7 +33,7 @@ public class ProtobufMessageBinder implements TypeBinder {
       context.dependencies().useRootOnly();
       IndexReferenceHolder indexReferenceProvider = createIndexReferenceProvider(context, MAX_DEPTH);
       Descriptor descriptor = globalReferenceHolder.getDescriptor(rootMessageName);
-      context.bridge(new ProtobufMessageBridge(indexReferenceProvider, descriptor));
+      context.bridge(byte[].class, new ProtobufMessageBridge(indexReferenceProvider, descriptor));
    }
 
    private IndexReferenceHolder createIndexReferenceProvider(TypeBindingContext context, int maxDepth) {
