@@ -8,8 +8,8 @@ To start the server with one of the configuration examples, do the following:
 . Copy the configuration file to the `$SERVER_HOME/conf` directory.
 . Specify the filename with the `-c` argument when you start the server.
 
-For example, start the server with a configuration file named "Authentication.xml":
+For example, start the server with a configuration file named "AuthenticationKeyCloak.xml":
 
 ----
-$ bin/server.sh -c Authentication.xml
+$ bin/server.sh -c AuthenticationKeyCloak.xml
 ----
