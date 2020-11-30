@@ -13,7 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DefaultResponseGenerator implements ResponseGenerator {
    private static final Log log = LogFactory.getLog(DefaultResponseGenerator.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (returnValue instanceof Response)
@@ -23,7 +22,7 @@ public class DefaultResponseGenerator implements ResponseGenerator {
          return command.isSuccessful() ? SuccessfulResponse.create(returnValue) : UnsuccessfulResponse.create(returnValue);
       } else {
          if (returnValue != null) {
-            if (trace) log.tracef("Ignoring non-null response for command %s: %s", command, returnValue);
+            if (log.isTraceEnabled()) log.tracef("Ignoring non-null response for command %s: %s", command, returnValue);
          }
          return null; // saves on serializing a response!
       }

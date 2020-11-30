@@ -31,7 +31,6 @@ import java.util.function.Predicate;
  */
 public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private static final Log log = LogFactory.getLog(VersionedEntry.class);
-	private final boolean trace = log.isTraceEnabled();
 
 	public static final ExcludeEmptyFilter EXCLUDE_EMPTY_VERSIONED_ENTRY = new ExcludeEmptyFilter();
 	private final Object value;
@@ -73,7 +72,7 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 
 	@Override
 	public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef("Applying %s to %s", this, view.find().orElse(null));
 		}
 		if (version == null) {
@@ -118,7 +117,7 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 				view.set(new VersionedEntry(null, null, timestamp), region.getExpiringMetaParam());
 			} else {
 				int compareResult = versionComparator.compare(version, oldVersion);
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("Comparing %s and %s -> %d (using %s)", version, oldVersion, compareResult, versionComparator);
 				}
 				if (value == null && compareResult >= 0) {

@@ -59,7 +59,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private static final Hash HASH_FUNCTION = MurmurHash3.getInstance();
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final EmbeddedCacheManager cacheManager;
    private final String cacheName;
@@ -122,7 +121,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          availabilityMode = AvailabilityMode.DEGRADED_MODE;
       });
       status = ComponentStatus.INSTANTIATED;
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Cache %s initialized. Persisted state? %s", cacheName, persistentState.isPresent());
       }
    }
@@ -241,7 +240,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       expectedMembers = immutableAdd(expectedMembers, joiner);
       persistentUUIDManager.addPersistentAddressMapping(joiner, joinInfo.getPersistentUUID());
       joiners = immutableAdd(joiners, joiner);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Added joiner %s to cache %s with persistent uuid %s: members = %s, joiners = %s", joiner, cacheName,
                joinInfo.getPersistentUUID(), expectedMembers, joiners);
       return true;
@@ -253,7 +252,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @GuardedBy("this")
    private boolean removeMember(Address leaver) {
       if (!expectedMembers.contains(leaver)) {
-         if (trace) log.tracef("Trying to remove node %s from cache %s, but it is not a member: " +
+         if (log.isTraceEnabled()) log.tracef("Trying to remove node %s from cache %s, but it is not a member: " +
                "members = %s", leaver, cacheName, expectedMembers);
          return false;
       }
@@ -263,7 +262,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       newCapacityFactors.remove(leaver);
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
       joiners = immutableRemove(joiners, leaver);
-      if (trace) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
+      if (log.isTraceEnabled()) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
             cacheName, expectedMembers, joiners);
       return true;
    }
@@ -274,14 +273,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @GuardedBy("this")
    private boolean retainMembers(List<Address> newClusterMembers) {
       if (newClusterMembers.containsAll(expectedMembers)) {
-         if (trace) log.tracef("Cluster members updated for cache %s, no abrupt leavers detected: " +
+         if (log.isTraceEnabled()) log.tracef("Cluster members updated for cache %s, no abrupt leavers detected: " +
                "cache members = %s. Existing members = %s", cacheName, newClusterMembers, expectedMembers);
          return false;
       }
 
       expectedMembers = immutableRetainAll(expectedMembers, newClusterMembers);
       joiners = immutableRetainAll(joiners, newClusterMembers);
-      if (trace) log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s", cacheName,
+      if (log.isTraceEnabled()) log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s", cacheName,
             expectedMembers, joiners);
       return true;
    }
@@ -294,7 +293,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (newTopology != null) {
          joiners = immutableRemoveAll(expectedMembers, newTopology.getCurrentCH().getMembers());
       }
-      if (trace) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
+      if (log.isTraceEnabled()) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
             cacheName, currentTopology, expectedMembers, joiners);
       if (newTopology != null) {
          newTopology.logRoutingTableInformation();
@@ -304,7 +303,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @GuardedBy("this")
    private void setStableTopology(CacheTopology newTopology) {
       this.stableTopology = newTopology;
-      if (trace) log.tracef("Cache %s stable topology updated: members = %s, joiners = %s, topology = %s",
+      if (log.isTraceEnabled()) log.tracef("Cache %s stable topology updated: members = %s, joiners = %s, topology = %s",
             cacheName, expectedMembers, joiners, newTopology);
    }
 
@@ -381,7 +380,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                     cacheName, viewId, newViewId);
          return;
       }
-      if (trace) log.tracef("Cache %s updating members for view %d: %s", cacheName, viewId, newClusterMembers);
+      if (log.isTraceEnabled()) log.tracef("Cache %s updating members for view %d: %s", cacheName, viewId, newClusterMembers);
       boolean cacheMembersModified = retainMembers(newClusterMembers);
       availabilityStrategy.onClusterViewChange(this, newClusterMembers);
 
@@ -683,13 +682,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       boolean isFirstMember = getCurrentTopology() == null;
       boolean memberJoined = addMember(joiner, joinInfo);
       if (!isFirstMember && !memberJoined) {
-         if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
+         if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
          return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
       }
       if (status == ComponentStatus.INSTANTIATED) {
          if (persistentState.isPresent()) {
-            if (trace) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
+            if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
             // We can only allow this to proceed if we have a complete cluster
             CacheTopology topology = restoreCacheTopology(persistentState.get());
             if (topology != null) {
@@ -727,11 +726,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @GuardedBy("this")
    protected CacheTopology restoreCacheTopology(ScopedPersistentState state) {
-      if (trace) log.tracef("Attempting to restore CH for cache %s", cacheName);
+      if (log.isTraceEnabled()) log.tracef("Attempting to restore CH for cache %s", cacheName);
 
       ConsistentHash persistedCH = joinInfo.getConsistentHashFactory().fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
       if (persistedCH == null || !getExpectedMembers().containsAll(persistedCH.getMembers())) {
-         if (trace) log.tracef("Could not restore CH for cache %s, one or more addresses are missing", cacheName);
+         if (log.isTraceEnabled()) log.tracef("Could not restore CH for cache %s, one or more addresses are missing", cacheName);
          return null;
       }
 
@@ -983,7 +982,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    private synchronized void completeConflictResolution() {
-      if (trace) log.tracef("Cache %s conflict resolution future complete", cacheName);
+      if (log.isTraceEnabled()) log.tracef("Cache %s conflict resolution future complete", cacheName);
       // CR is only queued for PreferConsistencyStrategy when a merge it is determined that the newAvailabilityMode will be AVAILABLE
       // therefore if this method is called we know that the partition must be set to AVAILABLE
       availabilityMode = AvailabilityMode.AVAILABLE;
@@ -1023,7 +1022,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       // CR members are the same as newMembers, so no need to restart
       if (!conflictResolution.restartRequired(members)) {
-         if (trace) log.tracef("Cache %s not restarting conflict resolution, existing conflict topology contains all members (%s)", cacheName, members);
+         if (log.isTraceEnabled()) log.tracef("Cache %s not restarting conflict resolution, existing conflict topology contains all members (%s)", cacheName, members);
          return false;
       }
 

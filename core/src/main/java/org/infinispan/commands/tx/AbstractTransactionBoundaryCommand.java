@@ -27,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
 
    private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
    protected final ByteString cacheName;
@@ -81,14 +80,14 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       TransactionTable txTable = registry.getTransactionTableRef().running();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
-         if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
+         if (log.isTraceEnabled()) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
          return CompletableFuture.completedFuture(invalidRemoteTxReturnValue(txTable));
       }
       visitRemoteTransaction(transaction);
       InvocationContextFactory icf = registry.getInvocationContextFactory().running();
       RemoteTxInvocationContext ctx = icf.createRemoteTxInvocationContext(transaction, getOrigin());
 
-      if (trace) log.tracef("About to execute tx command %s", this);
+      if (log.isTraceEnabled()) log.tracef("About to execute tx command %s", this);
       return registry.getInterceptorChain().running().invokeAsync(ctx, this);
    }
 

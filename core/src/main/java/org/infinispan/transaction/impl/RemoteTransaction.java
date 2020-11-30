@@ -29,7 +29,6 @@ import org.infinispan.util.logging.LogFactory;
 public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFutures.completedNull();
 
    /**
@@ -69,7 +68,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
       checkIfRolledBack();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Adding key %s to tx %s", toStr(key), getGlobalTransaction());
       }
       lookedUpEntries.put(key, e);
@@ -78,7 +77,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
       checkIfRolledBack();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Adding keys %s to tx %s", entries.keySet(), getGlobalTransaction());
       }
       lookedUpEntries.putAll(entries);

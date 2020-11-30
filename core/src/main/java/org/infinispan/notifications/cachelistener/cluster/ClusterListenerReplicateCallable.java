@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusterListenerReplicateCallable<K, V> implements Function<EmbeddedCacheManager, Void>,
       BiConsumer<EmbeddedCacheManager, Cache<K, V>> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final String cacheName;
    private final UUID identifier;
@@ -67,7 +66,7 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
       this.valueDataConversion = valueDataConversion;
       this.useStorageFormat = useStorageFormat;
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Created clustered listener replicate callable for: %s", filterAnnotations);
    }
 
@@ -120,23 +119,23 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
                   if (!cacheManager.getMembers().contains(origin)) {
                      cacheNotifier.removeListener(listener);
                      cacheManagerNotifier.removeListener(listener);
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Removing local cluster listener for remote cluster listener that was just registered, as the origin %s went away concurrently", origin);
                      }
-                  } else if (trace) {
+                  } else if (log.isTraceEnabled()) {
                      log.tracef("Registered local cluster listener for remote cluster listener from origin %s with id %s",
                            origin, identifier);
                   }
-               } else if (trace) {
+               } else if (log.isTraceEnabled()) {
                   log.tracef("Local cluster listener from origin %s with id %s was already installed, ignoring",
                         origin, identifier);
                }
             }
-         } else if (trace) {
+         } else if (log.isTraceEnabled()) {
             log.tracef("Not registering local cluster listener for remote cluster listener from origin %s, as the origin went away",
                   origin);
          }
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.trace("Not registering local cluster listener as we are the node who registered the cluster listener");
       }
 

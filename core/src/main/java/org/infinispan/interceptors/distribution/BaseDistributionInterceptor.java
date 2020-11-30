@@ -79,7 +79,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final Object LOST_PLACEHOLDER = new Object();
 
    @Inject protected RemoteValueRetrievedListener rvrl;
@@ -160,7 +159,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       DistributionInfo info = retrieveDistributionInfo(cacheTopology, command, key);
       if (info.isReadOwner()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Key %s became local after wrapping, retrying command. Command topology is %d, current topology is %d",
                   key, command.getTopologyId(), topologyId);
          }
@@ -170,7 +169,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Perform remote get for key %s. currentTopologyId=%s, owners=%s",
             key, topologyId, info.readOwners());
       }
@@ -244,7 +243,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {
       if (!command.isSuccessful()) {
-         if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+         if (log.isTraceEnabled()) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
@@ -650,7 +649,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (readNeedsRemoteValue(command)) {
          LocalizedCacheTopology cacheTopology = checkTopologyId(command);
          Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
 
          ReadOnlyKeyCommand remoteCommand = remoteReadOnlyCommand(ctx, command);
@@ -684,7 +683,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    protected Object invokeRemotely(InvocationContext ctx, DataWriteCommand command, Address primaryOwner) {
-      if (trace) getLog().tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+      if (log.isTraceEnabled()) getLog().tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
       boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
 
       if (!isSyncForwarding) {

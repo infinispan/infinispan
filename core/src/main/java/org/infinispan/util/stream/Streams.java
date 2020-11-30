@@ -358,19 +358,19 @@ public class Streams {
       // setup the initial readLength, if length is less than the buffer
       // size, then we only want to read that much
       readLength = Math.min((int) length, buffer.length);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("initial read length: %d", readLength);
       }
 
       while (readLength != 0 && (read = input.read(buffer, 0, readLength)) != -1) {
-         if (trace) log.tracef("read bytes: %d", read);
+         if (log.isTraceEnabled()) log.tracef("read bytes: %d", read);
          output.write(buffer, 0, read);
          total += read;
-         if (trace) log.tracef("total bytes read: %d", total);
+         if (log.isTraceEnabled()) log.tracef("total bytes read: %d", total);
 
          // update the readLength
          readLength = Math.min((int) (length - total), buffer.length);
-         if (trace) log.tracef("next read length: %d", readLength);
+         if (log.isTraceEnabled()) log.tracef("next read length: %d", readLength);
       }
 
       return total;

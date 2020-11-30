@@ -70,7 +70,6 @@ import org.infinispan.xsite.irac.IracManager;
 public class StateTransferManagerImpl implements StateTransferManager {
 
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;
@@ -97,7 +96,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Start(priority = 60)
    @Override
    public void start() throws Exception {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
 
@@ -133,7 +132,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }, partitionHandlingManager);
 
       CacheTopology initialTopology = CompletionStages.join(stage);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("StateTransferManager of cache %s on node %s received initial topology %s", cacheName, rpcManager.getAddress(), initialTopology);
       }
    }
@@ -173,7 +172,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                "Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Installing new cache topology %s on cache %s", newCacheTopology, cacheName);
       }
 
@@ -181,7 +180,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
          if (!distributionManager.getCacheTopology().isConnected() ||
              !distributionManager.getCacheTopology().getMembersSet().contains(rpcManager.getAddress())) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("This is the first topology %d in which the local node is a member", newTopologyId);
             inboundInvocationHandler.setFirstTopologyAsMember(newTopologyId);
          }
@@ -242,7 +241,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                 partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
                initialStateTransferComplete.countDown();
             }
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName,
                           rpcManager.getAddress());
             boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
@@ -261,7 +260,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Stop(priority = 0)
    @Override
    public void stop() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       initialStateTransferComplete.countDown();
@@ -291,7 +290,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                                                         Address origin) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (cacheTopology == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Not fowarding command %s because topology is null.", command);
          }
          return Collections.emptyMap();
@@ -301,7 +300,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       // but we need to make sure we have the latest topology
       int localTopologyId = cacheTopology.getTopologyId();
       // if it's a tx/lock/write command, forward it to the new owners
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
       }
 
@@ -317,7 +316,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (!newTargets.isEmpty()) {
             // Update the topology id to prevent cycles
             command.setTopologyId(localTopologyId);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Forwarding command %s to new targets %s", command, newTargets);
             }
             // TxCompletionNotificationCommands are the only commands being forwarded now,

@@ -27,20 +27,19 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
    }
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, MarshallableEntry> map = new ConcurrentHashMap<>();
 
    public CompletionStage<Void> passivate(MarshallableEntry marshallableEntry, int segment) {
       Object key = marshallableEntry.getKey();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Storing entry temporarily during passivation for key %s", key);
       }
       map.put(key, marshallableEntry);
       return writeToAllNonTxStores(marshallableEntry, segment, AccessMode.PRIVATE)
             .whenComplete((ignore, ignoreT) -> {
                map.remove(key);
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Removed temporary entry during passivation for key %s", key);
                }
             });
@@ -51,7 +50,7 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
                                                                             boolean localInvocation, boolean includeStores) {
       MarshallableEntry entry = map.get(key);
       if (entry != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Retrieved entry for key %s from temporary passivation map", key);
          }
          return CompletableFuture.completedFuture(entry);
@@ -64,7 +63,7 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
                                                                             boolean includeStores) {
       MarshallableEntry entry = map.get(key);
       if (entry != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Retrieved entry for key %s from temporary passivation map", key);
          }
          return CompletableFuture.completedFuture(entry);

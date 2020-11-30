@@ -16,7 +16,6 @@ import org.jgroups.logging.LogFactory;
 class FileChunkMapper {
 
    private static final Log log = LogFactory.getLog(FileChunkMapper.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final GridFile file;
    private final Cache<String, byte[]> cache;
@@ -36,7 +35,7 @@ class FileChunkMapper {
    public byte[] fetchChunk(int chunkNumber) {
       String key = getChunkKey(chunkNumber);
       byte[] val = cache.get(key);
-      if (trace)
+      if (log.isTraceEnabled())
          log.trace("fetching key=" + key + ": " + (val != null ? val.length + " bytes" : "null"));
       return val;
    }
@@ -45,7 +44,7 @@ class FileChunkMapper {
       String key = getChunkKey(chunkNumber);
       byte[] val = trim(buffer, length);
       cache.put(key, val);
-      if (trace)
+      if (log.isTraceEnabled())
          log.trace("put(): key=" + key + ": " + val.length + " bytes");
    }
 

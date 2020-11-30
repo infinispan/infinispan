@@ -36,7 +36,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject Configuration configuration;
@@ -56,12 +55,12 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    public void addEvents(Object batchIdentifier, Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
       eventContextMap.compute(batchIdentifier, (ignore, eventContext) -> {
          if (eventContext == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Created new unicast event context for identifier %s", batchIdentifier);
             }
             eventContext = new UnicastEventContext<>();
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Adding new events %s for identifier %s", events, batchIdentifier);
          }
          eventContext.addTargets(target, identifier, events, sync);
@@ -73,11 +72,11 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    public CompletionStage<Void> sendEvents(Object batchIdentifier) {
       EventContext<K, V> ctx = eventContextMap.remove(batchIdentifier);
       if (ctx != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Sending events for identifier %s", batchIdentifier);
          }
          return ctx.sendToTargets();
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("No events to send for identifier %s", batchIdentifier);
       }
       return CompletableFutures.completedNull();
@@ -86,7 +85,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    @Override
    public void dropEvents(Object batchIdentifier) {
       EventContext<K, V> ctx = eventContextMap.remove(batchIdentifier);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          if (ctx != null) {
             log.tracef("Dropping events for identifier %s", batchIdentifier);
          } else {

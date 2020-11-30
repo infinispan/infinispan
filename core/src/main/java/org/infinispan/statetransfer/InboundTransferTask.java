@@ -38,7 +38,6 @@ import net.jcip.annotations.GuardedBy;
 public class InboundTransferTask {
 
    private static final Log log = LogFactory.getLog(InboundTransferTask.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("segments")
    private final IntSet segments;
@@ -140,12 +139,12 @@ public class InboundTransferTask {
 
       IntSet segmentsCopy = getSegments();
       if (segmentsCopy.isEmpty()) {
-         if (trace) log.tracef("Segments list is empty, skipping source %s", source);
+         if (log.isTraceEnabled()) log.tracef("Segments list is empty, skipping source %s", source);
          completionFuture.complete(null);
          return completionFuture;
       }
       CacheRpcCommand cmd = transferCommand.apply(segmentsCopy);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Requesting state (%s) from node %s for segments %s", cmd, source, segmentsCopy);
       }
       CompletionStage<Response> remoteStage =
@@ -157,12 +156,12 @@ public class InboundTransferTask {
                completionFuture.completeExceptionally(throwable);
             }
          } else if (response instanceof SuccessfulResponse) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Successfully requested state (%s) from node %s for segments %s",
                           cmd, source, segmentsCopy);
             }
          } else if (response instanceof CacheNotFoundResponse) {
-            if (trace) log.tracef("State source %s was suspected, another source will be selected", source);
+            if (log.isTraceEnabled()) log.tracef("State source %s was suspected, another source will be selected", source);
             completionFuture.completeExceptionally(new SuspectException());
          } else {
             Exception e = new CacheException(String.valueOf(response));
@@ -185,7 +184,7 @@ public class InboundTransferTask {
          throw new IllegalArgumentException("The task is already cancelled.");
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Partially cancelling inbound state transfer from node %s, segments %s", source, cancelledSegments);
       }
 
@@ -219,7 +218,7 @@ public class InboundTransferTask {
          synchronized (segments) {
             unfinishedSegments.clear();
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cancelling inbound state transfer from %s with unfinished segments %s", source, segmentsCopy);
          }
 

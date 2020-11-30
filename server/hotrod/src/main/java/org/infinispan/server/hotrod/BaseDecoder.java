@@ -23,7 +23,6 @@ import io.netty.handler.codec.DecoderException;
 
 abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final static Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
-   protected final boolean trace = log.isTraceEnabled();
 
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;
@@ -57,7 +56,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    @Override
    public void channelActive(ChannelHandlerContext ctx) throws Exception {
       super.channelActive(ctx);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Channel %s became active", ctx.channel());
       }
       server.getClientListenerRegistry().findAndWriteEvents(ctx.channel());
@@ -69,7 +68,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       super.channelWritabilityChanged(ctx);
       Channel channel = ctx.channel();
       boolean writeable = channel.isWritable();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Channel %s writability changed to %b", channel, writeable);
       }
       if (writeable) {

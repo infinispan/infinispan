@@ -74,7 +74,6 @@ import org.infinispan.xsite.XSiteReplicateCommand;
 public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport t;
    @Inject Configuration configuration;
@@ -400,7 +399,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) command;
          if (topologyAffectedCommand.getTopologyId() == -1) {
             int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Topology id missing on command %s, setting it to %d", command, currentTopologyId);
             }
             topologyAffectedCommand.setTopologyId(currentTopologyId);

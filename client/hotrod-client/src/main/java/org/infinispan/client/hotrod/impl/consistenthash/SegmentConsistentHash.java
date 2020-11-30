@@ -22,7 +22,6 @@ import org.infinispan.commons.util.Util;
 public final class SegmentConsistentHash implements ConsistentHash {
 
    private static final Log log = LogFactory.getLog(SegmentConsistentHash.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;
@@ -43,7 +42,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
    @Override
    public SocketAddress getServer(Object key) {
       int segmentId = getSegment(key);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Find server in segment id %s for key %s", segmentId, Util.toStr(key));
 
       return segmentOwners[segmentId][0];

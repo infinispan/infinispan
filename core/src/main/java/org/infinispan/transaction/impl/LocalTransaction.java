@@ -37,7 +37,6 @@ import net.jcip.annotations.GuardedBy;
 public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private static final Log log = LogFactory.getLog(LocalTransaction.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private Set<Address> remoteLockedNodes;
 
@@ -61,7 +60,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public final void addModification(WriteCommand mod) {
-      if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
+      if (log.isTraceEnabled()) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
          // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
          modifications = Collections.synchronizedList(new LinkedList<>());
@@ -73,7 +72,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public void locksAcquired(Collection<Address> nodes) {
-      if (trace) log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
+      if (log.isTraceEnabled()) log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
       if (remoteLockedNodes == null)
          remoteLockedNodes = new HashSet<>(nodes);
       else
@@ -192,7 +191,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public Collection<Address> getCommitNodes(Collection<Address> recipients, CacheTopology cacheTopology) {
       int currentTopologyId = cacheTopology.getTopologyId();
       List<Address> members = cacheTopology.getMembers();
-      if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
+      if (log.isTraceEnabled()) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
                             recipients, currentTopologyId, members, getTopologyId());
       if (hasModification(ClearCommand.class)) {
          return members;
@@ -206,7 +205,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       // after a merge, it also retransmits the commit/rollback.
       Set<Address> allRecipients = new HashSet<>(getRemoteLocksAcquired());
       allRecipients.addAll(recipients);
-      if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
+      if (log.isTraceEnabled()) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
       return allRecipients;
    }
 

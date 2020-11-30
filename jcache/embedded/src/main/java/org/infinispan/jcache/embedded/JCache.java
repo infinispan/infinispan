@@ -76,7 +76,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private static final Log log =
          LogFactory.getLog(JCache.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> skipCacheLoadCache;
@@ -172,7 +171,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public boolean containsKey(final K key) {
       checkNotClosed();
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoke containsKey(key=%s)", key);
 
       if (key == null)
@@ -625,7 +624,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             }
             return;
          }
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Key loaded, wait for the rest of keys to load");
 
          if (countDown.decrementAndGet() == 0) {

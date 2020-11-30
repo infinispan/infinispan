@@ -31,7 +31,6 @@ import org.infinispan.metadata.Metadata;
 public class CounterInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(CounterInterceptor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final Collection<Flag> FLAGS_TO_SKIP_PERSISTENCE = EnumSet
          .of(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
 
@@ -54,7 +53,7 @@ public class CounterInterceptor extends BaseCustomAsyncInterceptor {
       CounterConfigurationMetaParam entryMetadata = entry == null ? null : extract(entry.getMetadata());
       CounterConfigurationMetaParam commandMetadata = extract(command.getMetadata());
       if (isVolatile(entryMetadata) || isVolatile(commandMetadata)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Setting skip persistence for %s", command.getKey());
          }
          command.setFlagsBitSet(EnumUtil.setEnums(command.getFlagsBitSet(), FLAGS_TO_SKIP_PERSISTENCE));

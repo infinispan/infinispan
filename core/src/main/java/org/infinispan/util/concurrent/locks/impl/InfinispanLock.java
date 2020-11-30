@@ -45,7 +45,6 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanLock {
 
    private static final Log log = LogFactory.getLog(InfinispanLock.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final AtomicReferenceFieldUpdater<InfinispanLock, LockPlaceHolder> OWNER_UPDATER =
          newUpdater(InfinispanLock.class, LockPlaceHolder.class, "current");
    private static final AtomicReferenceFieldUpdater<LockPlaceHolder, LockState> STATE_UPDATER =
@@ -118,13 +117,13 @@ public class InfinispanLock {
       Objects.requireNonNull(lockOwner, "Lock Owner should be non-null");
       Objects.requireNonNull(timeUnit, "Time Unit should be non-null");
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Acquire lock for %s. Timeout=%s (%s)", lockOwner, time, timeUnit);
       }
 
       LockPlaceHolder lockPlaceHolder = lockOwners.get(lockOwner);
       if (lockPlaceHolder != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Lock owner already exists: %s", lockPlaceHolder);
          }
          return lockPlaceHolder;
@@ -134,13 +133,13 @@ public class InfinispanLock {
       LockPlaceHolder other = lockOwners.putIfAbsent(lockOwner, lockPlaceHolder);
 
       if (other != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Lock owner already exists: %s", other);
          }
          return other;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created a new one: %s", lockPlaceHolder);
       }
 
@@ -163,13 +162,13 @@ public class InfinispanLock {
    public void release(Object lockOwner) {
       Objects.requireNonNull(lockOwner, "Lock Owner should be non-null");
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Release lock for %s.", lockOwner);
       }
 
       LockPlaceHolder wantToRelease = lockOwners.get(lockOwner);
       if (wantToRelease == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("%s not found!", lockOwner);
          }
          //nothing to release
@@ -177,7 +176,7 @@ public class InfinispanLock {
       }
 
       final boolean released = wantToRelease.setReleased();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Release lock for %s? %s", wantToRelease, released);
       }
 
@@ -234,7 +233,7 @@ public class InfinispanLock {
    }
 
    private void onCanceled(LockPlaceHolder canceled) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Release lock for %s. It was canceled.", canceled.owner);
       }
       LockPlaceHolder currentLocked = current;
@@ -259,7 +258,7 @@ public class InfinispanLock {
 
    private boolean cas(LockPlaceHolder release, LockPlaceHolder acquire) {
       boolean cas = OWNER_UPDATER.compareAndSet(this, release, acquire);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Lock Owner CAS(%s, %s) => %s", release, acquire, cas);
       }
       return cas;
@@ -269,7 +268,7 @@ public class InfinispanLock {
       LockPlaceHolder toRelease = release;
       do {
          LockPlaceHolder toAcquire = pendingRequest.peek();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Try acquire. Next in queue=%s. Current=%s", toAcquire, current);
          }
          if (toAcquire == null && toRelease == null) {
@@ -286,18 +285,18 @@ public class InfinispanLock {
             //we set the current lock owner, so we must remove it from the queue
             pendingRequest.remove(toAcquire);
             if (toAcquire.setAcquire()) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("%s successfully acquired the lock.", toAcquire);
                }
                return;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("%s failed to acquire (invalid state). Retrying.", toAcquire);
             }
             //oh oh, probably the nextPending Timed-Out. we are going to retry with the next in queue
             toRelease = toAcquire;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Unable to acquire. Lock is held.");
             }
             //other thread already set the current lock owner
@@ -499,7 +498,7 @@ public class InfinispanLock {
 
       private boolean casState(LockState expect, LockState update) {
          boolean updated = STATE_UPDATER.compareAndSet(this, expect, update);
-         if (updated && trace) {
+         if (updated && log.isTraceEnabled()) {
             log.tracef("State changed for %s. %s => %s", this, expect, update);
          }
          return updated;

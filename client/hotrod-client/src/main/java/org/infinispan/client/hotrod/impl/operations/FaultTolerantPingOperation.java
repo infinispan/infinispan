@@ -51,7 +51,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
          complete(pingResponse);
       } else {
          String hexStatus = Integer.toHexString(status);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Unknown response status: %s", hexStatus);
 
          throw new InvalidResponseException("Unexpected response status: " + hexStatus);

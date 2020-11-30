@@ -24,7 +24,6 @@ import org.infinispan.util.logging.events.EventLogManager;
 
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
@@ -68,7 +67,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       CacheTopology currentTopology = context.getCurrentTopology();
       List<Address> newMembers = new ArrayList<>(currentTopology.getMembers());
       if (!newMembers.retainAll(clusterMembers)) {
-         if (trace) log.tracef("Cache %s did not lose any members, skipping rebalance", context.getCacheName());
+         if (log.isTraceEnabled()) log.tracef("Cache %s did not lose any members, skipping rebalance", context.getCacheName());
          return;
       }
 
@@ -175,7 +174,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // Remove nodes that have not yet fully rejoined the cluster
       possibleOwners.retainAll(newMembers);
       boolean resolveConflicts = context.resolveConflictsOnMerge() && possibleOwners.size() > 1;
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Cache %s, resolveConflicts=%s, newMembers=%s, possibleOwners=%s, preferredTopology=%s, " +
                     "mergeTopologyId=%s",
                     cacheName, resolveConflicts, newMembers, possibleOwners, preferredPartition.topology,
@@ -277,7 +276,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
       for (int i = 0; i < partitions.size(); i++) {
          Partition referencePartition = partitions.get(i);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Cache %s keeping partition from %s: %s",
                        cacheName, referencePartition.senders, referencePartition.topology);
 
@@ -299,12 +298,12 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             if (topologyId == referenceTopologyId) {
                if (p.topology.equals(referencePartition.topology)) {
                   // The topology is exactly the same, ignore it
-                  if (trace)
+                  if (log.isTraceEnabled())
                      log.tracef("Cache %s ignoring topology from %s, same as topology from %s: %s",
                                 cacheName, p.senders, referencePartition.senders, p.topology);
                   fold = true;
                } else {
-                  if (trace)
+                  if (log.isTraceEnabled())
                      log.tracef("Cache %s partition of %s overlaps with partition of %s, with the same topology id",
                                 cacheName, p.senders, referencePartition.senders);
                }
@@ -316,12 +315,12 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
                // Having a majority doesn't matter, because the lost data check ensures p's sender
                // couldn't make any updates without talking to the reference partition's members
                if (!lostDataCheck.test(p.readCH, referencePartition.actualMembers)) {
-                  if (trace)
+                  if (log.isTraceEnabled())
                      log.tracef("Cache %s ignoring compatible old topology from %s: %s",
                                 cacheName, p.senders, p.topology);
                   fold = true;
                } else {
-                  if (trace)
+                  if (log.isTraceEnabled())
                      log.tracef("Cache %s partition of %s overlaps with partition of %s but possibly holds extra entries",
                                 cacheName, p.senders, referencePartition.senders);
                   p.setConflictResolutionOnly();

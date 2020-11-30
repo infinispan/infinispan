@@ -25,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * It is really useful only if TM and client are in separate processes and TM fails. This is because a client might
@@ -100,7 +99,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    @Override
    public int getTransactionTimeout() {
-      if (trace) log.trace("start called");
+      if (log.isTraceEnabled()) log.trace("start called");
       return txTimeout;
    }
 
@@ -128,16 +127,16 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
          log.recoveryIgnored();
          return RecoveryManager.RecoveryIterator.NOTHING;
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.trace("recover called: " + flag);
 
       if (isFlag(flag, TMSTARTRSCAN)) {
          recoveryIterator = txTable.recoveryManager.getPreparedTransactionsFromCluster();
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Fetched a new recovery iterator: %s", recoveryIterator);
       }
       if (isFlag(flag, TMENDRSCAN)) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.trace("Flushing the iterator");
          return recoveryIterator.all();
       } else {

@@ -35,7 +35,6 @@ import org.infinispan.commons.util.Util;
 // Note: this class was moved to impl package as it was not meant to be public
 public class ClientListenerNotifier {
    private static final Log log = LogFactory.getLog(ClientListenerNotifier.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    public static final AtomicInteger counter = new AtomicInteger(0);
 
    // Time for trying to reconnect listeners when all connections are down.
@@ -76,7 +75,7 @@ public class ClientListenerNotifier {
 
    public void addDispatcher(EventDispatcher<?> dispatcher) {
       dispatchers.put(new WrappedByteArray(dispatcher.listenerId), dispatcher);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Add dispatcher %s for client listener with id %s, for listener %s",
                dispatcher, Util.printArray(dispatcher.listenerId), dispatcher.listener);
    }
@@ -89,7 +88,7 @@ public class ClientListenerNotifier {
          if (failedServers.contains(dispatcher.address()))
             failoverListenerIds.add(entry.getKey());
       }
-      if (trace && failoverListenerIds.isEmpty())
+      if (log.isTraceEnabled() && failoverListenerIds.isEmpty())
          log.tracef("No event listeners registered in failed servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
@@ -116,7 +115,7 @@ public class ClientListenerNotifier {
                reconnectTask.setCancellationFuture(scheduledFuture);
             }
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Fallback listener id %s from a failed server %s",
                      Util.printArray(listenerId), dispatcher.address());
             }
@@ -136,13 +135,13 @@ public class ClientListenerNotifier {
    private EventDispatcher<?> removeClientListener(WrappedByteArray listenerId) {
       EventDispatcher dispatcher = dispatchers.remove(listenerId);
       if (dispatcher == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Client listener %s not present (removed concurrently?)", Util.printArray(listenerId.getBytes()));
          }
       } else {
          dispatcher.stop();
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Remove client listener with id %s", Util.printArray(listenerId.getBytes()));
       return dispatcher;
    }
@@ -181,7 +180,7 @@ public class ClientListenerNotifier {
 
    public void stop() {
       for (WrappedByteArray listenerId : dispatchers.keySet()) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Remote cache manager stopping, remove client listener id %s", Util.printArray(listenerId.getBytes()));
 
          removeClientListener(listenerId);

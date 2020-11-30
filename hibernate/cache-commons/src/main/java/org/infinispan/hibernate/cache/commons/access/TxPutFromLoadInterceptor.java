@@ -46,7 +46,6 @@ import org.infinispan.util.logging.LogFactory;
 class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(TxPutFromLoadInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(TxPutFromLoadInterceptor.class);
-   private final boolean trace = ispnLog.isTraceEnabled();
 	private final PutFromLoadValidator putFromLoadValidator;
 	private final ByteString cacheName;
 
@@ -110,7 +109,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 		else {
 			for (WriteCommand wc : command.getModifications()) {
             Collection<?> keys = wc.getAffectedKeys();
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef("Invalidating keys %s with lock owner %s", keys, ctx.getLockOwner());
 				}
 				for (Object key : keys ) {
@@ -123,7 +122,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 
 	@Override
 	public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef( "Commit command received, end invalidation" );
 		}
 
@@ -132,7 +131,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 
 	@Override
 	public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef( "Rollback command received, end invalidation" );
 		}
 
@@ -147,7 +146,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 				Object[] keys = ctx.getModifications().stream()
 					.flatMap(mod -> mod.getAffectedKeys().stream()).distinct().toArray();
 
-				if (trace) {
+				if (log.isTraceEnabled()) {
 					log.tracef( "Sending end invalidation for keys %s asynchronously, modifications are %s",
 						Arrays.toString(keys), ctx.getCacheTransaction().getModifications());
 				}

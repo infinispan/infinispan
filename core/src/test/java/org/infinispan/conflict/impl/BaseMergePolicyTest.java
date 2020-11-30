@@ -34,7 +34,6 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
 
    private static Log log = LogFactory.getLog(BaseMergePolicyTest.class);
-   private static boolean trace = log.isTraceEnabled();
 
    protected MagicKey conflictKey;
    protected Object valueAfterMerge;
@@ -122,20 +121,20 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    }
 
    public void testPartitionMergePolicy() throws Exception {
-      if (trace) log.tracef("beforeSplit()");
+      log.tracef("beforeSplit()");
       beforeSplit();
 
-      if (trace) log.tracef("splitCluster");
+      log.tracef("splitCluster");
       splitCluster();
 
-      if (trace) log.tracef("duringSplit()");
+      log.tracef("duringSplit()");
       AdvancedCache preferredPartitionCache = getCacheFromPreferredPartition();
       duringSplit(preferredPartitionCache, getCacheFromNonPreferredPartition(preferredPartitionCache));
 
-      if (trace) log.tracef("performMerge()");
+      log.tracef("performMerge()");
       performMerge();
 
-      if (trace) log.tracef("afterConflictResolutionAndMerge()");
+      log.tracef("afterConflictResolutionAndMerge()");
       afterConflictResolutionAndMerge();
    }
 
@@ -162,7 +161,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       CacheTopology preferredTopology = new PreferAvailabilityStrategy(null, null, lostDataCheck)
                                            .computePreferredTopology(statusResponses);
 
-      if (trace) log.tracef("getCacheFromPreferredPartition: partition=%s", preferredTopology.getMembers());
+      log.tracef("getCacheFromPreferredPartition: partition=%s", preferredTopology.getMembers());
       return Arrays.stream(caches)
                    .filter(c -> address(c).equals(preferredTopology.getMembers().get(0)))
                    .findFirst().get();

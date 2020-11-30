@@ -89,7 +89,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TxDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    @Inject PartitionHandlingManager partitionHandlingManager;
@@ -347,18 +346,18 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             // Prepare/Commit commands are sent to all affected nodes, including the ones that left the cluster.
             // We must not register a partial commit when receiving a CacheNotFoundResponse from one of those.
             if (!cacheTopology.getMembers().contains(recipient)) {
-               if (trace) log.tracef("Ignoring response from node not targeted %s", recipient);
+               if (log.isTraceEnabled()) log.tracef("Ignoring response from node not targeted %s", recipient);
             } else {
                if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients)) {
-                  if (trace) log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager", recipient);
+                  if (log.isTraceEnabled()) log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager", recipient);
                   return;
                } else {
-                  if (trace) log.tracef("Cache not running on node %s, or the node is missing", recipient);
+                  if (log.isTraceEnabled()) log.tracef("Cache not running on node %s, or the node is missing", recipient);
                   throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
                }
             }
          } else if (response == UnsureResponse.INSTANCE) {
-            if (trace) log.tracef("Node %s has a newer topology id", recipient);
+            if (log.isTraceEnabled()) log.tracef("Node %s has a newer topology id", recipient);
             throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
       }

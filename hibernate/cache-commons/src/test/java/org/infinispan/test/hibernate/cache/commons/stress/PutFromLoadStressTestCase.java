@@ -51,7 +51,6 @@ import static org.junit.Assert.assertFalse;
 public class PutFromLoadStressTestCase {
 
    static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(PutFromLoadStressTestCase.class);
-   final boolean isTrace = log.isTraceEnabled();
    static final int NUM_THREADS = 100;
    static final int WARMUP_TIME_SECS = 10;
    static final long RUNNING_TIME_SECS = Integer.getInteger("time", 60);
@@ -190,26 +189,26 @@ public class PutFromLoadStressTestCase {
       @Override
       public String call() throws Exception {
          try {
-            if (isTrace)
+            if (log.isTraceEnabled())
                log.tracef("[%s] Wait for all executions paths to be ready to perform calls", title(warmup));
             barrier.await();
 
             long start = System.nanoTime();
             int runs = 0;
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("[%s] Start time: %d", title(warmup), start);
             }
 
             queryItems();
             long end = System.nanoTime();
             long duration = end - start;
-            if (isTrace)
+            if (log.isTraceEnabled())
                log.tracef("[%s] End time: %d, duration: %d, runs: %d",
                      title(warmup), start, duration, runs);
 
             return opsPerMS(duration, runs);
          } finally {
-            if (isTrace)
+            if (log.isTraceEnabled())
                log.tracef("[%s] Wait for all execution paths to finish", title(warmup));
 
             barrier.await();

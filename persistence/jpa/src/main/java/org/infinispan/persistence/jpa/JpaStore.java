@@ -74,7 +74,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(JpaStore.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private JpaStoreConfiguration configuration;
    private EntityManagerFactory emf;
@@ -306,7 +305,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          MetadataEntity metadata = getMetadataEntity(key, em);
          EntityTransaction txn = em.getTransaction();
-         if (trace) log.trace("Removing " + entity + "(" + toString(metadata) + ")");
+         if (log.isTraceEnabled()) log.trace("Removing " + entity + "(" + toString(metadata) + ")");
          long txnBegin = timeService.time();
          txn.begin();
          try {
@@ -409,7 +408,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
          long txnBegin = timeService.time();
          try {
-            if (trace) log.trace("Writing " + entity + "(" + toString(metadata) + ")");
+            if (log.isTraceEnabled()) log.trace("Writing " + entity + "(" + toString(metadata) + ")");
             txn.begin();
 
             mergeEntity(em, entity);
@@ -511,12 +510,12 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          txn.begin();
          try {
             Object entity = findEntity(em, key);
-            if (trace) log.trace("Entity " + key + " -> " + entity);
+            if (log.isTraceEnabled()) log.trace("Entity " + key + " -> " + entity);
             try {
                if (entity == null) return false;
                if (configuration.storeMetadata()) {
                   MetadataEntity metadata = findMetadata(em, getMetadataKey(key));
-                  if (trace) log.trace("Metadata " + key + " -> " + toString(metadata));
+                  if (log.isTraceEnabled()) log.trace("Metadata " + key + " -> " + toString(metadata));
                   return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
                } else {
                   return true;
@@ -565,10 +564,10 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   if (isExpired(metaEntity)) {
                      return null;
                   }
-                  if (trace) log.trace("Loaded " + entity + " (" + metadata + ")");
+                  if (log.isTraceEnabled()) log.trace("Loaded " + entity + " (" + metadata + ")");
                   return marshallerEntryFactory.create(key, entity, metadata, getInternalMetadata(metaEntity), metaEntity.getCreated(), metaEntity.getLastUsed());
                }
-               if (trace) log.trace("Loaded " + entity);
+               if (log.isTraceEnabled()) log.trace("Loaded " + entity);
                return marshallerEntryFactory.create(key, entity, null, getInternalMetadata(metaEntity), -1, -1);
             } finally {
                try {
@@ -774,7 +773,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                }
                removeMetadata(emExec, metadata);
 
-               if (trace) log.trace("Expired " + key + " -> " + entity + "(" + toString(metadata) + ")");
+               if (log.isTraceEnabled()) log.trace("Expired " + key + " -> " + entity + "(" + toString(metadata) + ")");
                if (listener != null) {
                   eacs.submit(() -> listener.entryPurged(key), null);
                }
@@ -812,7 +811,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          metaEntity = fetchMetadata ? getMetadataEntity(key, emExec) : null;
          metadata = getMetadata(metaEntity);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Fetched metadata (fetching? %s) %s", fetchMetadata, metadata);
          }
          if (metaEntity != null && isExpired(metaEntity)) {
@@ -820,7 +819,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          if (fetchValue) {
             entity = findEntity(emExec, key);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Fetched value %s", entity);
             }
          } else {

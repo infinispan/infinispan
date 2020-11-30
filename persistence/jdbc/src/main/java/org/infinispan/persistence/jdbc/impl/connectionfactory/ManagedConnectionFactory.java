@@ -30,7 +30,6 @@ import org.infinispan.util.logging.LogFactory;
 public class ManagedConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private DataSource dataSource;
 
@@ -50,7 +49,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       try {
          ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
          }
          if (dataSource == null) {
@@ -88,7 +87,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          PERSISTENCE.sqlFailureRetrievingConnection(e);
          throw new PersistenceException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Connection checked out: %s", connection);
       }
       return connection;

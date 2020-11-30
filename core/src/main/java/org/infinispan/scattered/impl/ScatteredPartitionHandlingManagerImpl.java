@@ -15,19 +15,18 @@ import org.infinispan.util.logging.LogFactory;
 
 public class ScatteredPartitionHandlingManagerImpl extends PartitionHandlingManagerImpl {
    private static final Log log = LogFactory.getLog(ScatteredPartitionHandlingManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Override
    public void doCheck(Object key, boolean isWrite, long flagBitSet) {
       AvailabilityMode availabilityMode = getAvailabilityMode();
-      if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
+      if (log.isTraceEnabled()) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key))
          return;
-      if (trace) log.tracef("Partition is in %s mode, access is not allowed for key %s", availabilityMode, key);
+      if (log.isTraceEnabled()) log.tracef("Partition is in %s mode, access is not allowed for key %s", availabilityMode, key);
       throw CONTAINER.degradedModeKeyUnavailable(key);
    }
 

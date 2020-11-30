@@ -23,7 +23,6 @@ import org.infinispan.util.logging.LogFactory;
 public class SimpleConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private String connectionUrl;
    private String userName;
@@ -46,7 +45,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       this.connectionUrl = factoryConfiguration.connectionUrl();
       this.userName = factoryConfiguration.username();
       this.password = factoryConfiguration.password();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Starting connection %s", this);
       }
    }

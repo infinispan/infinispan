@@ -135,7 +135,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		if (transactionCoordinator == null) {
 			return;
 		}
-		if (trace) {
+		if (log.isTraceEnabled()) {
 			log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
 		}
 		transactionCoordinator.registerLocalSynchronization(new LocalInvalidationSynchronization(putValidator, key, lockOwner));
@@ -146,7 +146,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		if (transactionCoordinator == null) {
 			return;
 		}
-		if (trace) {
+		if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
 		transactionCoordinator.registerLocalSynchronization(new InvalidationSynchronization(nonTxPutFromLoadInterceptor, key, lockOwner));

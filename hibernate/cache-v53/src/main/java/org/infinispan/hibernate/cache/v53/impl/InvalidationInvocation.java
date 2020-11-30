@@ -18,7 +18,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
  */
 public class InvalidationInvocation implements Invocation {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInvocation.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Object lockOwner;
    private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
@@ -33,7 +32,7 @@ public class InvalidationInvocation implements Invocation {
 
    @Override
    public CompletableFuture<Void> invoke(boolean success) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("After completion callback, success=%b", success);
       }
       nonTxPutFromLoadInterceptor.endInvalidating(key, lockOwner, success);

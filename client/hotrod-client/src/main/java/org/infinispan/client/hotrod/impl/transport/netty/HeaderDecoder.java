@@ -35,7 +35,6 @@ import io.netty.util.Signal;
 
 public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private static final Log log = LogFactory.getLog(HeaderDecoder.class);
-   private final boolean trace = log.isTraceEnabled();
    // used for HeaderOrEventDecoder, too, as the function is similar
    public static final String NAME = "header-decoder";
 
@@ -66,7 +65,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    public void registerOperation(Channel channel, HotRodOperation<?> operation) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Registering operation %s(%08X) with id %d on %s",
                operation, System.identityHashCode(operation), operation.header().messageId(), channel);
       }
@@ -106,7 +105,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                      // complete earlier.
                      if (operation != null && !(operation instanceof AddClientListenerOperation)) {
                         throw HOTROD.operationIsNotAddClientListener(messageId, operation.toString());
-                     } else if (trace) {
+                     } else if (log.isTraceEnabled()) {
                         log.tracef("Received event for request %d", messageId, operation);
                      }
                      checkpoint(State.READ_CACHE_EVENT);
@@ -128,27 +127,27 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                if (operation == null) {
                   throw HOTROD.unknownMessageId(messageId);
                }
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Received response for request %d, %s", messageId, operation);
                }
                checkpoint(State.READ_HEADER);
                // fall through
             case READ_HEADER:
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Decoding header for message %s", HotRodConstants.Names.of(receivedOpCode));
                }
                status = codec.readHeader(in, receivedOpCode, operation.header(), channelFactory, ctx.channel().remoteAddress());
                checkpoint(State.READ_PAYLOAD);
                // fall through
             case READ_PAYLOAD:
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Decoding payload for message %s", HotRodConstants.Names.of(receivedOpCode));
                }
                operation.acceptResponse(in, status, this);
                checkpoint(State.READ_MESSAGE_ID);
                break;
             case READ_CACHE_EVENT:
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Decoding cache event %s", HotRodConstants.Names.of(receivedOpCode));
                }
                AbstractClientEvent cacheEvent;
@@ -168,7 +167,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                checkpoint(State.READ_MESSAGE_ID);
                break;
             case READ_COUNTER_EVENT:
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Decoding counter event %s", HotRodConstants.Names.of(receivedOpCode));
                }
                HotRodCounterEvent counterEvent;
@@ -214,7 +213,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                HOTROD.errorf(t, "Failed to complete %s", op);
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(cause, "Requesting %s close due to exception", ctx.channel());
          }
          ctx.close();
@@ -274,7 +273,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    public void addListener(byte[] listenerId) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Decoder %08X adding listener %s", hashCode(), Util.printArray(listenerId));
       }
       listeners.add(listenerId);
@@ -283,7 +282,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    // must be called from event loop thread!
    public void removeListener(byte[] listenerId) {
       boolean removed = listeners.removeIf(id -> Arrays.equals(id, listenerId));
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Decoder %08X removed? %s listener %s", hashCode(), Boolean.toString(removed), Util.printArray(listenerId));
       }
    }

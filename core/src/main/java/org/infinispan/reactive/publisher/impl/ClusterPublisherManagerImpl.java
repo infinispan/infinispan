@@ -87,7 +87,6 @@ import io.reactivex.rxjava3.processors.PublishProcessor;
 @Scope(Scopes.NAMED_CACHE)
 public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final boolean trace = log.isTraceEnabled();
 
    @Inject PublisherHandler publisherHandler;
    @Inject LocalPublisherManager<K, V> localPublisherManager;
@@ -185,7 +184,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       CompletionStage<PublisherResult<R>> localStage = composedType.contextInvocation(segments, keysToInclude, ctx,
             transformer);
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          // Make sure the trace occurs before response is processed
          localStage = localStage.whenComplete((results, t) ->
                log.tracef("Result result was: %s for context %s", results.getResult(), ctx)
@@ -239,7 +238,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, null,
                localKeys, null, includeLoader, deliveryGuarantee, transformer, finalizer);
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             // Make sure the trace occurs before response is processed
             localStage = localStage.whenComplete((results, t) ->
                   log.tracef("Result result was: %s for keys %s from %s with %s suspected segments",
@@ -304,7 +303,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, localSegments,
                null, keysToExcludeByAddress.get(localAddress), includeLoader, deliveryGuarantee, transformer, finalizer);
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             // Make sure the trace occurs before response is processed
             localStage = localStage.whenComplete((results, t) -> {
                if (t != null) {
@@ -362,7 +361,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       public void accept(PublisherResult<R> resultCollector, Throwable t) {
          if (t != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef(t, "General error encountered when executing publisher request command");
             }
             flowableProcessor.onError(t);
@@ -393,13 +392,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             flowableProcessor.onComplete();
          } else {
             int nextTopology = currentTopologyId + 1;
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Retrying segments %s after %d is installed", segmentsToRetry, nextTopology);
             }
             // If we had an issue with segments, we need to wait until the next topology is installed to try again
             stateTransferLock.topologyFuture(nextTopology).whenComplete((ign, innerT) -> {
                if (innerT != null) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef(innerT, "General error encountered when waiting on topology future for publisher request command");
                   }
                   flowableProcessor.onError(innerT);
@@ -445,7 +444,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       public void accept(PublisherResult<R> resultCollector, Throwable t) {
          if (t != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef(t, "General error encountered when executing publisher request command");
             }
             flowableProcessor.onError(t);
@@ -474,13 +473,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             flowableProcessor.onComplete();
          } else {
             int nextTopology = currentTopologyId + 1;
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Retrying keys %s after %d is installed", keysToRetry, nextTopology);
             }
             // If we had an issue with segments, we need to wait until the next topology is installed to try again
             stateTransferLock.topologyFuture(nextTopology).whenComplete((ign, innerT) -> {
                if (innerT != null) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef(innerT, "General error encountered when waiting on topology future for publisher request command");
                   }
                   flowableProcessor.onError(innerT);
@@ -510,7 +509,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       protected PublisherResult<R> addValidResponse(Address sender, ValidResponse response) {
          PublisherResult<R> results = (PublisherResult<R>) response.getResponseValue();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Result result was: %s for keys %s from %s", results.getResult(), keys, sender);
          }
          return results;
@@ -518,7 +517,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       protected PublisherResult<R> addTargetNotFound(Address sender) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cache is no longer running for keys %s from %s - must retry", Util.toStr(keys), sender);
          }
          return new KeyPublisherResult<>(keys);
@@ -526,7 +525,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       protected PublisherResult<R> addException(Address sender, Exception exception) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(exception, "Exception encountered while requesting keys %s from %s", Util.toStr(keys), sender);
          }
          // Throw the exception so it is propagated to caller
@@ -552,7 +551,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       protected PublisherResult<R> addValidResponse(Address sender, ValidResponse response) {
          PublisherResult<R> results = (PublisherResult<R>) response.getResponseValue();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Result result was: %s for segments %s from %s with %s suspected segments", results.getResult(),
                   targetSegments, sender, results.getSuspectedSegments());
          }
@@ -561,7 +560,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       protected PublisherResult<R> addTargetNotFound(Address sender) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cache is no longer running for segments %s from %s - must retry", targetSegments, sender);
          }
          return new SegmentPublisherResult<>(targetSegments, null);
@@ -569,7 +568,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       protected PublisherResult<R> addException(Address sender, Exception exception) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(exception, "Exception encountered while requesting segments %s from %s", targetSegments, sender);
          }
          // Throw the exception so it is propagated to caller
@@ -592,7 +591,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             handleSegment(segment, topology, localAddress, targets);
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Targets determined to be %s on topology " + topology.getTopologyId(), targets);
       }
       return targets;
@@ -607,7 +606,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // will wait for a new topology to try again
       if (targetAddres != null) {
          addToMap(targets, targetAddres, segment);
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("No owner was found for segment %s.", segment);
       }
    }
@@ -884,7 +883,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                   this.currentTopology = currentTopology;
                   if (previousTopology != -1 && previousTopology == currentTopology) {
                      int nextTopology = currentTopology + 1;
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Retrying segments %s after %d is installed for %s", segmentsToComplete,
                               nextTopology, requestId);
                      }
@@ -937,7 +936,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                }, MAX_INNER_SUBSCRIBERS)
                .repeatUntil(() -> {
                   boolean complete = segmentsToComplete.isEmpty();
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      if (complete) {
                         log.tracef("All segments complete for %s", requestId);
                      } else {
@@ -954,7 +953,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                if (previous != null) {
                   IntSet segments = enqueuedSegmentNotifiers.remove(previous);
                   if (segments != null) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Enqueued value %s has been returned, completing segments %s",
                               Util.toStr(previous), segments);
                      }
@@ -964,7 +963,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                previousValue.set(value);
             }).doOnComplete(() -> enqueuedSegmentNotifiers.forEach(
                   (k, segments) -> {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("Notifying of completed segments %s due to publisher is complete", segments);
                      }
                      segments.forEach(completedSegmentConsumer);
@@ -987,13 +986,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       void notifySegmentsComplete(IntSet segments, Object lastValue) {
          if (completedSegmentConsumer != null) {
             if (lastValue == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Delaying completed segments %s to be notified when current publisher is complete" +
                         "(no value to map it's completion)", segments);
                }
                enqueuedSegmentNotifiers.put(new Object(), segments);
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Delaying completed segments %s to be notified when %s is returned", segments,
                         Util.toStr(lastValue));
                }
@@ -1017,7 +1016,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             }
          }
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Request: %s is initiating publisher request with batch size %d from %s in segments %s", requestId, batchSize,
                   target, segments);
          }
@@ -1042,7 +1041,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       CompletionStage<PublisherResponse> sendNextCommand(Address target, int topologyId) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Request: %s is continuing publisher request from %s", requestId, target);
          }
          // Local command so just return the handler
@@ -1064,13 +1063,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       boolean handleThrowable(Throwable t, Address target, IntSet segments) {
          // Most likely SuspectException will be wrapped in CompletionException
          if (t instanceof SuspectException || t.getCause() instanceof SuspectException) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Received suspect exception for id %s from node %s when requesting segments %s", requestId,
                      target, segments);
             }
             return true;
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(t, "Received exception for id %s from node %s when requesting segments %s", requestId, target,
                   segments);
          }
@@ -1083,7 +1082,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          CancelPublisherCommand command = commandsFactory.buildCancelPublisherCommand(requestId);
          CompletionStage<?> stage = rpcManager.invokeCommand(target, command, VoidResponseCollector.ignoreLeavers(),
                rpcOptions);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             stage.exceptionally(t -> {
                log.tracef("There was a problem cancelling publisher for id %s at address %s", requestId, target);
                return null;
@@ -1107,7 +1106,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                // When keys are not tracked we return the key or entry as is and we have to convert if necessary (entry)
                key = publisher.composedType.toKey(value);
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Saving key %s for segment %d for id %s", Util.toStr(key), segment, requestId);
             }
             keys.add(key);

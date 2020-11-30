@@ -30,7 +30,6 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
    public static final int COMMAND_ID = 19;
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
 
@@ -49,7 +48,7 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Received multiple cluster event(s) %s", multiEvents);
       }
       AggregateCompletionStage<Void> innerComposed = CompletionStages.aggregateCompletionStage();

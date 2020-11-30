@@ -28,7 +28,7 @@ class NonTxInvalidationCacheAccessDelegate extends org.infinispan.hibernate.cach
    @Override
    protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
       Sync sync = (Sync)((SharedSessionContractImplementor) session).getCacheTransactionSynchronization();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
       sync.registerAfterCommit(new LocalInvalidationInvocation(putValidator, key, lockOwner));
@@ -37,7 +37,7 @@ class NonTxInvalidationCacheAccessDelegate extends org.infinispan.hibernate.cach
    @Override
    protected void registerClusteredInvalidation(Object session, Object lockOwner, Object key) {
       Sync sync = (Sync)((SharedSessionContractImplementor) session).getCacheTransactionSynchronization();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
       sync.registerAfterCommit(new InvalidationInvocation(nonTxPutFromLoadInterceptor, key, lockOwner));

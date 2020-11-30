@@ -26,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
 public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorService implements BlockingTaskAwareExecutorService {
 
    private static final Log log = LogFactory.getLog(BlockingTaskAwareExecutorServiceImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    private final Queue<BlockingRunnable> blockedTasks;
    private final ExecutorService executorService;
    private final TimeService timeService;
@@ -48,14 +47,14 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       }
       if (runnable.isReady()) {
          doExecute(runnable);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Added a new task directly: %d task(s) are waiting", blockedTasks.size());
          }
       } else {
          //we no longer submit directly to the executor service.
          blockedTasks.offer(runnable);
          checkForReadyTasks();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Added a new task to the queue: %d task(s) are waiting", blockedTasks.size());
          }
       }
@@ -158,7 +157,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
                   remaining++;
                }
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Tasks executed=%s, still pending=~%s", taskExecutionCount, remaining);
             }
          } while ((counter = requestCounter.addAndGet(-counter)) != 0);

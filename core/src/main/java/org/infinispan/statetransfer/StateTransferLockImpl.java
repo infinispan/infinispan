@@ -22,7 +22,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
@@ -69,7 +68,7 @@ public class StateTransferLockImpl implements StateTransferLock {
                     this.topologyId);
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
       }
       transactionDataTopologyId = topologyId;
@@ -95,7 +94,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (transactionDataTopologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
                     transactionDataTopologyId);
       }
@@ -110,7 +109,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public boolean transactionDataReceived(int expectedTopologyId) {
-      if (trace) log.tracef("Checking if transaction data was received for topology %s, current topology is %s",
+      if (log.isTraceEnabled()) log.tracef("Checking if transaction data was received for topology %s, current topology is %s",
             expectedTopologyId, transactionDataTopologyId);
       return transactionDataTopologyId >= expectedTopologyId;
    }
@@ -122,7 +121,7 @@ public class StateTransferLockImpl implements StateTransferLock {
                     this.topologyId);
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Signalling topology %d is installed", topologyId);
       }
       this.topologyId = topologyId;
@@ -147,7 +146,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (topologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
       }
       synchronized (this) {

@@ -172,7 +172,6 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
    static class ListenerQueue implements CounterListener {
 
       private static final Log log = LogFactory.getLog(ListenerQueue.class);
-      private final boolean trace = log.isTraceEnabled();
       final BlockingQueue<CounterEvent> queue;
       final String name;
 
@@ -185,7 +184,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       public void onUpdate(CounterEvent event) {
          try {
             queue.put(event);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("[%s] add event %s", name, event);
             }
          } catch (InterruptedException e) {

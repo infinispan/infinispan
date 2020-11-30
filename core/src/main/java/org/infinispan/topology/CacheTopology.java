@@ -31,7 +31,6 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheTopology {
 
    private static Log log = LogFactory.getLog(CacheTopology.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final int topologyId;
    private final int rebalanceId;
@@ -221,7 +220,7 @@ public class CacheTopology {
    }
 
    public final void logRoutingTableInformation() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Current consistent hash's routing table: %s", currentCH.getRoutingTableAsString());
          if (pendingCH != null) log.tracef("Pending consistent hash's routing table: %s", pendingCH.getRoutingTableAsString());
          if (unionCH != null) log.tracef("Union consistent hash's routing table: %s", unionCH.getRoutingTableAsString());

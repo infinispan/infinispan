@@ -19,7 +19,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> {
    private static final Log log = LogFactory.getLog(KeyStreamSupplier.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final ToIntFunction<Object> toIntFunction;
@@ -38,7 +37,7 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
       AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
             .withFlags(Flag.CACHE_MODE_LOCAL);
       if (keysToFilter != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // ignore tombstones and non existent keys
@@ -55,7 +54,7 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          }
       }
       if (segmentsToFilter != null && toIntFunction != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
          stream = stream.filter(k -> segmentsToFilter.contains(toIntFunction.applyAsInt(k)));

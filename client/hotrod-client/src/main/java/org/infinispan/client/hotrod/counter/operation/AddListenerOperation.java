@@ -79,7 +79,7 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
    public void cleanup() {
       // To prevent releasing concurrently from the channel and closing it
       channel.eventLoop().execute(() -> {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Cleanup for %s on %s", this, channel);
          }
          if (!codec.allowOperationsAndEvents()) {

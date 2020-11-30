@@ -29,7 +29,6 @@ import net.jcip.annotations.GuardedBy;
  */
 public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    private static final Log log = LogFactory.getLog(BasicComponentRegistryImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final ModuleRepository moduleRepository;
    private final Scopes scope;
@@ -299,7 +298,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          } else {
             mutatorThreads.remove(Thread.currentThread());
          }
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Changed status of " + wrapper.name + " to " + wrapper.state);
          condition.signalAll();
       } finally {
@@ -541,14 +540,14 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          ComponentWrapper wrapper = it.next();
          boolean survivesRestarts = wrapper.accessor != null && wrapper.accessor.getSurvivesRestarts();
          if (wrapper.manageLifecycle && !survivesRestarts) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Removing component %s in state %s", wrapper.name, wrapper.state);
             it.remove();
          } else {
             if (wrapper.manageLifecycle && wrapper.state == WrapperState.STOPPED) {
                wrapper.state = WrapperState.INSTANTIATED;
             }
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Keeping component %s in state %s", wrapper.name, wrapper.state);
          }
       }
@@ -689,7 +688,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          String name = wrapper.name;
          String className = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
          mutatorThreads.put(Thread.currentThread(), new ComponentPath(name, className, currentPath));
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Changed status of " + name + " to " + wrapper.state);
          return true;
       } finally {

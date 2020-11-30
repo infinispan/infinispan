@@ -138,7 +138,6 @@ public class JGroupsTransport implements Transport {
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
    public static final Log log = LogFactory.getLog(JGroupsTransport.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
          CompletableFuture.completedFuture(Collections.emptyMap());
    private static final short CORRELATOR_ID = (short) 0;
@@ -257,7 +256,7 @@ public class JGroupsTransport implements Transport {
    @Override
    public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder)   {
       if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("%s not sending command to self: %s", address, command);
          return;
       }
@@ -312,7 +311,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("About to send to backups %s, command %s", backups, command);
       Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls = new HashMap<>(backups.size());
       for (XSiteBackup xsb : backups) {
@@ -669,7 +668,7 @@ public class JGroupsTransport implements Transport {
       if (address == null) {
          org.jgroups.Address jgroupsAddress = channel.getAddress();
          this.address = fromJGroupsAddress(jgroupsAddress);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             String uuid = (jgroupsAddress instanceof org.jgroups.util.UUID) ?
                           ((org.jgroups.util.UUID) jgroupsAddress).toStringLong() : "N/A";
             log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
@@ -829,7 +828,7 @@ public class JGroupsTransport implements Transport {
       if (view.isViewIdAtLeast(expectedViewId))
          return CompletableFutures.completedNull();
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Waiting for view %d, current view is %d", expectedViewId, view.getViewId());
       viewUpdateLock.lock();
       try {
@@ -1205,12 +1204,12 @@ public class JGroupsTransport implements Transport {
    }
 
    private void logRequest(long requestId, ReplicableCommand command, Object targets, String type) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("%s sending %s request %d to %s: %s", address, type, requestId, targets, command);
    }
 
    private void logCommand(ReplicableCommand command, Object targets) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("%s sending command to %s: %s", address, targets, command);
    }
 
@@ -1295,7 +1294,7 @@ public class JGroupsTransport implements Transport {
          requestId = Request.NO_REQUEST_ID;
       }
       if (!running) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Ignoring message received before start or after stop");
          if (type == REQUEST) {
             sendResponse(src, CacheNotFoundResponse.INSTANCE, requestId, null);
@@ -1316,7 +1315,7 @@ public class JGroupsTransport implements Transport {
    }
 
    private void sendResponse(org.jgroups.Address target, Response response, long requestId, ReplicableCommand command) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
       ByteBuffer bytes;
       JChannel channel = this.channel;
@@ -1360,7 +1359,7 @@ public class JGroupsTransport implements Transport {
          DeliverOrder deliverOrder = decodeDeliverMode(flags);
          if (src.equals(((JGroupsAddress) getAddress()).getJGroupsAddress())) {
             // DISCARD ignores the DONT_LOOPBACK flag, see https://issues.jboss.org/browse/JGRP-2205
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Ignoring request %d from self without total order", requestId);
             return;
          }
@@ -1368,11 +1367,11 @@ public class JGroupsTransport implements Transport {
          ReplicableCommand command = (ReplicableCommand) marshaller.objectFromByteBuffer(buffer, offset, length);
          Reply reply;
          if (requestId != Request.NO_REQUEST_ID) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("%s received request %d from %s: %s", getAddress(), requestId, src, command);
             reply = response -> sendResponse(src, response, requestId, command);
          } else {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("%s received command from %s: %s", getAddress(), src, command);
             reply = Reply.NO_OP;
          }
@@ -1402,7 +1401,7 @@ public class JGroupsTransport implements Transport {
                response = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
             }
          }
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("%s received response for request %d from %s: %s", getAddress(), requestId, src, response);
          Address address = fromJGroupsAddress(src);
          requests.addResponse(requestId, address, response);

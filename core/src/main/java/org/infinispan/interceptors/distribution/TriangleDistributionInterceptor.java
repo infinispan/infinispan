@@ -97,7 +97,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TriangleDistributionInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    @Inject CommandAckCollector commandAckCollector;
    @Inject CommandsFactory commandsFactory;
    @Inject TriangleOrderManager triangleOrderManager;
@@ -347,7 +346,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command, entry.getValue());
          backupCommand.setSequence(sequence);
          backupCommand.setSegmentId(segmentId);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
                   sequence);
          }
@@ -430,7 +429,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          Collection<Address> backupOwners = distributionInfo.writeBackups();
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Command %s not successful in primary owner.", id);
             }
             return rv;
@@ -467,7 +466,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          Collection<Address> backupOwners = distributionInfo.writeBackups();
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Command %s not successful in primary owner.", id);
             }
             return rv;
@@ -480,14 +479,14 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    private <C extends DataWriteCommand> void sendToBackups(int segmentId, C command, Collection<Address> backupOwners,
          BackupBuilder<C> backupBuilder) {
       CommandInvocationId id = command.getCommandInvocationId();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
       long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
       BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command);
       backupCommand.setSequence(sequenceNumber);
       backupCommand.setSegmentId(segmentId);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
       }
       // TODO Should we use sendToAll in replicated mode?

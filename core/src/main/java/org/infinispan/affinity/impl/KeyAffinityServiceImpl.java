@@ -47,7 +47,6 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private static final int POLL_INTERVAL_MILLIS = 50;
 
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Set<Address> filter;
 
@@ -311,7 +310,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private void resetNumberOfKeys() {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
       existingKeyCount.set(0);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, existingKeyCount=%s",
                     maxNumberOfKeys.get(), existingKeyCount.get());
       }

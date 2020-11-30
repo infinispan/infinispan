@@ -76,7 +76,6 @@ import org.testng.annotations.Test;
 @Test(testName = "stress.AsyncStoreStressTest", groups = "stress")
 public class AsyncStoreStressTest extends AbstractInfinispanTest {
    static final Log log = LogFactory.getLog(AsyncStoreStressTest.class);
-   final boolean trace = log.isTraceEnabled();
 
    static final int CAPACITY = Integer.getInteger("size", 100000);
    static final int LOOP_FACTOR = 10;
@@ -312,7 +311,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
          @Override
          public boolean call(String key, long run) {
             MarshallableEntry me = CompletionStages.join(store.load(0, key));
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Loaded key=%s, value=%s", key, me != null ? me.getValue() : "null");
             return me != null;
          }
@@ -330,7 +329,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             return withStore(key, () -> {
                CompletionStages.join(store.write(0, MarshalledEntryUtil.create(entry, marshaller)));
                expectedState.put(key, entry);
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Expected state updated with key=%s, value=%s", key, value);
                return true;
             });
@@ -347,7 +346,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
                boolean removed = CompletionStages.join(store.delete(0, key));
                if (removed) {
                   expectedState.remove(key);
-                  if (trace)
+                  if (log.isTraceEnabled())
                      log.tracef("Expected state removed key=%s", key);
                }
                return true;

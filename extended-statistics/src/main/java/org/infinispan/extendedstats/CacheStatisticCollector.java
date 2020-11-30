@@ -32,7 +32,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class CacheStatisticCollector {
    private final static Log log = LogFactory.getLog(CacheStatisticCollector.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private final TimeService timeService;
    private final ConcurrentGlobalContainer globalContainer;
    private volatile EnumMap<PercentileStatistic, ReservoirSampler> percentiles;
@@ -47,7 +46,7 @@ public class CacheStatisticCollector {
     * reset all the statistics collected so far.
     */
    public final void reset() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Resetting Node Scope Statistics");
       }
       globalContainer.reset();
@@ -61,7 +60,7 @@ public class CacheStatisticCollector {
     * Merges a transaction statistics in this cache statistics.
     */
    public final void merge(TransactionStatistics transactionStatistics) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Merge transaction statistics %s to the node statistics", transactionStatistics);
       }
       ReservoirSampler reservoirSampler;
@@ -110,7 +109,7 @@ public class CacheStatisticCollector {
     */
    public final double getPercentile(PercentileStatistic stat, int percentile)
          throws IllegalArgumentException {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Get percentile %s from %s", percentile, stat);
       }
       return percentiles.get(stat).getKPercentile(percentile);
@@ -349,7 +348,7 @@ public class CacheStatisticCollector {
             }
             break;
          default:
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Attribute %s is not exposed via JMX. Calculating raw value", stat);
             }
             if (stat.isLocal()) {
@@ -359,7 +358,7 @@ public class CacheStatisticCollector {
                value += snapshot.getRemote(stat);
             }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Get attribute %s = %s", stat, value);
       }
       return value;

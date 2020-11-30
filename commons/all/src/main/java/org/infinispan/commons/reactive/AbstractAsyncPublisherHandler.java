@@ -48,7 +48,6 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialResponse, NextResponse> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   protected final boolean trace = log.isTraceEnabled();
 
    protected final int batchSize;
    protected final Supplier<Target> supplier;
@@ -141,7 +140,7 @@ public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialRespo
             alreadyCreated = false;
             target = supplier.get();
             if (target == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Completing processor %s", flowableProcessor);
                }
                flowableProcessor.onComplete();
@@ -240,7 +239,7 @@ public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialRespo
    // the requestors "lock" to invoke this
    protected boolean checkCancelled() {
       if (cancelled) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Subscription %s was cancelled, terminating early", this);
          }
          return true;

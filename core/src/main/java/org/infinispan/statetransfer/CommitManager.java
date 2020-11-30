@@ -36,7 +36,6 @@ import org.infinispan.util.logging.LogFactory;
 public class CommitManager {
 
    private static final Log log = LogFactory.getLog(CommitManager.class);
-   private final boolean trace = log.isTraceEnabled();
    private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
 
    @Inject InternalDataContainer dataContainer;
@@ -64,7 +63,7 @@ public class CommitManager {
    public final void stopTrack(Flag track) {
       setTrack(track, false);
       if (!trackStateTransfer && !trackXSiteStateTransfer) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Tracking is disabled. Clear tracker: %s", tracker);
          }
          tracker.clear();
@@ -87,14 +86,14 @@ public class CommitManager {
     */
    public final CompletionStage<Void> commit(final CacheEntry entry, final Flag operation, int segment,
                                              boolean l1Only, InvocationContext ctx) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 write/invalidation=%s", toStr(entry.getKey()),
                operation, l1Only);
       }
       if (l1Only || (operation == null && !trackStateTransfer && !trackXSiteStateTransfer)) {
          //track == null means that it is a normal put and the tracking is not enabled!
          //if it is a L1 invalidation, commit without track it.
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Committing key=%s. It is a L1 invalidation or a normal put and no tracking is enabled!",
                   toStr(entry.getKey()));
          }
@@ -103,7 +102,7 @@ public class CommitManager {
       if (isTrackDisabled(operation)) {
          //this a put for state transfer but we are not tracking it. This means that the state transfer has ended
          //or canceled due to a clear command.
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Not committing key=%s. It is a state transfer key but no track is enabled!",
                   toStr(entry.getKey()));
          }
@@ -112,7 +111,7 @@ public class CommitManager {
       ByRef<CompletionStage<Void>> byRef = new ByRef<>(null);
       tracker.compute(entry.getKey(), (o, discardPolicy) -> {
          if (discardPolicy != null && discardPolicy.ignore(operation)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s",
                      toStr(entry.getKey()), discardPolicy);
             }
@@ -120,7 +119,7 @@ public class CommitManager {
          }
          byRef.set(commitEntry(entry, segment, ctx));
          DiscardPolicy newDiscardPolicy = calculateDiscardPolicy(operation);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", toStr(entry.getKey()),
                        discardPolicy, newDiscardPolicy);
          }
@@ -172,7 +171,7 @@ public class CommitManager {
    }
 
    private void setTrack(Flag track, boolean value) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Set track to %s = %s", track, value);
       }
       switch (track) {

@@ -42,7 +42,6 @@ import org.infinispan.commons.util.CloseableIteratorSet;
 public class TransactionContext<K, V> {
 
    private static final Log log = LogFactory.getLog(TransactionContext.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Map<WrappedKey<K>, TransactionEntry<K, V>> entries;
    private final Function<K, byte[]> keyMarshaller;
@@ -97,12 +96,12 @@ public class TransactionContext<K, V> {
          if (entry == null) {
             entry = TransactionEntry.notReadEntry(wKey.key);
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). Before=%s", wKey, entry);
          }
          T result = function.apply(entry);
          future.complete(result);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). After=%s (result=%s)", wKey, entry, result);
          }
          return entry;
@@ -116,16 +115,16 @@ public class TransactionContext<K, V> {
       entries.compute(wrap(key), (wKey, entry) -> {
          if (entry == null) {
             entry = createEntryFromRemote(wKey.key, remoteValueSupplier);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Fetched key (%s) from remote. Entry=%s", wKey, entry);
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). Before=%s", wKey, entry);
          }
          T result = function.apply(entry);
          future.complete(result);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). After=%s (result=%s)", wKey, entry, result);
          }
          return entry;
@@ -143,16 +142,16 @@ public class TransactionContext<K, V> {
       entries.compute(wrap(key), (wKey, entry) -> {
          if (entry == null) {
             entry = createEntryFromRemote(wKey.key, remoteValueSupplier);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Fetched key (%s) from remote. Entry=%s", wKey, entry);
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). Before=%s", wKey, entry);
          }
          T result = function.apply(entry);
          ref.set(result);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Compute key (%s). After=%s (result=%s)", wKey, entry, result);
          }
          return entry;
@@ -171,7 +170,7 @@ public class TransactionContext<K, V> {
       List<Modification> modifications;
       try {
          modifications = toModification();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Preparing transaction xid=%s, remote-cache=%s, modification-size=%d", xid, cacheName,
                   modifications.size());
          }

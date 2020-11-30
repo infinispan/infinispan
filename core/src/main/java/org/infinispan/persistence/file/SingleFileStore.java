@@ -77,7 +77,6 @@ import io.reactivex.rxjava3.core.Flowable;
 @ConfiguredBy(SingleFileStoreConfiguration.class)
 public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public static final byte[] MAGIC_BEFORE_11 = new byte[]{'F', 'C', 'S', '1'}; //<11
    public static final byte[] MAGIC_11_0 = new byte[]{'F', 'C', 'S', '2'};
@@ -417,7 +416,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          // no appropriate free section available, append at end of file
          FileEntry fe = new FileEntry(filePos, len);
          filePos += len;
-         if (trace) log.tracef("New entry allocated at %d:%d, %d free entries, file size is %d", fe.offset, fe.size, freeList.size(), filePos);
+         if (log.isTraceEnabled()) log.tracef("New entry allocated at %d:%d, %d free entries, file size is %d", fe.offset, fe.size, freeList.size(), filePos);
          return fe;
       }
    }
@@ -431,7 +430,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             FileEntry newFreeEntry = new FileEntry(free.offset + len, remainder);
             addNewFreeEntry(newFreeEntry);
             FileEntry newEntry = new FileEntry(free.offset, len);
-            if (trace) log.tracef("Split entry at %d:%d, allocated %d:%d, free %d:%d, %d free entries",
+            if (log.isTraceEnabled()) log.tracef("Split entry at %d:%d, allocated %d:%d, free %d:%d, %d free entries",
                   free.offset, free.size, newEntry.offset, newEntry.size, newFreeEntry.offset, newFreeEntry.size,
                   freeList.size());
             return newEntry;
@@ -440,7 +439,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
 
-      if (trace) log.tracef("Existing free entry allocated at %d:%d, %d free entries", free.offset, free.size, freeList.size());
+      if (log.isTraceEnabled()) log.tracef("Existing free entry allocated at %d:%d, %d free entries", free.offset, free.size, freeList.size());
       return free;
    }
 
@@ -474,7 +473,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (!freeList.add(fe)) {
             throw new IllegalStateException(String.format("Trying to free an entry that was not allocated: %s", fe));
          }
-         if (trace) log.tracef("Deleted entry at %d:%d, there are now %d free entries", fe.offset, fe.size, freeList.size());
+         if (log.isTraceEnabled()) log.tracef("Deleted entry at %d:%d, there are now %d free entries", fe.offset, fe.size, freeList.size());
       }
    }
 
@@ -516,7 +515,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
             buf.flip();
             channel.write(buf, newEntry.offset);
-            if (trace) log.tracef("Wrote entry %s:%d at %d:%d", marshalledEntry.getKey(), len, newEntry.offset, newEntry.size);
+            if (log.isTraceEnabled()) log.tracef("Wrote entry %s:%d at %d:%d", marshalledEntry.getKey(), len, newEntry.offset, newEntry.size);
 
             // add the new entry to in-memory index
             oldEntry = entries.put(marshalledEntry.getKey(), newEntry);
@@ -573,7 +572,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                freeList.clear();
 
                // reset file
-               if (trace) log.tracef("Truncating file, current size is %d", filePos);
+               if (log.isTraceEnabled()) log.tracef("Truncating file, current size is %d", filePos);
                channel.truncate(0);
                channel.write(ByteBuffer.wrap(MAGIC_11_0), 0);
                filePos = MAGIC_11_0.length;
@@ -652,7 +651,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          fe.unlock();
       }
 
-      if (trace) log.tracef("Read entry %s at %d:%d", key, fe.offset, fe.actualSize());
+      if (log.isTraceEnabled()) log.tracef("Read entry %s at %d:%d", key, fe.offset, fe.actualSize());
       ByteBufferFactory factory = ctx.getByteBufferFactory();
       org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
 
@@ -758,7 +757,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    private void truncateFile(List<FileEntry> entries) {
       long startTime = 0;
-      if (trace) startTime = timeService.wallClockTime();
+      if (log.isTraceEnabled()) startTime = timeService.wallClockTime();
 
       int reclaimedSpace = 0;
       int removedEntries = 0;
@@ -788,7 +787,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Removed entries: %d, Reclaimed Space: %d, Free Entries %d", removedEntries, reclaimedSpace, freeList.size());
          log.tracef("Time taken for truncateFile: %d (ms)", timeService.wallClockTime() - startTime);
       }
@@ -799,7 +798,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    private void mergeFreeEntries(List<FileEntry> entries) {
       long startTime = 0;
-      if (trace) startTime = timeService.wallClockTime();
+      if (log.isTraceEnabled()) startTime = timeService.wallClockTime();
       FileEntry lastEntry = null;
       FileEntry newEntry = null;
       int mergeCounter = 0;
@@ -831,13 +830,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (newEntry != null)
          mergeAndLogEntry(newEntry, mergeCounter);
 
-      if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
+      if (log.isTraceEnabled()) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
    }
 
    private void mergeAndLogEntry(FileEntry entry, int mergeCounter) {
       try {
          addNewFreeEntry(entry);
-         if (trace) log.tracef("Merged %d entries at %d:%d, %d free entries", mergeCounter, entry.offset, entry.size, freeList.size());
+         if (log.isTraceEnabled()) log.tracef("Merged %d entries at %d:%d, %d free entries", mergeCounter, entry.offset, entry.size, freeList.size());
       } catch (IOException e) {
          throw new PersistenceException("Could not add new merged entry", e);
       }

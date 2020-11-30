@@ -36,7 +36,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInternalDataContainer<WrappedBytes, WrappedBytes> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final OffHeapListener offHeapListener;
 
@@ -229,7 +228,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
          }
 
          if (addressToRemove != 0) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Removing entry: 0x%016x due to eviction due to size %d being larger than maximum of %d",
                      addressToRemove, currentSize, maxSize);
             }
@@ -331,7 +330,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       public void entryRetrieved(long entryAddress) {
          lruLock.lock();
          try {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Moving entry 0x%016x to the end of the LRU list", entryAddress);
             }
             moveToEnd(entryAddress);
@@ -348,7 +347,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
        * @param entryAddress the new entry address pointer *NOT* the lru node
        */
       private void addEntryAddressToEnd(long entryAddress) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Adding entry 0x%016x to the end of the LRU list", entryAddress);
          }
          // This means it is the first entry
@@ -377,7 +376,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       private void removeNode(long address) {
          boolean middleNode = true;
          if (address == lastAddress) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Removed entry 0x%016x from the end of the LRU list", address);
             }
             long previousLRUNode = OffHeapLruNode.getPrevious(address);
@@ -388,7 +387,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             middleNode = false;
          }
          if (address == firstAddress) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Removed entry 0x%016x from the beginning of the LRU list", address);
             }
             long nextLRUNode = OffHeapLruNode.getNext(address);
@@ -399,7 +398,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             middleNode = false;
          }
          if (middleNode) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Removed entry 0x%016x from the middle of the LRU list", address);
             }
             // We are a middle pointer so both of these have to be non zero

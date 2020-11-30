@@ -64,7 +64,6 @@ import org.infinispan.xsite.XSiteReplicateCommand;
 public class GlobalInboundInvocationHandler implements InboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(GlobalInboundInvocationHandler.class);
-   private final boolean trace = log.isTraceEnabled();
 
    // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11483
    @Inject @ComponentName(BLOCKING_EXECUTOR)
@@ -121,7 +120,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
    @Override
    public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
 
@@ -145,14 +144,14 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Attempting to execute CacheRpcCommand: %s [sender=%s]", command, origin);
       }
       ByteString cacheName = command.getCacheName();
       ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Silently ignoring that %s cache is not defined", cacheName);
          }
          reply.reply(CacheNotFoundResponse.INSTANCE);
@@ -166,7 +165,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    private void handleReplicableCommand(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]", command, origin);
       }
       Runnable runnable = new ReplicableCommandRunner(command, reply, globalComponentRegistry, order.preserveOrder());
@@ -226,7 +225,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       String remoteSiteName = remoteSite.originSite;
       String remoteCacheName = remoteSite.originCache.toString();
       boolean found = cacheConfiguration.sites().backupFor().isBackupFor(remoteSiteName, remoteCacheName);
-      if (trace && found) {
+      if (log.isTraceEnabled() && found) {
          log.tracef("Found local cache '%s' is backup for cache '%s' from site '%s'", localCacheName, remoteCacheName,
                remoteSiteName);
       }

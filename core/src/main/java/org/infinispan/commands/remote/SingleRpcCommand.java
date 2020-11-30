@@ -25,7 +25,6 @@ public class SingleRpcCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 1;
    private static final Log log = LogFactory.getLog(SingleRpcCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private VisitableCommand command;
 
@@ -65,7 +64,7 @@ public class SingleRpcCommand extends BaseRpcCommand {
       if (command instanceof RemoteLockCommand) {
          ctx.setLockOwner(((RemoteLockCommand) command).getKeyLockOwner());
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoking command %s, with originLocal flag set to %b", command, ctx
                .isOriginLocal());
       return componentRegistry.getInterceptorChain().running().invokeAsync(ctx, command);

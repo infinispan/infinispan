@@ -71,7 +71,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class QueryInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    static final Object UNKNOWN = new Object() {
       @Override
@@ -407,10 +406,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             operation = removeFromIndexes(oldValue, key, segment);
-         } else if (trace) {
+         } else if (log.isTraceEnabled()) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
          }
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
       if (isIndexedType(newValue)) {
@@ -418,11 +417,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             operation = operation.thenCompose(r -> updateIndexes(skipIndexCleanup, newValue, key, segment));
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Not modifying index for %s (%s)", storedKey, command);
             }
          }
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Update not needed for %s", newValue);
       }
       return operation;

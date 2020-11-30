@@ -56,7 +56,6 @@ import org.infinispan.remoting.transport.Address;
  */
 public class ClusteredLockImpl implements ClusteredLock {
    private static final Log log = LogFactory.getLog(ClusteredLockImpl.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final String name;
    private final ClusteredLockKey lockKey;
@@ -118,7 +117,7 @@ public class ClusteredLockImpl implements ClusteredLock {
          }
 
          if (result == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Result is null on request %s", getName(), this.toString());
             }
             request.completeExceptionally(new ClusteredLockException("Lock result is null, something is wrong"));
@@ -186,13 +185,13 @@ public class ClusteredLockImpl implements ClusteredLock {
       protected void handle(Boolean result) {
          if (time <= 0) {
             // The answer has to be returned without holding the CompletableFuture
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Result[%b] for request %s", getName(), result, this);
             }
             request.complete(result);
          } else if (result) {
             // The lock might have been acquired correctly
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] LockResult[%b] for %s", getName(), result, this);
             }
             request.complete(true);
@@ -207,7 +206,7 @@ public class ClusteredLockImpl implements ClusteredLock {
                unlock(requestId, Collections.singleton(requestor));
             }
          } else if (!isScheduled) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Schedule for expiration %s", getName(), this);
             }
             // If the lock was not acquired, then schedule a complete false for the given timeout
@@ -247,7 +246,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       public void entryModified(CacheEntryModifiedEvent event) {
          ClusteredLockValue value = (ClusteredLockValue) event.getValue();
          if (value.getState() == ClusteredLockState.RELEASED) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Lock has been released, %s notified", getName(), originator);
             }
             retryPendingRequests(value);
@@ -266,19 +265,19 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    private void retryPendingRequests(ClusteredLockValue value) {
       if (isChangeViewUnlockInProgress()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] Hold pending requests while view change unlock is happening in %s", getName(), originator);
          }
       } else {
          RequestHolder nextRequestor = null;
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] Pending requests size[%d] in %s", getName(), pendingRequests.size(), originator);
          }
          while (!pendingRequests.isEmpty() && (nextRequestor == null || nextRequestor.isDone() || isSameRequest(nextRequestor, value)))
             nextRequestor = pendingRequests.poll();
 
          if (nextRequestor != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] About to retry lock for %s", getName(), nextRequestor);
             }
             final RequestHolder requestor = nextRequestor;
@@ -302,14 +301,14 @@ public class ClusteredLockImpl implements ClusteredLock {
 
       @ViewChanged
       public void viewChange(ViewChangedEvent event) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] ViewChange event has been fired %s", getName(), originator);
          }
 
          List<Address> newMembers = event.getNewMembers();
          List<Address> oldMembers = event.getOldMembers();
          if (newMembers.size() <= 1 && oldMembers.size() > 2) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] A single new node %s is this notification. Do nothing", getName(), originator);
             }
             return;
@@ -318,7 +317,7 @@ public class ClusteredLockImpl implements ClusteredLock {
          Set<Object> leavingNodes = oldMembers.stream().filter(a -> !newMembers.contains(a)).collect(Collectors.toSet());
 
          if (leavingNodes.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Nothing to do, all nodes are present %s", getName(), originator);
             }
             return;
@@ -327,14 +326,14 @@ public class ClusteredLockImpl implements ClusteredLock {
          if (leavingNodes.size() >= newMembers.size() && oldMembers.size() > 2) {
             // If the oldMembers size is greater than 2, we do nothing because the other nodes will handle
             // If the cluster was formed by 2 members and one leaves, we should not enter here
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Nothing to do, we are on a minority partition notification on %s", getName(), originator);
             }
             return;
          }
 
          if (clusteredLockManager.isDefined(name)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] %s launches unlock for each leaving node", getName(), originator);
             }
             forceUnlockForLeavingMembers(leavingNodes);
@@ -348,24 +347,24 @@ public class ClusteredLockImpl implements ClusteredLock {
        * @param possibleOwners
        */
       private void forceUnlockForLeavingMembers(Set<Object> possibleOwners) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] Call force unlock for %s from %s ", getName(), possibleOwners, originator);
          }
          int viewChangeUnlockValue = viewChangeUnlockHappening.incrementAndGet();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValue, originator);
          }
          unlock(null, possibleOwners)
                .whenComplete((unlockResult, ex) -> {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("LOCK[%s] Force unlock call completed for %s from %s ", getName(), possibleOwners, originator);
                   }
                   int viewChangeUnlockValueAfterUnlock = viewChangeUnlockHappening.decrementAndGet();
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValueAfterUnlock, originator);
                   }
                   if (ex == null) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef("LOCK[%s] Force unlock result %b for %s from %s ", getName(), unlockResult, possibleOwners, originator);
                      }
                   } else {
@@ -380,7 +379,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Void> lock() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] lock called from %s", getName(), originator);
       }
       CompletableFuture<Void> lockRequest = new CompletableFuture<>();
@@ -394,7 +393,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
       pendingRequests.offer(requestHolder);
       if (isChangeViewUnlockInProgress()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] View change unlock is happening in %s. Do not try to lock", getName(), originator);
          }
       } else {
@@ -406,7 +405,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Boolean> tryLock() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] tryLock called from %s", getName(), originator);
       }
       CompletableFuture<Boolean> tryLockRequest = new CompletableFuture<>();
@@ -416,7 +415,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Boolean> tryLock(long time, TimeUnit unit) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] tryLock with timeout (%d, %s) called from %s", getName(), time, unit, originator);
       }
       CompletableFuture<Boolean> tryLockRequest = new CompletableFuture<>();
@@ -441,14 +440,14 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Void> unlock() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] unlock called from %s", getName(), originator);
       }
       CompletableFuture<Void> unlockRequest = new CompletableFuture<>();
 
       readWriteMap.eval(lockKey, new UnlockFunction(originator)).whenComplete((unlockResult, ex) -> {
          if (ex == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] Unlock result for %s is %b", getName(), originator, unlockResult);
             }
             unlockRequest.complete(null);
@@ -461,7 +460,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Boolean> isLocked() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] isLocked called from %s", getName(), originator);
       }
       CompletableFuture<Boolean> isLockedRequest = new CompletableFuture<>();
@@ -477,7 +476,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Boolean> isLockedByMe() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] isLockedByMe called from %s", getName(), originator);
       }
       CompletableFuture<Boolean> isLockedByMeRequest = new CompletableFuture<>();
@@ -492,7 +491,7 @@ public class ClusteredLockImpl implements ClusteredLock {
    }
 
    private CompletableFuture<Boolean> unlock(String requestId, Set<Object> possibleOwners) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] unlock called for %s %s", getName(), requestId, possibleOwners);
       }
       CompletableFuture<Boolean> unlockRequest = new CompletableFuture<>();

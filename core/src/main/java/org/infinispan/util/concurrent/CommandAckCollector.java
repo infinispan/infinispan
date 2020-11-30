@@ -58,7 +58,6 @@ import net.jcip.annotations.GuardedBy;
 public class CommandAckCollector {
 
    private static final Log log = LogFactory.getLog(CommandAckCollector.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -92,7 +91,7 @@ public class CommandAckCollector {
       //is it possible the have a previous collector when the topology changes after the first collector is created
       //in that case, the previous collector must have a lower topology id
       assert prev == null || prev.topologyId < topologyId : format("replaced old collector '%s' by '%s'", prev, collector);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created new collector for %s. BackupOwners=%s", id, backupOwners);
       }
       return collector;
@@ -102,7 +101,7 @@ public class CommandAckCollector {
       BiasedKeyCollector collector = new BiasedKeyCollector(id, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
       assert prev == null || prev.topologyId < topologyId : prev.toString();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created new biased collector for %d", id);
       }
       return collector;
@@ -112,7 +111,7 @@ public class CommandAckCollector {
       MultiTargetCollectorImpl multiTargetCollector = new MultiTargetCollectorImpl(id, primaries, topologyId);
       BaseAckTarget prev = collectorMap.put(id, multiTargetCollector);
       assert prev == null || prev.topologyId < topologyId : prev.toString();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created new multi target collector for %d", id);
       }
       return multiTargetCollector;
@@ -134,7 +133,7 @@ public class CommandAckCollector {
       //is it possible the have a previous collector when the topology changes after the first collector is created
       //in that case, the previous collector must have a lower topology id
       assert prev == null || prev.topologyId < topologyId : format("replaced old collector '%s' by '%s'", prev, collector);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created new collector for %s. BackupSegments=%s", id, backups);
       }
       return collector;
@@ -239,7 +238,7 @@ public class CommandAckCollector {
        * The tasks includes removing the collector from the map and cancel the timeout task.
        */
       public final void accept(T t, Throwable throwable) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] Collector completed with ret=%s, throw=%s", id, t, throwable);
          }
          boolean removed = collectorMap.remove(id, this);
@@ -287,7 +286,7 @@ public class CommandAckCollector {
       }
 
       final void completeExceptionally(Throwable throwable, int topologyId) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef(throwable, "[Collector#%s] completed exceptionally. TopologyId=%s (expected=%s)",
                   id, topologyId, this.topologyId);
          }
@@ -312,7 +311,7 @@ public class CommandAckCollector {
 
       @Override
       synchronized boolean hasPendingBackupAcks() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Pending backup acks: %s", backupOwners);
          }
          return !backupOwners.isEmpty();
@@ -325,7 +324,7 @@ public class CommandAckCollector {
             empty = backupOwners.retainAll(members) && backupOwners.isEmpty();
          }
          if (empty && primaryResultReceived) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("[Collector#%s] Some backups left the cluster.", id);
             }
             markReady();
@@ -342,7 +341,7 @@ public class CommandAckCollector {
       }
 
       void backupAck(int topologyId, Address from) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] Backup ACK. Address=%s, TopologyId=%s (expected=%s)",
                   id, from, topologyId, this.topologyId);
          }
@@ -359,7 +358,7 @@ public class CommandAckCollector {
       }
 
       void markReady() {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] Ready!", id);
          }
          future.complete(primaryResult);
@@ -375,7 +374,7 @@ public class CommandAckCollector {
       }
 
       void backupAck(int topologyId, Address from) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] Backup ACK. Address=%s, TopologyId=%s (expected=%s)",
                   id, from, topologyId, this.topologyId);
          }
@@ -432,7 +431,7 @@ public class CommandAckCollector {
       @Override
       public synchronized void onMembersChange(Collection<Address> members) {
          if (backups.keySet().retainAll(members)) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("[Collector#%s] Some backups left the cluster.", id);
             }
             checkCompleted();
@@ -449,7 +448,7 @@ public class CommandAckCollector {
       }
 
       void backupAck(Address from, int segment, int topologyId) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] PutMap Backup ACK. Address=%s. TopologyId=%s (expected=%s). Segment=%s",
                   id, from, topologyId, this.topologyId, segment);
          }
@@ -468,7 +467,7 @@ public class CommandAckCollector {
       @GuardedBy("this")
       private void checkCompleted() {
          if (primaryResultReceived && backups.isEmpty()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("[Collector#%s] Ready! Return value=%ss.", id, primaryResult);
             }
             future.complete(primaryResult);
@@ -568,7 +567,7 @@ public class CommandAckCollector {
       }
 
       synchronized void addPendingAcks(Address[] waitFor) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] Adding pending acks from %s, existing are %s",
                   id, Arrays.toString(waitFor), pendingAcks);
          }
@@ -585,7 +584,7 @@ public class CommandAckCollector {
       }
 
       synchronized void backupAck(int topologyId, Address from) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("[Collector#%s] PutMap Backup ACK. Address=%s. TopologyId=%s (expected=%s).",
                   id, from, topologyId, this.topologyId);
          }

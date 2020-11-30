@@ -42,7 +42,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRegistry componentRegistry;
    @Inject TransactionTable txTable;
@@ -77,7 +76,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null)
          throw new IllegalStateException("Null context not allowed!!");
@@ -121,13 +120,13 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             // We log this as DEBUG rather than ERROR - see ISPN-2076
             log.debug("Exception executing call", th);
          } else if (th instanceof OutdatedTopologyException) {
-            if (trace) log.tracef("Topology changed, retrying command: %s", th);
+            if (log.isTraceEnabled()) log.tracef("Topology changed, retrying command: %s", th);
          } else {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
          }
          if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-            if (trace) log.trace("Transaction marked for rollback as exception was received.");
+            if (log.isTraceEnabled()) log.trace("Transaction marked for rollback as exception was received.");
             markTxForRollback(ctx);
          }
          if (ctx.isOriginLocal() && !(th instanceof CacheException)) {

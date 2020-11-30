@@ -42,7 +42,6 @@ import org.infinispan.util.ByteString;
 public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    public static final String OBJECT_NAME = "ClusteredLockManager";
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManager.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    public static final String FORCE_RELEASE = "forceRelease";
    public static final String REMOVE = "remove";
    public static final String IS_DEFINED = "isDefined";
@@ -66,7 +65,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Start
    public void start() {
-      if (trace)
+      if (log.isTraceEnabled())
          log.trace("Starting EmbeddedClusteredLockManager");
 
       started = true;
@@ -74,7 +73,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Stop
    public void stop() {
-      if (trace)
+      if (log.isTraceEnabled())
          log.trace("Stopping EmbeddedClusteredLockManager");
 
       started = false;
@@ -95,7 +94,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    @Override
    public boolean defineLock(String name) {
       ClusteredLockConfiguration configuration = new ClusteredLockConfiguration();
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] defineLock with default configuration has been called %s", name, configuration);
 
       return defineLock(name, configuration);
@@ -103,7 +102,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Override
    public boolean defineLock(String name, ClusteredLockConfiguration configuration) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] defineLock has been called %s", name, configuration);
 
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(name));
@@ -114,7 +113,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Override
    public ClusteredLock get(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] get has been called", name);
 
       return locks.computeIfAbsent(name, this::createLock);
@@ -133,7 +132,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Override
    public ClusteredLockConfiguration getConfiguration(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] getConfiguration has been called", name);
 
       if (cache().containsKey(new ClusteredLockKey(ByteString.fromString(name))))
@@ -152,7 +151,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    )
    @Override
    public boolean isDefined(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] isDefined has been called", name);
 
       return cache().containsKey(new ClusteredLockKey(ByteString.fromString(name)));
@@ -160,7 +159,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Override
    public CompletableFuture<Boolean> remove(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] remove has been called", name);
 
       ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
@@ -180,7 +179,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = REMOVE
    )
    public boolean removeSync(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] remove sync has been called", name);
 
       ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
@@ -193,7 +192,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    }
 
    public CompletableFuture<Boolean> forceRelease(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] forceRelease has been called", name);
 
       ClusteredLockKey lockLey = new ClusteredLockKey(ByteString.fromString(name));
@@ -208,7 +207,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = FORCE_RELEASE
    )
    public boolean forceReleaseSync(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] forceRelease sync has been called", name);
 
       return forceRelease(name).join();
@@ -220,7 +219,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = IS_LOCKED
    )
    public boolean isLockedSync(String name) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("LOCK[%s] isLocked sync has been called", name);
 
       ClusteredLockValue clv = cache().get(new ClusteredLockKey(ByteString.fromString(name)));

@@ -17,13 +17,12 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 class ActivationHandler extends ChannelInboundHandlerAdapter {
    static final String NAME = "activation-handler";
    private static final Log log = LogFactory.getLog(ActivationHandler.class);
-   private final boolean trace = log.isTraceEnabled();
    static final ActivationHandler INSTANCE = new ActivationHandler();
    static final Object ACTIVATION_EVENT = new Object();
 
    @Override
    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Activating channel %s", ctx.channel());
       }
       ChannelRecord.of(ctx.channel()).complete(ctx.channel());
@@ -42,7 +41,7 @@ class ActivationHandler extends ChannelInboundHandlerAdapter {
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
       Channel channel = ctx.channel();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef(cause, "Failed to activate channel %s", channel);
       }
       try {

@@ -37,7 +37,6 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final InternalEntryFactory iceFactory;
@@ -59,7 +58,7 @@ public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheS
    public Stream<CacheEntry<K, V>> buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel) {
       Stream<CacheEntry<K, V>> stream;
       if (keysToFilter != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // Make sure we aren't going remote to retrieve these
@@ -69,14 +68,14 @@ public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheS
                .map(advancedCache::getCacheEntry)
                .filter(Objects::nonNull);
          if (segmentsToFilter != null && toIntFunction != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Applying segment filter %s", segmentsToFilter);
             }
             stream = stream.filter(k -> {
                K key = k.getKey();
                int segment = toIntFunction.applyAsInt(key);
                boolean isPresent = segmentsToFilter.contains(segment);
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
                return isPresent;
             });

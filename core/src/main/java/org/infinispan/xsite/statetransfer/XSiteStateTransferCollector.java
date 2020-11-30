@@ -17,7 +17,6 @@ import org.infinispan.util.logging.LogFactory;
 public final class XSiteStateTransferCollector {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferCollector.class);
-   private final boolean trace = log.isTraceEnabled();
    private final Set<Address> collector;
    private boolean statusOk;
 
@@ -36,7 +35,7 @@ public final class XSiteStateTransferCollector {
 
    public boolean confirmStateTransfer(Address node, boolean statusOk) {
       synchronized (collector) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Remove %s from %s. Status=%s", node, collector, statusOk);
          }
          if (this.statusOk && !statusOk) {
@@ -54,7 +53,7 @@ public final class XSiteStateTransferCollector {
 
    public boolean updateMembers(Collection<Address> members) {
       synchronized (collector) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Retain %s from %s", members, collector);
          }
          return collector.retainAll(members) && collector.isEmpty();

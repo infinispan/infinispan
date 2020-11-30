@@ -41,7 +41,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject DistributionManager dm;
 
@@ -119,7 +118,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
          CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(),
                skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             stage = stage.thenAccept(removed ->
                   getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
          }
@@ -153,7 +152,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
          if (computeCommand.isSuccessful() && rv == null) {
              stage = persistenceManager.deleteFromAllStores(key, computeCommand.getSegment(),
                   skipSharedStores(rCtx, key, computeCommand) ? PRIVATE : BOTH);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                stage = stage.thenAccept(removed ->
                      getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
             }

@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
 
    private static final Log log = LogFactory.getLog(AllClusterExecutor.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    AllClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
          Transport transport, long time, TimeUnit unit, Executor localExecutor,
@@ -60,7 +59,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
    private <T> CompletableFuture<Void> startLocalInvocation(Function<? super EmbeddedCacheManager, ? extends T> callable,
          TriConsumer<? super Address, ? super T, ? super Throwable> triConsumer) {
       if (me == null || predicate == null || predicate.test(me)) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.trace("Submitting callable to local node on executor thread! - Usually remote command thread pool");
          }
          return super.submitConsumer(callable, triConsumer);
@@ -71,7 +70,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
 
    protected CompletableFuture<Void> startLocalInvocation(Runnable runnable) {
       if (me == null || predicate == null || predicate.test(me)) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.trace("Submitting runnable to local node on executor thread! - Usually remote command thread pool");
          }
          return super.submit(runnable);
@@ -92,7 +91,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
       CompletableFuture<?> remoteFuture;
       if (size == 1) {
          Address target = targets.get(0);
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
          remoteFuture = new CompletableFuture<>();
@@ -175,7 +174,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          }
          for (int i = 0; i < size; ++i) {
             Address target = targets.get(i);
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
             }
             ReplicableCommand command = new ReplicableManagerFunctionCommand(function);

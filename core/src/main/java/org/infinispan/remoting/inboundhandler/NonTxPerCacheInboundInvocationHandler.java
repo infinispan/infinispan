@@ -23,8 +23,6 @@ import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} implementation for non-total order
@@ -35,9 +33,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler implements
       LockListener {
-
-   private static final Log log = LogFactory.getLog(NonTxPerCacheInboundInvocationHandler.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
 
@@ -95,16 +90,6 @@ public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundIn
    @Override
    public void onEvent(LockState state) {
       checkForReadyTasks();
-   }
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
-   protected boolean isTraceEnabled() {
-      return trace;
    }
 
    private ReadyAction createReadyAction(int topologyId, RemoteLockCommand command) {

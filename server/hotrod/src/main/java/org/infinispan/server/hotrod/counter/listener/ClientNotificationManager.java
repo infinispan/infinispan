@@ -34,7 +34,6 @@ import io.netty.channel.Channel;
 class ClientNotificationManager {
 
    private static final Log log = LogFactory.getLog(ClientNotificationManager.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Map<String, Handle<Listener>> counterListener;
    private final CounterManager counterManager;
@@ -53,7 +52,7 @@ class ClientNotificationManager {
    }
 
    boolean addCounterListener(byte version, String counterName) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Add listener for counter '%s'", counterName);
       }
       ByRef<Boolean> status = new ByRef<>(true);
@@ -62,7 +61,7 @@ class ClientNotificationManager {
    }
 
    void removeCounterListener(String counterName) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Remove listener for counter '%s'", counterName);
       }
       counterListener.computeIfPresent(counterName, (name, handle) -> {
@@ -76,7 +75,7 @@ class ClientNotificationManager {
    }
 
    void removeAll() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Remove all listeners");
       }
       counterListener.values().forEach(Handle::remove);
@@ -85,7 +84,7 @@ class ClientNotificationManager {
 
    void channelActive(Channel otherChannel) {
       boolean sameChannel = this.channel == otherChannel;
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Channel active! is same channel? %s", sameChannel);
       }
       if (sameChannel) {
@@ -94,13 +93,13 @@ class ClientNotificationManager {
    }
 
    private void sendEvents() {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Send events! is writable? %s", channel.isWritable());
       }
       ClientCounterEvent event;
       boolean written = false;
       while (channel.isWritable() && (event = eventQueue.poll()) != null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Sending event %s", event);
          }
          ByteBuf buf = channel.alloc().ioBuffer();
@@ -131,7 +130,7 @@ class ClientNotificationManager {
 
    private void trySendEvents() {
       boolean writable = channel.isWritable();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Try to send events after notification. is writable? %s", writable);
       }
       if (channel.isWritable()) {
@@ -151,7 +150,7 @@ class ClientNotificationManager {
 
       @Override
       public void onUpdate(CounterEvent entry) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Event received! %s", entry);
          }
          eventQueue.add(new ClientCounterEvent(listenerId, version, counterName, entry));

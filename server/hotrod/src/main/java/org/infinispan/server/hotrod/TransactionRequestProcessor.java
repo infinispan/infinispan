@@ -28,7 +28,6 @@ import io.netty.channel.Channel;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
-   private final boolean isTrace = log.isTraceEnabled();
 
    TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
@@ -83,7 +82,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
 
    void getPreparedTransactions(HotRodHeader header, Subject subject) {
       //TODO authentication?
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.trace("Fetching transactions for recovery");
       }
       executor.execute(() -> {
@@ -105,7 +104,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       try {
          if (writes.isEmpty()) {
             //the client can optimize and avoid contacting the server when no data is written.
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Transaction %s is read only.", xid);
             }
             writeResponse(header, createTransactionResponse(header, XAResource.XA_RDONLY));
@@ -114,14 +113,14 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
          PrepareCoordinator prepareCoordinator = new PrepareCoordinator(cache, xid, recoverable, timeout);
 
          if (checkExistingTxForPrepare(header, prepareCoordinator)) {
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Transaction %s conflicts with another node.", xid);
             }
             return;
          }
 
          if (!prepareCoordinator.startTransaction()) {
-            if (isTrace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Unable to start transaction %s", xid);
             }
             writeNotExecuted(header);
@@ -234,19 +233,19 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
     */
    private boolean isValid(TransactionWrite write, AdvancedCache<byte[], byte[]> readCache) {
       if (write.skipRead()) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Operation %s wasn't read.", write);
          }
          return true;
       }
       CacheEntry<byte[], byte[]> entry = readCache.getCacheEntry(write.key);
       if (write.wasNonExisting()) {
-         if (isTrace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Key didn't exist for operation %s. Entry is %s", write, entry);
          }
          return entry == null || entry.getValue() == null;
       }
-      if (isTrace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Checking version for operation %s. Entry is %s", write, entry);
       }
       return entry != null && write.versionRead == MetadataUtils.extractVersion(entry);

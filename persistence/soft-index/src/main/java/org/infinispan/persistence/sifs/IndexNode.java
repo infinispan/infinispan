@@ -26,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 class IndexNode {
    private static final Log log = LogFactory.getLog(IndexNode.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final byte HAS_LEAVES = 1;
    private static final byte HAS_NODES = 2;
@@ -89,7 +88,7 @@ class IndexNode {
          leafNodes = LeafNode.EMPTY_ARRAY;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Loaded %08x from %d:%d (length %d)", System.identityHashCode(this), offset, occupiedSpace, length());
       }
    }
@@ -195,7 +194,7 @@ class IndexNode {
       buffer.flip();
       segment.getIndexFile().write(buffer, offset);
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Persisted %08x (length %d, %d %s) to %d:%d", System.identityHashCode(this), length(),
             innerNodes != null ? innerNodes.length : leafNodes.length,
             innerNodes != null ? "children" : "leaves", offset, occupiedSpace);
@@ -317,7 +316,7 @@ class IndexNode {
          // no change was executed
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created %08x (length %d) from %08x (length %d), stack size %d",
                System.identityHashCode(copy), copy.length(), System.identityHashCode(node), node.length(), stack.size());
       }
@@ -328,7 +327,7 @@ class IndexNode {
          if (result == null) {
             return;
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Created (1) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(node));
          }
          garbage.push(node);
@@ -337,12 +336,12 @@ class IndexNode {
                IndexNode newRoot;
                if (result.newNodes.size() == 1) {
                   newRoot = result.newNodes.get(0);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Setting new root %08x (index has shrunk)", System.identityHashCode(newRoot));
                   }
                } else {
                   newRoot = IndexNode.emptyWithInnerNodes(root.segment).copyWith(0, 0, result.newNodes);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Setting new root %08x (index has grown)", System.identityHashCode(newRoot));
                   }
                }
@@ -351,18 +350,18 @@ class IndexNode {
             }
             Path path = stack.pop();
             copy = path.node.copyWith(result.from, result.to, result.newNodes);
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Created %08x (length %d) from %08x with the %d new nodes (%d - %d)",
                      System.identityHashCode(copy), copy.length(), System.identityHashCode(path.node), result.newNodes.size(), result.from, result.to);
             }
             result = manageLength(path.node.segment, stack, path.node, copy, garbage);
             if (result == null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("No more index updates required");
                }
                return;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Created (2) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(path.node));
             }
             garbage.push(path.node);
@@ -607,14 +606,14 @@ class IndexNode {
                System.arraycopy(leafNodes, 0, newLeafNodes, 0, leafNodes.length);
                // Do not update the file and offset for DROPPED IndexRequests
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
                            oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
                   }
                   newLeafNodes[insertPart] = new LeafNode(file, offset, numRecords);
                   segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
                } else {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.trace(String.format("Updating num records for %d:%d to %d", oldLeafNode.file, oldLeafNode.offset, numRecords));
                   }
                   newLeafNodes[insertPart] = new LeafNode(oldLeafNode.file, oldLeafNode.offset, numRecords);

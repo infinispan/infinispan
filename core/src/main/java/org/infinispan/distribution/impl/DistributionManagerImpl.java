@@ -42,7 +42,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject Transport transport;
    @Inject KeyPartitioner keyPartitioner;
@@ -56,7 +55,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @Start(priority = 8)
    @SuppressWarnings("unused")
    void start() throws Exception {
-      if (trace) log.tracef("starting distribution manager on %s", getAddress());
+      if (log.isTraceEnabled()) log.tracef("starting distribution manager on %s", getAddress());
 
       cacheMode = configuration.clustering().cacheMode();
       // We need an extended topology for preload, before the start of StateTransferManagerImpl
@@ -136,7 +135,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void setCacheTopology(CacheTopology cacheTopology) {
-      if (trace) log.tracef("Topology updated to %s", cacheTopology);
+      if (log.isTraceEnabled()) log.tracef("Topology updated to %s", cacheTopology);
       this.extendedTopology = createLocalizedCacheTopology(cacheTopology);
    }
 

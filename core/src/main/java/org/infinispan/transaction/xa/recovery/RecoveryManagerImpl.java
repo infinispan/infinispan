@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 public class RecoveryManagerImpl implements RecoveryManager {
 
    private static final Log log = LogFactory.getLog(RecoveryManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private volatile RpcManager rpcManager;
    private volatile CommandsFactory commandFactory;
@@ -110,7 +109,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             if (isSuccessful(thisResponse)) {
                //noinspection unchecked
                List<XidImpl> responseValue = ((SuccessfulResponse<List<XidImpl>>) thisResponse).getResponseValue();
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Received Xid lists %s from node %s", responseValue, rEntry.getKey());
                }
                iterator.add(responseValue);
@@ -130,7 +129,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public CompletionStage<Void> removeRecoveryInformation(Collection<Address> lockOwners, XidImpl xid, GlobalTransaction gtx,
                                          boolean fromCluster) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Forgetting tx information for %s", gtx);
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null && !fromCluster) {
@@ -350,7 +349,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
       boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null//if it is in doubt must be prepared
                        || recoveryAwareTxTable().getLocalPreparedXids().contains(xid) || remotePrepared;
-      if (trace) log.tracef("Is tx %s prepared? %s", xid, result);
+      if (log.isTraceEnabled()) log.tracef("Is tx %s prepared? %s", xid, result);
       return result;
    }
 
@@ -370,7 +369,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
       CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       Map<Address, Response> addressResponseMap = rpcManager.blocking(completionStage);
-      if (trace) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
+      if (log.isTraceEnabled()) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
       return addressResponseMap;
    }
 

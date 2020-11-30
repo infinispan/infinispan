@@ -56,8 +56,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private static final Log log = LogFactory.getLog(XSiteStateProviderImpl.class);
-   private final boolean trace = log.isTraceEnabled();
-   private static final boolean debug = log.isDebugEnabled();
 
    private final ConcurrentMap<String, StatePushTask> runningStateTransfer;
 
@@ -93,11 +91,11 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       }
       StatePushTask task = new StatePushTask(siteName, origin, stateTransferConfiguration, minTopologyId);
       if (runningStateTransfer.putIfAbsent(siteName, task) == null) {
-         if (debug) {
+         if (log.isDebugEnabled()) {
             log.debugf("Starting state transfer to site '%s'", siteName);
          }
          blockingExecutor.execute(task);
-      } else if (debug) {
+      } else if (log.isDebugEnabled()) {
          log.debugf("Do not start state transfer to site '%s'. It has already started!", siteName);
       }
 
@@ -163,11 +161,9 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       }
       XSiteState[] privateBuffer = sharedBuffer.toArray(new XSiteState[0]);
 
-      if (trace) {
-         log.debugf("Sending chunk to site '%s'. Chunk contains %s", xSiteBackup.getSiteName(),
+      if (log.isTraceEnabled()) {
+         log.tracef("Sending chunk to site '%s'. Chunk contains %s", xSiteBackup.getSiteName(),
                     Arrays.toString(privateBuffer));
-      } else if (debug) {
-         log.debugf("Sending chunk to site '%s'. Chunk has %s keys.", xSiteBackup.getSiteName(), privateBuffer.length);
       }
 
       XSiteStatePushCommand command = commandsFactory.buildXSiteStatePushCommand(privateBuffer, xSiteBackup.getTimeout());
@@ -202,13 +198,13 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       @Override
       public void run() {
          try {
-            if (debug) {
+            if (log.isDebugEnabled()) {
                log.debugf("[X-Site State Transfer - %s] wait for min topology %s", xSiteBackup.getSiteName(), minTopologyId);
             }
 
             CompletableFutures.await(stateTransferLock.topologyFuture(minTopologyId));
 
-            if (debug) {
+            if (log.isDebugEnabled()) {
                log.debugf("[X-Site State Transfer - %s] start DataContainer iteration", xSiteBackup.getSiteName());
             }
 
@@ -216,7 +212,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                blockingSubscribe(Flowable.fromIterable(dataContainer)
                      .filter(ice -> shouldSendKey(ice.getKey()))
                      .map(ice -> {
-                        if (trace) {
+                        if (log.isTraceEnabled()) {
                            log.tracef("Added key '%s' to current chunk", ice.getKey());
                         }
                         return XSiteState.fromDataContainer(ice);
@@ -241,11 +237,11 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                return;
             }
 
-            if (debug) {
+            if (log.isDebugEnabled()) {
                log.debugf("[X-Site State Transfer - %s] finish DataContainer iteration", xSiteBackup.getSiteName());
             }
 
-            if (debug) {
+            if (log.isDebugEnabled()) {
                log.debugf("[X-Site State Transfer - %s] start Persistence iteration", xSiteBackup.getSiteName());
             }
             try {
@@ -279,7 +275,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                XSITE.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
                return;
             }
-            if (debug) {
+            if (log.isDebugEnabled()) {
                log.debugf("[X-Site State Transfer - %s] finish Persistence iteration", xSiteBackup.getSiteName());
             }
          } catch (Throwable e) {

@@ -28,7 +28,6 @@ public class CompletionStages {
    private CompletionStages() { }
 
    private static final Log log = LogFactory.getLog(CompletionStages.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Returns a CompletionStage that also can be composed of many other CompletionStages. A stage can compose another

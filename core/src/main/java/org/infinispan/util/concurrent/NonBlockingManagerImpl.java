@@ -20,7 +20,6 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.GLOBAL)
 public class NonBlockingManagerImpl implements NonBlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    @Inject ScheduledExecutorService scheduler;
@@ -68,12 +67,12 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
                      }
                   }
                   if (shouldCancel) {
-                     if (trace) {
+                     if (log.isTraceEnabled()) {
                         log.tracef( "Periodic non blocking task with supplier %s was cancelled while rescheduling.", supplier);
                      }
                      newFuture.cancel(true);
                   }
-               } else if (trace) {
+               } else if (log.isTraceEnabled()) {
                   log.tracef("Periodic non blocking task with supplier %s was cancelled prior.", supplier);
                }
             } else if (log.isDebugEnabled()) {
@@ -84,7 +83,7 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
 
       @Override
       public void close() throws Exception {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Periodic non blocking task with supplier %s was cancelled.", supplier);
          }
          Future<?> cancelFuture;

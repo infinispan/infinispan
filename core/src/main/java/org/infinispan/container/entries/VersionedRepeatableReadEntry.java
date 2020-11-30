@@ -25,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
 public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V> {
 
    private static final Log log = LogFactory.getLog(VersionedRepeatableReadEntry.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public VersionedRepeatableReadEntry(K key, V value, Metadata metadata) {
       super(key, value, metadata);
@@ -43,7 +42,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
                                         TxInvocationContext<?> ctx, EntryVersion versionSeen,
                                         VersionGenerator versionGenerator) {
       if (versionSeen == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", toStr(key));
          }
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
@@ -76,7 +75,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
       //in this case, the transaction read some value and the data container has a value stored.
       //version seen and previous version are not null. Simple version comparation.
       InequalVersionComparisonResult result = prevVersion.compareTo(versionSeen);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, versionSeen, key, result);
       }
       // TODO: there is a risk associated with versions that are not monotonous per entry - if an entry is removed
@@ -91,14 +90,14 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
 
       return entry.thenApply(ice -> {
          if (ice == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("No entry for key %s found in data container", toStr(key));
             }
             //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
             return versionGenerator.nonExistingVersion();
          }
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry found in data container: %s", toStr(ice));
          }
          IncrementableEntryVersion prevVersion = versionFromEntry(ice);

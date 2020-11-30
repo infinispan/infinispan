@@ -96,7 +96,6 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    /* ---------------- Constants -------------- */
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    // We always have to have more buckets than locks
    public final static int INITIAL_SIZE = 256;
@@ -913,7 +912,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    @GuardedBy("locks#lockAll")
    private void actualClear() {
       checkDeallocation();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Clearing off-heap data");
       }
       LongConsumer removeEntries = address -> {
@@ -940,7 +939,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       sizeMemoryBuckets(INITIAL_SIZE);
 
       size.set(0);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Cleared off-heap data");
       }
    }

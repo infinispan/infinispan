@@ -37,7 +37,6 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation<MetadataCollection<V>> {
    private static final Log log = LogFactory.getLog(GetKeyWithMetadataMultimapOperation.class);
-   private final boolean trace = log.isTraceEnabled();
 
    public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
@@ -75,7 +74,7 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
          maxIdle = ByteBufUtil.readVInt(buf);
       }
       long version = buf.readLong();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Received version: %d", version);
       }
       int size = ByteBufUtil.readVInt(buf);

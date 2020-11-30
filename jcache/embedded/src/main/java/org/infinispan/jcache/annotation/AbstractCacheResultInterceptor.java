@@ -33,8 +33,6 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  */
 public abstract class AbstractCacheResultInterceptor implements Serializable {
-   protected final boolean trace = getLog().isTraceEnabled();
-
    private static final long serialVersionUID = 5275055951121834315L;
 
    private final CacheResolver cacheResolver;
@@ -60,7 +58,7 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
 
       if (!cacheResult.skipGet()) {
          result = cache.get(cacheKey);
-         if (trace) {
+         if (getLog().isTraceEnabled()) {
             getLog().tracef("Entry with value '%s' has been found in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
          }
       }
@@ -69,7 +67,7 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
          result = invocationContext.proceed();
          if (result != null) {
             cache.put(cacheKey, result);
-            if (trace) {
+            if (getLog().isTraceEnabled()) {
                getLog().tracef("Value '%s' cached in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
             }
          }

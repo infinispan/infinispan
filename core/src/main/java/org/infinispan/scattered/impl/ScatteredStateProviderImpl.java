@@ -37,7 +37,6 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class ScatteredStateProviderImpl extends StateProviderImpl implements ScatteredStateProvider {
    private static final Log log = LogFactory.getLog(ScatteredStateProviderImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected ScatteredVersionManager svm;
 
@@ -130,7 +129,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             }
          }
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Invalidating %d entries from segments %s", numEntries,
                     stateChunks.stream().map(StateChunk::getSegmentId).collect(Collectors.toList()));
       }

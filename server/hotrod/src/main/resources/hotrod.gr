@@ -64,7 +64,7 @@ deadend {
 // this is the root
 root request
    : magic { if (accessLogging) { requestStart = Instant.now(); } }
-      header { if (trace) log.tracef("Parsed header: %s", header); }
+      header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
       parameters
    ;
 

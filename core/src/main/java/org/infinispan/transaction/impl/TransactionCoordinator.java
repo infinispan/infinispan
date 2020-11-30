@@ -47,7 +47,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class TransactionCoordinator {
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject CommandsFactory commandsFactory;
    @Inject ComponentRef<InvocationContextFactory> icf;
@@ -119,12 +118,12 @@ public class TransactionCoordinator {
       }
 
       if (isOnePhaseCommit(localTransaction)) {
-         if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
+         if (log.isTraceEnabled()) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OKAY_STAGE;
       }
 
       PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
-      if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
+      if (log.isTraceEnabled()) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icf.running().createTxInvocationContext(localTransaction);
       prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
@@ -151,7 +150,7 @@ public class TransactionCoordinator {
             });
          }
          if (localTransaction.isReadOnly()) {
-            if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
+            if (log.isTraceEnabled()) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
             return commitInternal(ctx)
                   .thenApply(XA_RDONLY_APPLY);
@@ -163,7 +162,7 @@ public class TransactionCoordinator {
    }
 
    public CompletionStage<Boolean> commit(LocalTransaction localTransaction, boolean isOnePhase) {
-      if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
+      if (log.isTraceEnabled()) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icf.running().createTxInvocationContext(localTransaction);
       if (isOnePhaseCommit(localTransaction) || isOnePhase) {
          CompletionStage<Boolean> markRollbackStage = validateNotMarkedForRollback(localTransaction);
@@ -171,7 +170,7 @@ public class TransactionCoordinator {
             return markRollbackStage;
          }
 
-         if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
+         if (log.isTraceEnabled()) log.trace("Doing an 1PC prepare call on the interceptor chain");
          List<WriteCommand> modifications = localTransaction.getModifications();
          PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), modifications, true);
          return CompletionStages.handleAndCompose(invoker.running().invokeAsync(ctx, command),
@@ -214,7 +213,7 @@ public class TransactionCoordinator {
    }
 
    private <T> CompletionStage<T> handleCommitFailure(Throwable e, boolean onePhaseCommit, LocalTxInvocationContext ctx) {
-      if (trace) log.tracef("Couldn't commit transaction %s, trying to rollback.", ctx.getCacheTransaction());
+      if (log.isTraceEnabled()) log.tracef("Couldn't commit transaction %s, trying to rollback.", ctx.getCacheTransaction());
       if (onePhaseCommit) {
          log.errorProcessing1pcPrepareCommand(e);
       } else {
@@ -259,7 +258,7 @@ public class TransactionCoordinator {
    }
 
    private CompletionStage<Void> rollbackInternal(LocalTxInvocationContext ctx) {
-      if (trace) log.tracef("rollback transaction %s ", ctx.getGlobalTransaction());
+      if (log.isTraceEnabled()) log.tracef("rollback transaction %s ", ctx.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(ctx.getGlobalTransaction());
       return invoker.running().invokeAsync(ctx, rollbackCommand)
             .thenRun(() ->
@@ -269,7 +268,7 @@ public class TransactionCoordinator {
 
    private <T> CompletionStage<T> validateNotMarkedForRollback(LocalTransaction localTransaction) {
       if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.tracef("Transaction already marked for rollback. Forcing rollback for %s", localTransaction);
+         if (log.isTraceEnabled()) log.tracef("Transaction already marked for rollback. Forcing rollback for %s", localTransaction);
          return rollback(localTransaction).thenApply(ignore -> {
             throw CompletableFutures.asCompletionException(new XAException(XAException.XA_RBROLLBACK));
          });

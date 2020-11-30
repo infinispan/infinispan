@@ -39,6 +39,7 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implementation with the default handling methods and utilities methods.
@@ -49,6 +50,8 @@ import org.infinispan.util.logging.Log;
 @Scope(Scopes.NAMED_CACHE)
 @MBean(objectName = MBEAN_COMPONENT_NAME, description = "Handles all the remote requests.")
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+   private static final Log log = LogFactory.getLog(BasePerCacheInboundInvocationHandler.class);
+
    public static final String MBEAN_COMPONENT_NAME = "InboundInvocationHandler";
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
 
@@ -109,8 +112,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final CompletableFuture<Response> invokeCommand(CacheRpcCommand cmd) throws Throwable {
-      if (isTraceEnabled()) {
-         getLog().tracef("Calling perform() on %s", cmd);
+      if (log.isTraceEnabled()) {
+         log.tracef("Calling perform() on %s", cmd);
       }
       CompletableFuture<?> future = cmd.invokeAsync(componentRegistry).toCompletableFuture();
       if (CompletionStages.isCompletedSuccessfully(future)) {
@@ -142,7 +145,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
-      getLog().tracef("Topology changed, retrying: %s", exception);
+      log.tracef("Topology changed, retrying: %s", exception);
       return new ExceptionResponse(exception);
    }
 
@@ -166,8 +169,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    public final boolean isCommandSentBeforeFirstTopology(int commandTopologyId) {
       if (0 <= commandTopologyId && commandTopologyId < firstTopologyAsMember) {
-         if (isTraceEnabled()) {
-            getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d, first topology as member is %d)", commandTopologyId, firstTopologyAsMember);
+         if (log.isTraceEnabled()) {
+            log.tracef("Ignoring command sent before the local node was a member (command topology id is %d, first topology as member is %d)", commandTopologyId, firstTopologyAsMember);
          }
          return true;
       }
@@ -187,10 +190,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
          boolean sync) {
       return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
    }
-
-   protected abstract Log getLog();
-
-   protected abstract boolean isTraceEnabled();
 
    final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
       return !order.preserveOrder() && command.canBlock();

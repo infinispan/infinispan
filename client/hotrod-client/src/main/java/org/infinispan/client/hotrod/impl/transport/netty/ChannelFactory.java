@@ -69,7 +69,6 @@ public class ChannelFactory {
 
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<ClusterSwitchStatus> NOT_SWITCHED_FUTURE = completedFuture(ClusterSwitchStatus.NOT_SWITCHED);
    private static final CompletableFuture<ClusterSwitchStatus> IN_PROGRESS_FUTURE = completedFuture(ClusterSwitchStatus.IN_PROGRESS);
    private static final CompletableFuture<ClusterSwitchStatus> SWITCHED_FUTURE = completedFuture(ClusterSwitchStatus.SWITCHED);
@@ -206,7 +205,7 @@ public class ChannelFactory {
             // Ping's objective is to retrieve a potentially newer
             // version of the Hot Rod cluster topology, so ignore
             // exceptions from nodes that might not be up any more.
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
                      servers);
          }
@@ -285,7 +284,7 @@ public class ChannelFactory {
       } finally {
          lock.writeLock().unlock();
       }
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("[%s] Using the balancer for determining the server: %s", new String(cacheName), server);
 
       return server;
@@ -342,7 +341,7 @@ public class ChannelFactory {
       addedServers.removeAll(servers);
       Set<SocketAddress> failedServers = new HashSet<>(servers);
       failedServers.removeAll(newServers);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          String cacheNameString = cacheName == null ? "<default>" : new String(cacheName);
          log.tracef("[%s] Current list: %s", cacheNameString, servers);
          log.tracef("[%s] New list: %s", cacheNameString, newServers);
@@ -435,7 +434,7 @@ public class ChannelFactory {
    public CompletableFuture<ClusterSwitchStatus> trySwitchCluster(String failedClusterName, byte[] cacheName) {
       lock.writeLock().lock();
       try {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Trying to switch cluster away from '%s'", failedClusterName);
 
          if (clusters.isEmpty()) {
@@ -455,7 +454,7 @@ public class ChannelFactory {
             return IN_PROGRESS_FUTURE;
          }
 
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Switching clusters, failed cluster is '%s' and current cluster name is '%s'",
                   failedClusterName, currentClusterName);
 
@@ -485,7 +484,7 @@ public class ChannelFactory {
       for (SocketAddress server : servers) {
          fetchChannelAndInvoke(server, operationsFactory.newPingOperation(true)).whenComplete((result, throwable) -> {
             if (throwable != null) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef(throwable, "Error checking whether this server is alive: %s", server);
                }
                if (remainingResponses.decrementAndGet() == 0) {

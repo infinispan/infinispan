@@ -19,7 +19,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private int index;
 
@@ -30,7 +29,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
       this.servers = servers.toArray(new SocketAddress[servers.size()]);
       // Always start with a random server after a topology update
       index = ThreadLocalRandom.current().nextInt(this.servers.length);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("New server list is: " + Arrays.toString(this.servers));
       }
    }
@@ -47,7 +46,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
             index = 0;
 
          if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                if (failedServers == null)
                   log.tracef("Selected %s from %s", server, Arrays.toString(servers));
                else
@@ -61,7 +60,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    private SocketAddress getServerByIndex(int pos) {
       SocketAddress server = servers[pos];
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Returning server: %s", server);
       }
       return server;

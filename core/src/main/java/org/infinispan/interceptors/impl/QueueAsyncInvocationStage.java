@@ -33,7 +33,6 @@ import org.jgroups.annotations.GuardedBy;
 public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implements BiConsumer<Object, Throwable>,
       InvocationCallback {
    private static final Log log = LogFactory.getLog(QueueAsyncInvocationStage.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final InvocationContext ctx;
    private final VisitableCommand command;
@@ -102,7 +101,7 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
    }
 
    private void invokeQueuedHandlers(Object rv, Throwable throwable) {
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Resuming invocation of command %s with %d handlers", command, queueSize());
       while (true) {
          InvocationCallback function = queuePoll();

@@ -37,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class OrderedClusteringDependentLogic implements ClusteringDependentLogic {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final ClusteringDependentLogic cdl;
    private final boolean passivation;
@@ -138,12 +137,12 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
       CompletionStage<Void> commitStage =  cdl.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
       if (shouldActivate) {
          return commitStage.thenCompose(ignore1 -> {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Activating entry for key %s due to update in dataContainer", key);
             }
             return activationManager.activateAsync(key, segment);
          });
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Skipping removal from store as %s was in the data container", key);
       }
       return commitStage;

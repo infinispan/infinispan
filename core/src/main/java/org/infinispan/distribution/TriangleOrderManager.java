@@ -25,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TriangleOrderManager {
 
    private static final Log log = LogFactory.getLog(TriangleOrderManager.class);
-   private final boolean trace = log.isTraceEnabled();
    private final TriangleSequencer[] sequencers;
    @Inject DistributionManager distributionManager;
 
@@ -83,13 +82,13 @@ public class TriangleOrderManager {
 
       private synchronized long next(int commandTopologyId) {
          if (senderTopologyId == commandTopologyId) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Sender Increment sequence (%s:%s). commandTopologyId=%s", senderTopologyId,
                      senderSequenceNumber, commandTopologyId);
             }
             return senderSequenceNumber++;
          } else if (senderTopologyId < commandTopologyId) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Sender update topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
                      commandTopologyId);
             }
@@ -98,7 +97,7 @@ public class TriangleOrderManager {
             senderSequenceNumber = 2;
             return 1;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Sender old topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
                      commandTopologyId);
             }
@@ -111,7 +110,7 @@ public class TriangleOrderManager {
       private synchronized void deliver(int commandTopologyId, long sequenceNumber) {
          if (receiverTopologyId == commandTopologyId && receiverSequenceNumber == sequenceNumber) {
             receiverSequenceNumber++;
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Deliver done. Next sequence (%s:%s)", receiverTopologyId, receiverSequenceNumber);
             }
          }
@@ -119,14 +118,14 @@ public class TriangleOrderManager {
 
       private synchronized boolean isNext(int commandTopologyId, long sequenceNumber) {
          if (receiverTopologyId == commandTopologyId) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
                      receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
             }
             return receiverSequenceNumber == sequenceNumber;
          } else if (receiverTopologyId < commandTopologyId) {
             //update topology. this command will be the first
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Receiver update topology. CommandTopologyId=%s, command sequence=%s", commandTopologyId,
                      sequenceNumber);
             }
@@ -134,7 +133,7 @@ public class TriangleOrderManager {
             receiverSequenceNumber = 1;
             return 1 == sequenceNumber;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
                      receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
             }

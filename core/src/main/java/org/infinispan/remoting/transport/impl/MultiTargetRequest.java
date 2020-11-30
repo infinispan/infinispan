@@ -26,7 +26,6 @@ import net.jcip.annotations.GuardedBy;
  */
 public class MultiTargetRequest<T> extends AbstractRequest<T> {
    private static final Log log = LogFactory.getLog(MultiTargetRequest.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("responseCollector")
    private final Address[] targets;
@@ -85,7 +84,7 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
             if (!validSender) {
                // A broadcast may be sent to nodes added to the cluster view after the request was created,
                // so we should just ignore responses from unexpected senders.
-               if (trace)
+               if (log.isTraceEnabled())
                   log.tracef("Ignoring unexpected response to request %d from %s: %s", requestId, sender, response);
                return;
             }
@@ -127,7 +126,7 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                   targets[i] = null;
                   missingResponses--;
                   targetRemoved = true;
-                  if (trace) log.tracef("Target %s of request %d left the cluster view", target, requestId);
+                  if (log.isTraceEnabled()) log.tracef("Target %s of request %d left the cluster view", target, requestId);
                   result = responseCollector.addResponse(target, CacheNotFoundResponse.INSTANCE);
                   if (result != null) {
                      isDone = true;

@@ -17,7 +17,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DataOperationOrderer {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Object, CompletionStage<Operation>> objectStages = new ConcurrentHashMap<>();
 
@@ -38,7 +37,7 @@ public class DataOperationOrderer {
     */
    public CompletionStage<Operation> orderOn(Object key, CompletionStage<Operation> register) {
       CompletionStage<Operation> current = objectStages.put(key, register);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Ordering upcoming future %s for key %s to run after %s", register, key, current);
       }
       return current;
@@ -51,7 +50,7 @@ public class DataOperationOrderer {
     * @param operation the type of operation
     */
    public void completeOperation(Object key, CompletableFuture<Operation> registeredFuture, Operation operation) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Ordered future %s is completed for key %s from op %s", registeredFuture, key, operation);
       }
       // If nothing was removed that is fine - means another operation has been registered

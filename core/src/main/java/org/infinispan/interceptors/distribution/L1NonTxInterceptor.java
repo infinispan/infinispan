@@ -65,7 +65,6 @@ import org.infinispan.util.logging.LogFactory;
 public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject protected L1Manager l1Manager;
    @Inject protected ClusteringDependentLogic cdl;
@@ -166,7 +165,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             concurrentWrites.remove(key);
          });
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Found current request for key %s, waiting for their invocation's response", key);
          }
          Object returnValue;
@@ -334,11 +333,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       L1WriteSynchronizer sync = concurrentWrites.remove(key);
       if (sync != null) {
          if (sync.trySkipL1Update()) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Aborted possible L1 update due to concurrent invalidation for key %s", key);
             }
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("L1 invalidation found a pending update for key %s - need to block until finished", key);
             }
             // We have to wait for the pending L1 update to complete before we can properly invalidate.  Any additional
@@ -356,7 +355,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                // We don't care what the L1 update exception was
                success = false;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Pending L1 update completed successfully: %b - L1 invalidation can occur for key %s", success, key);
             }
          }
@@ -366,7 +365,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command,
          boolean assumeOriginKeptEntryInL1) {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("local mode forced, suppressing L1 calls.");
          }
          return invokeNext(ctx, command);
@@ -398,7 +397,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
                VisitableCommand removeFromL1Command = CompletionStages.join(removeFromL1CommandStage);
                return invokeNextThenApply(rCtx, removeFromL1Command, (rCtx2, rCommand2, rv2) -> rv);
-            } else if (trace) {
+            } else if (log.isTraceEnabled()) {
                log.trace("Allowing entry to commit as local node is owner");
             }
          }
@@ -415,7 +414,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private CompletionStage<VisitableCommand> removeFromL1Command(InvocationContext ctx, Object key, int segment) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Removing entry from L1 for key %s", key);
       }
       abortL1UpdateOrWait(key);
@@ -430,7 +429,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       CompletableFuture<?> l1InvalidationFuture = null;
       if (cdl.getCacheTopology().isWriteOwner(command.getKey())) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Not invalidating key '%s' as local node(%s) is not owner", command.getKey(), rpcManager.getAddress());
       }
       return l1InvalidationFuture;

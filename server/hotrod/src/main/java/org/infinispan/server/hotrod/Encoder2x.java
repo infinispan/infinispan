@@ -62,7 +62,6 @@ import io.netty.channel.Channel;
  */
 class Encoder2x implements VersionedEncoder {
    private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Override
    public void writeEvent(Events.Event e, ByteBuf buf) {
@@ -112,7 +111,7 @@ class Encoder2x implements VersionedEncoder {
       } else {
          ExtendedByteBuf.writeRangedBytes(prev, buf);
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Write response to %s messageId=%d status=%s prev=%s", header.op, header.messageId, status, Util.printArray(prev));
       }
       return buf;
@@ -136,7 +135,7 @@ class Encoder2x implements VersionedEncoder {
       try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = entries.iterator()) {
          int max = Integer.MAX_VALUE;
          if (size != 0) {
-            if (trace) log.tracef("About to write (max) %d messages to the client", size);
+            if (log.isTraceEnabled()) log.tracef("About to write (max) %d messages to the client", size);
             max = size;
          }
          int count = 0;
@@ -487,7 +486,7 @@ class Encoder2x implements VersionedEncoder {
             throw new IllegalArgumentException("Unsupported response: " + topology);
          }
       } else {
-         if (trace) log.trace("Write topology response header with no change");
+         if (log.isTraceEnabled()) log.trace("Write topology response header with no change");
          buf.writeByte(0);
       }
       if (sendMediaType && HotRodVersion.HOTROD_29.isAtLeast(header.version)) {
@@ -554,7 +553,7 @@ class Encoder2x implements VersionedEncoder {
          log.noMembersInTopology();
          buffer.writeByte(0); // Topology not changed
       } else {
-         if (trace) log.tracef("Write topology change response header %s", t);
+         if (log.isTraceEnabled()) log.tracef("Write topology change response header %s", t);
          buffer.writeByte(1); // Topology changed
          ExtendedByteBuf.writeUnsignedInt(t.topologyId, buffer);
          ExtendedByteBuf.writeUnsignedInt(topologyMap.size(), buffer);
@@ -566,7 +565,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private void writeEmptyHashInfo(AbstractTopologyResponse t, ByteBuf buffer) {
-      if (trace) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
+      if (log.isTraceEnabled()) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
       buffer.writeByte(0); // Hash Function Version
       ExtendedByteBuf.writeUnsignedInt(t.numSegments, buffer);
    }
@@ -577,7 +576,7 @@ class Encoder2x implements VersionedEncoder {
       Map<Address, ServerAddress> members = h.serverEndpointsMap.entrySet().stream().filter(e ->
             ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("Topology cache contains: " + h.serverEndpointsMap);
          log.trace("After read consistent hash filter, members are: " + members);
       }
@@ -586,7 +585,7 @@ class Encoder2x implements VersionedEncoder {
          log.noMembersInHashTopology(ch, h.serverEndpointsMap.toString());
          buf.writeByte(0); // Topology not changed
       } else {
-         if (trace) log.tracef("Write hash distribution change response header %s", h);
+         if (log.isTraceEnabled()) log.tracef("Write hash distribution change response header %s", h);
          buf.writeByte(1); // Topology changed
          ExtendedByteBuf.writeUnsignedInt(h.topologyId, buf); // Topology ID
 
@@ -666,7 +665,7 @@ class Encoder2x implements VersionedEncoder {
 
       int topologyId = currentTopologyId;
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
                cacheMembers, cacheMembers, responseTopologyId, topologyId);
       }
@@ -674,12 +673,12 @@ class Encoder2x implements VersionedEncoder {
       if (!serverEndpoints.keySet().containsAll(cacheMembers)) {
          // At least one cache member is missing from the topology cache
          if (currentTopologyId - responseTopologyId < 2) {
-            if (trace) log.trace("Postpone topology update");
+            if (log.isTraceEnabled()) log.trace("Postpone topology update");
             return Optional.empty(); // Postpone topology update
          } else {
             // Send partial topology update
             topologyId -= 1;
-            if (trace) log.tracef("Send partial topology update with topology id %s", topologyId);
+            if (log.isTraceEnabled()) log.tracef("Send partial topology update with topology id %s", topologyId);
          }
       }
 

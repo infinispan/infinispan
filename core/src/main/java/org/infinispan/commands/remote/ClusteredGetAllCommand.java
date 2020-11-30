@@ -32,7 +32,6 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private List<?> keys;
    private GlobalTransaction gtx;
@@ -72,7 +71,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       InvocationContext invocationContext = cr.getInvocationContextFactory().running().createRemoteInvocationContextForCommand(command, getOrigin());
       CompletionStage<Object> future = cr.getInterceptorChain().running().invokeAsync(invocationContext, command);
       return future.thenApply(rv -> {
-         if (trace) log.trace("Found: " + rv);
+         if (log.isTraceEnabled()) log.trace("Found: " + rv);
          if (rv == null || rv instanceof Response) {
             return rv;
          }

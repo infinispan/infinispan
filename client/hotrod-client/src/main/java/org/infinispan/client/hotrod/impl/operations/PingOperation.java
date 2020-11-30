@@ -30,7 +30,6 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class PingOperation extends HotRodOperation<PingResponse> implements ChannelOperation {
    private static final Log log = LogFactory.getLog(PingOperation.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final boolean releaseChannel;
    private final OperationsFactory operationsFactory;
@@ -78,7 +77,7 @@ public class PingOperation extends HotRodOperation<PingResponse> implements Chan
          complete(pingResponse);
       } else {
          String hexStatus = Integer.toHexString(status);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Unknown response status: %s", hexStatus);
 
          throw new InvalidResponseException("Unexpected response status: " + hexStatus);

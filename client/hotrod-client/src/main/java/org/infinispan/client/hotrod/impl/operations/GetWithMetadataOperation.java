@@ -32,7 +32,6 @@ import net.jcip.annotations.Immutable;
 public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> implements RetryAwareCompletionStage<MetadataValue<V>> {
 
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final SocketAddress preferredServer;
 
@@ -90,7 +89,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
          maxIdle = ByteBufUtil.readVInt(buf);
       }
       long version = buf.readLong();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Received version: %d", version);
       }
       V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());

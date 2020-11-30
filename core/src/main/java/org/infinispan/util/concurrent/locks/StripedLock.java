@@ -29,7 +29,6 @@ import net.jcip.annotations.ThreadSafe;
 public class StripedLock {
 
    private static final Log log = LogFactory.getLog(StripedLock.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private static final int DEFAULT_CONCURRENCY = 20;
    private final int lockSegmentMask;
@@ -75,10 +74,10 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (exclusive) {
          lock.writeLock().lock();
-         if (trace) log.tracef("WL acquired for '%s'", key);
+         if (log.isTraceEnabled()) log.tracef("WL acquired for '%s'", key);
       } else {
          lock.readLock().lock();
-         if (trace) log.tracef("RL acquired for '%s'", key);
+         if (log.isTraceEnabled()) log.tracef("RL acquired for '%s'", key);
       }
    }
 
@@ -87,11 +86,11 @@ public class StripedLock {
       try {
          if (exclusive) {
             boolean success = lock.writeLock().tryLock(millis, TimeUnit.MILLISECONDS);
-            if (success && trace) log.tracef("WL acquired for '%s'", key);
+            if (success && log.isTraceEnabled()) log.tracef("WL acquired for '%s'", key);
             return success;
          } else {
             boolean success = lock.readLock().tryLock(millis, TimeUnit.MILLISECONDS);
-            if (success && trace) log.tracef("RL acquired for '%s'", key);
+            if (success && log.isTraceEnabled()) log.tracef("RL acquired for '%s'", key);
             return success;
          }
       } catch (InterruptedException e) {
@@ -107,10 +106,10 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (lock.isWriteLockedByCurrentThread()) {
          lock.writeLock().unlock();
-         if (trace) log.tracef("WL released for '%s'", key);
+         if (log.isTraceEnabled()) log.tracef("WL released for '%s'", key);
       } else {
          lock.readLock().unlock();
-         if (trace) log.tracef("RL released for '%s'", key);
+         if (log.isTraceEnabled()) log.tracef("RL released for '%s'", key);
       }
    }
 
@@ -119,14 +118,14 @@ public class StripedLock {
       lock.readLock().unlock();
       // another thread could come here and take the RL or WL, forcing us to wait
       lock.writeLock().lock();
-      if (trace) log.tracef("RL upgraded to WL for '%s'", key);
+      if (log.isTraceEnabled()) log.tracef("RL upgraded to WL for '%s'", key);
    }
 
    public void downgradeLock(Object key) {
       ReentrantReadWriteLock lock = getLock(key);
       lock.readLock().lock();
       lock.writeLock().unlock();
-      if (trace) log.tracef("WL downgraded to RL for '%s'", key);
+      if (log.isTraceEnabled()) log.tracef("WL downgraded to RL for '%s'", key);
    }
 
    final ReentrantReadWriteLock getLock(Object o) {
@@ -197,11 +196,11 @@ public class StripedLock {
          try {
             success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
             if (!success) {
-               if (trace) log.tracef("Could not acquire lock on %s. Exclusive? %b", toAcquire, exclusive);
+               if (log.isTraceEnabled()) log.tracef("Could not acquire lock on %s. Exclusive? %b", toAcquire, exclusive);
                break;
             }
          } catch (InterruptedException e) {
-            if (trace) log.trace("Caught InterruptedException while trying to acquire global lock", e);
+            if (log.isTraceEnabled()) log.trace("Caught InterruptedException while trying to acquire global lock", e);
             success = false;
             Thread.currentThread().interrupt();
          } finally {

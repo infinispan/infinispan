@@ -23,7 +23,6 @@ import org.infinispan.commons.util.Util;
 class SegmentKeyTracker implements KeyTracker {
 
    private static final Log log = LogFactory.getLog(SegmentKeyTracker.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final AtomicReferenceArray<Set<WrappedByteArray>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
@@ -35,7 +34,7 @@ class SegmentKeyTracker implements KeyTracker {
       this.dataFormat = dataFormat;
       int numSegments = segmentConsistentHash.getNumSegments();
       keysPerSegment = new AtomicReferenceArray<>(numSegments);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Created SegmentKeyTracker with %d segments, filter %s", numSegments, segments);
       this.segmentConsistentHash = segmentConsistentHash;
       IntStream segmentStream = segments == null ?
@@ -64,7 +63,7 @@ class SegmentKeyTracker implements KeyTracker {
          return keyOnlyTracker.add(new WrappedByteArray(key));
       }
       boolean result = keys.add(new WrappedByteArray(key));
-      if (trace)
+      if (log.isTraceEnabled())
          log.trackingSegmentKey(Util.printArray(key), segment, !result);
       return result;
    }
@@ -84,7 +83,7 @@ class SegmentKeyTracker implements KeyTracker {
 
    public void segmentsFinished(IntSet finishedSegments) {
       if (trackSegments && finishedSegments != null) {
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Removing completed segments %s", finishedSegments);
          finishedSegments.forEach((IntConsumer) seg -> keysPerSegment.set(seg, null));
       }

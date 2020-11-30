@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
-   private final boolean trace = getLog().isTraceEnabled();
    private final InvocationFinallyFunction<VisitableCommand> handleReadCommandReturn = this::handleReadCommandReturn;
 
    @Inject Configuration configuration;
@@ -119,7 +118,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    protected final void logRetry(int currentTopologyId, TopologyAffectedCommand cmd) {
-      if (trace)
+      if (getLog().isTraceEnabled())
          getLog().tracef("Retrying command because of topology change, current topology is %d, command topology %d: %s",
                          currentTopologyId, cmd.getTopologyId(), cmd);
    }
@@ -136,7 +135,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          CacheTopology cacheTopology = distributionManager.getCacheTopology();
          // Before the topology is set in STM/StateConsumer the topology in DistributionManager is 0
          int topologyId = cacheTopology == null ? 0 : cacheTopology.getTopologyId();
-         if (trace) getLog().tracef("Setting command topology to %d", topologyId);
+         if (getLog().isTraceEnabled()) getLog().tracef("Setting command topology to %d", topologyId);
          command.setTopologyId(topologyId);
       }
    }
@@ -216,7 +215,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          OutdatedTopologyException ote = (OutdatedTopologyException) ce;
          requestedTopologyId = cmd.getTopologyId() + ote.topologyIdDelta;
       } else if (ce instanceof AllOwnersLostException) {
-         if (trace)
+         if (getLog().isTraceEnabled())
             getLog().tracef("All owners for command %s have been lost.", cmd);
          // In scattered cache it might be common to lose the single owner, we need to retry. We will find out that
          // we can return null only after the next topology is installed. If partition handling is enabled we decide

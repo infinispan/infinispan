@@ -54,8 +54,6 @@ import org.infinispan.util.logging.Log;
  * @author Mircea Markus
  */
 public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
-   private final boolean trace = getLog().isTraceEnabled();
-
    final InvocationFinallyAction<VisitableCommand> unlockAllReturnHandler = this::handleUnlockAll;
 
    @Inject protected LockManager lockManager;
@@ -153,7 +151,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
-         if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
+         if (getLog().isTraceEnabled()) getLog().trace("Skipping invalidation as the write operation originated here.");
          return null;
       }
 
@@ -265,14 +263,14 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
       boolean shouldLock = isLockOwner(key);
-      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
+      if (getLog().isTraceEnabled()) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
    }
 
    final boolean shouldLockKey(int keySegment) {
       //only the primary owner acquires the lock.
       boolean shouldLock = isLockOwner(keySegment);
-      if (trace) getLog().tracef("Are (%s) we the lock owners for segment '%s'? %s", cdl.getAddress(), keySegment, shouldLock);
+      if (getLog().isTraceEnabled()) getLog().tracef("Are (%s) we the lock owners for segment '%s'? %s", cdl.getAddress(), keySegment, shouldLock);
       return shouldLock;
    }
 

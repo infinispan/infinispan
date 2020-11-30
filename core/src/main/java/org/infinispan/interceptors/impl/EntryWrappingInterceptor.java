@@ -114,7 +114,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean isPessimistic;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final long EVICT_FLAGS_BITSET =
          FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
 
@@ -243,7 +242,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             CacheEntry cacheEntry = rCtx.lookupEntry(key);
             if (cacheEntry == null) {
                // Data was lost
-               if (trace) log.tracef(t, "Missing entry for " + key);
+               if (log.isTraceEnabled()) log.tracef(t, "Missing entry for " + key);
             } else {
                cacheEntry.setSkipLookup(true);
             }
@@ -319,7 +318,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             stage = applyChanges(rCtx, rCommand);
          }
 
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("The return value is %s", rv);
          return delayedValue(stage, rv);
       });
@@ -335,7 +334,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                false, false);
          aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
-         if (trace)
+         if (log.isTraceEnabled())
            log.tracef("Entry to be removed: %s", toStr(key));
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
@@ -369,14 +368,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // modification concurrent to the retried operation, therefore we don't have to deal with this problem.
       if (useRepeatableRead) {
          MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("This is a retry - resetting previous value in entry %s", entry);
          }
          if (entry != null) {
             entry.resetCurrentValue();
          }
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("This is a retry - removing looked up entry %s", ctx.lookupEntry(key));
          }
          ctx.removeLookedUpEntry(key);
@@ -385,7 +384,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private void removeFromContextOnRetry(InvocationContext ctx, Collection<?> keys) {
       if (useRepeatableRead) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("This is a retry - resetting previous values for %s", keys);
          }
          for (Object key : keys) {
@@ -662,7 +661,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // change happens before we get here
             if (!ctx.isOriginLocal() || !(command instanceof DataCommand) ||
                   ctx.hasLockedKey(((DataCommand)command).getKey())) {
-               if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+               if (log.isTraceEnabled()) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                      commandTopologyId, currentTopologyId);
                // This shouldn't be necessary, as we'll have a fresh command instance when retrying
                command.setValueMatcher(command.getValueMatcher().matcherForRetry());
@@ -709,7 +708,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          return delayedValue(applyChanges(ctx, writeCommand), rv);
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("The return value is %s", toStr(rv));
       if (useRepeatableRead) {
          boolean addVersionRead = isVersioned && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
@@ -732,10 +731,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       IncrementableEntryVersion version = versionFromEntry(cacheEntry);
       if (version == null) {
          version = versionGenerator.nonExistingVersion();
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Adding non-existent version read for key %s", key);
          }
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Adding version read %s for key %s", version, key);
       }
       rCtx.getCacheTransaction().addVersionRead(key, version);
@@ -754,7 +753,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          return delayedValue(applyChanges(ctx, dataWriteCommand), rv);
       }
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("The return value is %s", rv);
       if (useRepeatableRead) {
          CacheEntry cacheEntry = ctx.lookupEntry(dataWriteCommand.getKey());
@@ -888,7 +887,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private CompletionStage<Void> commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
          Object key, final CacheEntry entry, final Flag stateTransferFlag) {
       if (entry == null) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(key));
          }
          return CompletableFutures.completedNull();
@@ -896,9 +895,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       final boolean l1Invalidation = command instanceof InvalidateL1Command;
 
       if (entry.isChanged()) {
-         if (trace) log.tracef("About to commit entry %s", entry);
+         if (log.isTraceEnabled()) log.tracef("About to commit entry %s", entry);
          return commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(key), entry);
       }
       return CompletableFutures.completedNull();

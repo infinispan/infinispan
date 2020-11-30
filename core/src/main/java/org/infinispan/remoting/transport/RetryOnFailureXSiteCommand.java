@@ -22,7 +22,6 @@ public class RetryOnFailureXSiteCommand<O> {
 
    public static final RetryPolicy NO_RETRY = new MaxRetriesPolicy(0);
    private static final Log log = LogFactory.getLog(RetryOnFailureXSiteCommand.class);
-   private final boolean trace = log.isTraceEnabled();
    private final XSiteBackup xSiteBackup;
    private final XSiteReplicateCommand<O> command;
    private final RetryPolicy retryPolicy;
@@ -51,19 +50,19 @@ public class RetryOnFailureXSiteCommand<O> {
          try {
             CompletionStage<O> response = rpcManager.invokeXSite(xSiteBackup, command);
             response.toCompletableFuture().join();
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.trace("Successful Response received.");
             }
             return;
          } catch (Throwable throwable) {
             throwable = CompletableFutures.extractException(throwable);
             if (!retryPolicy.retry(throwable, rpcManager)) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Failing command with exception %s", throwable);
                }
                throw throwable;
             } else {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Will retry command after exception %s", throwable);
                }
             }

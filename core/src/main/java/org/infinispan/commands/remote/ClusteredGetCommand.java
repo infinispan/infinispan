@@ -40,7 +40,6 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private Object key;
 
@@ -100,7 +99,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       AsyncInterceptorChain invoker = componentRegistry.getInterceptorChain().running();
       return invoker.invokeAsync(invocationContext, command)
             .thenApply(rv -> {
-               if (trace) log.tracef("Return value for key=%s is %s", key, rv);
+               if (log.isTraceEnabled()) log.tracef("Return value for key=%s is %s", key, rv);
                //this might happen if the value was fetched from a cache loader
                if (rv instanceof MVCCEntry) {
                   MVCCEntry<?, ?> mvccEntry = (MVCCEntry<?, ?>) rv;

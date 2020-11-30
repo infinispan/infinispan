@@ -24,8 +24,6 @@ import org.infinispan.util.logging.Log;
  * @since 9.0
  */
 public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
-   protected final boolean trace = getLog().isTraceEnabled();
-
    @Inject protected RpcManager rpcManager;
    @Inject protected ComponentRegistry componentRegistry;
 
@@ -67,7 +65,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
       boolean shouldInvokeRemotely = ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() ||
          localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
 
-      if (trace) {
+      if (getLog().isTraceEnabled()) {
          getLog().tracef("Should invoke remotely? %b. hasModifications=%b, hasRemoteLocksAcquired=%b",
                shouldInvokeRemotely, ctx.hasModifications(), !localCtx.getRemoteLocksAcquired().isEmpty());
       }

@@ -53,7 +53,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
@@ -136,7 +135,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public boolean addPartialRollbackTransaction(GlobalTransaction globalTransaction, Collection<Address> affectedNodes, Collection<Object> lockedKeys) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Added partially rollback transaction %s", globalTransaction);
       }
       partialTransactions.put(globalTransaction, new RollbackTransactionInfo(globalTransaction, affectedNodes, lockedKeys));
@@ -146,7 +145,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public boolean addPartialCommit2PCTransaction(GlobalTransaction globalTransaction, Collection<Address> affectedNodes,
                                                  Collection<Object> lockedKeys, Map<Object, IncrementableEntryVersion> newVersions) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Added partially committed (2PC) transaction %s", globalTransaction);
       }
       partialTransactions.put(globalTransaction, new Commit2PCTransactionInfo(globalTransaction, affectedNodes,
@@ -157,7 +156,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public boolean addPartialCommit1PCTransaction(GlobalTransaction globalTransaction, Collection<Address> affectedNodes,
                                                  Collection<Object> lockedKeys, List<WriteCommand> modifications) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Added partially committed (1PC) transaction %s", globalTransaction);
       }
       partialTransactions.put(globalTransaction, new Commit1PCTransactionInfo(globalTransaction, affectedNodes,
@@ -170,7 +169,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       TransactionInfo transactionInfo = partialTransactions.get(globalTransaction);
       // If we are going to commit, we can't release the resources yet
       boolean partiallyCommitted = transactionInfo != null && !transactionInfo.isRolledBack();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Can release resources for transaction %s? %s. Transaction info=%s", globalTransaction,
                !partiallyCommitted, transactionInfo);
       }
@@ -186,7 +185,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    public boolean canRollbackTransactionAfterOriginatorLeave(GlobalTransaction globalTransaction) {
       boolean canRollback = availabilityMode == AvailabilityMode.AVAILABLE &&
             !getLastStableTopology().getActualMembers().contains(globalTransaction.getAddress());
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Can rollback transaction? %s", canRollback);
       }
       return canRollback;
@@ -196,7 +195,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    public void onTopologyUpdate(CacheTopology cacheTopology) {
       boolean isStable = isTopologyStable(cacheTopology);
       if (isStable) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("On stable topology update. Pending txs: %d", partialTransactions.size());
          }
          for (TransactionInfo transactionInfo : partialTransactions.values()) {
@@ -217,26 +216,26 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       remoteInvocation.whenComplete((responseMap, throwable) -> {
          final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
          if (throwable != null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef(throwable, "Exception for transaction %s. Retry later.", globalTransaction);
             }
             return;
          }
 
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Future done for transaction %s. Response are %s", globalTransaction, responseMap);
          }
 
          for (Response response : responseMap.values()) {
             if (response == UnsureResponse.INSTANCE || response == CacheNotFoundResponse.INSTANCE) {
-               if (trace) {
+               if (log.isTraceEnabled()) {
                   log.tracef("Another partition or topology changed for transaction %s. Retry later.",
                              globalTransaction);
                }
                return;
             }
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Performing cleanup for transaction %s", globalTransaction);
          }
          lockManager.unlock(transactionInfo.getLockedKeys(), globalTransaction);
@@ -252,28 +251,28 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    private boolean isTopologyStable(CacheTopology cacheTopology) {
       CacheTopology stableTopology = localTopologyManager.getStableCacheTopology(cacheName);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Check if topology %s is stable. Last stable topology is %s", cacheTopology, stableTopology);
       }
       return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers()) && cacheTopology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION;
    }
 
    protected void doCheck(Object key, boolean isWrite, long flagBitSet) {
-      if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
+      if (log.isTraceEnabled()) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       boolean operationAllowed = isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key);
       if (!operationAllowed) {
-         if (trace) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
+         if (log.isTraceEnabled()) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
          if (EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK)) {
             throw CONTAINER.degradedModeLockUnavailable(key);
          } else {
             throw CONTAINER.degradedModeKeyUnavailable(key);
          }
       } else {
-         if (trace) log.tracef("Key %s is available.", key);
+         if (log.isTraceEnabled()) log.tracef("Key %s is available.", key);
       }
    }
 

@@ -64,7 +64,6 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          = AtomicIntegerFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, "topologyId");
 
    protected static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
-   protected final boolean trace = log.isTraceEnabled();
 
    @Inject Configuration configuration;
    @Inject ComponentRegistry componentRegistry;
@@ -237,7 +236,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    @Override
    public synchronized void unregisterSegment(int segment) {
       SegmentState previous = segmentStates.getAndSet(segment, SegmentState.NOT_OWNED);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Unregistered segment %d (previous=%s)", segment, previous);
       }
       CompletableFuture<Void> blockedFuture = blockedFutures.get(segment);
@@ -267,14 +266,14 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       // It is possible that the segment is not in KEY_TRANSFER state, but can be in BLOCKED states as well
       // when the CONFIRM_REVOKED_SEGMENTS failed.
       SegmentState previous = segmentStates.getAndSet(segment, update);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Finished transfer for segment %d = %s -> %s", segment, previous, update);
       }
       CompletableFuture<Void> blockedFuture = blockedFutures.get(segment);
       if (blockedFuture != null) {
          blockedFuture.completeExceptionally(new CacheException("Segment state transition did not complete correctly."));
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          if (expectValues) {
             log.tracef("Node %s, segment %d has all keys in, expects value transfer", rpcManager.getAddress(), segment);
          } else {

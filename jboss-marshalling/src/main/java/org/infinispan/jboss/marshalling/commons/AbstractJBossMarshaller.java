@@ -43,7 +43,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    protected static final Log log = LogFactory.getLog(AbstractJBossMarshaller.class);
-   private final boolean trace = log.isTraceEnabled();
    protected static final JBossMarshallerFactory factory = new JBossMarshallerFactory();
    protected static final int DEF_INSTANCE_COUNT = 16;
    protected static final int DEF_CLASS_COUNT = 8;
@@ -99,7 +98,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    @Override
    final public void finishObjectOutput(final ObjectOutput oo) {
       try {
-         if (trace) log.trace("Stop marshaller");
+         if (log.isTraceEnabled()) log.trace("Stop marshaller");
 
          ((org.jboss.marshalling.Marshaller) oo).finish();
       } catch (IOException ignored) {
@@ -125,7 +124,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       PerThreadInstanceHolder instanceHolder = getPerThreadInstanceHolder();
       Unmarshaller unmarshaller = instanceHolder.getUnmarshaller();
 
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Start unmarshaller after retrieving marshaller from %s",
                isReentrant ? "factory" : "thread local");
 
@@ -141,7 +140,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    @Override
    final public void finishObjectInput(final ObjectInput oi) {
       try {
-         if (trace)
+         if (log.isTraceEnabled())
             log.trace("Stop unmarshaller");
 
          if (oi != null) ((Unmarshaller) oi).finish();
@@ -155,7 +154,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       boolean containsMarshallable = marshallableTypeHints.isKnownMarshallable(clazz);
       if (containsMarshallable) {
          boolean marshallable = marshallableTypeHints.isMarshallable(clazz);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Marshallable type '%s' known and is marshallable=%b",
                   clazz.getName(), marshallable);
 

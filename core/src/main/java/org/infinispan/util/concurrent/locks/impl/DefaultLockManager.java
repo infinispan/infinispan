@@ -57,7 +57,6 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultLockManager implements LockManager {
 
    private static final Log log = LogFactory.getLog(DefaultLockManager.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final AtomicReferenceFieldUpdater<CompositeLockPromise, LockState> UPDATER =
          newUpdater(CompositeLockPromise.class, LockState.class, "lockState");
 
@@ -74,7 +73,7 @@ public class DefaultLockManager implements LockManager {
       Objects.requireNonNull(lockOwner, "Lock owner must be non null");
       Objects.requireNonNull(unit, "Time unit must be non null");
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Lock key=%s for owner=%s. timeout=%s (%s)", toStr(key), lockOwner, time, unit);
       }
 
@@ -82,7 +81,7 @@ public class DefaultLockManager implements LockManager {
          // If the lock is already owned by this lock owner there is no reason to attempt the lock needlessly
          InfinispanLock lock = lockContainer.getLock(key);
          if (lock != null && lock.getLockOwner() == key) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Not locking key=%s as it is already held by the same lock owner", key);
             return KeyAwareLockPromise.NO_OP;
          }
@@ -99,7 +98,7 @@ public class DefaultLockManager implements LockManager {
       Objects.requireNonNull(unit, "Time unit must be non null");
 
       if (keys.isEmpty()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Lock all: no keys found for owner=%s", lockOwner);
          }
          return KeyAwareLockPromise.NO_OP;
@@ -115,7 +114,7 @@ public class DefaultLockManager implements LockManager {
          return lock(uniqueKeys.iterator().next(), lockOwner, time, unit);
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)", toStr(uniqueKeys), lockOwner, time,
                unit);
       }
@@ -144,7 +143,7 @@ public class DefaultLockManager implements LockManager {
 
    @Override
    public void unlock(Object key, Object lockOwner) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Release lock for key=%s. owner=%s", key, lockOwner);
       }
       lockContainer.release(key, lockOwner);
@@ -152,7 +151,7 @@ public class DefaultLockManager implements LockManager {
 
    @Override
    public void unlockAll(Collection<?> keys, Object lockOwner) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Release locks for keys=%s. owner=%s", toStr(keys), lockOwner);
       }
       if (keys.isEmpty()) {
@@ -162,7 +161,7 @@ public class DefaultLockManager implements LockManager {
          // If the key is the lock owner that means it was explicitly locked, which can only be unlocked via the single
          // argument unlock method. This is used by a cache that has the lock owner specifically overridden
          if (key == lockOwner) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Ignoring key %s as it matches lock owner", key);
          } else {
             lockContainer.release(key, lockOwner);

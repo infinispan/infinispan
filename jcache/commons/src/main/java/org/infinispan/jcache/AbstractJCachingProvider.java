@@ -21,7 +21,6 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractJCachingProvider implements CachingProvider {
 
    private static final Log log = LogFactory.getLog(AbstractJCachingProvider.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    /**
     * Keeps track of cache managers. Each cache manager has to be tracked
@@ -54,7 +53,7 @@ public abstract class AbstractJCachingProvider implements CachingProvider {
       synchronized (cacheManagers) {
          Map<URI, CacheManager> map = cacheManagers.get(globalClassLoader);
          if (map == null) {
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("No cache managers registered under '%s'", globalUri);
 
             map = new HashMap<URI, CacheManager>();
@@ -65,7 +64,7 @@ public abstract class AbstractJCachingProvider implements CachingProvider {
          if (cacheManager == null || cacheManager.isClosed()) {
             // Not found or stopped, create cache manager and add to collection
             cacheManager = createCacheManager(globalClassLoader, globalUri, globalProperties);
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Created '%s' cache manager", globalUri);
 
             map.put(globalUri, cacheManager);
@@ -102,7 +101,7 @@ public abstract class AbstractJCachingProvider implements CachingProvider {
             close(map);
 
          cacheManagers.clear();
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("All cache managers have been removed");
       }
    }
@@ -136,7 +135,7 @@ public abstract class AbstractJCachingProvider implements CachingProvider {
    private void close(Map<URI, CacheManager> map) {
       for (CacheManager cacheManager : map.values()) {
          cacheManager.close();
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Shutdown cache manager '%s'", cacheManager.getURI());
       }
    }

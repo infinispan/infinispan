@@ -40,7 +40,6 @@ import org.infinispan.util.logging.LogFactory;
 public class EntryFactoryImpl implements EntryFactory {
 
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject InternalDataContainer container;
    @Inject Configuration configuration;
@@ -121,7 +120,7 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.setRead();
          cacheEntry = mvccEntry;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Wrap %s for read. Entry=%s", toStr(key), cacheEntry);
       }
       ctx.putLookedUpEntry(key, cacheEntry);
@@ -136,7 +135,7 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.setRead();
       }
       ctx.putLookedUpEntry(key, mvccEntry);
-      if (trace)
+      if (log.isTraceEnabled())
          log.tracef("Added context entry %s", mvccEntry);
    }
 
@@ -151,7 +150,7 @@ public class EntryFactoryImpl implements EntryFactory {
          // Need to wrap it in a MVCCEntry.
          MVCCEntry mvccEntry = createWrappedEntry(key, contextEntry);
          ctx.putLookedUpEntry(key, mvccEntry);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else {
          // Not in the context yet.
@@ -188,7 +187,7 @@ public class EntryFactoryImpl implements EntryFactory {
       if (expired == Boolean.FALSE) {
          addWriteEntryToContext(ctx, ice, key, isRead);
       } else {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Entry retrieved for key %s was expired, returning null entry", key);
          }
          addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
@@ -205,7 +204,7 @@ public class EntryFactoryImpl implements EntryFactory {
          // Need to wrap it in a MVCCEntry.
          MVCCEntry mvccEntry = createWrappedEntry(key, contextEntry);
          ctx.putLookedUpEntry(key, mvccEntry);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else {
          // Not in the context yet.
@@ -221,7 +220,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
          mvccEntry.setRead();
          ctx.putLookedUpEntry(key, mvccEntry);
-         if (trace)
+         if (log.isTraceEnabled())
             log.tracef("Updated context entry null -> %s", mvccEntry);
       }
    }
@@ -238,7 +237,7 @@ public class EntryFactoryImpl implements EntryFactory {
          if (mvccEntry.skipLookup()) {
             // This can happen during getGroup() invocations, which request the whole group from remote nodes
             // even if some keys are already in the context.
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Ignored update for context entry %s", contextEntry);
             return;
          }
@@ -250,7 +249,7 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.setMetadata(externalEntry.getMetadata());
          mvccEntry.setInternalMetadata(externalEntry.getInternalMetadata());
          mvccEntry.updatePreviousValue();
-         if (trace) log.tracef("Updated context entry %s", contextEntry);
+         if (log.isTraceEnabled()) log.tracef("Updated context entry %s", contextEntry);
       } else if (contextEntry == null || contextEntry.isNull()) {
          if (isWrite || useRepeatableRead) {
             MVCCEntry<?, ?> mvccEntry = createWrappedEntry(key, externalEntry);
@@ -258,27 +257,27 @@ public class EntryFactoryImpl implements EntryFactory {
                mvccEntry.setRead();
             }
             ctx.putLookedUpEntry(key, mvccEntry);
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
          } else {
             // This is a read operation, store the external entry in the context directly.
             ctx.putLookedUpEntry(key, externalEntry);
-            if (trace)
+            if (log.isTraceEnabled())
                log.tracef("Updated context entry %s -> %s", contextEntry, externalEntry);
          }
       } else {
          if (useRepeatableRead) {
-            if (trace) log.tracef("Ignored update %s -> %s as we do repeatable reads", contextEntry, externalEntry);
+            if (log.isTraceEnabled()) log.tracef("Ignored update %s -> %s as we do repeatable reads", contextEntry, externalEntry);
          } else {
             ctx.putLookedUpEntry(key, externalEntry);
-            if (trace) log.tracef("Updated context entry %s -> %s", contextEntry, externalEntry);
+            if (log.isTraceEnabled()) log.tracef("Updated context entry %s -> %s", contextEntry, externalEntry);
          }
       }
    }
 
    private CacheEntry<?, ?> getFromContext(InvocationContext ctx, Object key) {
       final CacheEntry<?, ?> cacheEntry = ctx.lookupEntry(key);
-      if (trace) log.tracef("Exists in context? %s ", cacheEntry);
+      if (log.isTraceEnabled()) log.tracef("Exists in context? %s ", cacheEntry);
       return cacheEntry;
    }
 
@@ -289,7 +288,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private InternalCacheEntry getFromContainer(Object key, int segment) {
       InternalCacheEntry ice = container.peek(segment, key);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Retrieved from container %s", ice);
       }
       return ice;
@@ -305,7 +304,7 @@ public class EntryFactoryImpl implements EntryFactory {
          internalMetadata = cacheEntry.getInternalMetadata();
       }
 
-      if (trace) log.tracef("Creating new entry for key %s", toStr(key));
+      if (log.isTraceEnabled()) log.tracef("Creating new entry for key %s", toStr(key));
       MVCCEntry<?, ?> mvccEntry;
       if (useRepeatableRead) {
          if (useVersioning) {

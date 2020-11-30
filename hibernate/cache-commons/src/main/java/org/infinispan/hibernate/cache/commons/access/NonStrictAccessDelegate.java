@@ -34,7 +34,6 @@ import org.infinispan.configuration.cache.Configuration;
  */
 public class NonStrictAccessDelegate implements AccessDelegate {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( NonStrictAccessDelegate.class );
-	private final boolean trace = log.isTraceEnabled();
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	protected final InfinispanDataRegion region;
@@ -96,14 +95,14 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 				Object oldVersion = getVersion(prev);
 				if (oldVersion != null) {
 					if (versionComparator.compare(version, oldVersion) <= 0) {
-						if (trace) {
+						if (log.isTraceEnabled()) {
 							log.tracef("putFromLoad not executed since version(%s) <= oldVersion(%s)", version, oldVersion);
 						}
 						return false;
 					}
 				}
 				else if (prev instanceof VersionedEntry && txTimestamp <= ((VersionedEntry) prev).getTimestamp()) {
-					if (trace) {
+					if (log.isTraceEnabled()) {
 						log.tracef("putFromLoad not executed since tx started at %d and entry was invalidated at %d",
 								txTimestamp, ((VersionedEntry) prev).getTimestamp());
 					}

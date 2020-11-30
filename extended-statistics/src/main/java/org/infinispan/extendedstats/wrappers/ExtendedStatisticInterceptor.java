@@ -65,7 +65,6 @@ import org.infinispan.util.logging.LogFactory;
       "relevant to transactions.")
 public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    @Inject BasicComponentRegistry componentRegistry;
    @Inject TimeService timeService;
@@ -107,7 +106,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Visit Get Key Value command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
       }
@@ -132,7 +131,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Visit Get All Command %s. Is it in transaction scope? %s. Is it local? %s", command,
                ctx.isInTxScope(), ctx.isOriginLocal());
       }
@@ -166,7 +165,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Visit Prepare command %s. Is it local?. Transaction is %s", command,
                     ctx.isOriginLocal(), globalTransaction.globalId());
       }
@@ -715,7 +714,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    private Object visitSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command, boolean commit,
                                           ExtendedStatistic duration, ExtendedStatistic counter) throws Throwable {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Visit 2nd phase command %s. Is it local? %s. Transaction is %s", command,
                     ctx.isOriginLocal(), globalTransaction.globalId());
       }
@@ -729,7 +728,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    private Object visitWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Visit write command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
       }

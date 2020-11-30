@@ -12,7 +12,6 @@ import org.infinispan.util.logging.LogFactory;
 final class EmbeddedQueryBuilder extends BaseQueryBuilder {
 
    private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final QueryEngine<?> queryEngine;
 
@@ -25,7 +24,7 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
    public <T> Query<T> build() {
       QueryStringCreator generator = new QueryStringCreator();
       String queryString = accept(generator);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Query string : %s", queryString);
       }
       return new DelegatingQuery<>(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);

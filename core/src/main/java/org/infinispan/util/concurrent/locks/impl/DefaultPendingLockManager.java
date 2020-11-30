@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultPendingLockManager implements PendingLockManager {
 
    private static final Log log = LogFactory.getLog(DefaultPendingLockManager.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final int NO_PENDING_CHECK = -2;
    @Inject TransactionTable transactionTable;
    @Inject TimeService timeService;
@@ -65,7 +64,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       final GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId == NO_PENDING_CHECK) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skipping pending transactions check for transaction %s", globalTransaction);
          }
          return PendingLockPromise.NO_OP;
@@ -80,7 +79,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       final GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId == NO_PENDING_CHECK) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Skipping pending transactions check for transaction %s", globalTransaction);
          }
          return PendingLockPromise.NO_OP;
@@ -94,7 +93,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
                                               long time, TimeUnit unit) throws InterruptedException {
       final GlobalTransaction gtx = ctx.getGlobalTransaction();
       PendingLockPromise pendingLockPromise = checkPendingTransactionsForKey(ctx, key, time, unit);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
       }
       return awaitOn(pendingLockPromise, gtx, time, unit);
@@ -105,7 +104,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
                                                   long time, TimeUnit unit) throws InterruptedException {
       final GlobalTransaction gtx = ctx.getGlobalTransaction();
       PendingLockPromise pendingLockPromise = checkPendingTransactionsForKeys(ctx, keys, time, unit);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
       }
       return awaitOn(pendingLockPromise, gtx, time, unit);
@@ -114,13 +113,13 @@ public class DefaultPendingLockManager implements PendingLockManager {
    private PendingLockPromise createPromise(Collection<PendingTransaction> transactions,
                                             GlobalTransaction globalTransaction, long time, TimeUnit unit) {
       if (transactions.isEmpty()) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("No transactions pending for transaction %s", globalTransaction);
          }
          return PendingLockPromise.NO_OP;
       }
 
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Transactions pending for transaction %s are %s", globalTransaction, transactions);
       }
       PendingLockPromiseImpl pendingLockPromise = new PendingLockPromiseImpl(globalTransaction, time, unit, transactions);
@@ -322,10 +321,10 @@ public class DefaultPendingLockManager implements PendingLockManager {
             timeoutTask.cancel(false);
          }
          if (timedOutTransaction == null) {
-            if (trace) log.tracef("All pending transactions have finished for transaction %s", globalTransaction);
+            if (log.isTraceEnabled()) log.tracef("All pending transactions have finished for transaction %s", globalTransaction);
             notifier.complete(null);
          } else {
-            if (trace) log.tracef("Timed out waiting for pending transaction %s for transaction %s", timedOutTransaction, globalTransaction);
+            if (log.isTraceEnabled()) log.tracef("Timed out waiting for pending transaction %s for transaction %s", timedOutTransaction, globalTransaction);
             notifier.completeExceptionally(timeout(timedOutTransaction, globalTransaction, timeoutNanos, TimeUnit.NANOSECONDS));
          }
       }

@@ -58,7 +58,6 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    public static final int SLOW_STORE_WAIT = 100;
 
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
-   private final boolean trace = log.isTraceEnabled();
    private static final ConcurrentMap<String, AtomicReferenceArray<Map<Object, byte[]>>> stores = new ConcurrentHashMap<>();
    private static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
 
@@ -202,7 +201,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       }
       if (entry!= null) {
          Map<Object, byte[]> map = mapForSegment(segment);
-         if (trace) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
+         if (log.isTraceEnabled()) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
          map.put(entry.getKey(), serialize(entry));
       }
 
@@ -213,7 +212,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    public CompletionStage<Void> clear() {
       assertRunning();
       record("clear");
-      if (trace) log.trace("Clear store");
+      if (log.isTraceEnabled()) log.trace("Clear store");
       for (int i = 0; i < store.length(); ++i) {
          Map<Object, byte[]> map = store.get(i);
          if (map != null) {
@@ -229,11 +228,11 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       record("delete");
       Map<Object, byte[]> map = mapForSegment(segment);
       if (map.remove(key) != null) {
-         if (trace) log.tracef("Removed %s from dummy store for segment %s", key, segment);
+         if (log.isTraceEnabled()) log.tracef("Removed %s from dummy store for segment %s", key, segment);
          return CompletableFutures.completedTrue();
       }
 
-      if (trace) log.tracef("Key %s not present in store, so don't remove", key);
+      if (log.isTraceEnabled()) log.tracef("Key %s not present in store, so don't remove", key);
       return CompletableFutures.completedFalse();
    }
 
@@ -512,7 +511,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       assertRunning();
       record("addSegments");
       if (configuration.segmented() && storeName == null) {
-         if (trace) log.tracef("Adding segments %s", segments);
+         if (log.isTraceEnabled()) log.tracef("Adding segments %s", segments);
          segments.forEach((int segment) -> {
             if (store.get(segment) == null) {
                store.set(segment, new ConcurrentHashMap<>());
@@ -527,7 +526,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       assertRunning();
       record("removeSegments");
       if (configuration.segmented() && storeName == null) {
-         if (trace) log.tracef("Removing segments %s", segments);
+         if (log.isTraceEnabled()) log.tracef("Removing segments %s", segments);
          segments.forEach((int segment) -> store.getAndSet(segment, null));
       }
       return CompletableFutures.completedNull();

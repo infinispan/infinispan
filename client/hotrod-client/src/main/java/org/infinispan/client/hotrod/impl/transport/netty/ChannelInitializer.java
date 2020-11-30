@@ -41,7 +41,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
-   private final boolean trace = log.isTraceEnabled();
 
    private final Bootstrap bootstrap;
    private final SocketAddress unresolvedAddress;
@@ -68,7 +67,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
    @Override
    protected void initChannel(Channel channel) throws Exception {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created channel %s", channel);
       }
       if (configuration.security().ssl().enabled()) {
@@ -171,7 +170,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    }
 
    private SaslClientFactory getSaslClientFactory(AuthenticationConfiguration configuration) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("Attempting to load SaslClientFactory implementation with mech=%s, props=%s",
                configuration.saslMechanism(), configuration.saslProperties());
       }
@@ -181,7 +180,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
             String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());
             for (String supportedMech : saslFactoryMechs) {
                if (supportedMech.equals(configuration.saslMechanism())) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Loaded SaslClientFactory: %s", saslFactory.getClass().getName());
                   }
                   return saslFactory;

@@ -49,7 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class BiasManagerImpl implements BiasManager {
    private static Log log = LogFactory.getLog(BiasManager.class);
-   private final boolean trace = log.isTraceEnabled();
    // TODO: size bounding?
    // TODO: we could keep last access timestamp for local bias and refresh the lease
    // if this gets close to acquisition timestamp so that the primary owner does not withdraw it
@@ -103,7 +102,7 @@ public class BiasManagerImpl implements BiasManager {
             });
             if (bias3 == null)
                return;
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Revoking old bias for key %s from %s", key, bias3.biased);
             }
             // TODO: maybe some batching here; on the other side we don't want to block writes for too long
@@ -113,7 +112,7 @@ public class BiasManagerImpl implements BiasManager {
                       .whenComplete((nil, throwable) -> {
                CompletableFuture<?> future = bias3.future;
                if (throwable != null) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef(throwable, "Bias revocation for %s failed", key);
                   }
                   remoteBias.compute(key, (k, bias4) -> {
@@ -124,7 +123,7 @@ public class BiasManagerImpl implements BiasManager {
                   });
                } else {
                   remoteBias.remove(key);
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Bias for %s has been revoked", key);
                   }
                }
@@ -171,11 +170,11 @@ public class BiasManagerImpl implements BiasManager {
    public void addLocalBias(Object key, int topologyId) {
       int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
       if (topologyId >= currentTopologyId) {
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("%s: adding local bias for %s in topology %d", rpcManager.getAddress(), key, topologyId);
          }
          localBias.put(key, new LocalBias(timeService.wallClockTime()));
-      } else if (trace) {
+      } else if (log.isTraceEnabled()) {
          log.tracef("%s: not adding local bias for %s in topology %d as current topology is %d",
                rpcManager.getAddress(), key, topologyId, currentTopologyId);
       }
@@ -183,7 +182,7 @@ public class BiasManagerImpl implements BiasManager {
 
    @Override
    public void revokeLocalBias(Object key) {
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("%s: revoking local bias for %s", rpcManager.getAddress(), key);
       }
       localBias.remove(key);
@@ -197,7 +196,7 @@ public class BiasManagerImpl implements BiasManager {
    @Override
    public boolean hasLocalBias(Object key) {
       LocalBias localBias = this.localBias.get(key);
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("%s: local bias for %s? %s", rpcManager.getAddress(), key, localBias);
       }
       if (localBias != null && renewLeasePeriod > 0) {
@@ -217,7 +216,7 @@ public class BiasManagerImpl implements BiasManager {
       ByRef<Revocation> ref = new ByRef<>(null);
       remoteBias.compute(key, (k, bias) -> {
          if (bias == null) {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("No bias for %s no need to revoke.", key);
             }
             return new RemoteBias(newBiased, timeService.wallClockTime());
@@ -225,7 +224,7 @@ public class BiasManagerImpl implements BiasManager {
             List<Address> revoking;
             if (bias.biased.contains(newBiased)) {
                if (bias.biased.size() == 1) {
-                  if (trace) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("Not revoking bias for %s as the new biased is the same as previous: %s", k, newBiased);
                   }
                   bias.acquiredTimestamp = timeService.wallClockTime();
@@ -237,7 +236,7 @@ public class BiasManagerImpl implements BiasManager {
             } else {
                revoking = bias.biased;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Revoking remote bias for %s, %s -> %s", key, bias.biased, newBiased);
             }
             bias.revoking = revoking;
@@ -246,7 +245,7 @@ public class BiasManagerImpl implements BiasManager {
             ref.set(new RevocationImpl(k, revoking, bias.future));
             return bias;
          } else {
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Revocation already in progress for %s, %s -> %s", key, bias.revoking, bias.newBiased);
             }
             ref.set(new RevocationImpl(k, null, bias.future));
@@ -321,7 +320,7 @@ public class BiasManagerImpl implements BiasManager {
          bias.newBiased = null;
          bias.acquiredTimestamp = timeService.wallClockTime();
          bias.future = null;
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Bias for %s has been transferred to %s", key, bias.biased);
          }
          future.complete(null);
@@ -336,7 +335,7 @@ public class BiasManagerImpl implements BiasManager {
                log.tracef("Missing bias information for %s", key);
                return null;
             }
-            if (trace) {
+            if (log.isTraceEnabled()) {
                log.tracef("Bias transfer for %s to %s failed, keeping %s", key, bias.newBiased, bias.biased);
             }
             bias.revoking = null;
