@@ -10,8 +10,8 @@
                     change_key_on_coord_leave = "false" <7>
                     change_key_on_leave = "false" <8>
                     use_external_key_exchange = "true" <9>
-                    stack.combine="INSERT_BEFORE"
-                    stack.position="pbcast.NAKACK2"/> <10>
+                    stack.combine="INSERT_AFTER"
+                    stack.position="SSL_KEY_EXCHANGE"/> <10>
          </stack>
     </jgroups>
     <cache-container name="default" statistics="true">
