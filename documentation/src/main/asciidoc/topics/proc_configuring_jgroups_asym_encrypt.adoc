@@ -25,7 +25,7 @@ include::config_examples/jgroups_asym_encrypt.xml[]
 <7> Configures {brandname} to generate and distribute a new secret key when the coordinator node changes.
 <8> Configures {brandname} to generate and distribute a new secret key when nodes leave.
 <9> Configures {brandname} nodes to use the `SSL_KEY_EXCHANGE` protocol for certificate authentication.
-<10> Uses the `stack.combine` and `stack.position` attributes to insert `ASYM_ENCRYPT` into the default TCP stack before the `pbcast.NAKACK2` protocol.
+<10> Uses the `stack.combine` and `stack.position` attributes to insert `ASYM_ENCRYPT` into the default TCP stack after the `SSL_KEY_EXCHANGE` protocol.
 <11> Configures the {brandname} cluster to use the secure JGroups stack.
 
 .Verification
