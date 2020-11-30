@@ -8,9 +8,10 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.remote.impl.mapping.typebridge.ProtobufMessageBridge;
 
 /**
- * This is used to wrap binary values encoded with Protocol Buffers. {@link ProtobufValueWrapperFieldBridge} is used as
+ * This is used to wrap binary values encoded with Protocol Buffers. {@link ProtobufMessageBridge} is used as
  * a class bridge to allow indexing of the binary payload.
  *
  * @author anistor@redhat.com
