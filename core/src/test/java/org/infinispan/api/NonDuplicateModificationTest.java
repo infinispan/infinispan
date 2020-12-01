@@ -95,7 +95,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
 
       future.get();
 
-      controlledRpcManager.stopBlocking();
+      controlledRpcManager.revertRpcManager();
 
       assertKeyValue(key, "v3");
    }
