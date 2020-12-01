@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,7 +19,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -37,6 +35,7 @@ import java.util.function.Function;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -47,7 +46,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -74,8 +72,6 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private final Set<Class<? extends ReplicableCommand>> excludedCommands =
       Collections.synchronizedSet(new HashSet<>());
    private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
-   // Holds all the requests for debuggind
-   private Deque<ControlledRequest<?>> allRequests = new ConcurrentLinkedDeque<>();
    private final ScheduledExecutorService executor;
    private RuntimeException globalError;
 
@@ -117,7 +113,6 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       stopped = true;
       executor.shutdownNow();
       throwGlobalError();
-      allRequests.clear();
       if (!waiters.isEmpty()) {
          fail("Stopped intercepting RPCs, but there are " + waiters.size() + " waiters in the queue");
       }
@@ -201,7 +196,6 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       Address excluded = realOne.getAddress();
       ControlledRequest<T> controlledRequest =
          new ControlledRequest<>(command, targets, collector, invoker, executor, excluded);
-      allRequests.add(controlledRequest);
       try {
          CompletableFuture<ControlledRequest<?>> waiter = waiters.poll(TIMEOUT_SECONDS, SECONDS);
          if (waiter == null) {
