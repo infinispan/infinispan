@@ -84,6 +84,9 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache) {
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      if (rpcManager instanceof ControlledRpcManager) {
+         throw new IllegalStateException("One ControlledRpcManager per cache should be enough");
+      }
       ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager, cache);
       log.tracef("Installing ControlledRpcManager on %s", controlledRpcManager.getAddress());
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
