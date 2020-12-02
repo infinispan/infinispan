@@ -5,7 +5,9 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -40,6 +42,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -50,6 +54,9 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Intercepts updates to the protobuf schema file caches and updates the SerializationContext accordingly.
@@ -87,33 +94,31 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       private final InvocationContext ctx;
       private final long flagsBitSet;
 
-      private final Set<String> errorFiles = new TreeSet<>();
+      private final Map<String, DescriptorParserException> errorFiles = new TreeMap<>();
+      private final Set<String> successFiles = new TreeSet<>();
 
       private ProgressCallback(InvocationContext ctx, long flagsBitSet) {
          this.ctx = ctx;
          this.flagsBitSet = flagsBitSet;
       }
 
-      Set<String> getErrorFiles() {
+      Map<String, DescriptorParserException> getErrorFiles() {
          return errorFiles;
+      }
+
+      public Set<String> getSuccessFiles() {
+         return successFiles;
       }
 
       @Override
       public void handleError(String fileName, DescriptorParserException exception) {
          // handle first error per file, ignore the rest if any
-         if (errorFiles.add(fileName)) {
-            Object key = fileName + ERRORS_KEY_SUFFIX;
-            VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(key, exception.getMessage(),
-                  keyPartitioner.getSegment(key), DEFAULT_METADATA, flagsBitSet);
-            invoker.running().invoke(ctx, cmd);
-         }
+         errorFiles.putIfAbsent(fileName, exception);
       }
 
       @Override
       public void handleSuccess(String fileName) {
-         Object key = fileName + ERRORS_KEY_SUFFIX;
-         VisitableCommand cmd = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flagsBitSet);
-         invoker.running().invoke(ctx, cmd);
+         successFiles.add(fileName);
       }
    }
 
@@ -243,6 +248,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          return invokeNext(ctx, command);
       }
 
+      CompletionStage<Object> stage;
       if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
          if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
             throw log.keyMustBeStringEndingWithProto(key);
@@ -250,13 +256,16 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
          // lock .errors key
          LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-         invoker.running().invoke(ctx, cmd);
+         stage = invoker.running().invokeAsync(ctx, cmd);
+      } else {
+         stage = CompletableFutures.completedNull();
       }
 
-      return invokeNextThenAccept(ctx, command, this::handlePutKeyValueResult);
+      return makeStage(asyncInvokeNext(ctx, command, stage))
+            .thenApply(ctx, command, this::handlePutKeyValueResult);
    }
 
-   private void handlePutKeyValueResult(InvocationContext rCtx, PutKeyValueCommand putKeyValueCommand, Object rv) {
+   private InvocationStage handlePutKeyValueResult(InvocationContext rCtx, PutKeyValueCommand putKeyValueCommand, Object rv) {
       if (putKeyValueCommand.isSuccessful()) {
          // StateConsumerImpl uses PutKeyValueCommands with InternalCacheEntry
          // values in order to preserve timestamps, so read the value from the context
@@ -276,9 +285,32 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
 
          if (progressCallback != null) {
-            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
+            CompletionStage<Void> schemaUpdate = updateSchema(rCtx, progressCallback);
+            CompletionStage<Object> errorUpdate = updateGlobalErrors(rCtx, progressCallback.getErrorFiles().keySet(), flagsBitSet);
+
+            return asyncValue(CompletionStages.allOf(schemaUpdate, errorUpdate))
+                  .thenApplyMakeStage(rCtx, putKeyValueCommand, (rCtx2, rCommand2, rv2) -> rv);
          }
       }
+      return SyncInvocationStage.makeStage(rv);
+   }
+
+   CompletionStage<Void> updateSchema(InvocationContext ctx, ProgressCallback progressCallback) {
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      for (Map.Entry<String, DescriptorParserException> errorEntry : progressCallback.getErrorFiles().entrySet()) {
+         String errorKeyName = errorEntry.getKey() + ERRORS_KEY_SUFFIX;
+         VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(errorKeyName, errorEntry.getValue().getMessage(),
+               keyPartitioner.getSegment(errorKeyName), DEFAULT_METADATA, progressCallback.flagsBitSet);
+         aggregateCompletionStage.dependsOn(invoker.running().invokeAsync(ctx, cmd));
+      }
+
+      for (String successKeyName : progressCallback.getSuccessFiles()) {
+         Object key = successKeyName + ERRORS_KEY_SUFFIX;
+         VisitableCommand cmd = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key),
+               progressCallback.flagsBitSet);
+         aggregateCompletionStage.dependsOn(invoker.running().invokeAsync(ctx, cmd));
+      }
+      return aggregateCompletionStage.freeze();
    }
 
    /**
@@ -318,9 +350,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       // lock .errors key
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      invoker.running().invoke(ctx, cmd);
+      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, cmd);
 
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          long flagsBitSet = copyFlags(rCommand);
          ProgressCallback progressCallback = null;
          if (rCtx.isOriginLocal()) {
@@ -337,66 +369,81 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
 
          if (progressCallback != null) {
-            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
+            CompletionStage<Void> schemaUpdate = updateSchema(rCtx, progressCallback);
+            CompletionStage<Object> errorUpdate = updateGlobalErrors(rCtx, progressCallback.getErrorFiles().keySet(), flagsBitSet);
+
+            return asyncValue(CompletionStages.allOf(schemaUpdate, errorUpdate));
          }
+         return InvocationStage.completedNullStage();
       });
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
-      if (ctx.isOriginLocal()) {
-         if (!(command.getKey() instanceof String)) {
-            throw log.keyMustBeString(command.getKey().getClass());
+      if (!ctx.isOriginLocal()) {
+         return invokeNext(ctx, command);
+      }
+      if (!(command.getKey() instanceof String)) {
+         throw log.keyMustBeString(command.getKey().getClass());
+      }
+      String key = (String) command.getKey();
+      if (!shouldIntercept(key)) {
+         return invokeNext(ctx, command);
+      }
+      // lock .errors key
+      long flagsBitSet = copyFlags(command);
+      LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
+      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, lockCommand);
+
+      stage = stage.thenCompose((ignore -> {
+         Object keyWithSuffix = key + ERRORS_KEY_SUFFIX;
+         WriteCommand writeCommand = commandsFactory.buildRemoveCommand(keyWithSuffix, null,
+               keyPartitioner.getSegment(keyWithSuffix), flagsBitSet);
+         return invoker.running().invokeAsync(ctx, writeCommand);
+      }));
+
+      stage = stage.thenCompose(ignore -> {
+         if (serializationContext.getFileDescriptors().containsKey(key)) {
+            serializationContext.unregisterProtoFile(key);
          }
-         String key = (String) command.getKey();
-         if (shouldIntercept(key)) {
-            // lock .errors key
-            long flagsBitSet = copyFlags(command);
-            LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
-            invoker.running().invoke(ctx, lockCommand);
 
-            Object keyWithSuffix = key + ERRORS_KEY_SUFFIX;
-            WriteCommand writeCommand = commandsFactory.buildRemoveCommand(keyWithSuffix, null,
-                  keyPartitioner.getSegment(keyWithSuffix), flagsBitSet);
-            invoker.running().invoke(ctx, writeCommand);
-
-            if (serializationContext.getFileDescriptors().containsKey(key)) {
-               serializationContext.unregisterProtoFile(key);
-            }
-
-            // put error key for all unresolved files and remove error key for all resolved files
-            StringBuilder sb = new StringBuilder();
-            for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
-               String errorFileName = fd.getName() + ERRORS_KEY_SUFFIX;
-               if (fd.isResolved()) {
-                  writeCommand = commandsFactory.buildRemoveCommand(errorFileName, null,
-                        keyPartitioner.getSegment(errorFileName), flagsBitSet);
-                  invoker.running().invoke(ctx, writeCommand);
-               } else {
-                  if (sb.length() > 0) {
-                     sb.append('\n');
-                  }
-                  sb.append(fd.getName());
-                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorFileName,
-                        "One of the imported files is missing or has errors", keyPartitioner.getSegment(errorFileName),
-                        DEFAULT_METADATA, flagsBitSet);
-                  put.setPutIfAbsent(true);
-                  invoker.running().invoke(ctx, put);
+         StringBuilder sb = new StringBuilder();
+         AggregateCompletionStage<StringBuilder> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(sb);
+         // put error key for all unresolved files and remove error key for all resolved files
+         for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
+            String errorFileName = fd.getName() + ERRORS_KEY_SUFFIX;
+            if (fd.isResolved()) {
+               RemoveCommand writeCommand = commandsFactory.buildRemoveCommand(errorFileName, null,
+                     keyPartitioner.getSegment(errorFileName), flagsBitSet);
+               aggregateCompletionStage.dependsOn(invoker.running().invokeAsync(ctx, writeCommand));
+            } else {
+               if (sb.length() > 0) {
+                  sb.append('\n');
                }
+               sb.append(fd.getName());
+               PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorFileName,
+                     "One of the imported files is missing or has errors", keyPartitioner.getSegment(errorFileName),
+                     DEFAULT_METADATA, flagsBitSet);
+               put.setPutIfAbsent(true);
+               aggregateCompletionStage.dependsOn(invoker.running().invokeAsync(ctx, put));
             }
+         }
 
-            if (sb.length() > 0) {
-               writeCommand = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
+         CompletionStage<StringBuilder> updatedStage = aggregateCompletionStage.freeze();
+         return updatedStage.thenCompose(innerStringBuilder -> {
+            WriteCommand writeCommand;
+            if (innerStringBuilder.length() > 0) {
+               writeCommand = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, innerStringBuilder.toString(),
                      keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
             } else {
                writeCommand = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null,
                      keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), flagsBitSet);
             }
-            invoker.running().invoke(ctx, writeCommand);
-         }
-      }
+            return invoker.running().invokeAsync(ctx, writeCommand);
+         });
+      });
 
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
    @Override
@@ -422,9 +469,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       // lock .errors key
       LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      invoker.running().invoke(ctx, cmd);
+      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, cmd);
 
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCommand.isSuccessful()) {
             long flagsBitSet = copyFlags(rCommand);
             ProgressCallback progressCallback = null;
@@ -436,9 +483,13 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
 
             if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
+               CompletionStage<Void> schemaUpdate = updateSchema(rCtx, progressCallback);
+               CompletionStage<Object> errorUpdate = updateGlobalErrors(rCtx, progressCallback.getErrorFiles().keySet(), flagsBitSet);
+
+               return asyncValue(CompletionStages.allOf(schemaUpdate, errorUpdate));
             }
          }
+         return InvocationStage.completedNullStage();
       });
    }
 
@@ -455,7 +506,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return !((String) key).endsWith(ERRORS_KEY_SUFFIX);
    }
 
-   private void updateGlobalErrors(InvocationContext ctx, Set<String> errorFiles, long flagsBitSet) {
+   private CompletionStage<Object> updateGlobalErrors(InvocationContext ctx, Set<String> errorFiles, long flagsBitSet) {
       // remove or update .errors accordingly
       VisitableCommand cmd;
       if (errorFiles.isEmpty()) {
@@ -472,7 +523,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
                keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
       }
-      invoker.running().invoke(ctx, cmd);
+      return invoker.running().invokeAsync(ctx, cmd);
    }
 
    // --- unsupported operations: compute, computeIfAbsent, eval or any other functional map commands  ---
