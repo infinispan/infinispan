@@ -461,7 +461,7 @@ public class Server implements ServerManagement, AutoCloseable {
       cacheManagers.values().forEach(cm -> {
          SecurityActions.checkPermission(cm.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
          cm.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cm, name));
-         sendExitStatusToServers(cm.executor(), ExitStatus.CLUSTER_SHUTDOWN);
+         sendExitStatusToServers(SecurityActions.getClusterExecutor(cm), ExitStatus.CLUSTER_SHUTDOWN);
       });
    }
 

@@ -12,6 +12,7 @@ import javax.naming.spi.NamingManager;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -116,5 +117,9 @@ final class SecurityActions {
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
       AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
       authzHelper.checkPermission(cacheManager.getSubject(), permission);
+   }
+
+   static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(() -> cacheManager.executor());
    }
 }
