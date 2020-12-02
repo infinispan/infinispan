@@ -187,7 +187,9 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
         try {
             handler.close();
-            expiredDb.close();
+            if (expiredDb != null) {
+                expiredDb.close();
+            }
         } finally {
             stopped = true;
             semaphore.release(Integer.MAX_VALUE);
@@ -869,9 +871,13 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
         @Override
         void close() {
-            defaultColumnFamilyHandle.close();
+            if (defaultColumnFamilyHandle != null) {
+                defaultColumnFamilyHandle.close();
+            }
 
-            db.close();
+            if (db != null) {
+                db.close();
+            }
         }
 
         protected void reinitAllDatabases() throws IOException, RocksDBException {
