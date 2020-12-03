@@ -1,15 +1,20 @@
 package org.infinispan.lock;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "clusteredLock.ClusteredLockWithZeroCapacityNodesTest")
 public class ClusteredLockWithZeroCapacityNodesTest extends ClusteredLockTest {
 
-   public ClusteredLockWithZeroCapacityNodesTest() {
-      numOwner = 1;
-      cacheMode = CacheMode.DIST_SYNC;
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // REPL
+            new ClusteredLockWithZeroCapacityNodesTest().numOwner(-1),
+            // DIST
+            new ClusteredLockWithZeroCapacityNodesTest().numOwner(1),
+            new ClusteredLockWithZeroCapacityNodesTest().numOwner(9),
+            };
    }
 
    protected int clusterSize() {

@@ -1,12 +1,11 @@
 package org.infinispan.lock;
 
-import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.commons.test.Exceptions.assertException;
+import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -14,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockConfiguration;
 import org.infinispan.lock.api.ClusteredLockManager;
@@ -31,7 +29,6 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
 
    public ClusteredLockTest() {
       super();
-      cacheMode = CacheMode.REPL_SYNC;
    }
 
    @BeforeMethod(alwaysRun = true)
@@ -43,7 +40,11 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
    @AfterMethod(alwaysRun = true)
    protected void destroyLock() {
       ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
-      await(clusteredLockManager.remove(LOCK_NAME));
+      if (clusteredLockManager.isDefined(LOCK_NAME)) {
+         // The test method must either unlock or remove the lock itself
+         assertFalse(await(clusteredLockManager.get(LOCK_NAME).isLocked()));
+         await(clusteredLockManager.remove(LOCK_NAME));
+      }
    }
 
    @Test
@@ -103,11 +104,14 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
 
       // lock1 from cm1 acquires the lock
       await(lock1.lock());
-
-      // lock1 from cm1 holds the lock
-      assertFalse(await(lock0.isLockedByMe()));
-      assertTrue(await(lock1.isLockedByMe()));
-      assertFalse(await(lock2.isLockedByMe()));
+      try {
+         // lock1 from cm1 holds the lock
+         assertFalse(await(lock0.isLockedByMe()));
+         assertTrue(await(lock1.isLockedByMe()));
+         assertFalse(await(lock2.isLockedByMe()));
+      } finally {
+         await(lock1.unlock());
+      }
    }
 
    @Test
@@ -223,7 +227,13 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
             .filter(Boolean::booleanValue)
             .count();
 
-      assertEquals(1, successTryLocks);
+      try {
+         assertEquals(1, successTryLocks);
+      } finally {
+         lock0.unlock();
+         lock1.unlock();
+         lock2.unlock();
+      }
    }
 
    private Future<Boolean> callTryLock(ClusteredLock lock) {
@@ -234,8 +244,7 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
       try {
          return result.get();
       } catch (Exception e) {
-         fail("tryLock call should work and return either TRUE ou FALSE");
+         throw new AssertionError(e);
       }
-      return null;
    }
 }

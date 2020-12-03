@@ -378,6 +378,13 @@ public class TestingUtil {
    public static void waitForNoRebalance(Cache... caches) {
       final int REBALANCE_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REBALANCE_TIMEOUT_SECONDS);
+      int zeroCapacityCaches = 0;
+      for (Cache<?, ?> c : caches) {
+         if (c.getCacheConfiguration().clustering().hash().capacityFactor() == 0f ||
+             c.getCacheManager().getCacheManagerConfiguration().isZeroCapacityNode()) {
+            zeroCapacityCaches++;
+         }
+      }
       for (Cache<?, ?> c : caches) {
          c = unwrapSecureCache(c);
          int numOwners = c.getCacheConfiguration().clustering().hash().numOwners();
@@ -398,7 +405,7 @@ public class TestingUtil {
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
                currentChIsBalanced = true;
 
-               int actualNumOwners = Math.min(numOwners, currentCH.getMembers().size());
+               int actualNumOwners = Math.min(numOwners, currentCH.getMembers().size() - zeroCapacityCaches);
                for (int i = 0; i < currentCH.getNumSegments(); i++) {
                   if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
                      currentChIsBalanced = false;
