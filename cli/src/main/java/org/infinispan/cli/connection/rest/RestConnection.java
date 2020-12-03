@@ -273,7 +273,7 @@ public class RestConnection implements Connection, Closeable {
                      });
 
                      sb.append("Creating backup '").append(backupName).append("'");
-                     String directory = command.arg(Backup.Create.DIR);
+                     String directory = command.option(Backup.Create.DIR);
                      response = manager.createBackup(backupName, directory, Backup.createResourceMap(command));
                      break;
                   case Backup.Delete.CMD:

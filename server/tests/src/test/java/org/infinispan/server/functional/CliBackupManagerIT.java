@@ -7,6 +7,7 @@ import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHE
 import static org.infinispan.server.core.BackupManager.Resources.Type.SCRIPTS;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -75,6 +76,23 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
    }
    private String zipResourceDir(BackupManager.Resources.Type type) {
       return "containers/default/" + type.toString();
+   }
+
+   @Test
+   public void testBackupToCustomDir() throws Exception {
+      startSourceCluster();
+      String backupName = "server-backup";
+      String fileName = backupName + ".zip";
+      File backupDir = new File(WORKING_DIR, "custom-dir");
+      backupDir.mkdir();
+
+      try (AeshTestConnection t = cli(source)) {
+         t.clear();
+         t.readln(String.format("backup create -d %s -n %s", backupDir.getPath(), backupName));
+         // Ensure that the backup has finished before stopping the source cluster
+         t.readln("backup get --no-content " + backupName);
+      }
+      assertTrue(new File(backupDir, backupName + "/" + fileName).exists());
    }
 
    @Test
