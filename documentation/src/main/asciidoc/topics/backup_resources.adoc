@@ -8,7 +8,7 @@
 
 |`cache-configs`
 |OPTIONAL
-|Specifies either an array of cache configurations to back up or `*` for all cache configurations.
+|Specifies either an array of cache templates to back up or `*` for all templates.
 
 |`counters`
 |OPTIONAL
@@ -18,8 +18,8 @@
 |OPTIONAL
 |Defines either an array of Protobuf schema names to back up or `*` for all schemas.
 
-|`scripts`
+|`tasks`
 |OPTIONAL
-|Specifies either an array of script names to back up or `*` for all scripts.
+|Specifies either an array of server tasks to back up or `*` for all tasks.
 
 |===

@@ -10,5 +10,5 @@ class Constants {
    static final String GLOBAL_CONFIG_FILE = "global.xml";
    static final String MANIFEST_PROPERTIES_FILE = "manifest.properties";
    static final String VERSION_KEY = "version";
-   static final String WORKING_DIR = "backup-manager";
+   static final String WORKING_DIR = "backups";
 }

@@ -25,9 +25,8 @@ POST /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
 
 [id='rest_v2_backup_cluster']
 = Backing Up {brandname} Clusters
-Create backup archives, `application/zip`, that contain resources (caches, cache
-configurations, counters, Protobuf schemas, scripts, and so on) currently
-stored in the cache container for the cluster.
+Create backup archives, `application/zip`, that contain resources (caches, templates, counters, Protobuf schemas, server tasks,
+and so on) currently stored in the cache container for the cluster.
 
 [source,options="nowrap",subs=attributes+]
 ----

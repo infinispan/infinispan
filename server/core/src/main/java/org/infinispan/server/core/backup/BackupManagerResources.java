@@ -1,10 +1,10 @@
 package org.infinispan.server.core.backup;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.CACHE_CONFIGURATIONS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.SCRIPTS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class BackupManagerResources implements BackupManager.Resources {
       }
 
       public Builder addCacheConfigurations(String... configs) {
-         return addResources(CACHE_CONFIGURATIONS, configs);
+         return addResources(TEMPLATES, configs);
       }
 
       public Builder addCounters(String... counters) {
@@ -74,7 +74,7 @@ public class BackupManagerResources implements BackupManager.Resources {
       }
 
       public Builder addScripts(String... scripts) {
-         return addResources(SCRIPTS, scripts);
+         return addResources(TASKS, scripts);
       }
 
       public Builder addResources(Type resource, String... resources) {

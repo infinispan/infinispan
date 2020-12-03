@@ -1,10 +1,10 @@
 package org.infinispan.server.functional;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.CACHE_CONFIGURATIONS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.SCRIPTS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -55,15 +55,15 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       String backupName = "partial-backup";
       String fileName = backupName + ".zip";
       try (AeshTestConnection t = cli(source)) {
-         t.readln("backup create --cache-configs=* -n " + backupName);
+         t.readln("backup create --templates=* -n " + backupName);
          // Ensure that the backup has finished before stopping the source cluster
          t.readln("backup get --no-content " + backupName);
       }
-      Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backup-manager").resolve(backupName).resolve(fileName);
+      Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       try (ZipFile zip = new ZipFile(createdBackup.toFile())) {
          // Ensure that only cache-configs are present
-         assertNotNull(zipResourceDir(CACHE_CONFIGURATIONS));
-         assertResourceDoesntExist(zip, CACHES, COUNTERS, PROTO_SCHEMAS, SCRIPTS);
+         assertNotNull(zipResourceDir(TEMPLATES));
+         assertResourceDoesntExist(zip, CACHES, COUNTERS, PROTO_SCHEMAS, TASKS);
       }
       Files.delete(createdBackup);
    }
@@ -117,7 +117,7 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
 
       // The location of the created .zip file that in EMBEDDED mode is available to both the source and target server
       // TODO This won't work with CONTAINER mode, we need a way to copy the file between the container filesystems at runtime
-      Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backup-manager").resolve(backupName).resolve(fileName);
+      Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       try (AeshTestConnection t = cli(target)) {
          t.readln("backup restore " + createdBackup.toString());
          Thread.sleep(1000);

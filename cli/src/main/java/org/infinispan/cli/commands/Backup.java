@@ -36,11 +36,11 @@ public class Backup extends CliCommand {
 
    public static final String CMD = "backup";
    public static final String CACHES = "caches";
-   public static final String CACHE_CONFIGS = "cache-configs";
+   public static final String TEMPLATES = "templates";
    public static final String COUNTERS = "counters";
    public static final String PROTO_SCHEMAS = "proto-schemas";
-   public static final String SCRIPTS = "scripts";
-   private static final String[] ALL_RESOURCE_TYPES = new String[]{CACHES, CACHE_CONFIGS, COUNTERS, PROTO_SCHEMAS, SCRIPTS};
+   public static final String TASKS = "tasks";
+   private static final String[] ALL_RESOURCE_TYPES = new String[]{CACHES, TEMPLATES, COUNTERS, PROTO_SCHEMAS, TASKS};
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -187,9 +187,9 @@ public class Backup extends CliCommand {
             completer = CacheCompleter.class, name = CACHES)
       List<String> caches;
 
-      @OptionList(description = "Comma separated list of cache configurations to include, '*' indicates all available",
-            completer = CacheConfigurationCompleter.class, name = CACHE_CONFIGS)
-      List<String> cacheConfigs;
+      @OptionList(description = "Comma separated list of cache templates to include, '*' indicates all available",
+            completer = CacheConfigurationCompleter.class, name = TEMPLATES)
+      List<String> templates;
 
       @OptionList(description = "Comma separated list of counters to include, '*' indicates all available",
             completer = CounterCompleter.class, name = COUNTERS)
@@ -199,9 +199,9 @@ public class Backup extends CliCommand {
             completer = SchemaCompleter.class, name = PROTO_SCHEMAS)
       List<String> protoSchemas;
 
-      @OptionList(description = "Comma separated list of scripts to include, '*' indicates all available",
-            completer = TaskCompleter.class, name = SCRIPTS)
-      List<String> scripts;
+      @OptionList(description = "Comma separated list of tasks to include, '*' indicates all available",
+            completer = TaskCompleter.class, name = TASKS)
+      List<String> tasks;
 
       AbstractResourceCommand(String type) {
          this.type = type;
@@ -212,10 +212,10 @@ public class Backup extends CliCommand {
          CommandInputLine cmd = new CommandInputLine(Backup.CMD)
                .arg(TYPE, type)
                .optionalArg(CACHES, caches)
-               .optionalArg(CACHE_CONFIGS, cacheConfigs)
+               .optionalArg(TEMPLATES, templates)
                .optionalArg(COUNTERS, counters)
                .optionalArg(PROTO_SCHEMAS, protoSchemas)
-               .optionalArg(SCRIPTS, scripts);
+               .optionalArg(TASKS, tasks);
          additionalArgs(cmd);
          return invocation.execute(cmd);
       }

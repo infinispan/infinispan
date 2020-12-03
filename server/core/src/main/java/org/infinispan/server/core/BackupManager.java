@@ -144,10 +144,10 @@ public interface BackupManager {
 
       enum Type {
          CACHES("caches"),
-         CACHE_CONFIGURATIONS("cache-configs"),
+         TEMPLATES("templates"),
          COUNTERS("counters"),
          PROTO_SCHEMAS("proto-schemas"),
-         SCRIPTS("scripts");
+         TASKS("tasks");
 
          final String name;
 

@@ -34,7 +34,7 @@ public class ContainerResourceFactory {
                switch (type) {
                   case CACHES:
                      return new CacheResource(blockingManager, parserRegistry, cm, params, containerRoot);
-                  case CACHE_CONFIGURATIONS:
+                  case TEMPLATES:
                      return new CacheConfigResource(blockingManager, parserRegistry, cm, params, containerRoot);
                   case COUNTERS:
                      CounterManager counterManager = gcr.getComponent(CounterManager.class);
@@ -42,7 +42,7 @@ public class ContainerResourceFactory {
                            missingResource(type) :
                            new CounterResource(blockingManager, cm, params, containerRoot);
                   case PROTO_SCHEMAS:
-                  case SCRIPTS:
+                  case TASKS:
                      ContainerResource cr = InternalCacheResource.create(type, blockingManager, cm, params, containerRoot);
                      return cr == null ? missingResource(type) : cr;
                   default:

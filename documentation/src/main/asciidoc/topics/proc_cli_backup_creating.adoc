@@ -35,11 +35,11 @@ create backup archives.
 [//containers/default]> backup create -d /some/server/dir
 ----
 +
-* Back up only caches and cache configurations.
+* Back up only caches and cache templates.
 +
 [source,json,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create --caches=* --cache-configs=*
+[//containers/default]> backup create --caches=* --templates=*
 ----
 * Back up named Protobuf schemas only.
 +
