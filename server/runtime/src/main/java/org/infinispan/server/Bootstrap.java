@@ -112,6 +112,9 @@ public class Bootstrap extends Main {
             if (!properties.containsKey(Server.JGROUPS_BIND_PORT)) {
                properties.setProperty(Server.JGROUPS_BIND_PORT, Integer.toString(Server.DEFAULT_JGROUPS_BIND_PORT + offset));
             }
+            if (!properties.containsKey(Server.JGROUPS_FD_BIND_PORT)) {
+               properties.setProperty(Server.JGROUPS_FD_BIND_PORT, Integer.toString(Server.DEFAULT_JGROUPS_FD_BIND_PORT + offset));
+            }
             break;
          case "-P":
             parameter = args.next();
