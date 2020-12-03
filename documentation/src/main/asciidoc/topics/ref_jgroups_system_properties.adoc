@@ -56,6 +56,11 @@ Use the following properties to customize JGroups cluster transport.
 | 10000
 | Optional
 
+| `jgroups.fd.port`
+| Bind port for the FD (failure detection protocol) socket.
+| `57600`
+| Optional
+
 |===
 
 [role="_additional-resources"]
