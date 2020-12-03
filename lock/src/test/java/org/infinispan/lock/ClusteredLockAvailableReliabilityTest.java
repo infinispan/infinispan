@@ -1,6 +1,5 @@
 package org.infinispan.lock;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.configuration.Reliability;
 import org.testng.annotations.Test;
 
@@ -11,7 +10,6 @@ public class ClusteredLockAvailableReliabilityTest extends ClusteredLockTest {
       super();
       reliability = Reliability.AVAILABLE;
       numOwner = 3;
-      cacheMode = CacheMode.DIST_SYNC;
    }
 
    @Override
