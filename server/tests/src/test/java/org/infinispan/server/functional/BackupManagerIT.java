@@ -191,17 +191,17 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
             (zip, client) -> {
                // Request that only the 'test.js' script is restored
                Map<String, List<String>> params = new HashMap<>();
-               params.put("scripts", Collections.singletonList("test.js"));
+               params.put("tasks", Collections.singletonList("test.js"));
                RestCacheManagerClient cm = client.cacheManager("clustered");
                RestResponse response = await(cm.restore(name, zip, params));
                assertEquals(202, response.getStatus());
                return awaitCreated(() -> cm.getRestore(name));
             },
             client -> {
-               // Assert that the test.js script has been restored
-               List<Json> scripts = Json.read(await(client.tasks().list(RestTaskClient.ResultType.USER)).getBody()).asJsonList();
-               assertEquals(1, scripts.size());
-               assertEquals("test.js", scripts.iterator().next().at("name").asString());
+               // Assert that the test.js task has been restored
+               List<Json> tasks = Json.read(await(client.tasks().list(RestTaskClient.ResultType.USER)).getBody()).asJsonList();
+               assertEquals(1, tasks.size());
+               assertEquals("test.js", tasks.iterator().next().at("name").asString());
 
                // Assert that no other content has been restored
                assertEquals("[\"___protobuf_metadata\",\"memcachedCache\",\"___script_cache\"]", await(client.caches()).getBody());
@@ -415,7 +415,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    private void assertNoServerBackupFilesExist(Cluster cluster) {
       for (int i = 0; i < 2; i++) {
          Path root = cluster.driver.getRootDir().toPath();
-         File workingDir = root.resolve(Integer.toString(i)).resolve("data").resolve("backup-manager").toFile();
+         File workingDir = root.resolve(Integer.toString(i)).resolve("data").resolve("backups").toFile();
          assertTrue(workingDir.isDirectory());
          String[] files = workingDir.list();
          assertNotNull(files);

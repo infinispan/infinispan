@@ -1,7 +1,7 @@
 package org.infinispan.server.core.backup.resources;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.SCRIPTS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * {@link org.infinispan.server.core.backup.ContainerResource} implementation for {@link
- * BackupManager.Resources.Type#PROTO_SCHEMAS} and {@link BackupManager.Resources.Type#SCRIPTS}.
+ * BackupManager.Resources.Type#PROTO_SCHEMAS} and {@link BackupManager.Resources.Type#TASKS}.
  *
  * @author Ryan Emerson
  * @since 12.0
@@ -36,7 +36,7 @@ class InternalCacheResource extends AbstractContainerResource {
 
    static {
       cacheMap.put(PROTO_SCHEMAS, "___protobuf_metadata");
-      cacheMap.put(SCRIPTS, "___script_cache");
+      cacheMap.put(TASKS, "___script_cache");
    }
 
    private final AdvancedCache<String, String> cache;

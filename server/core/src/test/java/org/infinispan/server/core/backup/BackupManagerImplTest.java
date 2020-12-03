@@ -6,7 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOW
 import static org.infinispan.functional.FunctionalTestUtils.MAX_WAIT_SECS;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.CACHE_CONFIGURATIONS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.core.backup.Constants.CONTAINERS_PROPERTIES_FILE;
 import static org.infinispan.server.core.backup.Constants.CONTAINER_KEY;
 import static org.infinispan.server.core.backup.Constants.GLOBAL_CONFIG_FILE;
@@ -290,7 +290,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
          Path containerPath = path(extractedRoot, CONTAINER_KEY, container1);
          assertFileExists(containerPath, CONTAINERS_PROPERTIES_FILE);
          assertFileExists(containerPath, GLOBAL_CONFIG_FILE);
-         assertFileExists(containerPath, CACHE_CONFIGURATIONS.toString(), "example-template.xml");
+         assertFileExists(containerPath, TEMPLATES.toString(), "example-template.xml");
          assertFileExists(containerPath, CACHES.toString(), "object-cache", "object-cache.xml");
          assertFileExists(containerPath, CACHES.toString(), "object-cache", "object-cache.dat");
          assertFileExists(containerPath, CACHES.toString(), "protostream-cache", "protostream-cache.xml");

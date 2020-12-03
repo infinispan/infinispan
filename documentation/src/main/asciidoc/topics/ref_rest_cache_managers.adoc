@@ -210,7 +210,7 @@ include::json_examples/rest_cache_stats_response.json[]
 [id='rest_v2_backup_manager_create']
 = Backing Up {brandname} Cache Managers
 Create backup archives, `application/zip`, that contain resources (caches, cache
-configurations, counters, Protobuf schemas, scripts, and so on) currently
+templates, counters, Protobuf schemas, server tasks, and so on) currently
 stored in the cache manager.
 
 [source,options="nowrap",subs=attributes+]

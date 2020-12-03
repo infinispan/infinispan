@@ -32,8 +32,8 @@ Defines a name for the backup archive.
 *--caches*='cache1,cache2,...'::
 Lists caches to back up. Use '*' to back up all caches.
 
-*--cache-configs*='config1,config2,...'::
-Lists cache configurations to back up. Use '*' to back up all cache configurations.
+*--templates*='template1,template2,...'::
+Lists cache templates to back up. Use '*' to back up all templates.
 
 *--counters*='counter1,counter2,...'::
 Lists of counters to back up. Use '*' to back up all counters.
@@ -41,8 +41,8 @@ Lists of counters to back up. Use '*' to back up all counters.
 *--proto-schemas*='schema1,schema2,...'::
 Lists Protobuf schemas to back up. Use '*' to back up all schemas.
 
-*--scripts*='script1,script2,...'::
-Lists scripts to back up. Use '*' to back up all scripts.
+*--tasks*='task1,task2,...'::
+Lists server tasks to back up. Use '*' to back up all tasks.
 
 
 BACKUP GET OPTIONS
@@ -62,8 +62,8 @@ Defines a name for the restore request.
 *--caches*='cache1,cache2,...'::
 Lists caches to restore. Use '*' to restore all caches from the backup archive.
 
-*--cache-configs*='config1,config2,...'::
-Lists cache configurations to restore. Use '*' to restore all cache configurations from the backup archive.
+*--templates*='template1,template2,...'::
+Lists cache templates to restore. Use '*' to restore all templates from the backup archive.
 
 *--counters*='counter1,counter2,...'::
 Lists counters to restore. Use '*' to restore all counters from the backup archive.
@@ -71,8 +71,8 @@ Lists counters to restore. Use '*' to restore all counters from the backup archi
 *--proto-schemas*='schema1,schema2,...'::
 Lists Protobuf schemas to restore. Use '*' to restore all schemas from the backup archive.
 
-*--scripts*='script1,script2,...'::
-Lists scripts to restore. Use '*' to restore all scripts from the backup archive.
+*--tasks*='task1,task2,...'::
+Lists server tasks to restore. Use '*' to restore all tasks from the backup archive.
 
 
 EXAMPLES
@@ -83,7 +83,7 @@ Initiates a backup of all container content with name `example-backup`.
 `backup create -d /some/server/dir` +
 Initiates a backup of all container content and stores it on the server at path `/some/server/dir`.
 
-`backup create --caches=* --cache-configs=*` +
+`backup create --caches=* --templates=*` +
 Initiates a backup that contains only cache and cache configuration resources.
 
 `backup create --proto-schemas=schema1,schema2` +
