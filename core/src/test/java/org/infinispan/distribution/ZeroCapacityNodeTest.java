@@ -1,10 +1,12 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -69,20 +71,25 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       String cacheName = "" + cacheMode + consistentHashFactory;
       createCache(cb, cacheName);
 
-      ConsistentHash ch =
-            cache(0, cacheName).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
+      Cache<Object, Object> cache1 = node1.getCache(cacheName);
+      Cache<Object, Object> cache2 = node2.getCache(cacheName);
+      Cache<Object, Object> zeroCapacityCache = zeroCapacityNode.getCache(cacheName);
+
+      ConsistentHash ch = extractCacheTopology(cache1).getReadConsistentHash();
       assertEquals(1f, capacityFactor(ch, node1), 0.0);
       assertEquals(1f, capacityFactor(ch, node2), 0.0);
       assertEquals(0f, capacityFactor(ch, zeroCapacityNode), 0.0);
 
       assertEquals(Collections.emptySet(), ch.getPrimarySegmentsForOwner(zeroCapacityNode.getAddress()));
       assertEquals(Collections.emptySet(), ch.getSegmentsForOwner(zeroCapacityNode.getAddress()));
-      node1.getCache(cacheName).stop();
+      cache1.stop();
 
-      ConsistentHash ch2 =
-            cache(0, cacheName).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
+      ConsistentHash ch2 = extractCacheTopology(cache2).getReadConsistentHash();
       assertEquals(Collections.emptySet(), ch2.getPrimarySegmentsForOwner(zeroCapacityNode.getAddress()));
       assertEquals(Collections.emptySet(), ch2.getSegmentsForOwner(zeroCapacityNode.getAddress()));
+
+      zeroCapacityCache.put("key", "value");
+      assertEquals("value", zeroCapacityCache.get("key"));
    }
 
    public void testReplicatedClusteredListener() {

@@ -100,7 +100,9 @@ public class InternalCacheFactory<K, V> {
       // We can optimize REPL reads that meet some criteria. This allows us to bypass interceptor chain
       if (configuration.clustering().cacheMode().isReplicated() && !configuration.persistence().usingStores()
           && !configuration.transaction().transactionMode().isTransactional() &&
-          configuration.clustering().stateTransfer().awaitInitialTransfer()) {
+          configuration.clustering().stateTransfer().awaitInitialTransfer() &&
+          configuration.clustering().hash().capacityFactor() != 0f &&
+          !globalComponentRegistry.getGlobalConfiguration().isZeroCapacityNode()) {
          cache = new GetReplCache<>(new CacheImpl<>(cacheName));
          if (configuration.statistics().available()) {
             cache = new StatsCache<>(cache);

@@ -233,7 +233,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    @Override
    public String toString() {
       return "EmbeddedClusteredLockManager{" +
-            ", address=" + cacheManager.getAddress() +
+            "address=" + cacheManager.getAddress() +
             ", locks=" + locks +
             '}';
    }
