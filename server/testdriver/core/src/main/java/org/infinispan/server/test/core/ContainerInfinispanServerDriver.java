@@ -155,7 +155,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          String serverOutputDir = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR);
          if (serverOutputDir == null) {
             // We try to use the latest public image for this major.minor version
-            imageName = "infinispan/server:" + Version.getMajorMinor();
+            imageName = "quay.io/infinispan/server:" + Version.getMajorMinor();
             prebuiltImage = true;
             log.infof("Using prebuilt image '%s'", imageName);
          } else {
