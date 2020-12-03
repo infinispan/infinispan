@@ -42,7 +42,7 @@ public class Shutdown extends CliCommand {
    public static class Server extends CliCommand {
       public static final String CMD = "server";
 
-      @Arguments(completer = ServerCompleter.class)
+      @Arguments(description = "The list of server names", completer = ServerCompleter.class)
       List<String> servers;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -58,9 +58,10 @@ public class Shutdown extends CliCommand {
          if (help) {
             invocation.println(invocation.getHelpInfo());
          }
-         CommandInputLine cmd = new CommandInputLine(Shutdown.CMD)
-               .arg(TYPE, Shutdown.Server.CMD)
-               .arg(SERVERS, servers);
+         CommandInputLine cmd = new CommandInputLine(Shutdown.CMD).arg(TYPE, Shutdown.Server.CMD);
+         if (servers != null && !servers.isEmpty() ) {
+            cmd.arg(SERVERS, servers);
+         }
          return invocation.execute(cmd);
       }
    }
