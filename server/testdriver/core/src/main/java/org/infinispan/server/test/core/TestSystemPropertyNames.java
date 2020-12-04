@@ -54,4 +54,20 @@ public class TestSystemPropertyNames {
     * The amount of memory this container is allowed to swap to disk
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP = "org.infinispan.test.server.container.memorySwap";
+   /**
+    * Specifies the name of the keycloak base image
+    */
+   public static final String KEYCLOAK_IMAGE = "org.infinispan.test.keycloakImage";
+   /**
+    * Specifies the keycloak user
+    */
+   public static final String KEYCLOAK_USER = "org.infinispan.test.keycloakUser";
+   /**
+    * Specifies the keycloak user password
+    */
+   public static final String KEYCLOAK_PASSWORD = "org.infinispan.test.keycloakPassword";
+   /**
+    * Specifies the keycloak realm
+    */
+   public static final String KEYCLOAK_REALM = "org.infinispan.test.keycloakRealm";
 }
