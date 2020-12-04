@@ -31,7 +31,7 @@ import org.testcontainers.utility.MountableFile;
  * @since 10.0
  **/
 public class KeyCloakServerRule implements TestRule {
-   public static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:10.0.1";
+   public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:10.0.1");
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer container;
@@ -67,9 +67,10 @@ public class KeyCloakServerRule implements TestRule {
 
       final Map<String, String> environment = new HashMap<>();
       environment.put("DB_VENDOR", "h2");
-      environment.put("KEYCLOAK_USER", "keycloak");
-      environment.put("KEYCLOAK_PASSWORD", "keycloak");
+      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_USER, "KEYCLOAK_USER"), "keycloak");
+      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_PASSWORD, "KEYCLOAK_PASSWORD"), "keycloak");
       environment.put("KEYCLOAK_IMPORT", keycloakImport.getAbsolutePath());
+      environment.put("JAVA_OPTS_APPEND", "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file="+keycloakImport.getAbsolutePath());
       container = new FixedHostPortGenericContainer(KEYCLOAK_IMAGE);
       container.withFixedExposedPort(14567, 8080)
             .withEnv(environment)
