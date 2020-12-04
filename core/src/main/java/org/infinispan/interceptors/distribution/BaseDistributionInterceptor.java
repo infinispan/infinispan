@@ -269,10 +269,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
       MapResponseCollector collector = MapResponseCollector.ignoreLeavers(isReplicated, owners.size());
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+      // Mark the command as a backup write so it can skip some checks
+      command.addFlags(FlagBitSets.BACKUP_WRITE);
       CompletionStage<Map<Address, Response>> remoteInvocation = isReplicated ?
             rpcManager.invokeCommandOnAll(command, collector, rpcOptions) :
             rpcManager.invokeCommand(owners, command, collector, rpcOptions);
       return asyncValue(remoteInvocation.handle((responses, t) -> {
+         // Unset the backup write bit as the command will be retried
+         command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.BACKUP_WRITE);
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
          command.setValueMatcher(originalMatcher.matcherForRetry());
          CompletableFutures.rethrowExceptionIfPresent(t);

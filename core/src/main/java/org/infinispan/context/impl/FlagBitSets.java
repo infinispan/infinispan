@@ -45,6 +45,7 @@ public class FlagBitSets {
    public static final long IRAC_UPDATE = EnumUtil.bitSetOf(Flag.IRAC_UPDATE);
    public static final long IRAC_STATE = EnumUtil.bitSetOf(Flag.IRAC_STATE);
    public static final long ALREADY_HAS_LOCK = EnumUtil.bitSetOf(Flag.ALREADY_HAS_LOCK);
+   public static final long BACKUP_WRITE = EnumUtil.bitSetOf(Flag.BACKUP_WRITE);
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.
