@@ -8,13 +8,19 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,9 +34,11 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
@@ -62,6 +70,9 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
                      .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
                      .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
                      .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
                      .build()
             ).toArray();
@@ -431,5 +442,44 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       incrementAllTimeServices(2, TimeUnit.MILLISECONDS);
 
       assertNotNull(cache1.get(key));
+   }
+
+   public void testPrimaryNotExpiredButBackupWas() throws InterruptedException, ExecutionException, TimeoutException {
+      if (transactional || cacheMode == CacheMode.SCATTERED_SYNC) {
+         throw new SkipException("Test isn't supported in transactional mode or scattered cache");
+      }
+      Object key = createKey(cache0, cache1);
+      String value = key.toString();
+      cache0.put(key, value,10, TimeUnit.SECONDS);
+
+      final ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(cache0);
+      Class<? extends ReplicableCommand> commandToExpect;
+      if (cacheMode == CacheMode.DIST_SYNC) {
+         controlledRpcManager.excludeCommands(PutKeyValueCommand.class);
+         commandToExpect = BackupWriteCommand.class;
+      } else {
+         commandToExpect = PutKeyValueCommand.class;
+      }
+
+      try {
+         Future<String> result = fork(() -> cache0.put(key, value + "-expire-backup"));
+
+         ControlledRpcManager.BlockedRequest<? extends ReplicableCommand> blockedRequest = controlledRpcManager.expectCommand(commandToExpect);
+
+         incrementAllTimeServices(11, TimeUnit.SECONDS);
+
+         ControlledRpcManager.SentRequest sentRequest = blockedRequest.send();
+
+         if (sentRequest != null) {
+            sentRequest.expectAllResponses().receive();
+         }
+
+         assertEquals(value, result.get(10, TimeUnit.SECONDS));
+      } finally {
+         controlledRpcManager.revertRpcManager();
+      }
+      assertEquals(value + "-expire-backup", cache0.get(key));
+      assertEquals(value + "-expire-backup", cache1.get(key));
+      assertEquals(value + "-expire-backup", cache2.get(key));
    }
 }

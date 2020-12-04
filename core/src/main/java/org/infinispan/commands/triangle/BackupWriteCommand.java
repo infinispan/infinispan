@@ -47,7 +47,8 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
       WriteCommand command = createWriteCommand();
       command.init(componentRegistry);
       command.setFlagsBitSet(flags);
-      command.addFlags(FlagBitSets.SKIP_LOCKING);
+      // Mark the command as a backup write and skip locking
+      command.addFlags(FlagBitSets.SKIP_LOCKING | FlagBitSets.BACKUP_WRITE);
       command.setValueMatcher(MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       InvocationContextFactory invocationContextFactory = componentRegistry.getInvocationContextFactory().running();
