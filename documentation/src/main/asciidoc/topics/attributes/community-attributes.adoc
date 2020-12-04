@@ -6,7 +6,7 @@
 //
 // Infinispan version
 //
-:ispn_version: 11.0.7.Final
+:ispn_version: 11.0.8.Final
 
 //
 // Special characters
