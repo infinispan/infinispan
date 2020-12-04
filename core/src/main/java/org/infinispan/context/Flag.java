@@ -252,6 +252,12 @@ public enum Flag {
     * key.
     */
    ALREADY_HAS_LOCK,
+
+   /**
+    * Signals that a {@link org.infinispan.commands.write.WriteCommand} was sent from the primary as a backup operation.
+    * Some things do not need to be checked in this case.
+    */
+   BACKUP_WRITE,
    ;
 
    private static final Flag[] CACHED_VALUES = values();

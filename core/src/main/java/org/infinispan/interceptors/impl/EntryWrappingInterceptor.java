@@ -355,6 +355,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
+      // The command is from a backup, we don't care if the entry is expired or not
+      if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE)) {
+         entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
+         return CompletableFutures.completedNull();
+      }
       return entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
    }
 
