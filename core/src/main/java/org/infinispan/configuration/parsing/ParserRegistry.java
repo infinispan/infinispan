@@ -178,7 +178,6 @@ public class ParserRegistry implements NamespaceMappingParser {
       XMLStreamReader subReader = factory.createXMLStreamReader(input);
       XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(factory, resourceResolver, this, subReader, properties);
       parse(reader, holder);
-      subReader.close();
       // Fire all parsingComplete events if any
       for (ParserContext parserContext : holder.getParserContexts().values()) {
          parserContext.fireParsingComplete();
