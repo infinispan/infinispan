@@ -158,7 +158,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    }
 
    @AfterClass
-   public void afterSuite() {
+   public void afterClass() {
       Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
          restServers.forEach(RestServerHelper::stop);
          return null;
