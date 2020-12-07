@@ -52,6 +52,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.commons.util.logging.TraceException;
@@ -81,6 +82,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Inject ComponentRef<CommandsFactory> cf;
    @Inject DistributionManager distributionManager;
    @Inject TimeService timeService;
+   @Inject NonBlockingManager nonBlockingManager;
 
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
    private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
@@ -142,19 +144,21 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
 
+      CompletionStage<T> invocation;
       if (!statisticsEnabled) {
-         return t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
+         invocation = t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
                                 rpcOptions.timeout(), rpcOptions.timeUnit());
+         return nonBlockingManager.resumeOnSameExecutor(invocation);
       }
 
       long startTimeNanos = timeService.time();
-      CompletionStage<T> invocation;
       try {
          invocation = t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
                                       rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
+      invocation = nonBlockingManager.resumeOnSameExecutor(invocation);
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 
@@ -169,19 +173,21 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
 
+      CompletionStage<T> invocation;
       if (!statisticsEnabled) {
-         return t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
+         invocation = t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
                                 rpcOptions.timeout(), rpcOptions.timeUnit());
+         return nonBlockingManager.resumeOnSameExecutor(invocation);
       }
 
       long startTimeNanos = timeService.time();
-      CompletionStage<T> invocation;
       try {
          invocation = t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
                                       rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
+      invocation = nonBlockingManager.resumeOnSameExecutor(invocation);
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 
@@ -206,19 +212,21 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
       List<Address> cacheMembers = distributionManager.getCacheTopology().getMembers();
 
+      CompletionStage<T> invocation;
       if (!statisticsEnabled) {
-         return t.invokeCommandOnAll(cacheMembers, cacheRpc, collector, rpcOptions.deliverOrder(),
+         invocation = t.invokeCommandOnAll(cacheMembers, cacheRpc, collector, rpcOptions.deliverOrder(),
                                      rpcOptions.timeout(), rpcOptions.timeUnit());
+         return nonBlockingManager.resumeOnSameExecutor(invocation);
       }
 
       long startTimeNanos = timeService.time();
-      CompletionStage<T> invocation;
       try {
          invocation = t.invokeCommandOnAll(cacheMembers, cacheRpc, collector, rpcOptions.deliverOrder(),
                                            rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
+      invocation = nonBlockingManager.resumeOnSameExecutor(invocation);
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 
@@ -227,19 +235,21 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                                                         ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
 
+      CompletionStage<T> invocation;
       if (!statisticsEnabled) {
-         return t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
+         invocation = t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
                                          rpcOptions.timeUnit());
+         return nonBlockingManager.resumeOnSameExecutor(invocation);
       }
 
       long startTimeNanos = timeService.time();
-      CompletionStage<T> invocation;
       try {
          invocation = t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
                                                rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
+      invocation = nonBlockingManager.resumeOnSameExecutor(invocation);
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 
@@ -247,19 +257,21 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, ReplicableCommand> commandGenerator,
                                                 ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      CompletionStage<T> invocation;
       if (!statisticsEnabled) {
-         return t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
+         invocation = t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
                                  rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
+         return nonBlockingManager.resumeOnSameExecutor(invocation);
       }
 
       long startTimeNanos = timeService.time();
-      CompletionStage<T> invocation;
       try {
          invocation = t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
                                        rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
+      invocation = nonBlockingManager.resumeOnSameExecutor(invocation);
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 

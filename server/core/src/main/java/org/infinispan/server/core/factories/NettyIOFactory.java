@@ -8,7 +8,9 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.server.core.transport.NettyNonBlockingManager;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 import io.netty.channel.EventLoopGroup;
 
@@ -19,7 +21,7 @@ import io.netty.channel.EventLoopGroup;
  * @author William Burns
  * @since 11.0
  */
-@DefaultFactoryFor(names = KnownComponentNames.NON_BLOCKING_EXECUTOR)
+@DefaultFactoryFor(names = KnownComponentNames.NON_BLOCKING_EXECUTOR, classes = NonBlockingManager.class)
 public class NettyIOFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    @Inject
    protected BasicComponentRegistry basicComponentRegistry;
@@ -31,8 +33,10 @@ public class NettyIOFactory extends AbstractComponentFactory implements AutoInst
          // This means our event loop can't have a cyclical dependency on us otherwise we will get stuck
          EventLoopGroup runningEventLoopGroup = ref.running();
          return new BlockingTaskAwareExecutorServiceImpl(runningEventLoopGroup, globalComponentRegistry.getTimeService());
+      } else if (componentName.equals(NonBlockingManager.class.getName())) {
+         return new NettyNonBlockingManager();
       } else {
-         throw new CacheConfigurationException("Unknown named executor " + componentName);
+         throw new CacheConfigurationException("Unknown named component " + componentName);
       }
    }
 

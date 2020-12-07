@@ -19,4 +19,15 @@ public interface NonBlockingManager {
     * @return an AutoCloseable that cancels the scheduled task.
     */
    AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay, TimeUnit unit);
+
+   /**
+    * The returned stage when chained will perform any of those tasks on the same executor as the
+    * invoking thread. If the provided stage is already complete the stage will be unchanged.
+    * @param stage stage to make sure it is chained on the same executor that is currently running
+    * @param <V> the return value of the stage
+    * @return resulting stage that when chained will run those operations on the same executor
+    */
+   default <V> CompletionStage<V> resumeOnSameExecutor(CompletionStage<V> stage) {
+      return stage;
+   }
 }
