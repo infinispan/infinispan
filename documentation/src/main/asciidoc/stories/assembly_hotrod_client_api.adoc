@@ -1,4 +1,5 @@
 [id='hotrod_api']
+:context: hotrod_client_api
 = Hot Rod Client API
 {brandname} Hot Rod client API provides interfaces for creating caches
 remotely, manipulating data, monitoring the topology of clustered caches, and
