@@ -645,6 +645,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       // Clear all stats
       RestResponse response = join(cacheClient.clearSearchStats());
+      ResponseAssertion.assertThat(response).isOk();
       if (security) {
          RestClient adminClient = RestClient.forConfiguration(getClientConfig().security().authentication().username("admin").password("admin").build());
          response = join(adminClient.cache("indexedCache").clearSearchStats());

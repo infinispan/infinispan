@@ -52,8 +52,8 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    }
 
    @AfterClass
-   public void afterSuite() {
-      super.afterSuite();
+   public void afterClass() {
+      super.afterClass();
       Util.close(noRedirectsClient);
    }
 
