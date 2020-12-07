@@ -52,20 +52,12 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    @Override
    public void handleAny(final ConfigurationBuilderHolder holder) throws XMLStreamException {
       require(START_ELEMENT, null, null);
-      boolean ok = false;
+      final Deque<Context> stack = this.stack;
+      stack.push(new Context());
       try {
-         final Deque<Context> stack = this.stack;
-         stack.push(new Context());
-         try {
-            parser.parseElement(this, holder);
-         } finally {
-            stack.pop();
-         }
-         ok = true;
+         parser.parseElement(this, holder);
       } finally {
-         if (!ok) {
-            safeClose();
-         }
+         stack.pop();
       }
    }
 
@@ -100,11 +92,7 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
          }
          return next;
       } else {
-         try {
-            throw readPastEnd(getLocation());
-         } finally {
-            safeClose();
-         }
+         throw readPastEnd(getLocation());
       }
    }
 
@@ -141,11 +129,7 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
          }
          return next;
       } else {
-         try {
-            throw readPastEnd(getLocation());
-         } finally {
-            safeClose();
-         }
+         throw readPastEnd(getLocation());
       }
    }
 
@@ -189,7 +173,10 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
 
    @Override
    public void close() throws XMLStreamException {
-      throw new UnsupportedOperationException();
+      while (!includeStack.isEmpty()) {
+         closeInclude();
+      }
+      streamReader.close();
    }
 
    @Override
@@ -422,14 +409,6 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
       Included(InputStream inputStream, XMLStreamReader reader) {
          this.inputStream = inputStream;
          this.reader = reader;
-      }
-   }
-
-   private void safeClose() {
-      try {
-         streamReader.close();
-      } catch (Exception e) {
-         // ignore
       }
    }
 
