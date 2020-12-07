@@ -19,9 +19,6 @@ include::{topics}/ref_jgroups_system_properties.adoc[leveloffset=+2]
 include::{topics}/proc_using_jgroups_inline.adoc[leveloffset=+1]
 include::{topics}/proc_using_jgroups_external.adoc[leveloffset=+1]
 
-//Security
-include::assembly_encrypting_cluster_traffic.adoc[leveloffset=+1]
-
 //Discovery
 include::{topics}/con_discovery.adoc[leveloffset=+1]
 include::{topics}/ref_discovery_ping.adoc[leveloffset=+2]
@@ -36,6 +33,8 @@ ifdef::embedded_mode[]
 include::{topics}/proc_using_custom_jchannels.adoc[leveloffset=+1]
 endif::embedded_mode[]
 
+//Security
+include::assembly_encrypting_cluster_traffic.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
