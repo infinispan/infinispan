@@ -25,7 +25,7 @@ import static org.infinispan.rest.ResponseHeader.ETAG_HEADER;
 import static org.infinispan.rest.ResponseHeader.EXPIRES_HEADER;
 import static org.infinispan.rest.ResponseHeader.LAST_MODIFIED_HEADER;
 import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -295,8 +295,12 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasNoErrors() {
-      Json node = Json.read(response.getBody());
-      Assertions.assertThat(node.at("error").isNull()).isTrue();
+      hasJson().hasProperty("error").isNull();
       return this;
+   }
+
+   public JsonAssertion hasJson() {
+      Json node = Json.read(response.getBody());
+      return new JsonAssertion(node);
    }
 }
