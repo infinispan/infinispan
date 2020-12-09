@@ -507,8 +507,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String entry = first.toPrettyString();
       assertThat(entry).contains("\"key\" : \"key_");
       assertThat(entry).contains("\"value\" : \"value_");
-      assertThat(entry).doesNotContain("lifespan");
-      assertThat(entry).doesNotContain("maxIdle");
+      assertThat(entry).doesNotContain("timeToLiveSeconds");
+      assertThat(entry).doesNotContain("maxIdleTimeSeconds");
       assertThat(entry).doesNotContain("created");
       assertThat(entry).doesNotContain("lastUsed");
       assertThat(entry).doesNotContain("expireTime");
@@ -537,11 +537,26 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String entry = first.toPrettyString();
       assertThat(entry).contains("\"key\" : \"key_");
       assertThat(entry).contains("\"value\" : \"value_");
-      assertThat(entry).contains("\"lifespan\" : -1");
-      assertThat(entry).contains("\"maxIdle\" : -1");
+      assertThat(entry).contains("\"timeToLiveSeconds\" : -1");
+      assertThat(entry).contains("\"maxIdleTimeSeconds\" : -1");
       assertThat(entry).contains("\"created\" : -1");
       assertThat(entry).contains("\"lastUsed\" : -1");
       assertThat(entry).contains("\"expireTime\" : -1");
+   }
+
+   @Test
+   public void testStreamEntriesWithMetadataAndExpirationTimesConvertedToSeconds() {
+      RestResponse response = join(client.cache("default").put("key1", "value1", 1000, 5000));
+      response = join(client.cache("default").entries(1, true));
+      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+
+      assertEquals(1, jsons.size());
+      Json first = jsons.get(0);
+      String entry = first.toPrettyString();
+      assertThat(entry).contains("\"key\" : \"key1");
+      assertThat(entry).contains("\"value\" : \"value1");
+      assertThat(entry).contains("\"timeToLiveSeconds\" : 1000");
+      assertThat(entry).contains("\"maxIdleTimeSeconds\" : 5000");
    }
 
    @Test

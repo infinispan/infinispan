@@ -6,14 +6,15 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
  * An {@link InputStream} that reads from a {@link CacheStream} of byte[] and produces a JSON output.
  * For example:
  * <p>
- * [{"key":1,"value":"value","lifespan": -1, "maxIdle": -1, "created": -1, "lastUsed": -1, "expireTime": -1},
- * {"key":2,"value":"value2","lifespan": -1, "maxIdle": -1, "created": -1, "lastUsed": -1, "expireTime": -1}]
+ * [{"key":1,"value":"value","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1},
+ * {"key":2,"value":"value2","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1}]
  *
  * @since 12.0
  */
@@ -40,7 +41,6 @@ public class CacheEntryInputStream extends InputStream {
    private int keyCursor = 0;
    private int valueCursor = 0;
    private int mdCursor = 0;
-   private int count = 0;
    private int keyLabelCursor = 0;
    private int valueLabelCursor = 0;
    private Boolean hasNext;
@@ -49,31 +49,31 @@ public class CacheEntryInputStream extends InputStream {
 
    static class Metadata {
       public static final byte[] EMPTY = new Metadata().bytes();
-      private final long lifespan;
-      private final long maxIdle;
+      private final long timeToLiveSeconds;
+      private final long maxIdleTimeSeconds;
       private final long created;
       private final long lastUsed;
       private final long expireTime;
 
       public Metadata() {
-         lifespan = -1;
-         maxIdle = -1;
+         timeToLiveSeconds = -1;
+         maxIdleTimeSeconds = -1;
          created = -1;
          lastUsed = -1;
          expireTime = -1;
       }
 
-      public Metadata(long lifespan, long maxIdle, long created, long lastUsed, long expireTime) {
-         this.lifespan = lifespan;
-         this.maxIdle = maxIdle;
+      public Metadata(long timeToLiveSeconds, long maxIdleTimeSeconds, long created, long lastUsed, long expireTime) {
+         this.timeToLiveSeconds = timeToLiveSeconds;
+         this.maxIdleTimeSeconds = maxIdleTimeSeconds;
          this.created = created;
          this.lastUsed = lastUsed;
          this.expireTime = expireTime;
       }
 
       public byte[] bytes() {
-         return ("\"lifespan\": " + lifespan + ", "
-               + "\"maxIdle\": " + maxIdle + ", "
+         return ("\"timeToLiveSeconds\": " + timeToLiveSeconds + ", "
+               + "\"maxIdleTimeSeconds\": " + maxIdleTimeSeconds + ", "
                + "\"created\": " + created + ", "
                + "\"lastUsed\": " + lastUsed + ", "
                + "\"expireTime\": " + expireTime)
@@ -143,7 +143,6 @@ public class CacheEntryInputStream extends InputStream {
                      if (includeMetadata) {
                         loadMetadata();
                      }
-                     count++;
                   }
                }
 
@@ -206,12 +205,18 @@ public class CacheEntryInputStream extends InputStream {
       if (currentEntry instanceof InternalCacheEntry) {
          InternalCacheEntry ice = (InternalCacheEntry) currentEntry;
          // add metadata
-         long lifespan = ice.getLifespan();
-         long maxIdle = ice.getMaxIdle();
+         long lifespanInSeconds = ice.getLifespan();
+         if (lifespanInSeconds > -1) {
+            lifespanInSeconds = TimeUnit.MILLISECONDS.toSeconds(lifespanInSeconds);
+         }
+         long maxIdleInSeconds = ice.getMaxIdle();
+         if (maxIdleInSeconds > -1) {
+            maxIdleInSeconds = TimeUnit.MILLISECONDS.toSeconds(maxIdleInSeconds);
+         }
          long created = ice.getCreated();
          long lastUsed = ice.getLastUsed();
          long expiryTime = ice.getExpiryTime();
-         currentMetadata = new Metadata(lifespan, maxIdle, created, lastUsed, expiryTime).bytes();
+         currentMetadata = new Metadata(lifespanInSeconds, maxIdleInSeconds, created, lastUsed, expiryTime).bytes();
       } else {
          currentMetadata = Metadata.EMPTY;
       }
