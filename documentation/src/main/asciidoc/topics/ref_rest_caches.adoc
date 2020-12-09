@@ -360,11 +360,11 @@ include::json_examples/rest_caches_all_entries.json[]
 
 * `key` The key for the entry.
 * `value` The value of the entry.
-* `lifespan` Lifespan, in milliseconds, or `Forever` if entries never expire. Returns a value of `-1` unless you set metadata="true".
-* `maxIdle` Maximum idle time, in milliseconds, or `Forever` if entries never expire. Returns a value of `-1` unless you set metadata="true".
-* `created` Time the entry was created. Returns a value of `-1` unless you set metadata="true".
-* `lastUsed` Last time an operation was performed on the entry. Returns a value of `-1` unless you set metadata="true".
-* `expireTime` Time when the entry expires or `Never` for immortal entries. Returns a value of `-1` unless you set metadata="true".
+* `timeToLiveSeconds` Based on the entry lifespan but in seconds, or `-1` if the entry never expires. It's not returned unless you set metadata="true".
+* `maxIdleTimeSeconds` Maximum idle time, in seconds, or `-1` if entry never expires. It's not returned unless you set metadata="true".
+* `created` Time the entry was created or or `-1` for immortal entries. It's not returned unless you set metadata="true".
+* `lastUsed` Last time an operation was performed on the entry or `-1` for immortal entries. It's not returned unless you set metadata="true".
+* `expireTime` Time when the entry expires or `-1` for immortal entries. It's not returned unless you set metadata="true".
 
 
 [id='rest_v2_clear_cache']

@@ -2,8 +2,8 @@
     {
         "key":1,
         "value":"value1",
-        "lifespan":-1,
-        "maxIdle":-1,
+        "timeToLiveSeconds":-1,
+        "maxIdleTimeSeconds":-1,
         "created":-1,
         "lastUsed":-1,
         "expireTime":-1
@@ -11,10 +11,10 @@
     {
         "key":2,
         "value":"value2",
-        "lifespan":-1,
-        "maxIdle":-1,
-        "created":-1,
-        "lastUsed":-1,
-        "expireTime":-1
+        "timeToLiveSeconds":10,
+        "maxIdleTimeSeconds":45,
+        "created":1607966017944,
+        "lastUsed": 1607966017944,
+        "expireTime":1607966027944
     }
 ]
