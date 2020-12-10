@@ -1,10 +1,11 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
 
+import java.io.File;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
@@ -14,6 +15,12 @@ import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.completers.EncodingCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.cli.resources.CacheResource;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -21,13 +28,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Put.CMD, description = "Puts an entry into the cache", activator = ConnectionActivator.class)
-public class Put extends CliCommand {
-   public static final String CMD = "put";
-   public static final String ENCODING = "encoding";
-   public static final String TTL = "ttl";
-   public static final String MAX_IDLE = "max-idle";
-   public static final String IF_ABSENT = "if-absent";
+@CommandDefinition(name = "put", description = "Puts an entry into the cache", activator = ConnectionActivator.class)
+public class Put extends RestCliCommand {
 
    @Arguments(required = true)
    List<String> args;
@@ -59,21 +61,20 @@ public class Put extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+   protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
       if ((file != null) && (args.size() != 1)) {
          throw Messages.MSG.illegalCommandArguments();
       } else if ((file == null) && (args.size() != 2)) {
          throw Messages.MSG.illegalCommandArguments();
       }
-      CommandInputLine cmd = new CommandInputLine(CMD)
-            .arg(KEY, args.get(0))
-            .optionalArg(VALUE, args.size() > 1 ? args.get(1) : null)
-            .option(FILE, file != null ? file.getAbsolutePath() : null)
-            .option(ENCODING, encoding)
-            .option(CACHE, cache)
-            .option(TTL, ttl)
-            .option(MAX_IDLE, maxIdle)
-            .option(IF_ABSENT, ifAbsent);
-      return invocation.execute(cmd);
+
+      RestCacheClient cacheClient = client.cache(cache != null ? cache : CacheResource.cacheName(resource));
+      MediaType putEncoding = encoding != null ? MediaType.fromString(encoding) : invocation.getContext().getEncoding();
+      RestEntity value = file != null ? RestEntity.create(putEncoding, new File(file.getAbsolutePath())) : RestEntity.create(putEncoding, args.get(1));
+      if (ifAbsent) {
+         return cacheClient.post(args.get(0), value, ttl, maxIdle);
+      } else {
+         return cacheClient.put(args.get(0), value, ttl, maxIdle);
+      }
    }
 }

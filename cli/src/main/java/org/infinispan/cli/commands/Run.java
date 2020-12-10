@@ -20,9 +20,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Run.CMD, description = "Reads and executes commands from one or more files")
+@CommandDefinition(name = "run", description = "Reads and executes commands from one or more files")
 public class Run extends CliCommand {
-   public static final String CMD = "run";
 
    @Arguments(required = true, completer = FileOptionCompleter.class)
    private List<Resource> arguments;
@@ -43,7 +42,7 @@ public class Run extends CliCommand {
             try (BufferedReader br = new BufferedReader("-".equals(resource.getName()) ? new InputStreamReader(System.in) : new InputStreamReader(resource.read()))) {
                for (String line = br.readLine(); line != null; line = br.readLine()) {
                   if (!line.startsWith("#")) {
-                     invocation.executeCommand(Batch.CMD + " " + StringPropertyReplacer.replaceProperties(line));
+                     invocation.executeCommand("batch " + StringPropertyReplacer.replaceProperties(line));
                   }
                }
             } catch (Exception e) {

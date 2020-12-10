@@ -5,14 +5,12 @@ import static org.infinispan.cli.commands.kubernetes.Kube.OPERATOR_SUBSCRIPTION_
 import java.io.IOException;
 import java.util.Map;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContextImpl;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -20,10 +18,8 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
-@CommandDefinition(name = Uninstall.CMD, description = "Uninstalls the operator")
+@CommandDefinition(name = "uninstall", description = "Uninstalls the operator")
 public class Uninstall extends CliCommand {
-   public static final String CMD = "uninstall";
 
    @Option(shortName = 'n', description = "Select the namespace")
    String namespace;

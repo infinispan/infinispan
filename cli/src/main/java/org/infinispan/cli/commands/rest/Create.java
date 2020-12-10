@@ -1,6 +1,7 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
 
-import java.util.Collections;
+import java.io.File;
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -11,11 +12,19 @@ import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.io.Resource;
 import org.infinispan.cli.activators.ConnectionActivator;
+import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheConfigurationCompleter;
 import org.infinispan.cli.completers.CounterStorageCompleter;
 import org.infinispan.cli.completers.CounterTypeCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -23,12 +32,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Create.CMD, description = "Creates a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Create.Cache.class, Create.Counter.class})
+@GroupCommandDefinition(name = "create", description = "Creates a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Create.Cache.class, Create.Counter.class})
 public class Create extends CliCommand {
-
-   public static final String CMD = "create";
-   public static final String TYPE = "type";
-   public static final String NAME = "name";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -45,12 +50,8 @@ public class Create extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Cache.CMD, description = "Create a cache", activator = ConnectionActivator.class)
-   public static class Cache extends CliCommand {
-      public static final String CMD = "cache";
-      public static final String TEMPLATE = "template";
-      public static final String FILE = "file";
-      public static final String VOLATILE = "volatile";
+   @CommandDefinition(name = "cache", description = "Create a cache", activator = ConnectionActivator.class)
+   public static class Cache extends RestCliCommand {
 
       @Argument(required = true)
       String name;
@@ -73,32 +74,26 @@ public class Create extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
          if (template != null && file != null) {
             throw Messages.MSG.mutuallyExclusiveOptions("template", "file");
          }
          if (template == null && file == null) {
             throw Messages.MSG.requiresOneOf("template", "file");
          }
-         CommandInputLine cmd = new CommandInputLine(Create.CMD)
-               .arg(TYPE, Cache.CMD)
-               .arg(NAME, name)
-               .optionalArg(TEMPLATE, template)
-               .optionalArg(FILE, file != null ? file.getAbsolutePath() : null)
-               .option(VOLATILE, volatileCache);
-         return invocation.execute(cmd);
+
+         RestCacheClient cache = client.cache(name);
+         CacheContainerAdmin.AdminFlag flags[] = volatileCache ? new CacheContainerAdmin.AdminFlag[]{CacheContainerAdmin.AdminFlag.VOLATILE} : new CacheContainerAdmin.AdminFlag[]{};
+         if (template != null) {
+            return cache.createWithTemplate(template, flags);
+         } else {
+            return cache.createWithConfiguration(RestEntity.create(new File(file.getAbsolutePath())), flags);
+         }
       }
    }
 
-   @CommandDefinition(name = Counter.CMD, description = "Create a counter", activator = ConnectionActivator.class)
-   public static class Counter extends CliCommand {
-      public static final String CMD = "counter";
-      public static final String COUNTER_TYPE = "counter-type";
-      public static final String INITIAL_VALUE = "initial-value";
-      public static final String STORAGE = "storage";
-      public static final String UPPER_BOUND = "upper-bound";
-      public static final String LOWER_BOUND = "lower-bound";
-      public static final String CONCURRENCY_LEVEL = "concurrency-level";
+   @CommandDefinition(name = "counter", description = "Create a counter", activator = ConnectionActivator.class)
+   public static class Counter extends RestCliCommand {
 
       @Argument(required = true)
       String name;
@@ -130,17 +125,19 @@ public class Create extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(Create.CMD)
-               .arg(Create.TYPE, Counter.CMD)
-               .arg(Create.NAME, name)
-               .option(COUNTER_TYPE, type)
-               .option(INITIAL_VALUE, initialValue)
-               .option(STORAGE, storage)
-               .option(UPPER_BOUND, upperBound)
-               .option(LOWER_BOUND, lowerBound)
-               .option(CONCURRENCY_LEVEL, concurrencyLevel);
-         return invocation.execute(Collections.singletonList(cmd));
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
+         Json counterBody = Json.object()
+               .set("initial-value", initialValue)
+               .set("concurrency-level", concurrencyLevel)
+               .set("storage", storage);
+         if (upperBound != null) {
+            counterBody.set("upper-bound", upperBound);
+         }
+         if (lowerBound != null) {
+            counterBody.set("lower-bound", lowerBound);
+         }
+         Json counter = Json.object().set(type + "-counter", counterBody);
+         return client.counter(name).create(RestEntity.create(MediaType.APPLICATION_JSON, counter.toString()));
       }
    }
 }

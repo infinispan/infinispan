@@ -9,10 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
@@ -21,17 +21,15 @@ import org.aesh.io.FileResource;
 import org.aesh.readline.AeshContext;
 import org.aesh.readline.Prompt;
 import org.aesh.readline.ReadlineConsole;
-import org.aesh.readline.terminal.formatting.Color;
-import org.aesh.readline.terminal.formatting.TerminalColor;
-import org.aesh.readline.terminal.formatting.TerminalString;
 import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.cli.resources.CacheKeyResource;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.util.SystemUtils;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 
@@ -198,7 +196,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
       }
    }
 
-   private void refreshPrompt() {
+   public void refreshPrompt() {
       if (console != null) {
          if (connection != null) {
             StringBuilder prompt = new StringBuilder();
@@ -213,6 +211,25 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
+   public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException {
+      try {
+         Resource resource;
+         if (fromResource != null) {
+            resource = connection.getActiveResource().findAncestor(fromResource).getChild(resourceType, name);
+         } else {
+            resource = connection.getActiveResource().getResource(name);
+         }
+         if (!(resource instanceof CacheKeyResource)) {
+            connection.setActiveResource(resource);
+         }
+         refreshPrompt();
+         return CommandResult.SUCCESS;
+      } catch (IOException e) {
+         throw new CommandException(e);
+      }
+   }
+
+   @Override
    public void disconnect() {
       Util.close(connection);
       connection = null;
@@ -220,20 +237,13 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public CommandResult execute(Shell shell, List<CommandInputLine> commands) {
-      try {
-         String response = connection.execute(commands);
-         if (response != null && !response.isEmpty()) {
-            shell.writeln(response);
-         }
-         refreshPrompt();
-         return CommandResult.SUCCESS;
-      } catch (Exception e) {
-         TerminalString error = new TerminalString(Util.getRootCause(e).getLocalizedMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
-         shell.writeln(error.toString());
-         refreshPrompt();
-         return CommandResult.FAILURE;
-      }
+   public MediaType getEncoding() {
+      return connection.getEncoding();
+   }
+
+   @Override
+   public void setEncoding(MediaType encoding) {
+      connection.setEncoding(encoding);
    }
 
    @Override

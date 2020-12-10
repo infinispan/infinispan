@@ -3,10 +3,13 @@ package org.infinispan.cli.connection;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiFunction;
 
-import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 
 public interface Connection extends Closeable {
 
@@ -16,15 +19,11 @@ public interface Connection extends Closeable {
 
    String getURI();
 
-   /**
-    * Executes the supplied commands
-    *
-    * @param commands
-    * @return the output.
-    */
-   String execute(List<CommandInputLine> commands) throws IOException;
+   String execute(BiFunction<RestClient, Resource, CompletionStage<RestResponse>> op, ResponseMode responseMode) throws IOException;
 
    Resource getActiveResource();
+
+   void setActiveResource(Resource resource);
 
    Resource getActiveContainer();
 
@@ -73,4 +72,12 @@ public interface Connection extends Closeable {
    Collection<String> getAvailableLoggers() throws IOException;
 
    Collection<String> getBackupNames(String container) throws IOException;
+
+   MediaType getEncoding();
+
+   void setEncoding(MediaType encoding);
+
+   void refreshServerInfo() throws IOException;
+
+   enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

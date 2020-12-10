@@ -1,6 +1,8 @@
 package org.infinispan.client.rest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.client.rest.impl.okhttp.ByteArrayRestEntityOkHttp;
@@ -32,5 +34,21 @@ public interface RestEntity {
 
    static RestEntity create(MediaType contentType, InputStream inputStream) {
       return new InputStreamEntityOkHttp(contentType, inputStream);
+   }
+
+   static RestEntity create(File file) {
+      try (InputStream is = new FileInputStream(file)) {
+         int b;
+         while ((b = is.read()) > -1) {
+            if (b == '{') {
+               return RestEntity.create(MediaType.APPLICATION_JSON, file);
+            } else if (b == '<') {
+               return RestEntity.create(MediaType.APPLICATION_XML, file);
+            }
+         }
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+      return RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, file);
    }
 }

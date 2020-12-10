@@ -34,4 +34,8 @@ public class CacheResource extends AbstractResource {
    public String describe() throws IOException {
       return getConnection().describeCache(getParent().getParent().getName(), name);
    }
+
+   public static String cacheName(Resource resource) {
+      return resource.findAncestor(CacheResource.class).getName();
+   }
 }

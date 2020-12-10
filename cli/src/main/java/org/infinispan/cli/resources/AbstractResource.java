@@ -36,7 +36,7 @@ public abstract class AbstractResource implements Resource {
 
    @Override
    public Resource getChild(String name) throws IOException {
-      if (Resource.PARENT.equals(name)) {
+      if (Resource.PARENT.equals(name) && parent != null) {
          return parent;
       } else {
          throw Messages.MSG.noSuchResource(name);
@@ -77,5 +77,34 @@ public abstract class AbstractResource implements Resource {
 
    Connection getConnection() {
       return findAncestor(RootResource.class).getConnection();
+   }
+
+   @Override
+   public Resource getResource(String path) throws IOException {
+      if (path == null || Resource.THIS.equals(path)) {
+         return this;
+      } else if (Resource.PARENT.equals(path)) {
+         Resource parent = getParent();
+         if (parent != null) {
+            return parent;
+         } else {
+            throw Messages.MSG.illegalContext();
+         }
+      } else {
+         String[] parts = path.split("/");
+         if (parts.length == 0) {
+            return findAncestor(RootResource.class);
+         } else {
+            Resource resource = this;
+            for (String part : parts) {
+               if (part.isEmpty()) {
+                  resource = resource.findAncestor(RootResource.class);
+               } else {
+                  resource = resource.getChild(part);
+               }
+            }
+            return resource;
+         }
+      }
    }
 }

@@ -1,13 +1,18 @@
 package org.infinispan.cli.commands;
 
+import java.io.IOException;
+
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CdContextCompleter;
+import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.Resource;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -15,9 +20,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Ls.CMD, description = "Lists resources in a path", activator = ConnectionActivator.class)
+@CommandDefinition(name = "ls", description = "Lists resources in a path", activator = ConnectionActivator.class)
 public class Ls extends CliCommand {
-   public static final String CMD = "ls";
 
    @Argument(description = "The path of the subsystem/item", completer = CdContextCompleter.class)
    String path;
@@ -31,9 +35,17 @@ public class Ls extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD)
-            .optionalArg(PATH, path);
-      return invocation.execute(cmd);
+   public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+      try {
+         Connection connection = invocation.getContext().getConnection();
+         connection.refreshServerInfo();
+         Resource resource = connection.getActiveResource().getResource(path);
+         for (String item : resource.getChildrenNames()) {
+            invocation.println(item);
+         }
+         return CommandResult.SUCCESS;
+      } catch (IOException e) {
+         throw new CommandException(e);
+      }
    }
 }

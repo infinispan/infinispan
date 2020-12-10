@@ -25,10 +25,8 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Patch.CMD, description = "Patch operations", groupCommands = {Patch.Create.class, Patch.Describe.class, Patch.Install.class, Patch.Ls.class, Patch.Rollback.class})
+@GroupCommandDefinition(name = "patch", description = "Patch operations", groupCommands = {Patch.Create.class, Patch.Describe.class, Patch.Install.class, Patch.Ls.class, Patch.Rollback.class})
 public class Patch extends CliCommand {
-
-   public static final String CMD = "patch";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -45,9 +43,8 @@ public class Patch extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Create.CMD, description = "Creates a patch archive")
+   @CommandDefinition(name = "create", description = "Creates a patch archive")
    public static class Create extends CliCommand {
-      public static final String CMD = "create";
 
       @Option(defaultValue = "", shortName = 'q', description = "A qualifier for this patch (e.g. `one-off`)")
       String qualifier;
@@ -84,9 +81,8 @@ public class Patch extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Describe.CMD, description = "Describes the contents of a patch archive")
+   @CommandDefinition(name = "describe", description = "Describes the contents of a patch archive")
    public static class Describe extends CliCommand {
-      public static final String CMD = "describe";
 
       @Argument(completer = FileOptionCompleter.class, description = "The path to a patch archive")
       Resource patch;
@@ -118,9 +114,8 @@ public class Patch extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Install.CMD, description = "Installs a patch archive")
+   @CommandDefinition(name = "install", description = "Installs a patch archive")
    public static class Install extends CliCommand {
-      public static final String CMD = "install";
 
       @Argument(completer = FileOptionCompleter.class, description = "The path to a patch archive")
       Resource patch;
@@ -154,9 +149,8 @@ public class Patch extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Ls.CMD, description = "Lists the patches installed on this server", aliases = "list")
+   @CommandDefinition(name = "ls", description = "Lists the patches installed on this server", aliases = "list")
    public static class Ls extends CliCommand {
-      public static final String CMD = "ls";
 
       @Option(completer = FileOptionCompleter.class, description = "The path to the server installation.")
       Resource server;
@@ -180,9 +174,8 @@ public class Patch extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Rollback.CMD, description = "Rolls back the latest patch installed on this server.")
+   @CommandDefinition(name = "rollback", description = "Rolls back the latest patch installed on this server.")
    public static class Rollback extends CliCommand {
-      public static final String CMD = "rollback";
 
       @Option(completer = FileOptionCompleter.class, description = "The path to the server installation.")
       Resource server;

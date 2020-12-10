@@ -1,14 +1,20 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
+
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.BooleanOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CounterCompleter;
+import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.CounterResource;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -16,11 +22,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Add.CMD, description = "Adds/subtracts a value to/from a counter", activator = ConnectionActivator.class)
-public class Add extends CliCommand {
-   public static final String CMD = "add";
-   public static final String COUNTER = "counter";
-   public static final String DELTA = "delta";
+@CommandDefinition(name = "add", description = "Adds/subtracts a value to/from a counter", activator = ConnectionActivator.class)
+public class Add extends RestCliCommand {
 
    @Argument(completer = CounterCompleter.class, description = "The name of the counter")
    String counter;
@@ -40,11 +43,12 @@ public class Add extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD)
-            .optionalArg(COUNTER, counter)
-            .option(QUIET, quiet)
-            .option(DELTA, delta);
-      return invocation.execute(cmd);
+   protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+      return client.counter(counter != null ? counter : CounterResource.counterName(resource)).add(delta);
+   }
+
+   @Override
+   public Connection.ResponseMode getResponseMode() {
+      return quiet ? Connection.ResponseMode.QUIET : Connection.ResponseMode.BODY;
    }
 }

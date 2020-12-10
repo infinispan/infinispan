@@ -1,6 +1,6 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
 
-import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -9,9 +9,13 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
+import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.completers.CounterCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -19,10 +23,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Drop.CMD, description = "Drops a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Drop.Cache.class, Drop.Counter.class})
+@GroupCommandDefinition(name = "drop", description = "Drops a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Drop.Cache.class, Drop.Counter.class})
 public class Drop extends CliCommand {
-
-   public static final String CMD = "drop";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -39,9 +41,8 @@ public class Drop extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Cache.CMD, description = "Drop a cache", activator = ConnectionActivator.class)
-   public static class Cache extends CliCommand {
-      public static final String CMD = "cache";
+   @CommandDefinition(name = "cache", description = "Drop a cache", activator = ConnectionActivator.class)
+   public static class Cache extends RestCliCommand {
 
       @Argument(required = true, completer = CacheCompleter.class, description = "The cache name")
       String name;
@@ -55,20 +56,13 @@ public class Drop extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         if (help) {
-            invocation.println(invocation.getHelpInfo());
-         }
-         CommandInputLine cmd = new CommandInputLine(Drop.CMD)
-               .arg("type", Cache.CMD)
-               .arg(NAME, name);
-         return invocation.execute(cmd);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.cache(name).delete();
       }
    }
 
-   @CommandDefinition(name = Counter.CMD, description = "Drop a counter", activator = ConnectionActivator.class)
-   public static class Counter extends CliCommand {
-      public static final String CMD = "counter";
+   @CommandDefinition(name = "counter", description = "Drop a counter", activator = ConnectionActivator.class)
+   public static class Counter extends RestCliCommand {
 
       @Argument(required = true, completer = CounterCompleter.class, description = "The counter name")
       String name;
@@ -82,14 +76,8 @@ public class Drop extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         if (help) {
-            invocation.println(invocation.getHelpInfo());
-         }
-         CommandInputLine cmd = new CommandInputLine(Drop.CMD)
-               .arg("type", Counter.CMD)
-               .arg(NAME, name);
-         return invocation.execute(Collections.singletonList(cmd));
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.counter(name).delete();
       }
    }
 }

@@ -32,10 +32,9 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Credentials.CMD, description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class})
+@GroupCommandDefinition(name = "credentials", description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class})
 public class Credentials extends CliCommand {
 
-   public static final String CMD = "credentials";
    public static final String STORE_TYPE = "pkcs12";
    public static final String CREDENTIALS_PATH = "credentials.pfx";
 
@@ -80,9 +79,8 @@ public class Credentials extends CliCommand {
 
    }
 
-   @CommandDefinition(name = Add.CMD, description = "Adds credentials to keystores.")
+   @CommandDefinition(name = "add", description = "Adds credentials to keystores.")
    public static class Add extends CliCommand {
-      public static final String CMD = "add";
 
       @Argument(description = "Specifies an alias, or name, for the credential.", required = true)
       String alias;
@@ -130,9 +128,8 @@ public class Credentials extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Remove.CMD, description = "Deletes credentials from keystores.", aliases = "rm")
+   @CommandDefinition(name = "remove", description = "Deletes credentials from keystores.", aliases = "rm")
    public static class Remove extends CliCommand {
-      public static final String CMD = "remove";
 
       @Argument(description = "Specifies an alias, or name, for the credential.", required = true)
       String alias;
@@ -174,9 +171,8 @@ public class Credentials extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Ls.CMD, description = "Lists credential aliases in keystores.")
+   @CommandDefinition(name = "ls", description = "Lists credential aliases in keystores.")
    public static class Ls extends CliCommand {
-      public static final String CMD = "ls";
 
       @Option(description = "Sets the path to a credential keystore.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
       Resource path;

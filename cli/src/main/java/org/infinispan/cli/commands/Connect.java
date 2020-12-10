@@ -13,9 +13,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Connect.CMD, description = "Connects to a remote server")
+@CommandDefinition(name = "connect", description = "Connects to a remote server")
 public class Connect extends CliCommand {
-   public static final String CMD = "connect";
    @Argument(description = "The connection string 'http://<host>:<port>")
    String connectionString;
 

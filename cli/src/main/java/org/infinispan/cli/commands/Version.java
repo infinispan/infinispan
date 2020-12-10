@@ -15,10 +15,8 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Version.CMD, description = "Shows version information")
+@CommandDefinition(name = "version", description = "Shows version information")
 public class Version extends CliCommand {
-
-   public static final String CMD = "version";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;

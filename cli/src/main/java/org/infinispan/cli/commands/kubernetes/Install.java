@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
@@ -15,7 +14,6 @@ import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContextImpl;
 import org.infinispan.commons.util.TypedProperties;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -23,10 +21,8 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
-@CommandDefinition(name = Install.CMD, description = "Installs the operator")
+@CommandDefinition(name = "install", description = "Installs the operator")
 public class Install extends CliCommand {
-   public static final String CMD = "install";
 
    @Option(shortName = 'n', description = "Select the namespace")
    String namespace;

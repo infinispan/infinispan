@@ -2,6 +2,7 @@ package org.infinispan.cli.commands;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -15,9 +16,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Cd.CMD, description = "Selects a subsystem or item", activator = ConnectionActivator.class)
+@CommandDefinition(name = "cd", description = "Selects a subsystem or item", activator = ConnectionActivator.class)
 public class Cd extends CliCommand {
-   public static final String CMD = "cd";
 
    @Argument(description = "The name of the subsystem/item", completer = CdContextCompleter.class, required = true)
    String path;
@@ -31,8 +31,7 @@ public class Cd extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD).arg(PATH, path);
-      return invocation.execute(cmd);
+   public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+      return invocation.getContext().changeResource(null, null, path);
    }
 }

@@ -1,4 +1,6 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
+
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -6,7 +8,12 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
+import org.infinispan.cli.commands.CliCommand;
+import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -14,11 +21,8 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Server.CMD, description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Server.Report.class})
+@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Server.Report.class})
 public class Server extends CliCommand {
-
-   public static final String CMD = "server";
-   public static final String NAME = "name";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -34,9 +38,8 @@ public class Server extends CliCommand {
       return CommandResult.SUCCESS;
    }
 
-   @CommandDefinition(name = Report.CMD, description = "Obtains an aggregate report from the server", activator = ConnectionActivator.class)
-   public static class Report extends CliCommand {
-      public static final String CMD = "report";
+   @CommandDefinition(name = "report", description = "Obtains an aggregate report from the server", activator = ConnectionActivator.class)
+   public static class Report extends RestCliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
@@ -47,10 +50,13 @@ public class Server extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(Server.CMD)
-               .arg(TYPE, Report.CMD);
-         return invocation.execute(cmd);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.server().report();
+      }
+
+      @Override
+      public Connection.ResponseMode getResponseMode() {
+         return Connection.ResponseMode.FILE;
       }
    }
 }

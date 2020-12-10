@@ -2,12 +2,15 @@ package org.infinispan.cli.commands;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.CachesResource;
+import org.infinispan.cli.resources.ContainerResource;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -15,10 +18,9 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Cache.CMD, description = "Selects a cache", activator = ConnectionActivator.class)
+@CommandDefinition(name = "cache", description = "Selects a cache", activator = ConnectionActivator.class)
 public class Cache extends CliCommand {
 
-   public static final String CMD = "cache";
    @Argument(description = "The name of the cache", completer = CacheCompleter.class, required = true)
    String name;
 
@@ -31,8 +33,7 @@ public class Cache extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD).arg("name", name);
-      return invocation.execute(cmd);
+   public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+      return invocation.getContext().changeResource(ContainerResource.class, CachesResource.NAME, name);
    }
 }

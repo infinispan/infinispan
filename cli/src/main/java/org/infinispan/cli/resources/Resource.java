@@ -58,4 +58,6 @@ public interface Resource {
    static Resource getRootResource(Connection connection) {
       return new RootResource(connection);
    }
+
+   Resource getResource(String path) throws IOException;
 }

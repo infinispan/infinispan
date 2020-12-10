@@ -13,10 +13,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Disconnect.CMD, description = "Disconnects from a remote server", activator = ConnectionActivator.class)
+@CommandDefinition(name = "disconnect", description = "Disconnects from a remote server", activator = ConnectionActivator.class)
 public class Disconnect extends CliCommand {
-
-   public static final String CMD = "disconnect";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
