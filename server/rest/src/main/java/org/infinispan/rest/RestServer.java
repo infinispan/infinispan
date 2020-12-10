@@ -35,6 +35,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 
 /**
  * REST Protocol Server.
@@ -66,6 +67,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
       return new NettyInitializers(getRestChannelInitializer());
+   }
+
+   @Override
+   public ChannelMatcher getChannelMatcher() {
+      return channel -> channel.pipeline().get(RestRequestHandler.class) != null;
    }
 
    /**

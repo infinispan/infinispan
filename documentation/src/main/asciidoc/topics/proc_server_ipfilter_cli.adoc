@@ -1,0 +1,28 @@
+[id='user_tool-{context}']
+= Inspecting and modifying {brandname} Server IP filter rules
+
+.Procedure
+
+. Open a terminal in `{server_home}`.
+. Inspect and modify the IP filter rules [command]`server connector ipfilter` command as required.
++
+List all IP filtering rules active on a connector across the cluster:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> server connector ipfilter ls endpoint-default
+----
++
+. Set some IP filtering rules across the whole cluster. Replaces all existing rules.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> server connector ipfilter set endpoint-default --rules=ACCEPT/192.168.0.0/16,REJECT/10.0.0.0/8`
+----
++
+. Removes all IP filtering rules on a connector across the cluster.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> server connector ipfilter clear endpoint-default
+----

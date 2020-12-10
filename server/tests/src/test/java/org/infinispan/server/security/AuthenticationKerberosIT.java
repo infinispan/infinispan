@@ -1,8 +1,8 @@
 package org.infinispan.server.security;
 
-import static org.infinispan.server.security.Common.HTTP_KERBEROS_MECHS;
-import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.HTTP_KERBEROS_MECHS;
+import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -17,13 +17,14 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.LdapServerRule;
+import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.infinispan.server.test.core.LdapServerRule;
-import org.infinispan.server.test.core.category.Security;
-import org.infinispan.commons.test.Exceptions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

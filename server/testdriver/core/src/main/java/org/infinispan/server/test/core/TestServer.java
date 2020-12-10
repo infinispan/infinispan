@@ -61,20 +61,21 @@ public class TestServer {
     * @return a client configured against the Hot Rod endpoint exposed by the server
     */
    public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder, int port) {
-      if(getDriver().getConfiguration().runMode() == ServerRunMode.CONTAINER) {
-         ContainerInfinispanServerDriver containerDriver =  (ContainerInfinispanServerDriver) serverDriver;
-         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-            InfinispanGenericContainer container = containerDriver.getContainer(0);
-            String hostIpAddress = DockerClientFactory.instance().dockerHostIpAddress();
-            builder.addServer().host(hostIpAddress).port(container.getMappedPort(port));
-         }
-      } else {
-         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-            InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-            builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      if (builder.servers().isEmpty()) {
+         if (getDriver().getConfiguration().runMode() == ServerRunMode.CONTAINER) {
+            ContainerInfinispanServerDriver containerDriver = (ContainerInfinispanServerDriver) serverDriver;
+            for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+               InfinispanGenericContainer container = containerDriver.getContainer(0);
+               String hostIpAddress = DockerClientFactory.instance().dockerHostIpAddress();
+               builder.addServer().host(hostIpAddress).port(container.getMappedPort(port));
+            }
+         } else {
+            for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+               InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
+               builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+            }
          }
       }
-
       return getDriver().createRemoteCacheManager(builder);
    }
 

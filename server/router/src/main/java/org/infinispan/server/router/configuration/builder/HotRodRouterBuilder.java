@@ -1,6 +1,7 @@
 package org.infinispan.server.router.configuration.builder;
 
 import org.infinispan.server.router.configuration.HotRodRouterConfiguration;
+import org.infinispan.server.router.logging.RouterLogger;
 
 /**
  * Configuration builder for Hot Rod.
@@ -31,7 +32,7 @@ public class HotRodRouterBuilder extends AbstractRouterBuilder {
             try {
                 validate();
             } catch (Exception e) {
-                throw logger.configurationValidationError(e);
+                throw RouterLogger.SERVER.configurationValidationError(e);
             }
             return new HotRodRouterConfiguration(ip, port, sendBufferSize, receiveBufferSize, tcpKeepAlive, tcpNoDelay);
         }

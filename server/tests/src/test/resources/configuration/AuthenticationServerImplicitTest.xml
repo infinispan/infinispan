@@ -18,6 +18,6 @@
 
       <xi:include href="security/properties-alternate.xml"/>
 
-      <xi:include href="endpoints/multiple-connectors.xml"/>
+      <xi:include href="endpoints/auth-multiple.xml"/>
    </server>
 </infinispan>

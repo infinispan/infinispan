@@ -48,6 +48,7 @@ import org.infinispan.server.configuration.security.TokenRealmConfigurationBuild
 import org.infinispan.server.configuration.security.TrustStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.TrustStoreRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
+import org.infinispan.server.core.configuration.IpFilterConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
@@ -1380,7 +1381,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
          }
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         reader.handleAny(holder);
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case IP_FILTER: {
+               parseConnectorIpFilter(reader, endpoint.singlePort().ipFilter());
+               break;
+            }
+            default:
+               reader.handleAny(holder);
+               break;
+         }
       }
       if (endpoint.connectors().isEmpty()) {
          endpoint.addConnector(HotRodServerConfigurationBuilder.class).socketBinding(socketBinding);
@@ -1447,6 +1457,39 @@ public class ServerConfigurationParser implements ConfigurationParser {
             }
             default:
                throw ParseUtils.unexpectedAttribute(reader, index);
+         }
+      }
+   }
+
+   public static void parseCommonConnectorElements(XMLExtendedStreamReader reader, ProtocolServerConfigurationBuilder<?, ?> builder) throws XMLStreamException {
+      Element element = Element.forName(reader.getLocalName());
+      switch (element) {
+         case IP_FILTER: {
+            parseConnectorIpFilter(reader, builder.ipFilter());
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private static void parseConnectorIpFilter(XMLExtendedStreamReader reader, IpFilterConfigurationBuilder builder) throws XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ACCEPT: {
+               builder.allowFrom(ParseUtils.requireSingleAttribute(reader, Attribute.FROM));
+               ParseUtils.requireNoContent(reader);
+               break;
+            }
+            case REJECT: {
+               builder.rejectFrom(ParseUtils.requireSingleAttribute(reader, Attribute.FROM));
+               ParseUtils.requireNoContent(reader);
+               break;
+            }
+            default:
+               throw ParseUtils.unexpectedElement(reader);
          }
       }
    }

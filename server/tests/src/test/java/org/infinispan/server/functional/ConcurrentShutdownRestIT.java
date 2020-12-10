@@ -2,7 +2,7 @@ package org.infinispan.server.functional;
 
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.functional.ShutdownRestIT.isServerShutdown;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.sync;
 
 import java.util.concurrent.CompletionStage;
 

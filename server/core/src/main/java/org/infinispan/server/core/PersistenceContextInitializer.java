@@ -12,8 +12,7 @@ import org.infinispan.server.core.backup.resources.CounterResource;
       },
       includeClasses = {
             CacheResource.CacheBackupEntry.class,
-            CounterResource.CounterBackupEntry.class,
-            CacheIgnoreManager.IgnoredCaches.class
+            CounterResource.CounterBackupEntry.class
       },
       schemaFileName = "persistence.server.core.proto",
       schemaFilePath = "proto/generated",

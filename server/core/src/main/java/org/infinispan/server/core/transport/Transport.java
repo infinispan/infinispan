@@ -1,5 +1,9 @@
 package org.infinispan.server.core.transport;
 
+import java.util.concurrent.CompletionStage;
+
+import io.netty.channel.group.ChannelMatcher;
+
 /**
  * Server transport abstraction
  *
@@ -11,6 +15,8 @@ public interface Transport {
    void start();
 
    void stop();
+
+   boolean isRunning();
 
    long getTotalBytesWritten();
 
@@ -36,4 +42,5 @@ public interface Transport {
 
    int getNumberOfGlobalConnections();
 
+   CompletionStage<Void> closeChannels(ChannelMatcher channelMatcher);
 }

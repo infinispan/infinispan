@@ -6,6 +6,7 @@ import java.net.InetAddress;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.router.Router;
@@ -15,7 +16,6 @@ import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.hotrod.SniNettyRouteSource;
 import org.infinispan.server.router.utils.HotRodClientTestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

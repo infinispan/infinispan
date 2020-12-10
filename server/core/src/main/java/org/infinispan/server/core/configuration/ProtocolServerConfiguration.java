@@ -38,6 +38,7 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
 
    // The default value can be overridden so it is the responsibility of each protocol to add it to the set
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 1).immutable().build();
+   private volatile boolean enabled = true;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ProtocolServerConfiguration.class,
@@ -63,10 +64,12 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
    protected final AttributeSet attributes;
 
    protected final SslConfiguration ssl;
+   protected final IpFilterConfiguration ipFilter;
 
-   protected ProtocolServerConfiguration(AttributeSet attributes, SslConfiguration ssl) {
+   protected ProtocolServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
       this.attributes = attributes.checkProtection();
       this.ssl = ssl;
+      this.ipFilter = ipFilter;
 
       defaultCacheName = attributes.attribute(DEFAULT_CACHE_NAME);
       zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
@@ -121,6 +124,10 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
       return ssl;
    }
 
+   public IpFilterConfiguration ipFilter() {
+      return ipFilter;
+   }
+
    public boolean tcpNoDelay() {
       return tcpNoDelay.get();
    }
@@ -156,5 +163,17 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
    @Override
    public String toString() {
       return "ProtocolServerConfiguration[" + attributes + "]";
+   }
+
+   public void disable() {
+      this.enabled = false;
+   }
+
+   public void enable() {
+      this.enabled = true;
+   }
+
+   public boolean isEnabled() {
+      return enabled;
    }
 }

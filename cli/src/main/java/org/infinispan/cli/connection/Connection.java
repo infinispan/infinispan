@@ -77,6 +77,8 @@ public interface Connection extends Closeable {
 
    String getLocalSiteName();
 
+   Collection<String> getConnectorNames() throws IOException;
+
    MediaType getEncoding();
 
    void setEncoding(MediaType encoding);

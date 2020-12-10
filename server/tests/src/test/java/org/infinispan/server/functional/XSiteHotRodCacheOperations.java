@@ -6,7 +6,7 @@ import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_XML
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
 import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

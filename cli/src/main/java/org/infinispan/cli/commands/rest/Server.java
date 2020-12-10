@@ -21,7 +21,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Server.Report.class})
+@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, Server.Report.class})
 public class Server extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)

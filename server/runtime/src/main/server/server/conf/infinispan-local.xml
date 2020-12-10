@@ -39,6 +39,10 @@
       </security>
 
       <endpoints socket-binding="default" security-realm="default">
+         <ip-filter>
+            <reject from="172.16.0.0/16"/>
+            <accept from="127.0.0.0/8"/>
+         </ip-filter>
          <hotrod-connector name="hotrod"/>
          <rest-connector name="rest"/>
          <!-- Uncomment to enable the memcached connector -->

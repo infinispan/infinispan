@@ -1,9 +1,7 @@
 package org.infinispan.server.router.router.impl.hotrod.handlers;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.impl.hotrod.handlers.util.SslUtils;
@@ -22,9 +20,6 @@ import io.netty.util.DomainNameMappingBuilder;
  * @author Sebastian Łaskawiec
  */
 public class SniHandlerInitializer extends ChannelInitializer<Channel> {
-
-    private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
     private final RoutingTable routingTable;
 
     /**
@@ -47,7 +42,7 @@ public class SniHandlerInitializer extends ChannelInitializer<Channel> {
 
         DomainNameMapping<SslContext> domainNameMapping = domainMappingBuilder.build();
 
-        logger.initializedSni(domainNameMapping);
+        RouterLogger.SERVER.debugf("Using SNI Handler with domain mapping %s", domainNameMapping);
 
         channel.pipeline().addLast(new SniRouteHandler(domainNameMapping, routingTable));
     }

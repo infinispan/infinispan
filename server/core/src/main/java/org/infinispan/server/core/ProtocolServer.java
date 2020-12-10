@@ -8,6 +8,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 
 /**
  * Represents a protocol compliant server.
@@ -65,5 +66,20 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
    /**
     * Sets the {@link ServerManagement} instance for this protocol server
     */
-   void setServer(ServerManagement server);
+   void setServerManagement(ServerManagement server);
+
+   /**
+    * Sets the enclosing {@link ProtocolServer}. Used by the single port server
+    */
+   void setEnclosingProtocolServer(ProtocolServer<?> enclosingProtocolServer);
+
+   /**
+    * Returns the enclosing {@link ProtocolServer}. May be null if this server has none.
+    */
+   ProtocolServer<?> getEnclosingProtocolServer();
+
+   /**
+    * Returns a {@link ChannelMatcher} which matches channels which belong to this protocol server
+    */
+   ChannelMatcher getChannelMatcher();
 }

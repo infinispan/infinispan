@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +44,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
@@ -63,10 +63,10 @@ import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
-import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.RequestTracer;
 import org.infinispan.server.core.ServerManagement;
+import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.backup.BackupManagerImpl;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -82,6 +82,7 @@ import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
+import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -177,7 +178,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private volatile ComponentStatus status;
    private ServerConfiguration serverConfiguration;
    private Extensions extensions;
-   private CacheIgnoreManager cacheIgnoreManager;
+   private ServerStateManager serverStateManager;
    private ScheduledExecutorService scheduler;
    private TaskManager taskManager;
    private ServerInitialContextFactoryBuilder initialContextFactoryBuilder;
@@ -348,7 +349,8 @@ public class Server implements ServerManagement, AutoCloseable {
 
          BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
          blockingManager = bcr.getComponent(BlockingManager.class).running();
-         cacheIgnoreManager = bcr.getComponent(CacheIgnoreManager.class).running();
+         serverStateManager = new ServerStateManagerImpl(this, cm, bcr.getComponent(GlobalConfigurationManager.class).running());
+         bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
 
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
@@ -367,13 +369,13 @@ public class Server implements ServerManagement, AutoCloseable {
          for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
             // Start the protocol servers
             SinglePortRouteSource routeSource = new SinglePortRouteSource();
-            ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
+            Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = ConcurrentHashMap.newKeySet();
             endpoint.connectors().parallelStream().forEach(configuration -> {
                try {
                   Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                   ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
                   if (endpoint.admin()) {
-                     protocolServer.setServer(this);
+                     protocolServer.setServerManagement(this);
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cm);
@@ -382,10 +384,10 @@ public class Server implements ServerManagement, AutoCloseable {
                      log.protocolStarted(protocolServer.getName(), configuration.socketBinding(), protocolConfig.host(), protocolConfig.port());
                   } else {
                      if (protocolServer instanceof HotRodServer) {
-                        routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
+                        routes.add(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)));
                         extensions.apply((HotRodServer) protocolServer);
                      } else if (protocolServer instanceof RestServer) {
-                        routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
+                        routes.add(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)));
                      }
                      log.protocolStarted(protocolServer.getName());
                   }
@@ -397,14 +399,15 @@ public class Server implements ServerManagement, AutoCloseable {
             // Next we start the single-port endpoints
             SinglePortRouterConfiguration singlePortRouter = endpoint.singlePortRouter();
             SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
-            endpointServer.start(new RoutingTable(routes.keySet()));
-            protocolServers.put("endpoint-" + singlePortRouter.host() + ":" + singlePortRouter.port(), endpointServer);
+            endpointServer.start(new RoutingTable(routes));
+            protocolServers.put("endpoint-" + endpoint.socketBinding(), endpointServer);
             log.protocolStarted(endpointServer.getName(), singlePortRouter.socketBinding(), singlePortRouter.host(), singlePortRouter.port());
             log.endpointUrl(
                   Util.requireNonNullElse(cm.getAddress(), "local"),
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
             );
          }
+         serverStateManager.start();
          // Change status
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
@@ -566,8 +569,8 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    @Override
-   public CacheIgnoreManager getIgnoreManager(String cacheManager) {
-      return cacheIgnoreManager;
+   public ServerStateManager getServerStateManager() {
+      return serverStateManager;
    }
 
    public ConfigurationBuilderHolder getConfigurationBuilderHolder() {
@@ -582,6 +585,7 @@ public class Server implements ServerManagement, AutoCloseable {
       return cacheManagers;
    }
 
+   @Override
    public Map<String, ProtocolServer> getProtocolServers() {
       return protocolServers;
    }

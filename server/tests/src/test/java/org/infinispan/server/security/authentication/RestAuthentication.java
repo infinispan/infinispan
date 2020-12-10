@@ -1,8 +1,8 @@
 package org.infinispan.server.security.authentication;
 
-import static org.infinispan.server.security.Common.HTTP_MECHS;
-import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.HTTP_MECHS;
+import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
@@ -14,13 +14,12 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.server.security.Common;
-
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.InfinispanServerDriver;
+import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.infinispan.server.test.core.category.Security;
-import org.infinispan.commons.test.Exceptions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;

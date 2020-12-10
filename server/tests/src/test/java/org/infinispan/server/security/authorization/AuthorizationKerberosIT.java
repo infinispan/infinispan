@@ -5,7 +5,7 @@ import javax.security.auth.Subject;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.server.security.Common;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerRule;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;

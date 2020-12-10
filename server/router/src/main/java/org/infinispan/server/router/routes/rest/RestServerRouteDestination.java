@@ -3,7 +3,7 @@ package org.infinispan.server.router.routes.rest;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.router.routes.RouteDestination;
 
-public class RestServerRouteDestination implements RouteDestination {
+public class RestServerRouteDestination implements RouteDestination<RestServer> {
 
     private final String name;
     private final RestServer restServer;
@@ -17,7 +17,8 @@ public class RestServerRouteDestination implements RouteDestination {
         return name;
     }
 
-    public RestServer getRestServer() {
+    @Override
+    public RestServer getProtocolServer() {
         return restServer;
     }
 
@@ -36,4 +37,5 @@ public class RestServerRouteDestination implements RouteDestination {
             throw new IllegalArgumentException("REST resource can not be null");
         }
     }
+
 }

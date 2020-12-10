@@ -85,6 +85,13 @@
       </dependency>
 
        <!-- and now for unit and integration tests -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-core</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
        <dependency>
            <groupId>org.infinispan.protostream</groupId>
            <artifactId>protostream</artifactId>

@@ -2,12 +2,14 @@ package org.infinispan.server.logging;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.naming.NamingException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.OS;
+import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -203,4 +205,20 @@ public interface Log extends BasicLogger {
 
    @Message(value = "No default trust manager available", id = 80054)
    CacheConfigurationException noDefaultTrustManager();
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Connector '%s': IP filter set: %s", id = 80055)
+   void connectorIpFilterSet(String connector, List<IpSubnetFilterRule> rules);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Connector '%s': IP filter cleared", id = 80056)
+   void connectorIpFilterCleared(String connector);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Connector '%s': stopped", id = 80057)
+   void connectorStopped(String connector);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Connector '%s': started", id = 80058)
+   void connectorStarted(String connector);
 }

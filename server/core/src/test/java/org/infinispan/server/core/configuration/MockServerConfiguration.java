@@ -8,7 +8,7 @@ public class MockServerConfiguration extends ProtocolServerConfiguration {
       return new AttributeSet(MockServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS);
    }
 
-   protected MockServerConfiguration(AttributeSet attributes, SslConfiguration ssl) {
-      super(attributes, ssl);
+   protected MockServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
+      super(attributes, ssl, ipRules);
    }
 }

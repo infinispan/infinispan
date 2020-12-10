@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.memcached;
 
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -101,7 +102,8 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      ParseUtils.requireNoContent(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
+      }
    }
-
 }

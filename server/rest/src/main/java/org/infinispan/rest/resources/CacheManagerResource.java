@@ -57,7 +57,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
-import org.infinispan.server.core.CacheIgnoreManager;
+import org.infinispan.server.core.ServerStateManager;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -76,7 +76,7 @@ public class CacheManagerResource implements ResourceHandler {
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
    private final RestCacheManager<Object> restCacheManager;
-   private final CacheIgnoreManager cacheIgnoreManager;
+   private final ServerStateManager serverStateManager;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
@@ -86,7 +86,7 @@ public class CacheManagerResource implements ResourceHandler {
       this.cacheManagerName = globalConfiguration.cacheManagerName();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-      this.cacheIgnoreManager = globalComponentRegistry.getComponent(CacheIgnoreManager.class);
+      this.serverStateManager = globalComponentRegistry.getComponent(ServerStateManager.class);
    }
 
    @Override
@@ -203,7 +203,7 @@ public class CacheManagerResource implements ResourceHandler {
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
 
-      Set<String> ignoredCaches = cacheIgnoreManager.getIgnoredCaches();
+      Set<String> ignoredCaches = serverStateManager.getIgnoredCaches();
       for (CacheHealth ch : SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
          cachesHealth.put(ch.getCacheName(), ch.getStatus());
       }

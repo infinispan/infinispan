@@ -1,10 +1,8 @@
 package org.infinispan.server.router.router.impl.hotrod.handlers;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Optional;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.routes.Route;
@@ -25,9 +23,6 @@ import io.netty.util.DomainNameMapping;
  * @author Sebastian Łaskawiec
  */
 public class SniRouteHandler extends SniHandler {
-
-    private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
     private final RoutingTable routingTable;
 
     /**
@@ -48,16 +43,16 @@ public class SniRouteHandler extends SniHandler {
         if (isHandShaked()) {
             // At this point Netty has replaced SNIHandler (formally this) with SSLHandler in the pipeline.
             // Now we need to add other handlers at the tail of the queue
-            logger.debugf("Handshaked with hostname %s", hostname());
+            RouterLogger.SERVER.debugf("Handshaked with hostname %s", hostname());
             Optional<Route<SniRouteSource, HotRodServerRouteDestination>> route = routingTable.streamRoutes(SniRouteSource.class, HotRodServerRouteDestination.class)
                     .filter(r -> r.getRouteSource().getSniHostName().equals(this.hostname()))
                     .findAny();
 
-            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDestination();
-            ChannelInitializer<Channel> channelInitializer = routeDestination.getHotrodServer().getInitializer();
+            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> RouterLogger.SERVER.noRouteFound()).getRouteDestination();
+            ChannelInitializer<Channel> channelInitializer = routeDestination.getProtocolServer().getInitializer();
 
             ctx.pipeline().addLast(channelInitializer);
-            logger.debug("Replaced with route destination's handlers");
+            RouterLogger.SERVER.debug("Replaced with route destination's handlers");
         }
     }
 

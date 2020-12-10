@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.DummyServerStateManager;
+import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -36,6 +38,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = createTestCacheManager();
+      cacheManager.getGlobalComponentRegistry().registerComponent(new DummyServerStateManager(), ServerStateManager.class);
       server = startMemcachedTextServer(cacheManager);
       client = createMemcachedClient(60000, server.getPort());
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());

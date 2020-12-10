@@ -1,9 +1,7 @@
 package org.infinispan.server.router.router.impl.rest.handlers;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.rest.RestRequestHandler;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
@@ -21,9 +19,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
  * @author Sebastian Łaskawiec
  */
 public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<FullHttpRequest> {
-
-   private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
    private final RoutingTable routingTable;
 
    public ChannelInboundHandlerDelegator(RoutingTable routingTable) {
@@ -35,17 +30,17 @@ public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<
       String[] uriSplitted = msg.uri().split("/");
       //we are paring something like this: /rest/<context or prefix>/...
       if (uriSplitted.length < 2) {
-         throw logger.noRouteFound();
+         throw RouterLogger.SERVER.noRouteFound();
       }
       String context = uriSplitted[2];
 
-      logger.debugf("Decoded context %s", context);
+      RouterLogger.SERVER.debugf("Decoded context %s", context);
       Optional<Route<PrefixedRouteSource, RestServerRouteDestination>> route = routingTable.streamRoutes(PrefixedRouteSource.class, RestServerRouteDestination.class)
             .filter(r -> r.getRouteSource().getRoutePrefix().equals(context))
             .findAny();
 
-      RestServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDestination();
-      RestRequestHandler restHandler = (RestRequestHandler) routeDestination.getRestServer().getRestChannelInitializer().getAlpnHandler().getRestHandler();
+      RestServerRouteDestination routeDestination = route.orElseThrow(() -> RouterLogger.SERVER.noRouteFound()).getRouteDestination();
+      RestRequestHandler restHandler = (RestRequestHandler) routeDestination.getProtocolServer().getRestChannelInitializer().getAlpnHandler().getRestHandler();
 
       //before passing it to REST Handler, we need to replace path. The handler should not be aware of additional context
       //used for multi-tenant prefixes

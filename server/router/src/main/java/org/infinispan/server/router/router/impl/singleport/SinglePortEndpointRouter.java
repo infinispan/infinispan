@@ -25,6 +25,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 
 public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortRouterConfiguration> implements EndpointRouter {
 
@@ -40,16 +41,17 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
    @Override
    public void start(RoutingTable routingTable) {
       this.routingTable = routingTable;
+      this.routingTable.streamRoutes().forEach(r -> r.getRouteDestination().getProtocolServer().setEnclosingProtocolServer(this));
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
       transport.start();
-      logger.restRouterStarted(getTransport().getHostName() + ":" + getTransport().getPort());
+      RouterLogger.SERVER.debugf("REST EndpointRouter listening on %s:%d", transport.getHostName(), transport.getPort());
    }
 
    @Override
    public void stop() {
-     super.stop();
+      super.stop();
    }
 
    @Override
@@ -72,17 +74,22 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
    }
 
    @Override
+   public ChannelMatcher getChannelMatcher() {
+      return channel -> true;
+   }
+
+   @Override
    public ChannelInitializer<Channel> getInitializer() {
       Map<String, ProtocolServer> upgradeServers = new HashMap<>();
 
       RestServer restServer = routingTable.streamRoutes(SinglePortRouteSource.class, RestServerRouteDestination.class)
             .findFirst()
-            .map(r -> r.getRouteDestination().getRestServer())
+            .map(r -> r.getRouteDestination().getProtocolServer())
             .orElseThrow(() -> new IllegalStateException("There must be a REST route!"));
 
       routingTable.streamRoutes(SinglePortRouteSource.class, HotRodServerRouteDestination.class)
             .findFirst()
-            .ifPresent(r -> upgradeServers.put("HR", r.getRouteDestination().getHotrodServer()));
+            .ifPresent(r -> upgradeServers.put("HR", r.getRouteDestination().getProtocolServer()));
 
       SinglePortChannelInitializer restChannelInitializer = new SinglePortChannelInitializer(this, transport, restServer, upgradeServers);
       return new NettyInitializers(restChannelInitializer);

@@ -1,0 +1,10 @@
+[id='server_endpoint_ipfilter_cli-{context}']
+:context: cli
+= Manipulating Server IP filter rules with the {brandname} CLI
+Server IP filter rules can be manipulated via the CLI.
+
+include::{topics}/proc_server_ipfilter_cli.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

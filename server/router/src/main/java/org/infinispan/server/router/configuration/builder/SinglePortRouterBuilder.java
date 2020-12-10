@@ -1,14 +1,16 @@
 package org.infinispan.server.router.configuration.builder;
 
-import java.io.File;
+import java.util.Collections;
 
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.router.configuration.HotRodRouterConfiguration;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
+import org.infinispan.server.router.logging.RouterLogger;
 
 /**
  * Configuration builder for Single Port.
@@ -20,8 +22,6 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
     private int sendBufferSize = 0;
     private int receiveBufferSize = 0;
     private String name = "single-port";
-    private String keystorePath;
-    private char[] keystorePassword;
     private SSLContext sslContext;
 
     /**
@@ -41,14 +41,11 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             try {
                 validate();
             } catch (Exception e) {
-                throw logger.configurationValidationError(e);
+                throw RouterLogger.SERVER.configurationValidationError(e);
             }
             SslConfigurationBuilder sslConfigurationBuilder = new SslConfigurationBuilder(null);
             if (sslContext != null) {
                 sslConfigurationBuilder.sslContext(sslContext).enable();
-            }
-            else if (keystorePath != null) {
-                sslConfigurationBuilder.keyStoreFileName(keystorePath).keyStorePassword(keystorePassword).enable();
             }
             AttributeSet attributes = SinglePortRouterConfiguration.attributeDefinitionSet();
             attributes.attribute(ProtocolServerConfiguration.NAME).set(name);
@@ -58,7 +55,7 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             attributes.attribute(ProtocolServerConfiguration.RECV_BUF_SIZE).set(receiveBufferSize);
             attributes.attribute(ProtocolServerConfiguration.SEND_BUF_SIZE).set(sendBufferSize);
             attributes.attribute(ProtocolServerConfiguration.WORKER_THREADS).set(1);
-            return new SinglePortRouterConfiguration(attributes.protect(), sslConfigurationBuilder.create());
+            return new SinglePortRouterConfiguration(attributes.protect(), sslConfigurationBuilder.create(), new IpFilterConfiguration(Collections.emptyList()));
         }
         return null;
     }
@@ -93,13 +90,7 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
         return this;
     }
 
-    public SinglePortRouterBuilder sslWithAlpn(String keystorePath, char[] keystorePassword) {
-        this.keystorePassword = keystorePassword;
-        this.keystorePath = keystorePath;
-        return this;
-    }
-
-    public SinglePortRouterBuilder sslWithAlpn(SSLContext sslContext) {
+    public SinglePortRouterBuilder sslContext(SSLContext sslContext) {
         this.sslContext = sslContext;
         return this;
     }
@@ -112,12 +103,6 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
         }
         if (sendBufferSize < 0) {
             throw new IllegalArgumentException("Send buffer size can not be negative");
-        }
-        if (keystorePath != null && !new File(keystorePath).exists()) {
-            throw new IllegalArgumentException("Keystore path does not exist");
-        }
-        if (sslContext != null && keystorePath != null) {
-            throw new IllegalArgumentException("Can not specify both SSLContext and Keystore");
         }
     }
 }

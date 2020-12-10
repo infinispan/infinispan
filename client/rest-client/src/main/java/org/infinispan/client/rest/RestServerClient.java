@@ -1,5 +1,6 @@
 package org.infinispan.client.rest;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -46,4 +47,18 @@ public interface RestServerClient {
    CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName);
 
    RestLoggingClient logging();
+
+   CompletionStage<RestResponse> connectorNames();
+
+   CompletionStage<RestResponse> connector(String name);
+
+   CompletionStage<RestResponse> connectorStart(String name);
+
+   CompletionStage<RestResponse> connectorStop(String name);
+
+   CompletionStage<RestResponse> connectorIpFilters(String name);
+
+   CompletionStage<RestResponse> connectorIpFiltersClear(String name);
+
+   CompletionStage<RestResponse> connectorIpFilterSet(String name, List<IpFilterRule> rules);
 }

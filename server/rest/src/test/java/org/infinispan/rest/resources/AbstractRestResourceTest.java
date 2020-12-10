@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.RestTestSCI;
@@ -44,7 +45,8 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
-import org.infinispan.server.core.CacheIgnoreManager;
+import org.infinispan.server.core.DummyServerStateManager;
+import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -68,7 +70,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    protected Protocol protocol = HTTP_11;
    protected boolean ssl;
 
-   protected CacheIgnoreManager ignoreManager;
+   protected ServerStateManager serverStateManager;
 
    @Override
    protected String parameters() {
@@ -123,7 +125,10 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          }
          cacheManagers.forEach(this::defineCaches);
          cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().encoding().mediaType(APPLICATION_OBJECT_TYPE).indexing().enabled(true).addIndexedEntities("invalid").build()));
+         serverStateManager = new DummyServerStateManager();
          for (EmbeddedCacheManager cm : cacheManagers) {
+            BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
+            bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
             cm.getClassAllowList().addClasses(TestClass.class);
             waitForClusterToForm(cm.getCacheNames().stream().filter(name -> {
                try {
@@ -145,7 +150,6 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
             restServers.add(restServerHelper);
          }
-         ignoreManager = SecurityActions.getGlobalComponentRegistry(cacheManagers.get(0)).getComponent(CacheIgnoreManager.class);
          return null;
       });
       client = RestClient.forConfiguration(getClientConfig().build());

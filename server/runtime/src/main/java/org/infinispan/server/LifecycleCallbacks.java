@@ -1,4 +1,4 @@
-package org.infinispan.server.logging.events;
+package org.infinispan.server;
 
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType;
 
@@ -14,17 +14,18 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 
 /**
- * LifecycleCallback for the server event logger module. Registers advanced externalizers and
+ * LifecycleCallback for the server runtime module. Registers advanced externalizers and
  * initializes the server logger
  *
  * @author Tristan Tarrant
  * @since 8.2
  */
-@InfinispanModule(name = "server-event-logger", requiredModules = {"core", "query-core"})
+@InfinispanModule(name = "server-runtime", requiredModules = {"core", "query-core"})
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    private EventLogger oldEventLogger;
@@ -32,7 +33,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new org.infinispan.server.logging.events.PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new org.infinispan.server.state.PersistenceContextInitializerImpl());
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);

@@ -66,6 +66,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    SslConfigurationBuilder<T, S> ssl();
 
    /**
+    * Configures the IP filter rules
+    */
+   IpFilterConfigurationBuilder<T, S> ipFilter();
+
+   /**
     * Sets the number of I/O threads
     */
    S ioThreads(int ioThreads);

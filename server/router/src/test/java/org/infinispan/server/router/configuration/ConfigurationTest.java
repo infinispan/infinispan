@@ -19,8 +19,7 @@ public class ConfigurationTest {
 
         RouteSource s1 = new RouteSource() {
         };
-        RouteDestination d1 = new RouteDestination() {
-        };
+        RouteDestination d1 = () -> null;
 
         //when
         multiTenantConfigurationBuilder

@@ -3,6 +3,7 @@ package org.infinispan.server.core.transport;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
@@ -13,6 +14,7 @@ import io.netty.channel.ChannelPromise;
  * @author wburns
  * @since 7.1
  */
+@Sharable
 public class StatsChannelHandler extends ChannelDuplexHandler {
    private final NettyTransport transport;
 

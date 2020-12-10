@@ -1,7 +1,10 @@
 package org.infinispan.server.router.routes;
 
-public interface RouteDestination {
-    default void validate() {
+import org.infinispan.server.core.ProtocolServer;
 
+public interface RouteDestination<T extends ProtocolServer> {
+    default void validate() {
     }
+
+    T getProtocolServer();
 }

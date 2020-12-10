@@ -613,7 +613,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
       String cacheName = server.getConfiguration().defaultCacheName();
 
-      server.getCacheIgnore().ignoreCache(cacheName);
+      server.getServerStateManager().ignoreCache(cacheName);
       try {
          client.get(k(m));
          fail("Should have failed");
@@ -622,7 +622,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
 
 
-      server.getCacheIgnore().unignoreCache(cacheName);
+      server.getServerStateManager().unignoreCache(cacheName);
       client.get(k(m));
    }
 

@@ -100,7 +100,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
          String socketBinding = socketBinding();
          name(DEFAULT_NAME + (socketBinding == null ? "" : "-" + socketBinding));
       }
-      return new RestServerConfiguration(attributes.protect(), ssl.create(), staticResources, authentication.create(), cors.create(), encryption.create());
+      return new RestServerConfiguration(attributes.protect(), ssl.create(), staticResources, authentication.create(), cors.create(), encryption.create(), ipFilter.create());
    }
 
    @Override

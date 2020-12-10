@@ -41,7 +41,7 @@ public class ServerEventLogger implements EventLogger {
    private final TimeService timeService;
    private Cache<UUID, ServerEventImpl> eventCache;
 
-   ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService) {
+   public ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService) {
       this.cacheManager = cacheManager;
       this.timeService = timeService;
    }

@@ -7,6 +7,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.net.InetSocketAddress;
 import java.util.Objects;
 
 import javax.security.auth.Subject;
@@ -71,7 +72,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       NettyRestRequest restRequest;
       LookupResult invocationLookup;
       try {
-         restRequest = new NettyRestRequest(request);
+         restRequest = new NettyRestRequest(request, (InetSocketAddress) ctx.channel().remoteAddress());
          invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
          Invocation invocation = invocationLookup.getInvocation();
          if (invocation != null && invocation.deprecated()) {

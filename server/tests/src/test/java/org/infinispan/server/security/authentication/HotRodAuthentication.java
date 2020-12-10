@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.security.Common;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.core.category.Security;

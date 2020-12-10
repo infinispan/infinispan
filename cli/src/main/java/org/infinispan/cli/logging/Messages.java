@@ -237,4 +237,7 @@ public interface Messages {
 
    @Message(value = "Confirm the credential: ")
    String credentialToolCredentialConfirm();
+
+   @Message(value = "Filter rule '%s' is not in the format [ACCEPT|REJECT]/{CIDR}")
+   IllegalArgumentException illegalFilterRule(String rule);
 }

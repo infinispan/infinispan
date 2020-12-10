@@ -6,7 +6,9 @@ import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.transport.AccessControlFilter;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -78,9 +80,12 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
    /**
     * Configure the handlers that should be used for both HTTP 1.1 and HTTP 2.0
     */
-   private void addCommonsHandlers(ChannelPipeline pipeline) {
+   private void addCommonHandlers(ChannelPipeline pipeline) {
+      // Handles IP filtering for the HTTP connector
+      RestServerConfiguration restServerConfiguration = restServer.getConfiguration();
+      pipeline.addLast(new AccessControlFilter<>(restServerConfiguration, false));
       // Handles http content encoding (gzip)
-      pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
+      pipeline.addLast(new HttpContentCompressor(restServerConfiguration.getCompressionLevel()));
       // Handles chunked data
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       // Handles Http/2 headers propagation from request to response
@@ -120,7 +125,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
             ChannelPipeline p = channel.pipeline();
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
-            addCommonsHandlers(p);
+            addCommonHandlers(p);
          }
       }).initialSettings(Http2Settings.defaultSettings()).build();
 
@@ -137,7 +142,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, multiplexCodec);
       pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
 
-      addCommonsHandlers(pipeline);
+      addCommonHandlers(pipeline);
    }
 
    protected int maxContentLength() {

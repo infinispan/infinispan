@@ -3,7 +3,7 @@ package org.infinispan.server.router.routes.hotrod;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.routes.RouteDestination;
 
-public class HotRodServerRouteDestination implements RouteDestination {
+public class HotRodServerRouteDestination implements RouteDestination<HotRodServer> {
 
    private final String name;
    private final HotRodServer hotrodServer;
@@ -13,7 +13,8 @@ public class HotRodServerRouteDestination implements RouteDestination {
       this.hotrodServer = hotRodServer;
    }
 
-   public HotRodServer getHotrodServer() {
+   @Override
+   public HotRodServer getProtocolServer() {
       return hotrodServer;
    }
 

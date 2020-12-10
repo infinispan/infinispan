@@ -139,8 +139,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                parseCorsRules(reader, builder);
                break;
             }
-            default:
-               throw ParseUtils.unexpectedElement(reader);
+            default: {
+               ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
+            }
          }
       }
       if (securityRealm != null) {
