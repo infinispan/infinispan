@@ -82,3 +82,8 @@ Specifies the path of a keystore named "my-trust-store.jks".
 
 `config set truststore-password secret` +
 Sets the keystore password, if required.
+
+
+SEE ALSO
+--------
+alias(1), unalias(1)
