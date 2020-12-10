@@ -1,0 +1,27 @@
+ALIAS(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+alias - creates or displays aliases.
+
+
+SYNOPSIS
+--------
+*alias* ['ALIAS-NAME'='COMMAND']
+
+
+EXAMPLES
+--------
+`alias q=quit` +
+Creates `q` as an alias for the `quit` command.
+
+`alias` +
+Lists all defined aliases.
+
+
+SEE ALSO
+--------
+config(1), unalias(1)
