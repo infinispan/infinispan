@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
 import java.util.Set;
@@ -13,12 +14,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.dataconversion.TranscodingException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 import io.netty.channel.Channel;
+import io.netty.handler.ipfilter.IpFilterRule;
 
 /**
  * Log abstraction for the server core module. For this module, message ids
@@ -29,6 +32,8 @@ import io.netty.channel.Channel;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   String LOG_ROOT = "org.infinispan.";
+   Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
 //   @LogMessage(level = WARN)
 //   @Message(value = "Server channel group did not completely unbind", id = 5004)
 //   void serverDidNotUnbind();
@@ -157,4 +162,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot perform restore, restore already exists with name '%s'", id = 5051)
    CacheException restoreAlreadyExists(String name);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Rejected connection from '%s' using rule '%s'", id = 5052)
+   void ipFilterConnectionRejection(InetSocketAddress remoteAddress, IpFilterRule rule);
 }

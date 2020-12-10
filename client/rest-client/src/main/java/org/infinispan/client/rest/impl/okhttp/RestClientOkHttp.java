@@ -39,6 +39,8 @@ import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorIntercept
 import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorWrapper;
 import org.infinispan.client.rest.impl.okhttp.auth.DigestAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.NegotiateAuthenticator;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.SslContextFactory;
 
 import okhttp3.Authenticator;
@@ -58,6 +60,7 @@ import okhttp3.ResponseBody;
  * @since 10.0
  **/
 public class RestClientOkHttp implements RestClient {
+   static final Log log = LogFactory.getLog(RestClientOkHttp.class);
    static final MediaType TEXT_PLAIN = MediaType.parse("text/plain; charset=utf-8");
    static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
    private final RestClientConfiguration configuration;
@@ -243,9 +246,11 @@ public class RestClientOkHttp implements RestClient {
       return new RestSchemasClientOkHttp(this);
    }
 
-   CompletionStage<RestResponse> execute(Request.Builder request) {
+   CompletionStage<RestResponse> execute(Request.Builder builder) {
+      Request request = builder.build();
+      log.tracef("Request %s", request);
       CompletableFuture<RestResponse> response = new CompletableFuture<>();
-      httpClient.newCall(request.build()).enqueue(new Callback() {
+      httpClient.newCall(request).enqueue(new Callback() {
          @Override
          public void onFailure(Call call, IOException e) {
             if (e.getSuppressed().length > 0 && e.getSuppressed()[0] instanceof AbstractAuthenticator.AuthenticationException) {
@@ -256,14 +261,17 @@ public class RestClientOkHttp implements RestClient {
                      .request(call.request())
                      .message(t.getMessage())
                      .protocol(Protocol.HTTP_1_1); // Doesn't really matter
+               log.trace("Response unauthorized", t);
                response.complete(new RestResponseOkHttp(builder.build()));
             } else {
+               log.trace("Response error", e);
                response.completeExceptionally(e);
             }
          }
 
          @Override
          public void onResponse(Call call, Response r) {
+            log.tracef("Response %s", r);
             response.complete(new RestResponseOkHttp(r));
          }
       });

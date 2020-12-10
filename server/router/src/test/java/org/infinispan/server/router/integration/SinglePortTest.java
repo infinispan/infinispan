@@ -20,6 +20,7 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -187,10 +188,11 @@ public class SinglePortTest {
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
 
+        SslContextFactory sslContextFactory = new SslContextFactory();
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslWithAlpn(KEY_STORE_PATH, KEY_STORE_PASSWORD.toCharArray())
+              .sslContext(sslContextFactory.keyStoreFileName(KEY_STORE_PATH).keyStorePassword(KEY_STORE_PASSWORD.toCharArray()).getContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()
@@ -230,10 +232,11 @@ public class SinglePortTest {
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
         Route<SinglePortRouteSource, HotRodServerRouteDestination> routeToHotRod = new Route<>(singlePortSource, hotrodDestination);
 
+        SslContextFactory sslContextFactory = new SslContextFactory();
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslWithAlpn(KEY_STORE_PATH, KEY_STORE_PASSWORD.toCharArray())
+              .sslContext(sslContextFactory.keyStoreFileName(KEY_STORE_PATH).keyStorePassword(KEY_STORE_PASSWORD.toCharArray()).getContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()

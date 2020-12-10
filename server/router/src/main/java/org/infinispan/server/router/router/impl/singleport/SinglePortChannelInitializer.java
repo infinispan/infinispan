@@ -19,30 +19,30 @@ import io.netty.handler.ssl.ApplicationProtocolNames;
  */
 class SinglePortChannelInitializer extends NettyChannelInitializer {
 
-   private final SinglePortUpgradeHandler http11To2UpgradeHandler;
+   private final SinglePortUpgradeHandler httpUpgradeHandler;
 
    public SinglePortChannelInitializer(SinglePortEndpointRouter server, NettyTransport transport, RestServer restServer, Map<String, ProtocolServer> upgradeServers) {
       super(server, transport, null, null);
-      http11To2UpgradeHandler = new SinglePortUpgradeHandler(server.getConfiguration().ssl().enabled(), restServer, upgradeServers);
+      httpUpgradeHandler = new SinglePortUpgradeHandler(server.getConfiguration().ssl().enabled(), restServer, upgradeServers);
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       super.initializeChannel(ch);
-      http11To2UpgradeHandler.getUpgradeServers().values().stream()
+      httpUpgradeHandler.getUpgradeServers().values().stream()
             .filter(ps -> ps instanceof HotRodServer).findFirst()
             .ifPresent(hotRodServer -> ch.pipeline().addLast(HotRodPingDetector.NAME, new HotRodPingDetector((HotRodServer) hotRodServer))
       );
       if (server.getConfiguration().ssl().enabled()) {
-         ch.pipeline().addLast(http11To2UpgradeHandler);
+         ch.pipeline().addLast(httpUpgradeHandler);
       } else {
-         http11To2UpgradeHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
+         httpUpgradeHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
       }
    }
 
    @Override
    protected ApplicationProtocolConfig getAlpnConfiguration() {
-      return http11To2UpgradeHandler.getAlpnConfiguration();
+      return httpUpgradeHandler.getAlpnConfiguration();
    }
 
 }

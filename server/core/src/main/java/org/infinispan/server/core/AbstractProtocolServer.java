@@ -13,6 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
@@ -39,7 +40,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    protected EmbeddedCacheManager cacheManager;
    protected C configuration;
    protected ServerManagement server;
-   private CacheIgnoreManager cacheIgnore;
+   private ServerStateManager serverStateManager;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
    private ExecutorService executor;
@@ -47,6 +48,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private ObjectName executorObjName;
    private CacheManagerMetricsRegistration metricsRegistration;
    private Set<MetricID> metricIds;
+   private ProtocolServer<?> enclosingProtocolServer;
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
@@ -78,16 +80,16 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
    }
 
-   public void setServer(ServerManagement server) {
+   public void setServerManagement(ServerManagement server) {
       this.server = server;
    }
 
    protected boolean isCacheIgnored(String cache) {
-      return cacheIgnore.isCacheIgnored(cache);
+      return serverStateManager != null && serverStateManager.isCacheIgnored(cache);
    }
 
-   public CacheIgnoreManager getCacheIgnore() {
-      return cacheIgnore;
+   public ServerStateManager getServerStateManager() {
+      return serverStateManager;
    }
 
    @Override
@@ -100,11 +102,10 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       this.cacheManager = cacheManager;
 
       BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
-      cacheIgnore = bcr.getComponent(CacheIgnoreManager.class).running();
-      if (cacheIgnore == null) {
-         throw new IllegalStateException("CacheIgnoreManager is a required component");
+      ComponentRef<ServerStateManager> stateManagerComponentRef = bcr.getComponent(ServerStateManager.class);
+      if (stateManagerComponentRef != null) {
+         serverStateManager = stateManagerComponentRef.running();
       }
-
       bcr.replaceComponent(getQualifiedName(), this, false);
 
       executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
@@ -257,7 +258,18 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       return transport != null;
    }
 
+   @Override
    public NettyTransport getTransport() {
       return transport;
+   }
+
+   @Override
+   public void setEnclosingProtocolServer(ProtocolServer<?> enclosingProtocolServer) {
+      this.enclosingProtocolServer = enclosingProtocolServer;
+   }
+
+   @Override
+   public ProtocolServer<?> getEnclosingProtocolServer() {
+      return enclosingProtocolServer;
    }
 }

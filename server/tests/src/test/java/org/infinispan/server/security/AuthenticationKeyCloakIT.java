@@ -1,6 +1,6 @@
 package org.infinispan.server.security;
 
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;

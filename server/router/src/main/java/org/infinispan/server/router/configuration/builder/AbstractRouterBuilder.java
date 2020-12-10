@@ -1,15 +1,8 @@
 package org.infinispan.server.router.configuration.builder;
 
-import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.router.logging.RouterLogger;
-
 public abstract class AbstractRouterBuilder implements ConfigurationBuilderParent {
-
-    protected static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
     protected final ConfigurationBuilderParent parent;
     protected int port;
     protected InetAddress ip;

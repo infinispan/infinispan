@@ -1,6 +1,7 @@
-package org.infinispan.server.security;
+package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,9 +17,10 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
-import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.security.AuthorizationPermission;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -100,6 +102,12 @@ public class Common {
       return Exceptions.unchecked(() -> stage.toCompletableFuture().get(timeout, timeUnit));
    }
 
+   public static void assertStatus(int status, CompletionStage<RestResponse> request) {
+      try (RestResponse response = sync(request)) {
+         assertEquals(status, response.getStatus());
+      }
+   }
+
    public static Subject createSubject(String principal, String realm, char[] password) {
       return Exceptions.unchecked(() -> {
          LoginContext context = new LoginContext("KDC", null, new BasicCallbackHandler(principal, realm, password), createJaasConfiguration(false));
@@ -117,7 +125,7 @@ public class Common {
             }
 
             AppConfigurationEntry[] entries = new AppConfigurationEntry[1];
-            Map<String, Object> options = new HashMap<String, Object>();
+            Map<String, Object> options = new HashMap<>();
             //options.put("debug", "true");
             options.put("refreshKrb5Config", "true");
 

@@ -10,12 +10,16 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetCacheManagerHealthAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
+import org.infinispan.security.impl.AuthorizationHelper;
 
 /**
  * SecurityActions for the org.infinispan.rest.cachemanager package.
@@ -59,5 +63,11 @@ final class SecurityActions {
 
    public static EncoderRegistry getEncoderRegistry(AdvancedCache<?, ?> cache) {
       return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
+   }
+
+   static void checkPermission(InvocationHelper invocationHelper, RestRequest request, AuthorizationPermission permission) {
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
+      authzHelper.checkPermission(request.getSubject(), permission);
    }
 }

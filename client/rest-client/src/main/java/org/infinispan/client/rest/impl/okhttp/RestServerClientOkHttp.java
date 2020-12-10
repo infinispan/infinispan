@@ -2,11 +2,15 @@ package org.infinispan.client.rest.impl.okhttp;
 
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.rest.IpFilterRule;
 import org.infinispan.client.rest.RestLoggingClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 import okhttp3.FormBody;
 import okhttp3.Request;
@@ -86,4 +90,52 @@ public class RestServerClientOkHttp implements RestServerClient {
    public RestLoggingClient logging() {
       return new RestLoggingClientOkHttp(client);
    }
+
+   @Override
+   public CompletionStage<RestResponse> connectorNames() {
+      return client.execute(baseServerURL, "connectors");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connectorStart(String name) {
+      String url = String.format("%s/connectors/%s?action=start", baseServerURL, name);
+      Request.Builder builder = new Request.Builder().url(url).post(new FormBody.Builder().build());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connectorStop(String name) {
+      String url = String.format("%s/connectors/%s?action=stop", baseServerURL, name);
+      Request.Builder builder = new Request.Builder().url(url).post(new FormBody.Builder().build());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connector(String name) {
+      return client.execute(baseServerURL, "connectors", name);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connectorIpFilters(String name) {
+      return client.execute(baseServerURL, "connectors", name, "ip-filter");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connectorIpFiltersClear(String name) {
+      String url = String.format("%s/connectors/%s/ip-filter", baseServerURL, name);
+      Request.Builder builder = new Request.Builder().url(url).delete();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> connectorIpFilterSet(String name, List<IpFilterRule> rules) {
+      String url = String.format("%s/connectors/%s/ip-filter", baseServerURL, name);
+      Json json = Json.array();
+      for (IpFilterRule rule : rules) {
+         json.add(Json.object().set("type", rule.getType().name()).set("cidr", rule.getCidr()));
+      }
+      Request.Builder builder = new Request.Builder().url(url).post(new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, json.toString()).toRequestBody());
+      return client.execute(builder);
+   }
+
 }

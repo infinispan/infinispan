@@ -28,19 +28,24 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
    protected final ChannelInboundHandler decoder;
+   private final AccessControlFilter ipRulesHandler;
+   private final StatsChannelHandler statsHandler;
 
    public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, ChannelInboundHandler decoder) {
       this.server = server;
       this.transport = transport;
       this.encoder = encoder;
       this.decoder = decoder;
+      this.statsHandler = transport != null ? new StatsChannelHandler(transport) : null;
+      this.ipRulesHandler = new AccessControlFilter(server.getConfiguration());
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       ChannelPipeline pipeline = ch.pipeline();
-      if(transport != null) {
-         pipeline.addLast("stats", new StatsChannelHandler(transport));
+      pipeline.addLast("iprules", ipRulesHandler);
+      if(statsHandler != null) {
+         pipeline.addLast("stats", statsHandler);
       }
       SslConfiguration ssl = server.getConfiguration().ssl();
       if (ssl.enabled()) {
@@ -65,8 +70,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
          //See https://issues.jboss.org/browse/ISPN-7765 for more details.
          pipeline.addLast("decoder", server.getDecoder());
       }
-      if (encoder != null)
+      if (encoder != null) {
          pipeline.addLast("encoder", encoder);
+      }
    }
 
    protected ApplicationProtocolConfig getAlpnConfiguration() {

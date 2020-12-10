@@ -304,6 +304,7 @@
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
+               <xs:element name="ip-filter" type="tns:ip-filter" minOccurs="0"/>
                <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
@@ -335,6 +336,9 @@
    <xs:complexType name="named-protocol-connector" abstract="true">
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
+            <xs:all>
+               <xs:element name="ip-filter" type="tns:ip-filter" minOccurs="0"/>
+            </xs:all>
             <xs:attribute name="name" type="xs:string">
                <xs:annotation>
                   <xs:documentation>Logically names this connector. Use this attribute to separate multiple connector declarations for the same endpoint.</xs:documentation>
@@ -343,6 +347,17 @@
 
          </xs:extension>
       </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="ip-filter">
+      <xs:choice maxOccurs="unbounded">
+         <xs:element name="accept" type="tns:ip-rule"/>
+         <xs:element name="reject" type="tns:ip-rule"/>
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="ip-rule">
+      <xs:attribute name="from" type="xs:string"/>
    </xs:complexType>
 
    <xs:complexType name="hotrod-connector">

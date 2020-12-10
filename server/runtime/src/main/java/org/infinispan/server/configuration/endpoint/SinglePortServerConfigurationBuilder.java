@@ -35,7 +35,7 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
 
    @Override
    public SinglePortRouterConfiguration create() {
-      return new SinglePortRouterConfiguration(attributes.protect(), ssl.create());
+      return new SinglePortRouterConfiguration(attributes.protect(), ssl.create(), ipFilter.create());
    }
 
    @Override

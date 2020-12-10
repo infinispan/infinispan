@@ -2,7 +2,9 @@ package org.infinispan.server.router.router.impl.singleport;
 
 import java.util.List;
 
+import org.infinispan.server.core.transport.AccessControlFilter;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.router.logging.RouterLogger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -20,7 +22,7 @@ public class HotRodPingDetector extends ByteToMessageDecoder {
    }
 
    @Override
-   protected  void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
       // We need to only see the Hot Rod Magic byte
       if (in.readableBytes() < 1) {
          // noop, wait for further reads
@@ -38,11 +40,11 @@ public class HotRodPingDetector extends ByteToMessageDecoder {
          }
          // Add the Hot Rod server handler
          ctx.pipeline().addLast(hotRodServer.getInitializer());
-         // Remove this
-         ctx.pipeline().remove(this);
-      } else {
-         // This ain't Hot Rod, remove ourselves and process as normal
-         ctx.pipeline().remove(this);
+         RouterLogger.SERVER.tracef("Detected Hot Rod connection %s", ctx);
       }
+      // Trigger any protocol-specific rules
+      ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+      // Remove this
+      ctx.pipeline().remove(this);
    }
 }

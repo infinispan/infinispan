@@ -20,6 +20,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -71,6 +72,11 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
    @Override
    public ChannelInboundHandler getDecoder() {
       return new MemcachedDecoder(memcachedCache, scheduler, transport, this::isCacheIgnored, configuration.clientEncoding());
+   }
+
+   @Override
+   public ChannelMatcher getChannelMatcher() {
+      return channel -> channel.pipeline().get(MemcachedDecoder.class) != null;
    }
 
    @Override

@@ -1,7 +1,7 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 

@@ -1,5 +1,6 @@
 package org.infinispan.rest.framework.impl;
 
+import java.net.InetSocketAddress;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,11 @@ public class SimpleRequest implements RestRequest {
 
    @Override
    public List<String> headers(String name) {
+      return null;
+   }
+
+   @Override
+   public InetSocketAddress getRemoteAddress() {
       return null;
    }
 
@@ -177,7 +183,7 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
-   public void setSubject(Subject principal) {
+   public void setSubject(Subject subject) {
       this.subject = subject;
    }
 

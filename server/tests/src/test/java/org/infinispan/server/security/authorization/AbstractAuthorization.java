@@ -1,11 +1,13 @@
 package org.infinispan.server.security.authorization;
 
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -136,7 +138,7 @@ public abstract class AbstractAuthorization {
       restCreateAuthzCache(explicitRoles);
       RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("writer")).get().cache(getServerTest().getMethodName());
       sync(writerCache.put("k1", "v1"));
-      assertEquals(403, sync(writerCache.get("k1")).getStatus());
+      assertStatus(403, writerCache.get("k1"));
       for (String user : Arrays.asList("reader", "supervisor")) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          assertEquals("v1", sync(userCache.get("k1")).getBody());
@@ -178,7 +180,7 @@ public abstract class AbstractAuthorization {
    private void testRestReaderCannotWrite(boolean explicitRoles) {
       restCreateAuthzCache(explicitRoles);
       RestCacheClient readerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("reader")).get().cache(getServerTest().getMethodName());
-      assertEquals(403, sync(readerCache.put("k1", "v1")).getStatus());
+      assertStatus(403, readerCache.put("k1", "v1"));
       for (String user : Arrays.asList("writer", "supervisor")) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          userCache.put(user, user);
@@ -229,93 +231,114 @@ public abstract class AbstractAuthorization {
    @Test
    public void testRestNonAdminsMustNotShutdownServer() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().stop()).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotShutdownCluster() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop()).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyCacheIgnores() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().ignoreCache("default", "predefined")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().unIgnoreCache("default", "predefined")).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().ignoreCache("default", "predefined"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().unIgnoreCache("default", "predefined"));
       }
    }
 
    @Test
    public void testRestAdminsShouldBeAbleToModifyLoggers() {
-      assertEquals(204, sync(getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT")).getStatus());
-      assertEquals(204, sync(getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER")).getStatus());
+      assertStatus(204, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
+      assertStatus(204, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyLoggers() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER")).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
       }
    }
 
    @Test
-   public void testRestNonAdminsMustNotObtainReport() {
+   public void testRestAdminsShoudleBeAbleToAdminServer() {
+      RestClientConfigurationBuilder adminConfig = restBuilders.get("admin");
+      assertStatus(204, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorStop("endpoint-alternate-1"));
+      assertStatus(204, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorStart("endpoint-alternate-1"));
+      assertStatus(204, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorIpFilterSet("endpoint-alternate-1", Collections.emptyList()));
+      assertStatus(204, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorIpFiltersClear("endpoint-alternate-1"));
+      assertStatus(200, getServerTest().rest().withClientConfiguration(adminConfig).get().server().memory());
+      assertStatus(200, getServerTest().rest().withClientConfiguration(adminConfig).get().server().env());
+      assertStatus(200, getServerTest().rest().withClientConfiguration(adminConfig).get().server().configuration());
+   }
+
+   @Test
+   public void testRestNonAdminsMustNotAdminServer() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().report()).getStatus());
+         RestClientConfigurationBuilder userConfig = restBuilders.get(user);
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().report());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorStop("endpoint-default"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorStart("endpoint-default"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorIpFilterSet("endpoint-default", Collections.emptyList()));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorIpFiltersClear("endpoint-default"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().memory());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().env());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().server().configuration());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessPerformXSiteOps() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").takeSiteOffline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").bringSiteOnline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelPushState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelReceiveState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").clearPushStateStatus()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushSiteState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushStateStatus()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").xsiteBackups()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").backupStatus("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").getXSiteTakeOfflineConfig("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").updateXSiteTakeOfflineConfig("NYC", 10, 1000)).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").bringBackupOnline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").takeOffline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").backupStatuses()).getStatus());
+         RestClientConfigurationBuilder userConfig = restBuilders.get(user);
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").takeSiteOffline("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").bringSiteOnline("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").cancelPushState("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").cancelReceiveState("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").clearPushStateStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").pushSiteState("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").pushStateStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").xsiteBackups());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").backupStatus("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").getXSiteTakeOfflineConfig("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").updateXSiteTakeOfflineConfig("NYC", 10, 1000));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").bringBackupOnline("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").takeOffline("NYC"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").backupStatuses());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotPerformSearchActions() {
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
-      assertEquals(200, sync(getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().schemas().put("bank.proto", schema)).getStatus());
+      assertStatus(200, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().schemas().put("bank.proto", schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User");
       getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
       String indexedCache = getServerTest().getMethodName();
 
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex()).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().createBackup("backup")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackup("backup", true)).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackupNames()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteBackup("backup")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().restore("restore", "somewhere")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestoreNames()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestore("restore")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteRestore("restore")).getStatus());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().createBackup("backup"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackup("backup", true));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackupNames());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteBackup("backup"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().restore("restore", "somewhere"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestoreNames());
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestore("restore"));
+         assertStatus(403, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteRestore("restore"));
       }
    }
 

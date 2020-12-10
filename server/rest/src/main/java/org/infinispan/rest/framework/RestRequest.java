@@ -1,5 +1,6 @@
 package org.infinispan.rest.framework;
 
+import java.net.InetSocketAddress;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -74,4 +75,6 @@ public interface RestRequest {
    String header(String name);
 
    List<String> headers(String name);
+
+   InetSocketAddress getRemoteAddress();
 }

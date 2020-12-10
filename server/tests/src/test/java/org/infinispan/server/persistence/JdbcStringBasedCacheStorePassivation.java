@@ -1,6 +1,6 @@
 package org.infinispan.server.persistence;
 
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

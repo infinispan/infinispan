@@ -65,7 +65,10 @@ public enum Element {
    CREDENTIAL_STORES,
    CREDENTIAL_STORE,
    CREDENTIAL_REFERENCE,
-   CLEAR_TEXT_CREDENTIAL;
+   CLEAR_TEXT_CREDENTIAL,
+   IP_FILTER,
+   ACCEPT,
+   REJECT;
 
    private static final Map<String, Element> ELEMENTS;
 

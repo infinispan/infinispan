@@ -126,7 +126,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             default: {
-               throw ParseUtils.unexpectedElement(reader);
+               ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
             }
          }
       }

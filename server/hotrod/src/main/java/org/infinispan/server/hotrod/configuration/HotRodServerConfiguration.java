@@ -12,6 +12,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.core.configuration.EncryptionConfiguration;
+import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -48,8 +49,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    HotRodServerConfiguration(AttributeSet attributes,
                              TopologyCacheConfiguration topologyCache,
                              SslConfiguration ssl, AuthenticationConfiguration authentication,
-                             EncryptionConfiguration encryption) {
-      super(attributes, ssl);
+                             EncryptionConfiguration encryption, IpFilterConfiguration ipRules) {
+      super(attributes, ssl, ipRules);
       this.topologyCache = topologyCache;
       this.authentication = authentication;
       this.encryption = encryption;

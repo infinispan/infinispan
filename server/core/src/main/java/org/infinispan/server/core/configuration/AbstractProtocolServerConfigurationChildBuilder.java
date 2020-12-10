@@ -107,6 +107,11 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public IpFilterConfigurationBuilder<T, S> ipFilter() {
+      return builder.ipFilter();
+   }
+
+   @Override
    public T build() {
       return builder.build();
    }

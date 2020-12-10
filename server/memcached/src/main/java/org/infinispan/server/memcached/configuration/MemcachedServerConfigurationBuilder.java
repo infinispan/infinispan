@@ -53,7 +53,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(attributes.protect(), ssl.create());
+      return new MemcachedServerConfiguration(attributes.protect(), ssl.create(), ipFilter.create());
    }
 
    public MemcachedServerConfiguration build(boolean validate) {

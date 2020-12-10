@@ -1,11 +1,9 @@
 package org.infinispan.server.router;
 
-import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.configuration.RouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.EndpointRouter;
@@ -19,9 +17,6 @@ import org.infinispan.server.router.router.impl.singleport.SinglePortEndpointRou
  * @author Sebastian Łaskawiec
  */
 public class Router {
-
-   private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
    private final RouterConfiguration routerConfiguration;
    private final Set<EndpointRouter> endpointRouters = new HashSet<>();
 
@@ -48,7 +43,7 @@ public class Router {
     */
    public void start() {
       endpointRouters.forEach(r -> r.start(routerConfiguration.routingTable()));
-      logger.printOutRoutingTable(routerConfiguration.routingTable());
+      RouterLogger.SERVER.printOutRoutingTable(routerConfiguration.routingTable());
    }
 
    /**

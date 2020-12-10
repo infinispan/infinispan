@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.configuration.EncryptionConfiguration;
+import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
@@ -49,8 +50,8 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl,
                            Path staticResources, AuthenticationConfiguration authentication,
                            CorsConfiguration cors,
-                           EncryptionConfiguration encryption) {
-      super(attributes, ssl);
+                           EncryptionConfiguration encryption, IpFilterConfiguration ipRules) {
+      super(attributes, ssl, ipRules);
       this.staticResources = staticResources;
       this.authentication = authentication;
       this.extendedHeaders = attributes.attribute(EXTENDED_HEADERS);

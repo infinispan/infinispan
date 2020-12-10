@@ -116,7 +116,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
          String socketBinding = socketBinding();
          name(DEFAULT_NAME + (socketBinding == null ? "" : "-" + socketBinding));
       }
-      return new HotRodServerConfiguration(attributes.protect(), topologyCache.create(), ssl.create(), authentication.create(), encryption.create());
+      return new HotRodServerConfiguration(attributes.protect(), topologyCache.create(), ssl.create(), authentication.create(), encryption.create(), ipFilter.create());
    }
 
    @Override

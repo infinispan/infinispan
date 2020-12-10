@@ -87,6 +87,7 @@ import org.infinispan.util.KeyValuePair;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
@@ -157,6 +158,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public HotRodDecoder getDecoder() {
       return new HotRodDecoder(cacheManager, getExecutor(), this);
+   }
+
+   @Override
+   public ChannelMatcher getChannelMatcher() {
+      return channel -> channel.pipeline().get(HotRodDecoder.class) != null;
    }
 
    /**

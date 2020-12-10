@@ -51,7 +51,6 @@ public class SinglePortUpgradeHandler extends ALPNHandler {
       return null;
    }
 
-
    public Map<String, ProtocolServer> getUpgradeServers() {
       return upgradeServers;
    }

@@ -7,6 +7,7 @@ import static org.infinispan.rest.RequestHeader.LAST_USED_HEADER;
 import static org.infinispan.rest.RequestHeader.MAX_TIME_IDLE_HEADER;
 import static org.infinispan.rest.RequestHeader.TTL_SECONDS_HEADER;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -44,6 +45,7 @@ public class NettyRestRequest implements RestRequest {
    private final String path;
    private final ContentSource contentSource;
    private final String context;
+   private final InetSocketAddress remoteAddress;
    private String action;
    private Subject subject;
    private Map<String, String> variables;
@@ -61,8 +63,9 @@ public class NettyRestRequest implements RestRequest {
       return baseURI + "/" + resourceName;
    }
 
-   NettyRestRequest(FullHttpRequest request) throws IllegalArgumentException {
+   NettyRestRequest(FullHttpRequest request, InetSocketAddress remoteAddress) throws IllegalArgumentException {
       this.request = request;
+      this.remoteAddress = remoteAddress;
       String uri = request.uri();
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
       this.parameters = queryStringDecoder.parameters();
@@ -108,6 +111,11 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public List<String> headers(String name) {
       return request.headers().getAll(name);
+   }
+
+   @Override
+   public InetSocketAddress getRemoteAddress() {
+      return remoteAddress;
    }
 
    @Override
@@ -283,6 +291,7 @@ public class NettyRestRequest implements RestRequest {
       return "NettyRestRequest{" +
             request.method().name() +
             " " + request.uri() +
+            ", remote=" + remoteAddress +
             ", subject=" + subject +
             '}';
    }

@@ -368,6 +368,11 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getConnectorNames() throws IOException {
+      return parseBody(fetch(client.server().connectorNames()), List.class);
+   }
+
+   @Override
    public void refreshServerInfo() throws IOException {
       try {
          ContainerResource container = getActiveContainer();

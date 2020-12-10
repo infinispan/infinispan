@@ -1,0 +1,71 @@
+SERVER(1)
+=========
+:doctype: manpage
+
+
+NAME
+----
+server - server configuration and state management.
+
+
+DESCRIPTION
+-----------
+The *server* command describes and manages server endpoint connectors and retrieves aggregated diagnostic reports about both the server and host.
+
+Reports provide details about CPU, memory, open files, network sockets and routing, threads, in addition to configuration and log files.
+
+
+SYNOPSIS
+--------
+*server report*
+
+*server connector ls*
+
+*server connector describe* 'connector-name'
+
+*server connector start* 'connector-name'
+
+*server connector stop* 'connector-name'
+
+*server connector ipfilter ls* 'connector-name'
+
+*server connector ipfilter set* 'connector-name' --rules='[ACCEPT|REJECT]/cidr',...
+
+*server connector ipfilter clear* 'connector-name'
+
+
+SERVER CONNECTOR IPFILTER OPTIONS
+---------------------------------
+
+*--rules*='[ACCEPT|REJECT]/cidr',...::
+One or more IP filtering rules.
+
+
+EXAMPLES
+--------
+
+`server report` +
+Obtains a server report, including information about network, threads, memory, etc.
+
+`server connector ls` +
+Lists all available connectors on the server.
+
+`server connector describe endpoint-default` +
+Shows information about the specified connector, including host, port, local and global connections, IP filtering rules.
+
+`server connector stop my-hotrod-connector` +
+Stops a connector dropping all established connections across the cluster.
+This command will be refused if attempting to stop the connector which is handling the request.
+
+`server connector start my-hotrod-connector` +
+Starts a connector so that it can accept connections across the cluster.
+
+`server connector ipfilter ls my-hotrod-connector` +
+Lists all IP filtering rules active on a connector across the cluster.
+
+`server connector ipfilter set my-hotrod-connector --rules=ACCEPT/192.168.0.0/16,REJECT/10.0.0.0/8`
+Sets IP filtering rules on a connector across the cluster. Replaces all existing rules.
+This command will be refused if one of the rejection rules matches the address of the connection on which it is invoked.
+
+`server connector ipfilter clear my-hotrod-connector` +
+Removes all IP filtering rules on a connector across the cluster.

@@ -13,6 +13,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.group.ChannelMatcher;
 
 /**
  * Abstract protocol server test.
@@ -86,6 +87,11 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       @Override
       public ChannelInboundHandler getDecoder() {
          return null;
+      }
+
+      @Override
+      public ChannelMatcher getChannelMatcher() {
+         return channel -> true;
       }
 
       @Override

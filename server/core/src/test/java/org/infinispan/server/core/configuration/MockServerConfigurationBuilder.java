@@ -30,6 +30,6 @@ public class MockServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public MockServerConfiguration create() {
-      return new MockServerConfiguration(attributes.protect(), ssl.create());
+      return new MockServerConfiguration(attributes.protect(), ssl.create(), ipFilter.create());
    }
 }

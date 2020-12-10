@@ -1,10 +1,8 @@
 package org.infinispan.server.router.router.impl.rest;
 
-import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
@@ -21,9 +19,6 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 
 public class RestEndpointRouter implements EndpointRouter {
-
-   private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
    private static final String THREAD_NAME_PREFIX = "EndpointRouter";
 
    private final NioEventLoopGroup masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(THREAD_NAME_PREFIX + "-ServerMaster"));
@@ -55,10 +50,10 @@ public class RestEndpointRouter implements EndpointRouter {
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       } catch (Exception e) {
-         throw logger.restRouterStartFailed(e);
+         throw RouterLogger.SERVER.restRouterStartFailed(e);
       }
 
-      logger.restRouterStarted(ip + ":" + port);
+      RouterLogger.SERVER.debugf("REST EndpointRouter listening on %s:%d", ip, port);
    }
 
    @Override
@@ -69,7 +64,7 @@ public class RestEndpointRouter implements EndpointRouter {
          masterGroupShutdown.get();
          workerGroupShutdown.get();
       } catch (Exception e) {
-         logger.errorWhileShuttingDown(e);
+         RouterLogger.SERVER.errorWhileShuttingDown(e);
       }
       port = null;
       ip = null;

@@ -2,6 +2,8 @@ package org.infinispan.server.core.transport;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -11,6 +13,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -26,6 +29,8 @@ import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroupFutureListener;
+import io.netty.channel.group.ChannelMatcher;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -44,11 +49,27 @@ import io.netty.util.internal.logging.Log4J2LoggerFactory;
  * @since 4.1
  */
 @MBean(objectName = "Transport",
-       description = "Transport component manages read and write operations to/from server.")
+      description = "Transport component manages read and write operations to/from server.")
 public class NettyTransport implements Transport {
 
    static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
    static private final boolean isLog4jAvailable = isIsLog4jAvailable();
+   private final DefaultThreadFactory masterThreadFactory;
+   private final DefaultThreadFactory ioThreadFactory;
+
+   private ChannelInitializer<Channel> handler;
+   private final InetSocketAddress address;
+   private final ProtocolServerConfiguration configuration;
+
+   private final ChannelGroup serverChannels;
+   final ChannelGroup acceptedChannels;
+
+   private EventLoopGroup masterGroup;
+   private EventLoopGroup ioGroup;
+
+   private final NettyTransportConnectionStats connectionStats;
+
+   private Optional<Integer> nettyPort = Optional.empty();
 
    // This method is here to be replaced by Quarkus
    private static boolean isIsLog4jAvailable() {
@@ -60,14 +81,15 @@ public class NettyTransport implements Transport {
       }
    }
 
+   private boolean running;
+
    public NettyTransport(InetSocketAddress address, ProtocolServerConfiguration configuration, String threadNamePrefix,
                          EmbeddedCacheManager cacheManager) {
       this.address = address;
       this.configuration = configuration;
 
-      // Need to initialize these in constructor since they require configuration
-      masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      masterThreadFactory = new DefaultThreadFactory(threadNamePrefix + "-ServerMaster");
+      ioThreadFactory = new DefaultThreadFactory(threadNamePrefix + "-ServerIO");
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -79,25 +101,23 @@ public class NettyTransport implements Transport {
       this.handler = handler;
    }
 
-   private ChannelInitializer<Channel> handler;
-   private final InetSocketAddress address;
-   private final ProtocolServerConfiguration configuration;
-
-   private final ChannelGroup serverChannels;
-   final ChannelGroup acceptedChannels;
-
-   private final EventLoopGroup masterGroup;
-   private final EventLoopGroup ioGroup;
-
-   private final NettyTransportConnectionStats connectionStats;
-
-   private Optional<Integer> nettyPort = Optional.empty();
-
+   @ManagedOperation(
+         description = "Starts the transport",
+         displayName = "Starts the transport",
+         name = "start"
+   )
    @Override
-   public void start() {
+   public synchronized void start() {
+      if (isRunning()) {
+         return;
+      }
       // Make netty use log4j, otherwise it goes to JDK logging.
       if (isLog4jAvailable)
          InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+
+      // Need to initialize these in constructor since they require configuration
+      masterGroup = buildEventLoop(1, masterThreadFactory);
+      ioGroup = buildEventLoop(configuration.ioThreads(), ioThreadFactory);
 
       ServerBootstrap bootstrap = new ServerBootstrap();
       bootstrap.group(masterGroup, ioGroup);
@@ -114,15 +134,24 @@ public class NettyTransport implements Transport {
       Channel ch;
       try {
          ch = bootstrap.bind(address).sync().channel();
-         nettyPort = Optional.of(((InetSocketAddress)ch.localAddress()).getPort());
+         nettyPort = Optional.of(((InetSocketAddress) ch.localAddress()).getPort());
       } catch (InterruptedException e) {
          throw new CacheException(e);
       }
       serverChannels.add(ch);
+      running = true;
    }
 
+   @ManagedOperation(
+         description = "Stops the transport",
+         displayName = "Stops the transport",
+         name = "stop"
+   )
    @Override
-   public void stop() {
+   public synchronized void stop() {
+      if (!isRunning()) {
+         return;
+      }
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
       Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
 
@@ -144,13 +173,24 @@ public class NettyTransport implements Transport {
          });
       }
       nettyPort = Optional.empty();
+      running = false;
    }
 
    @ManagedAttribute(
-      description = "Returns the total number of bytes written " +
-                    "by the server back to clients which includes both protocol and user information.",
-      displayName = "Number of total number of bytes written",
-      measurementType = MeasurementType.TRENDSUP
+         description = "Returns whether the transport is running",
+         displayName = "Transport running",
+         dataType = DataType.TRAIT
+   )
+   @Override
+   public synchronized boolean isRunning() {
+      return running;
+   }
+
+   @ManagedAttribute(
+         description = "Returns the total number of bytes written " +
+               "by the server back to clients which includes both protocol and user information.",
+         displayName = "Number of total number of bytes written",
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getTotalBytesWritten() {
@@ -158,9 +198,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(description = "Returns the total number of bytes read " +
-                                   "by the server from clients which includes both protocol and user information.",
-                     displayName = "Number of total number of bytes read",
-                     measurementType = MeasurementType.TRENDSUP
+         "by the server from clients which includes both protocol and user information.",
+         displayName = "Number of total number of bytes read",
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getTotalBytesRead() {
@@ -168,9 +208,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the host to which the transport binds.",
-      displayName = "Host name",
-      dataType = DataType.TRAIT
+         description = "Returns the host to which the transport binds.",
+         displayName = "Host name",
+         dataType = DataType.TRAIT
    )
    @Override
    public String getHostName() {
@@ -178,9 +218,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the port to which the transport binds.",
-      displayName = "Port",
-      dataType = DataType.TRAIT
+         description = "Returns the port to which the transport binds.",
+         displayName = "Port",
+         dataType = DataType.TRAIT
    )
    @Override
    public int getPort() {
@@ -188,9 +228,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the number of I/O threads.",
-      displayName = "Number of I/O threads",
-      dataType = DataType.TRAIT
+         description = "Returns the number of I/O threads.",
+         displayName = "Number of I/O threads",
+         dataType = DataType.TRAIT
    )
    @Override
    public int getNumberIOThreads() {
@@ -198,20 +238,20 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the number of pending tasks.",
-      displayName = "Pending tasks"
+         description = "Returns the number of pending tasks.",
+         displayName = "Pending tasks"
    )
    @Override
    public int getPendingTasks() {
       AtomicInteger count = new AtomicInteger(0);
-      ioGroup.forEach(ee -> count.addAndGet(((SingleThreadEventExecutor)ee).pendingTasks()));
+      ioGroup.forEach(ee -> count.addAndGet(((SingleThreadEventExecutor) ee).pendingTasks()));
       return count.get();
    }
 
    @ManagedAttribute(
-      description = "Returns the idle timeout.",
-      displayName = "Idle timeout",
-      dataType = DataType.TRAIT
+         description = "Returns the idle timeout.",
+         displayName = "Idle timeout",
+         dataType = DataType.TRAIT
    )
    @Override
    public int getIdleTimeout() {
@@ -219,9 +259,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns whether TCP no delay was configured or not.",
-      displayName = "TCP no delay",
-      dataType = DataType.TRAIT
+         description = "Returns whether TCP no delay was configured or not.",
+         displayName = "TCP no delay",
+         dataType = DataType.TRAIT
    )
    @Override
    public boolean getTcpNoDelay() {
@@ -229,9 +269,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the send buffer size.",
-      displayName = "Send buffer size",
-      dataType = DataType.TRAIT
+         description = "Returns the send buffer size.",
+         displayName = "Send buffer size",
+         dataType = DataType.TRAIT
    )
    @Override
    public int getSendBufferSize() {
@@ -239,9 +279,9 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns the receive buffer size.",
-      displayName = "Receive buffer size",
-      dataType = DataType.TRAIT
+         description = "Returns the receive buffer size.",
+         displayName = "Receive buffer size",
+         dataType = DataType.TRAIT
    )
    @Override
    public int getReceiveBufferSize() {
@@ -249,8 +289,8 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns a count of active connections this server.",
-      displayName = "Local active connections"
+         description = "Returns a count of active connections this server.",
+         displayName = "Local active connections"
    )
    @Override
    public int getNumberOfLocalConnections() {
@@ -258,10 +298,10 @@ public class NettyTransport implements Transport {
    }
 
    @ManagedAttribute(
-      description = "Returns a count of active connections in the cluster. " +
-                    "This operation will make remote calls to aggregate results, " +
-                    "so latency might have an impact on the speed of calculation of this attribute.",
-      displayName = "Cluster-wide number of active connections"
+         description = "Returns a count of active connections in the cluster. " +
+               "This operation will make remote calls to aggregate results, " +
+               "so latency might have an impact on the speed of calculation of this attribute.",
+         displayName = "Cluster-wide number of active connections"
    )
    @Override
    public int getNumberOfGlobalConnections() {
@@ -276,6 +316,15 @@ public class NettyTransport implements Transport {
       connectionStats.incrementTotalBytesRead(bytes);
    }
 
+   @Override
+   public CompletionStage<Void> closeChannels(ChannelMatcher channelMatcher) {
+      CompletableFuture<Void> closed = new CompletableFuture<>();
+      acceptedChannels
+            .close(channelMatcher)
+            .addListener((ChannelGroupFutureListener) channelFutures -> closed.complete(null));
+      return closed;
+   }
+
    private Class<? extends ServerChannel> getServerSocketChannel() {
       Class<? extends ServerChannel> channel = EPollAvailable.USE_NATIVE_EPOLL ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
       log.createdSocketChannel(channel.getName(), configuration.toString());
@@ -284,7 +333,7 @@ public class NettyTransport implements Transport {
 
    private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
       EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
-              new NioEventLoopGroup(nThreads, threadFactory);
+            new NioEventLoopGroup(nThreads, threadFactory);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
       return eventLoop;
    }

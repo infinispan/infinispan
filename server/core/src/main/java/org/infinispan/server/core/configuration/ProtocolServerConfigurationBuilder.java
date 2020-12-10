@@ -26,10 +26,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    private static final Log log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, Log.class);
    protected final AttributeSet attributes;
    protected final SslConfigurationBuilder<T, S> ssl;
+   protected final IpFilterConfigurationBuilder<T, S> ipFilter;
 
    protected ProtocolServerConfigurationBuilder(int port, AttributeSet attributes) {
       this.attributes = attributes;
       this.ssl = new SslConfigurationBuilder(this);
+      this.ipFilter = new IpFilterConfigurationBuilder<>(this);
       port(port);
 
    }
@@ -110,6 +112,11 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
+   public IpFilterConfigurationBuilder<T, S> ipFilter() {
+      return ipFilter;
+   }
+
+   @Override
    public S ioThreads(int ioThreads) {
       attributes.attribute(IO_THREADS).set(ioThreads);
       return this.self();
@@ -167,6 +174,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    public Builder<?> read(T template) {
       this.attributes.read(template.attributes());
       this.ssl.read(template.ssl());
+      this.ipFilter.read(template.ipFilter());
       return this;
    }
 }

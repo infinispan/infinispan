@@ -194,9 +194,9 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCachesWithIgnoreCache() {
       if (security) {
-         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> ignoreManager.ignoreCache("cache1"));
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> serverStateManager.ignoreCache("cache1"));
       } else {
-         ignoreManager.ignoreCache("cache1");
+         serverStateManager.ignoreCache("cache1");
       }
 
       RestResponse response = join(cacheManagerClient.caches());
