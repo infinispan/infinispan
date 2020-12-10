@@ -85,6 +85,14 @@ ifdef::productized[]
 | _Owner nodes_
 | *Complete*
 
+| Scattered
+| *Yes*
+| _Medium_ (primary)
+| _Higher_ (single RPC)
+| Cluster capacity^1^
+| _Owner nodes_
+| _Partial:_ no transactions.
+
 |===
 
 ^1^ Cluster capacity::

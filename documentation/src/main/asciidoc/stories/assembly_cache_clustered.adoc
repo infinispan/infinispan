@@ -7,10 +7,7 @@ technology as the transport layer to pass data across the network.
 include::{topics}/con_caches_invalidation.adoc[leveloffset=+1]
 include::{topics}/con_caches_replicated.adoc[leveloffset=+1]
 include::{topics}/con_caches_distribution.adoc[leveloffset=+1]
-//Community only
-ifndef::productized[]
 include::{topics}/con_caches_scattered.adoc[leveloffset=+1]
-endif::productized[]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
