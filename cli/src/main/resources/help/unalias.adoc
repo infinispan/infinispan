@@ -1,0 +1,24 @@
+UNALIAS(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+unalias - deletes aliases.
+
+
+SYNOPSIS
+--------
+*unalias* 'ALIAS-NAME'
+
+
+EXAMPLES
+--------
+`unalias q` +
+Deletes the `q` alias.
+
+
+SEE ALSO
+--------
+config(1), alias(1)
