@@ -12,10 +12,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Quit.CMD, description = "Quits the CLI")
+@CommandDefinition(name = "quit", description = "Quits the CLI")
 public class Quit extends CliCommand {
-
-   public static final String CMD = "quit";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;

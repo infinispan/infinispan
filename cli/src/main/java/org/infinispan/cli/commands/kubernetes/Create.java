@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
@@ -18,7 +17,6 @@ import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.ExposeCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContextImpl;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -27,15 +25,13 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @since 12.0
  **/
 
-@MetaInfServices(Command.class)
 @GroupCommandDefinition(
-      name = Create.CMD,
+      name = "create",
       description = "Creates a resource",
       groupCommands = {
             Create.Cluster.class,
       })
 public class Create extends CliCommand {
-   public static final String CMD = "create";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -50,9 +46,8 @@ public class Create extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Cluster.CMD, description = "Creates a cluster")
+   @CommandDefinition(name = "cluster", description = "Creates a cluster")
    public static class Cluster extends CliCommand {
-      public static final String CMD = "cluster";
 
       @Option(shortName = 'n', description = "Select the namespace")
       String namespace;

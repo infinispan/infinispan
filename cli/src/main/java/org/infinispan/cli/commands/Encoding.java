@@ -7,6 +7,7 @@ import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.completers.EncodingCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -14,9 +15,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Encoding.CMD, description = "Gets/sets the current encoding")
+@CommandDefinition(name = "encoding", description = "Gets/sets the current encoding")
 public class Encoding extends CliCommand {
-   public static final String CMD = "encoding";
 
    @Argument(completer = EncodingCompleter.class)
    String encoding;
@@ -31,10 +31,11 @@ public class Encoding extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD);
       if (encoding != null) {
-         cmd.arg(TYPE, encoding);
+         invocation.getContext().setEncoding(MediaType.fromString(encoding));
+      } else {
+         invocation.println(invocation.getContext().getEncoding().toString());
       }
-      return invocation.execute(cmd);
+      return CommandResult.SUCCESS;
    }
 }

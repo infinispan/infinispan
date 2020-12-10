@@ -3,89 +3,39 @@ package org.infinispan.cli.connection.rest;
 import static org.infinispan.cli.logging.Messages.MSG;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.aesh.io.FileResource;
-import org.infinispan.cli.commands.Add;
-import org.infinispan.cli.commands.Backup;
-import org.infinispan.cli.commands.Cache;
-import org.infinispan.cli.commands.Cas;
-import org.infinispan.cli.commands.Cd;
-import org.infinispan.cli.commands.ClearCache;
-import org.infinispan.cli.commands.CliCommand;
-import org.infinispan.cli.commands.CommandInputLine;
-import org.infinispan.cli.commands.Container;
-import org.infinispan.cli.commands.Counter;
-import org.infinispan.cli.commands.Create;
-import org.infinispan.cli.commands.Describe;
-import org.infinispan.cli.commands.Drop;
-import org.infinispan.cli.commands.Encoding;
-import org.infinispan.cli.commands.Get;
-import org.infinispan.cli.commands.Logging;
-import org.infinispan.cli.commands.Ls;
-import org.infinispan.cli.commands.Migrate;
-import org.infinispan.cli.commands.Put;
-import org.infinispan.cli.commands.Query;
-import org.infinispan.cli.commands.Remove;
-import org.infinispan.cli.commands.Reset;
-import org.infinispan.cli.commands.Schema;
-import org.infinispan.cli.commands.Server;
-import org.infinispan.cli.commands.Shutdown;
-import org.infinispan.cli.commands.Site;
-import org.infinispan.cli.commands.Stats;
-import org.infinispan.cli.commands.Task;
 import org.infinispan.cli.connection.Connection;
-import org.infinispan.cli.resources.CacheKeyResource;
-import org.infinispan.cli.resources.CacheResource;
-import org.infinispan.cli.resources.CachesResource;
 import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.ContainersResource;
-import org.infinispan.cli.resources.CounterResource;
-import org.infinispan.cli.resources.CountersResource;
 import org.infinispan.cli.resources.Resource;
-import org.infinispan.cli.resources.RootResource;
 import org.infinispan.cli.util.IterableJsonReader;
-import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestCounterClient;
-import org.infinispan.client.rest.RestEntity;
-import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
-import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.Version;
-
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -216,497 +166,64 @@ public class RestConnection implements Connection, Closeable {
       }
    }
 
-   private Resource pathToResource(String path) throws IOException {
-      if (Resource.THIS.equals(path)) {
-         return activeResource;
-      } else if (Resource.PARENT.equals(path)) {
-         return activeResource.getParent();
-      } else {
-         String[] parts = path.split("/");
-         if (parts.length == 0) {
-            return activeResource.findAncestor(RootResource.class);
-         } else {
-            Resource resource = activeResource;
-            for (String part : parts) {
-               if (part.isEmpty()) {
-                  resource = resource.findAncestor(RootResource.class);
-               } else {
-                  resource = resource.getChild(part);
-               }
-            }
-            return resource;
-         }
-      }
+   @Override
+   public MediaType getEncoding() {
+      return encoding;
    }
 
    @Override
-   public String execute(List<CommandInputLine> commands) throws IOException {
-      StringBuilder sb = new StringBuilder();
-      ResponseMode responseMode = ResponseMode.BODY;
-      for (CommandInputLine command : commands) {
-         CompletionStage<RestResponse> response = null;
-         switch (command.name()) {
-            case Add.CMD: {
-               RestCounterClient counter;
-               if (command.hasArg(Add.COUNTER)) {
-                  counter = client.counter(command.arg(Add.COUNTER));
-               } else {
-                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
-               }
-               response = counter.add(command.longOption(Add.DELTA));
-               if (command.boolOption(CliCommand.QUIET)) {
-                  responseMode = ResponseMode.QUIET;
-               }
-               break;
-            }
-            case Backup.CMD: {
-               String container = getActiveContainer().getName();
-               RestCacheManagerClient manager = this.client.cacheManager(container);
-               responseMode = ResponseMode.BODY;
-               String backupName;
-               switch (command.arg(CliCommand.TYPE)) {
-                  case Backup.Create.CMD:
-                     backupName = command.optionOrDefault(Backup.NAME, () -> {
-                        // If the backup name has not been specified generate one based upon the Infinispan version and timestamp
-                        LocalDateTime now = LocalDateTime.now();
-                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS%n", Version.getBrandName(), now);
-                     });
-
-                     sb.append("Creating backup '").append(backupName).append("'");
-                     String directory = command.option(Backup.Create.DIR);
-                     response = manager.createBackup(backupName, directory, Backup.createResourceMap(command));
-                     break;
-                  case Backup.Delete.CMD:
-                     backupName = command.arg(Backup.NAME);
-                     sb.append("Deleting backup '").append(backupName).append("'");
-                     response = manager.deleteBackup(backupName);
-                     break;
-                  case Backup.Get.CMD:
-                     boolean skipBody = command.boolOption(Backup.Get.NO_CONTENT);
-                     responseMode = skipBody ? ResponseMode.QUIET : ResponseMode.FILE;
-                     backupName = command.arg(Backup.NAME);
-                     sb.append("Downloading backup '").append(backupName).append("'\n");
-                     // Poll the backup's availability every 500 milliseconds with a maximum of 100 attempts
-                     response = Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
-                           .repeat(100)
-                           .flatMapSingle(Void -> Single.fromCompletionStage(manager.getBackup(backupName, skipBody)))
-                           .takeUntil(rsp -> rsp.getStatus() != 202)
-                           .lastOrErrorStage();
-                     break;
-                  case Backup.ListBackups.CMD:
-                     sb.append(String.join("\n", getBackupNames(container)));
-                     break;
-                  case Backup.Restore.CMD:
-                     Map<String, List<String>> resources = Backup.createResourceMap(command);
-                     Boolean upload = command.argAs(Backup.Restore.UPLOAD_BACKUP);
-                     FileResource resource = command.argAs(Backup.Restore.PATH);
-                     String restoreName = command.optionOrDefault(Backup.NAME, () -> {
-                        // If the restore name has not been specified generate one based upon the Infinispan version and timestamp
-                        LocalDateTime now = LocalDateTime.now();
-                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS%n", Version.getBrandName(), now);
-                     });
-                     if (upload != null && upload) {
-                        File file = resource.getFile();
-                        sb.append("Uploading backup '").append(file.getName()).append("' and restoring");
-                        response = manager.restore(restoreName, file, resources);
-                     } else {
-                        String path = resource.getAbsolutePath();
-                        sb.append("Restoring from backup '").append(path).append("'");
-                        response = manager.restore(restoreName, path, resources);
-                     }
-
-                     response = response.thenCompose(rsp -> {
-                              if (rsp.getStatus() != 202) {
-                                 return CompletableFuture.completedFuture(rsp);
-                              }
-                              // Poll the restore progress every 500 milliseconds with a maximum of 100 attempts
-                              return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
-                                    .repeat(100)
-                                    .flatMapSingle(Void -> Single.fromCompletionStage(manager.getRestore(restoreName)))
-                                    .takeUntil(r -> r.getStatus() != 202)
-                                    .lastOrErrorStage();
-                           }
-                     );
-                     break;
-               }
-               break;
-            }
-            case Cache.CMD:
-               activeResource = activeResource
-                     .findAncestor(ContainerResource.class)
-                     .getChild(CachesResource.NAME, command.arg(CliCommand.NAME));
-               break;
-            case Cas.CMD: {
-               RestCounterClient counter;
-               if (command.hasArg(Cas.COUNTER)) {
-                  counter = client.counter(command.arg(Cas.COUNTER));
-               } else {
-                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
-               }
-               if (command.boolOption(CliCommand.QUIET)) {
-                  response = counter.compareAndSet(command.longOption(Cas.EXPECT), command.longOption(Cas.VALUE));
-               } else {
-                  response = counter.compareAndSwap(command.longOption(Cas.EXPECT), command.longOption(Cas.VALUE));
-               }
-               break;
-            }
-            case Cd.CMD:
-               String path = command.arg(CliCommand.PATH);
-               Resource rPath = pathToResource(path);
-               if (!(rPath instanceof CacheKeyResource)) {
-                  activeResource = rPath;
-               }
-               break;
-            case ClearCache.CMD: {
-               if (command.hasArg(CliCommand.NAME)) {
-                  activeResource
-                        .findAncestor(ContainerResource.class)
-                        .getChild(CachesResource.NAME)
-                        .getChild(command.arg(CliCommand.NAME));
-                  response = client.cache(command.arg(CliCommand.NAME)).clear();
-               } else {
-                  CacheResource resource = activeResource.findAncestor(CacheResource.class);
-                  if (resource != null) {
-                     response = client.cache(resource.getName()).clear();
-                  }
-               }
-               break;
-            }
-            case Container.CMD: {
-               activeResource = activeResource
-                     .findAncestor(RootResource.class)
-                     .getChild(ContainersResource.NAME, command.arg(CliCommand.NAME));
-               break;
-            }
-            case Counter.CMD: {
-               activeResource = activeResource
-                     .findAncestor(ContainerResource.class)
-                     .getChild(CountersResource.NAME, command.arg(CliCommand.NAME));
-               break;
-            }
-            case Create.CMD: {
-               switch (command.arg(Create.TYPE)) {
-                  case Create.Cache.CMD: {
-                     RestCacheClient cache = client.cache(command.arg(Create.NAME));
-                     boolean vltl = command.boolOption(Create.Cache.VOLATILE);
-                     AdminFlag flags[] = vltl ? new AdminFlag[]{AdminFlag.VOLATILE} : new AdminFlag[]{};
-                     if (command.hasArg(Create.Cache.TEMPLATE)) {
-                        response = cache.createWithTemplate(command.arg(Create.Cache.TEMPLATE), flags);
-                     } else {
-                        RestEntity entity = entityFromFile(new File(command.arg(Create.Cache.FILE)));
-                        response = cache.createWithConfiguration(entity, flags);
-                     }
-                     break;
-                  }
-                  case Create.Counter.CMD: {
-                     Json counterBody = Json.object()
-                           .set(Create.Counter.INITIAL_VALUE, command.longOption(Create.Counter.INITIAL_VALUE))
-                           .set(Create.Counter.CONCURRENCY_LEVEL, command.intOption(Create.Counter.CONCURRENCY_LEVEL))
-                           .set(Create.Counter.STORAGE, command.option(Create.Counter.STORAGE));
-                     if (command.hasOption(Create.Counter.UPPER_BOUND)) {
-                        counterBody.set(Create.Counter.UPPER_BOUND, command.longOption(Create.Counter.UPPER_BOUND));
-                     }
-                     if (command.hasOption(Create.Counter.LOWER_BOUND)) {
-                        counterBody.set(Create.Counter.LOWER_BOUND, command.longOption(Create.Counter.LOWER_BOUND));
-                     }
-                     Json counter = Json.object().set(command.option(Create.Counter.COUNTER_TYPE) + "-counter", counterBody);
-                     response = client.counter(command.arg(CliCommand.NAME)).create(RestEntity.create(MediaType.APPLICATION_JSON, counter.toString()));
-                     break;
-                  }
-               }
-               break;
-            }
-            case Describe.CMD: {
-               Resource resource = activeResource;
-               if (command.hasArg(CliCommand.NAME)) {
-                  resource = pathToResource(command.arg(CliCommand.NAME));
-               }
-               return resource.describe();
-            }
-            case Drop.CMD: {
-               switch (command.arg(CliCommand.TYPE)) {
-                  case Drop.Cache.CMD:
-                     response = client.cache(command.arg(CliCommand.NAME)).delete();
-                     break;
-                  case Drop.Counter.CMD:
-                     response = client.counter(command.arg(CliCommand.NAME)).delete();
-                     break;
-               }
-               break;
-            }
-            case Encoding.CMD: {
-               if (command.hasArg(CliCommand.TYPE)) {
-                  encoding = MediaType.fromString(command.arg(CliCommand.TYPE));
-               } else {
-                  sb.append(encoding);
-               }
-               break;
-            }
-            case Get.CMD: {
-               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
-               response = cache.get(command.arg(CliCommand.KEY));
-               break;
-            }
-            case Ls.CMD: {
-               refreshServerInfo();
-               Resource resource = activeResource;
-               if (command.hasArg(CliCommand.PATH)) {
-                  resource = pathToResource(command.arg(CliCommand.PATH));
-               }
-               StringJoiner j = new StringJoiner("\n");
-               for (String item : resource.getChildrenNames()) {
-                  j.add(item);
-               }
-               return j.toString();
-            }
-            case Query.CMD: {
-               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
-               response = cache.query(
-                     command.arg(Query.QUERY),
-                     command.intOption(Query.MAX_RESULTS),
-                     command.intOption(Query.OFFSET),
-                     RestQueryMode.valueOf(command.option(Query.QUERY_MODE))
-               );
-               break;
-            }
-            case Put.CMD: {
-               RestCacheClient cache = getRestCacheClient(command.option(CliCommand.CACHE));
-               RestEntity value;
-               MediaType putEncoding = command.hasOption(Put.ENCODING) ? MediaType.fromString(command.option(Put.ENCODING)) : encoding;
-               if (command.hasOption(CliCommand.FILE)) {
-                  value = RestEntity.create(putEncoding, new File(command.option(CliCommand.FILE)));
-               } else {
-                  value = RestEntity.create(putEncoding, command.arg(CliCommand.VALUE));
-               }
-               if (command.boolOption(Put.IF_ABSENT)) {
-                  response = cache.post(command.arg(CliCommand.KEY), value, command.longOption(Put.TTL), command.longOption(Put.MAX_IDLE));
-               } else {
-                  response = cache.put(command.arg(CliCommand.KEY), value, command.longOption(Put.TTL), command.longOption(Put.MAX_IDLE));
-               }
-               break;
-            }
-            case Remove.CMD: {
-               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
-               response = cache.remove(command.arg(CliCommand.KEY));
-               break;
-            }
-            case Reset.CMD: {
-               RestCounterClient counter;
-               if (command.hasArg(Reset.COUNTER)) {
-                  counter = client.counter(command.arg(Reset.COUNTER));
-               } else {
-                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
-               }
-               response = counter.reset();
-               break;
-            }
-            case Schema.CMD: {
-               RestCacheClient cache = client.cache(PROTOBUF_METADATA_CACHE_NAME);
-               if (command.hasArg(CliCommand.FILE)) {
-                  RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, new File(command.arg(CliCommand.FILE)));
-                  response = cache.put(command.arg(CliCommand.KEY), value);
-               } else {
-                  response = cache.get(command.arg(CliCommand.KEY));
-               }
-               break;
-            }
-            case Shutdown.CMD: {
-               switch (command.arg(Shutdown.TYPE)) {
-                  case Shutdown.Server.CMD: {
-                     if (command.hasArg(Shutdown.SERVERS)) {
-                        response = client.cluster().stop(command.argAs(Shutdown.SERVERS));
-                     } else {
-                        response = client.server().stop();
-                     }
-                     break;
-                  }
-                  case Shutdown.Cluster.CMD: {
-                     response = client.cluster().stop();
-                     break;
-                  }
-               }
-               break;
-            }
-            case Site.CMD: {
-               RestCacheClient cache = client.cache(command.arg(Site.CACHE));
-               switch (command.arg(Site.OP)) {
-                  case Site.STATUS: {
-                     if (command.hasArg(Site.SITE_NAME)) {
-                        response = cache.backupStatus(command.arg(Site.SITE_NAME));
-                     } else {
-                        response = cache.xsiteBackups();
-                     }
-                     break;
-                  }
-                  case Site.BRING_ONLINE: {
-                     response = cache.bringSiteOnline(command.arg(Site.SITE_NAME));
-                     break;
-                  }
-                  case Site.TAKE_OFFLINE: {
-                     response = cache.takeSiteOffline(command.arg(Site.SITE_NAME));
-                     break;
-                  }
-                  case Site.PUSH_SITE_STATE: {
-                     response = cache.pushSiteState(command.arg(Site.SITE_NAME));
-                     break;
-                  }
-                  case Site.CANCEL_PUSH_STATE: {
-                     response = cache.cancelPushState(command.arg(Site.SITE_NAME));
-                     break;
-                  }
-                  case Site.CANCEL_RECEIVE_STATE: {
-                     response = cache.cancelReceiveState(command.arg(Site.SITE_NAME));
-                     break;
-                  }
-                  case Site.PUSH_SITE_STATUS: {
-                     response = cache.pushStateStatus();
-                     break;
-                  }
-                  case Site.CLEAR_PUSH_STATE_STATUS: {
-                     response = cache.clearPushStateStatus();
-                     break;
-                  }
-               }
-               break;
-            }
-            case Task.CMD: {
-               switch (command.arg(Task.TYPE)) {
-                  case Task.Exec.CMD: {
-                     response = client.tasks().exec(command.arg(Task.Exec.NAME), command.argAs(Task.Exec.PARAMETERS));
-                     break;
-                  }
-                  case Task.Upload.CMD: {
-                     RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, new File(command.option(CliCommand.FILE)));
-                     response = client.tasks().uploadScript(command.arg(Task.Exec.NAME), value);
-                     break;
-                  }
-               }
-               break;
-            }
-            case Stats.CMD: {
-               Resource resource = activeResource;
-               if (command.hasArg(CliCommand.NAME)) {
-                  resource = pathToResource(command.arg(CliCommand.NAME));
-               }
-               if (resource instanceof CacheResource) {
-                  response = client.cache(resource.getName()).stats();
-               } else if (resource instanceof ContainerResource) {
-                  response = client.cacheManager(resource.getName()).stats();
-               } else {
-                  String name = resource.getName();
-                  throw MSG.invalidResource(name.isEmpty() ? "/" : name);
-               }
-               break;
-            }
-            case Logging.CMD: {
-               switch (command.arg(Logging.TYPE)) {
-                  case Logging.Loggers.CMD: {
-                     response = client.server().logging().listLoggers();
-                     break;
-                  }
-                  case Logging.Appenders.CMD: {
-                     response = client.server().logging().listAppenders();
-                     break;
-                  }
-                  case Logging.Set.CMD: {
-                     if (command.hasArg(Logging.Set.APPENDERS)) {
-                        List<String> appenders = command.argAs(Logging.Set.APPENDERS);
-                        response = client.server().logging().setLogger(command.arg(Logging.NAME), command.option(Logging.Set.LEVEL), appenders.toArray(new String[0]));
-                     } else {
-                        response = client.server().logging().setLogger(command.arg(Logging.NAME), command.option(Logging.Set.LEVEL));
-                     }
-                     break;
-                  }
-                  case Logging.Remove.CMD: {
-                     response = client.server().logging().removeLogger(command.arg(Logging.NAME));
-                     break;
-                  }
-               }
-               break;
-            }
-            case Server.CMD: {
-               switch (command.arg(Logging.TYPE)) {
-                  case Server.Report.CMD: {
-                     responseMode = ResponseMode.FILE;
-                     response = client.server().report();
-                  }
-                  break;
-               }
-               break;
-            }
-            case Migrate.CMD: {
-               RestCacheClient cache = getRestCacheClient(command.option(CliCommand.CACHE));
-               switch (command.arg(Migrate.TYPE)) {
-                  case Migrate.Cluster.CMD: {
-                     switch (command.arg(Migrate.SUBTYPE)) {
-                        case Migrate.ClusterConnect.CMD:
-                           // TODO: ISPN-11870
-                           break;
-                        case Migrate.ClusterSynchronize.CMD: {
-                           response = cache.synchronizeData(command.intOption(Migrate.ClusterSynchronize.READ_BATCH), command.intOption(Migrate.ClusterSynchronize.THREADS));
-                           break;
-                        }
-                        case Migrate.ClusterDisconnect.CMD: {
-                           response = cache.disconnectSource();
-                           break;
-                        }
-                     }
-                     break;
-                  }
-               }
-               break;
-            }
-            default:
-               throw new IllegalArgumentException(command.name());
-         }
-         if (response != null) {
-            RestResponse r = fetch(response);
-            switch (responseMode) {
-               case BODY:
-                  String body = parseBody(r, String.class);
-                  if (body != null) {
-                     sb.append(body);
-                  }
-                  break;
-               case FILE:
-                  String contentDisposition = parseHeaders(r).get("Content-Disposition").get(0);
-                  String filename = contentDisposition.split("filename=")[1];
-                  File file = workingDir.resolve(filename).toFile();
-
-                  try (OutputStream os = new FileOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
-                     byte[] buffer = new byte[8 * 1024];
-                     int bytesRead;
-                     while ((bytesRead = is.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
-                     }
-                     sb.append(MSG.downloadedFile(filename));
-                  }
-               case QUIET:
-                  break;
-               case HEADERS:
-                  sb.append(Json.make(parseHeaders(r)).toPrettyString());
-                  break;
-               default:
-                  throw new IllegalArgumentException(responseMode.name());
-            }
-         }
-      }
-
-      refreshServerInfo();
-      return sb.toString();
+   public void setEncoding(MediaType encoding) {
+      this.encoding = encoding;
    }
 
-   private RestCacheClient getRestCacheClient(String name) {
-      if (name != null) {
-         return client.cache(name);
-      } else {
-         return client.cache(activeResource.findAncestor(CacheResource.class).getName());
+   @Override
+   public String execute(BiFunction<RestClient, Resource, CompletionStage<RestResponse>> op, ResponseMode responseMode) throws IOException {
+      RestResponse r = fetch(op.apply(client, activeResource));
+      return executeInternal(responseMode, r);
+   }
+
+   private String executeInternal(ResponseMode responseMode, RestResponse r) throws IOException {
+      StringBuilder sb = new StringBuilder();
+      switch (responseMode) {
+         case BODY:
+            String body = parseBody(r, String.class);
+            if (body != null) {
+               sb.append(body);
+            }
+            break;
+         case FILE:
+            String contentDisposition = parseHeaders(r).get("Content-Disposition").get(0);
+            String filename = contentDisposition.split("filename=")[1];
+            Path file = workingDir.resolve(filename);
+
+            try (OutputStream os = Files.newOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
+               byte[] buffer = new byte[8 * 1024];
+               int bytesRead;
+               while ((bytesRead = is.read(buffer)) != -1) {
+                  os.write(buffer, 0, bytesRead);
+               }
+               sb.append(MSG.downloadedFile(filename));
+            }
+         case QUIET:
+            break;
+         case HEADERS:
+            sb.append(Json.make(parseHeaders(r)).toPrettyString());
+            break;
+         default:
+            throw new IllegalArgumentException(responseMode.name());
       }
+      refreshServerInfo();
+      return sb.toString();
    }
 
    @Override
    public Resource getActiveResource() {
       return activeResource;
+   }
+
+   @Override
+   public void setActiveResource(Resource resource) {
+      this.activeResource = resource;
    }
 
    @Override
@@ -838,7 +355,8 @@ public class RestConnection implements Connection, Closeable {
       return parseBody(fetch(client.cacheManager(container).getBackupNames()), List.class);
    }
 
-   private void refreshServerInfo() throws IOException {
+   @Override
+   public void refreshServerInfo() throws IOException {
       try {
          ContainerResource container = getActiveContainer();
          String containerName = container.getName();
@@ -867,20 +385,6 @@ public class RestConnection implements Connection, Closeable {
       }
    }
 
-   private RestEntity entityFromFile(File f) throws IOException {
-      try (InputStream is = new FileInputStream(f)) {
-         int b;
-         while ((b = is.read()) > -1) {
-            if (b == '{') {
-               return RestEntity.create(MediaType.APPLICATION_JSON, f);
-            } else if (b == '<') {
-               return RestEntity.create(MediaType.APPLICATION_XML, f);
-            }
-         }
-      }
-      return RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, f);
-   }
-
    RestClientConfigurationBuilder getBuilder() {
       return builder;
    }
@@ -889,5 +393,4 @@ public class RestConnection implements Connection, Closeable {
       return serverInfo;
    }
 
-   enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

@@ -12,16 +12,6 @@ import org.infinispan.commons.util.Util;
  * @since 10.0
  **/
 public abstract class CliCommand implements Command<ContextAwareCommandInvocation> {
-   public static final String CACHE = "cache";
-   public static final String COUNTER = "counter";
-   public static final String FILE = "file";
-   public static final String KEY = "key";
-   public static final String NAME = "name";
-   public static final String NAMES = "names";
-   public static final String PATH = "path";
-   public static final String QUIET = "quiet";
-   public static final String TYPE = "type";
-   public static final String VALUE = "value";
 
    @Override
    public CommandResult execute(ContextAwareCommandInvocation invocation) throws CommandException {

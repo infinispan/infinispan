@@ -31,7 +31,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
  **/
 @MetaInfServices(Command.class)
 @GroupCommandDefinition(
-      name = Kube.CMD,
+      name = "kube",
       description = "Kubernetes commands",
       groupCommands = {
             Create.class,
@@ -43,7 +43,6 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
             Version.class
       })
 public class Kube implements Command {
-   public static final String CMD = "kube";
    public static final String DEFAULT_CLUSTER_NAME = "infinispan";
    public static final String INFINISPAN_SERVICE_LABEL = "infinispan-service";
 

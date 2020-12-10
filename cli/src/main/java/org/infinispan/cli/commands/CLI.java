@@ -30,6 +30,24 @@ import org.aesh.readline.ReadlineConsole;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
+import org.infinispan.cli.commands.rest.Add;
+import org.infinispan.cli.commands.rest.Backup;
+import org.infinispan.cli.commands.rest.Cas;
+import org.infinispan.cli.commands.rest.ClearCache;
+import org.infinispan.cli.commands.rest.Create;
+import org.infinispan.cli.commands.rest.Drop;
+import org.infinispan.cli.commands.rest.Get;
+import org.infinispan.cli.commands.rest.Logging;
+import org.infinispan.cli.commands.rest.Migrate;
+import org.infinispan.cli.commands.rest.Put;
+import org.infinispan.cli.commands.rest.Query;
+import org.infinispan.cli.commands.rest.Remove;
+import org.infinispan.cli.commands.rest.Reset;
+import org.infinispan.cli.commands.rest.Schema;
+import org.infinispan.cli.commands.rest.Server;
+import org.infinispan.cli.commands.rest.Shutdown;
+import org.infinispan.cli.commands.rest.Site;
+import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
@@ -55,7 +73,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
  * @since 11.0
  **/
 @GroupCommandDefinition(
-      name = CLI.CMD,
+      name = "cli",
       description = "",
       groupCommands = {
             Add.class,
@@ -85,7 +103,6 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Put.class,
             Query.class,
             Remove.class,
-            Replace.class,
             Reset.class,
             Run.class,
             Schema.class,
@@ -97,7 +114,6 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Version.class
       })
 public class CLI extends CliCommand {
-   public static final String CMD = "cli";
 
    private Context context;
 

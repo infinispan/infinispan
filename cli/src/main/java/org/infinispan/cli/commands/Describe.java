@@ -1,7 +1,10 @@
 package org.infinispan.cli.commands;
 
+import java.io.IOException;
+
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -15,10 +18,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Describe.CMD, description = "Displays information about the specified resource", activator = ConnectionActivator.class)
+@CommandDefinition(name = "describe", description = "Displays information about the specified resource", activator = ConnectionActivator.class)
 public class Describe extends CliCommand {
-
-   public static final String CMD = "describe";
 
    @Argument(description = "The path of the resource", completer = CdContextCompleter.class)
    String name;
@@ -31,10 +32,13 @@ public class Describe extends CliCommand {
       return help;
    }
 
-
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine("describe").optionalArg("name", name);
-      return invocation.execute(cmd);
+   public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+      try {
+         invocation.println(invocation.getContext().getConnection().getActiveResource().getResource(name).describe());
+         return CommandResult.SUCCESS;
+      } catch (IOException e) {
+         throw new CommandException(e);
+      }
    }
 }

@@ -23,10 +23,8 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = User.CMD, description = "User operations", groupCommands = {User.Create.class, User.Describe.class, User.Remove.class, User.Password.class, User.Groups.class, User.Ls.class, User.Encrypt.class})
+@GroupCommandDefinition(name = "user", description = "User operations", groupCommands = {User.Create.class, User.Describe.class, User.Remove.class, User.Password.class, User.Groups.class, User.Ls.class, User.Encrypt.class})
 public class User extends CliCommand {
-
-   public static final String CMD = "user";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -43,9 +41,8 @@ public class User extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Create.CMD, description = "Creates a user", aliases = "add")
+   @CommandDefinition(name = "create", description = "Creates a user", aliases = "add")
    public static class Create extends CliCommand {
-      public static final String CMD = "create";
 
       @Argument(description = "The username for the user")
       String username;
@@ -105,9 +102,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Describe.CMD, description = "Describes a user")
+   @CommandDefinition(name = "describe", description = "Describes a user")
    public static class Describe extends CliCommand {
-      public static final String CMD = "describe";
 
       @Argument(description = "The username for the user", required = true)
       String username;
@@ -137,9 +133,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Remove.CMD, description = "Removes a user", aliases = "rm")
+   @CommandDefinition(name = "remove", description = "Removes a user", aliases = "rm")
    public static class Remove extends CliCommand {
-      public static final String CMD = "remove";
 
       @Argument(description = "The username for the user", required = true)
       String username;
@@ -169,9 +164,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Password.CMD, description = "Changes a user's password")
+   @CommandDefinition(name = "password", description = "Changes a user's password")
    public static class Password extends CliCommand {
-      public static final String CMD = "password";
 
       @Argument(description = "The username for the user", required = true)
       String username;
@@ -220,9 +214,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Groups.CMD, description = "Sets a user's groups")
+   @CommandDefinition(name = "groups", description = "Sets a user's groups")
    public static class Groups extends CliCommand {
-      public static final String CMD = "groups";
 
       @Argument(description = "The username for the user", required = true)
       String username;
@@ -255,9 +248,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Ls.CMD, description = "Lists all users/groups")
+   @CommandDefinition(name = "ls", description = "Lists all users/groups")
    public static class Ls extends CliCommand {
-      public static final String CMD = "ls";
 
       @Option(description = "Whether to list all unique groups instead of users", shortName = 'g', hasValue = false)
       boolean groups;
@@ -294,9 +286,8 @@ public class User extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Encrypt.CMD, description = "Encrypts all of the passwords in a property file.")
+   @CommandDefinition(name = "encrypt-all", description = "Encrypts all of the passwords in a property file.")
    public static class Encrypt extends CliCommand {
-      public static final String CMD = "encrypt-all";
 
       @Option(description = "The path of the users.properties file", name = "users-file", shortName = 'f')
       String usersFile;

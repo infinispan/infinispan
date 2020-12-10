@@ -2,12 +2,9 @@ package org.infinispan.cli.impl;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Collections;
-import java.util.List;
 
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
-import org.aesh.command.CommandResult;
 import org.aesh.command.Executor;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.invocation.CommandInvocationConfiguration;
@@ -18,24 +15,25 @@ import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.readline.Prompt;
 import org.aesh.readline.action.KeyAction;
 import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.CommandInputLine;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ContextAwareCommandInvocation<CI extends CommandInvocation> implements CommandInvocation {
-   private final CommandInvocation<CI> invocation;
+public class ContextAwareCommandInvocation implements CommandInvocation<ContextAwareCommandInvocation> {
+   private final CommandInvocation invocation;
    private final Context context;
+   private final Shell shell;
 
-   public ContextAwareCommandInvocation(CommandInvocation<CI> commandInvocation, Context context) {
+   public ContextAwareCommandInvocation(CommandInvocation commandInvocation, Context context) {
       this.invocation = commandInvocation;
       this.context = context;
+      this.shell = commandInvocation.getShell();
    }
 
    @Override
    public Shell getShell() {
-      return invocation.getShell();
+      return shell;
    }
 
    @Override
@@ -89,7 +87,7 @@ public class ContextAwareCommandInvocation<CI extends CommandInvocation> impleme
    }
 
    @Override
-   public Executor<CI> buildExecutor(String line) throws CommandNotFoundException, CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException {
+   public Executor<ContextAwareCommandInvocation> buildExecutor(String line) throws CommandNotFoundException, CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException {
       return invocation.buildExecutor(line);
    }
 
@@ -121,31 +119,23 @@ public class ContextAwareCommandInvocation<CI extends CommandInvocation> impleme
       return context;
    }
 
-   public CommandResult execute(CommandInputLine cmd) {
-      return context.execute(invocation.getShell(), Collections.singletonList(cmd));
-   }
-
-   public CommandResult execute(List<CommandInputLine> cmds) {
-      return context.execute(invocation.getShell(), cmds);
-   }
-
    public PrintStream getShellOutput() {
-      return new PrintStream(new ShellOutputStreamAdapter(invocation.getShell()));
+      return System.out;
    }
 
    public PrintStream getShellError() {
-      return new PrintStream(new ShellOutputStreamAdapter(invocation.getShell()));
+      return System.err;
    }
 
    public String getPasswordInteractively(String prompt, String confirmPrompt) throws InterruptedException {
       String password = null;
       while (password == null || password.isEmpty()) {
-         password = invocation.getShell().readLine(new Prompt(prompt, '*'));
+         password = shell.readLine(new Prompt(prompt, '*'));
       }
       if (confirmPrompt != null) {
          String confirm = null;
          while (confirm == null || !confirm.equals(password)) {
-            confirm = invocation.getShell().readLine(new Prompt(confirmPrompt, '*'));
+            confirm = shell.readLine(new Prompt(confirmPrompt, '*'));
          }
       }
       return password;

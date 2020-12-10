@@ -1,10 +1,11 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
 
+import java.io.File;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
@@ -12,6 +13,10 @@ import org.aesh.io.Resource;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -19,9 +24,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Schema.CMD, description = "Manipulates protobuf schemas", activator = ConnectionActivator.class)
-public class Schema extends CliCommand {
-   public static final String CMD = "schema";
+@CommandDefinition(name = "schema", description = "Manipulates protobuf schemas", activator = ConnectionActivator.class)
+public class Schema extends RestCliCommand {
    @Arguments(required = true, description = "The name of the schema")
    List<String> args;
 
@@ -37,16 +41,16 @@ public class Schema extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+   protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
       if ((upload != null) && (args.size() != 1)) {
          throw Messages.MSG.illegalCommandArguments();
       } else if ((upload == null) && (args.size() != 2)) {
          throw Messages.MSG.illegalCommandArguments();
       }
-      CommandInputLine cmd = new CommandInputLine(Schema.CMD)
-            .arg(KEY, args.get(0))
-            .optionalArg(VALUE, args.size() > 1 ? args.get(1) : null)
-            .optionalArg(FILE, upload != null ? upload.getAbsolutePath() : null);
-      return invocation.execute(cmd);
+      if (upload == null) {
+         return client.schemas().put(args.get(0), args.get(1));
+      } else {
+         return client.schemas().put(args.get(0), RestEntity.create(MediaType.TEXT_PLAIN, new File(upload.getAbsolutePath())));
+      }
    }
 }

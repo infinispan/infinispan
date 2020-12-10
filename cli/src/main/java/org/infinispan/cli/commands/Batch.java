@@ -4,16 +4,35 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
+import org.infinispan.cli.commands.rest.Add;
+import org.infinispan.cli.commands.rest.Backup;
+import org.infinispan.cli.commands.rest.Cas;
+import org.infinispan.cli.commands.rest.ClearCache;
+import org.infinispan.cli.commands.rest.Create;
+import org.infinispan.cli.commands.rest.Drop;
+import org.infinispan.cli.commands.rest.Get;
+import org.infinispan.cli.commands.rest.Migrate;
+import org.infinispan.cli.commands.rest.Put;
+import org.infinispan.cli.commands.rest.Query;
+import org.infinispan.cli.commands.rest.Remove;
+import org.infinispan.cli.commands.rest.Reset;
+import org.infinispan.cli.commands.rest.Schema;
+import org.infinispan.cli.commands.rest.Server;
+import org.infinispan.cli.commands.rest.Shutdown;
+import org.infinispan.cli.commands.rest.Site;
+import org.infinispan.cli.commands.rest.Stats;
+import org.infinispan.cli.commands.rest.Task;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 @GroupCommandDefinition(
-      name = Batch.CMD,
+      name = "batch",
       description = "",
       groupCommands = {
             Add.class,
+            Backup.class,
             Cache.class,
             Cas.class,
             Cd.class,
@@ -36,7 +55,6 @@ import org.aesh.command.invocation.CommandInvocation;
             Put.class,
             Query.class,
             Remove.class,
-            Replace.class,
             Reset.class,
             Run.class,
             Schema.class,
@@ -49,8 +67,6 @@ import org.aesh.command.invocation.CommandInvocation;
             Version.class
       })
 public class Batch implements Command {
-
-   public static final String CMD = "batch";
 
    @Override
    public CommandResult execute(CommandInvocation invocation) {

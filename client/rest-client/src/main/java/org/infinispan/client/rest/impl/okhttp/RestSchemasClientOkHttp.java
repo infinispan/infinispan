@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 
@@ -40,10 +41,24 @@ public class RestSchemasClientOkHttp implements RestSchemaClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> post(String schemaName, RestEntity schemaContents) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(schemaUrl(schemaName)).post(((RestEntityAdaptorOkHttp)schemaContents).toRequestBody());
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> put(String schemaName, String schemaContents) {
       Request.Builder builder = new Request.Builder();
       RequestBody body = RequestBody.create(TEXT_PLAIN, schemaContents);
       builder.url(schemaUrl(schemaName)).put(body);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> put(String schemaName, RestEntity schemaContents) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(schemaUrl(schemaName)).put(((RestEntityAdaptorOkHttp)schemaContents).toRequestBody());
       return client.execute(builder);
    }
 

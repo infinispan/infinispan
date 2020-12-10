@@ -22,15 +22,13 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
 @GroupCommandDefinition(
-      name = Delete.CMD,
+      name = "delete",
       description = "Deletes a resource",
       groupCommands = {
             Delete.Cluster.class,
       })
 public class Delete extends CliCommand {
-   public static final String CMD = "delete";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -46,9 +44,8 @@ public class Delete extends CliCommand {
    }
 
    @MetaInfServices(Command.class)
-   @CommandDefinition(name = Cluster.CMD, description = "Deletes a cluster")
+   @CommandDefinition(name = "cluster", description = "Deletes a cluster")
    public static class Cluster extends CliCommand {
-      public static final String CMD = "cluster";
 
       @Option(shortName = 'n', description = "Select the namespace")
       String namespace;

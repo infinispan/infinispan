@@ -25,4 +25,8 @@ public class CounterResource extends AbstractResource {
    public String describe() throws IOException {
       return getConnection().describeCounter(getParent().getParent().getName(), name);
    }
+
+   public static String counterName(Resource resource) {
+      return resource.findAncestor(CounterResource.class).getName();
+   }
 }

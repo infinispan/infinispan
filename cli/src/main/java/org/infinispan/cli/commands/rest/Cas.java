@@ -1,14 +1,20 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
+
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.BooleanOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CounterCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.resources.CounterResource;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestCounterClient;
+import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -16,12 +22,9 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Cas.CMD, description = "Compares and sets counter values", activator = ConnectionActivator.class)
-public class Cas extends CliCommand {
-   public static final String CMD = "cas";
-   public static final String EXPECT = "expect";
-   public static final String VALUE = "value";
-   public static final String COUNTER = "counter";
+@CommandDefinition(name = "cas", description = "Compares and sets counter values", activator = ConnectionActivator.class)
+public class Cas extends RestCliCommand {
+
    @Argument(completer = CounterCompleter.class)
    String counter;
 
@@ -43,12 +46,12 @@ public class Cas extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine(CMD)
-            .optionalArg(COUNTER, counter)
-            .option(QUIET, quiet)
-            .option(EXPECT, expect)
-            .option(VALUE, value);
-      return invocation.execute(cmd);
+   protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+      RestCounterClient cc = counter != null ? client.counter(counter) : client.counter(CounterResource.counterName(resource));
+      if (quiet) {
+         return cc.compareAndSet(expect, value);
+      } else {
+         return cc.compareAndSwap(expect, value);
+      }
    }
 }

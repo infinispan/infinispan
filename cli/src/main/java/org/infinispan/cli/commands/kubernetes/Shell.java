@@ -5,7 +5,6 @@ import static org.infinispan.cli.commands.kubernetes.Kube.DEFAULT_CLUSTER_NAME;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -13,7 +12,6 @@ import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContextImpl;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodStatus;
@@ -25,10 +23,8 @@ import okhttp3.Response;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
-@CommandDefinition(name = Shell.CMD, description = "Initiates an interactive shell with a service")
+@CommandDefinition(name = "shell", description = "Initiates an interactive shell with a service")
 public class Shell extends CliCommand {
-   public static final String CMD = "shell";
 
    @Option(shortName = 'n', description = "Select the namespace")
    String namespace;

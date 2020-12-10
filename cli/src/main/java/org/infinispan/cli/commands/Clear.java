@@ -12,10 +12,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Clear.CMD, description = "Clears the screen")
+@CommandDefinition(name = "clear", description = "Clears the screen", aliases = "cls")
 public class Clear extends CliCommand {
-
-   public static final String CMD = "clear";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;

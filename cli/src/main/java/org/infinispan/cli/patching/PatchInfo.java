@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

@@ -5,15 +5,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
 import org.aesh.readline.AeshContext;
 import org.aesh.readline.ReadlineConsole;
-import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.SSLContextSettings;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.commons.dataconversion.MediaType;
 
 /**
  * Context.
@@ -72,11 +74,17 @@ public interface Context extends AeshContext {
     */
    void disconnect();
 
-   CommandResult execute(Shell shell, List<CommandInputLine> commands);
-
    void setConsole(ReadlineConsole console);
 
    CommandRegistry<? extends CommandInvocation> getRegistry();
+
+   MediaType getEncoding();
+
+   void setEncoding(MediaType encoding);
+
+   void refreshPrompt();
+
+   CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException;
 
    enum Property {
       TRUSTALL,

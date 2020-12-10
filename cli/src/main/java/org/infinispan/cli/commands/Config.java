@@ -20,10 +20,8 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Config.CMD, description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class})
+@GroupCommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class})
 public class Config extends CliCommand {
-
-   public static final String CMD = "config";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -40,9 +38,8 @@ public class Config extends CliCommand {
       return CommandResult.SUCCESS;
    }
 
-   @CommandDefinition(name = Set.CMD, description = "Sets a configuration property")
+   @CommandDefinition(name = "set", description = "Sets a configuration property")
    public static class Set extends CliCommand {
-      public static final String CMD = "set";
 
       @Arguments(description = "The property name and value", required = true, completer = ConfigPropertyCompleter.class)
       List<String> args;
@@ -74,9 +71,8 @@ public class Config extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Get.CMD, description = "Gets a configuration property")
+   @CommandDefinition(name = "get", description = "Gets a configuration property")
    public static class Get extends CliCommand {
-      public static final String CMD = "get";
 
       @Argument(description = "The name of the property", required = true, completer = ConfigPropertyCompleter.class)
       String name;

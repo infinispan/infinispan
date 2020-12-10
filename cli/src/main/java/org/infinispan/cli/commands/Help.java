@@ -28,10 +28,9 @@ import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Help.CMD, description = "Displays help for commands")
+@CommandDefinition(name = "help", description = "Displays help for commands")
 public class Help extends AeshFileDisplayer {
 
-   public static final String CMD = "help";
    @Arguments(completer = HelpCompleter.class)
    private final List<String> manPages;
 

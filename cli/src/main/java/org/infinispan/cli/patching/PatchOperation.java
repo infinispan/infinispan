@@ -3,8 +3,8 @@ package org.infinispan.cli.patching;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

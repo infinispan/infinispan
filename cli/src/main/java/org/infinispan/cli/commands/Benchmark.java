@@ -30,9 +30,8 @@ import org.openjdk.jmh.runner.options.VerboseMode;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Benchmark.CMD, description = "Benchmarks server performance")
+@CommandDefinition(name = "benchmark", description = "Benchmarks server performance")
 public class Benchmark extends CliCommand {
-   public static final String CMD = "benchmark";
    @Argument(description = "Specifies the URI of the server to benchmark. Supported protocols are http, https, hotrod, hotrods. If you do not set a protocol, the benchmark uses the URI of the current connection.")
    String uri;
 

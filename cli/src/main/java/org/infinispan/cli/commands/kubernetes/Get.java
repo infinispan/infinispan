@@ -26,15 +26,13 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
 @GroupCommandDefinition(
-      name = Get.CMD,
+      name = "get",
       description = "Displays resources",
       groupCommands = {
             Get.Clusters.class,
       })
 public class Get extends CliCommand {
-   public static final String CMD = "get";
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -50,9 +48,8 @@ public class Get extends CliCommand {
    }
 
    @MetaInfServices(Command.class)
-   @CommandDefinition(name = Get.Clusters.CMD, description = "Get clusters")
+   @CommandDefinition(name = "clusters", description = "Get clusters")
    public static class Clusters extends CliCommand {
-      public static final String CMD = "clusters";
 
       @Option(shortName = 'n', description = "Select the namespace")
       String namespace;

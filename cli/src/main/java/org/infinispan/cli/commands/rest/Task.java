@@ -1,7 +1,9 @@
-package org.infinispan.cli.commands;
+package org.infinispan.cli.commands.rest;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -13,8 +15,13 @@ import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionGroup;
 import org.aesh.io.Resource;
 import org.infinispan.cli.activators.ConnectionActivator;
+import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.TaskCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -22,10 +29,8 @@ import org.kohsuke.MetaInfServices;
  * @since 10.1
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Task.CMD, description = "Executes or manipulates server-side tasks", activator = ConnectionActivator.class, groupCommands = {Task.Exec.class, Task.Upload.class})
+@GroupCommandDefinition(name = "task", description = "Executes or manipulates server-side tasks", activator = ConnectionActivator.class, groupCommands = {Task.Exec.class, Task.Upload.class})
 public class Task extends CliCommand {
-   public static final String CMD = "task";
-
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -41,12 +46,9 @@ public class Task extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = Task.Exec.CMD, description = "Executes a server-side task", activator = ConnectionActivator.class)
-   public static class Exec extends CliCommand {
-      public static final String CMD = "exec";
-      public static final String PARAMETERS = "parameters";
-
-      @Argument(completer = TaskCompleter.class)
+   @CommandDefinition(name = "exec", description = "Executes a server-side task", activator = ConnectionActivator.class)
+   public static class Exec extends RestCliCommand {
+      @Argument(completer = TaskCompleter.class, required = true)
       String taskName;
 
       @OptionGroup(shortName = 'P', description = "Task parameters")
@@ -61,20 +63,14 @@ public class Task extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(Task.CMD)
-               .arg(TYPE, Task.Exec.CMD)
-               .arg(NAME, taskName)
-               .arg(PARAMETERS, parameters == null ? Collections.emptyMap() : parameters);
-         return invocation.execute(cmd);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
+         return client.tasks().exec(taskName, parameters == null ? Collections.emptyMap() : parameters);
       }
    }
 
-   @CommandDefinition(name = Task.Upload.CMD, description = "Uploads a new script task to the server", activator = ConnectionActivator.class)
-   public static class Upload extends CliCommand {
-      public static final String CMD = "upload";
-
-      @Argument(description = "The task name")
+   @CommandDefinition(name = "upload", description = "Uploads a new script task to the server", activator = ConnectionActivator.class)
+   public static class Upload extends RestCliCommand {
+      @Argument(description = "The task name", required = true)
       String taskName;
 
       @Option(completer = FileOptionCompleter.class, shortName = 'f', required = true)
@@ -89,15 +85,8 @@ public class Task extends CliCommand {
       }
 
       @Override
-      public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         if (help) {
-            invocation.println(invocation.getHelpInfo());
-         }
-         CommandInputLine cmd = new CommandInputLine(Task.CMD)
-               .arg(TYPE, Task.Upload.CMD)
-               .arg(NAME, taskName)
-               .option(FILE, file.getAbsolutePath());
-         return invocation.execute(cmd);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
+         return client.tasks().uploadScript(taskName, RestEntity.create(MediaType.TEXT_PLAIN, new File(file.getAbsolutePath())));
       }
    }
 }

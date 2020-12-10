@@ -20,9 +20,19 @@ public interface RestSchemaClient {
    CompletionStage<RestResponse> post(String schemaName, String schemaContents);
 
    /**
+    * POST a schema with the supplied name and contents.
+    */
+   CompletionStage<RestResponse> post(String schemaName, RestEntity schemaContents);
+
+   /**
     * PUT a schema with the supplied name and contents.
     */
    CompletionStage<RestResponse> put(String schemaName, String schemaContents);
+
+   /**
+    * PUT a schema with the supplied name and contents.
+    */
+   CompletionStage<RestResponse> put(String schemaName, RestEntity schemaContents);
 
    /**
     * DELETE a schema by name.
