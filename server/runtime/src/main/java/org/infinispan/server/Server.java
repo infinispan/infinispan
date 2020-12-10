@@ -427,7 +427,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public void serverStop(List<String> servers) {
       for (DefaultCacheManager cacheManager : cacheManagers.values()) {
          SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
-         ClusterExecutor executor = cacheManager.executor();
+         ClusterExecutor executor = SecurityActions.getClusterExecutor(cacheManager);
          if (servers != null && !servers.isEmpty()) {
             // Find the actual addresses of the servers
             List<Address> targets = cacheManager.getMembers().stream()
