@@ -1,0 +1,29 @@
+[id='cli_creating_command_aliases-{context}']
+= Creating Command Aliases
+Create aliases for {brandname} CLI commands to define custom shortcuts.
+
+.Procedure
+
+. Create aliases with the [command]`alias <alias>=<command>` command.
++
+For example, set `q` as an alias for the [command]`quit` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> alias q=quit
+----
++
+. Run the [command]`alias` command to check the defined aliases.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> alias
+alias q='quit'
+----
++
+. Delete aliases with the [command]`unalias` command, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> unalias q
+----

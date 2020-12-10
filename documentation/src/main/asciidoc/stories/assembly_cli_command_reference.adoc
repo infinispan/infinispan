@@ -15,6 +15,7 @@ $ help get
 ====
 
 include::{cli_help}/add.adoc[leveloffset=+1]
+include::{cli_help}/alias.adoc[leveloffset=+1]
 include::{cli_help}/cache.adoc[leveloffset=+1]
 include::{cli_help}/cas.adoc[leveloffset=+1]
 include::{cli_help}/cd.adoc[leveloffset=+1]
@@ -44,6 +45,7 @@ include::{cli_help}/shutdown.adoc[leveloffset=+1]
 include::{cli_help}/site.adoc[leveloffset=+1]
 include::{cli_help}/stats.adoc[leveloffset=+1]
 include::{cli_help}/task.adoc[leveloffset=+1]
+include::{cli_help}/unalias.adoc[leveloffset=+1]
 include::{cli_help}/user.adoc[leveloffset=+1]
 include::{cli_help}/version.adoc[leveloffset=+1]
 

@@ -19,5 +19,5 @@
 This directory contains the following files:
 
 `cli.properties`:: Stores values for CLI configuration properties.
-`aliases`:: Stores custom CLI aliases.
+`aliases`:: Stores command aliases.
 `history`:: Stores CLI history.

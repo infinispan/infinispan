@@ -81,7 +81,7 @@ ifdef::productized[]
 | *Yes*
 | _Medium_ (owners)
 | _Medium_ (owner nodes)
-a|image::node_capacity_owners.png[Formula for distributed caches,240,75]
+| Sum of all nodes capacity divided by the number of owners.
 | _Owner nodes_
 | *Complete*
 
@@ -89,7 +89,7 @@ a|image::node_capacity_owners.png[Formula for distributed caches,240,75]
 | *Yes*
 | _Medium_ (primary)
 | _Higher_ (single RPC)
-a|image::node_capacity_two.png[Formula for scattered caches,240,75]
+| Sum of all nodes capacity divided by 2.
 | _Owner nodes_
 | _Partial:_ no transactions.
 
