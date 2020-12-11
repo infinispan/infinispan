@@ -34,7 +34,7 @@ endif::productized[]
 
 //Product
 ifdef::productized[]
-[cols="20,^15,^15,^15,^15,^15,^15",options="header"]
+[cols="15,^15,^15,^15,^20,^15,^15",options="header"]
 |===
 
 | Cache mode
@@ -81,7 +81,7 @@ ifdef::productized[]
 | *Yes*
 | _Medium_ (owners)
 | _Medium_ (owner nodes)
-| Cluster capacity^1^
+a|image::node_capacity_owners.png[Formula for distributed caches,240,75]
 | _Owner nodes_
 | *Complete*
 
@@ -89,15 +89,10 @@ ifdef::productized[]
 | *Yes*
 | _Medium_ (primary)
 | _Higher_ (single RPC)
-| Cluster capacity^1^
+a|image::node_capacity_two.png[Formula for scattered caches,240,75]
 | _Owner nodes_
 | _Partial:_ no transactions.
 
 |===
-
-^1^ Cluster capacity::
-Calculate cluster capacity for distributed caches as follows:
-+
-image::node_capacity_owners.png[]
 
 endif::productized[]
