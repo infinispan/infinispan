@@ -37,7 +37,7 @@ Create a new logger or modify an existing one with `PUT` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-PUT /rest/v2/logging/loggers/{loggerName}&level={level}&appender={appender}&appender={appender}...
+PUT /rest/v2/logging/loggers/{loggerName}?level={level}&appender={appender}&appender={appender}...
 ----
 
 {brandname} sets the level of the logger identified by `{loggerName}` to `{level}`.
