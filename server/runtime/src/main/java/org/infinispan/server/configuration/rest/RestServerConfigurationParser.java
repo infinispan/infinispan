@@ -254,7 +254,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       if (securityRealm == null) {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
-      builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal));
+      builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, builder.mechanisms()));
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption) throws XMLStreamException {

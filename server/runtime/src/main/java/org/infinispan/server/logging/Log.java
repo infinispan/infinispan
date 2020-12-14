@@ -194,4 +194,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Element '%s' is missing a credential attribute '%s' or a credential reference", id = 80051)
    CacheConfigurationException missingCredential(String element, String attribute);
+
+   @Message(value = "The request authentication mechanism '%s' is not supported", id = 80052)
+   IllegalArgumentException unsupportedMechanism(String mechName);
 }

@@ -89,6 +89,8 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       response.close();
       if (response.getStatus() != 200) {
          switch (response.getStatus()) {
+            case 400:
+               throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.getStatus());
             case 401:
             case 403:
                throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
