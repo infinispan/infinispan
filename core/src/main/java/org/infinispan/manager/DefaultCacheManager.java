@@ -41,6 +41,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.ConfigurationManager;
@@ -341,7 +342,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
-      this(new ParserRegistry().parse(configurationStream, null), start);
+      this(new ParserRegistry().parse(configurationStream, null, MediaType.APPLICATION_XML), start);
    }
 
    /**

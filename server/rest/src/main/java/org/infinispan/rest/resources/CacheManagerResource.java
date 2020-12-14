@@ -27,8 +27,6 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -148,7 +146,7 @@ public class CacheManagerResource implements ResourceHandler {
             responseBuilder.contentType(APPLICATION_JSON);
             responseBuilder.entity(jsonWriter.toJSON(globalConfiguration));
          }
-      } catch (XMLStreamException e) {
+      } catch (Exception e) {
          responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
 

@@ -3,8 +3,7 @@ package org.infinispan.anchored.configuration;
 
 import static org.infinispan.anchored.configuration.AnchoredKeysConfigurationParser.NAMESPACE;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -12,13 +11,12 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
  * Anchored keys parser extension.
  *
- * This extension parses elements in the "urn:infinispan:config:anchored" namespace
+ * This extension parses elements in the "urn:infinispan:config:anchored-keys" namespace
  *
  * @author Dan Berindei
  * @since 11
@@ -28,11 +26,11 @@ import org.kohsuke.MetaInfServices;
 @Namespace(uri = NAMESPACE + "*", root = "anchored-keys", since = "11.0")
 public class AnchoredKeysConfigurationParser implements ConfigurationParser {
 
-   static final String PREFIX = "anchored";
+   static final String PREFIX = "anchored-keys";
    static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ParserScope.CACHE) && !holder.inScope(ParserScope.CACHE_TEMPLATE)) {
          throw new IllegalStateException("WRONG SCOPE");
       }
@@ -53,12 +51,11 @@ public class AnchoredKeysConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAnchoredKeys(XMLExtendedStreamReader reader, AnchoredKeysConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseAnchoredKeys(ConfigurationReader reader, AnchoredKeysConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
             builder.enabled(Boolean.parseBoolean(value));

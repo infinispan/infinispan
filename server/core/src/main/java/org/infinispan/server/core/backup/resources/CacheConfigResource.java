@@ -9,11 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -72,7 +72,7 @@ class CacheConfigResource extends AbstractContainerResource {
             Path xmlPath = root.resolve(String.format("%s.xml", configName));
             try (OutputStream os = Files.newOutputStream(xmlPath)) {
                parserRegistry.serialize(os, configName, config);
-            } catch (XMLStreamException | IOException e) {
+            } catch (IOException e) {
                throw new CacheException(String.format("Unable to create backup file '%s'", fileName), e);
             }
             log.debugf("Backing up template %s: %s", configName, config.toXMLString(configName));
@@ -86,8 +86,9 @@ class CacheConfigResource extends AbstractContainerResource {
          for (String configName : resources) {
             String configFile = configFile(configName);
             String zipPath = root.resolve(configFile).toString();
-            try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null);
+            ZipEntry entry = zip.getEntry(zipPath);
+            try (InputStream is = zip.getInputStream(entry)) {
+               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null, MediaType.fromExtension(entry.getName()));
                ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().get(configName);
                Configuration cfg = builder.template(true).build();
 

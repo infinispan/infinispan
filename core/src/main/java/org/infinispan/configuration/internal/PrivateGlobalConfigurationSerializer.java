@@ -1,9 +1,7 @@
 package org.infinispan.configuration.internal;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * A {@link ConfigurationSerializer} implementation for {@link PrivateGlobalConfiguration}.
@@ -15,7 +13,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
  */
 public class PrivateGlobalConfigurationSerializer implements ConfigurationSerializer<PrivateGlobalConfiguration> {
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, PrivateGlobalConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, PrivateGlobalConfiguration configuration) {
       //nothing to do! private configuration is not serialized.
    }
 }

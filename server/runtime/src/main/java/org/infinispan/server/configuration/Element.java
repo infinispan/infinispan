@@ -68,7 +68,10 @@ public enum Element {
    CLEAR_TEXT_CREDENTIAL,
    IP_FILTER,
    ACCEPT,
-   REJECT;
+   REJECT,
+   BINDINGS,
+   CONNECTION_PROPERTIES,
+   CONNECTORS;
 
    private static final Map<String, Element> ELEMENTS;
 

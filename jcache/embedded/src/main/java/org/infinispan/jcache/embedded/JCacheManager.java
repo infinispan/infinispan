@@ -13,6 +13,7 @@ import javax.cache.spi.CachingProvider;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -104,14 +105,13 @@ public class JCacheManager extends AbstractJCacheManager {
       }
    }
 
-   private ConfigurationBuilderHolder getConfigurationBuilderHolder(
-         ClassLoader classLoader) {
+   private ConfigurationBuilderHolder getConfigurationBuilderHolder(ClassLoader classLoader) {
       try {
          FileLookup fileLookup = FileLookupFactory.newInstance();
          InputStream configurationStream = getURI().isAbsolute()
                ? fileLookup.lookupFileStrict(getURI(), classLoader)
                : fileLookup.lookupFileStrict(getURI().toString(), classLoader);
-         return new ParserRegistry(classLoader).parse(configurationStream, null);
+         return new ParserRegistry(classLoader).parse(configurationStream, null, MediaType.fromExtension(getURI().toString()));
       } catch (FileNotFoundException e) {
          // No such file, lets use default CBH
          return new ConfigurationBuilderHolder(classLoader);

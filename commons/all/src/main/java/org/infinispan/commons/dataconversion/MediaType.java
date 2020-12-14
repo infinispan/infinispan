@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -70,6 +71,7 @@ public final class MediaType {
    public static final String APPLICATION_RTF_TYPE = "application/rtf";
    public static final String APPLICATION_SERIALIZED_OBJECT_TYPE = "application/x-java-serialized-object";
    public static final String APPLICATION_XML_TYPE = "application/xml";
+   public static final String APPLICATION_YAML_TYPE = "application/yaml";
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
    public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
@@ -109,6 +111,7 @@ public final class MediaType {
    public static final MediaType APPLICATION_OBJECT = fromString(APPLICATION_OBJECT_TYPE);
    public static final MediaType APPLICATION_SERIALIZED_OBJECT = fromString(APPLICATION_SERIALIZED_OBJECT_TYPE);
    public static final MediaType APPLICATION_XML = fromString(APPLICATION_XML_TYPE);
+   public static final MediaType APPLICATION_YAML = fromString(APPLICATION_YAML_TYPE);
    public static final MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
    public static final MediaType APPLICATION_JBOSS_MARSHALLING = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
    /**
@@ -300,6 +303,23 @@ public final class MediaType {
          return Double.parseDouble(weightValue);
       } catch (NumberFormatException nf) {
          throw CONTAINER.invalidWeight(weightValue);
+      }
+   }
+
+   public static MediaType fromExtension(String name) {
+      int last = name.lastIndexOf('.');
+      String extension = last < 0 ? name : name.substring(last + 1);
+      switch (extension) {
+         case "xml":
+            return APPLICATION_XML;
+         case "yaml":
+         case "yml":
+            return APPLICATION_YAML;
+         case "json":
+            return APPLICATION_JSON;
+         default:
+            Log.CONFIG.tracef("Unknown extension: %s", name);
+            return null;
       }
    }
 

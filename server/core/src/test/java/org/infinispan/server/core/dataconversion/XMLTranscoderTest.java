@@ -38,9 +38,9 @@ public class XMLTranscoderTest {
       byte[] value = "Hello World!".getBytes(UTF_8);
 
       Object asXML = xmlTranscoder.transcode(value, TEXT_PLAIN, APPLICATION_XML);
-      assertEquals("<?xml version=\"1.0\" ?><string>Hello World!</string>", new String((byte[]) asXML));
+      assertEquals("<string>Hello World!</string>", new String((byte[]) asXML));
 
       Object xmlAsText = xmlTranscoder.transcode(asXML, APPLICATION_XML, TEXT_PLAIN);
-      assertArrayEquals("<?xml version=\"1.0\" ?><string>Hello World!</string>".getBytes(), (byte[]) xmlAsText);
+      assertArrayEquals("<string>Hello World!</string>".getBytes(), (byte[]) xmlAsText);
    }
 }

@@ -91,7 +91,7 @@
       </replicated-cache>
       <replicated-cache name="capedwarf-metadata" mode="SYNC">
          <transaction mode="NON_XA"/>
-         <eviction strategy="NONE" max-entries="-1"/>
+         <eviction strategy="NONE"/>
          <persistence passivation="true">
             <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
          </persistence>

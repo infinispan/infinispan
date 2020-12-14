@@ -1,19 +1,15 @@
 package org.infinispan.counter.configuration;
 
-import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
-import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.infinispan.counter.configuration.CounterConfigurationParser.NAMESPACE;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -23,7 +19,6 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.Schema;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.counter.api.Storage;
 import org.kohsuke.MetaInfServices;
 
@@ -41,8 +36,7 @@ public class CounterConfigurationParser implements ConfigurationParser {
    static final String NAMESPACE = Parser.NAMESPACE + "counters:";
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ParserScope.CACHE_CONTAINER)) {
          throw CONTAINER.invalidScope(holder.getScope());
       }
@@ -70,16 +64,15 @@ public class CounterConfigurationParser implements ConfigurationParser {
     *
     * @param is the {@link InputStream} to read.
     * @return a {@link List} of {@link AbstractCounterConfiguration} read.
-    * @throws XMLStreamException if the xml is malformed.
     */
-   public List<AbstractCounterConfiguration> parseConfigurations(InputStream is) throws XMLStreamException {
+   public List<AbstractCounterConfiguration> parseConfigurations(InputStream is) throws IOException {
       BufferedInputStream input = new BufferedInputStream(is);
-      XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(input);
+      ConfigurationReader reader = ConfigurationReader.from(input).build();
       CounterManagerConfigurationBuilder builder = new CounterManagerConfigurationBuilder(null);
       try {
-         reader.require(START_DOCUMENT, null, null);
-         reader.nextTag();
-         reader.require(START_ELEMENT, null, null);
+         reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
+         reader.nextElement();
+         reader.require(ConfigurationReader.ElementType.START_ELEMENT);
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case COUNTERS: {
@@ -91,17 +84,16 @@ public class CounterConfigurationParser implements ConfigurationParser {
             }
          }
       } finally {
-         reader.close();
+         Util.close(reader);
       }
       return builder.create().counters();
    }
 
-   private void parseCountersElement(XMLStreamReader reader, CounterManagerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseCountersElement(ConfigurationReader reader, CounterManagerConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NUM_OWNERS:
                builder.numOwner(Integer.parseInt(value));
@@ -113,7 +105,7 @@ public class CounterConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case STRONG_COUNTER:
@@ -133,18 +125,18 @@ public class CounterConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private Schema getSchema(XMLStreamReader reader) {
-      String namespaceURI = reader.getNamespaceURI();
-      if(namespaceURI == null) return new Schema(Integer.parseInt(Version.getMajor()), Integer.parseInt(Version.getMinor()));
+   private Schema getSchema(ConfigurationReader reader) {
+      String namespaceURI = reader.getNamespace();
+      if (namespaceURI == null)
+         return new Schema(NAMESPACE, Integer.parseInt(Version.getMajor()), Integer.parseInt(Version.getMinor()));
       return Schema.fromNamespaceURI(namespaceURI);
    }
 
-   private void parseWeakCounter(XMLStreamReader reader, WeakCounterConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseWeakCounter(ConfigurationReader reader, WeakCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CONCURRENCY_LEVEL:
                builder.concurrencyLevel(Integer.parseInt(value));
@@ -156,15 +148,14 @@ public class CounterConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseStrongCounterLegacy(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseStrongCounterLegacy(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          parserCommonCounterAttributes(reader, builder, i, attribute, value);
       }
-      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case UPPER_BOUND:
@@ -179,12 +170,11 @@ public class CounterConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseUpperBound(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseUpperBound(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case VALUE:
                builder.upperBound(Long.parseLong(value));
@@ -196,12 +186,11 @@ public class CounterConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseLowerBound(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseLowerBound(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case VALUE:
                builder.lowerBound(Long.parseLong(value));
@@ -214,12 +203,11 @@ public class CounterConfigurationParser implements ConfigurationParser {
    }
 
 
-   private void parseStrongCounter(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseStrongCounter(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case UPPER_BOUND:
                builder.upperBound(Long.parseLong(value));
@@ -234,9 +222,8 @@ public class CounterConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parserCommonCounterAttributes(XMLStreamReader reader, CounterConfigurationBuilder builder,
-         int index, Attribute attribute, String value)
-         throws XMLStreamException {
+   private void parserCommonCounterAttributes(ConfigurationReader reader, CounterConfigurationBuilder builder,
+                                              int index, Attribute attribute, String value) {
       switch (attribute) {
          case NAME:
             builder.name(value);

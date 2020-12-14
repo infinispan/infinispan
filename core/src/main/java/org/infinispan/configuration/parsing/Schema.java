@@ -1,37 +1,51 @@
 package org.infinispan.configuration.parsing;
 
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
+
 /**
  * Schema.
  *
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class Schema {
-   final int major;
-   final int minor;
+public class Schema implements ConfigurationSchemaVersion {
+   private final String uri;
+   private final int major;
+   private final int minor;
 
-   public Schema(int major, int minor) {
+   public Schema(String uri, int major, int minor) {
+      this.uri = uri;
       this.major = major;
       this.minor = minor;
    }
 
+   @Override
+   public String getURI() {
+      return uri;
+   }
+
+   @Override
    public int getMajor() {
       return major;
    }
 
+   @Override
    public int getMinor() {
       return minor;
    }
 
+   @Override
    public boolean since(int major, int minor) {
       return (this.major > major) || ((this.major == major) && (this.minor >= minor));
    }
 
    public static Schema fromNamespaceURI(String namespaceURI) {
-      int major = 999;
-      int minor = 999;
       if (namespaceURI.startsWith("uri:") || namespaceURI.startsWith("urn:")) {
-         String version = namespaceURI.substring(namespaceURI.lastIndexOf(':') + 1);
+         int major = 999;
+         int minor = 999;
+         int colon = namespaceURI.lastIndexOf(':');
+         String uri = namespaceURI.substring(0, colon);
+         String version = namespaceURI.substring(colon + 1);
          String[] split = version.split("\\.");
          try {
             major = Integer.parseInt(split[0]);
@@ -39,8 +53,10 @@ public class Schema {
          } catch (NumberFormatException e) {
             // Ignore
          }
+         return new Schema(uri, major, minor);
+      } else {
+         return new Schema("", 999, 999);
       }
-      return new Schema(major, minor);
    }
 
 }

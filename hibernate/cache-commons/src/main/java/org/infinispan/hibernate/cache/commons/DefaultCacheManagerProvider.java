@@ -12,6 +12,7 @@ import java.util.Properties;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -61,7 +62,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       ClassLoaderService.Work<ConfigurationBuilderHolder> work = classLoader -> {
          ClassLoader infinispanClassLoader = InfinispanProperties.class.getClassLoader();
          try (InputStream input = lookupFile(config, classLoader, infinispanClassLoader)) {
-            return parse(input, infinispanClassLoader);
+            return parse(input, infinispanClassLoader, MediaType.fromExtension(config));
          } catch (IOException e) {
             throw LOGGER.unableToCreateCacheManager(e);
          }
@@ -81,7 +82,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       return input;
    }
 
-   private static ConfigurationBuilderHolder parse(InputStream input, ClassLoader classLoader) {
+   private static ConfigurationBuilderHolder parse(InputStream input, ClassLoader classLoader, MediaType mediaType) {
       ParserRegistry parser = new ParserRegistry(classLoader);
       // Infinispan requires the context ClassLoader to have full visibility on all
       // its components and eventual extension points even *during* configuration parsing.
@@ -89,7 +90,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       ClassLoader originalClassLoader = currentThread.getContextClassLoader();
       try {
          currentThread.setContextClassLoader(classLoader);
-         ConfigurationBuilderHolder builderHolder = parser.parse(input, null);
+         ConfigurationBuilderHolder builderHolder = parser.parse(input, null, mediaType);
          // Workaround Infinispan's ClassLoader strategies to bend to our will:
          builderHolder.getGlobalConfigurationBuilder().classLoader(classLoader);
          return builderHolder;

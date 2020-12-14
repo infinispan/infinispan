@@ -66,9 +66,16 @@ public class ServerConfigurationParserTest {
    }
 
    @Test
-   public void testParser() throws IOException {
-      ServerConfiguration server = parse();
+   public void testXMLParser() throws IOException {
+      validateConfiguration(parse(".xml"));
+   }
 
+   @Test
+   public void testYAMLParser() throws IOException {
+      validateConfiguration(parse(".yml"));
+   }
+
+   private void validateConfiguration(ServerConfiguration server) {
       // Interfaces
       assertEquals(2, server.networkInterfaces().size());
       NetworkAddress defaultInterface = server.networkInterfaces().get("default");
@@ -132,7 +139,7 @@ public class ServerConfigurationParserTest {
 
    @Test
    public void testJsonSerialization() throws IOException {
-      ServerConfiguration serverConfiguration = parse();
+      ServerConfiguration serverConfiguration = parse(".xml");
 
       String serverConfigPath = getConfigPath().toString();
 
@@ -289,9 +296,9 @@ public class ServerConfigurationParserTest {
       assertMemcachedConnector(memcachedConnector);
    }
 
-   ServerConfiguration parse() throws IOException {
+   ServerConfiguration parse(String extension) throws IOException {
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      URL url = fileLookup.lookupFileLocation("configuration/" + getClass().getSimpleName() + ".xml", ServerConfigurationParserTest.class.getClassLoader());
+      URL url = fileLookup.lookupFileLocation("configuration/" + getClass().getSimpleName() + extension, ServerConfigurationParserTest.class.getClassLoader());
       Properties properties = new Properties();
       properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, getConfigPath().toString());
       ParserRegistry registry = new ParserRegistry(this.getClass().getClassLoader(), false, properties);

@@ -1,11 +1,9 @@
 package org.infinispan.persistence.jpa.configuration;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * JpaStoreConfigurationSerializer.
@@ -16,7 +14,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 public class JpaStoreConfigurationSerializer extends AbstractStoreSerializer implements ConfigurationSerializer<JpaStoreConfiguration> {
 
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, JpaStoreConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, JpaStoreConfiguration configuration) {
       writer.writeStartElement(Element.JPA_STORE);
       writer.writeDefaultNamespace(JpaStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);

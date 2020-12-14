@@ -1,11 +1,11 @@
 package org.infinispan.configuration.serializing;
 
-import javax.xml.stream.XMLStreamException;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 
 /**
  * @author Tristan Tarrant
  * @since 9.0
  */
 public interface ConfigurationSerializer<T> {
-   void serialize(XMLExtendedStreamWriter writer, T configuration) throws XMLStreamException;
+   void serialize(ConfigurationWriter writer, T configuration);
 }

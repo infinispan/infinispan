@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
-      xmlns:anchored="urn:infinispan:config:anchored:${infinispan.core.schema.version}"
+      xmlns:anchored-keys="urn:infinispan:config:anchored-keys:${infinispan.core.schema.version}"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version}
             https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
-            urn:infinispan:config:anchored:${infinispan.core.schema.version}
+            urn:infinispan:config:anchored-keys:${infinispan.core.schema.version}
             https://infinispan.org/schemas/infinispan-anchored-config-${infinispan.core.schema.version}.xsd">
 
     <cache-container default-cache="default">
         <transport/>
         <replicated-cache name="default">
-            <anchored:anchored-keys/>
+            <anchored-keys:anchored-keys/>
         </replicated-cache>
     </cache-container>
 

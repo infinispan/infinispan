@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -39,7 +40,7 @@ public class ScriptMetadataParser {
             matcher = METADATA_KV.matcher(text);
             while (matcher.find()) {
                String key = matcher.group(1).toLowerCase();
-               String value = unquote(matcher.group(2));
+               String value = Util.unquote(matcher.group(2));
                switch (key) {
                case "name":
                   metadataBuilder.name(value);
@@ -72,14 +73,6 @@ public class ScriptMetadataParser {
       }
 
       return metadataBuilder.build();
-   }
-
-   private static String unquote(String s) {
-      if (s.charAt(0) == '"' || s.charAt(0) == '\'') {
-         return s.substring(1, s.length() - 1);
-      } else {
-         return s;
-      }
    }
 
    private static Set<String> unarray(String s) {

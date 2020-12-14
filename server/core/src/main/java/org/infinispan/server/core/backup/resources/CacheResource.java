@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
@@ -116,7 +114,7 @@ public class CacheResource extends AbstractContainerResource {
             String configFile = configFile(cacheName);
             String zipPath = cacheRoot.resolve(configFile).toString();
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null);
+               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null, MediaType.fromExtension(configFile));
                Configuration cfg = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
                log.debugf("Restoring Cache %s: %s", cacheName, cfg.toXMLString(cacheName));
                // GetOrCreate in the event that a default cache is defined. This also allows cache-configurations to be
@@ -186,7 +184,7 @@ public class CacheResource extends AbstractContainerResource {
          Path xmlPath = cacheRoot.resolve(xmlFileName);
          try (OutputStream os = Files.newOutputStream(xmlPath)) {
             parserRegistry.serialize(os, cacheName, configuration);
-         } catch (XMLStreamException | IOException e) {
+         } catch (IOException e) {
             throw new CacheException(String.format("Unable to create backup file '%s'", xmlFileName), e);
          }
 

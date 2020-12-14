@@ -2,10 +2,8 @@ package org.infinispan.persistence.jpa.configuration;
 
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser.NAMESPACE;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -13,7 +11,6 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -29,8 +26,8 @@ public class JpaStoreConfigurationParser implements ConfigurationParser {
    static final String NAMESPACE = Parser.NAMESPACE + "store:jpa:";
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader,
-         ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public void readElement(ConfigurationReader reader,
+                           ConfigurationBuilderHolder holder) {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case JPA_STORE: {
@@ -44,12 +41,11 @@ public class JpaStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseJpaCacheStore(XMLExtendedStreamReader reader, JpaStoreConfigurationBuilder builder, ClassLoader classLoader)
-         throws XMLStreamException {
+   private void parseJpaCacheStore(ConfigurationReader reader, JpaStoreConfigurationBuilder builder, ClassLoader classLoader) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case ENTITY_CLASS_NAME: {
@@ -75,7 +71,7 @@ public class JpaStoreConfigurationParser implements ConfigurationParser {
          }
       }
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Parser.parseStoreElement(reader, builder);
       }
    }

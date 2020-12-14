@@ -1,12 +1,7 @@
 package org.infinispan.configuration.parsing;
 
-import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
-import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
-import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,19 +16,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationReaderException;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.configuration.io.ConfigurationWriterException;
+import org.infinispan.commons.configuration.io.NamingStrategy;
+import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
@@ -43,8 +41,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.serializing.ConfigurationHolder;
 import org.infinispan.configuration.serializing.Serializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
 
 /**
  * ParserRegistry is a namespace-mapping-aware meta-parser which provides a way to delegate the
@@ -97,7 +93,7 @@ public class ParserRegistry implements NamespaceMappingParser {
                QName qName = new QName(ns.uri(), ns.root());
                NamespaceParserPair existing = parserMappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
                if (existing != null && !parser.getClass().equals(existing.parser.getClass())) {
-                  CONFIG.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existing.parser.getClass().getName());
+                  CONFIG.parserRootElementAlreadyRegistered(qName.toString(), parser.getClass().getName(), existing.parser.getClass().getName());
                }
             }
          }
@@ -106,7 +102,7 @@ public class ParserRegistry implements NamespaceMappingParser {
 
    public ConfigurationBuilderHolder parse(URL url) throws IOException {
       try (InputStream is = url.openStream()) {
-         return parse(is, new URLXMLResourceResolver(url));
+         return parse(is, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
       }
    }
 
@@ -117,7 +113,7 @@ public class ParserRegistry implements NamespaceMappingParser {
          throw new FileNotFoundException(filename);
       }
       try (InputStream is = url.openStream()) {
-         return parse(is, new URLXMLResourceResolver(url));
+         return parse(is, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
       }
    }
 
@@ -129,14 +125,19 @@ public class ParserRegistry implements NamespaceMappingParser {
          throw new FileNotFoundException(file.getAbsolutePath());
       }
       try {
-         return parse(is, new URLXMLResourceResolver(file.toURI().toURL()));
+         URL url = file.toURI().toURL();
+         return parse(is, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
       } finally {
          Util.close(is);
       }
    }
 
    public ConfigurationBuilderHolder parse(String s) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null);
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null, MediaType.APPLICATION_XML);
+   }
+
+   public ConfigurationBuilderHolder parse(String s, MediaType mediaType) {
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null, mediaType);
    }
 
    /**
@@ -145,10 +146,10 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param resourceResolver an optional resolver for Xinclude
     * @return a new {@link ConfigurationBuilderHolder} which contains the parsed configuration
     */
-   public ConfigurationBuilderHolder parse(InputStream is, XMLResourceResolver resourceResolver) {
+   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationResourceResolver resourceResolver, MediaType mediaType) {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
-         parse(is, holder, resourceResolver);
+         parse(is, holder, resourceResolver, mediaType);
          holder.validate();
          return holder;
       } catch (CacheConfigurationException e) {
@@ -158,25 +159,14 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
-   private void setIfSupported(final XMLInputFactory inputFactory, final String property, final Object value) {
-      if (inputFactory.isPropertySupported(property)) {
-         inputFactory.setProperty(property, value);
-      }
-   }
-
-   public ConfigurationBuilderHolder parse(URL url, ConfigurationBuilderHolder holder) throws IOException, XMLStreamException {
+   public ConfigurationBuilderHolder parse(URL url, ConfigurationBuilderHolder holder) throws IOException {
       try(InputStream is = url.openStream()) {
-         return parse(is, holder, new URLXMLResourceResolver(url));
+         return parse(is, holder, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
       }
    }
 
-   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder, XMLResourceResolver resourceResolver) throws XMLStreamException {
-      BufferedInputStream input = new BufferedInputStream(is);
-      XMLInputFactory factory = XMLInputFactory.newInstance();
-      setIfSupported(factory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
-      setIfSupported(factory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-      XMLStreamReader subReader = factory.createXMLStreamReader(input);
-      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(factory, resourceResolver, this, subReader, properties);
+   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder, ConfigurationResourceResolver resourceResolver, MediaType mediaType) {
+      ConfigurationReader reader = ConfigurationReader.from(is).withResolver(resourceResolver).withType(mediaType).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
       parse(reader, holder);
       // Fire all parsingComplete events if any
       for (ParserContext parserContext : holder.getParserContexts().values()) {
@@ -185,13 +175,14 @@ public class ParserRegistry implements NamespaceMappingParser {
       return holder;
    }
 
-   public ConfigurationBuilderHolder parse(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public ConfigurationBuilderHolder parse(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       try {
-         reader.require(START_DOCUMENT, null, null);
-         reader.nextTag();
-         reader.require(START_ELEMENT, null, null);
+         holder.setNamespaceMappingParser(this);
+         reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
+         reader.nextElement();
+         reader.require(ConfigurationReader.ElementType.START_ELEMENT);
          parseElement(reader, holder);
-         while (reader.next() != END_DOCUMENT) {
+         while (reader.nextElement() != ConfigurationReader.ElementType.END_DOCUMENT) {
             // consume remaining parsing events
          }
          return holder;
@@ -204,25 +195,41 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    @Override
-   public void parseElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      QName name = reader.getName();
-      // First we attempt to get the direct name
-      NamespaceParserPair parser = parserMappings.get(name);
-      if (parser == null) {
-         // Next we strip off the version from the URI and look for a wildcard match
-         String uri = name.getNamespaceURI();
-         int lastColon = uri.lastIndexOf(':');
-         String baseUri = uri.substring(0,  lastColon + 1) + "*";
-         parser = parserMappings.get(new QName(baseUri, name.getLocalPart()));
-         // See if we can get a default parser instead
-         if (parser == null || !isSupportedNamespaceVersion(parser.namespace, uri.substring(lastColon + 1)))
-            throw CONFIG.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI(), Version.getVersion());
-      }
-      Schema oldSchema = reader.getSchema();
-      reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));
+   public void parseElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      String namespace = reader.getNamespace();
+      String name = reader.getLocalName();
+      NamespaceParserPair parser = findNamespaceParser(namespace, name);
+      ConfigurationSchemaVersion oldSchema = reader.getSchema();
+      reader.setSchema(Schema.fromNamespaceURI(namespace));
       parser.parser.readElement(reader, holder);
       reader.setSchema(oldSchema);
    }
+
+   @Override
+   public void parseAttribute(ConfigurationReader reader, int i, ConfigurationBuilderHolder holder) throws ConfigurationReaderException {
+      String namespace = reader.getAttributeNamespace(i);
+      String name = reader.getLocalName();
+      NamespaceParserPair parser = findNamespaceParser(namespace, name);
+      ConfigurationSchemaVersion oldSchema = reader.getSchema();
+      reader.setSchema(Schema.fromNamespaceURI(namespace));
+      parser.parser.readAttribute(reader, name, reader.getAttributeName(i), reader.getAttributeValue(i), holder);
+      reader.setSchema(oldSchema);
+   }
+
+   private NamespaceParserPair findNamespaceParser(String namespace, String name) {
+      NamespaceParserPair parser = parserMappings.get(new QName(namespace, name));
+      if (parser == null) {
+         // Next we strip off the version from the URI and look for a wildcard match
+         int lastColon = namespace.lastIndexOf(':');
+         String baseUri = namespace.substring(0,  lastColon + 1) + "*";
+         parser = parserMappings.get(new QName(baseUri, name));
+         // See if we can get a default parser instead
+         if (parser == null || !isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1)))
+            throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
+      }
+      return parser;
+   }
+
 
    private boolean isSupportedNamespaceVersion(Namespace namespace, String version) {
       short reqVersion = Version.getVersionShort(version);
@@ -239,25 +246,25 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param os the output stream where the configuration should be serialized to
     * @param globalConfiguration the global configuration. Can be null
     * @param configurations a map of named configurations
-    * @throws XMLStreamException
     */
-   public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
-      BufferedOutputStream output = new BufferedOutputStream(os);
-      XMLStreamWriter subWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(output);
-      XMLExtendedStreamWriter writer = new XMLExtendedStreamWriterImpl(subWriter);
+   public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
+      ConfigurationWriter writer = ConfigurationWriter.to(os).build();
       serialize(writer, globalConfiguration, configurations);
-      subWriter.close();
+      try {
+         writer.close();
+      } catch (Exception e) {
+         throw new ConfigurationWriterException(e);
+      }
    }
 
    /**
-    * Serializes a full configuration to an {@link XMLExtendedStreamWriter}
+    * Serializes a full configuration to an {@link ConfigurationWriter}
     *
     * @param writer the writer where the configuration should be serialized to
     * @param globalConfiguration the global configuration. Can be null
     * @param configurations a map of named configurations
-    * @throws XMLStreamException
     */
-   public void serialize(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
       writer.writeStartDocument();
       writer.writeStartElement("infinispan");
       writer.writeDefaultNamespace(Parser.NAMESPACE + Version.getMajorMinor());
@@ -273,7 +280,7 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param name
     * @param configuration
     */
-   public void serialize(OutputStream os, String name, Configuration configuration) throws XMLStreamException {
+   public void serialize(OutputStream os, String name, Configuration configuration) {
       serialize(os, null, Collections.singletonMap(name, configuration));
    }
 
@@ -300,6 +307,42 @@ public class ParserRegistry implements NamespaceMappingParser {
       NamespaceParserPair(Namespace namespace, ConfigurationParser parser) {
          this.namespace = namespace;
          this.parser = parser;
+      }
+
+      @Override
+      public String toString() {
+         return "NamespaceParserPair{" +
+               "namespace=" + namespace +
+               ", parser=" + parser +
+               '}';
+      }
+   }
+
+   public static class QName {
+      final String namespace;
+      final String name;
+
+      public QName(String namespace, String name) {
+         this.namespace = namespace;
+         this.name = name;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         QName qName = (QName) o;
+         return Objects.equals(namespace, qName.namespace) && Objects.equals(name, qName.name);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(namespace, name);
+      }
+
+      @Override
+      public String toString() {
+         return this.namespace.equals("") ? this.name : "{" + this.namespace + "}" + this.name;
       }
    }
 }

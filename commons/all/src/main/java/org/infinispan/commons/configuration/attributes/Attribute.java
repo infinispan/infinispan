@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -232,7 +230,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       modified = false;
    }
 
-   void write(XMLStreamWriter writer, String name) throws XMLStreamException {
+   void write(ConfigurationWriter writer, String name) {
       if (modified && value != null) {
          Class<?> klass = value.getClass();
          if (klass == Class.class) {

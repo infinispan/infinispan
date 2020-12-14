@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
@@ -34,7 +35,7 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
                   ConfigurationBuilderHolder cbh = new ParserRegistry().parse(
                         new ByteArrayInputStream(config.getBytes()), Void -> {
                            throw new FileNotFoundException();
-                        });
+                        }, MediaType.APPLICATION_XML);
                   cm = new DefaultCacheManager(cbh, true);
                } finally {
                   TestingUtil.killCacheManagers(cm);

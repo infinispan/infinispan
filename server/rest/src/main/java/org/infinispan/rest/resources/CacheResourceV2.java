@@ -9,7 +9,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
@@ -21,7 +21,9 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -363,7 +366,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
 
-      MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML);
+      MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML);
       responseBuilder.contentType(accept);
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND).build();
@@ -373,14 +376,19 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return notFoundResponseFuture();
 
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      ParserRegistry registry = new ParserRegistry();
 
-      String entity;
-      if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {
-         entity = cacheConfiguration.toXMLString();
-      } else {
-         entity = invocationHelper.getJsonWriter().toJSON(cacheConfiguration);
+      switch (accept.getTypeSubtype()) {
+         case APPLICATION_JSON_TYPE:
+            responseBuilder.entity(invocationHelper.getJsonWriter().toJSON(cacheConfiguration));
+            break;
+         default:
+            ByteArrayOutputStream entity = new ByteArrayOutputStream();
+            ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).build();
+            registry.serialize(writer, null, Collections.singletonMap(cacheName, cacheConfiguration));
+            responseBuilder.entity(entity);
       }
-      return CompletableFuture.completedFuture(responseBuilder.status(OK).entity(entity).build());
+      return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
    }
 
    private CompletionStage<RestResponse> getSize(RestRequest request) {

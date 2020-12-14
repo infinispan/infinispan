@@ -1,0 +1,77 @@
+infinispan:
+  jgroups:
+    - stack:
+      name: "test-tcp"
+      extends: "tcp"
+      MERGE3:
+        min_interval: "1000"
+        max_interval: "5000"
+        stack.combine: "REPLACE"
+      FD_SOCK:
+        sock_conn_timeout: "3000"
+      FD_ALL3:
+        timeout: "3000"
+        interval: "1000"
+        stack.combine: "REPLACE"
+        stack.position: "FD_ALL"
+    - stack:
+      stack name: "test-udp"
+      extends: "udp"
+      MERGE3:
+        min_interval: "1000"
+        max_interval: "5000"
+        stack.combine: "REPLACE"
+      FD_SOCK:
+        sock_conn_timeout: "3000"
+      FD_ALL3:
+        timeout: "3000"
+        interval: "1000"
+        ispn:stack.combine: "REPLACE"
+        ispn:stack.position: "FD_ALL"
+  cache-container:
+    name: "default"
+    transport:
+      cluster: "${infinispan.cluster.name:cluster}"
+      stack: "${infinispan.cluster.stack}"
+    security:
+      authorization:
+        identity-role-mapper: ~
+        roles:
+          - role:
+            name: "AdminRole"
+            permissions: "ALL"
+          - role:
+            name: "ReaderRole"
+            permissions: "READ"
+          - role:
+            name: "WriterRole"
+            permissions: "WRITE"
+          - role:
+            name: "SupervisorRole"
+            permissions: "READ WRITE EXEC BULK_READ"
+  server:server:
+    interfaces:
+      - interface:
+        name: "public"
+        inet-address:
+          value: "${infinispan.bind.address:127.0.0.1}"
+    socket-bindings:
+      default-interface: "public"
+      port-offset: "${infinispan.socket.binding.port-offset:0}"
+        - socket-binding:
+            name: "default"
+            port: "11222"
+    security:
+      security-realms:
+        - security-realm:
+            name: "default"
+            realms:
+              - properties-realm:
+                  groups-attribute: "Roles"
+                  user-properties:
+                    path: "users.properties"
+                  group-properties:
+                    path: "group.properties"
+    endpoints:
+      socket-binding: "default"
+      security-realm: "default"

@@ -1128,4 +1128,12 @@ public final class Util {
       array[offset] = (byte) val;
    }
 
+   public static String unquote(String s) {
+      if (s.charAt(0) == '"' || s.charAt(0) == '\'') {
+         return s.substring(1, s.length() - 1);
+      } else {
+         return s;
+      }
+   }
+
 }

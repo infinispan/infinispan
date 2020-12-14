@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,6 +42,9 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
 
    public void testConditionalReplace() {
       Object k = init();
+      AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
+      Object put = cache.put("kx", "vx");
+      put = cache.put("kx", "vx");
       assertTrue(advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES).replace(k, "v0", "v1"));
       assertEquals(cache(0).get(k), "v1");
       assertEquals(cache(1).get(k), "v1");

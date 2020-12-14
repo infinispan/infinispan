@@ -17,6 +17,10 @@ import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.configuration.io.NamingStrategy;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -44,9 +48,8 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       }
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       registry.serialize(baos, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
-
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = registry.parse(bais, null);
+      ConfigurationBuilderHolder holderAfter = registry.parse(bais, null, MediaType.fromExtension(config.getFileName().toString()));
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
 
@@ -64,6 +67,17 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
          compareConfigurations(name, configurationBefore, configurationAfter);
       }
+
+      baos = new ByteArrayOutputStream();
+      ConfigurationWriter yamlWriter = ConfigurationWriter.to(baos).withType(MediaType.APPLICATION_YAML).build();
+      registry.serialize(yamlWriter, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
+      yamlWriter.close();
+
+      bais = new ByteArrayInputStream(baos.toByteArray());
+      ConfigurationReader yamlReader = ConfigurationReader.from(bais).withProperties(properties).withType(MediaType.APPLICATION_YAML).withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
+      ConfigurationBuilderHolder yamlHolder = new ConfigurationBuilderHolder();
+      registry.parse(yamlReader, yamlHolder);
+      yamlReader.close();
    }
 
    private void compareConfigurations(String name, Configuration configurationBefore, Configuration configurationAfter) {

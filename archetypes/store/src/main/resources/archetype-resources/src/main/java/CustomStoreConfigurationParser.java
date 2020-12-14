@@ -5,8 +5,6 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -14,7 +12,6 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 @Namespaces({
       // A version-specific parser for a cache store. If a parser is capable of parsing configuration for multiple versions
@@ -34,8 +31,8 @@ public class CustomStoreConfigurationParser implements ConfigurationParser {
    }
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader,
-                           ConfigurationBuilderHolder configurationHolder) throws XMLStreamException {
+   public void readElement(ConfigurationReader reader,
+                           ConfigurationBuilderHolder configurationHolder) {
       ConfigurationBuilder builder = configurationHolder.getCurrentConfigurationBuilder();
 
       Element element = Element.forName(reader.getLocalName());
@@ -50,8 +47,7 @@ public class CustomStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseSampleElement(XMLExtendedStreamReader reader, PersistenceConfigurationBuilder persistenceBuilder)
-         throws XMLStreamException {
+   private void parseSampleElement(ConfigurationReader reader, PersistenceConfigurationBuilder persistenceBuilder) {
       CustomStoreConfigurationBuilder storeBuilder = new CustomStoreConfigurationBuilder(persistenceBuilder);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);

@@ -1,17 +1,16 @@
-package org.infinispan.configuration.parsing;
+package org.infinispan.commons.configuration.io;
 
 import java.io.IOException;
 import java.net.URL;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
- * @since 10.0
+ * @since 12.1
  **/
-public class URLXMLResourceResolver implements XMLResourceResolver {
-
+public class URLConfigurationResourceResolver implements ConfigurationResourceResolver {
    private final URL context;
 
-   public URLXMLResourceResolver(URL context) {
+   public URLConfigurationResourceResolver(URL context) {
       this.context = context;
    }
 

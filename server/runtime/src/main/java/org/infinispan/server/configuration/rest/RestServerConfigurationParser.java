@@ -2,16 +2,13 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.rest.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.CorsConfigurationBuilder;
 import org.infinispan.rest.configuration.CorsRuleConfigurationBuilder;
@@ -42,8 +39,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private static org.infinispan.util.logging.Log coreLog = LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ServerConfigurationParser.ENDPOINTS_SCOPE)) {
          throw coreLog.invalidScope(ServerConfigurationParser.ENDPOINTS_SCOPE, holder.getScope());
       }
@@ -71,8 +67,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
-         throws XMLStreamException {
+   private void parseRest(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder) {
       boolean dedicatedSocketBinding = false;
       ServerSecurityRealm securityRealm = null;
       EndpointConfigurationBuilder endpoint = serverBuilder.endpoints().current();
@@ -81,7 +76,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CONTEXT_PATH: {
                builder.contextPath(value);
@@ -121,7 +116,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       if (!dedicatedSocketBinding) {
          builder.socketBinding(endpoint.singlePort().socketBinding());
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHENTICATION: {
@@ -149,11 +144,11 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseCorsRules(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseCorsRules(ConfigurationReader reader, RestServerConfigurationBuilder builder)
+         {
       ParseUtils.requireNoAttributes(reader);
       CorsConfigurationBuilder cors = builder.cors();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CORS_RULE: {
@@ -167,11 +162,11 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseCorsRule(XMLExtendedStreamReader reader, CorsRuleConfigurationBuilder corsRule) throws XMLStreamException {
+   private void parseCorsRule(ConfigurationReader reader, CorsRuleConfigurationBuilder corsRule) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NAME: {
                corsRule.name(value);
@@ -190,7 +185,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          String[] values = reader.getElementText().split(",");
          switch (element) {
@@ -218,7 +213,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) throws XMLStreamException {
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) {
       if (securityRealm == null) {
          securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
       }
@@ -226,7 +221,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SECURITY_REALM: {
                builder.securityRealm(value);
@@ -254,10 +249,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, builder.mechanisms()));
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) throws XMLStreamException {
+   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          String value = reader.getAttributeValue(i);
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
@@ -284,7 +279,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       //Since nextTag() moves the pointer, we need to make sure we won't move too far
       boolean skipTagCheckAtTheEnd = reader.hasNext();
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
@@ -301,11 +296,11 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          ParseUtils.requireNoContent(reader);
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) throws XMLStreamException {
+   private void parseSni(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case HOST_NAME: {
                sni.host(value);

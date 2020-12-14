@@ -3,11 +3,9 @@ package org.infinispan.persistence.remote.configuration;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.NAMESPACE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -16,7 +14,6 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -36,8 +33,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    }
 
    @Override
-   public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
 
       Element element = Element.forName(reader.getLocalName());
@@ -52,12 +48,12 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseRemoteStore(final XMLExtendedStreamReader reader, PersistenceConfigurationBuilder persistenceBuilder,
-         ClassLoader classLoader) throws XMLStreamException {
+   private void parseRemoteStore(final ConfigurationReader reader, PersistenceConfigurationBuilder persistenceBuilder,
+         ClassLoader classLoader) {
       RemoteStoreConfigurationBuilder builder = new RemoteStoreConfigurationBuilder(persistenceBuilder);
       parseRemoteStoreAttributes(reader, builder);
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case ASYNC_TRANSPORT_EXECUTOR: {
@@ -85,8 +81,8 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       persistenceBuilder.addStore(builder);
    }
 
-   private void parseSecurity(XMLExtendedStreamReader reader, SecurityConfigurationBuilder security) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+   private void parseSecurity(ConfigurationReader reader, SecurityConfigurationBuilder security) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHENTICATION: {
@@ -104,12 +100,12 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthentication(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+   private void parseAuthentication(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       authentication.enable();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SERVER_NAME: {
                authentication.serverName(value);
@@ -121,7 +117,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
          }
       }
       boolean hasMech = false;
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTH_PLAIN: {
@@ -152,30 +148,30 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthenticationPlain(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+   private void parseAuthenticationPlain(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName());
       authentication.saslMechanism("PLAIN").username(attributes[0]).password(attributes[1]);
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAuthenticationDigest(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+   private void parseAuthenticationDigest(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
       authentication.saslMechanism("DIGEST-MD5").username(attributes[0]).password(attributes[1]).realm(attributes[2]);
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAuthenticationExternal(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+   private void parseAuthenticationExternal(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       ParseUtils.requireNoAttributes(reader);
       authentication.saslMechanism("EXTERNAL");
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+   private void parseEncryption(ConfigurationReader reader, SslConfigurationBuilder ssl) {
       ssl.enable();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case PROTOCOL: {
                ssl.protocol(value);
@@ -190,7 +186,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case KEYSTORE: {
@@ -208,7 +204,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseKeystore(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+   private void parseKeystore(ConfigurationReader reader, SslConfigurationBuilder ssl) {
       String[] attributes = ParseUtils.requireAttributes(reader, true,
             Attribute.FILENAME.getLocalName(),
             Attribute.PASSWORD.getLocalName());
@@ -218,7 +214,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case FILENAME:
             case PASSWORD:
@@ -244,7 +240,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseTruststore(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+   private void parseTruststore(ConfigurationReader reader, SslConfigurationBuilder ssl) {
       String[] attributes = ParseUtils.requireAttributes(reader, true,
             Attribute.FILENAME.getLocalName(),
             Attribute.PASSWORD.getLocalName());
@@ -254,7 +250,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case FILENAME:
             case PASSWORD:
@@ -272,12 +268,12 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAsyncTransportExecutor(final XMLExtendedStreamReader reader,
-         final ExecutorFactoryConfigurationBuilder builder, ClassLoader classLoader) throws XMLStreamException {
+   private void parseAsyncTransportExecutor(final ConfigurationReader reader,
+         final ExecutorFactoryConfigurationBuilder builder, ClassLoader classLoader) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case FACTORY: {
                builder.factory(Util.getInstance(value, classLoader));
@@ -289,14 +285,14 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
          }
       }
 
-      builder.withExecutorProperties(Parser.parseProperties(reader));
+      builder.withExecutorProperties(Parser.parseProperties(reader, Element.ASYNC_TRANSPORT_EXECUTOR));
    }
 
-   private void parseConnectionPool(XMLExtendedStreamReader reader, ConnectionPoolConfigurationBuilder builder) throws XMLStreamException {
+   private void parseConnectionPool(ConfigurationReader reader, ConnectionPoolConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case EXHAUSTED_ACTION: {
                builder.exhaustedAction(ExhaustedAction.valueOf(value));
@@ -341,12 +337,11 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseServer(XMLExtendedStreamReader reader, RemoteServerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseServer(ConfigurationReader reader, RemoteServerConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case HOST:
                builder.host(value);
@@ -364,12 +359,11 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseRemoteStoreAttributes(XMLExtendedStreamReader reader, RemoteStoreConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseRemoteStoreAttributes(ConfigurationReader reader, RemoteStoreConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         String attrName = reader.getAttributeLocalName(i);
+         String attrName = reader.getAttributeName(i);
          Attribute attribute = Attribute.forName(attrName);
          switch (attribute) {
             case BALANCING_STRATEGY: {

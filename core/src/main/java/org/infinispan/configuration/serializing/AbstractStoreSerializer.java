@@ -2,9 +2,8 @@ package org.infinispan.configuration.serializing;
 
 import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -18,17 +17,17 @@ import org.infinispan.configuration.parsing.Element;
  * @since 9.0
  */
 public abstract class AbstractStoreSerializer {
-   protected void writeCommonStoreSubAttributes(XMLExtendedStreamWriter writer, AbstractStoreConfiguration configuration) throws XMLStreamException {
+   protected void writeCommonStoreSubAttributes(ConfigurationWriter writer, AbstractStoreConfiguration configuration) {
    }
 
-   protected void writeCommonStoreElements(XMLExtendedStreamWriter writer, StoreConfiguration configuration) throws XMLStreamException {
+   protected void writeCommonStoreElements(ConfigurationWriter writer, StoreConfiguration configuration) {
       if (configuration.async().enabled()) {
          writeStoreWriteBehind(writer, configuration);
       }
       writeTypedProperties(writer, TypedProperties.toTypedProperties(configuration.properties()));
    }
 
-   private void writeStoreWriteBehind(XMLExtendedStreamWriter writer, StoreConfiguration configuration)  throws XMLStreamException {
+   private void writeStoreWriteBehind(ConfigurationWriter writer, StoreConfiguration configuration) {
       AttributeSet writeBehind = configuration.async().attributes();
       if (writeBehind.isModified()) {
          writer.writeStartElement(Element.WRITE_BEHIND);
