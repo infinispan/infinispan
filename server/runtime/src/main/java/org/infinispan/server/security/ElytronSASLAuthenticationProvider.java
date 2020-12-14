@@ -1,6 +1,7 @@
 package org.infinispan.server.security;
 
 import java.security.Principal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -13,9 +14,11 @@ import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
 import org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory;
 import org.wildfly.security.sasl.util.AggregateSaslServerFactory;
+import org.wildfly.security.sasl.util.FilterMechanismSaslServerFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslFactories;
+import org.wildfly.security.sasl.util.SecurityProviderSaslServerFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
 
 /**
@@ -25,9 +28,10 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
 public class ElytronSASLAuthenticationProvider implements ServerAuthenticationProvider {
    private final SaslAuthenticationFactory saslAuthenticationFactory;
 
-   public ElytronSASLAuthenticationProvider(String name, ServerSecurityRealm realm, String serverPrincipal) {
+   public ElytronSASLAuthenticationProvider(String name, ServerSecurityRealm realm, String serverPrincipal, Collection<String> mechanisms) {
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
-      AggregateSaslServerFactory factory = new AggregateSaslServerFactory(SaslFactories.getProviderSaslServerFactory());
+      SecurityProviderSaslServerFactory all = SaslFactories.getProviderSaslServerFactory();
+      AggregateSaslServerFactory factory = new AggregateSaslServerFactory(new FilterMechanismSaslServerFactory(all, true, mechanisms));
       builder.setFactory(factory);
       builder.setSecurityDomain(realm.getSecurityDomain());
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();
@@ -47,6 +51,6 @@ public class ElytronSASLAuthenticationProvider implements ServerAuthenticationPr
          factory = props != null ? new PropertiesSaslServerFactory(factory, props) : factory;
          return factory;
       });
-      return new ElytronSubjectSaslServer(saslServer, principals, null);
+      return saslServer == null ? null : new ElytronSubjectSaslServer(saslServer, principals, null);
    }
 }

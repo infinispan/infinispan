@@ -175,7 +175,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                Server.log.debug("Enabled PLAIN mechanism for Hot Rod");
             }
          }
-         authentication.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal));
+         authentication.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal, authentication.sasl().mechanisms()));
       }
    }
 
@@ -225,7 +225,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                Server.log.debug("Enabled BASIC for HTTP");
             }
          }
-         authentication.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal));
+         authentication.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, authentication.mechanisms()));
       }
    }
 }

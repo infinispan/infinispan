@@ -80,9 +80,17 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
          future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
       RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
+      response.close();
       if (response.getStatus() != 200) {
-         response.close();
-         throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+         switch (response.getStatus()) {
+            case 400:
+               throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.getStatus());
+            case 401:
+            case 403:
+               throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
+            default:
+               throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+         }
       } else {
          return restClient;
       }

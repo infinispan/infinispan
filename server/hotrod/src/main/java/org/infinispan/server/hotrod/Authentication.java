@@ -91,6 +91,9 @@ public class Authentication extends BaseRequestProcessor {
    private void authInternal(HotRodHeader header, String mech, byte[] response) throws Throwable {
       if (saslServer == null) {
          saslServer = createSaslServer(mech);
+         if (saslServer == null) {
+            throw log.invalidMech(mech);
+         }
       }
       byte[] serverChallenge = saslServer.evaluateResponse(response);
       if (saslServer.isComplete()) {

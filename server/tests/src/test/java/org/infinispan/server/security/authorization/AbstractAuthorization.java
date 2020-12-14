@@ -90,7 +90,7 @@ public abstract class AbstractAuthorization {
    @Test
    public void testRestNonAdminsMustNotCreateCache() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         Exceptions.expectException(RuntimeException.class, "(?s).*403.*",
+         Exceptions.expectException(SecurityException.class, "(?s).*403.*",
                () -> getServerTest().rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
       }
