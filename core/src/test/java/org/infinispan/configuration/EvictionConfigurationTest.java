@@ -16,8 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -180,7 +178,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseLegacyXML() throws XMLStreamException {
+   public void testParseLegacyXML() {
       String xmlLegacy = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -204,7 +202,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseLegacyXML2() throws XMLStreamException {
+   public void testParseLegacyXML2() {
       String xmlLegacy = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -229,7 +227,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseLegacyXML3() throws XMLStreamException {
+   public void testParseLegacyXML3() {
       String xmlLegacy = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -256,7 +254,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseXML() throws XMLStreamException {
+   public void testParseXML() {
       String xml = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -282,7 +280,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseXML2() throws XMLStreamException {
+   public void testParseXML2() {
       String xmlNew = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -308,7 +306,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseXML3() throws XMLStreamException {
+   public void testParseXML3() {
       String xmlNew = "<infinispan>\n" +
             "   <cache-container>\n" +
             "      <local-cache name=\"local\">\n" +
@@ -509,7 +507,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       configBuilder.memory().storage(OFF_HEAP).maxCount(10).maxSize("10TB").build();
    }
 
-   private void testSerializationAndBack(String xml) throws XMLStreamException {
+   private void testSerializationAndBack(String xml) {
       // Parse config
       ConfigurationBuilderHolder configurationBuilderHolder = REGISTRY.parse(xml);
       ConfigurationBuilder builder = configurationBuilderHolder.getNamedConfigurationBuilders().get("local");
@@ -519,7 +517,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       REGISTRY.serialize(baos, "local", before);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, null);
+      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, null, MediaType.APPLICATION_XML);
 
       // Parse again from the serialized
       ConfigurationBuilder afterParsing = holderAfter.getNamedConfigurationBuilders().get("local");

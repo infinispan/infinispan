@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Version;
+import org.infinispan.server.logging.log4j.XmlConfigurationFactory;
 import org.infinispan.server.tool.Main;
 
 /**
@@ -145,6 +146,7 @@ public class Bootstrap extends Main {
          stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
+      System.setProperty("log4j.configurationFactory", XmlConfigurationFactory.class.getName());
       System.setProperty("log4j.configurationFile", loggingFile.toAbsolutePath().toString());
 
       logJVMInformation();

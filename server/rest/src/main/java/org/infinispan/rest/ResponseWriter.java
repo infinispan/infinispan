@@ -3,6 +3,7 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
 import static io.netty.handler.codec.http.HttpHeaderValues.KEEP_ALIVE;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +46,8 @@ public enum ResponseWriter {
          Object entity = response.getEntity();
          if (entity instanceof byte[]) {
             responseContent.writeBytes((byte[]) entity);
+         } else if (entity instanceof ByteArrayOutputStream) {
+            responseContent.writeBytes(((ByteArrayOutputStream)entity).toByteArray());
          } else {
             ByteBufUtil.writeUtf8(responseContent, entity.toString());
          }

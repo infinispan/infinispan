@@ -1,9 +1,7 @@
 package org.infinispan.commands.module;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * A {@link ConfigurationSerializer} implementation for {@link TestGlobalConfiguration}.
@@ -15,7 +13,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
  */
 public class TestGlobalConfigurationSerializer implements ConfigurationSerializer<TestGlobalConfiguration> {
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, TestGlobalConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, TestGlobalConfiguration configuration) {
       //nothing to do! test configuration is not serialized.
    }
 }

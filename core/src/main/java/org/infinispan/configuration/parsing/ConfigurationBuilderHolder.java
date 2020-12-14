@@ -8,6 +8,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationReaderContext;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.JGroupsConfigurationBuilder;
@@ -15,7 +17,7 @@ import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigura
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
-public class ConfigurationBuilderHolder {
+public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
 
    private final GlobalConfigurationBuilder globalConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
@@ -24,6 +26,7 @@ public class ConfigurationBuilderHolder {
    private final WeakReference<ClassLoader> classLoader;
    private final Deque<String> scope;
    private final JGroupsConfigurationBuilder jgroupsBuilder;
+   private NamespaceMappingParser namespaceMappingParser;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -150,4 +153,17 @@ public class ConfigurationBuilderHolder {
       return jgroupsBuilder.getStack(name);
    }
 
+   public void setNamespaceMappingParser(NamespaceMappingParser namespaceMappingParser) {
+      this.namespaceMappingParser = namespaceMappingParser;
+   }
+
+   @Override
+   public void handleAnyElement(ConfigurationReader reader) {
+      namespaceMappingParser.parseElement(reader, this);
+   }
+
+   @Override
+   public void handleAnyAttribute(ConfigurationReader reader, int i) {
+      namespaceMappingParser.parseAttribute(reader, i, this);
+   }
 }

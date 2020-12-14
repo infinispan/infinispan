@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.Storage;
@@ -57,7 +55,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
    public Map<String, CounterConfiguration> loadAll() {
       try {
          doLoadAll();
-      } catch (IOException | XMLStreamException e) {
+      } catch (IOException e) {
          throw CONTAINER.errorReadingCountersConfiguration(e);
       }
       return storage;
@@ -72,7 +70,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       storage.put(name, configuration);
       try {
          doStoreAll();
-      } catch (IOException | XMLStreamException e) {
+      } catch (IOException e) {
          throw CONTAINER.errorPersistingCountersConfiguration(e);
       }
    }
@@ -92,7 +90,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       sharedDirectory = cacheManager.getCacheManagerConfiguration().globalState().sharedPersistentLocation();
    }
 
-   private void doStoreAll() throws IOException, XMLStreamException {
+   private void doStoreAll() throws IOException {
       File directory = getSharedDirectory();
       File temp = File.createTempFile("counters", null, directory);
       try (FileOutputStream f = new FileOutputStream(temp)) {
@@ -106,7 +104,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       }
    }
 
-   private void doLoadAll() throws XMLStreamException, IOException {
+   private void doLoadAll() throws IOException {
       File file = getPersistentFile();
       try (FileInputStream fis = new FileInputStream(file)) {
          convertToMap(parser.parseConfigurations(fis));

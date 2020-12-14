@@ -1,10 +1,8 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * JdbcStringBasedStoreConfigurationSerializer.
@@ -15,7 +13,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 public class JdbcStringBasedStoreConfigurationSerializer extends AbstractJdbcStoreConfigurationSerializer implements ConfigurationSerializer<JdbcStringBasedStoreConfiguration> {
 
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, JdbcStringBasedStoreConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, JdbcStringBasedStoreConfiguration configuration) {
       writer.writeStartElement(Element.STRING_KEYED_JDBC_STORE);
       writer.writeDefaultNamespace(JdbcStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       writeJdbcStoreAttributes(writer, configuration);

@@ -1,0 +1,20 @@
+%YAML 1.2
+%TAG ! urn:infinispan:config:12.1
+%TAG !server! urn:infinispan:server:12.1
+%TAG !jgroups! urn:org:jgroups
+---
+# This is a YAML file which uses the Infinispan configuration conventions
+item1:
+  item2:
+    a: 1
+    b: 2
+    c: 3
+    camelItem3:
+      camelAttribute: ${opinion}
+      anotherCamelAttribute: ${fact}
+    d: 4
+  item5: v5
+  item6: v6
+  item7:
+    - v7
+    - v8

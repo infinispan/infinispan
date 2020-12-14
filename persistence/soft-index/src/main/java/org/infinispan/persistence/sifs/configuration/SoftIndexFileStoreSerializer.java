@@ -1,11 +1,9 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * SoftIndexFileStoreSerializer.
@@ -16,7 +14,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 public class SoftIndexFileStoreSerializer extends AbstractStoreSerializer implements ConfigurationSerializer<SoftIndexFileStoreConfiguration> {
 
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
       writer.writeStartElement(Element.SOFT_INDEX_FILE_STORE);
       writer.writeDefaultNamespace(SoftIndexFileStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
@@ -27,14 +25,14 @@ public class SoftIndexFileStoreSerializer extends AbstractStoreSerializer implem
       writer.writeEndElement();
    }
 
-   private void writeDataElement(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
+   private void writeDataElement(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
       configuration.data().attributes().write(writer, Element.DATA.getLocalName(),
             DataConfiguration.DATA_LOCATION,
             DataConfiguration.MAX_FILE_SIZE,
             DataConfiguration.SYNC_WRITES);
    }
 
-   private void writeIndexElement(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
+   private void writeIndexElement(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
       configuration.index().attributes().write(writer, Element.INDEX.getLocalName(),
             IndexConfiguration.INDEX_LOCATION,
             IndexConfiguration.INDEX_QUEUE_LENGTH,

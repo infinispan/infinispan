@@ -3,17 +3,14 @@ package org.infinispan.persistence.rocksdb.configuration;
 import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationParser.NAMESPACE;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -32,7 +29,7 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
    }
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
@@ -46,13 +43,13 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseRocksDBCacheStore(XMLExtendedStreamReader reader, RocksDBStoreConfigurationBuilder builder) throws XMLStreamException {
+   private void parseRocksDBCacheStore(ConfigurationReader reader, RocksDBStoreConfigurationBuilder builder) {
       String path = null;
       String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         String attrName = reader.getAttributeLocalName(i);
+         String attrName = reader.getAttributeName(i);
          Attribute attribute = Attribute.forName(attrName);
 
          switch (attribute) {
@@ -90,7 +87,7 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
          builder.location(path);
       }
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case EXPIRATION: {
@@ -108,10 +105,10 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseExpiry(XMLExtendedStreamReader reader, RocksDBStoreConfigurationBuilder builder) throws XMLStreamException {
+   private void parseExpiry(ConfigurationReader reader, RocksDBStoreConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case PATH: {
                builder.expiredLocation(value);
@@ -132,10 +129,10 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCompression(XMLExtendedStreamReader reader, RocksDBStoreConfigurationBuilder builder) throws XMLStreamException {
+   private void parseCompression(ConfigurationReader reader, RocksDBStoreConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case TYPE: {
                builder.compressionType(CompressionType.valueOf(value));

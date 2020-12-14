@@ -2,10 +2,7 @@ package org.infinispan.lock.configuration;
 
 import static org.infinispan.lock.configuration.ClusteredLockConfigurationParser.NAMESPACE;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -14,7 +11,6 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.lock.logging.Log;
 import org.kohsuke.MetaInfServices;
 
@@ -34,8 +30,7 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
    private static final Log log = LogFactory.getLog(ClusteredLockConfigurationParser.class, Log.class);
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ParserScope.CACHE_CONTAINER)) {
          throw log.invalidScope(holder.getScope());
       }
@@ -58,12 +53,11 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseClusteredLocksElement(XMLStreamReader reader, ClusteredLockManagerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseClusteredLocksElement(ConfigurationReader reader, ClusteredLockManagerConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NUM_OWNERS:
                builder.numOwner(Integer.parseInt(value));
@@ -75,7 +69,7 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLUSTERED_LOCK:
@@ -87,12 +81,11 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseClusteredLock(XMLStreamReader reader,
-                                   ClusteredLockConfigurationBuilder builder) throws XMLStreamException {
+   private void parseClusteredLock(ConfigurationReader reader, ClusteredLockConfigurationBuilder builder)  {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NAME:
                builder.name(value);

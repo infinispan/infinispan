@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 import javax.naming.InitialContext;
 import javax.naming.spi.NamingManager;
-import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
@@ -301,7 +300,7 @@ public class Server implements ServerManagement, AutoCloseable {
          }
 
          configurationBuilderHolder.validate();
-      } catch (IOException | XMLStreamException e) {
+      } catch (IOException e) {
          throw new CacheConfigurationException(e);
       }
    }

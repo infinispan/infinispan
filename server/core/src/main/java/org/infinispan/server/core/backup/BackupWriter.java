@@ -22,8 +22,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
@@ -141,7 +139,7 @@ class BackupWriter {
       Path xmlPath = root.resolve(GLOBAL_CONFIG_FILE);
       try (OutputStream os = Files.newOutputStream(xmlPath)) {
          parserRegistry.serialize(os, configuration, Collections.emptyMap());
-      } catch (XMLStreamException | IOException e) {
+      } catch (Exception e) {
          throw new CacheException(String.format("Unable to create global configuration file '%s'", xmlPath), e);
       }
    }

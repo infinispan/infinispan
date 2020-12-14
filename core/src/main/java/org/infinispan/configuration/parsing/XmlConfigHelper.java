@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -13,12 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -167,18 +160,4 @@ public class XmlConfigHelper {
       }
    }
 
-   public static String toString(Element e) {
-      try {
-         TransformerFactory tfactory = TransformerFactory.newInstance();
-         Transformer xform = tfactory.newTransformer();
-         Source src = new DOMSource(e);
-         java.io.StringWriter writer = new StringWriter();
-         Result result = new javax.xml.transform.stream.StreamResult(writer);
-         xform.transform(src, result);
-         return writer.toString();
-      }
-      catch (Exception ex) {
-         return "Unable to convert to string: " + ex.toString();
-      }
-   }
 }

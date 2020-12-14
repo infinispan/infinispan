@@ -15,6 +15,7 @@ public enum Element {
     // KEEP THESE IN ALPHABETICAL ORDER!
 
     ADVANCED_EXTERNALIZER,
+    ADVANCED_EXTERNALIZERS,
     ALLOW_LIST,
     ASYNC,
     AUTHORIZATION,
@@ -24,6 +25,7 @@ public enum Element {
     BINARY,
     BLOCKING_BOUNDED_QUEUE_THREAD_POOL,
     CACHE_CONTAINER,
+    CACHES,
     CACHED_THREAD_POOL,
     CLASS,
     CLUSTERING,
@@ -91,10 +93,12 @@ public enum Element {
     REPLICATED_CACHE,
     REPLICATED_CACHE_CONFIGURATION,
     ROLE,
+    ROLES,
     ROOT,
     SCATTERED_CACHE,
     SCATTERED_CACHE_CONFIGURATION,
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
+    SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),
     SHARED_PERSISTENT_LOCATION,
     SCHEDULED_THREAD_POOL,
     SECURITY,
@@ -111,7 +115,9 @@ public enum Element {
     TAKE_OFFLINE,
     TEMPORARY_LOCATION,
     THREADS,
+    THREAD_FACTORIES,
     THREAD_FACTORY,
+    THREAD_POOLS,
     TRANSACTION,
     TRANSPORT,
     UNSAFE,
@@ -121,7 +127,7 @@ public enum Element {
     @Deprecated
     WHITE_LIST,
     WRITE_BEHIND,
-    ;
+    STACKS;
 
    private final String name;
 

@@ -2,14 +2,12 @@ package org.infinispan.persistence.remote.configuration;
 
 import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.SerializeUtils;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * RemoteStoreConfigurationSerializer.
@@ -20,7 +18,7 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer implements ConfigurationSerializer<RemoteStoreConfiguration> {
 
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, RemoteStoreConfiguration configuration) throws XMLStreamException {
+   public void serialize(ConfigurationWriter writer, RemoteStoreConfiguration configuration) {
       writer.writeStartElement(Element.REMOTE_STORE);
       writer.writeDefaultNamespace(RemoteStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
@@ -36,7 +34,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       writer.writeEndElement();
    }
 
-   private void writeAsyncExecutor(XMLExtendedStreamWriter writer, ExecutorFactoryConfiguration executorFactoryConfiguration) throws XMLStreamException {
+   private void writeAsyncExecutor(ConfigurationWriter writer, ExecutorFactoryConfiguration executorFactoryConfiguration) {
       AttributeSet attributes = executorFactoryConfiguration.attributes();
       if(attributes.isModified()) {
          writer.writeStartElement(Element.ASYNC_TRANSPORT_EXECUTOR);
@@ -46,7 +44,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       }
    }
 
-   private void writeConnectionPool(XMLExtendedStreamWriter writer, ConnectionPoolConfiguration connectionPool) throws XMLStreamException {
+   private void writeConnectionPool(ConfigurationWriter writer, ConnectionPoolConfiguration connectionPool) {
       writer.writeStartElement(Element.CONNECTION_POOL);
       writer.writeAttribute(Attribute.EXHAUSTED_ACTION, connectionPool.exhaustedAction().name());
       writer.writeAttribute(Attribute.MAX_ACTIVE, Integer.toString(connectionPool.maxActive()));
@@ -57,7 +55,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       writer.writeEndElement();
    }
 
-   private void writeServers(XMLExtendedStreamWriter writer, List<RemoteServerConfiguration> servers) throws XMLStreamException {
+   private void writeServers(ConfigurationWriter writer, List<RemoteServerConfiguration> servers) {
       for(RemoteServerConfiguration server : servers) {
          writer.writeStartElement(Element.SERVER);
          writer.writeAttribute(Attribute.HOST, server.host());
@@ -66,7 +64,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       }
    }
 
-   private void writeSecurity(XMLExtendedStreamWriter writer, SecurityConfiguration security) throws XMLStreamException {
+   private void writeSecurity(ConfigurationWriter writer, SecurityConfiguration security) {
       if (security.authentication().attributes().isModified() || security.ssl().attributes().isModified()) {
          writer.writeStartElement(Element.SECURITY);
          writeAuthentication(writer, security.authentication());
@@ -75,7 +73,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       }
    }
 
-   private void writeAuthentication(XMLExtendedStreamWriter writer, AuthenticationConfiguration authentication) throws XMLStreamException {
+   private void writeAuthentication(ConfigurationWriter writer, AuthenticationConfiguration authentication) {
       AttributeSet attributeSet = authentication.attributes();
       if (attributeSet.isModified()) {
          writer.writeStartElement(Element.AUTHENTICATION);
@@ -106,7 +104,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       }
    }
 
-   private void writeEncryption(XMLExtendedStreamWriter writer, SslConfiguration ssl) throws XMLStreamException {
+   private void writeEncryption(ConfigurationWriter writer, SslConfiguration ssl) {
       AttributeSet attributes = ssl.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.ENCRYPTION);

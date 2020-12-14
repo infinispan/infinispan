@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
@@ -75,8 +75,8 @@ public class Parser extends CacheParser {
    }
 
    @Override
-   public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+   public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
+      while (reader.inTag("infinispan")) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CACHE_CONTAINER: {
@@ -101,13 +101,12 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseSerialization(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   private void parseSerialization(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case MARSHALLER_CLASS: {
@@ -127,9 +126,21 @@ public class Parser extends CacheParser {
          }
       }
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+
+
+      while (reader.hasNext()) {
+         reader.nextElement();
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case SERIALIZATION: {
+               reader.require(ConfigurationReader.ElementType.END_ELEMENT);
+               return;
+            }
+            case ADVANCED_EXTERNALIZERS:
+            case SERIALIZATION_CONTEXT_INITIALIZERS: {
+               // Empty elements for YAML/JSON
+               break;
+            }
             case ADVANCED_EXTERNALIZER: {
                CONFIG.advancedExternalizerDeprecated();
                parseAdvancedExternalizer(reader, holder.getClassLoader(), builder.serialization());
@@ -144,10 +155,11 @@ public class Parser extends CacheParser {
                   throw ParseUtils.elementRemoved(reader, Element.ALLOW_LIST.getLocalName());
                }
                CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
-               // fall through
+               parseAllowList(reader, builder.serialization().allowList(), Element.WHITE_LIST);
+               break;
             case ALLOW_LIST: {
                if (reader.getSchema().since(10, 0)) {
-                  parseAllowList(reader, builder.serialization().allowList());
+                  parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
                   break;
                } else {
                   throw ParseUtils.unexpectedElement(reader);
@@ -160,13 +172,13 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseSerializationContextInitializer(final XMLExtendedStreamReader reader, final ClassLoader classLoader,
-                                                     final SerializationConfigurationBuilder builder) throws XMLStreamException {
+   private void parseSerializationContextInitializer(final ConfigurationReader reader, final ClassLoader classLoader,
+                                                     final SerializationConfigurationBuilder builder) {
       int attributes = reader.getAttributeCount();
       ParseUtils.requireAttributes(reader, Attribute.CLASS.getLocalName());
       for (int i = 0; i < attributes; i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CLASS: {
                builder.addContextInitializer(Util.getInstance(value, classLoader));
@@ -180,8 +192,8 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAllowList(final XMLExtendedStreamReader reader, final AllowListConfigurationBuilder builder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+   private void parseAllowList(final ConfigurationReader reader, final AllowListConfigurationBuilder builder, Element outerElement) {
+      while (reader.inTag(outerElement)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLASS: {
@@ -199,15 +211,15 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseAdvancedExternalizer(final XMLExtendedStreamReader reader, final ClassLoader classLoader,
-                                          final SerializationConfigurationBuilder builder) throws XMLStreamException {
+   private void parseAdvancedExternalizer(final ConfigurationReader reader, final ClassLoader classLoader,
+                                          final SerializationConfigurationBuilder builder) {
       int attributes = reader.getAttributeCount();
       AdvancedExternalizer<?> advancedExternalizer = null;
       Integer id = null;
       ParseUtils.requireAttributes(reader, Attribute.CLASS.getLocalName());
       for (int i = 0; i < attributes; i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CLASS: {
                advancedExternalizer = Util.getInstance(value, classLoader);
@@ -232,10 +244,20 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseThreads(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+   private void parseThreads(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      while (reader.hasNext()) {
+         reader.nextElement();
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case THREADS: {
+               reader.require(ConfigurationReader.ElementType.END_ELEMENT);
+               return;
+            }
+            case THREAD_FACTORIES:
+            case THREAD_POOLS: {
+               // Wrapper elements for YAML/JSON parsers
+               break;
+            }
             case THREAD_FACTORY: {
                parseThreadFactory(reader, holder);
                break;
@@ -261,11 +283,10 @@ public class Parser extends CacheParser {
             }
          }
       }
-
    }
 
-   private void parseBoundedQueueThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder,
-         boolean isNonBlocking) throws XMLStreamException {
+   private void parseBoundedQueueThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder,
+         boolean isNonBlocking) {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
 
       String name = null;
@@ -278,7 +299,7 @@ public class Parser extends CacheParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case NAME: {
@@ -316,14 +337,14 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseScheduledThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseScheduledThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
       String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case NAME: {
@@ -345,14 +366,14 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCachedThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseCachedThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
       String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case NAME: {
@@ -374,7 +395,7 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseThreadFactory(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseThreadFactory(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String name = null;
       String threadGroupName = null;
       String threadNamePattern = null;
@@ -383,7 +404,7 @@ public class Parser extends CacheParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case NAME: {
@@ -412,13 +433,13 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseJGroups(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseJGroups(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       Transport transport = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
             if (!ParseUtils.isNoNamespaceAttribute(reader, i))
             continue;
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
             case TRANSPORT:
@@ -437,9 +458,13 @@ public class Parser extends CacheParser {
          holder.getGlobalConfigurationBuilder().transport().transport(transport);
       }
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag(Element.JGROUPS)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case STACKS: {
+               // Wrapper element for YAML/JSON
+               break;
+            }
             case STACK_FILE:
                parseStackFile(reader, holder);
                break;
@@ -456,7 +481,7 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties, XMLResourceResolver resourceResolver) {
+   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties, ConfigurationResourceResolver resourceResolver) {
       URL url = FileLookupFactory.newInstance().lookupFileLocation(path, holder.getClassLoader());
       try (InputStream xml = (url != null ? url : resourceResolver.resolveResource(path)).openStream()) {
          holder.addJGroupsStack(new FileJGroupsChannelConfigurator(name, path, xml, properties));
@@ -467,14 +492,14 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseJGroupsStack(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseJGroupsStack(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String stackName = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
       EmbeddedJGroupsChannelConfigurator stackConfigurator = new EmbeddedJGroupsChannelConfigurator(stackName);
       String extend = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NAME:
                break;
@@ -487,7 +512,7 @@ public class Parser extends CacheParser {
       }
 
       List<ProtocolConfiguration> stack = stackConfigurator.getProtocolStack();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case REMOTE_SITES:
@@ -495,10 +520,10 @@ public class Parser extends CacheParser {
                break;
             default:
                // It should be an actual JGroups protocol
-               String protocolName = reader.getLocalName();
+               String protocolName = reader.getLocalName(NamingStrategy.IDENTITY);
                Map<String, String> protocolAttributes = new HashMap<>();
                for (int i = 0; i < reader.getAttributeCount(); i++) {
-                  protocolAttributes.put(reader.getAttributeLocalName(i), reader.getAttributeValue(i));
+                  protocolAttributes.put(reader.getAttributeName(i, NamingStrategy.SNAKE_CASE), reader.getAttributeValue(i));
                }
                ParseUtils.requireNoContent(reader);
                stack.add(new ProtocolConfiguration(protocolName, protocolAttributes));
@@ -508,19 +533,19 @@ public class Parser extends CacheParser {
       holder.addJGroupsStack(stackConfigurator, extend);
    }
 
-   private void parseJGroupsRelay(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, EmbeddedJGroupsChannelConfigurator stackConfigurator) throws XMLStreamException {
+   private void parseJGroupsRelay(ConfigurationReader reader, ConfigurationBuilderHolder holder, EmbeddedJGroupsChannelConfigurator stackConfigurator) {
       String defaultStack = ParseUtils.requireSingleAttribute(reader, Attribute.DEFAULT_STACK);
       if (holder.getJGroupsStack(defaultStack) == null) {
          throw CONFIG.missingJGroupsStack(defaultStack);
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case REMOTE_SITE:
                String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
                String stack = defaultStack;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
-                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                  Attribute attribute = Attribute.forName(reader.getAttributeName(i));
                   switch (attribute) {
                      case NAME:
                         break;
@@ -543,21 +568,21 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseStackFile(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseStackFile(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
       ParseUtils.requireNoContent(reader);
 
       addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties(), reader.getResourceResolver());
    }
 
-   private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseContainer(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       holder.pushScope(ParserScope.CACHE_CONTAINER);
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          if (!ParseUtils.isNoNamespaceAttribute(reader, i))
             continue;
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NAME: {
                builder.cacheManagerName(value);
@@ -638,9 +663,13 @@ public class Parser extends CacheParser {
          }
       }
 
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag(Element.CACHE_CONTAINER)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case CACHES: {
+               // Wrapper element for YAML/JSON
+               break;
+            }
             case TRANSPORT: {
                parseTransport(reader, holder);
                break;
@@ -733,9 +762,9 @@ public class Parser extends CacheParser {
       holder.popScope();
    }
 
-   private void parseGlobalSecurity(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseGlobalSecurity(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ParseUtils.requireNoAttributes(reader);
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHORIZATION: {
@@ -749,11 +778,11 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseGlobalAuthorization(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseGlobalAuthorization(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       GlobalAuthorizationConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security().authorization().enable();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case AUDIT_LOGGER: {
                builder.auditLogger(Util.getInstance(value, holder.getClassLoader()));
@@ -765,9 +794,17 @@ public class Parser extends CacheParser {
          }
       }
       PrincipalRoleMapper roleMapper = null;
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.hasNext()) {
+         reader.nextElement();
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case AUTHORIZATION: {
+               reader.require(ConfigurationReader.ElementType.END_ELEMENT);
+               if (roleMapper != null) {
+                  builder.principalRoleMapper(roleMapper);
+               }
+               return;
+            }
             case IDENTITY_ROLE_MAPPER:
                if (roleMapper != null) {
                   throw ParseUtils.unexpectedElement(reader);
@@ -798,6 +835,10 @@ public class Parser extends CacheParser {
                }
                roleMapper = parseCustomMapper(reader, holder);
                break;
+            case ROLES: {
+               // Wrapper element for YAML/JSON
+               break;
+            }
             case ROLE: {
                parseGlobalRole(reader, builder);
                break;
@@ -807,18 +848,15 @@ public class Parser extends CacheParser {
             }
          }
       }
-      if (roleMapper != null) {
-         builder.principalRoleMapper(roleMapper);
-      }
    }
 
-   private PrincipalRoleMapper parseCustomMapper(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private PrincipalRoleMapper parseCustomMapper(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String mapperClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
       ParseUtils.requireNoContent(reader);
       return Util.getInstance(mapperClass, holder.getClassLoader());
    }
 
-   private void parseGlobalRole(XMLExtendedStreamReader reader, GlobalAuthorizationConfigurationBuilder builder) throws XMLStreamException {
+   private void parseGlobalRole(ConfigurationReader reader, GlobalAuthorizationConfigurationBuilder builder) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.PERMISSIONS.getLocalName());
       GlobalRoleConfigurationBuilder role = builder.role(attributes[0]);
       for(String permission : attributes[1].split("\\s+")) {
@@ -826,7 +864,7 @@ public class Parser extends CacheParser {
       }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case NAME:
             case PERMISSIONS: {
@@ -841,12 +879,12 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseMetrics(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseMetrics(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case GAUGES: {
                builder.metrics().gauges(Boolean.parseBoolean(value));
@@ -873,12 +911,12 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseJmx(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseJmx(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
                builder.jmx().enabled(Boolean.parseBoolean(value));
@@ -906,122 +944,126 @@ public class Parser extends CacheParser {
          }
       }
 
-      Properties properties = parseProperties(reader);
+      Properties properties = parseProperties(reader, Element.JMX);
       builder.jmx().withProperties(properties);
    }
 
-   private void parseModules(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+   private void parseModules(ConfigurationReader reader, ConfigurationBuilderHolder holder)
+         {
+      while (reader.inTag()) {
          reader.handleAny(holder);
       }
    }
 
-   private void parseTransport(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseTransport(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (holder.getGlobalConfigurationBuilder().transport().getTransport() == null) {
          holder.getGlobalConfigurationBuilder().transport().defaultTransport();
       }
       TransportConfigurationBuilder transport = holder.getGlobalConfigurationBuilder().transport();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case STACK: {
-               // Make sure we have the default stacks added
-               addJGroupsDefaultStacksIfNeeded(reader, holder);
-               JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(value);
-               if (jGroupsStack == null) {
-                  throw CONFIG.missingJGroupsStack(value);
+         if (ParseUtils.isNoNamespaceAttribute(reader, i)) {
+            Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+            switch (attribute) {
+               case STACK: {
+                  // Make sure we have the default stacks added
+                  addJGroupsDefaultStacksIfNeeded(reader, holder);
+                  JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(value);
+                  if (jGroupsStack == null) {
+                     throw CONFIG.missingJGroupsStack(value);
+                  }
+                  Properties p = new Properties();
+                  p.put(JGroupsTransport.CHANNEL_CONFIGURATOR, jGroupsStack);
+                  p.put("stack", value);
+                  transport.withProperties(p);
+                  break;
                }
-               Properties p = new Properties();
-               p.put(JGroupsTransport.CHANNEL_CONFIGURATOR, jGroupsStack);
-               p.put("stack", value);
-               transport.withProperties(p);
-               break;
-            }
-            case CLUSTER: {
-               transport.clusterName(value);
-               break;
-            }
-            case EXECUTOR: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute("transport executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               case CLUSTER: {
+                  transport.clusterName(value);
+                  break;
                }
-               break;
-            }
-            case TOTAL_ORDER_EXECUTOR: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute("total order executor", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               case EXECUTOR: {
+                  if (reader.getSchema().since(11, 0)) {
+                     throw ParseUtils.attributeRemoved(reader, i);
+                  } else {
+                     CONFIG.ignoredAttribute("transport executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+                  }
+                  break;
                }
-               break;
-            }
-            case REMOTE_COMMAND_EXECUTOR: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute("remote command executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               case TOTAL_ORDER_EXECUTOR: {
+                  if (reader.getSchema().since(9, 0)) {
+                     throw ParseUtils.attributeRemoved(reader, i);
+                  } else {
+                     CONFIG.ignoredAttribute("total order executor", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+                  }
+                  break;
                }
-               break;
-            }
-            case LOCK_TIMEOUT: {
-               transport.distributedSyncTimeout(Long.parseLong(value));
-               break;
-            }
-            case NODE_NAME: {
-               transport.nodeName(value);
-               holder.getGlobalConfigurationBuilder().threads().nodeName(value);
-               break;
-            }
-            case LOCKING:
-               break;
-            case MACHINE_ID: {
-               transport.machineId(value);
-               break;
-            }
-            case RACK_ID: {
-               transport.rackId(value);
-               break;
-            }
-            case SITE: {
-               transport.siteId(value);
-               break;
-            }
-            case INITIAL_CLUSTER_SIZE: {
-               if (reader.getSchema().since(8, 2)) {
-                  transport.initialClusterSize(Integer.parseInt(value));
-               } else {
+               case REMOTE_COMMAND_EXECUTOR: {
+                  if (reader.getSchema().since(11, 0)) {
+                     throw ParseUtils.attributeRemoved(reader, i);
+                  } else {
+                     CONFIG.ignoredAttribute("remote command executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+                  }
+                  break;
+               }
+               case LOCK_TIMEOUT: {
+                  transport.distributedSyncTimeout(Long.parseLong(value));
+                  break;
+               }
+               case NODE_NAME: {
+                  transport.nodeName(value);
+                  holder.getGlobalConfigurationBuilder().threads().nodeName(value);
+                  break;
+               }
+               case LOCKING:
+                  break;
+               case MACHINE_ID: {
+                  transport.machineId(value);
+                  break;
+               }
+               case RACK_ID: {
+                  transport.rackId(value);
+                  break;
+               }
+               case SITE: {
+                  transport.siteId(value);
+                  break;
+               }
+               case INITIAL_CLUSTER_SIZE: {
+                  if (reader.getSchema().since(8, 2)) {
+                     transport.initialClusterSize(Integer.parseInt(value));
+                  } else {
+                     throw ParseUtils.unexpectedAttribute(reader, i);
+                  }
+                  break;
+               }
+               case INITIAL_CLUSTER_TIMEOUT: {
+                  if (reader.getSchema().since(8, 2)) {
+                     transport.initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
+                  } else {
+                     throw ParseUtils.unexpectedAttribute(reader, i);
+                  }
+                  break;
+               }
+               default: {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
-               break;
             }
-            case INITIAL_CLUSTER_TIMEOUT: {
-               if (reader.getSchema().since(8, 2)) {
-                  transport.initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               }
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
+         } else {
+            reader.handleAttribute(holder, i);
          }
       }
-      Properties properties = parseProperties(reader);
+      Properties properties = parseProperties(reader, Element.TRANSPORT);
       for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
         transport.addProperty((String) propertyEntry.getKey(), (String) propertyEntry.getValue());
       }
    }
 
-   private void parseGlobalState(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseGlobalState(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ParseUtils.requireNoAttributes(reader);
       GlobalStateConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().globalState().enable();
       ConfigurationStorage storage = null;
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case PERSISTENT_LOCATION: {
@@ -1086,11 +1128,11 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseGlobalStatePath(XMLExtendedStreamReader reader, BiConsumer<String, String> pathItems) throws XMLStreamException {
+   private void parseGlobalStatePath(ConfigurationReader reader, BiConsumer<String, String> pathItems) {
       String path = ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0];
       String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case RELATIVE_TO: {
                relativeTo = ParseUtils.requireAttributeProperty(reader, i);
@@ -1109,7 +1151,7 @@ public class Parser extends CacheParser {
       pathItems.accept(path, relativeTo);
    }
 
-   private Supplier<? extends LocalConfigurationStorage> parseCustomConfigurationStorage(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private Supplier<? extends LocalConfigurationStorage> parseCustomConfigurationStorage(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String storageClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
       ParseUtils.requireNoContent(reader);
       return Util.getInstanceSupplier(storageClass, holder.getClassLoader());
@@ -1135,161 +1177,40 @@ public class Parser extends CacheParser {
    }
 
    /**
-    * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated use {@link CacheParser#parseStoreAttribute(ConfigurationReader, int, AbstractStoreConfigurationBuilder)}
     */
-   public static void parseStoreAttribute(XMLExtendedStreamReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
-      // Stores before 10.0 were non segmented by default
-      if (reader.getSchema().getMajor() < 10) {
-         storeBuilder.segmented(false);
-      }
-      String value = reader.getAttributeValue(index);
-      Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
-      switch (attribute) {
-         case SHARED: {
-            storeBuilder.shared(Boolean.parseBoolean(value));
-            break;
-         }
-         case READ_ONLY: {
-            storeBuilder.ignoreModifications(Boolean.parseBoolean(value));
-            break;
-         }
-         case PRELOAD: {
-            storeBuilder.preload(Boolean.parseBoolean(value));
-            break;
-         }
-         case FETCH_STATE: {
-            storeBuilder.fetchPersistentState(Boolean.parseBoolean(value));
-            break;
-         }
-         case PURGE: {
-            storeBuilder.purgeOnStartup(Boolean.parseBoolean(value));
-            break;
-         }
-         case SINGLETON: {
-            if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               ignoreAttribute(reader, index);
-            }
-            break;
-         }
-         case TRANSACTIONAL: {
-            storeBuilder.transactional(Boolean.parseBoolean(value));
-            break;
-         }
-         case MAX_BATCH_SIZE: {
-            storeBuilder.maxBatchSize(Integer.parseInt(value));
-            break;
-         }
-         case SEGMENTED: {
-            storeBuilder.segmented(Boolean.parseBoolean(value));
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedAttribute(reader, index);
-         }
-      }
+   @Deprecated
+   public static void parseStoreAttribute(ConfigurationReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) {
+      CacheParser.parseStoreAttribute(reader, index, storeBuilder);
    }
 
-   public static void parseStoreElement(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
-      Element element = Element.forName(reader.getLocalName());
-      switch (element) {
-         case WRITE_BEHIND: {
-            parseStoreWriteBehind(reader, storeBuilder.async().enable());
-            break;
-         }
-         case PROPERTY: {
-            parseStoreProperty(reader, storeBuilder);
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedElement(reader);
-         }
-      }
+   /**
+    * @deprecated use {@link CacheParser#parseStoreElement(ConfigurationReader, StoreConfigurationBuilder)}
+    */
+   @Deprecated
+   public static void parseStoreElement(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
+      CacheParser.parseStoreElement(reader, storeBuilder);
    }
 
-   public static void parseStoreWriteBehind(XMLExtendedStreamReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) throws XMLStreamException {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case FLUSH_LOCK_TIMEOUT:
-            case SHUTDOWN_TIMEOUT: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
-               break;
-            }
-            case MODIFICATION_QUEUE_SIZE: {
-               storeBuilder.modificationQueueSize(Integer.parseInt(value));
-               break;
-            }
-            case FAIL_SILENTLY:
-               storeBuilder.failSilently(Boolean.parseBoolean(value));
-               break;
-            case THREAD_POOL_SIZE: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
-               break;
-            }
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-      ParseUtils.requireNoContent(reader);
+   /**
+    * @deprecated use {@link CacheParser#parseStoreWriteBehind(ConfigurationReader, AsyncStoreConfigurationBuilder)}
+    */
+   @Deprecated
+   public static void parseStoreWriteBehind(ConfigurationReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) {
+      CacheParser.parseStoreWriteBehind(reader, storeBuilder);
    }
 
-   public static void parseStoreProperty(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+   /**
+    * @deprecated use {@link CacheParser#parseStoreProperty(ConfigurationReader, StoreConfigurationBuilder)}
+    */
+   @Deprecated
+   public static void parseStoreProperty(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();
       storeBuilder.addProperty(property, value);
    }
 
-   private static void parseProperty(XMLExtendedStreamReader reader, Properties properties) throws XMLStreamException {
-      int attributes = reader.getAttributeCount();
-      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
-      String key = null;
-      String propertyValue;
-      for (int i = 0; i < attributes; i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case NAME: {
-               key = value;
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-      propertyValue = reader.getElementText();
-      properties.setProperty(key, propertyValue);
-   }
-
-   public static Properties parseProperties(final XMLExtendedStreamReader reader) throws XMLStreamException {
-      Properties properties = new Properties();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTY: {
-               parseProperty(reader, properties);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
-      return properties;
-   }
-
-   private void addJGroupsDefaultStacksIfNeeded(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) {
+   private void addJGroupsDefaultStacksIfNeeded(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       if (holder.getJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP_STACK_NAME) == null) {
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP(reader.getProperties()));
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.UDP(reader.getProperties()));

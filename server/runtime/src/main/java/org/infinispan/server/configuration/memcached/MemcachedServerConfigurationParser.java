@@ -1,8 +1,6 @@
 package org.infinispan.server.configuration.memcached;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -10,7 +8,6 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
@@ -31,8 +28,8 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
    private static org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder)
+         {
       if (!holder.inScope(ServerConfigurationParser.ENDPOINTS_SCOPE)) {
          throw coreLog.invalidScope(ServerConfigurationParser.ENDPOINTS_SCOPE, holder.getScope());
       }
@@ -60,8 +57,8 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseMemcached(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseMemcached(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder)
+         {
       String[] required = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
       serverBuilder.applySocketBinding(required[0], builder, serverBuilder.endpoints().current().singlePort());
       builder.startTransport(true);
@@ -69,7 +66,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CACHE: {
                builder.cache(value);
@@ -102,7 +99,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
       }
    }

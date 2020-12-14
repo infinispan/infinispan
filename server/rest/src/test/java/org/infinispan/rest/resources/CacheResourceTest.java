@@ -150,7 +150,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).isOk();
       assertThat(response).hasContentType("application/xml");
       assertThat(response).hasReturnedText(
-            "<?xml version=\"1.0\" ?><org.infinispan.rest.TestClass><name>test</name></org.infinispan.rest.TestClass>");
+            "<org.infinispan.rest.TestClass><name>test</name></org.infinispan.rest.TestClass>");
    }
 
    @Test

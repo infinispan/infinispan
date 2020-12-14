@@ -1,6 +1,5 @@
 package org.infinispan.configuration.parsing;
 
-import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -9,9 +8,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.xml.XMLConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationReaderException;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -21,8 +21,8 @@ public final class ParseUtils {
     private ParseUtils() {
     }
 
-    public static Element nextElement(XMLStreamReader reader) throws XMLStreamException {
-        if (reader.nextTag() == END_ELEMENT) {
+    public static Element nextElement(ConfigurationReader reader) throws ConfigurationReaderException {
+        if (reader.nextElement() == ConfigurationReader.ElementType.END_ELEMENT) {
             return null;
         }
         return Element.forName(reader.getLocalName());
@@ -33,12 +33,12 @@ public final class ParseUtils {
      * @param reader the stream reader
      * @return the exception
      */
-    public static XMLStreamException unexpectedElement(final XMLStreamReader reader) {
-        return new XMLStreamException("Unexpected element '" + reader.getName() + "' encountered", reader.getLocation());
+    public static ConfigurationReaderException unexpectedElement(final ConfigurationReader reader) {
+        return new ConfigurationReaderException("Unexpected element '" + reader.getLocalName() + "' encountered", reader.getLocation());
     }
 
-    public static <T extends Enum<T>> XMLStreamException unexpectedElement(final XMLStreamReader reader, T element) {
-        return new XMLStreamException("Unexpected element '" + element.toString() + "' encountered", reader.getLocation());
+    public static <T extends Enum<T>> ConfigurationReaderException unexpectedElement(final ConfigurationReader reader, T element) {
+        return new ConfigurationReaderException("Unexpected element '" + element.toString() + "' encountered", reader.getLocation());
     }
 
     /**
@@ -46,8 +46,8 @@ public final class ParseUtils {
      * @param reader the stream reader
      * @return the exception
      */
-    public static XMLStreamException unexpectedEndElement(final XMLStreamReader reader) {
-        return new XMLStreamException("Unexpected end of element '" + reader.getName() + "' encountered", reader.getLocation());
+    public static ConfigurationReaderException unexpectedEndElement(final ConfigurationReader reader) {
+        return new ConfigurationReaderException("Unexpected end of element '" + reader.getLocalName() + "' encountered", reader.getLocation());
     }
 
     /**
@@ -56,8 +56,8 @@ public final class ParseUtils {
      * @param index the attribute index
      * @return the exception
      */
-    public static XMLStreamException unexpectedAttribute(final XMLStreamReader reader, final int index) {
-        return new XMLStreamException("Unexpected attribute '" + reader.getAttributeName(index) + "' encountered",
+    public static ConfigurationReaderException unexpectedAttribute(final ConfigurationReader reader, final int index) {
+        return new ConfigurationReaderException("Unexpected attribute '" + reader.getAttributeName(index) + "' encountered",
                 reader.getLocation());
     }
 
@@ -67,8 +67,8 @@ public final class ParseUtils {
      * @param name the attribute name
      * @return the exception
      */
-    public static XMLStreamException unexpectedAttribute(final XMLStreamReader reader, final String name) {
-        return new XMLStreamException("Unexpected attribute '" + name + "' encountered",
+    public static ConfigurationReaderException unexpectedAttribute(final ConfigurationReader reader, final String name) {
+        return new ConfigurationReaderException("Unexpected attribute '" + name + "' encountered",
                 reader.getLocation());
     }
 
@@ -78,8 +78,8 @@ public final class ParseUtils {
      * @param index the attribute index
      * @return the exception
      */
-    public static XMLStreamException invalidAttributeValue(final XMLStreamReader reader, final int index) {
-        return new XMLStreamException("Invalid value '" + reader.getAttributeValue(index) + "' for attribute '"
+    public static ConfigurationReaderException invalidAttributeValue(final ConfigurationReader reader, final int index) {
+        return new ConfigurationReaderException("Invalid value '" + reader.getAttributeValue(index) + "' for attribute '"
                 + reader.getAttributeName(index) + "'", reader.getLocation());
     }
 
@@ -90,7 +90,7 @@ public final class ParseUtils {
      *        attribute name
      * @return the exception
      */
-    public static XMLStreamException missingRequired(final XMLStreamReader reader, final Set<?> required) {
+    public static ConfigurationReaderException missingRequired(final ConfigurationReader reader, final Set<?> required) {
         final StringBuilder b = new StringBuilder();
         Iterator<?> iterator = required.iterator();
         while (iterator.hasNext()) {
@@ -100,7 +100,7 @@ public final class ParseUtils {
                 b.append(", ");
             }
         }
-        return new XMLStreamException("Missing required attribute(s): " + b, reader.getLocation());
+        return new ConfigurationReaderException("Missing required attribute(s): " + b, reader.getLocation());
     }
 
     /**
@@ -110,7 +110,7 @@ public final class ParseUtils {
      *        attribute name
      * @return the exception
      */
-    public static XMLStreamException missingRequiredElement(final XMLStreamReader reader, final Set<?> required) {
+    public static ConfigurationReaderException missingRequiredElement(final ConfigurationReader reader, final Set<?> required) {
         final StringBuilder b = new StringBuilder();
         Iterator<?> iterator = required.iterator();
         while (iterator.hasNext()) {
@@ -120,16 +120,16 @@ public final class ParseUtils {
                 b.append(", ");
             }
         }
-        return new XMLStreamException("Missing required element(s): " + b, reader.getLocation());
+        return new ConfigurationReaderException("Missing required element(s): " + b, reader.getLocation());
     }
 
     /**
      * Checks that the current element has no attributes, throwing an
-     * {@link javax.xml.stream.XMLStreamException} if one is found.
+     * {@link ConfigurationReaderException} if one is found.
      * @param reader the reader
-     * @throws javax.xml.stream.XMLStreamException if an error occurs
+     * @throws ConfigurationReaderException if an error occurs
      */
-    public static void requireNoAttributes(final XMLStreamReader reader) throws XMLStreamException {
+    public static void requireNoAttributes(final ConfigurationReader reader) throws ConfigurationReaderException {
         if (reader.getAttributeCount() > 0) {
             throw unexpectedAttribute(reader, 0);
         }
@@ -137,13 +137,13 @@ public final class ParseUtils {
 
     /**
      * Consumes the remainder of the current element, throwing an
-     * {@link javax.xml.stream.XMLStreamException} if it contains any child
+     * {@link ConfigurationReaderException} if it contains any child
      * elements.
      * @param reader the reader
-     * @throws javax.xml.stream.XMLStreamException if an error occurs
+     * @throws ConfigurationReaderException if an error occurs
      */
-    public static void requireNoContent(final XMLStreamReader reader) throws XMLStreamException {
-        if (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
+    public static void requireNoContent(final ConfigurationReader reader) throws ConfigurationReaderException {
+        if (reader.hasNext() && reader.nextElement() != ConfigurationReader.ElementType.END_ELEMENT) {
             throw unexpectedElement(reader);
         }
     }
@@ -155,8 +155,8 @@ public final class ParseUtils {
      * @param name the name that was redeclared
      * @return the exception
      */
-    public static XMLStreamException duplicateAttribute(final XMLStreamReader reader, final String name) {
-        return new XMLStreamException("An attribute named '" + name + "' has already been declared", reader.getLocation());
+    public static ConfigurationReaderException duplicateAttribute(final ConfigurationReader reader, final String name) {
+        return new ConfigurationReaderException("An attribute named '" + name + "' has already been declared", reader.getLocation());
     }
 
     /**
@@ -166,8 +166,8 @@ public final class ParseUtils {
      * @param name the name that was redeclared
      * @return the exception
      */
-    public static XMLStreamException duplicateNamedElement(final XMLStreamReader reader, final String name) {
-        return new XMLStreamException("An element of this type named '" + name + "' has already been declared",
+    public static ConfigurationReaderException duplicateNamedElement(final ConfigurationReader reader, final String name) {
+        return new ConfigurationReaderException("An element of this type named '" + name + "' has already been declared",
                 reader.getLocation());
     }
 
@@ -176,12 +176,12 @@ public final class ParseUtils {
      * @param reader the reader
      * @param attributeName the attribute name, usually "value"
      * @return the boolean value
-     * @throws javax.xml.stream.XMLStreamException if an error occurs or if the
+     * @throws ConfigurationReaderException if an error occurs or if the
      *         element does not contain the specified attribute, contains other
      *         attributes, or contains child elements.
      */
-    public static boolean readBooleanAttributeElement(final XMLStreamReader reader, final String attributeName)
-            throws XMLStreamException {
+    public static boolean readBooleanAttributeElement(final ConfigurationReader reader, final String attributeName)
+            throws ConfigurationReaderException {
         requireSingleAttribute(reader, attributeName);
         final boolean value = Boolean.parseBoolean(reader.getAttributeValue(0));
         requireNoContent(reader);
@@ -193,12 +193,12 @@ public final class ParseUtils {
      * @param reader the reader
      * @param attributeName the attribute name, usually "value" or "name"
      * @return the string value
-     * @throws javax.xml.stream.XMLStreamException if an error occurs or if the
+     * @throws ConfigurationReaderException if an error occurs or if the
      *         element does not contain the specified attribute, contains other
      *         attributes, or contains child elements.
      */
-    public static String readStringAttributeElement(final XMLStreamReader reader, final String attributeName)
-            throws XMLStreamException {
+    public static String readStringAttributeElement(final ConfigurationReader reader, final String attributeName)
+            throws ConfigurationReaderException {
         final String value = requireSingleAttribute(reader, attributeName);
         requireNoContent(reader);
         return value;
@@ -209,16 +209,16 @@ public final class ParseUtils {
      * given name.
      * @param reader the reader
      * @param attributeName the attribute name
-     * @throws javax.xml.stream.XMLStreamException if an error occurs
+     * @throws ConfigurationReaderException if an error occurs
      */
-    public static String requireSingleAttribute(final XMLStreamReader reader, final String attributeName)
-            throws XMLStreamException {
+    public static String requireSingleAttribute(final ConfigurationReader reader, final String attributeName)
+            throws ConfigurationReaderException {
         final int count = reader.getAttributeCount();
         if (count == 0) {
             throw missingRequired(reader, Collections.singleton(attributeName));
         }
         requireNoNamespaceAttribute(reader, 0);
-        if (!attributeName.equals(reader.getAttributeLocalName(0))) {
+        if (!attributeName.equals(reader.getAttributeName(0))) {
             throw unexpectedAttribute(reader, 0);
         }
         if (count > 1) {
@@ -227,8 +227,8 @@ public final class ParseUtils {
         return reader.getAttributeValue(0);
     }
 
-    public static String requireSingleAttribute(final XMLStreamReader reader, final Enum<?> attribute)
-          throws XMLStreamException {
+    public static String requireSingleAttribute(final ConfigurationReader reader, final Enum<?> attribute)
+          throws ConfigurationReaderException {
         return requireSingleAttribute(reader, attribute.toString());
     }
 
@@ -237,15 +237,15 @@ public final class ParseUtils {
      * @param reader the reader
      * @param attributeNames the attribute names
      * @return the attribute values in order
-     * @throws javax.xml.stream.XMLStreamException if an error occurs
+     * @throws ConfigurationReaderException if an error occurs
      */
-    public static String[] requireAttributes(final XMLStreamReader reader, boolean replace, final String... attributeNames)
-            throws XMLStreamException {
+    public static String[] requireAttributes(final ConfigurationReader reader, boolean replace, final String... attributeNames)
+            throws ConfigurationReaderException {
         final int length = attributeNames.length;
         final String[] result = new String[length];
         for (int i = 0; i < length; i++) {
             final String name = attributeNames[i];
-            final String value = reader.getAttributeValue(null, name);
+            final String value = reader.getAttributeValue(name);
             if (value == null) {
                 throw missingRequired(reader, Collections.singleton(name));
             }
@@ -254,13 +254,13 @@ public final class ParseUtils {
         return result;
     }
 
-    public static String[] requireAttributes(final XMLStreamReader reader, final String... attributeNames)
-          throws XMLStreamException {
+    public static String[] requireAttributes(final ConfigurationReader reader, final String... attributeNames)
+          throws ConfigurationReaderException {
         return requireAttributes(reader, false, attributeNames);
     }
 
-    public static String[] requireAttributes(final XMLStreamReader reader, final Enum<?>... attributes)
-          throws XMLStreamException {
+    public static String[] requireAttributes(final ConfigurationReader reader, final Enum<?>... attributes)
+          throws ConfigurationReaderException {
         String attributeNames[] = new String[attributes.length];
         for (int i = 0; i < attributes.length; i++) {
             attributeNames[i] = attributes[i].toString();
@@ -268,14 +268,13 @@ public final class ParseUtils {
         return requireAttributes(reader, true, attributeNames);
     }
 
-    public static boolean isNoNamespaceAttribute(final XMLStreamReader reader, final int index) {
+    public static boolean isNoNamespaceAttribute(final ConfigurationReader reader, final int index) {
         String namespace = reader.getAttributeNamespace(index);
-        // FIXME when STXM-8 is done, remove the null check
-        return namespace == null || XMLConstants.NULL_NS_URI.equals(namespace);
+        return namespace == null || namespace.isEmpty();
     }
 
-    public static void requireNoNamespaceAttribute(final XMLStreamReader reader, final int index)
-            throws XMLStreamException {
+    public static void requireNoNamespaceAttribute(final ConfigurationReader reader, final int index)
+            throws ConfigurationReaderException {
         if (!isNoNamespaceAttribute(reader, index)) {
             throw unexpectedAttribute(reader, index);
         }
@@ -312,43 +311,47 @@ public final class ParseUtils {
         }
     }
 
-    public static String requireAttributeProperty(final XMLStreamReader reader, int i) throws XMLStreamException {
+    public static String requireAttributeProperty(final ConfigurationReader reader, int i) throws ConfigurationReaderException {
         String property = reader.getAttributeValue(i);
         Object value = reader.getProperty(property);
         if (value == null) {
-            throw new XMLStreamException("Missing required property '" + property +"' for attribute '" + reader.getAttributeLocalName(i) + "'", reader.getLocation());
+            throw new ConfigurationReaderException("Missing required property '" + property +"' for attribute '" + reader.getAttributeName(i) + "'", reader.getLocation());
         } else {
             return value.toString();
         }
     }
 
-    public static void ignoreAttribute(XMLExtendedStreamReader reader, String attributeName) {
+    public static void ignoreAttribute(ConfigurationReader reader, String attributeName) {
        CONFIG.ignoreXmlAttribute(attributeName, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
     }
 
-    public static void ignoreAttribute(XMLExtendedStreamReader reader, int attributeIndex) {
-        ignoreAttribute(reader, reader.getAttributeName(attributeIndex).getLocalPart());
+    public static void ignoreAttribute(ConfigurationReader reader, int attributeIndex) {
+        ignoreAttribute(reader, reader.getAttributeName(attributeIndex));
     }
 
-    public static void ignoreElement(XMLExtendedStreamReader reader, Enum<?> element) {
+    public static void ignoreAttribute(ConfigurationReader reader, Enum<?> attribute) {
+       CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+    }
+
+    public static void ignoreElement(ConfigurationReader reader, Enum<?> element) {
        CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
     }
 
-    public static XMLStreamException elementRemoved(XMLExtendedStreamReader reader, String newElementName) {
-        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName, reader.getLocation());
+    public static CacheConfigurationException elementRemoved(ConfigurationReader reader, String newElementName) {
+        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName);
     }
 
-    public static XMLStreamException elementRemoved(XMLExtendedStreamReader reader) {
-        return CONFIG.elementRemoved(reader.getLocalName(), reader.getLocation());
+    public static CacheConfigurationException elementRemoved(ConfigurationReader reader) {
+        return CONFIG.elementRemoved(reader.getLocalName());
     }
 
-    public static XMLStreamException attributeRemoved(XMLExtendedStreamReader reader, int attributeIndex, String newAttributeName) {
-        String attributeName = reader.getAttributeName(attributeIndex).getLocalPart();
-        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName, reader.getLocation());
+    public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex, String newAttributeName) {
+        String attributeName = reader.getAttributeName(attributeIndex);
+        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName);
     }
 
-    public static XMLStreamException attributeRemoved(XMLExtendedStreamReader reader, int attributeIndex) {
-        String attributeName = reader.getAttributeName(attributeIndex).getLocalPart();
-        return CONFIG.attributeRemoved(attributeName, reader.getLocation());
+    public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex) {
+        String attributeName = reader.getAttributeName(attributeIndex);
+        return CONFIG.attributeRemoved(attributeName);
     }
 }

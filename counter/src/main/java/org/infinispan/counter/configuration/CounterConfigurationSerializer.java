@@ -4,14 +4,10 @@ import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
 
 /**
  * Counters configuration serializer.
@@ -22,36 +18,32 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
 public class CounterConfigurationSerializer implements ConfigurationSerializer<CounterManagerConfiguration> {
 
    @Override
-   public void serialize(XMLExtendedStreamWriter writer, CounterManagerConfiguration configuration)
-         throws XMLStreamException {
-      writer.writeStartElement(Element.COUNTERS);
+   public void serialize(ConfigurationWriter writer, CounterManagerConfiguration configuration) {
+      writer.writeStartListElement(Element.COUNTERS, true);
       writer.writeDefaultNamespace(CounterConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
       writeConfigurations(writer, configuration.counters());
-      writer.writeEndElement();
+      writer.writeEndListElement();
    }
 
    /**
     * It serializes a {@link List} of {@link AbstractCounterConfiguration} to an {@link OutputStream}.
     * @param os the {@link OutputStream} to write to.
     * @param configs the {@link List} if {@link AbstractCounterConfiguration}.
-    * @throws XMLStreamException if xml is malformed
     */
-   public void serializeConfigurations(OutputStream os, List<AbstractCounterConfiguration> configs)
-         throws XMLStreamException {
+   public void serializeConfigurations(OutputStream os, List<AbstractCounterConfiguration> configs) {
       BufferedOutputStream output = new BufferedOutputStream(os);
-      XMLStreamWriter subWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(output);
-      XMLExtendedStreamWriter writer = new XMLExtendedStreamWriterImpl(subWriter);
+      ConfigurationWriter writer = ConfigurationWriter.to(output).build();
       writer.writeStartDocument();
       writer.writeStartElement(Element.COUNTERS);
       writeConfigurations(writer, configs);
+
       writer.writeEndElement();
       writer.writeEndDocument();
-      subWriter.close();
+      Util.close(writer);
    }
 
-   private void writeConfigurations(XMLExtendedStreamWriter writer, List<AbstractCounterConfiguration> configs)
-         throws XMLStreamException {
+   private void writeConfigurations(ConfigurationWriter writer, List<AbstractCounterConfiguration> configs) {
       for (AbstractCounterConfiguration c : configs) {
          if (c instanceof StrongCounterConfiguration) {
             writeStrongConfiguration((StrongCounterConfiguration) c, writer);
@@ -61,15 +53,13 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
       }
    }
 
-   private void writeWeakConfiguration(WeakCounterConfiguration configuration, XMLExtendedStreamWriter writer)
-         throws XMLStreamException {
+   private void writeWeakConfiguration(WeakCounterConfiguration configuration, ConfigurationWriter writer) {
       writer.writeStartElement(Element.WEAK_COUNTER);
       configuration.attributes().write(writer);
       writer.writeEndElement();
    }
 
-   private void writeStrongConfiguration(StrongCounterConfiguration configuration, XMLExtendedStreamWriter writer)
-         throws XMLStreamException {
+   private void writeStrongConfiguration(StrongCounterConfiguration configuration, ConfigurationWriter writer) {
       writer.writeStartElement(Element.STRONG_COUNTER);
       configuration.attributes().write(writer);
       writer.writeEndElement();

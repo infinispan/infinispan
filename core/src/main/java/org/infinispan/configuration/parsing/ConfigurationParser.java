@@ -1,8 +1,7 @@
 package org.infinispan.configuration.parsing;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 
 /**
  *
@@ -14,14 +13,13 @@ import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 public interface ConfigurationParser {
 
    /**
-    * The entry point of a configuration parser which gets passed a {@link XMLExtendedStreamReader} positioned at a root
+    * The entry point of a configuration parser which gets passed a {@link ConfigurationReader} positioned at a root
     * element associated with the parser itself according to the registered mapping.
     *
-    * @param reader the XML stream reader
+    * @param reader the configuration stream reader
     * @param holder a holder object used by the parser to maintain state
-    * @throws XMLStreamException
     */
-   void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException;
+   void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder);
 
    Namespace[] getNamespaces();
 
@@ -30,5 +28,9 @@ public interface ConfigurationParser {
     */
    default Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
       return null;
+   }
+
+   default void readAttribute(ConfigurationReader reader, String name, String attributeName, String attributeValue, ConfigurationBuilderHolder holder) {
+      throw new UnsupportedOperationException("This parser cannot handle namespaced attributes");
    }
 }

@@ -2,12 +2,10 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
-import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 
 /**
  * AbstractJdbcStoreConfigurationSerializer.
@@ -16,11 +14,11 @@ import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
  * @since 9.0
  */
 public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractStoreSerializer {
-   protected void writeJdbcStoreAttributes(XMLExtendedStreamWriter writer, AbstractJdbcStoreConfiguration configuration) throws XMLStreamException {
+   protected void writeJdbcStoreAttributes(ConfigurationWriter writer, AbstractJdbcStoreConfiguration configuration) {
       configuration.attributes().write(writer);
    }
 
-   private void writeJDBCStoreConnection(XMLExtendedStreamWriter writer, SimpleConnectionFactoryConfiguration configuration) throws XMLStreamException {
+   private void writeJDBCStoreConnection(ConfigurationWriter writer, SimpleConnectionFactoryConfiguration configuration) {
       writer.writeStartElement(Element.SIMPLE_CONNECTION);
       writeOptional(writer, Attribute.CONNECTION_URL, configuration.connectionUrl());
       writeOptional(writer, Attribute.DRIVER_CLASS, configuration.driverClass());
@@ -29,7 +27,7 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       writer.writeEndElement();
    }
 
-   private void writeJDBCStoreConnection(XMLExtendedStreamWriter writer, PooledConnectionFactoryConfiguration configuration) throws XMLStreamException {
+   private void writeJDBCStoreConnection(ConfigurationWriter writer, PooledConnectionFactoryConfiguration configuration) {
       writer.writeStartElement(Element.CONNECTION_POOL);
       writeOptional(writer, Attribute.CONNECTION_URL, configuration.connectionUrl());
       writeOptional(writer, Attribute.DRIVER_CLASS, configuration.driverClass());
@@ -38,13 +36,13 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       writer.writeEndElement();
    }
 
-   private void writeJDBCStoreConnection(XMLExtendedStreamWriter writer, ManagedConnectionFactoryConfiguration configuration) throws XMLStreamException {
+   private void writeJDBCStoreConnection(ConfigurationWriter writer, ManagedConnectionFactoryConfiguration configuration) {
       writer.writeStartElement(Element.DATA_SOURCE);
       writer.writeAttribute(Attribute.JNDI_URL, configuration.jndiUrl());
       writer.writeEndElement();
    }
 
-   protected void writeJDBCStoreConnection(XMLExtendedStreamWriter writer, AbstractJdbcStoreConfiguration configuration) throws XMLStreamException {
+   protected void writeJDBCStoreConnection(ConfigurationWriter writer, AbstractJdbcStoreConfiguration configuration) {
       ConnectionFactoryConfiguration cfc = configuration.connectionFactory();
       if (cfc instanceof SimpleConnectionFactoryConfiguration) {
          writeJDBCStoreConnection(writer, (SimpleConnectionFactoryConfiguration) cfc);
@@ -55,7 +53,7 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       }
    }
 
-   protected void writeJDBCStoreTable(XMLExtendedStreamWriter writer, Element element, TableManipulationConfiguration configuration) throws XMLStreamException {
+   protected void writeJDBCStoreTable(ConfigurationWriter writer, Element element, TableManipulationConfiguration configuration) {
       AttributeSet attributes = configuration.attributes();
       writer.writeStartElement(element);
       attributes.write(writer, TableManipulationConfiguration.TABLE_NAME_PREFIX, Attribute.PREFIX);
@@ -73,8 +71,8 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       writer.writeEndElement();
    }
 
-   private void writeJDBCStoreColumn(XMLExtendedStreamWriter writer, Element element, AttributeSet attributes, AttributeDefinition<?> columnName,
-         AttributeDefinition<?> columnType) throws XMLStreamException {
+   private void writeJDBCStoreColumn(ConfigurationWriter writer, Element element, AttributeSet attributes, AttributeDefinition<?> columnName,
+                                     AttributeDefinition<?> columnType) {
       writer.writeStartElement(element);
       attributes.write(writer, columnName, Attribute.NAME);
       attributes.write(writer, columnType, Attribute.TYPE);

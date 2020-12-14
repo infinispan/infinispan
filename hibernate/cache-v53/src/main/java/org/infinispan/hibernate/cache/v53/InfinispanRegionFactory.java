@@ -6,8 +6,6 @@
  */
 package org.infinispan.hibernate.cache.v53;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +16,6 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
@@ -42,28 +39,24 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.hibernate.cache.commons.DataType;
 import org.infinispan.hibernate.cache.commons.DefaultCacheManagerProvider;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandFactory;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
+import org.infinispan.hibernate.cache.v53.impl.ClusteredTimestampsRegionImpl;
 import org.infinispan.hibernate.cache.v53.impl.DomainDataRegionImpl;
 import org.infinispan.hibernate.cache.v53.impl.QueryResultsRegionImpl;
-import org.infinispan.hibernate.cache.v53.impl.ClusteredTimestampsRegionImpl;
 import org.infinispan.hibernate.cache.v53.impl.Sync;
 import org.infinispan.hibernate.cache.v53.impl.TimestampsRegionImpl;
-import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.TransactionMode;
 
@@ -304,52 +297,6 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
    protected void stopCacheManager() {
       log.debug( "Stop cache manager" );
       manager.stop();
-   }
-
-   private ConfigurationBuilderHolder loadConfiguration(ServiceRegistry serviceRegistry, String configFile) {
-      final FileLookup fileLookup = FileLookupFactory.newInstance();
-      final ClassLoader infinispanClassLoader = InfinispanRegionFactory.class.getClassLoader();
-      return serviceRegistry.getService( ClassLoaderService.class ).workWithClassLoader(
-            classLoader -> {
-               InputStream is = null;
-               try {
-                  is = fileLookup.lookupFile(configFile, classLoader );
-                  if ( is == null ) {
-                     // when it's not a user-provided configuration file, it might be a default configuration file,
-                     // and if that's included in [this] module might not be visible to the ClassLoaderService:
-                     classLoader = infinispanClassLoader;
-                     // This time use lookupFile*Strict* so to provide an exception if we can't find it yet:
-                     is = FileLookupFactory.newInstance().lookupFileStrict(configFile, classLoader );
-                  }
-                  final ParserRegistry parserRegistry = new ParserRegistry( infinispanClassLoader );
-                  final ConfigurationBuilderHolder holder = parseWithOverridenClassLoader( parserRegistry, is, infinispanClassLoader );
-
-                  return holder;
-               }
-               catch (IOException e) {
-                  throw log.unableToCreateCacheManager(e);
-               }
-               finally {
-                  Util.close( is );
-               }
-            }
-      );
-   }
-
-   private static ConfigurationBuilderHolder parseWithOverridenClassLoader(ParserRegistry configurationParser, InputStream is, ClassLoader infinispanClassLoader) {
-      // Infinispan requires the context ClassLoader to have full visibility on all
-      // its components and eventual extension points even *during* configuration parsing.
-      final Thread currentThread = Thread.currentThread();
-      final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
-      try {
-         currentThread.setContextClassLoader( infinispanClassLoader );
-         ConfigurationBuilderHolder builderHolder = configurationParser.parse(is, null);
-         // Workaround Infinispan's ClassLoader strategies to bend to our will:
-         builderHolder.getGlobalConfigurationBuilder().classLoader( infinispanClassLoader );
-         return builderHolder;
-      } finally {
-         currentThread.setContextClassLoader( originalContextClassLoader );
-      }
    }
 
    private void startRegion(InfinispanBaseRegion region) {

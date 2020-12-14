@@ -10,6 +10,7 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
@@ -150,7 +151,7 @@ public class TestCacheManagerFactory {
    public static ConfigurationBuilderHolder parseStream(InputStream is, boolean defaultParsersOnly) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       ParserRegistry parserRegistry = new ParserRegistry(classLoader, defaultParsersOnly, System.getProperties());
-      ConfigurationBuilderHolder holder = parserRegistry.parse(is, null);
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is, null, MediaType.APPLICATION_XML);
       return updateTestName(holder);
    }
 

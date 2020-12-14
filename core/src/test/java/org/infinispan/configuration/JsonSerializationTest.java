@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -26,6 +25,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -44,7 +44,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.configuration.parsing.URLXMLResourceResolver;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
@@ -176,7 +175,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    private ConfigurationBuilderHolder parseStringConfiguration(String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      return parserRegistry.parse(is, null);
+      return parserRegistry.parse(is, null, MediaType.APPLICATION_XML);
    }
 
    @Test
@@ -185,7 +184,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       File[] resourceConfigs = getResourceConfigs();
       for (File f : resourceConfigs) {
          if (f.isDirectory()) continue;
-         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(new FileInputStream(f), new URLXMLResourceResolver(f.toURI().toURL()));
+         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(f.toURI().toURL());
          testConfigurations(builderHolder);
       }
    }

@@ -26,7 +26,7 @@ public class AnchoredKeysIT {
    public static final InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AnchoredKeys.xml")
                .numServers(2)
-               .runMode(ServerRunMode.CONTAINER)
+               .runMode(ServerRunMode.EMBEDDED)
                .build();
 
    @Rule
@@ -42,7 +42,7 @@ public class AnchoredKeysIT {
    public void testCreateAnchoredKeysCache() {
       BasicConfiguration config = new XMLStringConfiguration("<infinispan><cache-container><replicated-cache name=\"anchored2\">\n" +
                         "<locking concurrency-level=\"100\" acquire-timeout=\"1000\"/>\n" +
-                           "<anchored-keys xmlns=\"urn:infinispan:config:anchored:" + Version.getMajorMinor() + "\" enabled=\"true\"/>\n" +
+                           "<anchored-keys xmlns=\"urn:infinispan:config:anchored-keys:" + Version.getMajorMinor() + "\" enabled=\"true\"/>\n" +
                        "</replicated-cache></cache-container></infinispan>");
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       rcm.administration().createCache("anchored2", config);

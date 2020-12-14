@@ -9,7 +9,7 @@ For example, you configure authorization on a specific cache instance so that
 invoking `Cache.get()` requires an identity to be assigned a role with read
 permission while `Cache.put()` requires a role with write permission.
 
-In this scenario, if a user application or client with the `reader` role
+In this scenario, if a user application or client with the `io` role
 attempts to write an entry, {brandname} denies the request and throws a
 security exception. If a user application or client with the `writer` role
 sends a write request, {brandname} validates authorization and issues a token

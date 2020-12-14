@@ -7,25 +7,20 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collections;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.core.dataconversion.xml.MXParserDriver;
 import org.infinispan.server.core.logging.Log;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
@@ -62,7 +57,6 @@ import com.thoughtworks.xstream.converters.extended.LocaleConverter;
 import com.thoughtworks.xstream.converters.reflection.ExternalizableConverter;
 import com.thoughtworks.xstream.converters.reflection.ReflectionConverter;
 import com.thoughtworks.xstream.converters.reflection.SerializableConverter;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
 import com.thoughtworks.xstream.security.ForbiddenClassException;
 import com.thoughtworks.xstream.security.NoTypePermission;
 
@@ -75,10 +69,8 @@ public class XMLTranscoder extends OneToManyTranscoder {
 
    private static final Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
 
-   private static final SAXParserFactory SAXFACTORY = SAXParserFactory.newInstance();
-
    private static class XStreamHolder {
-      static final XStream XStream = new XStream(new StaxDriver()) {
+      static final XStream XStream = new XStream(new MXParserDriver()) {
          @Override
          protected void setupConverters() {
             registerConverter(new ReflectionConverter(getMapper(), getReflectionProvider()), PRIORITY_VERY_LOW);
@@ -175,13 +167,15 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    private boolean isWellFormed(byte[] content) {
-      XMLReader xmlReader;
-      try {
-         xmlReader = SAXFACTORY.newSAXParser().getXMLReader();
-         xmlReader.parse(new InputSource(new ByteArrayInputStream(content)));
-      } catch (SAXException | IOException | ParserConfigurationException e) {
+      ByteArrayInputStream is = new ByteArrayInputStream(content);
+      try (ConfigurationReader reader = ConfigurationReader.from(is).build()) {
+         // Consume all the stream
+         while (reader.hasNext()) {
+            reader.nextElement();
+         }
+         return true;
+      } catch (Exception e) {
          return false;
       }
-      return true;
    }
 }

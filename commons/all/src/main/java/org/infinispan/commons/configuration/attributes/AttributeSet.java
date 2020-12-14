@@ -6,8 +6,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 
 /**
  * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link AttributeDefinition}s.
@@ -163,34 +162,31 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    }
 
    /**
-    * Writer a single attribute to the specified {@link XMLStreamWriter} using the attribute's xmlName
+    * Writer a single attribute to the specified {@link ConfigurationWriter} using the attribute's xmlName
     * @param writer the writer
     * @param def the Attribute definition
-    * @throws XMLStreamException
     */
-   public void write(XMLStreamWriter writer, AttributeDefinition<?> def) throws XMLStreamException {
+   public void write(ConfigurationWriter writer, AttributeDefinition<?> def) {
       write(writer, def, def.xmlName());
    }
 
    /**
-    * Writer a single attribute to the specified {@link XMLStreamWriter} using the supplied name
+    * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name
     * @param writer the writer
     * @param def the Attribute definition
     * @param name the XML tag name for the attribute
-    * @throws XMLStreamException
     */
-   public void write(XMLStreamWriter writer, AttributeDefinition<?> def, Enum<?> name) throws XMLStreamException {
+   public void write(ConfigurationWriter writer, AttributeDefinition<?> def, Enum<?> name) {
       write(writer, def, name.toString());
    }
 
    /**
-    * Writer a single attribute to the specified {@link XMLStreamWriter} using the supplied name
+    * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name
     * @param writer the writer
     * @param def the Attribute definition
     * @param name the XML tag name for the attribute
-    * @throws XMLStreamException
     */
-   public void write(XMLStreamWriter writer, AttributeDefinition<?> def, String name) throws XMLStreamException {
+   public void write(ConfigurationWriter writer, AttributeDefinition<?> def, String name) {
       Attribute<?> attribute = attribute(def);
       attribute.write(writer, name);
    }
@@ -200,7 +196,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * Writes this attributeset to the specified XMLStreamWriter as an element
     * @param writer
     */
-   public void write(XMLStreamWriter writer, String xmlElementName) throws XMLStreamException {
+   public void write(ConfigurationWriter writer, String xmlElementName) {
       if (isModified()) {
          writer.writeStartElement(xmlElementName);
          write(writer);
@@ -212,7 +208,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * Writes the specified attributes in this attributeset to the specified XMLStreamWriter as an element
     * @param writer
     */
-   public void write(XMLStreamWriter writer, String xmlElementName, AttributeDefinition<?>... defs) throws XMLStreamException {
+   public void write(ConfigurationWriter writer, String xmlElementName, AttributeDefinition<?>... defs) {
       boolean skip = true;
       for (AttributeDefinition def : defs) {
          skip = skip && !attribute(def).isModified();
@@ -231,7 +227,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * Writes the attributes of this attributeset as part of the current element
     * @param writer
     */
-   public void write(XMLStreamWriter writer) throws XMLStreamException {
+   public void write(ConfigurationWriter writer) {
       for (Attribute<?> attr : attributes.values()) {
          if (attr.isPersistent())
             attr.write(writer, attr.getAttributeDefinition().xmlName());

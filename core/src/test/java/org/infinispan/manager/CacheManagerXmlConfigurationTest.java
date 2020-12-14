@@ -139,5 +139,4 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          cm.stop();
       }
    }
-
 }

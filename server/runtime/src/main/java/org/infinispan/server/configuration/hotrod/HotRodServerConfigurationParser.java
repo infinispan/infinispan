@@ -2,16 +2,13 @@ package org.infinispan.server.configuration.hotrod;
 
 import java.util.EnumSet;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
@@ -41,8 +38,8 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    private static org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
-         throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder)
+         {
       if (!holder.inScope(ServerConfigurationParser.ENDPOINTS_SCOPE)) {
          throw coreLog.invalidScope(ServerConfigurationParser.ENDPOINTS_SCOPE, holder.getScope());
       }
@@ -68,14 +65,14 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseHotRodConnector(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseHotRodConnector(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
+         {
       boolean dedicatedSocketBinding = false;
       ServerSecurityRealm securityRealm = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case EXTERNAL_HOST: {
                builder.proxyHost(value);
@@ -107,7 +104,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       if (!dedicatedSocketBinding) {
          builder.socketBinding(serverBuilder.endpoints().current().singlePort().socketBinding());
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case TOPOLOGY_STATE_TRANSFER: {
@@ -135,11 +132,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) throws XMLStreamException {
+   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
                encryption.requireClientAuth(Boolean.parseBoolean(value));
@@ -160,7 +157,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          String name = securityRealm.getName();
          encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
@@ -174,11 +171,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) throws XMLStreamException {
+   private void parseSni(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case HOST_NAME: {
                sni.host(value);
@@ -197,11 +194,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) throws XMLStreamException {
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SECURITY_REALM: {
                securityRealm = serverBuilder.getSecurityRealm(value);
@@ -221,7 +218,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       // Automatically set the digest realm name. It can be overridden by the user
       builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm.getName());
       String serverPrincipal = null;
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SASL: {
@@ -237,13 +234,13 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal, builder.sasl().mechanisms()));
    }
 
-   private String parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+   private String parseSasl(ConfigurationReader reader, AuthenticationConfigurationBuilder builder) {
       SaslConfigurationBuilder sasl = builder.sasl();
       String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SERVER_PRINCIPAL: {
                serverPrincipal = value;
@@ -277,7 +274,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          }
       }
       final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case POLICY: {
@@ -301,14 +298,14 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       return serverPrincipal;
    }
 
-   void parsePolicy(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+   void parsePolicy(ConfigurationReader reader, AuthenticationConfigurationBuilder builder) {
       if (reader.getAttributeCount() > 0) {
          throw ParseUtils.unexpectedAttribute(reader, 0);
       }
       PolicyConfigurationBuilder policy = builder.sasl().policy();
       // Handle nested elements.
       final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          if (visited.contains(element)) {
             throw ParseUtils.unexpectedElement(reader);
@@ -347,11 +344,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseTopologyStateTransfer(XMLExtendedStreamReader reader, HotRodServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseTopologyStateTransfer(ConfigurationReader reader, HotRodServerConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case LOCK_TIMEOUT: {
                builder.topologyLockTimeout(Long.parseLong(value));

@@ -3,8 +3,7 @@ package org.infinispan.cloudevents.configuration;
 
 import static org.infinispan.cloudevents.configuration.CloudEventsConfigurationParser.NAMESPACE;
 
-import javax.xml.stream.XMLStreamException;
-
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -14,7 +13,6 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
-import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -38,7 +36,7 @@ public class CloudEventsConfigurationParser implements ConfigurationParser {
    static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
 
    @Override
-   public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (holder.inScope(ParserScope.CACHE_CONTAINER)) {
          GlobalConfigurationBuilder globalBuilder = holder.getGlobalConfigurationBuilder();
          Element element = Element.forName(reader.getLocalName());
@@ -72,12 +70,11 @@ public class CloudEventsConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseGlobalCloudEvents(XMLExtendedStreamReader reader, CloudEventsGlobalConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseGlobalCloudEvents(ConfigurationReader reader, CloudEventsGlobalConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case BOOTSTRAP_SERVERS: {
                builder.bootstrapServers(value);
@@ -103,12 +100,11 @@ public class CloudEventsConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCacheCloudEvents(XMLExtendedStreamReader reader, CloudEventsConfigurationBuilder builder)
-         throws XMLStreamException {
+   private void parseCacheCloudEvents(ConfigurationReader reader, CloudEventsConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
                builder.enabled(Boolean.parseBoolean(value));

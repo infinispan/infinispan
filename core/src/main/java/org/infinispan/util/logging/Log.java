@@ -22,10 +22,6 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-import javax.xml.namespace.QName;
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -875,7 +871,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Root element for %s already registered in ParserRegistry by %s. Cannot install %s.", id = 234)
-   void parserRootElementAlreadyRegistered(QName qName, String oldParser, String newParser);
+   void parserRootElementAlreadyRegistered(String qName, String oldParser, String newParser);
 
    @Message(value = "Configuration parser %s does not declare any Namespace annotations", id = 235)
    CacheConfigurationException parserDoesNotDeclareNamespaces(String name);
@@ -1082,7 +1078,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Ignoring XML element %s at [%d,%d], please remove from configuration file", id = 294)
    void ignoreXmlElement(Object element, int line, int column);
 
-   @Message(value = "No thread pool with name %s found", id = 295)
+   @Message(value = "No thread pool with name '%s' found", id = 295)
    CacheConfigurationException undefinedThreadPoolName(String name);
 
    @Message(value = "Attempt to add a %s permission to a SecurityPermissionCollection", id = 296)
@@ -2122,16 +2118,16 @@ public interface Log extends BasicLogger {
    CacheException xsiteStateTransferAlreadyInProgress(String site);
 
    @Message(value = "Element '%s' has been removed. Please use element '%s' instead", id = 621)
-   XMLStreamException elementRemovedUseOther(String elementName, String newElementName, @Param Location location);
+   CacheConfigurationException elementRemovedUseOther(String elementName, String newElementName);
 
    @Message(value = "Element '%s' has been removed with no replacement", id = 622)
-   XMLStreamException elementRemoved(String elementName, @Param Location location);
+   CacheConfigurationException elementRemoved(String elementName);
 
    @Message(value = "Attribute '%s' has been removed. Please use attribute '%s' instead", id = 623)
-   XMLStreamException attributeRemovedUseOther(String attributeName, String newAttributeName, @Param Location location);
+   CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName);
 
    @Message(value = "Attribute '%s' has been removed with no replacement", id = 624)
-   XMLStreamException attributeRemoved(String attributeName, @Param Location location);
+   CacheConfigurationException attributeRemoved(String attributeName);
 
    @LogMessage(level = WARN)
    @Message(value = "Index path not provided and global state disabled, will use the current working directory for storage.", id = 625)
