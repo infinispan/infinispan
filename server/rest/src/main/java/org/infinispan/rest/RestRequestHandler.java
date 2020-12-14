@@ -105,8 +105,8 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       }
       authenticator.challenge(restRequest, ctx).whenComplete((authResponse, authThrowable) -> {
          boolean hasError = authThrowable != null;
-         boolean authorized = authResponse.getStatus() != UNAUTHORIZED.code();
-         if (!hasError && authorized) {
+         boolean authorized = !hasError && authResponse.getStatus() != UNAUTHORIZED.code();
+         if (authorized) {
             authorization = restRequest.getAuthorizationHeader();
             subject = restRequest.getSubject();
             handleRestRequest(ctx, restRequest, invocationLookup);

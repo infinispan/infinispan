@@ -1,5 +1,6 @@
 package org.infinispan.server.security;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.function.Supplier;
 
@@ -33,12 +34,12 @@ public class ServerSecurityRealm {
       return name;
    }
 
-   public ServerAuthenticationProvider getSASLAuthenticationProvider(String serverPrincipal) {
-      return new ElytronSASLAuthenticationProvider(name, this, serverPrincipal);
+   public ServerAuthenticationProvider getSASLAuthenticationProvider(String serverPrincipal, Collection<String> mechanisms) {
+      return new ElytronSASLAuthenticationProvider(name, this, serverPrincipal, mechanisms);
    }
 
-   public Authenticator getHTTPAuthenticationProvider(String serverPrincipal) {
-      return new ElytronHTTPAuthenticator(name, this, serverPrincipal);
+   public Authenticator getHTTPAuthenticationProvider(String serverPrincipal, Collection<String> mechanisms) {
+      return new ElytronHTTPAuthenticator(name, this, serverPrincipal, mechanisms);
    }
 
    public boolean isReadyForHttpChallenge() {
