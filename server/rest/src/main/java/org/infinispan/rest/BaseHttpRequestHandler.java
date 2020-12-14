@@ -35,7 +35,7 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
          errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
       } else if (cause instanceof SecurityException) {
          errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(cause.getMessage()).build();
-      } else if (cause instanceof CacheConfigurationException) {
+      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException) {
          errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(cause.getMessage()).build();
       } else {
          Throwable rootCause = Util.getRootCause(throwable);

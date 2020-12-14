@@ -73,6 +73,9 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
       return !attributes.attribute(MECHANISMS).get().isEmpty();
    }
 
+   public List<String> mechanisms() {
+      return attributes.attribute(MECHANISMS).get();
+   }
 
    public AuthenticationConfigurationBuilder metricsAuth(boolean metricsAuth) {
       attributes.attribute(METRICS_AUTH).set(metricsAuth);

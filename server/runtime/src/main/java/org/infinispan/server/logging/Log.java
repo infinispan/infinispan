@@ -176,4 +176,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot have multiple endpoints bound to the same socket binding '%s'", id = 80045)
    CacheConfigurationException endpointSocketBindingConflict(String name);
+
+   @Message(value = "The request authentication mechanism '%s' is not supported", id = 80052)
+   IllegalArgumentException unsupportedMechanism(String mechName);
 }

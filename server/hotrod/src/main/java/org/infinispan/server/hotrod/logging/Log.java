@@ -109,4 +109,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid credentials", id = 28027)
    SecurityException authenticationException(@Cause Throwable cause);
+
+   @Message(value = "Invalid mech '%s'", id = 28028)
+   IllegalArgumentException invalidMech(String mech);
 }

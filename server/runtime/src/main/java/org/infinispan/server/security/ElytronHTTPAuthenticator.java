@@ -2,6 +2,7 @@ package org.infinispan.server.security;
 
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -9,12 +10,12 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.server.Server;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -24,11 +25,11 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
+import org.wildfly.security.http.util.FilterServerMechanismFactory;
 import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 import org.wildfly.security.http.util.SetMechanismInformationMechanismFactory;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -40,13 +41,13 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    private Executor executor;
    private RestServerConfiguration configuration;
 
-   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm realm, String serverPrincipal) {
+   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm realm, String serverPrincipal, Collection<String> mechanisms) {
       this.serverSecurityRealm = realm;
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
       httpBuilder.setSecurityDomain(realm.getSecurityDomain());
 
       HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory();
-      httpServerFactory = new SetMechanismInformationMechanismFactory(httpServerFactory);
+      httpServerFactory = new SetMechanismInformationMechanismFactory(new FilterServerMechanismFactory(httpServerFactory, true, mechanisms));
       httpBuilder.setFactory(httpServerFactory);
 
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();
@@ -70,7 +71,6 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                   HttpServerAuthenticationMechanism mechanism = factory.createMechanism(name);
                   mechanism.evaluateRequest(requestAdapter);
                }
-               return requestAdapter.getResponse();
             } else {
                String mechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
                if ("BEARER".equals(mechName)) {
@@ -79,6 +79,9 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                   mechName = "SPNEGO";
                }
                HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
+               if (mechanism == null) {
+                  throw Server.log.unsupportedMechanism(mechName);
+               }
                mechanism.evaluateRequest(requestAdapter);
                SecurityIdentity securityIdentity = (SecurityIdentity) mechanism.getNegotiatedProperty(SECURITY_IDENTITY);
                if (securityIdentity != null) {
@@ -87,10 +90,10 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                   securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
                   request.setSubject(subject);
                }
-               return requestAdapter.getResponse();
             }
-         } catch (HttpAuthenticationException e) {
-            return new NettyRestResponse.Builder().status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return requestAdapter.getResponse();
+         } catch (Exception e) {
+            throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
          }
       }, executor);
    }
