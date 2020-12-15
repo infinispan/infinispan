@@ -8,6 +8,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 /**
  * A no-op implementation of {@link XSiteStateTransferManager}.
@@ -46,7 +47,7 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    }
 
    @Override
-   public Map<String, String> getStatus() {
+   public Map<String, StateTransferStatus> getStatus() {
       return Collections.emptyMap();
    }
 
@@ -56,7 +57,7 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    }
 
    @Override
-   public Map<String, String> getClusterStatus() {
+   public Map<String, StateTransferStatus> getClusterStatus() {
       return Collections.emptyMap();
    }
 
@@ -78,6 +79,11 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    @Override
    public void becomeCoordinator(String siteName) {
       // no-op
+   }
+
+   @Override
+   public void onTopologyUpdated(CacheTopology cacheTopology, boolean stateTransferInProgress) {
+      //no-op
    }
 
    @Override

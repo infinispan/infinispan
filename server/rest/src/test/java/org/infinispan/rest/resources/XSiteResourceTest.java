@@ -8,7 +8,6 @@ import static org.infinispan.rest.helper.RestResponses.responseBody;
 import static org.infinispan.rest.helper.RestResponses.responseStatus;
 import static org.infinispan.xsite.XSiteAdminOperations.OFFLINE;
 import static org.infinispan.xsite.XSiteAdminOperations.ONLINE;
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -208,7 +207,9 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertSuccessful(cache.clearPushStateStatus());
 
       status = jsonResponseBody(cache.pushStateStatus());
-      assertTrue(status.asMap().isEmpty());
+      assertEquals(2, status.asMap().size());
+      assertEquals("IDLE", status.asMap().get(NYC));
+      assertEquals("IDLE", status.asMap().get(SFO));
 
       assertSuccessful(cache.cancelReceiveState(NYC));
    }

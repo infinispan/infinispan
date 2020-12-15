@@ -105,6 +105,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
@@ -150,6 +151,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected InternalConflictManager<?, ?> conflictManager;
    @Inject protected LocalPublisherManager<Object, Object> localPublisherManager;
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
+   @Inject XSiteStateTransferManager xSiteStateTransferManager;
 
    protected String cacheName;
    protected long timeout;
@@ -340,6 +342,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
          inboundInvocationHandler.checkForReadyTasks();
+         xSiteStateTransferManager.onTopologyUpdated(cacheTopology, isStateTransferInProgress());
 
          if (!wasMember && isMember) {
             return fetchClusterListeners(cacheTopology);

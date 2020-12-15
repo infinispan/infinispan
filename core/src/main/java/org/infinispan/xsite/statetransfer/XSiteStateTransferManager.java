@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 /**
  * It manages the state transfer between sites.
@@ -22,11 +23,10 @@ public interface XSiteStateTransferManager {
     * It receives the notifications from local site when some node finishes pushing the state to the remote site.
     *
     * @param siteName the remote site name
-    * @param node     the {@link org.infinispan.remoting.transport.Address} from the node that finishes.
+    * @param node     the {@link Address} from the node that finishes.
     * @param statusOk {@code true} if no error or exception occurred during the state transfer.
-    * @throws Throwable If some unexpected behavior occurs.
     */
-   void notifyStatePushFinished(String siteName, Address node, boolean statusOk) throws Throwable;
+   void notifyStatePushFinished(String siteName, Address node, boolean statusOk);
 
    /**
     * It notifies all nodes from local site to start transfer the state to the remote site.
@@ -52,7 +52,7 @@ public interface XSiteStateTransferManager {
    /**
     * @return the completed state transfer status for which this node is the coordinator.
     */
-   Map<String, String> getStatus();
+   Map<String, StateTransferStatus> getStatus();
 
    /**
     * Clears the completed state transfer status.
@@ -61,16 +61,13 @@ public interface XSiteStateTransferManager {
 
    /**
     * @return the completed state transfer status from all the coordinators in the cluster.
-    * @throws Exception if some exception during the remote invocation occurs.
     */
-   Map<String, String> getClusterStatus() throws Exception;
+   Map<String, StateTransferStatus> getClusterStatus();
 
    /**
     * Clears the completed state transfer status in all the cluster.
-    *
-    * @throws Exception if some exception occurs during the remote invocation.
     */
-   void clearClusterStatus() throws Exception;
+   void clearClusterStatus();
 
    /**
     * @return {@code null} if this node is not receiving state or the site name which is sending the state.
@@ -97,7 +94,22 @@ public interface XSiteStateTransferManager {
     */
    void becomeCoordinator(String siteName);
 
+   /**
+    * Notifies {@link XSiteStateTransferManager} that a new {@link CacheTopology} is installed and if the local cluster
+    * state transfer is in progress (or about to start)
+    *
+    * @param cacheTopology           The new {@link CacheTopology}.
+    * @param stateTransferInProgress {@code true} if the state transfer is in progress or starting.
+    */
+   void onTopologyUpdated(CacheTopology cacheTopology, boolean stateTransferInProgress);
+
+   /**
+    * @return The {@link XSiteStateProvider} instance.
+    */
    XSiteStateProvider getStateProvider();
 
+   /**
+    * @return The {@link XSiteStateConsumer} instance.
+    */
    XSiteStateConsumer getStateConsumer();
 }

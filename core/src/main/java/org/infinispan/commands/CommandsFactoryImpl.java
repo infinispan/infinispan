@@ -440,8 +440,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName) {
-      return new XSiteStateTransferStartReceiveCommand(cacheName, siteName);
+   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand() {
+      return new XSiteStateTransferStartReceiveCommand(cacheName);
    }
 
    @Override

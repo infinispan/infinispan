@@ -72,8 +72,6 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       assertNotEquals(extractComponent(cache(LON, 0), XSiteAdminOperations.class).pushState(NYC), SUCCESS);
       assertDataInSite(LON);
       assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
-      assertTrue(getStatus().isEmpty());
-
    }
 
    public void testLinkBrokenDuringStateTransfer() {
@@ -107,7 +105,6 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       });
 
       assertEquals(SUCCESS, extractComponent(cache(LON, 0), XSiteAdminOperations.class).clearPushStateStatus());
-      assertTrue(getStatus().isEmpty());
    }
 
    @Override
@@ -158,10 +155,10 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
          if (fail) {
             getLog().debugf("Inducing timeout for %s", rpcCommand);
-            XSiteResponseImpl rsp = new XSiteResponseImpl(TIME_SERVICE, backup);
+            XSiteResponseImpl<O> rsp = new XSiteResponseImpl<>(TIME_SERVICE, backup);
             //completeExceptionally is ok since we don't care about the stats.
             rsp.completeExceptionally(new TimeoutException("induced timeout!"));
             return rsp;

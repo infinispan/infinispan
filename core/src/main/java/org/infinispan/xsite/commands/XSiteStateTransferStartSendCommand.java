@@ -10,7 +10,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 /**
  * Start send XSite state.
@@ -42,9 +41,7 @@ public class XSiteStateTransferStartSendCommand extends BaseRpcCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      XSiteStateTransferManager stateTransferManager = registry.getXSiteStateTransferManager().running();
-      XSiteStateProvider provider = stateTransferManager.getStateProvider();
-      provider.startStateTransfer(siteName, getOrigin(), topologyId);
+      invokeLocal(registry.getXSiteStateTransferManager().running().getStateProvider());
       return CompletableFutures.completedNull();
    }
 
@@ -77,5 +74,9 @@ public class XSiteStateTransferStartSendCommand extends BaseRpcCommand {
             ", topologyId=" + topologyId +
             ", cacheName=" + cacheName +
             '}';
+   }
+
+   public void invokeLocal(XSiteStateProvider provider) {
+      provider.startStateTransfer(siteName, getOrigin(), topologyId);
    }
 }

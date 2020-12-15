@@ -505,7 +505,7 @@ public interface CommandsFactory {
 
    XSiteStateTransferRestartSendingCommand buildXSiteStateTransferRestartSendingCommand(String siteName, int topologyId);
 
-   XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName);
+   XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand();
 
    XSiteStateTransferStartSendCommand buildXSiteStateTransferStartSendCommand(String siteName, int topologyId);
 

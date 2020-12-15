@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -30,6 +31,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.StateTransferStatus;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.CacheMixedSiteStatus;
@@ -270,13 +272,11 @@ public class XSiteAdminOperations {
          name = "PushStateStatus")
    public final Map<String, String> getPushStateStatus() {
       authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
-      Map<String, String> map = new HashMap<>();
       try {
-         for (String siteName : getRunningStateTransfer()) {
-            map.put(siteName, XSiteStateTransferManager.STATUS_SENDING);
-         }
-         map.putAll(stateTransferManager.getClusterStatus());
-         return map;
+         return stateTransferManager.getClusterStatus()
+               .entrySet()
+               .stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, entry -> StateTransferStatus.toText(entry.getValue())));
       } catch (Exception e) {
          return Collections.singletonMap(XSiteStateTransferManager.STATUS_ERROR, e.getLocalizedMessage());
       }
@@ -290,7 +290,7 @@ public class XSiteAdminOperations {
       return performOperation("clearPushStateStatus", "(local)", () -> stateTransferManager.clearClusterStatus());
    }
 
-   @ManagedOperation(displayName = "Cancel Push Status",
+   @ManagedOperation(displayName = "Cancel Push State",
          description = "Cancels the push state to remote site.",
          name = "CancelPushState")
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")

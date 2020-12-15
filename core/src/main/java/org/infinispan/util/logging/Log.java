@@ -2102,4 +2102,18 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to migrate data across multiple major versions", id = 616)
    PersistenceException persistedDataMigrationAcrossMajorVersions();
+
+   @Message(value = "Site '%s' not found.", id = 617)
+   IllegalArgumentException siteNotFound(String siteName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cleanup failed for Cross-Site state transfer. In case of issues, invoke operation cancel-push-state(%s).", id = 618)
+   void xsiteCancelSendFailed(@Cause Throwable throwable, String remoteSite);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cleanup failed for Cross-Site state transfer. In case of issues, invoke operation cancel-receive(%s) in site %s.", id = 619)
+   void xsiteCancelReceiveFailed(@Cause Throwable throwable, String localSite, String remoteSite);
+
+   @Message(value = "Cross-Site state transfer to '%s' already started!", id = 620)
+   CacheException xsiteStateTransferAlreadyInProgress(String site);
 }
