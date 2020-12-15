@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.RebalancingStatus;
+import org.infinispan.xsite.statetransfer.StateTransferStatus;
 import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeSiteOfflineResponse;
@@ -29,7 +30,8 @@ public class EnumExternalizer implements AdvancedExternalizer<Enum<?>> {
             RebalancingStatus.class,
             BringSiteOnlineResponse.class,
             TakeSiteOfflineResponse.class,
-            SiteState.class
+            SiteState.class,
+            StateTransferStatus.class
       );
    }
 

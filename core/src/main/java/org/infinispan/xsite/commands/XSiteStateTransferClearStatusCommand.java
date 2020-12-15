@@ -29,8 +29,7 @@ public class XSiteStateTransferClearStatusCommand extends BaseRpcCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      XSiteStateTransferManager stateTransferManager = registry.getXSiteStateTransferManager().running();
-      stateTransferManager.clearStatus();
+      invokeLocal(registry.getXSiteStateTransferManager().running());
       return CompletableFutures.completedNull();
    }
 
@@ -49,5 +48,9 @@ public class XSiteStateTransferClearStatusCommand extends BaseRpcCommand {
       return "XSiteStateTransferClearStatusCommand{" +
             "cacheName=" + cacheName +
             '}';
+   }
+
+   public void invokeLocal(XSiteStateTransferManager stateTransferManager) {
+      stateTransferManager.clearStatus();
    }
 }

@@ -12,7 +12,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 /**
  * Finish receiving XSite state.
@@ -42,9 +41,7 @@ public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateComman
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      XSiteStateTransferManager stateTransferManager = registry.getXSiteStateTransferManager().running();
-      XSiteStateConsumer consumer = stateTransferManager.getStateConsumer();
-      consumer.endStateTransfer(siteName);
+      invokeLocal(registry.getXSiteStateTransferManager().running().getStateConsumer());
       return CompletableFutures.completedNull();
    }
 
@@ -82,5 +79,9 @@ public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateComman
             "siteName='" + siteName + '\'' +
             ", cacheName=" + cacheName +
             '}';
+   }
+
+   public void invokeLocal(XSiteStateConsumer consumer) {
+      consumer.endStateTransfer(siteName);
    }
 }

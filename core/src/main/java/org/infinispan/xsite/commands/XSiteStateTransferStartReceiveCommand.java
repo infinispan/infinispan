@@ -27,6 +27,7 @@ public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand
    private String siteName;
 
    // For CommandIdUniquenessTest only
+   @SuppressWarnings("unused")
    public XSiteStateTransferStartReceiveCommand() {
       super(COMMAND_ID, null);
    }
@@ -35,7 +36,7 @@ public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand
       this(cacheName, null);
    }
 
-   public XSiteStateTransferStartReceiveCommand(ByteString cacheName, String siteName) {
+   private XSiteStateTransferStartReceiveCommand(ByteString cacheName, String siteName) {
       super(COMMAND_ID, cacheName);
       this.siteName = siteName;
    }

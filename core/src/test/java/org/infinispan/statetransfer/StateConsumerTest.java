@@ -2,7 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -72,6 +74,7 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -155,6 +158,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       DistributionManager distributionManager = mock(DistributionManager.class);
       LocalPublisherManager localPublisherManager = mock(LocalPublisherManager.class);
       PerCacheInboundInvocationHandler invocationHandler = mock(PerCacheInboundInvocationHandler.class);
+      XSiteStateTransferManager xSiteStateTransferManager = mock(XSiteStateTransferManager.class);
 
       when(persistenceManager.removeSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.addSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
@@ -204,6 +208,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(rpcManager.getSyncRpcOptions()).thenReturn(new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS));
       when(rpcManager.blocking(any(CompletionStage.class))).thenAnswer(invocation -> ((CompletionStage) invocation
             .getArgument(0)).toCompletableFuture().join());
+      doNothing().when(xSiteStateTransferManager).onTopologyUpdated(any(CacheTopology.class), anyBoolean());
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
@@ -212,7 +217,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),
                          new HashFunctionPartitioner(), conflictManager, distributionManager, localPublisherManager,
-                         invocationHandler);
+                         invocationHandler, xSiteStateTransferManager);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();

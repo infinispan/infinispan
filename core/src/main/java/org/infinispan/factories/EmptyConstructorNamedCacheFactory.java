@@ -158,7 +158,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(CommitManager.class.getName())) {
          return new CommitManager();
       } else if (componentName.equals(XSiteStateTransferManager.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ? new XSiteStateTransferManagerImpl()
+         return configuration.sites().hasEnabledBackups() ? new XSiteStateTransferManagerImpl(configuration)
                                                           : new NoOpXSiteStateTransferManager();
       } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
          return new XSiteStateConsumerImpl();

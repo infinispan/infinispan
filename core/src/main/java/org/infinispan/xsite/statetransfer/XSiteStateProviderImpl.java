@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -137,14 +136,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private void notifyStateTransferEnd(final String siteName, final Address origin, final boolean error) {
       if (rpcManager.getAddress().equals(origin)) {
-         blockingExecutor.submit((Callable<Void>) () -> {
-            try {
-               stateTransferManager.running().notifyStatePushFinished(siteName, origin, !error);
-            } catch (Throwable throwable) {
-               //ignored
-            }
-            return null;
-         });
+         stateTransferManager.running().notifyStatePushFinished(siteName, origin, !error);
       } else {
          XSiteStateTransferFinishSendCommand command = commandsFactory.buildXSiteStateTransferFinishSendCommand(siteName, !error);
          rpcManager.sendTo(origin, command, DeliverOrder.NONE);
@@ -167,7 +159,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       }
 
       XSiteStatePushCommand command = commandsFactory.buildXSiteStatePushCommand(privateBuffer, xSiteBackup.getTimeout());
-      RetryOnFailureXSiteCommand remoteSite = RetryOnFailureXSiteCommand.newInstance(xSiteBackup, command, task.retryPolicy);
+      RetryOnFailureXSiteCommand<?> remoteSite = RetryOnFailureXSiteCommand.newInstance(xSiteBackup, command, task.retryPolicy);
       remoteSite.execute(rpcManager, task.waitTime, TimeUnit.MILLISECONDS);
    }
 

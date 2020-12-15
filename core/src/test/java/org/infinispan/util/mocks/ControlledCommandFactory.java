@@ -442,8 +442,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName) {
-      return actual.buildXSiteStateTransferStartReceiveCommand(siteName);
+   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand() {
+      return actual.buildXSiteStateTransferStartReceiveCommand();
    }
 
    @Override
