@@ -790,6 +790,8 @@
       <versionx.xmlpull.xmlpull>1.1.3.1</versionx.xmlpull.xmlpull>
       <versionx.xpp3.xpp3>${version.xpp3}</versionx.xpp3.xpp3>
       <versionx.xpp3.xpp3_min>${version.xpp3}</versionx.xpp3.xpp3_min>
+
+      <version.io.opentracing>0.31.0</version.io.opentracing>
    </properties>
 
    <dependencyManagement>
@@ -3874,6 +3876,17 @@
             <groupId>xpp3</groupId>
             <artifactId>xpp3_min</artifactId>
             <version>${versionx.xpp3.xpp3_min}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-api</artifactId>
+            <version>${version.io.opentracing}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-noop</artifactId>
+            <version>${version.io.opentracing}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

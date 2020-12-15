@@ -270,6 +270,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
          addSelfToTopologyView(cacheManager);
       }
+
+      RequestTracer.start();
    }
 
    @Override
@@ -571,6 +573,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public void stop() {
+      RequestTracer.stop();
+
       if (removeCacheListener != null) {
          SecurityActions.removeListener(cacheManager, removeCacheListener);
       }
