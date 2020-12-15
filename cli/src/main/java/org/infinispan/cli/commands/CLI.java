@@ -50,6 +50,7 @@ import org.infinispan.cli.commands.rest.Site;
 import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.impl.AeshDelegatingShell;
+import org.infinispan.cli.impl.CliAliasManager;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
 import org.infinispan.cli.impl.CliRuntimeRunner;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -218,10 +219,16 @@ public class CLI extends CliCommand {
       // We now start an interactive CLI
       CommandRegistry commandRegistry = initializeCommands();
       context.setRegistry(commandRegistry);
+      CliAliasManager aliasManager;
+      try {
+         aliasManager = new CliAliasManager(context.getConfigPath().resolve("aliases").toFile(), true, commandRegistry);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
       SettingsBuilder settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
-            .aliasFile(context.getConfigPath().resolve("aliases").toFile())
+            .aliasManager(aliasManager)
             .historyFile(context.getConfigPath().resolve("history").toFile())
             .outputStream(System.out)
             .outputStreamError(System.err)
