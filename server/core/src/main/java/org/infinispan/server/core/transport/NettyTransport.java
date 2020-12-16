@@ -26,7 +26,6 @@ import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -130,34 +129,20 @@ public class NettyTransport implements Transport {
       masterTerminationFuture.awaitUninterruptibly();
       ioTerminationFuture.awaitUninterruptibly();
 
-      // This is probably not necessary, all Netty resources should have been freed already
-      ChannelGroupFuture serverChannelsTerminationFuture = serverChannels.close();
-      ChannelGroupFuture acceptedChannelsTerminationFuture = acceptedChannels.close();
-
-      ChannelGroupFuture future = serverChannelsTerminationFuture.awaitUninterruptibly();
-      if (!future.isSuccess()) {
-         log.serverDidNotUnbind();
-
-         future.forEach(fut -> {
-            Channel ch = fut.channel();
+      if (serverChannels.isEmpty() && acceptedChannels.isEmpty()) {
+         log.debug("Channel group completely closed, external resources released");
+      } else {
+         serverChannels.forEach(ch -> {
             if (ch.isActive()) {
                log.channelStillBound(ch, ch.remoteAddress());
             }
          });
-      }
-
-      future = acceptedChannelsTerminationFuture.awaitUninterruptibly();
-      if (!future.isSuccess()) {
-         log.serverDidNotClose();
-         future.forEach(fut -> {
-            Channel ch = fut.channel();
+         acceptedChannels.forEach(ch -> {
             if (ch.isActive()) {
                log.channelStillConnected(ch, ch.remoteAddress());
             }
          });
       }
-      if (log.isDebugEnabled())
-         log.debug("Channel group completely closed, external resources released");
       nettyPort = Optional.empty();
    }
 
