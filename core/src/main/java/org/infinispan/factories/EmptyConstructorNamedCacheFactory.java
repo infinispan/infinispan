@@ -163,7 +163,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
          return new XSiteStateConsumerImpl();
       } else if (componentName.equals(XSiteStateProvider.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ? new XSiteStateProviderImpl()
+         return configuration.sites().hasEnabledBackups() ? new XSiteStateProviderImpl(configuration)
                                                           : NoOpXSiteStateProvider.getInstance();
       } else if (componentName.equals(FunctionalNotifier.class.getName())) {
          return new FunctionalNotifierImpl<>();

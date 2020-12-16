@@ -1,7 +1,11 @@
 package org.infinispan.xsite.statetransfer;
 
 import java.util.Collection;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -37,5 +41,30 @@ public class XSiteProviderDelegator implements XSiteStateProvider {
    @Override
    public Collection<String> getSitesMissingCoordinator(Collection<Address> currentMembers) {
       return xSiteStateProvider.getSitesMissingCoordinator(currentMembers);
+   }
+
+   @Override
+   public void notifyStateTransferEnd(String siteName, Address origin, boolean statusOk) {
+      xSiteStateProvider.notifyStateTransferEnd(siteName, origin, statusOk);
+   }
+
+   @Override
+   public CommandsFactory getCommandsFactory() {
+      return xSiteStateProvider.getCommandsFactory();
+   }
+
+   @Override
+   public RpcManager getRpcManager() {
+      return xSiteStateProvider.getRpcManager();
+   }
+
+   @Override
+   public ScheduledExecutorService getScheduledExecutorService() {
+      return xSiteStateProvider.getScheduledExecutorService();
+   }
+
+   @Override
+   public Executor getExecutor() {
+      return xSiteStateProvider.getExecutor();
    }
 }
