@@ -29,17 +29,17 @@ import io.netty.channel.Channel;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @LogMessage(level = WARN)
-   @Message(value = "Server channel group did not completely unbind", id = 5004)
-   void serverDidNotUnbind();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Server channel group did not completely unbind", id = 5004)
+//   void serverDidNotUnbind();
 
    @LogMessage(level = WARN)
    @Message(value = "%s is still bound to %s", id = 5005)
    void channelStillBound(Channel ch, SocketAddress address);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Channel group did not completely close", id = 5006)
-   void serverDidNotClose();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Channel group did not completely close", id = 5006)
+//   void serverDidNotClose();
 
    @LogMessage(level = WARN)
    @Message(value = "%s is still connected to %s", id = 5007)
