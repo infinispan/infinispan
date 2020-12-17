@@ -147,10 +147,11 @@ public final class InfinispanQueryStatisticsInfo {
 
    public Json getLegacyIndexStatistics() {
       Map<String, IndexInfo> indexStats = indexStatistics.indexInfos();
+      Map<String, Long> counts = indexStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().count()));
       Map<String, Long> sizes = indexStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
       return Json.object()
-            .set("indexed_class_names", Json.make(getIndexedClassNames()))
-            .set("indexed_entities_count", Json.make(indexStats.keySet()))
+            .set("indexed_class_names", Json.make(indexStats.keySet()))
+            .set("indexed_entities_count", Json.make(counts))
             .set("index_sizes", Json.make(sizes))
             .set("reindexing", indexStatistics.reindexing());
    }
