@@ -41,6 +41,11 @@ public class TestServer {
       return serverDriver;
    }
 
+   public void stopServerDriver(String testName) {
+      getDriver().stop(testName);
+      serverDriver = null;
+   }
+
    /**
     * @return a client configured against the Hot Rod endpoint exposed by the server
     */
