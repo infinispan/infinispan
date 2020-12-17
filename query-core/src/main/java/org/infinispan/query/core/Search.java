@@ -17,6 +17,7 @@ import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -117,7 +118,7 @@ public final class Search {
    /**
     * @return {@link SearchStatistics} for the whole cluster combined. The returned object is a snapshot.
     */
-   public static CompletionStage<SearchStatistics> getClusteredSearchStatistics(Cache<?, ?> cache) {
+   public static CompletionStage<SearchStatisticsSnapshot> getClusteredSearchStatistics(Cache<?, ?> cache) {
       return getStatsRetriever(cache).getDistributedSearchStatistics();
    }
 

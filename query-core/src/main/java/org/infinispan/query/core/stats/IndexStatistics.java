@@ -1,9 +1,8 @@
 package org.infinispan.query.core.stats;
 
 import java.util.Map;
-
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 /**
  *
@@ -11,33 +10,22 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
  *
  * @since 12.0
  */
-public interface IndexStatistics extends JsonSerialization {
+public interface IndexStatistics {
+
+   /**
+    * @return The name of all indexed entities configured in the cache. The name of the entity is
+    * either the class name annotated with @Index, or the protobuf Message name.
+    */
+   Set<String> indexedEntities();
 
    /**
     * @return The {@link IndexInfo} for each indexed entity configured in the cache. The name of the entity is
     * either the class name annotated with @Index, or the protobuf Message name.
     */
-   Map<String, IndexInfo> indexInfos();
+   CompletionStage<Map<String, IndexInfo>> computeIndexInfos();
 
-   /**
-    * Merge with another {@link IndexStatistics}.
-    *
-    * @return self
-    */
-   IndexStatistics merge(IndexStatistics other);
+   boolean reindexing();
 
-   IndexStatistics getSnapshot();
-
-   default boolean reindexing() {
-      return false;
-   }
-
-   @Override
-   default Json toJson() {
-      return Json.object()
-            .set("types", Json.make(indexInfos()))
-            .set("reindexing", reindexing());
-   }
-
+   CompletionStage<IndexStatisticsSnapshot> computeSnapshot();
 
 }

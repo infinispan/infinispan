@@ -93,7 +93,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       Set<String> totalEntities = new HashSet<>();
       for (int i = 0; i < cacheManagers.size(); i++) {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
-         Map<String, IndexInfo> indexInfos = searchStatistics.getIndexStatistics().indexInfos();
+         Map<String, IndexInfo> indexInfos = await(searchStatistics.getIndexStatistics().computeIndexInfos());
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
             assertEquals(indexInfo.count(), 0L);
@@ -103,7 +103,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(totalEntities, expectedEntities);
 
       SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
-      Map<String, IndexInfo> classIndexInfoMap = clusteredStats.getIndexStatistics().indexInfos();
+      Map<String, IndexInfo> classIndexInfoMap = await(clusteredStats.getIndexStatistics().computeIndexInfos());
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
 
       Long reduceCount = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);
@@ -125,7 +125,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       long totalSize = 0L;
       for (int i = 0; i < cacheManagers.size(); i++) {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
-         Map<String, IndexInfo> indexInfos = searchStatistics.getIndexStatistics().indexInfos();
+         Map<String, IndexInfo> indexInfos = await(searchStatistics.getIndexStatistics().computeIndexInfos());
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
             totalCount += indexInfo.count();
@@ -137,7 +137,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertThat(totalSize).isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
 
       SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
-      Map<String, IndexInfo> classIndexInfoMap = clusteredStats.getIndexStatistics().indexInfos();
+      Map<String, IndexInfo> classIndexInfoMap = await(clusteredStats.getIndexStatistics().computeIndexInfos());
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
 
       Long reduceCount = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);

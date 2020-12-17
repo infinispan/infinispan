@@ -30,6 +30,7 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -110,7 +111,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       assertEquals(numberOfEntries, mBeanServer.invoke(name, "getNumberOfIndexedEntities",
             new Object[]{Person.class.getName()},
             new String[]{String.class.getName()}));
-      assertEquals(2, searchStatistics.getIndexStatistics().indexInfos().size());
+      assertEquals(2, CompletionStages.join(searchStatistics.getIndexStatistics().computeIndexInfos()).size());
 
       // add more test data
       AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
@@ -127,7 +128,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       assertEquals(2, classNames.size());
       assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getName()));
       assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getName()));
-      assertEquals(2, searchStatistics.getIndexStatistics().indexInfos().size());
+      assertEquals(2, CompletionStages.join(searchStatistics.getIndexStatistics().computeIndexInfos()).size());
 
       // check the statistics and see they have reasonable values
       assertTrue("The query execution total time should be > 0.", (Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0);

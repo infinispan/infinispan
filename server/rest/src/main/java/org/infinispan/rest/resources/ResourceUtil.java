@@ -54,6 +54,10 @@ class ResourceUtil {
       return addEntityAsJson(json, new NettyRestResponse.Builder()).build();
    }
 
+   static RestResponse asJsonResponse(Json json, NettyRestResponse.Builder responseBuilder) {
+      return addEntityAsJson(json, responseBuilder).build();
+   }
+
    static CompletableFuture<RestResponse> asJsonResponseFuture(Json json) {
       return completedFuture(asJsonResponse(json));
    }

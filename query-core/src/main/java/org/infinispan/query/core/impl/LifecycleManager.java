@@ -23,7 +23,7 @@ import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventF
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.IndexStatistics;
-import org.infinispan.query.core.stats.impl.EmptyIndexStatistics;
+import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
@@ -41,7 +41,7 @@ public class LifecycleManager implements ModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
-         cr.registerComponent(EmptyIndexStatistics.INSTANCE, IndexStatistics.class);
+         cr.registerComponent(new IndexStatisticsSnapshotImpl(), IndexStatistics.class);
          cr.registerComponent(new LocalQueryStatistics(), LocalQueryStatistics.class);
          cr.registerComponent(new SearchStatsRetriever(), SearchStatsRetriever.class);
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();

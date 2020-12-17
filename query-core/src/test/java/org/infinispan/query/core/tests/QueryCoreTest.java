@@ -99,7 +99,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       QueryStatistics queryStatistics = searchStatistics.getQueryStatistics();
       IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
 
-      assertTrue(indexStatistics.indexInfos().isEmpty());
+      assertTrue(await(indexStatistics.computeIndexInfos()).isEmpty());
       assertTrue(await(Search.getClusteredSearchStatistics(cache)).getIndexStatistics().indexInfos().isEmpty());
 
       assertEquals(0, queryStatistics.getNonIndexedQueryCount());
@@ -113,8 +113,9 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       queryStatistics = searchStatistics.getQueryStatistics();
       indexStatistics = searchStatistics.getIndexStatistics();
 
-      assertTrue(indexStatistics.indexInfos().isEmpty());
-      assertTrue(await(Search.getClusteredSearchStatistics(cacheWithStats)).getIndexStatistics().indexInfos().isEmpty());
+      assertTrue(await(indexStatistics.computeIndexInfos()).isEmpty());
+      assertTrue(await(Search.getClusteredSearchStatistics(cacheWithStats)
+              .thenCompose(s -> s.getIndexStatistics().computeIndexInfos())).isEmpty());
 
       assertEquals(1, queryStatistics.getNonIndexedQueryCount());
       assertTrue(queryStatistics.getNonIndexedQueryAvgTime() > 0);
