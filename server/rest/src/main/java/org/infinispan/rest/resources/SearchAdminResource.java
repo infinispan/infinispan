@@ -17,11 +17,11 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
@@ -80,11 +80,10 @@ public class SearchAdminResource implements ResourceHandler {
       String scopeParam = restRequest.getParameter("scope");
 
       if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
-         CompletionStage<SearchStatistics> stats = Search.getClusteredSearchStatistics(cache);
-         return stats.thenApply(s -> asJsonResponse(makeJson(s)));
+         CompletionStage<SearchStatisticsSnapshot> stats = Search.getClusteredSearchStatistics(cache);
+         return stats.thenApply(s -> asJsonResponse(s.toJson()));
       } else {
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
-         return asJsonResponseFuture(makeJson(searchStatistics));
+         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(s.toJson()));
       }
    }
 
@@ -114,12 +113,6 @@ public class SearchAdminResource implements ResourceHandler {
       }
    }
 
-   private Json makeJson(SearchStatistics searchStatistics) {
-      return Json.object()
-            .set("query", Json.make(searchStatistics.getQueryStatistics()))
-            .set("index", Json.make(searchStatistics.getIndexStatistics()));
-   }
-
    private CompletionStage<RestResponse> reindex(RestRequest request) {
       return runIndexer(request, Indexer::run, true);
    }
@@ -134,7 +127,7 @@ public class SearchAdminResource implements ResourceHandler {
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(searchStats.getLegacyIndexStatistics(), responseBuilder);
+      return searchStats.computeLegacyIndexStatistics().thenApply(json -> asJsonResponse(json, responseBuilder));
    }
 
    private CompletionStage<RestResponse> queryStats(RestRequest request) {

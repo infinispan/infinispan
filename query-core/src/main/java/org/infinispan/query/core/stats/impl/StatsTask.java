@@ -8,10 +8,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
+import org.infinispan.util.concurrent.CompletionStages;
 
 @ProtoTypeId(ProtoStreamTypeIds.STATS_TASK)
-public class StatsTask implements Function<EmbeddedCacheManager, SearchStatistics> {
+public class StatsTask implements Function<EmbeddedCacheManager, SearchStatisticsSnapshot> {
 
    @ProtoField(number = 1)
    String cacheName;
@@ -22,9 +23,9 @@ public class StatsTask implements Function<EmbeddedCacheManager, SearchStatistic
    }
 
    @Override
-   public SearchStatistics apply(EmbeddedCacheManager cacheManager) {
+   public SearchStatisticsSnapshot apply(EmbeddedCacheManager cacheManager) {
       Cache<?, ?> cache = SecurityActions.getCache(cacheManager, cacheName);
       SearchStatsRetriever searchStatsRetriever = SecurityActions.getStatsRetriever(cache);
-      return searchStatsRetriever.getSnapshot();
+      return CompletionStages.join(searchStatsRetriever.getSearchStatistics().computeSnapshot());
    }
 }

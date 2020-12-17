@@ -11,8 +11,8 @@ import org.infinispan.query.core.stats.IndexInfo;
       includeClasses = {
             QueryMetrics.class,
             LocalQueryStatistics.class,
-            IndexStatisticSnapshot.class,
-            SearchStatisticsImpl.class,
+            IndexStatisticsSnapshotImpl.class,
+            SearchStatisticsSnapshotImpl.class,
             IndexInfo.class,
             IndexEntry.class,
             StatsTask.class

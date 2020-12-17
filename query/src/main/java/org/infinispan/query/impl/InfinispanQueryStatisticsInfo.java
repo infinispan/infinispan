@@ -1,10 +1,5 @@
 package org.infinispan.query.impl;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.hibernate.search.engine.Version;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.jmx.annotations.MBean;
@@ -16,6 +11,13 @@ import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.util.concurrent.CompletionStages;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -102,12 +104,12 @@ public final class InfinispanQueryStatisticsInfo {
 
    @ManagedAttribute
    public Set<String> getIndexedClassNames() {
-      return indexStatistics.indexInfos().keySet();
+      return blockingIndexInfos().keySet();
    }
 
    @ManagedOperation
    public int getNumberOfIndexedEntities(String entity) {
-      return find(indexStatistics.indexInfos(), entity).map(IndexInfo::count).orElse(0L).intValue();
+      return find(blockingIndexInfos(), entity).map(IndexInfo::count).orElse(0L).intValue();
    }
 
    private Optional<IndexInfo> find(Map<String, IndexInfo> indexInfos, String entity) {
@@ -117,18 +119,18 @@ public final class InfinispanQueryStatisticsInfo {
 
    @ManagedOperation
    public Map<String, Integer> indexedEntitiesCount() {
-      return indexStatistics.indexInfos().entrySet().stream()
+      return blockingIndexInfos().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().count()));
    }
 
    @ManagedOperation
    public long getIndexSize(String indexName) {
-      return find(indexStatistics.indexInfos(), indexName).map(IndexInfo::size).orElse(0L);
+      return find(blockingIndexInfos(), indexName).map(IndexInfo::size).orElse(0L);
    }
 
    @ManagedOperation
    public Map<String, Long> indexSizes() {
-      return indexStatistics.indexInfos().entrySet().stream()
+      return blockingIndexInfos().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
    }
 
@@ -145,15 +147,20 @@ public final class InfinispanQueryStatisticsInfo {
             .set("search_query_execution_max_time_query_string", getSearchQueryExecutionMaxTimeQueryString());
    }
 
-   public Json getLegacyIndexStatistics() {
-      Map<String, IndexInfo> indexStats = indexStatistics.indexInfos();
-      Map<String, Long> counts = indexStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().count()));
-      Map<String, Long> sizes = indexStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
-      return Json.object()
-            .set("indexed_class_names", Json.make(indexStats.keySet()))
-            .set("indexed_entities_count", Json.make(counts))
-            .set("index_sizes", Json.make(sizes))
-            .set("reindexing", indexStatistics.reindexing());
+   public CompletionStage<Json> computeLegacyIndexStatistics() {
+      return indexStatistics.computeIndexInfos().thenApply(indexInfos -> {
+         Map<String, Long> counts = indexInfos.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().count()));
+         Map<String, Long> sizes = indexInfos.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
+         return Json.object()
+               .set("indexed_class_names", Json.make(indexInfos.keySet()))
+               .set("indexed_entities_count", Json.make(counts))
+               .set("index_sizes", Json.make(sizes))
+               .set("reindexing", indexStatistics.reindexing());
+      });
+   }
+
+   private Map<String, IndexInfo> blockingIndexInfos() {
+      return CompletionStages.join(indexStatistics.computeIndexInfos());
    }
 
 }

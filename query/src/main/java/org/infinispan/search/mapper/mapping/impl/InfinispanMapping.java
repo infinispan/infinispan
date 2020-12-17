@@ -27,6 +27,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
@@ -40,7 +41,8 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private final SearchSession mappingSession;
    private final SearchIndexer searchIndexer;
 
-   private final Collection<Class<?>> allIndexedEntityJavaClasses;
+   private final Set<String> allIndexedEntityNames;
+   private final Set<Class<?>> allIndexedEntityJavaClasses;
 
    private SearchIntegration integration;
    private boolean close = false;
@@ -53,8 +55,10 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.entityConverter = entityConverter;
       this.mappingSession = new InfinispanSearchSession(this, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer);
+      this.allIndexedEntityNames = typeContextContainer.allIndexed().stream()
+              .map(SearchIndexedEntity::name).collect(Collectors.toSet());
       this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
-            .map(SearchIndexedEntity::javaClass).collect(Collectors.toList());
+            .map(SearchIndexedEntity::javaClass).collect(Collectors.toSet());
    }
 
    @Override
@@ -136,7 +140,12 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    }
 
    @Override
-   public Collection<Class<?>> allIndexedEntityJavaClasses() {
+   public Set<String> allIndexedEntityNames() {
+      return allIndexedEntityNames;
+   }
+
+   @Override
+   public Set<Class<?>> allIndexedEntityJavaClasses() {
       return allIndexedEntityJavaClasses;
    }
 

@@ -14,6 +14,7 @@ import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
@@ -109,7 +110,7 @@ public final class Search {
       return ComponentRegistryUtils.getSearchStatsRetriever(cache).getSearchStatistics();
    }
 
-   public static CompletionStage<SearchStatistics> getClusteredSearchStatistics(Cache<?, ?> cache) {
+   public static CompletionStage<SearchStatisticsSnapshot> getClusteredSearchStatistics(Cache<?, ?> cache) {
       return ComponentRegistryUtils.getSearchStatsRetriever(cache).getDistributedSearchStatistics();
    }
 }

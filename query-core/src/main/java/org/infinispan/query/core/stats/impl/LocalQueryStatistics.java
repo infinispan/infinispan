@@ -9,9 +9,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.query.core.stats.QueryStatistics;
+import org.infinispan.query.core.stats.QueryStatisticsSnapshot;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  *  Manages query statistics for a Cache.
@@ -20,7 +23,7 @@ import org.infinispan.security.impl.AuthorizationHelper;
  */
 @Scope(Scopes.NAMED_CACHE)
 @ProtoTypeId(ProtoStreamTypeIds.LOCAL_QUERY_STATS)
-public class LocalQueryStatistics implements QueryStatistics {
+public class LocalQueryStatistics implements QueryStatisticsSnapshot {
 
    @ProtoField(number = 1)
    QueryMetrics localIndexedQueries = new QueryMetrics();
@@ -295,8 +298,9 @@ public class LocalQueryStatistics implements QueryStatistics {
       return configuration.statistics().enabled();
    }
 
-   public QueryStatistics getSnapshot() {
-      return new LocalQueryStatistics().merge(this);
+   @Override
+   public CompletionStage<QueryStatisticsSnapshot> computeSnapshot() {
+      return CompletableFuture.completedFuture(new LocalQueryStatistics().merge(this));
    }
 
    @Override
@@ -319,7 +323,7 @@ public class LocalQueryStatistics implements QueryStatistics {
    }
 
    @Override
-   public QueryStatistics merge(QueryStatistics other) {
+   public QueryStatisticsSnapshot merge(QueryStatisticsSnapshot other) {
       mergeMetrics(this.localIndexedQueries, other.getLocalIndexedQueryCount(), other.getLocalIndexedQueryTotalTime(),
             other.getLocalIndexedQueryMaxTime(), other.getSlowestLocalIndexedQuery());
       mergeMetrics(this.distIndexedQueries, other.getDistributedIndexedQueryCount(), other.getDistributedIndexedQueryTotalTime(),

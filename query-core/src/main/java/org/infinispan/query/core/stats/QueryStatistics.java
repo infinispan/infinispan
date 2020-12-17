@@ -1,13 +1,13 @@
 package org.infinispan.query.core.stats;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Exposes query statistics for a particular cache.
  *
  * @since 12.0
  */
-public interface QueryStatistics extends JsonSerialization {
+public interface QueryStatistics {
    /**
     * @return Number of queries executed in the local index.
     */
@@ -134,10 +134,9 @@ public interface QueryStatistics extends JsonSerialization {
    void clear();
 
    /**
-    * Merge with another {@link QueryStatistics}
-    * @return self.
+    * @return A snapshot of self.
     */
-   QueryStatistics merge(QueryStatistics other);
+   CompletionStage<QueryStatisticsSnapshot> computeSnapshot();
 
    /**
     * @return true if the Cache has statistics enabled.

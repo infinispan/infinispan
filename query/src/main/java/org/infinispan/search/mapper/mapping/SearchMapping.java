@@ -8,6 +8,7 @@ import org.infinispan.search.mapper.work.SearchIndexer;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 public interface SearchMapping extends AutoCloseable {
 
@@ -60,12 +61,17 @@ public interface SearchMapping extends AutoCloseable {
     */
    Collection<? extends SearchIndexedEntity> allIndexedEntities();
 
+   /**
+    * @return A set containing the name of {@link #allIndexedEntities() all indexed entities}.
+    */
+   Set<String> allIndexedEntityNames();
+
    //TODO: ISPN-12449 replace with a method with a method returning entity names.
    // Currently this method returns java type, using byte[] to represents *all* protobuf types.
    // So if we use java types, we can't discriminate between two protobuf types,
    // which means for example that we can't reindex just one protobuf type;
    // see the callers for more details.
-   Collection<Class<?>> allIndexedEntityJavaClasses();
+   Set<Class<?>> allIndexedEntityJavaClasses();
 
    /**
     * @param value An entity.
