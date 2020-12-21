@@ -4,7 +4,11 @@ import static org.infinispan.cli.logging.Messages.MSG;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.net.ssl.TrustManager;
@@ -21,6 +25,7 @@ import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
+import org.aesh.command.option.OptionGroup;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
@@ -136,6 +141,12 @@ public class CLI extends CliCommand {
    @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
    String connect;
 
+   @Option(shortName = 'P', description = "Sets system properties from the specified file.")
+   String properties;
+
+   @OptionGroup(shortName = 'D', description = "Sets a system property")
+   Map<String, String> propertyMap;
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -158,6 +169,20 @@ public class CLI extends CliCommand {
       }
 
       context = invocation.getContext();
+
+      if (propertyMap != null) {
+         propertyMap.forEach(context.getProperties()::putIfAbsent);
+      }
+
+      if (properties != null) {
+         try(Reader r = Files.newBufferedReader(Paths.get(properties))) {
+            Properties loaded = new Properties();
+            loaded.load(r);
+            loaded.forEach(context.getProperties()::putIfAbsent);
+         } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+         }
+      }
 
       String sslTrustStore = truststore != null ? truststore.getAbsolutePath() : context.getProperty(Context.Property.TRUSTSTORE);
       if (sslTrustStore != null) {
