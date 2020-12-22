@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -36,6 +37,7 @@ public class InfinispanEmbeddedAutoConfigurationPropertiesTest {
       final GlobalConfiguration globalConfiguration = defaultCacheManager.getCacheManagerConfiguration();
       assertThat(globalConfiguration.globalJmxStatistics().enabled()).isTrue();
       assertThat(globalConfiguration.globalJmxStatistics().domain()).isEqualTo("properties.test.spring.infinispan");
+      assertThat(globalConfiguration.serialization().marshaller()).isInstanceOf(JavaSerializationMarshaller.class);
 
       final Configuration defaultCacheConfiguration = defaultCacheManager.getDefaultCacheConfiguration();
       assertThat(defaultCacheConfiguration.memory().size()).isEqualTo(2000L);
