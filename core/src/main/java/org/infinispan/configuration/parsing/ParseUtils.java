@@ -322,11 +322,33 @@ public final class ParseUtils {
         }
     }
 
-    public static void ignoreAttribute(XMLExtendedStreamReader reader, Enum<?> attribute) {
-       CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+    public static void ignoreAttribute(XMLExtendedStreamReader reader, String attributeName) {
+       CONFIG.ignoreXmlAttribute(attributeName, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+    }
+
+    public static void ignoreAttribute(XMLExtendedStreamReader reader, int attributeIndex) {
+        ignoreAttribute(reader, reader.getAttributeName(attributeIndex).getLocalPart());
     }
 
     public static void ignoreElement(XMLExtendedStreamReader reader, Enum<?> element) {
        CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+    }
+
+    public static XMLStreamException elementRemoved(XMLExtendedStreamReader reader, String newElementName) {
+        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName, reader.getLocation());
+    }
+
+    public static XMLStreamException elementRemoved(XMLExtendedStreamReader reader) {
+        return CONFIG.elementRemoved(reader.getLocalName(), reader.getLocation());
+    }
+
+    public static XMLStreamException attributeRemoved(XMLExtendedStreamReader reader, int attributeIndex, String newAttributeName) {
+        String attributeName = reader.getAttributeName(attributeIndex).getLocalPart();
+        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName, reader.getLocation());
+    }
+
+    public static XMLStreamException attributeRemoved(XMLExtendedStreamReader reader, int attributeIndex) {
+        String attributeName = reader.getAttributeName(attributeIndex).getLocalPart();
+        return CONFIG.attributeRemoved(attributeName, reader.getLocation());
     }
 }

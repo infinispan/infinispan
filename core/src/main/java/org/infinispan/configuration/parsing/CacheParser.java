@@ -45,6 +45,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
+import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -171,7 +172,7 @@ public class CacheParser implements ConfigurationParser {
          case START:
          case JNDI_NAME:
          case MODULE: {
-            ignoreAttribute(reader, attribute);
+            ignoreAttribute(reader, index);
             break;
          }
          case SIMPLE_CACHE:
@@ -187,9 +188,9 @@ public class CacheParser implements ConfigurationParser {
          }
          case SPIN_DURATION: {
             if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               throw ParseUtils.attributeRemoved(reader, index);
             } else {
-               ignoreAttribute(reader, attribute);
+               ignoreAttribute(reader, index);
             }
             break;
          }
@@ -250,8 +251,8 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case ENABLED: {
                if (reader.getSchema().since(11, 0))
-                  throw ParseUtils.unexpectedElement(reader);
-               ignoreAttribute(reader, attribute);
+                  throw ParseUtils.attributeRemoved(reader, i, Attribute.WHEN_SPLIT.getLocalName());
+               ignoreAttribute(reader, i);
                break;
             }
             case WHEN_SPLIT: {
@@ -260,7 +261,7 @@ public class CacheParser implements ConfigurationParser {
             }
             case MERGE_POLICY: {
                MergePolicy mp = MergePolicy.fromString(value);
-               org.infinispan.conflict.EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
+               EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
                ph.mergePolicy(mergePolicy);
                break;
             }
@@ -454,7 +455,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case EVICTION: {
             if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.unexpectedElement(reader);
+               throw ParseUtils.elementRemoved(reader, Element.MEMORY.getLocalName());
             } else {
                this.parseEviction(reader, builder);
             }
@@ -497,7 +498,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case MODULES: {
             if (reader.getSchema().since(9, 0)) {
-               throw ParseUtils.unexpectedElement(reader);
+               throw ParseUtils.elementRemoved(reader);
             } else {
                parseModules(reader, holder);
             }
@@ -505,7 +506,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case DATA_CONTAINER: {
             if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.unexpectedElement(reader);
+               throw ParseUtils.elementRemoved(reader);
             } else {
                parseDataContainer(reader);
             }
@@ -546,7 +547,7 @@ public class CacheParser implements ConfigurationParser {
             case CLASS:
             case KEY_EQUIVALENCE:
             case VALUE_EQUIVALENCE:
-               ignoreAttribute(reader, attribute);
+               ignoreAttribute(reader, i);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -631,9 +632,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             case ADDRESS_COUNT:
                if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             case STRATEGY:
@@ -749,7 +750,7 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case VERSIONING_SCHEME:
                if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute("versioning", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -884,7 +885,7 @@ public class CacheParser implements ConfigurationParser {
             }
             case TRANSACTION_PROTOCOL: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute("transaction protocol", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -966,7 +967,7 @@ public class CacheParser implements ConfigurationParser {
             case STRATEGY:
             case THREAD_POLICY:
             case TYPE:
-               ignoreAttribute(reader, attribute);
+               ignoreAttribute(reader, i);
                break;
             case MAX_ENTRIES:
             case SIZE:
@@ -1074,7 +1075,7 @@ public class CacheParser implements ConfigurationParser {
       switch (attribute) {
          case ASYNC_MARSHALLING: {
             if (reader.getSchema().since(9, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               throw ParseUtils.attributeRemoved(reader, index);
             } else {
                CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
             }
@@ -1085,17 +1086,10 @@ public class CacheParser implements ConfigurationParser {
             builder.clustering().cacheMode(mode.apply(baseCacheMode));
             break;
          }
-         case QUEUE_SIZE: {
-            if (reader.getSchema().since(11, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
-            } else {
-               CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
-            }
-            break;
-         }
+         case QUEUE_SIZE:
          case QUEUE_FLUSH_INTERVAL: {
             if (reader.getSchema().since(11, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               throw ParseUtils.attributeRemoved(reader, index);
             } else {
                CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
             }
@@ -1392,8 +1386,8 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case RELATIVE_TO: {
                if (reader.getSchema().since(11, 0))
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               ignoreAttribute(reader, attribute);
+                  throw ParseUtils.attributeRemoved(reader, i);
+               ignoreAttribute(reader, i);
                break;
             }
             case PATH: {
@@ -1453,9 +1447,9 @@ public class CacheParser implements ConfigurationParser {
          }
          case SINGLETON: {
             if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, index);
+               throw ParseUtils.attributeRemoved(reader, index);
             } else {
-               ignoreAttribute(reader, attribute);
+               ignoreAttribute(reader, index);
             }
             break;
          }
@@ -1507,9 +1501,9 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case FLUSH_LOCK_TIMEOUT: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }
@@ -1522,17 +1516,17 @@ public class CacheParser implements ConfigurationParser {
                break;
             case SHUTDOWN_TIMEOUT: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }
             case THREAD_POOL_SIZE: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }
@@ -1585,9 +1579,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             case SINGLETON:
                if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             case TRANSACTIONAL:
