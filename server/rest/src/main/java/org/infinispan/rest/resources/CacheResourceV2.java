@@ -11,6 +11,8 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
@@ -48,14 +50,22 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.rest.CacheEntryInputStream;
 import org.infinispan.rest.CacheKeyInputStream;
+import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
+import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -91,6 +101,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::streamEntries)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("listen").handleWith(this::cacheListen)
 
             // Info and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
@@ -112,8 +123,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search")
-               .permission(AuthorizationPermission.BULK_READ)
-               .handleWith(queryAction::search)
+            .permission(AuthorizationPermission.BULK_READ)
+            .handleWith(queryAction::search)
 
             // Misc
             .invocation().methods(POST).path("/v2/caches").withAction("toJSON").handleWith(this::convertToJson)
@@ -241,6 +252,20 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }, invocationHelper.getExecutor());
    }
 
+   private CompletionStage<RestResponse> cacheListen(RestRequest request) {
+      MediaType accept = negotiateMediaType(request, APPLICATION_JSON, TEXT_PLAIN);
+      String cacheName = request.variables().get("cacheName");
+      boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
+      if (!restCacheManager.cacheExists(cacheName))
+         return notFoundResponseFuture();
+      Cache<?, ?> cache = restCacheManager.getCache(cacheName, accept, accept, request);
+      BaseCacheListener listener = includeCurrentState ? new StatefulCacheListener(cache) : new StatelessCacheListener(cache);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
+      return cache.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
+   }
+
    private CompletionStage<RestResponse> removeCache(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
@@ -324,7 +349,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() ->
-         asJsonResponse(cache.getAdvancedCache().getStats().toJson()), invocationHelper.getExecutor());
+            asJsonResponse(cache.getAdvancedCache().getStats().toJson()), invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {
@@ -476,6 +501,44 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("secured", secured)
                .set("has_remote_backup", hasRemoteBackup)
                .set("statistics", statistics);
+      }
+   }
+
+   public static abstract class BaseCacheListener {
+      protected final Cache<?, ?> cache;
+      protected final EventStream eventStream;
+
+      protected BaseCacheListener(Cache<?, ?> cache) {
+         this.cache = cache;
+         this.eventStream = new EventStream(null, () -> cache.removeListenerAsync(this));
+      }
+
+      public EventStream getEventStream() {
+         return eventStream;
+      }
+
+      @CacheEntryCreated
+      @CacheEntryModified
+      @CacheEntryRemoved
+      @CacheEntryExpired
+      public CompletionStage<Void> onCacheEvent(CacheEntryEvent<?, ?> event) {
+         ServerSentEvent sse = new ServerSentEvent(event.getType().name().toLowerCase().replace('_', '-'), new String((byte[]) event.getKey()));
+         return eventStream.sendEvent(sse);
+      }
+   }
+
+   @Listener(clustered = true, includeCurrentState = true)
+   public static class StatefulCacheListener extends BaseCacheListener {
+      public StatefulCacheListener(Cache<?, ?> cache) {
+         super(cache);
+      }
+   }
+
+   @Listener(clustered = true)
+   public static class StatelessCacheListener extends BaseCacheListener {
+
+      public StatelessCacheListener(Cache<?, ?> cache) {
+         super(cache);
       }
    }
 }

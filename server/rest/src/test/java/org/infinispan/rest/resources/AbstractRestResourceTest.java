@@ -211,6 +211,20 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(response).isOk();
    }
 
+   private void removeFromCache(String cacheName, Object key, String keyContentType) {
+      String url = String.format("/rest/v2/caches/%s/%s", cacheName, key);
+      Map<String, String> headers = new HashMap<>();
+      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), keyContentType);
+
+      CompletionStage<RestResponse> response = client.raw().delete(url, headers);
+
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
+   void removeTextEntryFromCache(String cacheName, String key) {
+      removeFromCache(cacheName, key, TEXT_PLAIN_TYPE);
+   }
+
    protected RestClientConfigurationBuilder getClientConfig() {
       RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
       if (protocol != null) {

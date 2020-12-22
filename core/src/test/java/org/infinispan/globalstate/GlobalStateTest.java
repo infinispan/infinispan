@@ -20,6 +20,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -166,6 +169,43 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          assertFalse(globalStateFile.exists());
       } finally {
          TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   public void testCacheManagerNotifications(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, null, new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, null, new TransportFlags());
+      try {
+         Configuration cacheConfig = new ConfigurationBuilder().build();
+         Configuration template = new ConfigurationBuilder().template(true).build();
+         cm1.start();
+         cm2.start();
+         cm1.addListener(new StateListener());
+         cm2.addListener(new StateListener());
+
+         cm1.administration().getOrCreateCache("replicated-cache", cacheConfig);
+         cm1.administration().getOrCreateTemplate("replicated-template", template);
+         assertNotNull(cm2.getCache("replicated-cache"));
+         assertNotNull(cm2.getCacheConfiguration("replicated-template"));
+
+         assertEquals(1, cm1.getCacheNames().size());
+         assertEquals(1, cm2.getCacheNames().size());
+         cm1.stop();
+         cm2.stop();
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   @Listener
+   public class StateListener {
+      @ConfigurationChanged
+      public void configurationChanged(ConfigurationChangedEvent event) {
+
       }
    }
 

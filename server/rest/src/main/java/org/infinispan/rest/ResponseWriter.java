@@ -1,7 +1,9 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
 import static io.netty.handler.codec.http.HttpHeaderValues.KEEP_ALIVE;
+import static io.netty.handler.codec.http.HttpHeaderValues.NO_CACHE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -64,7 +66,7 @@ public enum ResponseWriter {
             RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r");
             HttpResponse res = response.getResponse();
             HttpUtil.setContentLength(res, randomAccessFile.length());
-            accessLog.log(ctx, request, response.getResponse());
+            accessLog.log(ctx, request, res);
             response.getResponse().headers().add(ResponseHeader.TRANSFER_ENCODING.getValue(), "chunked");
             ctx.write(res);
             ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(randomAccessFile, 0, randomAccessFile.length(), 8192)), ctx.newProgressivePromise());
@@ -80,9 +82,23 @@ public enum ResponseWriter {
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
          res.headers().set(CONNECTION, KEEP_ALIVE);
          InputStream inputStream = (InputStream) response.getEntity();
-         accessLog.log(ctx, request, response.getResponse());
+         accessLog.log(ctx, request, res);
          ctx.write(res);
          ctx.writeAndFlush(new HttpChunkedInput(new ChunkedStream(inputStream)), ctx.newProgressivePromise());
+      }
+   },
+   EVENT_STREAM {
+      @Override
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
+         HttpResponse res = response.getResponse();
+         res.headers().set(CACHE_CONTROL, NO_CACHE);
+         res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+         res.headers().set(CONNECTION, KEEP_ALIVE);
+         accessLog.log(ctx, request, res);
+         ctx.writeAndFlush(res).addListener(v -> {
+            EventStream eventStream = (EventStream) response.getEntity();
+            eventStream.setChannelHandlerContext(ctx);
+         });
       }
    };
 
@@ -94,6 +110,7 @@ public enum ResponseWriter {
       if (content == null) return EMPTY;
       if (content instanceof File) return CHUNKED_FILE;
       if (content instanceof InputStream) return CHUNKED_STREAM;
+      if (content instanceof EventStream) return EVENT_STREAM;
       return FULL;
    }
 }

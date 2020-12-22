@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.notifications.Listenable;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -25,6 +26,15 @@ public interface CacheManagerNotifier extends Listenable {
    CompletionStage<Void> notifyCacheStopped(String cacheName);
 
    CompletionStage<Void> notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged);
+
+   /**
+    * Notifies all registered listeners of a configurationChange event.
+    * @param eventType the type of event (CREATE or REMOVE)
+    * @param entityType the type of configuration that has changed (e.g. cache, counter, ...)
+    * @param entityName the name of the configuration item that has been changed
+    * @return a {@link CompletionStage} which completes when the notification has been sent.
+    */
+   CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName);
 
    /**
     * Returns whether there is at least one listener registered for the given annotation

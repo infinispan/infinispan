@@ -74,7 +74,7 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public NettyRestResponse build() {
          HttpResponse response;
-         if (entity instanceof File || entity instanceof InputStream) {
+         if (entity instanceof File || entity instanceof InputStream || entity instanceof EventStream) {
             response = new DefaultHttpResponse(HTTP_1_1, OK);
          } else {
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.buffer());

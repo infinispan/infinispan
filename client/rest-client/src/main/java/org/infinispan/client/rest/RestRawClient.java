@@ -1,5 +1,6 @@
 package org.infinispan.client.rest;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,4 +48,6 @@ public interface RestRawClient {
    CompletionStage<RestResponse> options(String path, Map<String, String> headers);
 
    CompletionStage<RestResponse> head(String path, Map<String, String> headers);
+
+   Closeable listen(String url, Map<String, String> headers, RestEventListener listener);
 }

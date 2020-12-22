@@ -17,10 +17,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -54,12 +56,14 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       allowedListeners.put(CacheStopped.class, CacheStoppedEvent.class);
       allowedListeners.put(ViewChanged.class, ViewChangedEvent.class);
       allowedListeners.put(Merged.class, MergeEvent.class);
+      allowedListeners.put(ConfigurationChanged.class, ConfigurationChangedEvent.class);
    }
 
    final List<ListenerInvocation<Event>> cacheStartedListeners = new CopyOnWriteArrayList<>();
    final List<ListenerInvocation<Event>> cacheStoppedListeners = new CopyOnWriteArrayList<>();
    final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<>();
    final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<>();
+   final List<ListenerInvocation<Event>> configurationChangedListeners = new CopyOnWriteArrayList<>();
 
    @Inject EmbeddedCacheManager cacheManager;
 
@@ -68,6 +72,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       listenersMap.put(CacheStopped.class, cacheStoppedListeners);
       listenersMap.put(ViewChanged.class, viewChangedListeners);
       listenersMap.put(Merged.class, mergeListeners);
+      listenersMap.put(ConfigurationChanged.class, configurationChangedListeners);
    }
 
    protected class DefaultBuilder extends AbstractInvocationBuilder {
@@ -142,6 +147,19 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.CACHE_STOPPED);
          return invokeListeners(e, cacheStoppedListeners);
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName) {
+      if (!configurationChangedListeners.isEmpty()) {
+         EventImpl e = new EventImpl();
+         e.setConfigurationEventType(eventType);
+         e.setConfigurationEntityType(entityType);
+         e.setConfigurationEntityName(entityName);
+         e.setType(Event.Type.CONFIGURATION_CHANGED);
+         return invokeListeners(e, configurationChangedListeners);
       }
       return CompletableFutures.completedNull();
    }
