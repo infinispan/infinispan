@@ -327,9 +327,9 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
             case TEST_WHILE_IDLE:
             case TIME_BETWEEN_EVICTION_RUNS: {
                if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  CONFIG.ignoreXmlAttribute(attribute.getLocalName());
+                  ParseUtils.ignoreAttribute(reader, i);
                }
                break;
             }
@@ -398,9 +398,9 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
             }
             case PING_ON_STARTUP: {
                if (!reader.getSchema().since(9, 1)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  CONFIG.ignoreXmlAttribute(attribute);
+                  ParseUtils.ignoreAttribute(reader, i);
                }
                break;
             }

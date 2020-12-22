@@ -23,6 +23,8 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -2116,4 +2118,16 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cross-Site state transfer to '%s' already started!", id = 620)
    CacheException xsiteStateTransferAlreadyInProgress(String site);
+
+   @Message(value = "Element '%s' has been removed. Please use element '%s' instead", id = 621)
+   XMLStreamException elementRemovedUseOther(String elementName, String newElementName, @Param Location location);
+
+   @Message(value = "Element '%s' has been removed with no replacement", id = 622)
+   XMLStreamException elementRemoved(String elementName, @Param Location location);
+
+   @Message(value = "Attribute '%s' has been removed. Please use attribute '%s' instead", id = 623)
+   XMLStreamException attributeRemovedUseOther(String attributeName, String newAttributeName, @Param Location location);
+
+   @Message(value = "Attribute '%s' has been removed with no replacement", id = 624)
+   XMLStreamException attributeRemoved(String attributeName, @Param Location location);
 }

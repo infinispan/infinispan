@@ -115,12 +115,11 @@ public class Parser extends CacheParser {
                break;
             }
             case VERSION: {
-               if (!reader.getSchema().since(11, 0)) {
-                  ignoreAttribute(reader, Attribute.VERSION);
-                  break;
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.attributeRemoved(reader, i);
                }
+               ignoreAttribute(reader, i);
+               break;
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -142,10 +141,10 @@ public class Parser extends CacheParser {
             }
             case WHITE_LIST:
                if (reader.getSchema().since(12, 0)) {
-                  throw ParseUtils.unexpectedElement(reader, element);
-               } else {
-                  CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
+                  throw ParseUtils.elementRemoved(reader, Element.ALLOW_LIST.getLocalName());
                }
+               CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
+               // fall through
             case ALLOW_LIST: {
                if (reader.getSchema().since(10, 0)) {
                   parseAllowList(reader, builder.serialization().allowList());
@@ -576,9 +575,9 @@ public class Parser extends CacheParser {
             case PERSISTENCE_EXECUTOR:
             case STATE_TRANSFER_EXECUTOR: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }
@@ -589,7 +588,7 @@ public class Parser extends CacheParser {
             }
             case EVICTION_EXECUTOR:
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.evictionExecutorDeprecated();
                }
@@ -601,7 +600,7 @@ public class Parser extends CacheParser {
             }
             case REPLICATION_QUEUE_EXECUTOR: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -700,7 +699,7 @@ public class Parser extends CacheParser {
             }
             case MODULES: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedElement(reader);
+                  throw ParseUtils.elementRemoved(reader);
                } else {
                   parseModules(reader, holder);
                }
@@ -895,10 +894,10 @@ public class Parser extends CacheParser {
             }
             case ALLOW_DUPLICATE_DOMAINS: {
                if (!reader.getSchema().since(11, 0)) {
-                  ignoreAttribute(reader, Attribute.VERSION);
+                  ignoreAttribute(reader, i);
                   break;
                } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                }
             }
             default: {
@@ -946,7 +945,7 @@ public class Parser extends CacheParser {
             }
             case EXECUTOR: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute("transport executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -954,7 +953,7 @@ public class Parser extends CacheParser {
             }
             case TOTAL_ORDER_EXECUTOR: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute("total order executor", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -962,7 +961,7 @@ public class Parser extends CacheParser {
             }
             case REMOTE_COMMAND_EXECUTOR: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute("remote command executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                }
@@ -1168,9 +1167,9 @@ public class Parser extends CacheParser {
          }
          case SINGLETON: {
             if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.unexpectedAttribute(reader, index);
+               throw ParseUtils.attributeRemoved(reader, index);
             } else {
-               ignoreAttribute(reader, attribute);
+               ignoreAttribute(reader, index);
             }
             break;
          }
@@ -1214,11 +1213,12 @@ public class Parser extends CacheParser {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case FLUSH_LOCK_TIMEOUT: {
+            case FLUSH_LOCK_TIMEOUT:
+            case SHUTDOWN_TIMEOUT: {
                if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }
@@ -1229,19 +1229,11 @@ public class Parser extends CacheParser {
             case FAIL_SILENTLY:
                storeBuilder.failSilently(Boolean.parseBoolean(value));
                break;
-            case SHUTDOWN_TIMEOUT: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
-               } else {
-                  ignoreAttribute(reader, attribute);
-               }
-               break;
-            }
             case THREAD_POOL_SIZE: {
                if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
-                  ignoreAttribute(reader, attribute);
+                  ignoreAttribute(reader, i);
                }
                break;
             }

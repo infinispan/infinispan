@@ -66,10 +66,10 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
             }
             case CLEAR_THRESHOLD: {
                if (!reader.getSchema().since(12, 0)) {
-                  ignoreAttribute(reader, Attribute.CLEAR_THRESHOLD);
+                  ignoreAttribute(reader, i);
                   break;
                } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                }
             }
             case BLOCK_SIZE: {
@@ -119,10 +119,10 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
             }
             case QUEUE_SIZE: {
                if (!reader.getSchema().since(12, 0)) {
-                  ignoreAttribute(reader, Attribute.CLEAR_THRESHOLD);
+                  ignoreAttribute(reader, i);
                   break;
                } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.attributeRemoved(reader, i);
                }
             }
             default:
