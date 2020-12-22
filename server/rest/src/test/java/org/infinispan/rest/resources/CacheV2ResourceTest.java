@@ -26,13 +26,17 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -833,6 +837,19 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       restResponse = join(cacheClient.query("From future.Entity"));
       assertThat(restResponse).isOk();
       assertThat(restResponse).containsReturnedText("Kim");
+   }
+
+   @Test
+   public void testCacheListener() throws InterruptedException, IOException {
+      SSEListener sseListener = new SSEListener();
+      Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap("Accept", "text/plain"), sseListener);
+      assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
+      putTextEntryInCache("default", "AKey", "AValue");
+      assertEquals("cache-entry-created", sseListener.events.poll(10, TimeUnit.SECONDS));
+      assertEquals("AKey", sseListener.data.removeFirst());
+      removeTextEntryFromCache("default", "AKey");
+      assertEquals("cache-entry-removed", sseListener.events.poll(10, TimeUnit.SECONDS));
+      listen.close();
    }
 
    private void assertQueryStatEmpty(Json queryTypeStats) {

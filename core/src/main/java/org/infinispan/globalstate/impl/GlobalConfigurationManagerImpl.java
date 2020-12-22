@@ -27,6 +27,8 @@ import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -48,12 +50,20 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    public static final String CACHE_SCOPE = "cache";
    public static final String TEMPLATE_SCOPE = "template";
 
-   @Inject EmbeddedCacheManager cacheManager;
-   @Inject LocalTopologyManager localTopologyManager;
-   @Inject ConfigurationManager configurationManager;
-   @Inject InternalCacheRegistry internalCacheRegistry;
-   @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject BlockingManager blockingManager;
+   @Inject
+   EmbeddedCacheManager cacheManager;
+   @Inject
+   LocalTopologyManager localTopologyManager;
+   @Inject
+   ConfigurationManager configurationManager;
+   @Inject
+   InternalCacheRegistry internalCacheRegistry;
+   @Inject
+   GlobalComponentRegistry globalComponentRegistry;
+   @Inject
+   BlockingManager blockingManager;
+   @Inject
+   CacheManagerNotifier cacheManagerNotifier;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -240,7 +250,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       localConfigurationManager.validateFlags(flags);
       try {
          CacheState state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
-         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state).thenApply((v) -> configuration);
+         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
+               .thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }
@@ -250,6 +261,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       log.debugf("Starting template %s from global state", name);
       CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, true);
       return configurationStage.thenCompose(configuration -> localConfigurationManager.createTemplate(name, configuration, state.getFlags()))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name))
             .toCompletableFuture();
    }
 
@@ -257,6 +269,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       log.debugf("Starting cache %s from global state", name);
       CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
       return configurationStage.thenCompose(configuration -> localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags()))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))
             .toCompletableFuture();
    }
 
@@ -275,7 +288,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          } catch (Exception e) {
             // Ignore
          }
-         return getStateCache().removeAsync(cacheScopedState).thenCompose((r) -> CompletableFutures.completedNull());
+         return getStateCache().removeAsync(cacheScopedState).thenCompose(r -> CompletableFutures.completedNull());
       } else {
          return localConfigurationManager.removeCache(name, flags);
       }
@@ -287,10 +300,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletableFuture<Void> removeCacheLocally(String name, CacheState state) {
-      return localConfigurationManager.removeCache(name, state.getFlags());
+      return localConfigurationManager.removeCache(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name));
    }
 
    CompletableFuture<Void> removeTemplateLocally(String name, CacheState state) {
-      return localConfigurationManager.removeTemplate(name, state.getFlags());
+      return localConfigurationManager.removeTemplate(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name));
    }
 }

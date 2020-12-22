@@ -2,11 +2,13 @@ package org.infinispan.notifications.cachemanagerlistener.event.impl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
@@ -17,16 +19,19 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent {
+public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent, ConfigurationChangedEvent {
 
-   String cacheName;
-   EmbeddedCacheManager cacheManager;
-   Type type;
-   List<Address> newMembers, oldMembers;
-   Address localAddress;
-   int viewId;
+   private String cacheName;
+   private EmbeddedCacheManager cacheManager;
+   private Type type;
+   private List<Address> newMembers, oldMembers;
+   private Address localAddress;
+   private int viewId;
    private List<List<Address>> subgroupsMerged;
    private boolean mergeView;
+   private String configurationEntityType;
+   private String configurationEntityName;
+   private EventType configurationEventType;
 
    public EventImpl() {
    }
@@ -70,7 +75,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
    @Override
    public List<Address> getNewMembers() {
-      if(newMembers == null){
+      if (newMembers == null) {
          return Collections.emptyList();
       }
       return newMembers;
@@ -86,7 +91,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
    @Override
    public List<Address> getOldMembers() {
-      if(oldMembers == null){
+      if (oldMembers == null) {
          return Collections.emptyList();
       }
       return this.oldMembers;
@@ -118,10 +123,10 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       EventImpl event = (EventImpl) o;
 
       if (viewId != event.viewId) return false;
-      if (cacheName != null ? !cacheName.equals(event.cacheName) : event.cacheName != null) return false;
-      if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
-      if (newMembers != null ? !newMembers.equals(event.newMembers) : event.newMembers != null) return false;
-      if (oldMembers != null ? !oldMembers.equals(event.oldMembers) : event.oldMembers != null) return false;
+      if (!Objects.equals(cacheName, event.cacheName)) return false;
+      if (!Objects.equals(localAddress, event.localAddress)) return false;
+      if (!Objects.equals(newMembers, event.newMembers)) return false;
+      if (!Objects.equals(oldMembers, event.oldMembers)) return false;
       if (!Util.safeEquals(subgroupsMerged, event.subgroupsMerged)) return false;
       if (type != event.type) return false;
 
@@ -144,14 +149,14 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public String toString() {
       return "EventImpl{" +
-              "type=" + type +
-              ", newMembers=" + newMembers +
-              ", oldMembers=" + oldMembers +
-              ", localAddress=" + localAddress +
-              ", viewId=" + viewId +
-              ", subgroupsMerged=" + subgroupsMerged +
-              ", mergeView=" + mergeView +
-              '}';
+            "type=" + type +
+            ", newMembers=" + newMembers +
+            ", oldMembers=" + oldMembers +
+            ", localAddress=" + localAddress +
+            ", viewId=" + viewId +
+            ", subgroupsMerged=" + subgroupsMerged +
+            ", mergeView=" + mergeView +
+            '}';
    }
 
    public void setSubgroupsMerged(List<List<Address>> subgroupsMerged) {
@@ -169,7 +174,33 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    }
 
    public void setMergeView(boolean b) {
-        mergeView = b;
-     }
+      mergeView = b;
+   }
 
+   public void setConfigurationEventType(EventType eventType) {
+      configurationEventType = eventType;
+   }
+
+   public void setConfigurationEntityType(String type) {
+      configurationEntityType = type;
+   }
+
+   public void setConfigurationEntityName(String name) {
+      configurationEntityName = name;
+   }
+
+   @Override
+   public EventType getConfigurationEventType() {
+      return configurationEventType;
+   }
+
+   @Override
+   public String getConfigurationEntityType() {
+      return configurationEntityType;
+   }
+
+   @Override
+   public String getConfigurationEntityName() {
+      return configurationEntityName;
+   }
 }

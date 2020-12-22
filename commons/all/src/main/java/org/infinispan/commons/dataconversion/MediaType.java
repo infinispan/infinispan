@@ -89,6 +89,7 @@ public final class MediaType {
    public static final String TEXT_CSV_TYPE = "text/csv";
    public static final String TEXT_PLAIN_TYPE = "text/plain";
    public static final String TEXT_HTML_TYPE = "text/html";
+   public static final String TEXT_EVENT_STREAM_TYPE = "text/event-stream";
    /**
     * @deprecated Since 11.0, will be removed with ISPN-9622
     */
@@ -130,6 +131,7 @@ public final class MediaType {
    public static final MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
    public static final MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
    public static final MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
+   public static final MediaType TEXT_EVENT_STREAM = fromString(TEXT_EVENT_STREAM_TYPE);
    /**
     * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
     */

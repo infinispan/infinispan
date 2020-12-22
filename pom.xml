@@ -564,6 +564,11 @@
             <version>${versionx.com.squareup.okhttp3.ohhttp}</version>
          </dependency>
          <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-sse</artifactId>
+            <version>${versionx.com.squareup.okhttp3.ohhttp}</version>
+         </dependency>
+         <dependency>
             <groupId>com.sun</groupId>
             <artifactId>tools</artifactId>
             <version>${versionx.com.sun.tools}</version>

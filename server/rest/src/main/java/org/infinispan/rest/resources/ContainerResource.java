@@ -7,15 +7,19 @@ import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
@@ -44,20 +49,27 @@ import org.infinispan.health.Health;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -67,7 +79,7 @@ import io.reactivex.rxjava3.core.Flowable;
  *
  * @since 10.0
  */
-public class CacheManagerResource implements ResourceHandler {
+public class ContainerResource implements ResourceHandler {
 
    private final InvocationHelper invocationHelper;
    private final EmbeddedCacheManager cacheManager;
@@ -78,7 +90,7 @@ public class CacheManagerResource implements ResourceHandler {
    private final RestCacheManager<Object> restCacheManager;
    private final ServerStateManager serverStateManager;
 
-   public CacheManagerResource(InvocationHelper invocationHelper) {
+   public ContainerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
       this.cacheManager = invocationHelper.getRestCacheManager().getInstance();
       this.restCacheManager = invocationHelper.getRestCacheManager();
@@ -103,6 +115,10 @@ public class CacheManagerResource implements ResourceHandler {
 
             // Cache Manager config
             .invocation().methods(GET).path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
+
+            // Container configuration listener
+            .invocation().methods(GET).path("/v2/container/config").withAction("listen")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenConfig)
 
             // Cache Manager info
             .invocation().methods(GET).path("/v2/cache-managers/{name}").handleWith(this::getInfo)
@@ -420,4 +436,78 @@ public class CacheManagerResource implements ResourceHandler {
       }
    }
 
+   private CompletionStage<RestResponse> listenConfig(RestRequest request) {
+      MediaType mediaType = negotiateMediaType(request, APPLICATION_YAML, APPLICATION_JSON, APPLICATION_XML);
+      boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      ConfigurationListener listener = new ConfigurationListener(cacheManager, mediaType, includeCurrentState);
+      responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
+      return cacheManager.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
+   }
+
+   private static String cacheConfig(EmbeddedCacheManager cacheManager, String name, MediaType mediaType) throws
+         Exception {
+      Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(cacheManager, name);
+      StringWriter sw = new StringWriter();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
+         new ParserRegistry().serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
+      }
+      return sw.toString();
+   }
+
+   @Listener
+   public static class ConfigurationListener {
+      final EmbeddedCacheManager cacheManager;
+      final EventStream eventStream;
+      final MediaType mediaType;
+
+      protected ConfigurationListener(EmbeddedCacheManager cacheManager, MediaType mediaType, boolean includeCurrentState) {
+         this.cacheManager = cacheManager;
+         this.mediaType = mediaType;
+         this.eventStream = new EventStream(
+               includeCurrentState ?
+                     (stream) -> {
+                        for (String cache : cacheManager.getCacheNames()) {
+                           try {
+                              stream.sendEvent(new ServerSentEvent("cache-create", cacheConfig(cacheManager, cache, mediaType)));
+                           } catch (Exception e) {
+                              Log.REST.errorf(e, "Could not serialize cache configuration");
+                           }
+                        }
+                     } : null,
+               () -> Security.doPrivileged((PrivilegedAction<Object>) () -> {
+                  cacheManager.removeListenerAsync(this);
+                  return null;
+               }));
+      }
+
+      public EventStream getEventStream() {
+         return eventStream;
+      }
+
+      @ConfigurationChanged
+      public CompletionStage<Void> onConfigurationEvent(ConfigurationChangedEvent event) {
+         String eventType = event.getConfigurationEventType().toString().toLowerCase() + "-" + event.getConfigurationEntityType();
+         final ServerSentEvent sse;
+         if (event.getConfigurationEventType() == ConfigurationChangedEvent.EventType.REMOVE) {
+            sse = new ServerSentEvent(eventType, event.getConfigurationEntityName());
+         } else {
+            switch (event.getConfigurationEntityType()) {
+               case "cache":
+                  try {
+                     sse = new ServerSentEvent(eventType, cacheConfig(cacheManager, event.getConfigurationEntityName(), mediaType));
+                  } catch (Exception e) {
+                     Log.REST.errorf(e, "Could not serialize cache configuration");
+                     return CompletableFutures.completedNull();
+                  }
+                  break;
+               default:
+                  // Unhandled entity type, ignore
+                  return CompletableFutures.completedNull();
+            }
+         }
+         return eventStream.sendEvent(sse);
+      }
+   }
 }

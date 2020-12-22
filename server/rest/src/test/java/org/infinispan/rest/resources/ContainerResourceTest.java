@@ -1,26 +1,38 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
+import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -32,6 +44,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -39,10 +52,12 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "rest.CacheManagerResourceTest")
-public class CacheManagerResourceTest extends AbstractRestResourceTest {
+@Test(groups = "functional", testName = "rest.ContainerResourceTest")
+public class ContainerResourceTest extends AbstractRestResourceTest {
+   private static final String PERSISTENT_LOCATION = tmpDirectory(ContainerResourceTest.class.getName());
 
    private Configuration cache2Config;
    private final JsonWriter jsonWriter = new JsonWriter();
@@ -53,13 +68,25 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheManagerResourceTest().withSecurity(true),
-            new CacheManagerResourceTest().withSecurity(false)
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_11),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_11),
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_20),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_20)
       };
    }
 
    @Override
+   protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
+      GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
+      config.globalState().enable()
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString());
+      return config;
+   }
+
+   @Override
    protected void createCacheManagers() throws Exception {
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
       cacheManagerClient = client.cacheManager("default");
       timeService = new ControlledTimeService();
@@ -284,6 +311,29 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       cmStats = Json.read(join(cacheManagerClient.stats()).getBody());
       assertEquals(1, cmStats.at("stores").asInteger());
       assertEquals(1, cmStats.at("number_of_entries").asInteger());
+   }
+
+   @Test
+   public void testConfigListener() throws InterruptedException, IOException {
+      SSEListener sseListener = new SSEListener();
+      Closeable listen = client.raw().listen("/rest/v2/container/config?action=listen", Collections.emptyMap(), sseListener);
+      AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
+      createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
+      assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+      AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("text/plain"));
+      createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"application/octet-stream\"}}}", "listen2");
+      assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+      AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("application/octet-stream"));
+      assertThat(client.cache("listen1").delete()).isOk();
+      assertEquals("remove-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+      assertEquals("listen1", sseListener.data.removeFirst());
+      listen.close();
+   }
+
+   private void createCache(String json, String name) {
+      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
+      CompletionStage<RestResponse> response = client.cache(name).createWithConfiguration(jsonEntity);
+      assertThat(response).isOk();
    }
 
    private Map<String, String> cacheAndConfig(Json list) {

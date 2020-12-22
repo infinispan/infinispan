@@ -1,9 +1,11 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.rest.RestEventListener;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 
@@ -12,6 +14,8 @@ import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.internal.Util;
+import okhttp3.sse.EventSource;
+import okhttp3.sse.EventSources;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -102,5 +106,15 @@ public class RestRawClientOkHttp implements RestRawClient {
       headers.forEach(builder::header);
       builder.head();
       return restClient.execute(builder);
+   }
+
+   @Override
+   public Closeable listen(String url, Map<String, String> headers, RestEventListener listener) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      EventSource.Factory factory = EventSources.createFactory(restClient.client());
+      EventSource eventSource = factory.newEventSource(builder.build(), new RestEventListenerOkHttp(listener));
+      return () -> eventSource.cancel();
    }
 }

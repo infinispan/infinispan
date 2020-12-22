@@ -310,4 +310,8 @@ public class RestClientOkHttp implements RestClient {
    String getBaseURL() {
       return baseURL;
    }
+
+   OkHttpClient client() {
+      return httpClient;
+   }
 }
