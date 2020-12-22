@@ -142,7 +142,7 @@ public class Parser extends CacheParser {
             }
             case WHITE_LIST:
                if (reader.getSchema().since(12, 0)) {
-                  throw ParseUtils.unexpectedElement(reader, element);
+                  throw ParseUtils.elementRemovedUseOther(reader, element.getLocalName());
                } else {
                   CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
                }

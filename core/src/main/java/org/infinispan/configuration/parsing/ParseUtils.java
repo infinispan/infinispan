@@ -329,4 +329,13 @@ public final class ParseUtils {
     public static void ignoreElement(XMLExtendedStreamReader reader, Enum<?> element) {
        CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
     }
+
+    public static XMLStreamException elementRemovedUseOther(XMLExtendedStreamReader reader, String newElementName) {
+        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName, reader.getLocation());
+    }
+
+    public static XMLStreamException attributeRemovedUseOther(XMLExtendedStreamReader reader, Enum<?> attribute,
+                                                              String newAttributeName) {
+        return CONFIG.attributeRemovedUseOther(attribute.toString(), newAttributeName, reader.getLocation());
+    }
 }
