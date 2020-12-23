@@ -66,11 +66,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
    }
 
    private SocketAddress getServerByIndex(int pos) {
-      SocketAddress server = servers[pos];
-      if (trace) {
-         log.tracef("Returning server: %s", server);
-      }
-      return server;
+      return servers[pos];
    }
 
    public SocketAddress[] getServers() {
