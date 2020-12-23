@@ -38,7 +38,8 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       } else try {
          OperationStatus status = OperationStatus.Success;
          if (result.isEmpty()) {
-            status = OperationStatus.KeyDoesNotExist;
+            writeNotExist(header);
+            return;
          }
          writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel, status,
                mapToCollectionOfByteArrays(result)));
