@@ -75,7 +75,7 @@ import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
-import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * ClusterPublisherManager that determines targets for the given segments and/or keys and then sends to local and
@@ -148,8 +148,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       // Needs to be serialized processor as we can write to it from different threads
-      FlowableProcessor<R> flowableProcessor = PublishProcessor.<R>create().toSerialized();
-      // We apply the finalizer first to ensure they can subscribe to the PublishProcessor before we emit any items
+      FlowableProcessor<R> flowableProcessor = UnicastProcessor.<R>create().toSerialized();
+      // Apply the finalizer first (which subscribes) before emitting items, to avoid buffering in UnicastProcessor
       CompletionStage<R> stage = finalizer.apply(flowableProcessor);
 
       Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizerToUse =
