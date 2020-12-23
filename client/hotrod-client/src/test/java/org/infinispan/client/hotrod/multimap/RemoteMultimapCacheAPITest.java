@@ -28,7 +28,8 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.forceReturnValues(isForceReturnValuesViaConfiguration());
+      // Do not retry when the server response cannot be parsed, see ISPN-12596
+      builder.forceReturnValues(isForceReturnValuesViaConfiguration()).maxRetries(0);
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());
    }
