@@ -191,14 +191,14 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    protected void logAndRetryOrFail(Throwable e, boolean canSwitchCluster) {
-      if (retryCount < channelFactory.getMaxRetries() && channelFactory.getMaxRetries() >= 0) {
+      if (retryCount < channelFactory.getMaxRetries()) {
          if (log.isTraceEnabled()) {
             log.tracef(e, "Exception encountered in %s. Retry %d out of %d", this, retryCount, channelFactory.getMaxRetries());
          }
          retryCount++;
          channelFactory.incrementRetryCount();
          retryIfNotDone();
-      } else if (canSwitchCluster) {
+      } else if (canSwitchCluster && !cfg.clusters().isEmpty()) {
          channelFactory.trySwitchCluster(currentClusterName, cacheName).whenComplete((status, throwable) -> {
             if (throwable != null) {
                completeExceptionally(throwable);
