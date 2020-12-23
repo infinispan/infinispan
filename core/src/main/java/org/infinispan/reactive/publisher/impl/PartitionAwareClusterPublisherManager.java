@@ -24,7 +24,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.processors.FlowableProcessor;
-import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
@@ -129,7 +129,7 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    private <R> SegmentCompletionPublisher<R> registerPublisher(SegmentCompletionPublisher<R> original) {
       return (subscriber, segmentsComplete) -> {
          // Processor has to be serialized due to possibly invoking onError from a different thread
-         FlowableProcessor<R> earlyTerminatingProcessor = PublishProcessor.<R>create().toSerialized();
+         FlowableProcessor<R> earlyTerminatingProcessor = UnicastProcessor.<R>create().toSerialized();
          pendingProcessors.add(earlyTerminatingProcessor);
          // Have to check after registering in case if we got a partition between when the publisher was created and
          // subscribed to
