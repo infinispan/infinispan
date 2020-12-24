@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
@@ -70,7 +71,7 @@ public class ContainerDatabase extends Database {
 
    @Override
    public String jdbcUrl() {
-      String address = container.getContainerInfo().getNetworkSettings().getNetworks().values().iterator().next().getIpAddress();
+      String address = Containers.ipAddress(container);
       Properties props = new Properties();
       props.setProperty("container.address", address);
       return StringPropertyReplacer.replaceProperties(super.jdbcUrl(), props);

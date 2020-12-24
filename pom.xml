@@ -398,7 +398,11 @@
       <versionx.org.springframework.spring-expression>${version.spring5}</versionx.org.springframework.spring-expression>
       <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
+      <!-- Version 0.33.0 is not compatible -->
+      <versionx.org.opentracing.api>0.31.0</versionx.org.opentracing.api>
+      <versionx.io.jaegertracing.jaeger-client>1.5.0</versionx.io.jaegertracing.jaeger-client>
       <versionx.org.testcontainers.testcontainers>1.15.1</versionx.org.testcontainers.testcontainers>
+      <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.3.1</versionx.org.twdata.maven.mojo-executor>
@@ -414,6 +418,8 @@
       <versionx.org.yaml.snakeyaml>1.18</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
+
+      <version.io.opentracing>0.31.0</version.io.opentracing>
    </properties>
 
    <dependencyManagement>
@@ -1652,6 +1658,36 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-api</artifactId>
+            <version>${versionx.org.opentracing.api}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-noop</artifactId>
+            <version>${versionx.org.opentracing.api}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-core</artifactId>
+            <version>${versionx.io.jaegertracing.jaeger-client}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-thrift</artifactId>
+            <version>${versionx.io.jaegertracing.jaeger-client}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-tracerresolver</artifactId>
+            <version>${versionx.io.jaegertracing.jaeger-client}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-testcontainers</artifactId>
+            <version>${versionx.io.jaegertracing.jaeger-testcontainers}</version>
+         </dependency>
+         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <version>${versionx.org.testcontainers.testcontainers}</version>
@@ -1729,6 +1765,17 @@
             <groupId>sun.jdk</groupId>
             <artifactId>jconsole</artifactId>
             <version>${versionx.sun.jdk.jconsole}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-api</artifactId>
+            <version>${version.io.opentracing}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-noop</artifactId>
+            <version>${version.io.opentracing}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

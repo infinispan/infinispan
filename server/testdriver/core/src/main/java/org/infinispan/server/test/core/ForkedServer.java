@@ -1,7 +1,6 @@
 package org.infinispan.server.test.core;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.util.OS;
+import static org.infinispan.commons.test.Exceptions.unchecked;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,7 +20,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.infinispan.commons.test.Exceptions.unchecked;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.OS;
 
 /**
  * Forked server starts the server using batch scripts from the Infinispan Server distribution to start the server.
@@ -38,6 +38,9 @@ import static org.infinispan.commons.test.Exceptions.unchecked;
  * @since 11.0
  **/
 public class ForkedServer {
+   public static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_FORKED_TIMEOUT_SECONDS, 30);
+   public static final Integer DEFAULT_SINGLE_PORT = 11222;
+   public static final int OFFSET_FACTOR = 100;
 
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ForkedInfinispanServerDriver.class);
 
@@ -50,9 +53,7 @@ public class ForkedServer {
    private final String serverHome;
    private final String serverLogDir;
    private final String serverLog;
-   public static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_FORKED_TIMEOUT_SECONDS, 30);
-   public static final Integer DEFAULT_SINGLE_PORT = 11222;
-   public static final int OFFSET_FACTOR = 100;
+   private String jvmOptions;
 
    public ForkedServer(String serverHome) {
       this.serverId = UUID.randomUUID();
@@ -88,10 +89,20 @@ public class ForkedServer {
       return this;
    }
 
+   public ForkedServer setJvmOptions(String jvmOptions) {
+      this.jvmOptions = jvmOptions;
+      return this;
+   }
+
    public ForkedServer start() {
       boolean isServerStarted;
       ProcessBuilder pb = new ProcessBuilder();
       pb.command(commands);
+
+      if (jvmOptions != null) {
+         pb.environment().put("JAVA_OPTS", jvmOptions);
+      }
+
       try {
          process = pb.start();
          isServerStarted = runWithTimeout(this::checkServerLog, START_PATTERN);
