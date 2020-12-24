@@ -2,6 +2,7 @@ package org.infinispan.server.test.core;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -39,6 +40,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
+import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.api.TestUser;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -84,6 +86,16 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    protected abstract void start(String name, File rootDir, File configurationFile);
+
+   protected String debugJvmOption() {
+      String nonLoopbackAddress;
+      try {
+         nonLoopbackAddress = NetworkAddress.nonLoopback("").getAddress().getHostAddress();
+      } catch (IOException e) {
+         throw new IllegalStateException("Could not find a non-loopback address");
+      }
+      return String.format("-agentlib:jdwp=transport=dt_socket,server=n,address=%s:5005", nonLoopbackAddress);
+   }
 
    protected abstract void stop();
 

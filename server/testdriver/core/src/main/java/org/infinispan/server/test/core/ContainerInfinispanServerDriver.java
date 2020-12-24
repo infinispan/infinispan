@@ -293,6 +293,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
             }
          });
+
+      // Replace 99 with index of server to debug
+      if (i == 99) {
+         container.withEnv("JAVA_OPTS", debugJvmOption());
+      }
+
       // Process any enhancers
       container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)));
       for (Consumer<OutputFrame> consumer : logConsumers)

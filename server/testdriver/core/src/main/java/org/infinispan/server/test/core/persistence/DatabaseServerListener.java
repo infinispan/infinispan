@@ -1,4 +1,4 @@
-package org.infinispan.server.test.junit4;
+package org.infinispan.server.test.core.persistence;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -9,7 +9,6 @@ import java.util.Properties;
 
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
-import org.infinispan.server.test.core.persistence.Database;
 import org.jboss.logging.Logger;
 
 /**

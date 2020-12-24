@@ -65,6 +65,7 @@ import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.RequestTracer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.backup.BackupManagerImpl;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -360,6 +361,9 @@ public class Server implements ServerManagement, AutoCloseable {
          taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
+         // Initialize the OpenTracing integration
+         RequestTracer.start();
+
          for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
             // Start the protocol servers
             SinglePortRouteSource routeSource = new SinglePortRouteSource();
@@ -439,6 +443,9 @@ public class Server implements ServerManagement, AutoCloseable {
 
    @Override
    public void serverStop(List<String> servers) {
+      // Stop the OpenTracing integration
+      RequestTracer.stop();
+
       for (DefaultCacheManager cacheManager : cacheManagers.values()) {
          SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
          ClusterExecutor executor = SecurityActions.getClusterExecutor(cacheManager);
@@ -492,6 +499,10 @@ public class Server implements ServerManagement, AutoCloseable {
       if (scheduler != null) {
          scheduler.shutdown();
       }
+
+      // Stop the OpenTracing integration
+      RequestTracer.stop();
+
       // Shutdown Log4j's context manually as we set shutdownHook="disable"
       // Log4j's shutdownHook may run concurrently with our shutdownHook,
       // disabling logging before the server has finished stopping.

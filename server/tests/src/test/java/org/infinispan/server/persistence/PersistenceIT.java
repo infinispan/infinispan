@@ -1,7 +1,7 @@
 package org.infinispan.server.persistence;
 
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.DatabaseServerListener;
+import org.infinispan.server.test.core.persistence.DatabaseServerListener;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.junit.ClassRule;

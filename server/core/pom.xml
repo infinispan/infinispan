@@ -110,6 +110,11 @@
          <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>io.opentracing</groupId>
+         <artifactId>opentracing-api</artifactId>
+      </dependency>
    </dependencies>
 
    <build>

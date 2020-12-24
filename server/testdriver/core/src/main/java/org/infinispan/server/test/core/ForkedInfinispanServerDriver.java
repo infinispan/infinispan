@@ -52,6 +52,10 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          ForkedServer server = new ForkedServer(serverHomes[i])
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
+         // Replace 99 with index of server to debug
+         if (i == 99) {
+            server.setJvmOptions(debugJvmOption());
+         }
          copyArtifactsToUserLibDir(server.getServerLib());
          forkedServers.add(server.start());
          forkedServers.get(0).printServerLog(log::info);
