@@ -52,8 +52,9 @@ public class ClusteredIT {
    @ClassRule
    public static final InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .numServers(2)
-                                    .build();
+               .numServers(2)
+               .property("infinispan.query.lucene.max-boolean-clauses", "1025")
+               .build();
 
    static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed) {
       ConfigurationBuilder config = new ConfigurationBuilder();
@@ -64,8 +65,7 @@ public class ClusteredIT {
       if (indexed) {
          builder.indexing().enable()
                .storage(LOCAL_HEAP)
-               .addIndexedEntity("sample_bank_account.User")
-               .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
+               .addIndexedEntity("sample_bank_account.User");
       }
 
       HotRodTestClientDriver hotRodTestClientDriver = testMethodRule.hotrod().withClientConfiguration(config);
