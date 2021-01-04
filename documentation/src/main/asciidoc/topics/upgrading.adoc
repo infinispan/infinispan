@@ -200,6 +200,12 @@ in an older Lucene version.
 
 Configuration of sharding through the property `default.sharding_strategy.nbr_of_shards` is deprecated and will be removed in a future version.
 
+==== Maximum boolean clauses
+
+The property `infinispan.query.lucene.max-boolean-clauses` is now only supported when used via JVM property. Support for using
+it inside the `<property>` element of the index configuration was removed.
+
+
 == Cache Health
 A new status `FAILED` has been added to the cache health, to indicate that a cache failed to start with the
 provided configuration. The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING, DEGRADED and FAILED.

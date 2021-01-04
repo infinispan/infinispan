@@ -25,7 +25,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
@@ -103,8 +102,6 @@ public class LifecycleManager implements ModuleLifecycle {
     */
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
-   private static boolean maxBooleanClausesWasSet = false;
-
    /**
     * Registers the Search interceptor in the cache before it gets started
     */
@@ -121,8 +118,6 @@ public class LifecycleManager implements ModuleLifecycle {
 
          SearchMapping searchMapping = null;
          if (isIndexed) {
-            setBooleanQueryMaxClauseCount(cfg.indexing().properties());
-
             Map<String, Class<?>> indexedClasses = makeIndexedClassesMap(cache);
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
@@ -444,34 +439,27 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_TOTAL_HITS, new LuceneTotalHitsExternalizer());
    }
 
-   /**
-    * Sets {@link BooleanQuery#setMaxClauseCount} according to the value of {@link #MAX_BOOLEAN_CLAUSES_SYS_PROP} system
-    * property. This is executed only once, when first indexed cache is started.
-    *
-    * @param properties
-    */
-   private void setBooleanQueryMaxClauseCount(TypedProperties properties) {
-      if (!maxBooleanClausesWasSet) {
-         maxBooleanClausesWasSet = true;
-         String maxClauseCountProp = properties.getProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
-         if (maxClauseCountProp == null) {
-            maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      setMaxBooleanClauses();
+   }
+
+   private void setMaxBooleanClauses() {
+      String maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+      if (maxClauseCountProp != null) {
+         int maxClauseCount;
+         try {
+            maxClauseCount = Integer.parseInt(maxClauseCountProp);
+         } catch (NumberFormatException e) {
+            CONTAINER.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
+            throw e;
          }
-         if (maxClauseCountProp != null) {
-            int maxClauseCount;
-            try {
-               maxClauseCount = Integer.parseInt(maxClauseCountProp);
-            } catch (NumberFormatException e) {
-               CONTAINER.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
-               throw e;
-            }
-            int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
-            if (maxClauseCount > currentMaxClauseCount) {
-               CONTAINER.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
-               BooleanQuery.setMaxClauseCount(maxClauseCount);
-            } else {
-               CONTAINER.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
-            }
+         int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
+         if (maxClauseCount > currentMaxClauseCount) {
+            CONTAINER.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
+            BooleanQuery.setMaxClauseCount(maxClauseCount);
+         } else {
+            CONTAINER.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
          }
       }
    }
