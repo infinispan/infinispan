@@ -9,7 +9,8 @@ include::{topics}/proc_installing_server.adoc[leveloffset=+1]
 include::{topics}/proc_cli_creating_users.adoc[leveloffset=+1]
 include::{topics}/proc_starting_server.adoc[leveloffset=+1]
 include::{topics}/proc_forming_clusters.adoc[leveloffset=+1]
-include::{topics}/proc_cli_shutdown.adoc[leveloffset=+1]
+include::{topics}/proc_shutting_down_servers.adoc[leveloffset=+1]
+include::{topics}/con_restarting_clusters.adoc[leveloffset=+2]
 include::{topics}/con_server_directory_structure.adoc[leveloffset=+1]
 
 // Restore the parent context.

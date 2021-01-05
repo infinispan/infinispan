@@ -1,0 +1,9 @@
+[id='restarting_clusters-{context}']
+= Restarting {brandname} Clusters
+When you bring {brandname} clusters back online after shutting them down, you should wait for the cluster to be available before adding or removing nodes or modifying cluster state.
+
+If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order. +
+For example, if you shutdown `server1` and then shutdown `server2`, you should first start `server2` and then start `server1`.
+
+If you shutdown a cluster with the [command]`shutdown cluster` command, clusters become fully operational only after all nodes rejoin. +
+You can restart nodes in any order but the cluster remains in DEGRADED state until all nodes that were joined before shutdown are running.

@@ -36,6 +36,7 @@ filter can only be enabled with a bounded near cache.
 Bloom filter near cache requires the pool configuration to also have a maximum of 1 active
 connection per server and utilize the WAIT exhausted action. This is required so the server
 can keep the bloom filter updated on the server side to which listener was registered.
+====
 
 .Procedure
 
@@ -69,6 +70,6 @@ builder
 [NOTE]
 ====
 You should always configure near caching on a per-cache basis. Even though
-{brandname} provides global near cache configuration properties, you should not 
+{brandname} provides global near cache configuration properties, you should not
 use them.
 ====
