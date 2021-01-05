@@ -1,4 +1,4 @@
-[[anchored_keys_module]]
+[[cloudevents_integration_module]]
 = CloudEvents Integration Module (Experimental)
 
 {brandname} version 12 introduces an experimental module that converts

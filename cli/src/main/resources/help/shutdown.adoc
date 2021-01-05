@@ -5,8 +5,7 @@ SHUTDOWN(1)
 
 NAME
 ----
-shutdown - stops individual servers or performs orderly shutdowns for entire
-clusters.
+shutdown - stops running servers or brings clusters down gracefully.
 
 
 SYNOPSIS
@@ -18,11 +17,14 @@ SYNOPSIS
 
 EXAMPLES
 --------
+`shutdown server` +
+Stops the server to which the CLI is connected.
+
 `shutdown server my_server01` +
 Stops the server with hostname `my_server01`.
 
 `shutdown cluster` +
-Performs an orderly shutdown of all servers joined to the cluster.
+Stores cluster state, persists entries if you use a cache store, and stops all nodes.
 
 
 SEE ALSO
