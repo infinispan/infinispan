@@ -26,7 +26,7 @@ endif::productized[]
 
 == Server Root Directory
 
-Apart from resources in the `docs` folder, the only folder under `{server_home}` that you should interact with is the server root directory, which is named `server` by default.
+Apart from resources in the `bin` and `docs` folders, the only folder under `{server_home}` that you should interact with is the server root directory, which is named `server` by default.
 
 You can create multiple nodes under the same `{server_home}` directory or in different directories, but each {brandname} Server instance must have its own server root directory.
 For example, a cluster of 5 nodes could have the following server root directories on the filesystem:

@@ -157,7 +157,7 @@ Create a username and password with the CLI as follows:
 
 == Server home directory
 
-${infinispan.brand.name} Server uses the `infinispan.server.home` path to locate the contents of the server distribution on the host filesystem.
+${infinispan.brand.name} Server uses `infinispan.server.home.path` to locate the contents of the server distribution on the host filesystem.
 
 The server home directory, referred to as `<SERVER_HOME>`, contains the following folders:
 
@@ -199,7 +199,7 @@ Do not place custom `JAR` files in this folder.
 
 == Server root directory
 
-${infinispan.brand.name} Server uses the `infinispan.server.root` path to locate configuration files and data for ${infinispan.brand.name} Server instances.
+${infinispan.brand.name} Server uses `infinispan.server.root.path` to locate configuration files and data for ${infinispan.brand.name} Server instances.
 
 You can create multiple server root folders in the same directory or in different directories and then specify the locations with the `-s` or `--server-root` argument, as in the following example:
 
