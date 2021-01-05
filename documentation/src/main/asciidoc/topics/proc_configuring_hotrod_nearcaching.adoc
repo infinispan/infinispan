@@ -54,6 +54,6 @@ builder
 [NOTE]
 ====
 You should always configure near caching on a per-cache basis. Even though
-{brandname} provides global near cache configuration properties, you should not 
+{brandname} provides global near cache configuration properties, you should not
 use them.
 ====

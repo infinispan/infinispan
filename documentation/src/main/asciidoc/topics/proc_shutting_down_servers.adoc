@@ -1,0 +1,47 @@
+[id='server_shutdown-{context}']
+= Shutting Down {brandname} Server
+Stop individually running servers or bring down clusters gracefully.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Shut down {brandname} Server in one of the following ways:
++
+* Stop all nodes in a cluster with the [command]`shutdown cluster` command, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> shutdown cluster
+----
++
+This command saves cluster state to the `data` folder for each node in the cluster.
+If you use a cache store, the [command]`shutdown cluster` command also persists all data in the cache.
++
+* Stop individual server instances with the [command]`shutdown server` command and the server hostname, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> shutdown server <my_server01>
+----
+
+[IMPORTANT]
+====
+The [command]`shutdown server` command does not wait for rebalancing operations to complete, which can lead to data loss if you specify multiple hostnames at the same time.
+====
+
+[TIP]
+====
+Run [command]`help shutdown` for more details about using the command.
+====
+
+.Verification
+
+{brandname} logs the following messages when you shut down servers:
+
+[source,options="nowrap",subs=attributes+]
+----
+ISPN080002: {brandname} Server stopping
+ISPN000080: Disconnecting JGroups channel cluster
+ISPN000390: Persisted state, version=<$version> timestamp=YYYY-MM-DDTHH:MM:SS
+ISPN080003: {brandname} Server stopped
+----
