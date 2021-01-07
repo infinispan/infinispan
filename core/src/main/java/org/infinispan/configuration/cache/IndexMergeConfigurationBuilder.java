@@ -3,7 +3,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.CALIBRATE_BY_DELETES;
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.FACTOR;
-import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_DOCS;
+import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_ENTRIES;
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_FORCED_SIZE;
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_SIZE;
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.MIN_SIZE;
@@ -25,7 +25,7 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
       implements Builder<IndexMergeConfiguration>, ConfigurationBuilderInfo {
 
    private static final String KEY_PREFIX = "hibernate.search.backend.io.merge";
-   private static final String MAX_DOCS_KEY = KEY_PREFIX + ".max_docs";
+   private static final String MAX_ENTRIES_KEY = KEY_PREFIX + ".max_docs";
    private static final String FACTOR_KEY = KEY_PREFIX + ".factor";
    private static final String MIN_SIZE_KEY = KEY_PREFIX + ".min_size";
    private static final String MAX_SIZE_KEY = KEY_PREFIX + ".max_size";
@@ -33,7 +33,7 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
    private static final String CALIBRATE_BY_DELETES_KEY = KEY_PREFIX + ".calibrate_by_deletes";
 
    private final AttributeSet attributes;
-   private final Attribute<Integer> maxDocs;
+   private final Attribute<Integer> maxEntries;
    private final Attribute<Integer> factor;
    private final Attribute<Integer> minSize;
    private final Attribute<Integer> maxSize;
@@ -43,7 +43,7 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
    IndexMergeConfigurationBuilder(IndexingConfigurationBuilder builder) {
       super(builder);
       this.attributes = IndexMergeConfiguration.attributeDefinitionSet();
-      this.maxDocs = attributes.attribute(MAX_DOCS);
+      this.maxEntries = attributes.attribute(MAX_ENTRIES);
       this.factor = attributes.attribute(FACTOR);
       this.minSize = attributes.attribute(MIN_SIZE);
       this.maxSize = attributes.attribute(MAX_SIZE);
@@ -53,8 +53,8 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
 
    Map<String, Object> asInternalProperties() {
       Map<String, Object> props = new HashMap<>();
-      if (!maxDocs.isNull()) {
-         props.put(MAX_DOCS_KEY, maxDocs());
+      if (!maxEntries.isNull()) {
+         props.put(MAX_ENTRIES_KEY, maxEntries());
       }
       if (!minSize.isNull()) {
          props.put(MIN_SIZE_KEY, minSize());
@@ -79,13 +79,13 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
       return IndexMergeConfiguration.ELEMENT_DEFINITION;
    }
 
-   public IndexMergeConfigurationBuilder maxDocs(int value) {
-      maxDocs.set(value);
+   public IndexMergeConfigurationBuilder maxEntries(int value) {
+      maxEntries.set(value);
       return this;
    }
 
-   public Integer maxDocs() {
-      return maxDocs.get();
+   public Integer maxEntries() {
+      return maxEntries.get();
    }
 
    public IndexMergeConfigurationBuilder factor(int value) {

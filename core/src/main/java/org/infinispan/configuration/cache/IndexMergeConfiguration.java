@@ -13,8 +13,8 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class IndexMergeConfiguration implements ConfigurationInfo {
 
-   public static final AttributeDefinition<Integer> MAX_DOCS =
-         AttributeDefinition.builder("max-docs", null, Integer.class).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_ENTRIES =
+         AttributeDefinition.builder("max-entries", null, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> FACTOR =
          AttributeDefinition.builder("factor", null, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> MIN_SIZE =
@@ -27,7 +27,7 @@ public class IndexMergeConfiguration implements ConfigurationInfo {
          AttributeDefinition.builder("calibrate-by-deletes", null, Boolean.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexMergeConfiguration.class, MAX_DOCS, FACTOR, MIN_SIZE, MAX_SIZE, MAX_FORCED_SIZE,
+      return new AttributeSet(IndexMergeConfiguration.class, MAX_ENTRIES, FACTOR, MIN_SIZE, MAX_SIZE, MAX_FORCED_SIZE,
             CALIBRATE_BY_DELETES);
    }
 
@@ -50,8 +50,8 @@ public class IndexMergeConfiguration implements ConfigurationInfo {
       return attributes;
    }
 
-   public Integer maxDocs() {
-      return attributes.attribute(MAX_DOCS).get();
+   public Integer maxEntries() {
+      return attributes.attribute(MAX_ENTRIES).get();
    }
 
    public Integer factor() {

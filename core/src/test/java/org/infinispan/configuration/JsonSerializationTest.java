@@ -145,7 +145,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .expiration().lifespan(10).wakeUpInterval(123).maxIdle(1122)
             .indexing().enable()
             .reader().refreshInterval(1000)
-            .writer().ramBufferSize(100).maxBufferedDocs(123).queueSize(111).queueCount(12).setLowLevelTrace(true).commitInterval(12)
+            .writer().ramBufferSize(100).maxBufferedEntries(123).queueSize(111).queueCount(12).setLowLevelTrace(true).commitInterval(12)
             .merge().factor(12).minSize(12).maxSize(11).calibrateByDeletes(true)
             .addIndexedEntity("Entity").addProperty("v", "v")
             .customInterceptors()

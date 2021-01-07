@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_COMMIT_INTERVAL;
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_LOW_LEVEL_TRACE;
-import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_MAX_BUFFERED_DOCS;
+import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_MAX_BUFFERED_ENTRIES;
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_QUEUE_COUNT;
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_QUEUE_SIZE;
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_RAM_BUFFER_SIZE;
@@ -35,7 +35,7 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
    private static final String IO_PREFIX = "hibernate.search.backend.io.";
    private static final String COMMIT_INTERVAL_KEY = IO_PREFIX + "commit_interval";
    private static final String RAM_BUFFER_KEY = IO_PREFIX + "writer.ram_buffer_size";
-   private static final String MAX_BUFFER_DOCS_KEY = IO_PREFIX + "writer.max_buffered_docs";
+   private static final String MAX_BUFFER_ENTRIES_KEY = IO_PREFIX + "writer.max_buffered_docs";
    private static final String LOW_LEVEL_TRACE_KEY = IO_PREFIX + "writer.infostream";
 
    private final AttributeSet attributes;
@@ -45,7 +45,7 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
    private final Attribute<Integer> queueCount;
    private final Attribute<Integer> queueSize;
    private final Attribute<Integer> ramBufferSize;
-   private final Attribute<Integer> maxBufferedDocs;
+   private final Attribute<Integer> maxBufferedEntries;
    private final Attribute<Boolean> lowLevelTrace;
    private final List<ConfigurationBuilderInfo> subElements;
 
@@ -57,7 +57,7 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       this.queueSize = attributes.attribute(INDEX_QUEUE_SIZE);
       this.commitInterval = attributes.attribute(INDEX_COMMIT_INTERVAL);
       this.ramBufferSize = attributes.attribute(INDEX_RAM_BUFFER_SIZE);
-      this.maxBufferedDocs = attributes.attribute(INDEX_MAX_BUFFERED_DOCS);
+      this.maxBufferedEntries = attributes.attribute(INDEX_MAX_BUFFERED_ENTRIES);
       this.lowLevelTrace = attributes.attribute(INDEX_LOW_LEVEL_TRACE);
       this.indexMergeConfigurationBuilder = new IndexMergeConfigurationBuilder(builder);
       this.subElements = Collections.singletonList(indexMergeConfigurationBuilder);
@@ -85,8 +85,8 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       if (!ramBufferSize.isNull()) {
          props.put(RAM_BUFFER_KEY, ramBufferSize());
       }
-      if (!maxBufferedDocs.isNull()) {
-         props.put(MAX_BUFFER_DOCS_KEY, maxBufferedDocs());
+      if (!maxBufferedEntries.isNull()) {
+         props.put(MAX_BUFFER_ENTRIES_KEY, maxBufferedEntries());
       }
       if (lowLevelTrace.isModified()) {
          props.put(LOW_LEVEL_TRACE_KEY, isLowLevelTrace());
@@ -146,12 +146,12 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       return this;
    }
 
-   public int maxBufferedDocs() {
-      return maxBufferedDocs.get();
+   public int maxBufferedEntries() {
+      return maxBufferedEntries.get();
    }
 
-   public IndexWriterConfigurationBuilder maxBufferedDocs(int value) {
-      maxBufferedDocs.set(value);
+   public IndexWriterConfigurationBuilder maxBufferedEntries(int value) {
+      maxBufferedEntries.set(value);
       return this;
    }
 

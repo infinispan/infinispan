@@ -1813,7 +1813,7 @@ public class CacheParser implements ConfigurationParser {
                indexWriterBuilder.setLowLevelTrace(Boolean.parseBoolean(value));
                break;
             case MAX_BUFFERED_ENTRIES:
-               indexWriterBuilder.maxBufferedDocs(Integer.parseInt(value));
+               indexWriterBuilder.maxBufferedEntries(Integer.parseInt(value));
                break;
             case RAM_BUFFER_SIZE:
                indexWriterBuilder.ramBufferSize(Integer.parseInt(value));
@@ -1840,7 +1840,7 @@ public class CacheParser implements ConfigurationParser {
          IndexMergeConfigurationBuilder mergeBuilder = builder.indexing().writer().merge();
          switch (attribute) {
             case MAX_ENTRIES:
-               mergeBuilder.maxDocs(Integer.parseInt(value));
+               mergeBuilder.maxEntries(Integer.parseInt(value));
                break;
             case CALIBRATE_BY_DELETES:
                mergeBuilder.calibrateByDeletes(Boolean.parseBoolean(value));

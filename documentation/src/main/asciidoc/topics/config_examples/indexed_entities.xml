@@ -3,8 +3,8 @@
       <replicated-cache name="default">
          <indexing>
             <indexed-entities>
-                <indexed-entity>com.acme.query.test.Car</indexed-entity>
-                <indexed-entity>com.acme.query.test.Truck</indexed-entity>
+                <indexed-entity>org.infinispan.sample.Car</indexed-entity>
+                <indexed-entity>org.infinispan.sample.Truck</indexed-entity>
             </indexed-entities>
          </indexing>
       </replicated-cache>

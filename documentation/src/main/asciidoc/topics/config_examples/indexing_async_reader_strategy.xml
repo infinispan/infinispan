@@ -1,7 +1,0 @@
-<distributed-cache name="default">
-    <indexing>
-        <property name="default.reader.strategy">async</property>
-        <!-- refresh reader every 1s, default is 5s -->
-        <property name="default.reader.async_refresh_period_ms">1000</property>
-    </indexing>
-</distributed-cache>

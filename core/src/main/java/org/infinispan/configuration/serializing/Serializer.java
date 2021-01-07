@@ -671,7 +671,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             writer.writeStartElement(Element.INDEX_WRITER);
             writerAttributes.write(writer, IndexWriterConfiguration.INDEX_COMMIT_INTERVAL, Attribute.COMMIT_INTERVAL);
             writerAttributes.write(writer, IndexWriterConfiguration.INDEX_LOW_LEVEL_TRACE, Attribute.LOW_LEVEL_TRACE);
-            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_MAX_BUFFERED_DOCS, Attribute.MAX_BUFFERED_ENTRIES);
+            writerAttributes.write(writer, IndexWriterConfiguration.INDEX_MAX_BUFFERED_ENTRIES, Attribute.MAX_BUFFERED_ENTRIES);
             writerAttributes.write(writer, IndexWriterConfiguration.INDEX_QUEUE_COUNT, Attribute.QUEUE_COUNT);
             writerAttributes.write(writer, IndexWriterConfiguration.INDEX_QUEUE_SIZE, Attribute.QUEUE_SIZE);
             writerAttributes.write(writer, IndexWriterConfiguration.INDEX_THREAD_POOL_SIZE, Attribute.THREAD_POOL_SIZE);
@@ -680,7 +680,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
                writer.writeStartElement(Element.INDEX_MERGE);
                mergeAttributes.write(writer, IndexMergeConfiguration.CALIBRATE_BY_DELETES, Attribute.CALIBRATE_BY_DELETES);
                mergeAttributes.write(writer, IndexMergeConfiguration.FACTOR, Attribute.FACTOR);
-               mergeAttributes.write(writer, IndexMergeConfiguration.MAX_DOCS, Attribute.MAX_ENTRIES);
+               mergeAttributes.write(writer, IndexMergeConfiguration.MAX_ENTRIES, Attribute.MAX_ENTRIES);
                mergeAttributes.write(writer, IndexMergeConfiguration.MIN_SIZE, Attribute.MIN_SIZE);
                mergeAttributes.write(writer, IndexMergeConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
                mergeAttributes.write(writer, IndexMergeConfiguration.MAX_FORCED_SIZE, Attribute.MAX_FORCED_SIZE);
