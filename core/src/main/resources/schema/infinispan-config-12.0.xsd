@@ -2402,8 +2402,8 @@
       <xs:annotation>
         <xs:documentation>
           Whether the number of deleted entries in an index should be taken into account when counting the entries in
-          the segment. Setting false will lead to more frequent merges caused by max-docs, but will more aggressively
-          merge segments with many deleted documents, improving search performance.
+          the segment. Setting false will lead to more frequent merges caused by max-entries, but will more aggressively
+          merge segments with many deleted entries, improving search performance.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2433,8 +2433,8 @@
         <xs:documentation>
           Advanced: The maximum amount of RAM that may be used for buffering added entries and deletions before they are
           flushed to the index storage. Large values mean faster indexing, but more RAM usage.
-          Generally for faster indexing performance it's best to use this setting rather than max-buffer-docs.
-          When used together with max-buffer-docs a flush occurs for whichever event happens first.
+          Generally for faster indexing performance it's best to use this setting rather than max-buffered-entries.
+          When used together with max-buffered-entries a flush occurs for whichever event happens first.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

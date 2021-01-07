@@ -26,8 +26,8 @@ public class IndexWriterConfiguration implements ConfigurationInfo {
          AttributeDefinition.builder("commit-interval", null, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_RAM_BUFFER_SIZE =
          AttributeDefinition.builder("ram-buffer-size", null, Integer.class).immutable().build();
-   public static final AttributeDefinition<Integer> INDEX_MAX_BUFFERED_DOCS =
-         AttributeDefinition.builder("max-buffered-docs", null, Integer.class).immutable().build();
+   public static final AttributeDefinition<Integer> INDEX_MAX_BUFFERED_ENTRIES =
+         AttributeDefinition.builder("max-buffered-entries", null, Integer.class).immutable().build();
    public static final AttributeDefinition<Boolean> INDEX_LOW_LEVEL_TRACE =
          AttributeDefinition.builder("low-level-trace", false, Boolean.class).immutable().build();
 
@@ -35,7 +35,7 @@ public class IndexWriterConfiguration implements ConfigurationInfo {
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(IndexWriterConfiguration.class, INDEX_THREAD_POOL_SIZE, INDEX_QUEUE_COUNT, INDEX_QUEUE_SIZE,
-            INDEX_COMMIT_INTERVAL, INDEX_RAM_BUFFER_SIZE, INDEX_MAX_BUFFERED_DOCS, INDEX_LOW_LEVEL_TRACE);
+            INDEX_COMMIT_INTERVAL, INDEX_RAM_BUFFER_SIZE, INDEX_MAX_BUFFERED_ENTRIES, INDEX_LOW_LEVEL_TRACE);
    }
 
    static final ElementDefinition<IndexWriterConfiguration> ELEMENT_DEFINITION =
@@ -90,8 +90,8 @@ public class IndexWriterConfiguration implements ConfigurationInfo {
       return attributes.attribute(INDEX_RAM_BUFFER_SIZE).get();
    }
 
-   public Integer getMaxBufferedDocs() {
-      return attributes.attribute(INDEX_MAX_BUFFERED_DOCS).get();
+   public Integer getMaxBufferedEntries() {
+      return attributes.attribute(INDEX_MAX_BUFFERED_ENTRIES).get();
    }
 
    public Boolean isLowLevelTrace() {

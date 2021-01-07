@@ -26,8 +26,8 @@ public class EngineConfigTest extends SingleCacheManagerTest {
             .writer().commitInterval(2000)
             .ramBufferSize(40)
             .queueSize(555).queueCount(8)
-            .threadPoolSize(11).setLowLevelTrace(true).maxBufferedDocs(50000)
-            .merge().maxSize(1500).factor(30).calibrateByDeletes(true).minSize(100).maxForcedSize(110).maxDocs(12000);
+            .threadPoolSize(11).setLowLevelTrace(true).maxBufferedEntries(50000)
+            .merge().maxSize(1500).factor(30).calibrateByDeletes(true).minSize(100).maxForcedSize(110).maxEntries(12000);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 

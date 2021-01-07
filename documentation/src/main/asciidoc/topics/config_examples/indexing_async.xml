@@ -1,8 +1,0 @@
-<distributed-cache name="default">
-    <indexing>
-        <!-- Index data in async mode -->
-        <property name="default.worker.execution">async</property>
-        <!-- Optional: configure the commit interval, default is 1000ms -->
-        <property name="default.index_flush_interval">500</property>
-    </indexing>
-</distributed-cache>

@@ -16,13 +16,13 @@ Finally, {brandname} has support for link:#query_continuous[Continuous Queries],
 and obtain results, it allows a client to register queries that will be evaluated continuously as data in the cluster changes, generating notifications
 whenever the changed data matches the queries.
 
-== Indexing Entry Values
+== Configuring Indexing
 
 Indexing entry values in {brandname} caches dramatically improves search performance and allows you to perform full-text queries. However, indexing can degrade write throughput for {brandname} clusters. For this reason you should plan to use strategies to optimise query performance, depending on the cache mode and your use case. More information on link:#query_performance[query performance guide].
 
-=== Configuration
+=== Basic Configuration
 
-To enable indexing via XML, you need to add the `<indexing>` element to your cache configuration, specify the entities that are indexed and optionally pass additional properties.
+To enable indexing via XML, you need to add the `<indexing>` element to your cache configuration, specify the entities that are indexed and optionally customize how entries are written and read from the index.
 
 [NOTE]
 ====
@@ -40,17 +40,12 @@ include::config_examples/indexing.xml[]
 .Programmatically
 [source,java]
 ----
-import org.infinispan.configuration.cache.*;
-
-ConfigurationBuilder cacheCfg = ...
-cacheCfg.indexing().enable()
-            .addIndexedEntity(Book.class)
-      .addProperty("property name", "propery value")
+include::code_examples/IndexBasicConfiguration.java[]
 ----
 
 === Specifying Indexed Entities
 
-It is recommended to declare the indexed types, as they will be mandatory in the next {brandname} version.
+Indexed entities must be declared in the configuration:
 
 .Declaratively
 [source,xml,options="nowrap",subs=attributes+]
@@ -82,10 +77,12 @@ The config should be:
 include::config_examples/indexed_entities_proto.xml[]
 ----
 
+For caches storing POJOs, the indexed entities configuration should contain the fully qualified class name that is annotated with ```@Indexed```.
+
 [[query_index_storage]]
 === Index Storage
 
-{brandname} can store indexes in the file system or in memory. File system is the recommended and the default configuration, and memory indexes should only be used for small to medium indexes that don't need to survive restart.
+{brandname} can store indexes in the file system or in memory (JVM Heap). File system is the recommended and the default configuration, and memory indexes should only be used for small to medium indexes that don't need to survive restart.
 
 .Configuration for file system indexes:
 
@@ -101,36 +98,79 @@ include::config_examples/indexing_filesystem.xml[]
 include::config_examples/indexing_local_heap.xml[]
 ----
 
-[[query_index_manager]]
-=== Index Manager
+[[query_index_reader]]
+=== Index Reader
 
-{brandname} uses internally a component called "Index Manager" to control how new data is applied to the index and
-when the data is visible to searches.
+{brandname} refreshes the index reader before performing a query. The default behavior is to refresh a reader before every search, provided the index changed since the last refresh.
 
-The default Index Manager `directory-based` writes to the index as soon as the data is written to the cache. The downside is it can slow down considerably cache writes specially under heavy writing scenarios, since it needs to do constant costly operations called "flushes" on the index.
-
-The `near-real-time` index manager is similar to the default index manager but takes advantage of the Near-Real-Time features of Lucene. It has better write performance because it flushes the index to the underlying store less often.
-The drawback is that unflushed index changes can be lost in case of a non-clean shutdown. Can be used in conjunction with `local-heap` or `filesystem`.
-
-Example with `local-heap`:
+It's possible to configure {brandname} to refresh the reader less frequently by using the `index-reader` configuration:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_near_real_time.xml[]
+include::config_examples/indexing_reader.xml[]
 ----
 
-Example with `filesystem`:
+The attribute `refresh-interval` defines the interval in milliseconds to refresh the index reader. A value larger than zero will make some queries results stale, but query throughput will increase substantially, specially in write heavy scenarios.
 
+[[query_index_writer]]
+=== Index Writer
+
+The index used by {brandname} is link:https://lucene.apache.org/[Lucene] based, thus it's composed of one or more segments (a group of immutable files representing a searchable index) that can be merged over time for performance reasons. Merges are important because fewer segments usually means less overhead during searches, since index readers needs to take into account all segments to perform their work.
+
+Lucene indexes entries in two tiers: memory and storage. New entries go to the memory index first, and then when a flush happens, to the configured index storage. Periocally, Lucene performs a commit operation, creating a segment from the previously flushed data, making all the index changes permanent.
+
+The `index-writer` configuration offers the possibility to customize how flushes, commits and merges are performed.
+
+NOTE: The `index-writer` configuration is optional. The defaults should work for most cases and custom configurations should only be used to tune performance.
+
+
+
+.Declaratively
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_near_real_time_fs.xml[]
+include::config_examples/index_writer.xml[]
 ----
 
-[[query_massindexer]]
+.Programmatically
+[source,java]
+----
+include::code_examples/IndexWriterConfig.java[]
+----
+
+
+
+
+To configure the behaviour of the `index-writer`, use the following attributes:
+
+* `commit-interval`: Period in milliseconds that index changes that are buffered in memory are flushed to the index storage and a
+commit is performed. As this operation is costly, small values should be avoided. The default is 1000 ms (1 second).
+* `max-buffered-entries`: The maximum number of entries that can be buffered in-memory before they are flushed to the index
+storage. Large values mean faster indexing, but more RAM usage. When used together with `ram-buffer-size` a flush occurs for
+whichever event happens first.
+* `ram-buffer-size`: The maximum amount of RAM that may be used for buffering added entries and deletions before they are
+flushed to the index storage. Large values mean faster indexing, but more RAM usage. Generally for faster indexing performance it's
+best to use this setting rather than `max-buffered-entries`. When used together with `max-buffered-entries` a flush occurs for whichever event happens first.
+* `thread-pool-size`: Number of threads to execute write operations to the index.
+* `queue-count`: Number of internal queues to use for each indexed type. Each queue holds a batch of modifications that is
+applied to the index, and queues are processed in parallel. Increasing the number of queues will lead to an increase of
+indexing throughput, but only if the bottleneck is CPU. For optimum results, avoid `queue-count` larger than the `thread-pool-size`.
+* `queue-size`: The maximum number of elements each queue can hold. The larger the queue-size, more memory will be used during indexing operations. A value too small can increase the likelihood of blocking during indexing.
+* `low-level-trace`: Enables low level trace information about indexing operations. Causes a substantial performance penalty and should only be used as a last resource for troubleshooting.
+
+To define how index segments are merged, use the `index-merge` sub-element, that offers the following attributes:
+
+* `max-entries`: The maximum number of entries that an index segment can have before merging. Segments with more than this number of entries will not be merged. Smaller values perform better on frequently changing indexes, larger values provide better search performance if the index does not change often.
+* `factor`: The number of segments that are merged at once. With smaller values, merging happens more often and thus uses more resources,
+but the total number of segments will be lower on average, increasing search performance. Thus, larger values (> 10) are best for heavy writing scenarios.
+* `min-size`: The minimum target size of segments, in MB, for background merges. Segments smaller than this size are merged more aggressively. Setting this too large might result in expensive merge operations, even tough they are less frequent.
+* `max-size`: The maximum size of segments, in MB, for background merges. Segments larger than this size are never merged in the background. Settings this to a lower value helps reduce memory requirements and avoids some merging operations at the cost of optimal search speed. When forcefully merging an index, this value is ignored and `max-forced-size` is used instead (see below).
+* `calibrate-by-deletes`: Whether the number of deleted entries in an index should be taken into account when counting the entries in the segment. Setting `false` will lead to more frequent merges caused by `max-docs`, but will more aggressively merge segments with many deleted documents, improving search performance.
+
+[[query_indexer]]
 === Rebuilding Indexes
 
-Rebuilding an index reconstructs it from data stored in the cache. You need to rebuild indexes if you change things like
-definitions of indexed types or Analyzers. Likewise you might need to rebuild indexes if they are deleted for some reason.
+Rebuilding an index reconstructs it from the data stored in the cache. You need to rebuild indexes if you change things like
+definitions of indexed types or analyzers. Likewise, you may need to rebuild indexes if they are deleted for some reason.
 Beware it might take some time as it needs to reprocess all data in the grid!
 
 [source,java]
@@ -162,11 +202,11 @@ For instance:
 ----
 // Remote Query, using protobuf
 QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
-Query q = qf.create("from sample_bank_account.Transaction where amount > 20");
+Query<Transaction> q = qf.create("from sample_bank_account.Transaction where amount > 20");
 
 // Embedded Query using Java Objects
 QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-Query q = qf.create("from com.acme.Book where price > 20");
+Query<Transaction> q = qf.create("from org.infinispan.sample.Book where price > 20");
 
 // Execute the query
 QueryResult<Book> queryResult = q.execute();
@@ -178,8 +218,8 @@ A query will always target a single entity type and is evaluated over the conten
 query over multiple caches or creating queries that target several entity types (joins) is not supported.
 ====
 
-Executing the query and fetching the results is as simple as invoking the `run()` method of the `Query` object. Once
-executed, calling `run()` on the same instance will re-execute the query.
+Executing the query and fetching the results is as simple as invoking the `execute()` method of the `Query` object. Once
+executed, calling `execute()` on the same instance will re-execute the query.
 
 === Pagination
 
@@ -190,7 +230,7 @@ conjunction with `Query.startOffset(long startOffset)` to achieve pagination of 
 ----
 // sorted by year and match all books that have "clustering" in their title
 // and return the third page of 10 results
-Query<Book> query = queryFactory.create("FROM com.acme.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
+Query<Book> query = queryFactory.create("FROM org.infinispan.sample.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
 ----
 
 === Number of Hits
@@ -222,14 +262,14 @@ the operator instead of the usual constant value. Once the parameters have been 
 ----
 QueryFactory queryFactory = Search.getQueryFactory(cache);
 // Defining a query to search for various authors and publication years
-Query<Book> query = queryFactory.create("SELECT title FROM com.acme.Book WHERE author = :authorName AND publicationYear = :publicationYear").build();
+Query<Book> query = queryFactory.create("SELECT title FROM org.infinispan.sample.Book WHERE author = :authorName AND publicationYear = :publicationYear").build();
 
 // Set actual parameter values
 query.setParameter("authorName", "Doe");
 query.setParameter("publicationYear", 2010);
 
 // Execute the query
-List<Book> found = query.list();
+List<Book> found = query.execute.list();
 ----
 
 Alternatively, you can supply a map of actual parameter values to set multiple parameters at once:
@@ -300,7 +340,7 @@ operator still has higher priority than `or` even though `or` was invoked first.
 # match all books that have "Data Grid" in their title
 # or have an author named "Manik" and their description contains "clustering"
 
-FROM com.acme.Book WHERE title LIKE '%Data Grid%' OR author.name = 'Manik' AND description like '%clustering%'
+FROM org.infinispan.sample.Book WHERE title LIKE '%Data Grid%' OR author.name = 'Manik' AND description like '%clustering%'
 ----
 
 Boolean negation has highest precedence among logical operators and applies only to the next simple attribute condition.
@@ -308,7 +348,7 @@ Boolean negation has highest precedence among logical operators and applies only
 [source,sql]
 ----
 # match all books that do not have "Data Grid" in their title and are authored by "Manik"
-FROM com.acme.Book WHERE title != 'Data Grid' AND author.name = 'Manik'
+FROM org.infinispan.sample.Book WHERE title != 'Data Grid' AND author.name = 'Manik'
 
 ----
 
@@ -319,7 +359,7 @@ Changing the precedence of logical operators is achieved with parenthesis:
 ----
 # match all books that have an author named "Manik" and their title contains
 # "Data Grid" or their description contains "clustering"
-FROM com.acme.Book WHERE author.name = 'Manik' AND ( title like '%Data Grid%' OR description like '% clustering%')
+FROM org.infinispan.sample.Book WHERE author.name = 'Manik' AND ( title like '%Data Grid%' OR description like '% clustering%')
 ----
 
 ==== Selecting attributes
@@ -335,7 +375,7 @@ a projected attribute.
 ----
 # match all books that have "Data Grid" in their title or description
 # and return only their title and publication year
-SELECT title, publicationYear FROM com.acme.Book WHERE title like '%Data Grid%' OR description like '%Data Grid%'
+SELECT title, publicationYear FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' OR description like '%Data Grid%'
 ----
 
 ==== Sorting
@@ -349,7 +389,7 @@ are specified, then the order will dictate their precedence.
 ----
 # match all books that have "Data Grid" in their title or description
 # and return them sorted by the publication year and title
-FROM com.acme.Book WHERE title like '%Data Grid%' ORDER BY publicationYear DESC, title ASC
+FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' ORDER BY publicationYear DESC, title ASC
 ----
 
 ==== Grouping and Aggregation
@@ -369,7 +409,7 @@ is legal.
 Example: Grouping Books by author and counting them.
 [source,sql]
 ----
-SELECT author, COUNT(title) FROM com.acme.Book WHERE title LIKE '%engine%' GROUP BY author
+SELECT author, COUNT(title) FROM org.infinispan.sample.Book WHERE title LIKE '%engine%' GROUP BY author
 ----
 
 [NOTE]
@@ -529,32 +569,13 @@ Each `Book` will be defined as in the following example; we have to choose which
 [source,java]
 .Book.java
 ----
-import org.hibernate.search.annotations.*;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-//Values you want to index need to be annotated with @Indexed, then you pick which fields and how they are to be indexed:
-@Indexed
-public class Book {
-   @Field String title;
-   @Field String description;
-   @Field @DateBridge(resolution=Resolution.YEAR) Date publicationYear;
-   @IndexedEmbedded Set<Author> authors = new HashSet<Author>();
-}
-
+include::code_examples/BookEmbedded.java[]
 ----
 
 [source,java]
 .Author.java
 ----
-
-public class Author {
-   @Field String name;
-   @Field String surname;
-   // hashCode() and equals() omitted
-}
-
+include::code_examples/AuthorEmbedded.java[]
 ----
 
 Now assuming we stored several `Book` instances in our {brandname} `Cache` , we can search them for any matching field as in the following example.
@@ -565,14 +586,12 @@ Now assuming we stored several `Book` instances in our {brandname} `Cache` , we 
 include::code_examples/QueryExample.java[]
 ----
 
-Apart from `list()` you have the option for obtaining on `iterator()`, or use pagination.
-
 [[mapping_embedded]]
 === Mapping Entities
 
 {brandname} relies on the rich API of link:http://hibernate.org/search/[Hibernate Search] in order to define fine grained configuration for indexing at entity level.
 This configuration includes which fields are annotated, which analyzers should be used, how to map nested objects and so on.
-Detailed documentation is available at link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-mapping[the Hibernate Search manual].
+Detailed documentation is available at link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#mapper-orm-mapping[the Hibernate Search manual].
 
 ==== @DocumentId
 Unlike Hibernate Search, using `@DocumentId` to mark a field as identifier does not apply to {brandname} values; in {brandname} the identifier for all `@Indexed` objects is the key used to store the value. You can still customize how the key is indexed using a combination of `@Transformable` , custom types and custom `FieldBridge` implementations.
@@ -1019,70 +1038,39 @@ each query captures the minimal information needed both in terms of number of ma
 to quickly process all received events without blocking and to avoid performing actions that will lead to the generation
 of new matching events from the cache it listens to.
 
+[[query_statistics]]
 == Statistics
 
-Query link:http://docs.jboss.org/hibernate/search/5.7/api/org/hibernate/search/stat/Statistics.html[Statistics]
-can be obtained from the `SearchManager`, as demonstrated in the following code snippet.
+{brandname} exposes indexing and querying statistics through the `Search` entry point:
 
 [source,java]
 ----
-SearchManager searchManager = Search.getSearchManager(cache);
-org.hibernate.search.stat.Statistics statistics = searchManager.getStatistics();
+// Statistics for the local cluster member
+SearchStatistics statistics = Search.getSearchStatistics(cache);
+
+// Consolidated statistics for the whole cluster
+CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearchStatistics(cache)
+
 ----
 
-TIP: This data is also available via JMX through the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_statisticsinfombean[Hibernate Search StatisticsInfoMBean]
-registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=Statistics`.
-Please note this MBean is always registered by {brandname} but the statistics are collected only if statistics collection is enabled at cache level.
-
-WARNING: Hibernate Search has its own configuration properties `hibernate.search.jmx_enabled` and `hibernate.search.generate_statistics`
-for JMX statistics as explained link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-monitoring[here].
-Using them with {brandname} Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
+TIP: Index and query statistics are also exposed in the server via REST, using invocation `GET /v2/caches/{cacheName}/search/stats`
 
 [[query_performance]]
 == Performance Tuning
 
-=== Batch writing in SYNC mode
+=== Check index usage statistics
 
-By default, the link:#query_index_manager[Index Managers] work in sync mode, meaning when data is written to {brandname}, it will perform the indexing operations synchronously.
-This synchronicity guarantees indexes are always consistent with the data (and thus visible in searches), but can slowdown write operations since it will also perform a commit to the index.
-Committing is an extremely expensive operation in Lucene, and for that reason, multiple writes from different nodes can be automatically batched into a single commit to reduce
-the impact.
+Start by using the exposed link:#query_statistics[Statistics] to check the time taken for each type of query.
+Indexed queries should be faster, but some queries may be using the index only partially, in case a field in the schema
+is annotated as indexed, and others aren't. Make sure only fully indexed queries are executed, by double checking the
+correctness of entities and field mappings.
 
-So, when doing data loads to {brandname} with index enabled, try to use multiple threads to take advantage of this batching.
+=== Indexing performance
 
-If using multiple threads does not result in the required performance, an alternative is to load data with indexing temporarily disabled and run
- a link:#query_massindexer[re-indexing] operation afterwards. This can be done writing data with the `SKIP_INDEXING` flag:
+The index configuration exposes several attributes that affect the indexing performance, such as `commit-interval`. Please check
+link:#query_index_writer[Index Writer Configuration] for details.
 
-[source,java]
-----
-cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put("key","value");
-----
+=== Querying performance
 
-=== Writing using async mode
-
-If it's acceptable a small delay between data writes and when that data is visible in queries, an index manager can be configured to work in *async mode*.
-The async mode offers much better writing performance, since in this mode commits happen at a configurable interval.
-
-Configuration:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/indexing_async.xml[]
-----
-
-=== Index reader async strategy
-
-Lucene internally works with snapshots of the index: once an `IndexReader` is opened, it will only see the index changes up to the point it was opened;
-further index changes will not be visible until the `IndexReader` is refreshed. The Index Managers used in {brandname} by default will check the
-freshness of the index readers before every query and refresh them if necessary.
-
-It is possible to tune this strategy to relax this freshness checking to a pre-configured interval by using the `reader.strategy` configuration set as `async`:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/indexing_async_reader_strategy.xml[]
-----
-
-=== Lucene Options
-
-It is possible to apply tuning options in Lucene directly. For more details, see the link:++https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_lucene_configuration++[Hibernate Search manual].
+By default, as soon as data is written to a cache, it's visible on searches. If this requirement is not strictly necessary, and can be
+relaxed, query performance can be improved by configuring the `refresh-interval`. Check link:#query_index_reader[Index Reader Configuration] for details.
