@@ -101,10 +101,11 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
          synchronized (this) {
             rules = corsRules;
             if (rules == null) {
-               corsRules = new ArrayList<>();
-               corsRules.addAll(CorsUtil.enableAllForSystemConfig());
-               corsRules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
-               corsRules.addAll(restServer.getConfiguration().getCorsRules());
+               rules = new ArrayList<>();
+               rules.addAll(CorsUtil.enableAllForSystemConfig());
+               rules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
+               rules.addAll(restServer.getConfiguration().getCorsRules());
+               corsRules = rules;
             }
          }
       }

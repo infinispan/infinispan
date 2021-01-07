@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 /**
  * Test Netty pipeline initialization with multiple simultaneous clients.
  */
-@Test(groups = "functional", testName = "rest.CorsInitializationTest")
+@Test(groups = "functional", testName = "rest.PipelineInitializationTest")
 public class PipelineInitializationTest extends AbstractInfinispanTest {
 
    private RestServerHelper restServer;
