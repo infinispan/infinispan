@@ -35,6 +35,16 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       init(configuration.numSegments());
    }
 
+   @Override
+   public void init(KeyPartitioner other) {
+      if (other instanceof HashFunctionPartitioner) {
+         HashFunctionPartitioner o = (HashFunctionPartitioner) other;
+         if (o.numSegments > 0) { // The other HFP has been initialized, so we can use it
+            init(o.numSegments);
+         }
+      }
+   }
+
    private void init(int numSegments) {
       if (numSegments <= 0) {
          throw new IllegalArgumentException("numSegments must be strictly positive");

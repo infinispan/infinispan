@@ -13,7 +13,7 @@ public class ContentTypeConfiguration extends ConfigurationElement<ContentTypeCo
    public static final String DEFAULT_MEDIA_TYPE = MediaType.APPLICATION_OBJECT_TYPE;
 
    public static final AttributeDefinition<String> MEDIA_TYPE =
-         AttributeDefinition.builder("media-type", null, String.class).build();
+         AttributeDefinition.builder("media-type", null, String.class).immutable().build();
 
    private final MediaType parsed;
 

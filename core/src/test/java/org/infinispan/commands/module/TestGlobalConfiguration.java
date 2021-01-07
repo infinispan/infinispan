@@ -1,5 +1,7 @@
 package org.infinispan.commands.module;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -9,8 +11,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.factories.ComponentRegistry;
 
@@ -27,14 +27,14 @@ public class TestGlobalConfiguration {
    static final AttributeDefinition<Map<String, Object>> GLOBAL_TEST_COMPONENTS =
          AttributeDefinition.<Map<String, Object>>builder("globalTestComponents", new HashMap<>())
                .initializer(HashMap::new)
-               .copier(CollectionAttributeCopier.INSTANCE).build();
+               .copier(identityCopier()).build();
    static final AttributeDefinition<Map<String, Map<String, Object>>> CACHE_TEST_COMPONENTS =
          AttributeDefinition.<Map<String, Map<String, Object>>>builder("cacheTestComponents", new HashMap<>())
                .initializer(HashMap::new)
-               .copier(CollectionAttributeCopier.INSTANCE).build();
+               .copier(identityCopier()).build();
    static final AttributeDefinition<Consumer<ComponentRegistry>> CACHE_STARTING_CALLBACK =
          AttributeDefinition.<Consumer<ComponentRegistry>>builder("cacheStartingCallback", cr -> {})
-               .copier(IdentityAttributeCopier.INSTANCE).build();
+               .copier(identityCopier()).build();
 
    private final AttributeSet attributes;
 

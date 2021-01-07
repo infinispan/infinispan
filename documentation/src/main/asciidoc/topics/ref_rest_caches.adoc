@@ -23,6 +23,37 @@ POST /rest/v2/caches/{cacheName}
 
 include::ref_infinispan_caches.adoc[leveloffset=+1]
 
+[id='rest_v2_modify_cache']
+= Modifying Caches
+Make changes to attributes in cache configurations across {brandname} clusters with `PUT` requests that include XML or JSON configuration in the payload.
+
+[NOTE]
+====
+You can modify a cache only if the changes are compatible with the existing configuration.
+
+For example you cannot use a replicated cache configuration to modify a distributed cache.
+Likewise if you create a cache configuration with a specific attribute, you cannot modify the configuration to use a different attribute instead.
+For example, attempting to modify cache configuration by specifying a value for the `max-count` attribute results in invalid configuration if the `max-size` is already set.
+====
+
+[source,options="nowrap",subs=attributes+]
+----
+PUT /rest/v2/caches/{cacheName}
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Content-Type`
+|REQUIRED
+|Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
+{brandname} configuration payload; either `application/xml` or
+`application/json`.
+| `Flags` | OPTIONAL | Used to set link:{javadocroot}/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+|===
+
 [id='rest_v2_cache_exists']
 = Verifying Caches
 Check if caches are available in {brandname} clusters with `HEAD` requests.

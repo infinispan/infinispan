@@ -378,6 +378,15 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getCacheConfigurationAttributes(String name) {
+      try {
+         return name == null ? Collections.emptyList() : parseBody(fetch(client.cache(name).configurationAttributes()), List.class);
+      } catch (IOException e) {
+         return Collections.emptyList();
+      }
+   }
+
+   @Override
    public void refreshServerInfo() throws IOException {
       try {
          ContainerResource container = getActiveContainer();

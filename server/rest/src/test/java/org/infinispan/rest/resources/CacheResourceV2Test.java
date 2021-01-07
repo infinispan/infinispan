@@ -229,6 +229,73 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testCreateAndAlterCache() {
+      String cacheConfig = "{\n" +
+            "  \"distributed-cache\" : {\n" +
+            "    \"mode\" : \"SYNC\",\n" +
+            "    \"statistics\" : true,\n" +
+            "    \"encoding\" : {\n" +
+            "      \"key\" : {\n" +
+            "        \"media-type\" : \"application/x-protostream\"\n" +
+            "      },\n" +
+            "      \"value\" : {\n" +
+            "        \"media-type\" : \"application/x-protostream\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    \"expiration\" : {\n" +
+            "      \"lifespan\" : \"60000\"\n" +
+            "    },\n" +
+            "    \"memory\" : {\n" +
+            "      \"max-count\" : \"1000\",\n" +
+            "      \"when-full\" : \"REMOVE\"\n" +
+            "    }\n" +
+            "  }\n" +
+            "}\n";
+      String cacheConfigAlter = "{\n" +
+            "  \"distributed-cache\" : {\n" +
+            "    \"mode\" : \"SYNC\",\n" +
+            "    \"statistics\" : true,\n" +
+            "    \"encoding\" : {\n" +
+            "      \"key\" : {\n" +
+            "        \"media-type\" : \"application/x-protostream\"\n" +
+            "      },\n" +
+            "      \"value\" : {\n" +
+            "        \"media-type\" : \"application/x-protostream\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    \"expiration\" : {\n" +
+            "      \"lifespan\" : \"30000\"\n" +
+            "    },\n" +
+            "    \"memory\" : {\n" +
+            "      \"max-count\" : \"2000\",\n" +
+            "      \"when-full\" : \"REMOVE\"\n" +
+            "    }\n" +
+            "  }\n" +
+            "}\n";
+      String cacheConfigConflict = "{\n" +
+            "  \"distributed-cache\" : {\n" +
+            "    \"mode\" : \"ASYNC\"\n" +
+            "  }\n" +
+            "}\n";
+
+      RestCacheClient cacheClient = client.cache("mutable");
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfig));
+      assertThat(response).isOk();
+      response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfigAlter));
+      assertThat(response).isOk();
+
+      response = cacheClient.configuration();
+      assertThat(response).isOk();
+      String configFromServer = join(response).getBody();
+
+      assertTrue(configFromServer.contains("\"expiration\":{\"lifespan\":\"30000\"}"));
+      assertTrue(configFromServer.contains("\"memory\":{\"max-count\":\"2000\""));
+
+      response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfigConflict));
+      assertThat(response).isBadRequest();
+   }
+
+   @Test
    public void testCacheV2LifeCycle() throws Exception {
       String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
       String json = getResourceAsString("cache.json", getClass().getClassLoader());

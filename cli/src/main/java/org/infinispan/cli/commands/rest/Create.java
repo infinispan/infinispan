@@ -10,6 +10,7 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.command.parser.RequiredOptionException;
 import org.aesh.io.Resource;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -74,7 +75,7 @@ public class Create extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws RequiredOptionException {
          if (template != null && file != null) {
             throw Messages.MSG.mutuallyExclusiveOptions("template", "file");
          }

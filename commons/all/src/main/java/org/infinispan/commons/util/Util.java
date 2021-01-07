@@ -1,19 +1,19 @@
 package org.infinispan.commons.util;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -80,13 +81,7 @@ public final class Util {
    private static final Set<Class<?>> BASIC_TYPES;
 
    private static final String HEX_VALUES = "0123456789ABCDEF";
-   private static final char[] HEX_DUMP_CHARS = new char[256*2];
-
-   /**
-    * Current Java vendor. This variable is later used to differentiate LRU implementations
-    * for different java vendors.
-    */
-   private static final String javaVendor = SecurityActions.getProperty("java.vendor", "");
+   private static final char[] HEX_DUMP_CHARS = new char[256 * 2];
 
    static {
       BASIC_TYPES = new HashSet<>();
@@ -129,8 +124,8 @@ public final class Util {
     * </p>
     *
     * @param classname name of the class to load
-    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
-    *        Infinispan
+    * @param cl        the application classloader which should be used to load the class, or null if the class is
+    *                  always packaged with Infinispan
     * @return the class
     * @throws CacheConfigurationException if the class cannot be loaded
     */
@@ -148,48 +143,49 @@ public final class Util {
 
    /**
     * <p>
-    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
+    * classloader.
     * </p>
     *
     * <p>
-    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
+    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
+    * classloader.
     * </p>
     *
-    * @param classname name of the class to load
+    * @param classname       name of the class to load
+    * @param userClassLoader the application classloader which should be used to load the class, or null if the class is
+    *                        always packaged with Infinispan
     * @return the class
-    * @param userClassLoader the application classloader which should be used to load the class, or null if the class is always packaged with
-    *        Infinispan
     * @throws ClassNotFoundException if the class cannot be loaded
     */
    @SuppressWarnings("unchecked")
    public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
       ClassLoader[] cls = getClassLoaders(userClassLoader);
-         ClassNotFoundException e = null;
-         NoClassDefFoundError ne = null;
-         for (ClassLoader cl : cls)  {
-            if (cl == null)
-               continue;
+      ClassNotFoundException e = null;
+      NoClassDefFoundError ne = null;
+      for (ClassLoader cl : cls) {
+         if (cl == null)
+            continue;
 
-            try {
-               return (Class<T>) Class.forName(classname, true, cl);
-            } catch (ClassNotFoundException ce) {
-               e = ce;
-            } catch (NoClassDefFoundError ce) {
-               ne = ce;
-            }
+         try {
+            return (Class<T>) Class.forName(classname, true, cl);
+         } catch (ClassNotFoundException ce) {
+            e = ce;
+         } catch (NoClassDefFoundError ce) {
+            ne = ce;
          }
-         if (ne != null) {
-            //Always log the NoClassDefFoundError errors first:
-            //if one happened they will contain critically useful details.
-            log.unableToLoadClass(classname, Arrays.toString(cls), ne);
-         }
-         if (e != null)
-            throw e;
-         else if (ne != null) {
-            throw new ClassNotFoundException(classname, ne);
-         }
-         else
-            throw new IllegalStateException();
+      }
+      if (ne != null) {
+         //Always log the NoClassDefFoundError errors first:
+         //if one happened they will contain critically useful details.
+         log.unableToLoadClass(classname, Arrays.toString(cls), ne);
+      }
+      if (e != null)
+         throw e;
+      else if (ne != null) {
+         throw new ClassNotFoundException(classname, ne);
+      } else
+         throw new IllegalStateException();
    }
 
    public static InputStream getResourceAsStream(String resourcePath, ClassLoader userClassLoader) {
@@ -225,8 +221,9 @@ public final class Util {
     * arguments. If no matching constructor is found this will return null. Note that the constructor must be public.
     * <p/>
     * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+    *
     * @param clazz class to instantiate
-    * @param <T> the instance type
+    * @param <T>   the instance type
     * @return the new instance if a matching constructor was found otherwise null
     */
    public static <T> T newInstanceOrNull(Class<T> clazz, Class[] parameterTypes, Object... arguments) {
@@ -280,8 +277,7 @@ public final class Util {
       try {
          Method factoryMethod = getFactoryMethod(clazz);
          if (factoryMethod != null) instance = (T) factoryMethod.invoke(null);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          // no factory method or factory method failed.  Try a constructor.
          instance = null;
       }
@@ -293,10 +289,11 @@ public final class Util {
 
    /**
     * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
-    * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
-    * back to an empty constructor.
-    * <p />
-    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link CacheConfigurationException}.
+    * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls back
+    * to an empty constructor.
+    * <p/>
+    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link
+    * CacheConfigurationException}.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -325,46 +322,21 @@ public final class Util {
    }
 
    /**
-    * Clones parameter x of type T with a given Marshaller reference;
-    *
-    *
-    * @return a deep clone of an object parameter x
-    */
-   @SuppressWarnings("unchecked")
-   public static <T> T cloneWithMarshaller(Marshaller marshaller, T x){
-      if (marshaller == null)
-         throw new IllegalArgumentException("Cannot use null Marshaller for clone");
-
-      byte[] byteBuffer;
-      try {
-         byteBuffer = marshaller.objectToByteBuffer(x);
-         return (T) marshaller.objectFromByteBuffer(byteBuffer);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException(e);
-      } catch (Exception e) {
-         throw new CacheException(e);
-      }
-   }
-
-   /**
-    * Given two Runnables, return a Runnable that executes both in sequence,
-    * even if the first throws an exception, and if both throw exceptions, add
-    * any exceptions thrown by the second as suppressed exceptions of the first.
+    * Given two Runnables, return a Runnable that executes both in sequence, even if the first throws an exception, and
+    * if both throw exceptions, add any exceptions thrown by the second as suppressed exceptions of the first.
     */
    public static Runnable composeWithExceptions(Runnable a, Runnable b) {
       return () -> {
          try {
             a.run();
-         }
-         catch (Throwable e1) {
+         } catch (Throwable e1) {
             try {
                b.run();
-            }
-            catch (Throwable e2) {
+            } catch (Throwable e2) {
                try {
                   e1.addSuppressed(e2);
-               } catch (Throwable ignore) {}
+               } catch (Throwable ignore) {
+               }
             }
             throw e1;
          }
@@ -395,9 +367,10 @@ public final class Util {
    }
 
    /**
-    * {@link System#nanoTime()} is less expensive than {@link System#currentTimeMillis()} and better suited
-    * to measure time intervals. It's NOT suited to know the current time, for example to be compared
-    * with the time of other nodes.
+    * {@link System#nanoTime()} is less expensive than {@link System#currentTimeMillis()} and better suited to measure
+    * time intervals. It's NOT suited to know the current time, for example to be compared with the time of other
+    * nodes.
+    *
     * @return the value of {@link System#nanoTime()}, but converted in Milliseconds.
     */
    public static long currentMillisFromNanotime() {
@@ -431,47 +404,26 @@ public final class Util {
    }
 
    /**
-    * Reads the given InputStream fully, closes the stream and returns the result as a byte array.
+    * Reads the given InputStream fully, closes the stream and returns the result as a String.
     *
     * @param is the stream to read
-    * @return the read bytes
+    * @return the UTF-8 string
     * @throws java.io.IOException in case of stream read errors
     */
-   public static byte[] readStream(InputStream is) throws IOException {
+   public static String read(InputStream is) throws IOException {
       try {
-         ByteArrayOutputStream os = new ByteArrayOutputStream();
-         byte[] buf = new byte[1024];
+         final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+         StringWriter writer = new StringWriter();
+         char[] buf = new char[1024];
          int len;
-         while ((len = is.read(buf)) != -1) {
-            os.write(buf, 0, len);
+         while ((len = reader.read(buf)) != -1) {
+            writer.write(buf, 0, len);
          }
-         return os.toByteArray();
+         return writer.toString();
       } finally {
          is.close();
       }
    }
-
-    /**
-     * Reads the given InputStream fully, closes the stream and returns the result as a String.
-     *
-     * @param is the stream to read
-     * @return the UTF-8 string
-     * @throws java.io.IOException in case of stream read errors
-     */
-    public static String read(InputStream is) throws IOException {
-       try {
-          final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-          StringWriter writer = new StringWriter();
-          char[] buf = new char[1024];
-          int len;
-          while ((len = reader.read(buf)) != -1) {
-             writer.write(buf, 0, len);
-          }
-          return writer.toString();
-       } finally {
-          is.close();
-       }
-    }
 
    public static void close(AutoCloseable cl) {
       if (cl == null) return;
@@ -500,36 +452,6 @@ public final class Util {
       try {
          ctx.close();
       } catch (Exception e) {
-      }
-   }
-
-   public static void flushAndCloseStream(OutputStream o) {
-      if (o == null) return;
-      try {
-         o.flush();
-      } catch (Exception e) {
-
-      }
-
-      try {
-         o.close();
-      } catch (Exception e) {
-
-      }
-   }
-
-   public static void flushAndCloseOutput(ObjectOutput o) {
-      if (o == null) return;
-      try {
-         o.flush();
-      } catch (Exception e) {
-
-      }
-
-      try {
-         o.close();
-      } catch (Exception e) {
-
       }
    }
 
@@ -579,10 +501,10 @@ public final class Util {
 
       StringBuilder sb = new StringBuilder();
       sb.append('[');
-      for (int counter = 0;;) {
+      for (int counter = 0; ; ) {
          E e = i.next();
          sb.append(e == collection ? "(this Collection)" : toStr(e));
-         if (! i.hasNext())
+         if (!i.hasNext())
             return sb.append(']').toString();
          if (++counter >= COLLECTIONS_LIMIT) {
             return sb.append("...<")
@@ -641,8 +563,8 @@ public final class Util {
       char[] result = new char[length * 2];
 
       for (int i = 0; i < length; ++i) {
-         result[2*i] = HEX_VALUES.charAt((input[i + offset] >> 4) & 0x0F);
-         result[2*i+1] = HEX_VALUES.charAt((input[i + offset] & 0x0F));
+         result[2 * i] = HEX_VALUES.charAt((input[i + offset] >> 4) & 0x0F);
+         result[2 * i + 1] = HEX_VALUES.charAt((input[i + offset] & 0x0F));
       }
       return String.valueOf(result);
    }
@@ -696,8 +618,7 @@ public final class Util {
    }
 
    /**
-    * Prints the identity hash code of the object passed as parameter
-    * in an hexadecimal format in order to safe space.
+    * Prints the identity hash code of the object passed as parameter in an hexadecimal format in order to safe space.
     */
    public static String hexIdHashCode(Object o) {
       return Integer.toHexString(System.identityHashCode(o));
@@ -738,23 +659,12 @@ public final class Util {
       buf.append(HEX_VALUES.charAt(b & 0x0F));
    }
 
-   public static Double constructDouble(Class<?> type, Object o) {
-      if (type.equals(Long.class) || type.equals(long.class))
-         return Double.valueOf((Long) o);
-      else if (type.equals(Double.class) || type.equals(double.class))
-         return (Double) o;
-      else if (type.equals(Integer.class) || type.equals(int.class))
-         return Double.valueOf((Integer) o);
-      else if (type.equals(String.class))
-         return Double.valueOf((String) o);
-
-      throw new IllegalStateException(String.format("Expected a value that can be converted into a double: type=%s, value=%s", type, o));
-   }
 
    /**
     * Applies the given hash function to the hash code of a given object, and then normalizes it to ensure a positive
     * value is always returned.
-    * @param object to hash
+    *
+    * @param object  to hash
     * @param hashFct hash function to apply
     * @return a non-null, non-negative normalized hash code for a given object
     */
@@ -765,15 +675,12 @@ public final class Util {
 
    /**
     * Returns the size of each segment, given a number of segments.
+    *
     * @param numSegments number of segments required
     * @return the size of each segment
     */
    public static int getSegmentSize(int numSegments) {
-      return (int)Math.ceil((double)(1L << 31) / numSegments);
-   }
-
-   public static boolean isIBMJavaVendor() {
-      return javaVendor.toLowerCase().contains("ibm");
+      return (int) Math.ceil((double) (1L << 31) / numSegments);
    }
 
    public static String join(List<String> strings, String separator) {
@@ -794,8 +701,8 @@ public final class Util {
 
    /**
     * Returns a number such that the number is a power of two that is equal to, or greater than, the number passed in as
-    * an argument.  The smallest number returned will be 1. Due to having to be a power of two, the highest int
-    * this can return is 2<sup>31 since int is signed.
+    * an argument.  The smallest number returned will be 1. Due to having to be a power of two, the highest int this can
+    * return is 2<sup>31 since int is signed.
     */
    public static int findNextHighestPowerOfTwo(int num) {
       if (num <= 1) {
@@ -808,9 +715,8 @@ public final class Util {
    }
 
    /**
-    * A function that calculates hash code of a byte array based on its
-    * contents but using the given size parameter as deliminator for the
-    * content.
+    * A function that calculates hash code of a byte array based on its contents but using the given size parameter as
+    * deliminator for the content.
     */
    public static int hashCode(byte[] bytes, int size) {
       int contentLimit = size;
@@ -825,31 +731,11 @@ public final class Util {
    }
 
    /**
-    *
-    * Prints {@link Subject}'s principals as a one-liner
-    * (as opposed to default Subject's <code>toString()</code> method, which prints every principal on separate line).
-    *
+    * Prints {@link Subject}'s principals as a one-liner (as opposed to default Subject's <code>toString()</code>
+    * method, which prints every principal on separate line).
     */
    public static String prettyPrintSubject(Subject subject) {
       return (subject == null) ? "null" : "Subject with principal(s): " + toStr(subject.getPrincipals());
-   }
-
-   /**
-    * Concatenates an arbitrary number of arrays returning a new array containing all elements
-    */
-   @SafeVarargs
-   public static <T> T[] arrayConcat(T[] first, T[]... rest) {
-      int totalLength = first.length;
-      for (T[] array : rest) {
-        totalLength += array.length;
-      }
-      T[] result = Arrays.copyOf(first, totalLength);
-      int offset = first.length;
-      for (T[] array : rest) {
-        System.arraycopy(array, 0, result, offset, array.length);
-        offset += array.length;
-      }
-      return result;
    }
 
    /**
@@ -887,45 +773,45 @@ public final class Util {
             continue;
          }
          switch (aChar) {
-         case ' ':
-            if (x == 0)
+            case ' ':
+               if (x == 0)
+                  out.append('\\');
+               out.append(' ');
+               break;
+            case '\t':
                out.append('\\');
-            out.append(' ');
-            break;
-         case '\t':
-            out.append('\\');
-            out.append('t');
-            break;
-         case '\n':
-            out.append('\\');
-            out.append('n');
-            break;
-         case '\r':
-            out.append('\\');
-            out.append('r');
-            break;
-         case '\f':
-            out.append('\\');
-            out.append('f');
-            break;
-         case '=':
-         case ':':
-         case '#':
-         case '!':
-            out.append('\\');
-            out.append(aChar);
-            break;
-         default:
-            if ((aChar < 0x0020) || (aChar > 0x007e)) {
+               out.append('t');
+               break;
+            case '\n':
                out.append('\\');
-               out.append('u');
-               addSingleHexChar(out, (byte)((aChar >> 12) & 0xF));
-               addSingleHexChar(out, (byte)((aChar >> 8) & 0xF));
-               addSingleHexChar(out, (byte)((aChar >> 4) & 0xF));
-               addSingleHexChar(out, (byte)(aChar & 0xF));
-            } else {
+               out.append('n');
+               break;
+            case '\r':
+               out.append('\\');
+               out.append('r');
+               break;
+            case '\f':
+               out.append('\\');
+               out.append('f');
+               break;
+            case '=':
+            case ':':
+            case '#':
+            case '!':
+               out.append('\\');
                out.append(aChar);
-            }
+               break;
+            default:
+               if ((aChar < 0x0020) || (aChar > 0x007e)) {
+                  out.append('\\');
+                  out.append('u');
+                  addSingleHexChar(out, (byte) ((aChar >> 12) & 0xF));
+                  addSingleHexChar(out, (byte) ((aChar >> 8) & 0xF));
+                  addSingleHexChar(out, (byte) ((aChar >> 4) & 0xF));
+                  addSingleHexChar(out, (byte) (aChar & 0xF));
+               } else {
+                  out.append(aChar);
+               }
          }
       }
       return out.toString();
@@ -970,15 +856,11 @@ public final class Util {
       return out.toString();
    }
 
-   public static <T> Supplier<T> getInstanceSupplier(Class<T> klass) {
-      return () -> getInstance(klass);
-   }
-
    public static <T> Supplier<T> getInstanceSupplier(String className, ClassLoader classLoader) {
       return () -> getInstance(className, classLoader);
    }
 
-  /**
+   /**
     * Deletes directory recursively.
     *
     * @param directoryName Directory to be deleted
@@ -1007,9 +889,9 @@ public final class Util {
    private static void recursiveDelete(File f) {
       try {
          Files.walk(f.toPath())
-                 .sorted(Comparator.reverseOrder())
-                 .map(Path::toFile)
-                 .forEach(File::delete);
+               .sorted(Comparator.reverseOrder())
+               .map(Path::toFile)
+               .forEach(File::delete);
       } catch (Exception e) {
          throw new IllegalStateException(e);
       }
@@ -1049,24 +931,6 @@ public final class Util {
             return FileVisitResult.CONTINUE;
          }
       });
-   }
-
-   public static boolean isBasicType(Class<?> type) {
-      return BASIC_TYPES.contains(type);
-   }
-
-   public static String xmlify(String s) {
-      StringBuilder sb = new StringBuilder();
-      for(int i=0; i < s.length(); i++) {
-         char ch = s.charAt(i);
-         if (Character.isUpperCase(ch)) {
-            sb.append('-');
-            sb.append(Character.toLowerCase(ch));
-         } else {
-            sb.append(ch);
-         }
-      }
-      return sb.toString();
    }
 
    public static char[] toCharArray(String s) {
@@ -1137,4 +1001,59 @@ public final class Util {
       }
    }
 
+   public static Object fromString(Class klass, String value) {
+      if (klass == Character.class) {
+         if (value.length() == 1) {
+            return value.charAt(0);
+         } else {
+            throw new IllegalArgumentException("Expected a single character, got '" + value + "'");
+         }
+      } else if (klass == Byte.class) {
+         return Byte.valueOf(value);
+      } else if (klass == Short.class) {
+         return Short.valueOf(value);
+      } else if (klass == Integer.class) {
+         return Integer.valueOf(value);
+      } else if (klass == Long.class) {
+         return Long.valueOf(value);
+      } else if (klass == Boolean.class) {
+         return Boolean.valueOf(value);
+      } else if (klass == String.class) {
+         return value;
+      } else if (klass == char[].class) {
+         return value.toCharArray();
+      } else if (klass == Float.class) {
+         return Float.valueOf(value);
+      } else if (klass == Double.class) {
+         return Double.valueOf(value);
+      } else if (klass == BigDecimal.class) {
+         return new BigDecimal(value);
+      } else if (klass == BigInteger.class) {
+         return new BigInteger(value);
+      } else if (klass == File.class) {
+         return new File(value);
+      } else if (klass.isEnum()) {
+         return Enum.valueOf(klass, value);
+      } else if (klass == Properties.class) {
+         try {
+            Properties props = new Properties();
+            props.load(new ByteArrayInputStream(value.getBytes()));
+            return props;
+         } catch (IOException e) {
+            throw new CacheConfigurationException("Failed to load Properties from: " + value, e);
+         }
+      }
+
+      throw new CacheConfigurationException("Cannot convert " + value + " to type " + klass.getName());
+   }
+
+   public static void unwrapSuppressed(Throwable t, Throwable t1) {
+      if (t1.getSuppressed().length > 0) {
+         for (Throwable suppressed : t1.getSuppressed()) {
+            t.addSuppressed(suppressed);
+         }
+      } else {
+         t.addSuppressed(t1);
+      }
+   }
 }

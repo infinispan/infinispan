@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -57,7 +57,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    }
 
    @Override
-   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
       if (existing == null) {
          SecurityActions.defineConfiguration(cacheManager, name, configuration);
@@ -70,7 +70,8 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       return CompletableFutures.completedNull();
    }
 
-   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   @Override
+   public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
       if (existing == null) {
          SecurityActions.defineConfiguration(cacheManager, name, configuration);
@@ -91,8 +92,30 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       }, name).toCompletableFuture();
    }
 
+   @Override
+   public CompletionStage<Void> validateConfigurationUpdate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
+      if (existing == null) {
+         throw CONFIG.noSuchCacheConfiguration(name);
+      } else {
+         existing.validateUpdate(configuration);
+         return CompletableFutures.completedNull();
+      }
+   }
 
-   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   @Override
+   public CompletionStage<Void> updateConfiguration(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
+      if (existing == null) {
+         throw CONFIG.noSuchCacheConfiguration(name);
+      } else {
+         existing.update(configuration);
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return blockingManager.<Void>supplyBlocking(() -> {
          removeCacheSync(name, flags);
          return null;
@@ -120,7 +143,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    }
 
    @Override
-   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       removeTemplateSync(name, flags);
       return CompletableFutures.completedNull();
    }

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
 import org.aesh.command.CommandException;
+import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
 import org.infinispan.cli.user.UserTool;
@@ -86,7 +87,7 @@ public interface Messages {
    IllegalArgumentException mutuallyExclusiveOptions(String arg1, String arg2);
 
    @Message("One of the '%s' and '%s' options are required")
-   IllegalArgumentException requiresOneOf(String arg1, String arg2);
+   RequiredOptionException requiresOneOf(String arg1, String arg2);
 
    @Message("Could not connect to server: %s")
    ConnectException connectionFailed(String message);
@@ -243,4 +244,10 @@ public interface Messages {
 
    @Message(value = "Error executing line %d: '%s'")
    CommandException batchError(int lineNumber, String line, @Cause Throwable t);
+
+   @Message("Option '%s' requires option '%s'")
+   RequiredOptionException requiresAllOf(String option1, String option2);
+
+   @Message("The cache name is required")
+   IllegalArgumentException missingCacheName();
 }

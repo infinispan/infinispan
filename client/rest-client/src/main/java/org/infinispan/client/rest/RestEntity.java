@@ -37,6 +37,10 @@ public interface RestEntity {
    }
 
    static RestEntity create(File file) {
+      if (file.getName().endsWith(".yaml") || file.getName().endsWith(".yml")) {
+         // We can only "guess" YAML by its extension
+         return RestEntity.create(MediaType.APPLICATION_YAML, file);
+      }
       try (InputStream is = new FileInputStream(file)) {
          int b;
          while ((b = is.read()) > -1) {

@@ -1,5 +1,7 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +11,6 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -27,7 +28,7 @@ public class GlobalAuthorizationConfiguration {
    private static final Map<String, Role> DEFAULT_ROLES;
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUDIT_LOGGER, (AuditLogger) new NullAuditLogger())
-         .copier(IdentityAttributeCopier.INSTANCE).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
+         .copier(identityCopier()).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<Map<String, Role>> ROLES = AttributeDefinition.<Map<String, Role>>builder(org.infinispan.configuration.parsing.Attribute.ROLES, new HashMap<>())
          .initializer(new AttributeInitializer<Map<String, Role>>() {
             @Override

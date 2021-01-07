@@ -263,11 +263,20 @@ public interface RestCacheClient {
    /**
     * Creates the cache using the supplied configuration
     *
-    * @param configuration the configuration, either in XML or JSON format
+    * @param configuration the configuration, in XML, JSON or YAML format
     * @param flags         any flags to apply to the create operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
     * @return
     */
    CompletionStage<RestResponse> createWithConfiguration(RestEntity configuration, CacheContainerAdmin.AdminFlag... flags);
+
+   /**
+    * Updates the cache configuration
+    *
+    * @param configuration the configuration, in XML, JSON or YAML format
+    * @param flags         any flags to apply to the update operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
+    * @return
+    */
+   CompletionStage<RestResponse> updateWithConfiguration(RestEntity configuration, CacheContainerAdmin.AdminFlag... flags);
 
    /**
     * Removes the cache
@@ -456,4 +465,14 @@ public interface RestCacheClient {
     * Disables automatic rebalancing for the cache.
     */
    CompletionStage<RestResponse> disableRebalancing();
+
+   /**
+    * Updates a configuration attribute.
+    */
+   CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String value);
+
+   /**
+    * Retrieves all available configuration attributes for this cache
+    */
+   CompletionStage<RestResponse> configurationAttributes();
 }

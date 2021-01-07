@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.util.Util;
@@ -16,7 +17,8 @@ public class StatisticsConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Boolean> JMX_ENABLED = AttributeDefinition.builder("jmx_enabled", false).immutable().build();
    public static final AttributeDefinition<String> JMX_DOMAIN = AttributeDefinition.builder("jmx_domain", "org.infinispan").immutable().build();
-   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanserverlookup", (MBeanServerLookup) Util.getInstance(PlatformMBeanServerLookup.class)).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanserverlookup", (MBeanServerLookup) Util.getInstance(PlatformMBeanServerLookup.class))
+         .copier(identityCopier()).immutable().build();
    public static final AttributeDefinition<String> JMX_NAME = AttributeDefinition.builder("jmx_name", "Default").immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StatisticsConfiguration.class, ENABLED, JMX_ENABLED, JMX_DOMAIN, MBEAN_SERVER_LOOKUP, JMX_NAME);

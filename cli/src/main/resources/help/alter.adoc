@@ -1,0 +1,49 @@
+ALTER(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+alter - modifies the configuration of caches on ${infinispan.brand.name} Server.
+
+
+SYNOPSIS
+--------
+*alter cache* ['OPTIONS'] `CACHE_NAME`
+
+You can modify a cache with the `alter` command only if the changes are compatible with the existing configuration.
+
+For example you cannot use a replicated cache configuration to modify a distributed cache.
+Likewise if you create a cache configuration with a specific attribute, you cannot modify the configuration to use a different attribute instead.
+For example, attempting to modify cache configuration by specifying a value for the `max-count` attribute results in invalid configuration if the `max-size` is already set.
+
+
+ALTER CACHE OPTIONS
+-------------------
+*-f, --file*='FILE'::
+Specifies a configuration file in XML, JSON or YAML format that modifies an existing configuration.
+Mutually exclusive with the `--attribute` option.
+
+*--attribute*='ATTRIBUTE'::
+Specifies an attribute to modify in an existing configuration. Press the tab key to display a list of attributes.
+Must be used in combination with the `--value` option.
+Mutually exclusive with the `--file` option.
+
+*--value*='VALUE'::
+Specifies the new value for a configuration attribute.
+Must be used in combination with the `--attribute` option.
+
+
+EXAMPLES
+--------
+`alter cache mycache --file=/path/to/mycache.json` +
+Modifies the configuration of a cache named `mycache` with the `mycache.json` file.
+
+`alter cache mycache --attribute=clustering.remote-timeout --value=5000` +
+Modifies the configuration of a cache named `mycache` so that the `clustering.remote-timeout` attribute has a value of '5000'.
+
+
+SEE ALSO
+--------
+create(1), drop(1)

@@ -25,6 +25,10 @@ public interface KeyPartitioner extends Matchable<KeyPartitioner>, ToIntFunction
       // Do nothing
    }
 
+   default void init(KeyPartitioner other) {
+      // Do nothing
+   }
+
    @Override
    default int applyAsInt(Object value) {
       return getSegment(value);

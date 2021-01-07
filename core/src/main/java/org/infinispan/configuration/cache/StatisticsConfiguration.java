@@ -3,17 +3,18 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Determines whether cache statistics are gathered.
  *
  * @since 10.1.3
  */
-public class StatisticsConfiguration extends JMXStatisticsConfiguration implements Matchable<StatisticsConfiguration> {
+public class StatisticsConfiguration extends ConfigurationElement<StatisticsConfiguration> implements JMXStatisticsConfiguration  {
 
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STATISTICS, false).build();
-   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STATISTICS_AVAILABLE, true).build();
+   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STATISTICS_AVAILABLE, true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StatisticsConfiguration.class, ENABLED, AVAILABLE);
@@ -21,7 +22,6 @@ public class StatisticsConfiguration extends JMXStatisticsConfiguration implemen
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Boolean> available;
-   private final AttributeSet attributes;
 
    /**
     * Enable or disable statistics gathering.
@@ -29,7 +29,7 @@ public class StatisticsConfiguration extends JMXStatisticsConfiguration implemen
     * @param attributes
     */
    StatisticsConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.JMX_STATISTICS, attributes);
       enabled = attributes.attribute(ENABLED);
       available = attributes.attribute(AVAILABLE);
    }
@@ -46,29 +46,5 @@ public class StatisticsConfiguration extends JMXStatisticsConfiguration implemen
    @Deprecated
    public boolean available() {
       return available.get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return "StatisticsConfiguration [attributes=" + attributes + "]";
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null || getClass() != obj.getClass())
-         return false;
-      StatisticsConfiguration other = (StatisticsConfiguration) obj;
-      return attributes.equals(other.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes.hashCode();
    }
 }

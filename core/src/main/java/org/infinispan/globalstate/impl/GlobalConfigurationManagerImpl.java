@@ -121,7 +121,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             boolean cacheScope = CACHE_SCOPE.equals(scope);
             Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
             ensureClusterCompatibility(name, state, map);
-            CompletableFuture<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
+            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
             CompletionStages.join(future);
          }
       });
@@ -174,7 +174,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Cache<ScopedState, Object> cache = getStateCache();
       ScopedState key = new ScopedState(TEMPLATE_SCOPE, name);
       return cache.containsKeyAsync(key).thenCompose(exists -> {
@@ -185,7 +185,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       localConfigurationManager.validateFlags(flags);
       try {
          CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
@@ -196,8 +196,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration,
-                                                       EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Configuration> createCache(String cacheName, Configuration configuration,
+                                                     EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
          throw CONFIG.cacheExists(cacheName);
       } else {
@@ -206,12 +206,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Configuration> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return createCache(cacheName, null, configuration, flags);
    }
 
    @Override
-   public CompletableFuture<Configuration> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Configuration> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
          throw CONFIG.cacheExists(cacheName);
       } else {
@@ -220,7 +220,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Configuration> getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration configuration;
       if (template == null) {
          // The user has not specified a template, if a cache already exists just return it without checking for compatibility
@@ -246,31 +246,51 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return createCache(cacheName, template, configuration, flags);
    }
 
-   CompletableFuture<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   CompletionStage<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       localConfigurationManager.validateFlags(flags);
+      final CacheState state;
       try {
-         CacheState state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
-         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
-               .thenApply((v) -> configuration);
+         state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }
+      if (flags.contains(CacheContainerAdmin.AdminFlag.UPDATE)) {
+         if (internalCacheRegistry.isInternalCache(cacheName)) {
+            throw CONFIG.cannotUpdateInternalCache(cacheName);
+         }
+         return getStateCache().putAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
+               .thenApply((v) -> configuration);
+      } else {
+         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
+               .thenApply((v) -> configuration);
+      }
    }
 
-   CompletableFuture<Void> createTemplateLocally(String name, CacheState state) {
+   CompletionStage<Void> createTemplateLocally(String name, CacheState state) {
       log.debugf("Starting template %s from global state", name);
       CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, true);
       return configurationStage.thenCompose(configuration -> localConfigurationManager.createTemplate(name, configuration, state.getFlags()))
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name))
-            .toCompletableFuture();
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name));
    }
 
-   CompletableFuture<Void> createCacheLocally(String name, CacheState state) {
+   CompletionStage<Void> createCacheLocally(String name, CacheState state) {
       log.debugf("Starting cache %s from global state", name);
       CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
       return configurationStage.thenCompose(configuration -> localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags()))
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))
-            .toCompletableFuture();
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name));
+   }
+
+   CompletionStage<Void> validateConfigurationUpdateLocally(String name, CacheState state) {
+      log.debugf("Validating configuration %s from global state", name);
+      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
+      return configurationStage.thenCompose(configuration -> localConfigurationManager.validateConfigurationUpdate(name, configuration, state.getFlags()));
+   }
+
+   CompletionStage<Void> updateConfigurationLocally(String name, CacheState state) {
+      log.debugf("Updating configuration %s from global state", name);
+      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
+      return configurationStage.thenCompose(configuration -> localConfigurationManager.updateConfiguration(name, configuration, state.getFlags()))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.UPDATE, "cache", name));
    }
 
    private CompletionStage<Configuration> buildConfiguration(String name, CacheState state, boolean template) {
@@ -280,7 +300,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       ScopedState cacheScopedState = new ScopedState(CACHE_SCOPE, name);
       if (getStateCache().containsKey(cacheScopedState)) {
          try {
@@ -295,15 +315,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return getStateCache().removeAsync(new ScopedState(TEMPLATE_SCOPE, name)).thenCompose((r) -> CompletableFutures.completedNull());
    }
 
-   CompletableFuture<Void> removeCacheLocally(String name, CacheState state) {
+   CompletionStage<Void> removeCacheLocally(String name, CacheState state) {
       return localConfigurationManager.removeCache(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name));
    }
 
-   CompletableFuture<Void> removeTemplateLocally(String name, CacheState state) {
+   CompletionStage<Void> removeTemplateLocally(String name, CacheState state) {
       return localConfigurationManager.removeTemplate(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name));
    }
 }
