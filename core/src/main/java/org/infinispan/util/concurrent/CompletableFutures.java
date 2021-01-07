@@ -148,7 +148,6 @@ public class CompletableFutures {
       }
    }
 
-
    public static CompletionException asCompletionException(Throwable t) {
       if (t instanceof CompletionException) {
          return ((CompletionException) t);

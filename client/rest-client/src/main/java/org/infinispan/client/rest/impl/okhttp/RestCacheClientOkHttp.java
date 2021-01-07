@@ -528,4 +528,26 @@ public class RestCacheClientOkHttp implements RestCacheClient {
                   .url(cacheUrl + "?action=" + action)
       );
    }
+
+   @Override
+   public CompletionStage<RestResponse> updateWithConfiguration(RestEntity configuration, CacheContainerAdmin.AdminFlag... flags) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl).put(((RestEntityAdaptorOkHttp) configuration).toRequestBody());
+      addEnumHeader("flags", builder, flags);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String value) {
+      Request.Builder builder = new Request.Builder();
+      builder.post(EMPTY_BODY).url(cacheUrl + "?action=set-mutable-attribute&attribute-name=" + attribute + "&attribute-value=" + value);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> configurationAttributes() {
+      Request.Builder builder = new Request.Builder();
+      builder.get().url(cacheUrl + "?action=get-mutable-attributes");
+      return client.execute(builder);
+   }
 }

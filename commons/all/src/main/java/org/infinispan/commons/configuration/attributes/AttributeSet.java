@@ -18,7 +18,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public class AttributeSet implements AttributeListener<Object>, Matchable<AttributeSet> {
+public class AttributeSet implements AttributeListener<Object>, Matchable<AttributeSet>, Updatable<AttributeSet> {
    public static final AttributeSet EMPTY = new AttributeSet(null, "", null, new AttributeDefinition[0]).protect();
    private final Class<?> klass;
    private final String name;
@@ -286,6 +286,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       return true;
    }
 
+   @Override
    public boolean matches(AttributeSet other) {
       if (other.attributes.size() != attributes.size())
          return false;
@@ -301,6 +302,28 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          }
       }
       return true;
+   }
+
+   @Override
+   public void update(AttributeSet other) {
+      for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
+         e.getValue().update(other.attribute(e.getKey()));
+      }
+   }
+
+   @Override
+   public void validateUpdate(AttributeSet other) {
+      IllegalArgumentException iae = new IllegalArgumentException();
+      for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
+         try {
+            e.getValue().validateUpdate(other.attribute(e.getKey()));
+         } catch (Throwable t) {
+            iae.addSuppressed(t);
+         }
+      }
+      if (iae.getSuppressed().length > 0) {
+         throw iae;
+      }
    }
 
    @Override
@@ -346,7 +369,6 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    @Override
    public void attributeChanged(Attribute<Object> attribute, Object oldValue) {
-      // TODO
    }
 
    public Collection<Attribute<?>> attributes() {

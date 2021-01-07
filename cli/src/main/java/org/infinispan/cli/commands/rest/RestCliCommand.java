@@ -23,14 +23,20 @@ import org.infinispan.commons.util.Util;
  **/
 abstract class RestCliCommand extends CliCommand {
 
-   protected abstract CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource);
+   protected abstract CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws Exception;
 
    @Override
    protected final CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       Shell shell = invocation.getShell();
       Context context = invocation.getContext();
       try {
-         String response = context.getConnection().execute((c, r) -> exec(invocation, c, r), getResponseMode());
+         String response = context.getConnection().execute((c, r) -> {
+            try {
+               return exec(invocation, c, r);
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         }, getResponseMode());
          if (response != null && !response.isEmpty()) {
             shell.writeln(response);
          }

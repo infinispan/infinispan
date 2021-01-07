@@ -14,7 +14,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -53,8 +53,8 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    }
 
    @Override
-   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      CompletableFuture<Void> future = super.createTemplate(name, configuration, flags);
+   public CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletionStage<Void> future = super.createTemplate(name, configuration, flags);
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
          return blockingManager.thenApplyBlocking(future, (v) -> {
             persistentTemplates.add(name);
@@ -67,7 +67,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    }
 
    @Override
-   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return blockingManager.<Void>supplyBlocking(() -> {
          if (persistentTemplates.remove(name)) {
             storeTemplates();
@@ -77,8 +77,9 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
       }, name).toCompletableFuture();
    }
 
-   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      CompletableFuture<Void> future = super.createCache(name, template, configuration, flags);
+   @Override
+   public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletionStage<Void> future = super.createCache(name, template, configuration, flags);
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
          return blockingManager.thenApplyBlocking(future, (v) -> {
             persistentCaches.add(name);
@@ -90,7 +91,21 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
       }
    }
 
-   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   @Override
+   public CompletionStage<Void> updateConfiguration(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletionStage<Void> future = super.updateConfiguration(name, configuration, flags);
+      if (persistentCaches.contains(name)) {
+         return blockingManager.thenApplyBlocking(future, (v) -> {
+            storeCaches();
+            return v;
+         }, name).toCompletableFuture();
+      } else {
+         return future;
+      }
+   }
+
+   @Override
+   public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return blockingManager.<Void>supplyBlocking(() -> {
          if (persistentCaches.remove(name)) {
             storeCaches();

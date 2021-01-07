@@ -12,6 +12,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.util.logging.Log;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -82,7 +83,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * @param capacityFactor the capacity factor for the local node. Must be positive.
     */
    public HashConfigurationBuilder capacityFactor(float capacityFactor) {
-      if (capacityFactor < 0) throw new IllegalArgumentException("capacityFactor must be positive");
+      if (capacityFactor < 0) throw Log.CONFIG.illegalCapacityFactor();
       attributes.attribute(CAPACITY_FACTOR).set(capacityFactor);
       return this;
    }

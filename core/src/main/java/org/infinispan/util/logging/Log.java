@@ -2197,4 +2197,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Asynchronous cache modes, such as %s, cannot use SYNC touch mode for maximum idle expiration.", id = 645)
    CacheConfigurationException invalidTouchMode(CacheMode cacheMode);
+
+   @Message(value = "capacityFactor must be positive", id = 646)
+   IllegalArgumentException illegalCapacityFactor();
+
+   @Message(value = "The configuration for internal cache '%s' cannot be modified", id = 647)
+   IllegalArgumentException cannotUpdateInternalCache(String name);
 }

@@ -87,5 +87,7 @@ public interface Connection extends Closeable {
 
    Collection<String> getDataSourceNames() throws IOException;
 
+   Collection<String> getCacheConfigurationAttributes(String name);
+
    enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

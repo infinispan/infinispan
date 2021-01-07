@@ -24,8 +24,10 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -37,6 +39,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -107,15 +111,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::streamEntries)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("listen").handleWith(this::cacheListen)
 
-            // Info and statistics
+            // Config and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attributes").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttributes)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttribute)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("set-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::setCacheConfigMutableAttribute)
 
             // List
             .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
 
             // Cache lifecycle
-            .invocation().methods(POST).path("/v2/caches/{cacheName}").handleWith(this::createCache)
+            .invocation().methods(POST, PUT).path("/v2/caches/{cacheName}").handleWith(this::createOrUpdate)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}").handleWith(this::removeCache)
             .invocation().method(HEAD).path("/v2/caches/{cacheName}").handleWith(this::cacheExists)
 
@@ -136,7 +143,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // All details
             .invocation().methods(GET).path("/v2/caches/{cacheName}").handleWith(this::getAllDetails)
 
-             // Enable Rebalance
+            // Enable Rebalance
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("enable-rebalancing")
             .permission(AuthorizationPermission.ADMIN).name("ENABLE REBALANCE").auditContext(AuditContext.CACHE)
             .handleWith(r -> setRebalancing(true, r))
@@ -336,16 +343,26 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
-   private CompletableFuture<RestResponse> createCache(RestRequest request) {
+   private CompletableFuture<RestResponse> createOrUpdate(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
 
       EnumSet<AdminFlag> adminFlags = request.getAdminFlags();
+      if (request.method() == PUT) {
+         if (adminFlags == null) {
+            adminFlags = EnumSet.of(AdminFlag.UPDATE);
+         } else {
+            adminFlags.add(AdminFlag.UPDATE);
+         }
+      }
       EmbeddedCacheManagerAdmin initialAdmin = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       EmbeddedCacheManagerAdmin administration = adminFlags == null ? initialAdmin : initialAdmin.withFlags(adminFlags);
 
       if (template != null && !template.isEmpty()) {
+         if (request.method() == PUT) {
+            return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         }
          String templateName = template.iterator().next();
          return CompletableFuture.supplyAsync(() -> {
             administration.createCache(cacheName, templateName);
@@ -357,6 +374,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
       if (bytes == null || bytes.length == 0) {
+         if (request.method() == PUT) {
+            return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         }
          return CompletableFuture.supplyAsync(() -> {
             administration.createCache(cacheName, (String) null);
             responseBuilder.status(OK);
@@ -376,7 +396,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       return CompletableFuture.supplyAsync(() -> {
          try {
-            administration.createCache(cacheName, cfgBuilder.build());
+            if (request.method() == PUT) {
+               administration.getOrCreateCache(cacheName, cfgBuilder.build());
+            } else {
+               administration.createCache(cacheName, cfgBuilder.build());
+            }
             responseBuilder.status(OK);
          } catch (Throwable t) {
             responseBuilder.status(BAD_REQUEST).entity(t.getMessage());
@@ -476,6 +500,77 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       responseBuilder.entity(entity);
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
+   }
+
+   private CompletionStage<RestResponse> getCacheConfigMutableAttributes(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+
+      responseBuilder.contentType(APPLICATION_JSON);
+      if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
+         responseBuilder.status(NOT_FOUND).build();
+      }
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      if (cache == null)
+         return notFoundResponseFuture();
+
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      List<String> attributes = new ArrayList<>();
+      mutableAttributes(cacheConfiguration, attributes, null);
+      return asJsonResponseFuture(Json.make(attributes));
+   }
+
+   private static void mutableAttributes(ConfigurationElement<?> element, List<String> attributes, String prefix) {
+      prefix = prefix == null ? "" : element.name();
+      for (Attribute<?> attribute : element.attributes().attributes()) {
+         if (!attribute.isImmutable()) {
+            attributes.add(prefix + "." + attribute.getAttributeDefinition().name());
+         }
+      }
+      for (ConfigurationElement<?> child : element.children()) {
+         mutableAttributes(child, attributes, prefix);
+      }
+   }
+
+   private CompletionStage<RestResponse> getCacheConfigMutableAttribute(RestRequest request) {
+      String attributeName = request.getParameter("attribute-name");
+      String cacheName = request.variables().get("cacheName");
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      if (cache == null) {
+         return notFoundResponseFuture();
+      }
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      Attribute<?> attribute = cacheConfiguration.findAttribute(attributeName);
+      if (attribute.isImmutable()) {
+         return responseFuture(BAD_REQUEST);
+      } else {
+         return asJsonResponseFuture(Json.make(String.valueOf(attribute.get())));
+      }
+   }
+
+   private CompletionStage<RestResponse> setCacheConfigMutableAttribute(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String attributeName = request.getParameter("attribute-name");
+      String attributeValue = request.getParameter("attribute-value");
+      String cacheName = request.variables().get("cacheName");
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      if (cache == null) {
+         return notFoundResponseFuture();
+      }
+      Configuration configuration = new ConfigurationBuilder().read(SecurityActions.getCacheConfiguration(cache.getAdvancedCache())).build();
+      Attribute<?> attribute = configuration.findAttribute(attributeName);
+      invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
+      EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request).withFlags(AdminFlag.UPDATE);
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            attribute.fromString(attributeValue);
+            administration.getOrCreateCache(cacheName, configuration);
+            responseBuilder.status(OK);
+         } catch (Throwable t) {
+            responseBuilder.status(BAD_REQUEST).entity(Util.getRootCause(t).getMessage());
+         }
+         return responseBuilder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getSize(RestRequest request) {

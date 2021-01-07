@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -7,7 +9,6 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.transaction.LockingMode;
@@ -25,12 +26,14 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionConfiguration extends ConfigurationElement<TransactionConfiguration> {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_COMMIT, true).immutable().build();
    public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STOP_TIMEOUT, TimeUnit.SECONDS.toMillis(30)).build();
-   public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LOCKING, LockingMode.OPTIMISTIC).build();
+   public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LOCKING, LockingMode.OPTIMISTIC)
+         .immutable().build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder(org.infinispan.configuration.parsing.Attribute.TRANSACTION_MANAGER_LOOKUP_CLASS, GenericTransactionManagerLookup.INSTANCE)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
-         .copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
+         .copier(identityCopier()).autoPersist(false).immutable().build();
 
-   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
+   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class)
+         .copier(identityCopier()).autoPersist(false).immutable().build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, TransactionMode.NON_TRANSACTIONAL).immutable()
          .autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();

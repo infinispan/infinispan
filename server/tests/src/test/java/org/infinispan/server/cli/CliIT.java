@@ -106,6 +106,8 @@ public class CliIT {
 
          terminal.readln("stats");
          terminal.assertContains("required_minimum_number_of_nodes");
+
+         // COUNTERS
          terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
          terminal.readln("cd /containers/default/counters/cnt1");
          terminal.readln("describe");
@@ -120,6 +122,23 @@ public class CliIT {
          terminal.clear();
          terminal.readln("add --delta=100");
          terminal.assertContains("100");
+
+         // ALTER CACHE
+         terminal.readln("create cache --file=" + getCliResource("xcache.xml").getPath() + " xcache");
+         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.assertContains("\"lifespan\" : \"60000\"");
+         terminal.assertContains("\"max-count\" : \"1000\"");
+         terminal.clear();
+         terminal.readln("alter cache --file=" + getCliResource("xcache-alter.xml").getPath() + " xcache");
+         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.assertContains("\"lifespan\" : \"30000\"");
+         terminal.assertContains("\"max-count\" : \"2000\"");
+         terminal.clear();
+         terminal.readln("alter cache xcache --attribute=memory.max-count --value=5000");
+         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.assertContains("\"lifespan\" : \"30000\"");
+         terminal.assertContains("\"max-count\" : \"5000\"");
+         terminal.clear();
       }
    }
 

@@ -13,6 +13,8 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
 
+import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -143,6 +145,40 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          expectException(EmbeddedCacheManagerStartupException.class,
                          "(?s)org.infinispan.commons.CacheConfigurationException: ISPN000500: Cannot create clustered configuration for cache.*",
                          () -> newCm2.start());
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testConfigurationUpdate(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+         // Create two DIST caches
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).memory().maxCount(1000);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+         assertEquals(1000, cm1.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         assertEquals(1000, cm2.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         // Update the configuration
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).memory().maxCount(2000);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+         assertEquals(2000, cm1.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         assertEquals(2000, cm2.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         // Verify that it is unchanged if we don't use the UPDATE flag
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).memory().maxCount(3000);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+         assertEquals(2000, cm1.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         assertEquals(2000, cm2.getCache("cache1").getCacheConfiguration().memory().maxCount());
+         // Try to use an incompatible configuration
+         builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+         Exceptions.expectRootCause(IllegalArgumentException.class, () -> cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build()));
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }

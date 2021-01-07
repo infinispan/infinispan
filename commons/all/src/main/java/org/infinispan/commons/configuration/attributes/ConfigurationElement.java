@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.Util;
 
 /**
  * An abstract class which represents a configuration element, with attributes and child elements.
@@ -14,7 +16,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
  * @author Tristan Tarrant
  * @since 13.0
  **/
-public abstract class ConfigurationElement<T extends ConfigurationElement> implements Matchable<T> {
+public abstract class ConfigurationElement<T extends ConfigurationElement> implements Matchable<T>, Updatable<T> {
    public static final ConfigurationElement<?>[] CHILDLESS = new ConfigurationElement[0];
    protected final String element;
    protected final AttributeSet attributes;
@@ -36,12 +38,35 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       this.children = children != null ? children : CHILDLESS;
    }
 
+   public String name() {
+      return element;
+   }
+
    public final AttributeSet attributes() {
       return attributes;
    }
 
    public ConfigurationElement<?>[] children() {
       return children;
+   }
+
+   public Attribute<?> findAttribute(String name) {
+      int sep = name.indexOf('.');
+      if (sep < 0) {
+         if (!attributes.contains(name)) {
+            throw Log.CONFIG.noAttribute(name, element);
+         } else {
+            return attributes.attribute(name);
+         }
+      } else {
+         String part = name.substring(0, sep);
+         for (ConfigurationElement<?> child : children) {
+            if (part.equals(child.name())) {
+               return child.findAttribute(name.substring(sep + 1));
+            }
+         }
+         throw Log.CONFIG.noAttribute(name, element);
+      }
    }
 
    protected static <T extends ConfigurationElement> ConfigurationElement<T> list(Enum<?> element, List<T> list) {
@@ -55,11 +80,43 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       if (!attributes.matches(other.attributes)) return false;
       if (children.length != other.children.length) return false;
       for (int i = 0; i < children.length; i++) {
-         ConfigurationElement left = children[i];
-         ConfigurationElement right = other.children[i];
-         if (!left.matches(right)) return false;
+         ConfigurationElement ours = children[i];
+         ConfigurationElement theirs = other.children[i];
+         if (!ours.matches(theirs)) return false;
       }
       return true;
+   }
+
+   @Override
+   public void update(T other) {
+      this.attributes.update(other.attributes);
+      for (int i = 0; i < children.length; i++) {
+         ConfigurationElement ours = children[i];
+         ConfigurationElement theirs = other.children[i];
+         ours.update(theirs);
+      }
+   }
+
+   @Override
+   public void validateUpdate(T other) {
+      IllegalArgumentException iae = new IllegalArgumentException();
+      try {
+         this.attributes.validateUpdate(other.attributes);
+      } catch (Throwable t) {
+         Util.unwrapSuppressed(iae, t);
+      }
+      for (int i = 0; i < children.length; i++) {
+         ConfigurationElement ours = children[i];
+         ConfigurationElement theirs = other.children[i];
+         try {
+            ours.validateUpdate(theirs);
+         } catch (Throwable t) {
+            Util.unwrapSuppressed(iae, t);
+         }
+      }
+      if (iae.getSuppressed().length > 0) {
+         throw iae;
+      }
    }
 
    @Override

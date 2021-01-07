@@ -1,5 +1,7 @@
 package org.infinispan.cli.completers;
 
+import static org.infinispan.cli.completers.CacheCompleter.getCacheName;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,10 +9,7 @@ import java.util.Optional;
 
 import org.aesh.command.Command;
 import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.CacheAwareCommand;
 import org.infinispan.cli.connection.Connection;
-import org.infinispan.cli.resources.CacheResource;
-import org.infinispan.cli.resources.Resource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -31,14 +30,6 @@ public class SiteCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
       throw new IllegalStateException();
-   }
-
-   private static Optional<String> getCacheName(Context context, Command<?> command) {
-      Resource resource = context.getConnection().getActiveResource();
-      if (command instanceof CacheAwareCommand) {
-         return ((CacheAwareCommand) command).getCacheName(resource);
-      }
-      return CacheResource.findCacheName(resource);
    }
 
    private static Collection<String> getAvailableSites(Connection connection, String cacheName) {

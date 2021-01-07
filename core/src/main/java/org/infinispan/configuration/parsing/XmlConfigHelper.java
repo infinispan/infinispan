@@ -2,22 +2,17 @@ package org.infinispan.configuration.parsing;
 
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.util.BeanUtils;
+import org.infinispan.commons.util.Util;
 import org.w3c.dom.Element;
 
 /**
@@ -27,50 +22,6 @@ import org.w3c.dom.Element;
  * @since 4.0
  */
 public class XmlConfigHelper {
-   @SuppressWarnings({"rawtypes", "unchecked"})
-   public static Object valueConverter(Class klass, String value) {
-      if (klass == Character.class) {
-         if (value.length() == 1) {
-            return value.charAt(0);
-         }
-      } else if (klass == Byte.class) {
-         return Byte.valueOf(value);
-      } else if (klass == Short.class) {
-         return Short.valueOf(value);
-      } else if (klass == Integer.class) {
-         return Integer.valueOf(value);
-      } else if (klass == Long.class) {
-         return Long.valueOf(value);
-      } else if (klass == Boolean.class) {
-         return Boolean.valueOf(value);
-      } else if (klass == String.class) {
-         return value;
-      } else if (klass == char[].class) {
-         return value.toCharArray();
-      } else if (klass == Float.class) {
-         return Float.valueOf(value);
-      } else if (klass == Double.class) {
-         return Double.valueOf(value);
-      } else if (klass == BigDecimal.class) {
-         return new BigDecimal(value);
-      } else if (klass == BigInteger.class) {
-         return new BigInteger(value);
-      } else if (klass == File.class) {
-         return new File(value);
-      } else if (klass.isEnum()) {
-         return Enum.valueOf(klass, value);
-      } else if (klass == Properties.class) {
-         try {
-            Properties props = new Properties();
-            props.load(new ByteArrayInputStream(value.getBytes()));
-            return props;
-         } catch (IOException e) {
-            throw new CacheConfigurationException("Failed to load Properties from: " + value, e);
-         }
-      }
-
-      throw new CacheConfigurationException("Cannot convert " + value + " to type " + klass.getName());
-   }
 
    public static Map<Object, Object> setAttributes(AttributeSet attributes, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingAttribute) {
       Map<Object, Object> ignoredAttribs = new HashMap<>();
@@ -78,7 +29,7 @@ public class XmlConfigHelper {
          String name = NamingStrategy.KEBAB_CASE.convert((String) entry.getKey());
          if (attributes.contains(name)) {
             Attribute<Object> attribute = attributes.attribute(name);
-            attribute.set(valueConverter(attribute.getAttributeDefinition().getType(), (String) entry.getValue()));
+            attribute.set(Util.fromString(attribute.getAttributeDefinition().getType(), (String) entry.getValue()));
          } else if (failOnMissingAttribute) {
             throw new CacheConfigurationException("Couldn't find an attribute named [" + name + "] on attribute set [" + attributes.getName() + "]");
          } else {
@@ -132,7 +83,7 @@ public class XmlConfigHelper {
                    continue; // try another param with the same name.
                }
 
-               Object parameter = valueConverter(parameterType, (String) attribs.get(propName));
+               Object parameter = Util.fromString(parameterType, (String) attribs.get(propName));
 
                try {
                   m.invoke(target, parameter);

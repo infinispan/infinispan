@@ -18,7 +18,7 @@ SYNOPSIS
 CREATE CACHE OPTIONS
 --------------------
 *-f, --file*='FILE'::
-Specifies a configuration file in JSON or XML format.
+Specifies a configuration file in XML, JSON or YAML format.
 
 *-t, --template*='TEMPLATE'::
 Specifies a configuration template. Use tab autocompletion to see available templates.

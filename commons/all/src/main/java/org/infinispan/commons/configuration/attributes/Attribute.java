@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.Util;
 
 /**
  * Attribute. This class implements a configuration attribute value holder. A configuration attribute is defined by an
@@ -20,7 +22,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
+public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, Updatable<Attribute<T>> {
    private final AttributeDefinition<T> definition;
    private T value;
    private boolean protect;
@@ -61,7 +63,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
 
    public void set(T value) {
       if (protect) {
-         throw new IllegalStateException();
+         throw Log.CONFIG.protectedAttribute(definition.name());
       }
       T oldValue = this.value;
       this.value = value;
@@ -71,12 +73,16 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
 
    public void setImplied(T value) {
       if (protect) {
-         throw new IllegalStateException();
+         throw Log.CONFIG.protectedAttribute(definition.name());
       }
       T oldValue = this.value;
       this.value = value;
       this.modified = false;
       this.fireValueChanged(oldValue);
+   }
+
+   public void fromString(String value) {
+      set((T) Util.fromString(definition.getType(), value));
    }
 
    public T computeIfAbsent(Supplier<T> supplier) {
@@ -214,6 +220,47 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          }
       }
       return true;
+   }
+
+   /**
+    * Updates this attribute with the value of the other attribute only if the attribute is mutable and the other has
+    * been modified from its default value
+    *
+    * @param other
+    */
+   @Override
+   public void update(Attribute<T> other) {
+      if (this.definition.equals(other.definition)) {
+         if (isImmutable()) {
+            // Ensure that there are no incompatible changes
+            if (definition.isGlobal() && !equals(other)) {
+               throw Log.CONFIG.incompatibleAttribute(definition.name(), String.valueOf(value), String.valueOf(other.value));
+            }
+         } else if (!equals(other)) {
+            if (other.isModified()) {
+               set(other.get());
+            } else {
+               setImplied(other.get());
+            }
+            Log.CONFIG.debugf("Updated attribute '%s' to value '%s'", name(), value);
+         }
+      } else {
+         throw new IllegalArgumentException(this + "!=" + other);
+      }
+   }
+
+   @Override
+   public void validateUpdate(Attribute<T> other) {
+      if (this.definition.equals(other.definition)) {
+         if (isImmutable()) {
+            // Ensure that there are no incompatible changes
+            if (definition.isGlobal() && !Objects.equals(value, other.value)) {
+               throw Log.CONFIG.incompatibleAttribute(definition.name(), String.valueOf(value), String.valueOf(other.value));
+            }
+         }
+      } else {
+         throw new IllegalArgumentException(this + "!=" + other);
+      }
    }
 
    @Override

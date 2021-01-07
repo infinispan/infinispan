@@ -1,11 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -38,7 +39,8 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BEFORE, null, Class.class)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
-   public static final AttributeDefinition<AsyncInterceptor> INTERCEPTOR = AttributeDefinition.builder(Element.INTERCEPTOR, null, AsyncInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<AsyncInterceptor> INTERCEPTOR = AttributeDefinition.builder(Element.INTERCEPTOR, null, AsyncInterceptor.class)
+         .copier(identityCopier()).immutable().build();
    public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CLASS, null, Class.class)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, -1).immutable().build();

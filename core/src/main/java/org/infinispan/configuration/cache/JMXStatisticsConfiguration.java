@@ -7,9 +7,9 @@ package org.infinispan.configuration.cache;
  * @deprecated since 10.1.3. Use {@link StatisticsConfiguration} instead. This will be removed in next major version.
  */
 @Deprecated
-public abstract class JMXStatisticsConfiguration {
+public interface JMXStatisticsConfiguration {
 
-   public abstract boolean enabled();
+   boolean enabled();
 
    /**
     * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
@@ -17,5 +17,5 @@ public abstract class JMXStatisticsConfiguration {
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
    @Deprecated
-   public abstract boolean available();
+   boolean available();
 }

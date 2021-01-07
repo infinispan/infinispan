@@ -1,11 +1,12 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import java.util.List;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.remoting.transport.Transport;
 
 /*
@@ -15,7 +16,7 @@ public class JGroupsConfiguration {
 
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
          .builder("transport", null, Transport.class)
-         .copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+         .copier(identityCopier()).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JGroupsConfiguration.class, TRANSPORT);

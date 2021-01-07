@@ -6,7 +6,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.ConfigurationManager;
@@ -36,22 +36,32 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
    }
 
    @Override
-   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw CONFIG.immutableConfiguration();
    }
 
    @Override
-   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw CONFIG.immutableConfiguration();
    }
 
    @Override
-   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw CONFIG.immutableConfiguration();
    }
 
    @Override
-   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> updateConfiguration(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      throw CONFIG.immutableConfiguration();
+   }
+
+   @Override
+   public CompletionStage<Void> validateConfigurationUpdate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      throw CONFIG.immutableConfiguration();
+   }
+
+   @Override
+   public CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw CONFIG.immutableConfiguration();
    }
 

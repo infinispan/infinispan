@@ -5,7 +5,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -26,8 +26,12 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTS, 256).immutable().build();
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
-         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, new HashFunctionPartitioner(), KeyPartitioner.class)
-         .copier(SimpleInstanceAttributeCopier.INSTANCE)
+         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, new HashFunctionPartitioner(NUM_SEGMENTS.getDefaultValue()), KeyPartitioner.class)
+         .copier(original -> {
+            KeyPartitioner copy = Util.getInstance(original.getClass());
+            copy.init(original);
+            return copy;
+         })
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
          .immutable().build();
 
