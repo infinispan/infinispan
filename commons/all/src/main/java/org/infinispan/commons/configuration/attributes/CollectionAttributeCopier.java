@@ -13,7 +13,11 @@ import java.util.HashSet;
  * @since 7.2
  */
 public class CollectionAttributeCopier<T> implements AttributeCopier<T> {
-   public static final AttributeCopier<Object> INSTANCE = new CollectionAttributeCopier<>();
+   private static final AttributeCopier<Object> INSTANCE = new CollectionAttributeCopier<>();
+
+   public static <T> CollectionAttributeCopier<T> collectionCopier() {
+      return (CollectionAttributeCopier<T>) INSTANCE;
+   }
 
    @SuppressWarnings("unchecked")
    @Override

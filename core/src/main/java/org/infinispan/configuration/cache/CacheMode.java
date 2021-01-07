@@ -2,14 +2,18 @@ package org.infinispan.configuration.cache;
 
 
 import static org.infinispan.configuration.parsing.Element.DISTRIBUTED_CACHE;
+import static org.infinispan.configuration.parsing.Element.DISTRIBUTED_CACHE_CONFIGURATION;
 import static org.infinispan.configuration.parsing.Element.INVALIDATION_CACHE;
+import static org.infinispan.configuration.parsing.Element.INVALIDATION_CACHE_CONFIGURATION;
 import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE;
+import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE_CONFIGURATION;
 import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE;
+import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE_CONFIGURATION;
 import static org.infinispan.configuration.parsing.Element.SCATTERED_CACHE;
-
-import java.util.Arrays;
+import static org.infinispan.configuration.parsing.Element.SCATTERED_CACHE_CONFIGURATION;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 /**
@@ -168,8 +172,22 @@ public enum CacheMode {
       }
    }
 
-   public static boolean isValidCacheMode(String serializedCacheMode) {
-      return Arrays.stream(values()).map(CacheMode::toCacheType).anyMatch(s -> s.equals(serializedCacheMode));
+   public Element toElement(boolean template) {
+      switch (this) {
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            return template ? DISTRIBUTED_CACHE_CONFIGURATION : DISTRIBUTED_CACHE;
+         case REPL_SYNC:
+         case REPL_ASYNC:
+            return template ? REPLICATED_CACHE_CONFIGURATION : REPLICATED_CACHE;
+         case INVALIDATION_SYNC:
+         case INVALIDATION_ASYNC:
+            return template ? INVALIDATION_CACHE_CONFIGURATION : INVALIDATION_CACHE;
+         case SCATTERED_SYNC:
+            return template ? SCATTERED_CACHE_CONFIGURATION : SCATTERED_CACHE;
+         default:
+            return template ? LOCAL_CACHE_CONFIGURATION : LOCAL_CACHE;
+      }
    }
 
    public static CacheMode fromParts(String distribution, String synchronicity) {

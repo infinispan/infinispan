@@ -5,6 +5,7 @@ Use the command line interface (CLI) to perform operations on remote caches such
 
 include::{topics}/proc_creating_caches_cli.adoc[leveloffset=+1]
 include::{topics}/ref_infinispan_caches.adoc[leveloffset=+2]
+include::{topics}/proc_cli_modifying_cache_configuration.adoc[leveloffset=+1]
 include::{topics}/proc_cli_adding_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_deleting_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_dropping_caches.adoc[leveloffset=+1]

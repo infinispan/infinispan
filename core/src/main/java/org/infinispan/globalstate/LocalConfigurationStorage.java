@@ -2,7 +2,7 @@ package org.infinispan.globalstate;
 
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.ConfigurationManager;
@@ -44,7 +44,7 @@ public interface LocalConfigurationStorage {
     * @param configuration the {@link Configuration} to use
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Creates the template using the supplied configuration and flags.
@@ -53,7 +53,25 @@ public interface LocalConfigurationStorage {
     * @param configuration the {@link Configuration} to use
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+
+   /**
+    * Updates an existing configuration. Only the attributes that are mutable and that have been modified in the supplied
+    * configuration will be applied.
+    *
+    * @param name the name of the configuration (cache/template)
+    * @param configuration the configuration changes to apply
+    * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
+    */
+   CompletionStage<Void> updateConfiguration(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+
+   /**
+    * Validates an update to an existing configuration.
+    * @param name the name of the configuration (cache/template)
+    * @param configuration the configuration changes to apply
+    * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
+    */
+   CompletionStage<Void> validateConfigurationUpdate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Removes the specified cache.
@@ -61,7 +79,7 @@ public interface LocalConfigurationStorage {
     * @param name the name of the cache to remove
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Removes the specified template.
@@ -69,7 +87,7 @@ public interface LocalConfigurationStorage {
     * @param name the name of the template to remove
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Loads all persisted cache configurations

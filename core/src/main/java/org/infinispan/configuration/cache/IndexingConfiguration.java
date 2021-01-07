@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.CollectionAttributeCopier.collectionCopier;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,7 +11,6 @@ import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.parsing.Element;
@@ -30,10 +31,10 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    @Deprecated
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_CONFIG, false).immutable().build();
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder(Element.KEY_TRANSFORMERS, null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
-         .copier(CollectionAttributeCopier.INSTANCE)
+         .copier(collectionCopier())
          .initializer(HashMap::new).immutable().build();
    public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder(Element.INDEXED_ENTITIES, null, (Class<Set<String>>) (Class<?>) Set.class)
-         .copier(CollectionAttributeCopier.INSTANCE)
+         .copier(collectionCopier())
          .initializer(HashSet::new).immutable().build();
    public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.FILESYSTEM)
          .immutable().build();

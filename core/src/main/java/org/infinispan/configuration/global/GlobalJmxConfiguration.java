@@ -1,12 +1,13 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -17,7 +18,7 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder("domain", "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanServerLookup", null, MBeanServerLookup.class)
-         .copier(IdentityAttributeCopier.INSTANCE).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
+         .copier(identityCopier()).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(TypedProperties::new).build();
 
    static AttributeSet attributeDefinitionSet() {

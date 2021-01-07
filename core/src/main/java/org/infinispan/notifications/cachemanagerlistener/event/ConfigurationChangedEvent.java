@@ -9,6 +9,7 @@ package org.infinispan.notifications.cachemanagerlistener.event;
 public interface ConfigurationChangedEvent extends Event {
    enum EventType {
       CREATE,
+      UPDATE,
       REMOVE
    }
 

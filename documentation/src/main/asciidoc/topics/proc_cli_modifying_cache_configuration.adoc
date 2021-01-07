@@ -1,0 +1,28 @@
+[id='modifying-cache-configuration']
+= Modifying {brandname} cache configuration
+Make changes to your remote cache configuration with the {brandname} CLI.
+You can modify attributes in your cache configuration either one at a time or provide a cache configuration in XML, JSON or YAML format to modify several attributes at once.
+
+.Prerequisites
+
+* Create at least one remote cache on your {brandname} cluster.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Modify the cache configuration with the [command]`alter` command in one of the following ways:
++
+* Use the `--file` option to specify a configuration file with one or more attribute modifications.
+* Use the `--attribute` and `--value` option to modify a specific configuration attribute.
++
+[TIP]
+====
+For more information and examples, run the [command]`help alter` command.
+====
++
+. Verify your changes with the [command]`describe` command, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe caches/mycache
+----

@@ -102,7 +102,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Expecting a protected configuration for %s", id = 912)
    IllegalStateException unprotectedAttributeSet(String name);
 
-   @Message(value = "Expecting a unprotected configuration for %s", id = 913)
+   @Message(value = "Expecting an unprotected configuration for %s", id = 913)
    IllegalStateException protectedAttributeSet(String name);
 
    @Message(value = "Duplicate attribute '%s' in attribute set '%s'", id = 914)
@@ -252,6 +252,15 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Property '%s' has been deprecated. Please use '%s' instead.", id = 29525)
    void deprecatedProperty(String oldName, String newName);
+
+   @Message(value = "No attribute '%s' in '%s'", id = 29526)
+   IllegalArgumentException noAttribute(String name, String element);
+
+   @Message(value = "Incompatible attribute '%s', existing value='%s', new value='%s'", id = 29527)
+   IllegalArgumentException incompatibleAttribute(String name, String v1, String v2);
+
+   @Message(value = "Cannot modify protected attribute '%s'", id = 29528)
+   IllegalStateException protectedAttribute(String name);
 
    //----- counters exceptions // don't use the same id range  ------
 }

@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import static org.infinispan.util.concurrent.CompletableFutures.uncheckedAwait;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.util.EnumSet;
 
@@ -38,54 +38,54 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.createCache(cacheName, configuration, flags));
+      join(clusterConfigurationManager.createCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, String template) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.createCache(cacheName, template, flags));
+      join(clusterConfigurationManager.createCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, String template) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public void createTemplate(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.createTemplate(name, configuration, flags));
+      join(clusterConfigurationManager.createTemplate(name, configuration, flags));
    }
 
    @Override
    public Configuration getOrCreateTemplate(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
+      join(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
       return cacheManager.getCacheConfiguration(name);
    }
 
    @Override
    public void removeTemplate(String name) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.removeTemplate(name, flags));
+      join(clusterConfigurationManager.removeTemplate(name, flags));
    }
 
    @Override
    public void removeCache(String cacheName) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      uncheckedAwait(clusterConfigurationManager.removeCache(cacheName, flags));
+      join(clusterConfigurationManager.removeCache(cacheName, flags));
    }
 
    @Override

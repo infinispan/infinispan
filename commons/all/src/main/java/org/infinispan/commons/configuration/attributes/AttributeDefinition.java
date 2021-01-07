@@ -82,7 +82,7 @@ public final class AttributeDefinition<T> {
       return global;
    }
 
-   public AttributeCopier copier() {
+   public AttributeCopier<T> copier() {
       return copier;
    }
 
@@ -178,7 +178,7 @@ public final class AttributeDefinition<T> {
       private boolean immutable = false;
       private boolean autoPersist = true;
       private boolean global = true;
-      private AttributeCopier copier = null;
+      private AttributeCopier<T> copier = null;
       private AttributeInitializer<? extends T> initializer;
       private AttributeValidator<? super T> validator;
       private AttributeSerializer<? super T> serializer = AttributeSerializer.DEFAULT;
@@ -194,7 +194,7 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
-      public Builder<T> copier(AttributeCopier copier) {
+      public Builder<T> copier(AttributeCopier<T> copier) {
          this.copier = copier;
          return this;
       }

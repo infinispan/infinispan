@@ -9,10 +9,11 @@ import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.configuration.parsing.ParserRegistry;
 
-public class Configuration implements BasicConfiguration, Matchable<Configuration> {
+public class Configuration extends ConfigurationElement<Configuration> implements BasicConfiguration {
 
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SIMPLE_CACHE, false).immutable().build();
 
@@ -36,7 +37,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
    private final Map<Class<?>, ?> moduleConfiguration;
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
-   private final AttributeSet attributes;
    private final boolean template;
 
    Configuration(boolean template, AttributeSet attributes,
@@ -44,17 +44,28 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  ExpirationConfiguration expirationConfiguration,
                  EncodingConfiguration encodingConfiguration,
-                 IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
+                 IndexingConfiguration indexingConfiguration,
+                 InvocationBatchingConfiguration invocationBatchingConfiguration,
                  StatisticsConfiguration statisticsConfiguration,
                  PersistenceConfiguration persistenceConfiguration,
                  LockingConfiguration lockingConfiguration,
                  SecurityConfiguration securityConfiguration,
-                 TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
+                 TransactionConfiguration transactionConfiguration,
+                 UnsafeConfiguration unsafeConfiguration,
                  SitesConfiguration sitesConfiguration,
                  MemoryConfiguration memoryConfiguration,
                  List<?> modules) {
+      super(clusteringConfiguration.cacheMode().toElement(template), attributes,
+            clusteringConfiguration,
+            expirationConfiguration,
+            encodingConfiguration,
+            statisticsConfiguration,
+            lockingConfiguration,
+            transactionConfiguration,
+            unsafeConfiguration,
+            sitesConfiguration,
+            memoryConfiguration);
       this.template = template;
-      this.attributes = attributes.checkProtection();
       this.simpleCache = attributes.attribute(SIMPLE_CACHE);
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
@@ -75,10 +86,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    public boolean simpleCache() {

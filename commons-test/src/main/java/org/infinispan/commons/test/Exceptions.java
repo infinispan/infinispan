@@ -140,6 +140,11 @@ public class Exceptions {
       assertException(wrapperExceptionClass[wrapperExceptionClass.length - 1], regex, t);
    }
 
+   public static void expectRootCause(Class<? extends Throwable> exceptionClass, ExceptionRunnable runnable) {
+      Throwable t = getRootCause(extractException(runnable));
+      assertException(exceptionClass, t);
+   }
+
    public static void expectExceptionNonStrict(Class<? extends Throwable> e, ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
       assertExceptionNonStrict(e, t);
@@ -276,6 +281,15 @@ public class Exceptions {
          exception = t;
       }
       return exception;
+   }
+
+   public static Throwable getRootCause(Throwable re) {
+      if (re == null) return null;
+      Throwable cause = re.getCause();
+      if (cause != null)
+         return getRootCause(cause);
+      else
+         return re;
    }
 
    public static void unchecked(ExceptionRunnable runnable) {

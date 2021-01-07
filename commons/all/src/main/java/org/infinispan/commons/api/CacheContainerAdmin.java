@@ -27,7 +27,14 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
        */
       @Deprecated
       PERMANENT,
-      VOLATILE;
+      /**
+       * Configuration changes will not be persisted to the global state.
+       */
+      VOLATILE,
+      /**
+       * If a configuration already exists, and is compatible with the supplied configuration, update it.
+       */
+      UPDATE;
 
       private static final AdminFlag[] CACHED_VALUES = AdminFlag.values();
 

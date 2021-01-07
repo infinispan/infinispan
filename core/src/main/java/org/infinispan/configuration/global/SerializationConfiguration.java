@@ -1,5 +1,7 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.commons.configuration.attributes.CollectionAttributeCopier.collectionCopier;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +11,6 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -19,7 +20,7 @@ public class SerializationConfiguration {
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
          .immutable().build();
    public static final AttributeDefinition<Map<Integer, AdvancedExternalizer<?>>> ADVANCED_EXTERNALIZERS = AttributeDefinition.builder("advancedExternalizer", null, (Class<Map<Integer, AdvancedExternalizer<?>>>) (Class<?>) Map.class)
-         .copier(CollectionAttributeCopier.INSTANCE)
+         .copier(collectionCopier())
          .initializer(HashMap::new).immutable().build();
 
    public static final AttributeDefinition<List<SerializationContextInitializer>> SERIALIZATION_CONTEXT_INITIALIZERS =
