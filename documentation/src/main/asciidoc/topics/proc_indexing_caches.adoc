@@ -1,0 +1,67 @@
+[id='indexing_caches-{context}']
+= Configuring {brandname} to Index Caches
+Create indexes of values in your caches to improve query performance and use full-text search capabilities.
+
+[NOTE]
+====
+{brandname} uses link:http://lucene.apache.org/[Apache Lucene] technology to index values in caches.
+====
+
+.Procedure
+
+. Enable indexing in your cache configuration.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<distributed-cache name="my-cache">
+   <indexing> <1>
+      ...
+   </indexing>
+</distributed-cache>
+----
+<1> Adding an `<indexing>` element automatically enables indexing. You do not need to include the `enabled` attribute, even though the default value of the `enabled` attribute is `false` in the configuration schema.
++
+. Specify each entity that you want to index as a value for the `indexed-entity` element.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<distributed-cache name="my-cache">
+   <indexing>
+     <indexed-entities>
+       <indexed-entity>...</indexed-entity>
+     </indexed-entities>
+   </indexing>
+</distributed-cache>
+----
+
+.Plain Old Java Objects
+
+For caches that store POJOs, you specify the fully qualified class name that is annotated with `@Indexed`, for example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<indexed-entities>
+  <indexed-entity>org.infinispan.sample.Car</indexed-entity>
+  <indexed-entity>org.infinispan.sample.Truck</indexed-entity>
+</indexed-entities>
+----
+
+.Protobuf
+
+For caches that store Protobuf-encoded entries, you specify the `Message` declared in the Protobuf schema.
+
+For example, you use the following Protobuf schema:
+
+[source,proto]
+----
+include::code_examples/library.proto[]
+----
+
+You should then specify the following value for the `indexed-entity` element:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<indexed-entities>
+  <indexed-entity>book_sample.Book</indexed-entity>
+</indexed-entities>
+----

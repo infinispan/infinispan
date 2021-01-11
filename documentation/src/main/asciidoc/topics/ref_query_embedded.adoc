@@ -1,0 +1,165 @@
+[id='embedded_queries-{context}']
+= Embedded Queries
+Use embedded queries when you add {brandname} as a library to custom applications.
+
+Protobuf mapping is not required with embedded queries.
+Indexing and querying are both done on top of Java objects.
+
+== Embedded Query Example
+
+We're going to store `Book` instances in an {brandname} cache called "books". `Book` instances will be indexed, so we enable indexing for the cache:
+
+{brandname} configuration:
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan_distributed_cache_books.xml[]
+----
+
+Obtaining the cache:
+
+[source,java]
+----
+import org.infinispan.Cache;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+
+EmbeddedCacheManager manager = new DefaultCacheManager("infinispan.xml");
+Cache<String, Book> cache = manager.getCache("books");
+----
+
+Each `Book` will be defined as in the following example; we have to choose which properties are indexed, and for each property we can optionally choose advanced indexing options using the annotations defined in the Hibernate Search project.
+
+[source,java]
+.Book.java
+----
+include::code_examples/BookEmbedded.java[]
+----
+
+[source,java]
+.Author.java
+----
+include::code_examples/AuthorEmbedded.java[]
+----
+
+Now assuming we stored several `Book` instances in our {brandname} `Cache`, we can search them for any matching field as in the following example.
+
+[source,java]
+.QueryExample.java
+----
+include::code_examples/QueryExample.java[]
+----
+
+== Mapping Entities
+
+{brandname} relies on the API of link:http://hibernate.org/search/[Hibernate Search] in order to define fine grained configuration for indexing at entity level.
+This configuration includes which fields are annotated, which analyzers should be used, how to map nested objects and so on.
+Detailed documentation is available at link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#mapper-orm-mapping[the Hibernate Search manual].
+
+[discrete]
+=== @DocumentId
+Unlike Hibernate Search, using `@DocumentId` to mark a field as identifier does not apply to {brandname} values; in {brandname} the identifier for all `@Indexed` objects is the key used to store the value. You can still customize how the key is indexed using a combination of `@Transformable` , custom types and custom `FieldBridge` implementations.
+
+[discrete]
+=== @Transformable keys
+The key for each value needs to be indexed as well, and the key instance must be transformed in a `String`. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of `org.infinispan.query.Transformer` .
+
+.Registering a key Transformer via annotations
+
+You can annotate your key class with `org.infinispan.query.Transformable` and your custom transformer implementation
+will be picked up automatically:
+
+[source,java]
+----
+@Transformable(transformer = CustomTransformer.class)
+public class CustomKey {
+   ...
+}
+
+public class CustomTransformer implements Transformer {
+   @Override
+   public Object fromString(String s) {
+      ...
+      return new CustomKey(...);
+   }
+
+   @Override
+   public String toString(Object customType) {
+      CustomKey ck = (CustomKey) customType;
+      return ...
+   }
+}
+----
+
+.Registering a key Transformer via the cache indexing configuration
+
+Use the `key-transformers` xml element in both embedded and server config:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_key_transformer.xml[]
+----
+
+Alternatively, use the Java configuration API (embedded mode):
+
+[source,java]
+----
+   ConfigurationBuilder builder = ...
+   builder.indexing().enable()
+         .addKeyTransformer(CustomKey.class, CustomTransformer.class);
+----
+
+[discrete]
+=== Programmatic mapping
+
+Instead of using annotations to map an entity to the index, it's also possible to configure it programmatically.
+
+In the following example we map an object `Author` which is to be stored in the grid and made searchable on two properties but without annotating the class.
+
+[source,java]
+----
+import org.apache.lucene.search.Query;
+import org.hibernate.search.cfg.Environment;
+import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.query.dsl.QueryBuilder;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
+
+import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.util.Properties;
+
+SearchMapping mapping = new SearchMapping();
+mapping.entity(Author.class).indexed()
+       .property("name", ElementType.METHOD).field()
+       .property("surname", ElementType.METHOD).field();
+
+Properties properties = new Properties();
+properties.put(Environment.MODEL_MAPPING, mapping);
+properties.put("hibernate.search.[other options]", "[...]");
+
+Configuration infinispanConfiguration = new ConfigurationBuilder()
+        .indexing().index(Index.NONE)
+        .withProperties(properties)
+        .build();
+
+DefaultCacheManager cacheManager = new DefaultCacheManager(infinispanConfiguration);
+
+Cache<Long, Author> cache = cacheManager.getCache();
+SearchManager sm = Search.getSearchManager(cache);
+
+Author author = new Author(1, "Manik", "Surtani");
+cache.put(author.getId(), author);
+
+QueryBuilder qb = sm.buildQueryBuilderForClass(Author.class).get();
+Query q = qb.keyword().onField("name").matching("Manik").createQuery();
+CacheQuery cq = sm.getQuery(q, Author.class);
+assert cq.getResultSize() == 1;
+----

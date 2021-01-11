@@ -898,7 +898,7 @@
           <xs:sequence>
             <xs:element name="index-reader" type="tns:index-reader" minOccurs="0">
               <xs:annotation>
-                <xs:documentation>Controls index reading parameters</xs:documentation>
+                <xs:documentation>Controls index reading parameters.</xs:documentation>
               </xs:annotation>
             </xs:element>
             <xs:element name="index-writer" type="tns:index-writer" minOccurs="0">
@@ -2330,8 +2330,7 @@
       </xs:enumeration>
       <xs:enumeration value="local-heap">
         <xs:annotation>
-          <xs:documentation>JVM heap index storage, not persisted between restarts. Only suitable for small datasets
-            with low concurrency.
+          <xs:documentation>JVM heap index storage, not persisted between restarts. Only suitable for small datasets with low concurrency.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
@@ -2342,11 +2341,8 @@
     <xs:attribute name="refresh-interval" type="xs:long" default="0">
       <xs:annotation>
         <xs:documentation>
-          Advanced: Defines the interval in milliseconds to reopen the index reader.
-          By default, the index reader is refreshed on-demand during searches, if
-          new entries were indexed since the last refresh. Configuring with a value
-          larger than zero will make some queries results stale, but query throughput
-          will increase substantially, specially in write heavy scenarios.
+          Interval, in milliseconds, to reopen the index reader.
+          By default, the index reader is refreshed on-demand during searches, if new entries were indexed since the last refresh. Configuring with a value larger than zero will make some queries results stale, but query throughput will increase substantially, specially in write heavy scenarios.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2356,57 +2352,42 @@
     <xs:attribute name="max-entries" type="xs:int">
       <xs:annotation>
         <xs:documentation>
-          Advanced: The maximum number of entries that a index segment can have before merging. Segments with more than
-          this number of entries will not be merged. Smaller values perform better on frequently changing indexes,
-          larger values provide better search performance if the index does not change often.
+          Maximum number of entries that an index segment can have before merging. Segments with more than this number of entries are not merged. Smaller values perform better on frequently changing indexes, larger values provide better search performance if the index does not change often.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="factor" type="xs:int">
       <xs:annotation>
         <xs:documentation>
-          The number of segments that are merged at once.
-          With smaller values, merging happens more often and thus uses more resources, but the total number of segments
-          will be lower on average, increasing read performance. Thus, larger values (&gt; 10) are best for heavy writing
-          scenarios.
+          Number of segments that are merged at once. With smaller values, merging happens more often, which uses more resources, but the total number of segments will be lower on average, increasing search performance. Larger values (greater than 10) are best for heavy writing scenarios.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="min-size" type="xs:int">
       <xs:annotation>
         <xs:documentation>
-          The minimum target size of segments, in MB, for background merges.
-          Segments smaller than this size are merged more aggressively.
-          Setting this too large might result in expensive merge operations, even tough they are less frequent.
+          Minimum target size of segments, in MB, for background merges. Segments smaller than this size are merged more aggressively. Setting a value that is too large might result in expensive merge operations, even though they are less frequent.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="max-size" type="xs:int">
       <xs:annotation>
         <xs:documentation>
-          The maximum size of segments, in MB, for background merges.
-          Segments larger than this size are never merged in the background.
-          Settings this to a lower value helps reduce memory requirements and avoids some merging operations at the
-          cost of optimal search speed. When forcefully merging an index, this value is ignored and max-forced-size is
-          used instead (see below).
+          Maximum size of segments, in MB, for background merges. Segments larger than this size are never merged in the background. Settings this to a lower value helps reduce memory requirements and avoids some merging operations at the cost of optimal search speed. This attribute is ignored when forcefully merging an index and `max-forced-size` applies instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="max-forced-size" type="xs:int">
       <xs:annotation>
         <xs:documentation>
-          The maximum size of segments, in MB, for forced merges. This is the equivalent of max-size for forceful
-          merges. You will generally want to set this to the same value as max-size or lower, but setting it too low
-          will degrade search performance as documents are deleted.
+          maximum size of segments, in MB, for forced merges and overrides the `max-size` attribute. Set this to the same value as `max-size` or lower. However setting the value too low degrades search performance because documents are deleted.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="calibrate-by-deletes" type="xs:boolean">
       <xs:annotation>
         <xs:documentation>
-          Whether the number of deleted entries in an index should be taken into account when counting the entries in
-          the segment. Setting false will lead to more frequent merges caused by max-entries, but will more aggressively
-          merge segments with many deleted entries, improving search performance.
+          Whether the number of deleted entries in an index should be taken into account when counting the entries in the segment. Setting `false` will lead to more frequent merges caused by `max-entries`, but will more aggressively merge segments with many deleted documents, improving search performance.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2426,61 +2407,49 @@
     <xs:attribute name="commit-interval" type="xs:int" default="1000">
       <xs:annotation>
         <xs:documentation>
-          Period in milliseconds that index changes that are buffered in memory are flushed to the index storage.
-          As this operation is costly, small values should be avoided.
+          Amount of time, in milliseconds, that index changes that are buffered in memory are flushed to the index storage and a commit is performed. Because operation is costly, small values should be avoided. The default is 1000 ms (1 second).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="ram-buffer-size" type="xs:int" default="32">
       <xs:annotation>
         <xs:documentation>
-          Advanced: The maximum amount of RAM that may be used for buffering added entries and deletions before they are
-          flushed to the index storage. Large values mean faster indexing, but more RAM usage.
-          Generally for faster indexing performance it's best to use this setting rather than max-buffered-entries.
-          When used together with max-buffered-entries a flush occurs for whichever event happens first.
+          Maximum amount of memory that can be used for buffering added entries and deletions before they are flushed to the index storage. Large values result in faster indexing but use more memory. For faster indexing performance you should set this attribute instead of `max-buffered-entries`. When used in combination with the `max-buffered-entries` attribute, a flush occurs for whichever event happens first.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="max-buffered-entries" type="xs:int" default="32">
       <xs:annotation>
         <xs:documentation>
-          Advanced: The maximum number of entries that can be buffered in-memory before they are flushed to the index
-          storage. Large values mean faster indexing, but more RAM usage. When used together with ram-buffer-size a
-          flush occurs for whichever event happens first.
+          Maximum number of entries that can be buffered in-memory before they are flushed to the index storage. Large values result in faster indexing but use more memory. When used in combination with the `ram-buffer-size` attribute, a flush occurs for whichever event happens first.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="thread-pool-size" type="xs:int" default="1">
       <xs:annotation>
         <xs:documentation>
-          Advanced: Number of threads to execute write operations to a certain index.
+          Number of threads that execute write operations to the index.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="queue-count" type="xs:int" default="1">
       <xs:annotation>
         <xs:documentation>
-          Advanced: Number of internal queues to use for each indexed type. Each queue holds a batch of modifications
-          that is applied to the index, and queues are processed in parallel. Increasing the number of queues will lead
-          to an increase of indexing throughput, but only if the bottleneck is CPU. For optimum results, avoid queue-count
-          larger than the thread-pool-size.
+          Number of internal queues to use for each indexed type. Each queue holds a batch of modifications that is applied to the index and queues are processed in parallel. Increasing the number of queues will lead to an increase of indexing throughput, but only if the bottleneck is CPU. For optimum results, do not set a value for `queue-count` that is larger than the value for `thread-pool-size`.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="queue-size" type="xs:int" default="1000">
       <xs:annotation>
         <xs:documentation>
-          Advanced: The maximum number of elements each queue can hold. The larger the queue-size, more memory will be
-          used during indexing operations. A value too small can increase the likelihood of blocking during indexing.
+          Maximum number of elements each queue can hold. Increasing the `queue-size` value increases the amount of memory that is used during indexing operations. Setting a value that is too small can block indexing operations.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="low-level-trace" type="xs:boolean" default="false">
       <xs:annotation>
         <xs:documentation>
-          Advanced: Enables low level trace information about indexing operations. Cause a substantial performance
-          penalty and
-          should only be used as a last resources for troubleshooting.
+          Enables low-level trace information for indexing operations. Enabling this attribute substantially degrades performance. You should use this low-level tracing only as a last resource for troubleshooting.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

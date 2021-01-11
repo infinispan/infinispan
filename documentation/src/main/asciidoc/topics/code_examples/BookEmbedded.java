@@ -6,7 +6,8 @@ import java.util.Set;
 
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
-//Values you want to index need to be annotated with @Indexed, then you pick which fields and how they are to be indexed:
+// Annotate values with @Indexed to add them to indexes
+// Annotate each fields according to how you want to index it
 @Indexed
 public class Book {
    @FullTextField

@@ -1,0 +1,191 @@
+[id='remote_queries-{context}']
+= Remote Queries
+Use remote queries when you set up {brandname} Sever clusters that you access from clients.
+
+To perform remote queries, data in the cache must use link:http://code.google.com/p/protobuf/[Google Protocol Buffers] as an encoding for both over-the-wire transmission and storage.
+Additionally, remote queries require Protobuf schemas (`.proto` files) to define the data structure and indexing elements.
+
+[NOTE]
+====
+The benefit of using Protobuf with remote queries is that it is language neutral and works with Hot Rod Java clients as well as REST, C{plusplus}, C#, and Node.js clients.
+====
+
+== Remote Query Example
+
+An object called `Book` will be stored in a {brandname} cache called "books". Book instances will be indexed, so we enable indexing for the cache:
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexed_entities_proto.xml[]
+----
+
+Alternatively, if the cache is not indexed, we configure the `<encoding>` as `application/x-protostream` to make sure the storage is queryable:
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/non_indexed_entities_proto.xml[]
+----
+
+Each `Book` will be defined as in the following example: we use `@Protofield` annotations to identify the message fields and the `@ProtoDoc` annotation on the fields to configure indexing attributes:
+
+[source,java, title=Book.java]
+----
+include::code_examples/BookIndexed.java[]
+----
+
+During compilation, the annotations in the preceding example generate the artifacts necessary to read, write  and query `Book` instances. To enable this generation, use the `@AutoProtoSchemaBuilder` annotation in a newly created class with empty constructor or interface:
+
+[source,java, title=RemoteQueryInitializer.java]
+----
+include::code_examples/RemoteQueryInitializer.java[]
+----
+
+After compilation, a file `book.proto` file will be created in the configured `schemaFilePath`, along with an implementation `RemoteQueryInitializerImpl.java` of the annotated interface.
+This concrete class can be used directly in the Hot Rod client code to initialize the serialization context.
+
+Putting all together:
+
+[source,java, title=RemoteQuery.java]
+----
+include::code_examples/RemoteQuery.java[]
+----
+
+== Registering Protobuf Schemas
+
+To query protobuf entities, you must provide the client and server with the relevant metadata about your entities in a Protobuf schema (`.proto` file).
+
+The descriptors are stored in a dedicated `___protobuf_metadata` cache on the server.
+Both keys and values in this cache are plain strings.
+Registering a new schema is therefore as simple as performing a `put()` operation on this cache using the schema name as key and the schema file itself as the value.
+
+Alternatively you can use the [command]`schema` command with the {brandname} CLI, {brandname} Console, REST endpoint `/rest/v2/schemas`, or the `ProtobufMetadataManager` MBean via JMX.
+
+Note that, if you enable authorization on caches, users must belong to the ['___schema_manager'] role to add to the `___protobuf_metadata` cache.
+
+[NOTE]
+====
+Even if indexing is enabled for a cache no fields of Protobuf encoded entries will be indexed unless you use the `@Indexed` and `@Field` inside Protobuf schema documentation annotations `(@ProtoDoc)`  to specify what fields need to get indexed.
+====
+
+.Reference
+
+* link:{cli_docs}#protobuf_query[CLI Guide: Querying Caches with Protobuf Metadata]
+
+[[analysis]]
+== Analysis
+Analysis is a process that converts input data into one or more terms that you can index and query.
+While in link:#mapping_embedded[Embedded Query] mapping is done through link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_analysis[Hibernate Search annotations], that supports
+a rich set of Lucene based analyzers, in client-server mode the analyzer definitions are declared in a platform neutral way.
+
+[discrete]
+=== Default Analyzers
+{brandname} provides a set of default analyzers for remote query as follows:
+
+[%header,cols=2*]
+|===
+
+| Definition
+| Description
+
+| `standard`
+| Splits text fields into tokens, treating whitespace and punctuation as delimiters.
+
+| `simple`
+| Tokenizes input streams by delimiting at non-letters and then converting all letters to lowercase characters. Whitespace and non-letters are discarded.
+
+| `whitespace`
+| Splits text streams on whitespace and returns sequences of non-whitespace characters as tokens.
+
+| `keyword`
+| Treats entire text fields as single tokens.
+
+| `stemmer`
+| Stems English words using the Snowball Porter filter.
+
+| `ngram`
+| Generates n-gram tokens that are 3 grams in size by default.
+
+| `filename`
+| Splits text fields into larger size tokens than the `standard` analyzer, treating whitespace as a delimiter and converts all letters to lowercase characters.
+
+|===
+
+These analyzer definitions are based on Apache Lucene and are provided "as-is".
+For more information about tokenizers, filters, and CharFilters, see the
+appropriate Lucene documentation.
+
+[discrete]
+=== Using Analyzer Definitions
+
+To use analyzer definitions, reference them by name in the `.proto` schema file.
+
+. Include the `Analyze.YES` attribute to indicate that the property is analyzed.
+. Specify the analyzer definition with the `@Analyzer` annotation.
+
+The following example shows referenced analyzer definitions:
+
+[source,protobuf,options="nowrap"]
+----
+/* @Indexed */
+message TestEntity {
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword")) */
+    optional string id = 1;
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "simple")) */
+    optional string name = 2;
+}
+----
+
+If using Java classes annotated with `@ProtoField`, the declaration is similar:
+
+[source,java,options="nowrap"]
+----
+@ProtoDoc("@Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
+@ProtoField(number = 1)
+final String id;
+
+@ProtoDoc("@Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"simple\"))")
+@ProtoField(number = 2)
+final String description;
+----
+
+[discrete]
+=== Creating Custom Analyzer Definitions
+If you require custom analyzer definitions, do the following:
+
+. Create an implementation of the `ProgrammaticSearchMappingProvider` interface packaged in a `JAR` file.
+. Provide a file named `org.infinispan.query.spi.ProgrammaticSearchMappingProvider` in the `META-INF/services/` directory of your `JAR`. This file should contain the fully qualified class name of your implementation.
+. Copy the `JAR` to the `lib/` directory of your {brandname} Server installation.
++
+[IMPORTANT]
+====
+Your JAR must be available to {brandname} Server during startup. You cannot add it to an already running server.
+====
+
+The following is an example implementation of the `ProgrammaticSearchMappingProvider` interface:
+
+[source,java,options="nowrap"]
+----
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.core.StopFilterFactory;
+import org.apache.lucene.analysis.standard.StandardFilterFactory;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
+import org.hibernate.search.cfg.SearchMapping;
+import org.infinispan.Cache;
+import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+
+public final class MyAnalyzerProvider implements ProgrammaticSearchMappingProvider {
+
+   @Override
+   public void defineMappings(Cache cache, SearchMapping searchMapping) {
+      searchMapping
+            .analyzerDef("standard-with-stop", StandardTokenizerFactory.class)
+               .filter(StandardFilterFactory.class)
+               .filter(LowerCaseFilterFactory.class)
+               .filter(StopFilterFactory.class);
+   }
+}
+----
