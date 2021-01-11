@@ -1,0 +1,27 @@
+[id='query_performance-{context}']
+= Query Performance Tuning
+{brandname} exposes statistics for queries and provides configurable attributes so you can monitor and tune queries for optimal performance.
+
+.Check index usage statistics
+
+Indexing caches improves query performance.
+However, in some cases, queries might only partially use an index such as when not all fields in the schema are annotated.
+
+Start tuning query performance by checking the time it takes for each type of query to run.
+If your queries seem to be slow, you should make sure that queries are using the indexes for caches and that all entities and field mappings are indexed.
+
+.Indexing performance
+
+Indexing can degrade write throughput for {brandname} clusters.
+The `commit-interval` attribute defines the interval, in milliseconds, between which index changes that are buffered in memory are flushed to the index storage and a commit is performed.
+
+This operation is costly so you should avoid configuring an interval that is too small. The default is 1000 ms (1 second).
+
+.Querying performance
+
+The `refresh-interval` attribute defines the interval, in milliseconds, between which the index reader is refreshed.
+
+The default value is `0`, which returns data in queries as soon as it is written to a cache.
+
+A value greater than `0` results in some stale query results but substantially increases throughput, especially in write-heavy scenarios.
+If you do not need data returned in queries as soon as it is written, you should adjust the refresh interval to improve query performance.

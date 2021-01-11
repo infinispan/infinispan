@@ -1,0 +1,19 @@
+[id='query_statistics-{context}']
+= Query Statistics
+
+{brandname} exposes indexing and querying statistics through the `Search` entry point, which you can use programmatically as follows:
+
+[source,java]
+----
+// Statistics for the local cluster member
+SearchStatistics statistics = Search.getSearchStatistics(cache);
+
+// Consolidated statistics for the whole cluster
+CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearchStatistics(cache)
+----
+
+.Statistics via REST
+
+{brandname} Server also exposes index and query statistics through the REST endpoint.
+
+Use the following invocation: `GET /v2/caches/{cacheName}/search/stats`

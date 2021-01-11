@@ -1,0 +1,16 @@
+[id='indexing_caches_programmatically-{context}']
+= Enabling Cache Indexing Programmatically
+Configure indexing for caches programmatically via {brandname} APIs.
+
+.Procedure
+
+* When using {brandname} as an embedded library, enable and configure indexing for caches with the `IndexingConfigurationBuilder` class, as in the following example:
+
+[source,java]
+----
+include::code_examples/IndexBasicConfiguration.java[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]

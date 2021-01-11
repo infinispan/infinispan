@@ -1,0 +1,10 @@
+[id='indexing_annotations-{context}']
+= Index Annotations
+When you enable indexing in {brandname} caches, you use the following annotations:
+
+* `@Indexed` denotes a Java object that you want to index.
+* `@Field` controls how fields within objects are indexed.
+
+For {brandname} as an embedded library, you add these annotations your Java classes.
+
+For {brandname} Server, you define Protobuf schemas, `.proto` files, that contain these annotations.

@@ -1,0 +1,34 @@
+[id='indexing_rebuilding-{context}']
+= Rebuilding Indexes
+Rebuilding an index reconstructs it from the data stored in the cache.
+You rebuild indexes when you change things like the definitions of indexed types or analyzers.
+Likewise, you might also need to rebuild indexes if they are deleted for some reason.
+
+[IMPORTANT]
+====
+Rebuilding indexes can take a long time to complete because the process takes place for all data in the grid.
+While the rebuild operation is in progress, queries might also return fewer results.
+
+{brandname} logs the following warning message when you rebuild an index:
+
+----
+WARN: Rebuilding indexes also affect queries, that can return less results than expected.
+----
+====
+
+.Procedure
+
+* Rebuild indexes on remote {brandname} servers by calling the `reindexCache()` method as follows:
++
+[source,java]
+----
+remoteCacheManager.administration().reindexCache("MyCache");
+----
+
+* Rebuild indexes when using {brandname} as an embedded library as follows:
++
+[source,java]
+----
+Indexer indexer = Search.getIndexer(cache);
+CompletionStage<Void> future = index.run();
+----
