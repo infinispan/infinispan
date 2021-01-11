@@ -1,12 +1,9 @@
 [id='mvn_settings']
-= Adding the {RedHat} GA Maven Repository
-Configure your Maven settings file, typically `~/.m2/settings.xml`, to include
-the {RedHat} GA repository. Alternatively, include the repository directly in
-your project `pom.xml` file.
+= Adding {RedHat} Maven Repositories
+Configure your Maven settings file, typically `~/.m2/settings.xml`, to include the {RedHat} GA and Early Access repositories.
+Instead of configuring your Maven settings file, you can include the repositories directly in your project `pom.xml` file.
 
-The following configuration uses the public {RedHat} Enterprise Maven
-repository. To use the {brandname} Maven repository that you downloaded from
-the {portal}, change the value of `url` elements to the correct location.
+.{RedHat} GA repository
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -22,6 +19,26 @@ the {portal}, change the value of `url` elements to the correct location.
     <id>redhat-ga</id>
     <name>{RedHat} GA Repository</name>
     <url>https://maven.repository.redhat.com/ga/</url>
+  </pluginRepository>
+</pluginRepositories>
+----
+
+.{RedHat} Early Access repository
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<repositories>
+  <repository>
+    <id>redhat-earlyaccess</id>
+    <name>{RedHat} Early Access Repository</name>
+    <url>https://maven.repository.redhat.com/earlyaccess/all/</url>
+  </repository>
+</repositories>
+<pluginRepositories>
+  <pluginRepository>
+    <id>redhat-earlyaccess</id>
+    <name>{RedHat} Early Access Repository</name>
+    <url>https://maven.repository.redhat.com/earlyaccess/all/</url>
   </pluginRepository>
 </pluginRepositories>
 ----
