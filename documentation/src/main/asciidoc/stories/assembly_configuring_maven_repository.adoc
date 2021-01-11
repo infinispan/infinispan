@@ -17,6 +17,7 @@ repository.
 include::{topics}/proc_downloading_maven_repository.adoc[leveloffset=+1]
 include::{topics}/proc_adding_maven_repository.adoc[leveloffset=+1]
 endif::productized[]
+
 include::{topics}/proc_configuring_pom_xml.adoc[leveloffset=+1]
 
 // Restore the parent context.
