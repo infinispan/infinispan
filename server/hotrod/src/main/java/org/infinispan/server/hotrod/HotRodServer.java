@@ -94,7 +94,6 @@ import org.infinispan.server.hotrod.iteration.IterationManager;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.KeyValuePair;
 
 /**
@@ -454,8 +453,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          if (addToKnownCaches) {
             knownCaches.put(scopedCacheKey, cache);
          }
-         // make sure we register a Migrator for this cache!
-         tryRegisterMigrationManager(cache);
       }
 
       return cache;
@@ -467,12 +464,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    ComponentRegistry getCacheRegistry(String cacheName) {
       return knownCacheRegistries.get(cacheName);
-   }
-
-   private void tryRegisterMigrationManager(AdvancedCache<byte[], byte[]> cache) {
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
-      if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache));
    }
 
    private void setupSasl() {

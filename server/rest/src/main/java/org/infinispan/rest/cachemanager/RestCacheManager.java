@@ -15,7 +15,6 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -25,7 +24,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -65,7 +63,6 @@ public class RestCacheManager<V> {
       AdvancedCache<Object, V> cache = knownCaches.get(cacheKey);
       if (cache == null) {
          cache = instance.<Object, V>getCache(name).getAdvancedCache();
-         tryRegisterMigrationManager(cache);
 
          cache = (AdvancedCache<Object, V>) cache.getAdvancedCache()
                .withMediaType(keyContentType.toString(), valueContentType.toString());
@@ -146,13 +143,6 @@ public class RestCacheManager<V> {
 
    public EmbeddedCacheManager getInstance() {
       return instance;
-   }
-
-   @SuppressWarnings("unchecked")
-   private void tryRegisterMigrationManager(AdvancedCache<?, ?> cache) {
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
-      RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
-      if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
    }
 
    public void stop() {
