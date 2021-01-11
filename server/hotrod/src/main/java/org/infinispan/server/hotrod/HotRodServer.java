@@ -82,7 +82,6 @@ import org.infinispan.server.hotrod.iteration.IterationManager;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -421,16 +420,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private AdvancedCache<byte[], byte[]> obtainAnonymizedCache(String cacheName) {
       String validCacheName = cacheName.isEmpty() ? defaultCacheName() : cacheName;
       Cache<byte[], byte[]> cache = SecurityActions.getCache(cacheManager, validCacheName);
-      AdvancedCache<byte[], byte[]> advancedCache = cache.getAdvancedCache();
-      // make sure we register a Migrator for this cache!
-      tryRegisterMigrationManager(advancedCache);
-      return advancedCache;
-   }
-
-   private void tryRegisterMigrationManager(AdvancedCache<byte[], byte[]> cache) {
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
-      if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache));
+      return cache.getAdvancedCache();
    }
 
    public Cache<Address, ServerAddress> getAddressCache() {

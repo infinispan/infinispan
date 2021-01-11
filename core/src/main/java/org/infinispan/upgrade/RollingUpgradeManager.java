@@ -2,8 +2,8 @@ package org.infinispan.upgrade;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -11,6 +11,7 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -34,10 +35,18 @@ import org.infinispan.util.logging.LogFactory;
 @SurvivesRestarts
 public class RollingUpgradeManager {
    private static final Log log = LogFactory.getLog(RollingUpgradeManager.class);
-   private final Set<SourceMigrator> sourceMigrators = new HashSet<>(2);
+   private final ConcurrentMap<String, TargetMigrator> targetMigrators = new ConcurrentHashMap<>(2);
    @Inject Cache<Object, Object> cache;
    @Inject TimeService timeService;
    @Inject GlobalConfiguration globalConfiguration;
+
+   @Start
+   public void start() {
+      ClassLoader cl = globalConfiguration.classLoader();
+      for (TargetMigrator m : ServiceFinder.load(TargetMigrator.class, cl)) {
+         targetMigrators.put(m.getName(), m);
+      }
+   }
 
    @ManagedOperation(
          description = "Synchronizes data from source clusters to target clusters with the specified migrator.",
@@ -76,24 +85,10 @@ public class RollingUpgradeManager {
    }
 
    private TargetMigrator getMigrator(String name) throws Exception {
-      ClassLoader cl = globalConfiguration.classLoader();
-      for (TargetMigrator m : ServiceFinder.load(TargetMigrator.class, cl)) {
-         if (name.equalsIgnoreCase(m.getName())) {
-            return m;
-         }
+      TargetMigrator targetMigrator = targetMigrators.get(name);
+      if (targetMigrator == null) {
+         throw CONTAINER.unknownMigrator(name);
       }
-      throw CONTAINER.unknownMigrator(name);
-   }
-
-   /**
-    * Registers a migrator for a specific data format or endpoint. In the Infinispan ecosystem, we'd
-    * typically have one Migrator implementation for Hot Rod, one for memcached, one for REST and
-    * one for embedded/in-VM mode, and these would typically be added to the upgrade manager on
-    * first access via any of these protocols.
-    *
-    * @param migrator
-    */
-   public void addSourceMigrator(SourceMigrator migrator) {
-      sourceMigrators.add(migrator);
+      return targetMigrator;
    }
 }
