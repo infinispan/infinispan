@@ -11,14 +11,17 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.CacheContainerStatsMBeanTest")
@@ -30,14 +33,18 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
+   private ControlledTimeService timeService;
+
    @Override
    protected void createCacheManagers() throws Throwable {
+      timeService = new ControlledTimeService();
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.cacheContainer().statistics(true)
           .jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
             new TransportFlags());
+      TestingUtil.replaceComponent(cacheManager1, TimeService.class, timeService, true);
       cacheManager1.start();
 
       GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -45,6 +52,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
           .jmx().enabled(true).domain(JMX_DOMAIN + 2).mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
             new TransportFlags());
+      TestingUtil.replaceComponent(cacheManager2, TimeService.class, timeService, true);
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);
@@ -75,6 +83,9 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
 
       cache1.remove("a1");
 
+      // Advance 1 second for the cached stats to expire
+      timeService.advance(1000);
+
       assertAttributeValue(mBeanServer, nodeStats, "RemoveHits", 1);
 
       Cache<String, Serializable> cache3 = manager(0).getCache(cachename2);
@@ -82,6 +93,9 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       cache3.put("a11", "b2");
       cache3.put("a12", "b3");
       cache3.put("a13", "b4");
+
+      // Advance 1 second for the cached stats to expire
+      timeService.advance(1000);
 
       assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", 7);
       assertAttributeValue(mBeanServer, nodeStats, "Stores", 8);
