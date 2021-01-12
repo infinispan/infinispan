@@ -45,6 +45,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    private boolean statisticsEnabled = false;
    @Inject TimeService timeService;
 
+   private volatile StatsHolder enabledStats;
+
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;
    }
@@ -147,7 +149,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @Override
    public int getRequiredMinimumNumberOfNodes() {
       int result = -1;
-      for (Stats stats : getStats()) {
+      for (Stats stats : getEnabledStats()) {
          result = Math.max(result, stats.getRequiredMinimumNumberOfNodes());
       }
       return result;
@@ -615,19 +617,6 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       resetStatistics();
    }
 
-   private List<Stats> getStats() {
-      List<Stats> stats = new ArrayList<>();
-      for (String cn : cm.getCacheNames()) {
-         if (cm.cacheExists(cn)) {
-            AdvancedCache<?, ?> cache = getCache(cn);
-            if (cache != null) {
-               stats.add(cache.getStats());
-            }
-         }
-      }
-      return stats;
-   }
-
    private AdvancedCache<?, ?> getCache(String cacheName) {
       try {
          return SecurityActions.getUnwrappedCache(cm.getCache(cacheName)).getAdvancedCache();
@@ -638,6 +627,9 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    }
 
    private List<Stats> getEnabledStats() {
+      if (enabledStats != null && !enabledStats.isExpired())
+         return enabledStats.stats;
+
       List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
@@ -650,6 +642,21 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
             }
          }
       }
+      this.enabledStats = new StatsHolder(stats);
       return stats;
+   }
+
+   private final class StatsHolder {
+      final long expiration;
+      final List<Stats> stats;
+
+      StatsHolder(List<Stats> stats) {
+         this.expiration = timeService.expectedEndTime(1, TimeUnit.SECONDS);
+         this.stats = stats;
+      }
+
+      boolean isExpired() {
+         return timeService.isTimeExpired(expiration);
+      }
    }
 }

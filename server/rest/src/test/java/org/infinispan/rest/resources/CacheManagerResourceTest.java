@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -37,6 +38,7 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -53,6 +55,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    private JsonWriter jsonWriter = new JsonWriter();
    private Configuration templateConfig;
    private RestCacheManagerClient cacheManagerClient;
+   private ControlledTimeService timeService;
 
    @Override
    public Object[] factory() {
@@ -66,6 +69,8 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    protected void createCacheManagers() throws Exception {
       super.createCacheManagers();
       cacheManagerClient = client.cacheManager("default");
+      timeService = new ControlledTimeService();
+      cacheManagers.forEach(cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
    }
 
    @Override
@@ -274,6 +279,9 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertTrue(cmStats.get("statistics_enabled").asBoolean());
       assertEquals(0, cmStats.get("stores").asInt());
       assertEquals(0, cmStats.get("number_of_entries").asInt());
+
+      // Advance 1 second for the cached stats to expire
+      timeService.advance(1000);
 
       cacheManagers.iterator().next().getCache("cache1").put("key", "value");
       cmStats = mapper.readTree(join(cacheManagerClient.stats()).getBody());
