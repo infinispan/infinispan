@@ -16,7 +16,7 @@ import org.jgroups.conf.XmlConfigurator;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class FileJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
+public class FileJGroupsChannelConfigurator extends AbstractJGroupsChannelConfigurator {
    private final String name;
    private final String path;
    private final Properties properties;
@@ -45,8 +45,8 @@ public class FileJGroupsChannelConfigurator implements JGroupsChannelConfigurato
    }
 
    @Override
-   public JChannel createChannel() throws Exception {
-      return new JChannel(this);
+   public JChannel createChannel(String name) throws Exception {
+      return applySocketFactory(new JChannel(this));
    }
 
    public String getPath() {

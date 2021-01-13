@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.Builder;
 public class SecurityConfigurationBuilder implements Builder<SecurityConfiguration> {
    private final CredentialStoresConfigurationBuilder credentialStoresConfiguration = new CredentialStoresConfigurationBuilder();
    private final RealmsConfigurationBuilder realmsConfiguration = new RealmsConfigurationBuilder();
+   private final TransportSecurityConfigurationBuilder transport = new TransportSecurityConfigurationBuilder();
 
    public CredentialStoresConfigurationBuilder credentialStores() {
       return credentialStoresConfiguration;
@@ -21,11 +22,12 @@ public class SecurityConfigurationBuilder implements Builder<SecurityConfigurati
    public void validate() {
       credentialStoresConfiguration.validate();
       realmsConfiguration.validate();
+      transport.validate();
    }
 
    @Override
    public SecurityConfiguration create() {
-      return new SecurityConfiguration(credentialStoresConfiguration.create(), realmsConfiguration.create());
+      return new SecurityConfiguration(credentialStoresConfiguration.create(), realmsConfiguration.create(), transport.create());
    }
 
    @Override
@@ -33,5 +35,9 @@ public class SecurityConfigurationBuilder implements Builder<SecurityConfigurati
       credentialStoresConfiguration.read(template.credentialStores());
       realmsConfiguration.read(template.realms());
       return this;
+   }
+
+   public TransportSecurityConfigurationBuilder transport() {
+      return transport;
    }
 }

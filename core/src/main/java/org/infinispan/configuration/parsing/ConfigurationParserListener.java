@@ -4,11 +4,11 @@ import java.util.EventListener;
 
 /**
  * ParserContextListener. An interface which should be implemented by listeners who wish to be
- * notified when a file has been successfully parsed. See {@link ParserContext}
+ * notified when a file has been successfully parsed.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface ParserContextListener extends EventListener {
-   void parsingComplete(ParserContext context);
+public interface ConfigurationParserListener extends EventListener {
+   void parsingComplete(ConfigurationBuilderHolder holder);
 }

@@ -6,10 +6,12 @@ package org.infinispan.server.configuration.security;
 public class SecurityConfiguration {
    private final CredentialStoresConfiguration credentialStoresConfiguration;
    private final RealmsConfiguration realmsConfiguration;
+   private final TransportSecurityConfiguration transportConfiguration;
 
-   SecurityConfiguration(CredentialStoresConfiguration credentialStoresConfiguration, RealmsConfiguration realmsConfiguration) {
+   SecurityConfiguration(CredentialStoresConfiguration credentialStoresConfiguration, RealmsConfiguration realmsConfiguration, TransportSecurityConfiguration transportConfiguration) {
       this.credentialStoresConfiguration = credentialStoresConfiguration;
       this.realmsConfiguration = realmsConfiguration;
+      this.transportConfiguration = transportConfiguration;
    }
 
    public CredentialStoresConfiguration credentialStores() {
@@ -18,5 +20,9 @@ public class SecurityConfiguration {
 
    public RealmsConfiguration realms() {
       return realmsConfiguration;
+   }
+
+   public TransportSecurityConfiguration transport() {
+      return transportConfiguration;
    }
 }

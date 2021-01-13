@@ -7,6 +7,7 @@ import static org.infinispan.util.logging.Log.XSITE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,8 +109,10 @@ import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
+import org.jgroups.stack.Protocol;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.MessageBatch;
+import org.jgroups.util.SocketFactory;
 
 /**
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
@@ -136,6 +139,7 @@ public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
+   public static final String SOCKET_FACTORY = "socketFactory";
    public static final short REQUEST_FLAGS_UNORDERED =
          (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value() |
                   Message.Flag.DONT_BUNDLE.value());
@@ -611,8 +615,15 @@ public class JGroupsTransport implements Transport {
 
          if (channel == null && props.containsKey(CHANNEL_CONFIGURATOR)) {
             JGroupsChannelConfigurator configurator = (JGroupsChannelConfigurator) props.get(CHANNEL_CONFIGURATOR);
+            if (props.containsKey(SOCKET_FACTORY)) {
+               SocketFactory socketFactory = (SocketFactory) props.get(SOCKET_FACTORY);
+               if (socketFactory instanceof NamedSocketFactory) {
+                  ((NamedSocketFactory)socketFactory).setName(configuration.transport().clusterName());
+               }
+               configurator.setSocketFactory(socketFactory);
+            }
             try {
-               channel = configurator.createChannel();
+               channel = configurator.createChannel(configuration.transport().clusterName());
             } catch (Exception e) {
                throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
             }
@@ -660,12 +671,16 @@ public class JGroupsTransport implements Transport {
 
       if (channel == null) {
          CLUSTER.unableToUseJGroupsPropertiesProvided(props);
-         try {
-            URL url = fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader());
-            channel = new JChannel(url.openStream());
+         try (InputStream is = fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()).openStream()) {
+            channel = new JChannel(is);
          } catch (Exception e) {
             throw CLUSTER.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
          }
+      }
+
+      if (props.containsKey(SOCKET_FACTORY) && !props.containsKey(CHANNEL_CONFIGURATOR)) {
+         Protocol protocol = channel.getProtocolStack().getTopProtocol();
+         protocol.setSocketFactory((SocketFactory) props.get(SOCKET_FACTORY));
       }
    }
 
