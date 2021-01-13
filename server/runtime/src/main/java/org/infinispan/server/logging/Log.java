@@ -225,4 +225,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "No script engines are available", id = 80059)
    void noScriptEngines();
+
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "SSL Transport using realm '%s`", id = 80060)
+   void sslTransport(String value);
 }

@@ -104,12 +104,34 @@
     <xs:sequence maxOccurs="unbounded">
       <xs:element name="remote-site" type="tns:jgroups-stack-relay-remote-site" />
     </xs:sequence>
-    <xs:attribute name="default-stack" type="xs:string" use="required"/>
+    <xs:attribute name="default-stack" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Defines the name of the JGroups stack to be used by default when connecting to remote sites.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="cluster" type="xs:string" default="xsite">
+      <xs:annotation>
+        <xs:documentation>Defines the default cluster name for remote clusters.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="jgroups-stack-relay-remote-site">
-    <xs:attribute name="name" type="xs:string" use="required"/>
-    <xs:attribute name="stack" type="xs:string"/>
+    <xs:attribute name="name" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Defines the name of the remote site.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="stack" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Defines the name of the JGroups stack to use to connect to the remote site. If unspecified, the default-stack will be used.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="cluster" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Defines the name for the underlying group communication cluster. If unspecified, the remote-sites.cluster name will be used.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="threads">
@@ -474,6 +496,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:anyAttribute/>
   </xs:complexType>
 
   <xs:complexType name="global-security">

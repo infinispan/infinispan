@@ -45,6 +45,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private final PropertiesRealmConfigurationBuilder propertiesRealmConfiguration = new PropertiesRealmConfigurationBuilder(this);
 
    private SSLContext sslContext = null;
+   private SSLContext clientSslContext = null;
    private SSLContextBuilder sslContextBuilder = null;
    private Supplier<Boolean> httpChallengeReadiness = () -> true;
    private ServerSecurityRealm serverSecurityRealm = null;
@@ -162,23 +163,13 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    SSLContext getSSLContext() {
-      if (sslContextBuilder == null) return null;
-      if (sslContext == null) {
-         if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
-            sslContextBuilder.setSecurityDomain(getServerSecurityRealm().getSecurityDomain());
-         }
-         sslContextBuilder.setWrap(false);
-         String sslProvider = SslContextFactory.getSslProvider();
-         if (sslProvider != null) {
-            sslContextBuilder.setProviderName(sslProvider);
-         }
-         try {
-            sslContext = sslContextBuilder.build().create();
-         } catch (GeneralSecurityException e) {
-            throw new CacheConfigurationException(e);
-         }
-      }
+      createSslContexts();
       return sslContext;
+   }
+
+   SSLContext getClientSSLContext() {
+      createSslContexts();
+      return clientSslContext;
    }
 
    public void addFeature(ServerSecurityRealm.Feature feature) {
@@ -214,6 +205,35 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       realmBuilder.build();
       if (domainBuilder.getDefaultRealmName() == null) {
          domainBuilder.setDefaultRealmName(realmName);
+      }
+   }
+
+   private void createSslContexts() {
+      if (sslContextBuilder == null) {
+         return;
+      }
+      if (sslContext == null) {
+         if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
+            sslContextBuilder.setSecurityDomain(getServerSecurityRealm().getSecurityDomain());
+         }
+         sslContextBuilder.setWrap(false);
+         String sslProvider = SslContextFactory.getSslProvider();
+         if (sslProvider != null) {
+            sslContextBuilder.setProviderName(sslProvider);
+         }
+         try {
+            sslContext = sslContextBuilder.build().create();
+         } catch (GeneralSecurityException e) {
+            throw new CacheConfigurationException(e);
+         }
+      }
+      if (clientSslContext == null) {
+         sslContextBuilder.setClientMode(true);
+         try {
+            clientSslContext = sslContextBuilder.build().create();
+         } catch (GeneralSecurityException e) {
+            throw new CacheConfigurationException(e);
+         }
       }
    }
 }

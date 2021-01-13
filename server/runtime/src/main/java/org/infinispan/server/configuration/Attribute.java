@@ -110,8 +110,7 @@ public enum Attribute {
    METRICS_AUTH,
    CLEAR_TEXT,
    STORE,
-   TYPE,
-   ;
+   TYPE;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

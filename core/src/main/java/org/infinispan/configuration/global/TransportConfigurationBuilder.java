@@ -165,7 +165,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
-   public TransportConfigurationBuilder addProperty(String key, String value) {
+   public TransportConfigurationBuilder addProperty(String key, Object value) {
       typedProperties.put(key, value);
       return this;
    }

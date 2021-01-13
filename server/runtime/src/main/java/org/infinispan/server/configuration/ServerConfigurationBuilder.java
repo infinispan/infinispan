@@ -93,6 +93,14 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return sslContext;
    }
 
+   public SSLContext getClientSSLContext(String name) {
+      SSLContext sslContext = security.realms().getClientSSLContext(name);
+      if (sslContext == null) {
+         throw Server.log.unknownSecurityDomain(name);
+      }
+      return sslContext;
+   }
+
    public void applySocketBinding(String bindingName, ProtocolServerConfigurationBuilder builder, SinglePortServerConfigurationBuilder singlePort) {
       if (!socketBindings.exists(bindingName)) {
          throw Server.log.unknownSocketBinding(bindingName);

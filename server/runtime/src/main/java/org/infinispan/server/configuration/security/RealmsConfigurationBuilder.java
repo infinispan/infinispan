@@ -40,6 +40,14 @@ public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> 
       return realmConfigurationBuilder.getSSLContext();
    }
 
+   public SSLContext getClientSSLContext(String name) {
+      RealmConfigurationBuilder realmConfigurationBuilder = securityRealms.get(name);
+      if (realmConfigurationBuilder == null) {
+         throw Server.log.unknownSecurityDomain(name);
+      }
+      return realmConfigurationBuilder.getClientSSLContext();
+   }
+
    @Override
    public RealmsConfiguration create() {
       List<RealmConfiguration> realms = securityRealms.values().stream().map(RealmConfigurationBuilder::create).collect(Collectors.toList());

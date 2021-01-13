@@ -169,9 +169,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       ConfigurationReader reader = ConfigurationReader.from(is).withResolver(resourceResolver).withType(mediaType).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
       parse(reader, holder);
       // Fire all parsingComplete events if any
-      for (ParserContext parserContext : holder.getParserContexts().values()) {
-         parserContext.fireParsingComplete();
-      }
+      holder.fireParserListeners();
       return holder;
    }
 
@@ -214,7 +212,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       NamespaceParserPair parser = findNamespaceParser(namespace, name);
       ConfigurationSchemaVersion oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(namespace));
-      parser.parser.readAttribute(reader, name, reader.getAttributeName(i), reader.getAttributeValue(i), holder);
+      parser.parser.readAttribute(reader, name, i, holder);
       reader.setSchema(oldSchema);
    }
 

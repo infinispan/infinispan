@@ -2,6 +2,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolStackConfigurator;
+import org.jgroups.util.SocketFactory;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -10,5 +11,7 @@ import org.jgroups.conf.ProtocolStackConfigurator;
 public interface JGroupsChannelConfigurator extends ProtocolStackConfigurator {
    String getName();
 
-   JChannel createChannel() throws Exception;
+   JChannel createChannel(String name) throws Exception;
+
+   void setSocketFactory(SocketFactory socketFactory);
 }

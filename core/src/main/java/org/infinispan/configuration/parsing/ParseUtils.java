@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationReaderException;
@@ -38,7 +37,11 @@ public final class ParseUtils {
     }
 
     public static <T extends Enum<T>> ConfigurationReaderException unexpectedElement(final ConfigurationReader reader, T element) {
-        return new ConfigurationReaderException("Unexpected element '" + element.toString() + "' encountered", reader.getLocation());
+        return unexpectedElement(reader, element.toString());
+    }
+
+    public static ConfigurationReaderException unexpectedElement(final ConfigurationReader reader, String element) {
+        return new ConfigurationReaderException("Unexpected element '" + element + "' encountered", reader.getLocation());
     }
 
     /**
