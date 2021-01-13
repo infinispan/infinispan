@@ -171,8 +171,14 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          } else {
             unwrappedKey = key;
          }
-         MarshalledValue value = (MarshalledValue) remoteCache.get(unwrappedKey);
-         return value == null ? null : entryFactory.create(key, value);
+         Object value = remoteCache.get(unwrappedKey);
+         if (value == null) {
+            return null;
+         }
+         if (value instanceof MarshalledValue) {
+            return entryFactory.create(key, (MarshalledValue) value);
+         }
+         return entryFactory.create(key, value);
       }
    }
 
