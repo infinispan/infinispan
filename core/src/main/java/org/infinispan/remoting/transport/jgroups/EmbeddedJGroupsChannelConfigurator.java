@@ -15,6 +15,7 @@ import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.SocketFactory;
 import org.jgroups.util.StackType;
 
 /**
@@ -23,13 +24,13 @@ import org.jgroups.util.StackType;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
+public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelConfigurator {
 
    private static final String PROTOCOL_PREFIX = "org.jgroups.protocols.";
 
    private final String name;
    final List<ProtocolConfiguration> stack;
-   final Map<String, JGroupsChannelConfigurator> remoteSites;
+   final Map<String, RemoteSite> remoteSites;
 
    public EmbeddedJGroupsChannelConfigurator(String name, List<ProtocolConfiguration> stack) {
       this.name = name;
@@ -51,16 +52,12 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
       return stack;
    }
 
-   public Map<String, JGroupsChannelConfigurator> getRemoteSites() {
-      return remoteSites;
-   }
-
    public String getName() {
       return name;
    }
 
    @Override
-   public JChannel createChannel() throws Exception {
+   public JChannel createChannel(String name) throws Exception {
       StackType stackType = org.jgroups.util.Util.getIpStackType();
       List<Protocol> protocols = new ArrayList<>(stack.size());
       for(ProtocolConfiguration c : stack) {
@@ -82,14 +79,21 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
                if (remoteSites.size() == 0) {
                   throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
                }
-               for (Map.Entry<String, JGroupsChannelConfigurator> remoteSite : remoteSites.entrySet()) {
-                  JGroupsChannelConfigurator remoteSiteChannel = remoteSite.getValue();
+               for (Map.Entry<String, RemoteSite> remoteSite : remoteSites.entrySet()) {
+                  JGroupsChannelConfigurator configurator = remoteSite.getValue().configurator;
+                  SocketFactory socketFactory = getSocketFactory();
+                  final String remoteCluster = remoteSite.getValue().cluster;
+                  if (socketFactory instanceof NamedSocketFactory) {
+                     // Create a new NamedSocketFactory using the remote cluster name
+                     socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
+                  }
+                  configurator.setSocketFactory(socketFactory);
                   RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
-                  siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteSiteChannel.getName()) {
+                  siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
                      @Override
                      public JChannel createChannel() throws Exception {
                         // TODO The bridge channel is created lazily, and Infinispan doesn't see any errors
-                        return remoteSiteChannel.createChannel();
+                        return configurator.createChannel(getClusterName());
                      }
                   });
                   relay2.addSite(remoteSite.getKey(), siteConfig);
@@ -103,14 +107,14 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
          }
       }
 
-      return new JChannel(protocols);
+      return applySocketFactory(new JChannel(protocols));
    }
 
-   public void addRemoteSite(String remoteSite, JGroupsChannelConfigurator stackConfigurator) {
+   public void addRemoteSite(String remoteSite, String cluster, JGroupsChannelConfigurator stackConfigurator) {
       if (remoteSites.containsKey(remoteSite)) {
          throw CONFIG.duplicateRemoteSite(remoteSite, name);
       } else {
-         remoteSites.put(remoteSite, stackConfigurator);
+         remoteSites.put(remoteSite, new RemoteSite(cluster, stackConfigurator));
       }
    }
 
@@ -212,5 +216,15 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
       REPLACE,
       REMOVE,
       APPEND, // non-public
+   }
+
+   public static class RemoteSite {
+      final String cluster;
+      final JGroupsChannelConfigurator configurator;
+
+      public RemoteSite(String cluster, JGroupsChannelConfigurator configurator) {
+         this.cluster = cluster;
+         this.configurator = configurator;
+      }
    }
 }

@@ -1596,4 +1596,13 @@
    <xs:complexType name="security-realm-trust">
       <xs:attribute type="xs:string" name="name"/>
    </xs:complexType>
+
+   <xs:attribute name="security-realm" type="xs:string">
+      <xs:annotation>
+         <xs:documentation>
+            Defines a security-realm which will be used to secure the resource.
+            It may be used on the cache-container transport element.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:attribute>
 </xs:schema>

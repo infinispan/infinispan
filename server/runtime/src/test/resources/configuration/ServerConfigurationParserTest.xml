@@ -4,7 +4,9 @@
                             urn:infinispan:server:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-server-${infinispan.core.schema.version}.xsd"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
         xmlns:server="urn:infinispan:server:${infinispan.core.schema.version}">
-<cache-container/>
+   <cache-container>
+      <transport server:security-realm="default"/>
+   </cache-container>
    <server xmlns="urn:infinispan:server:${infinispan.core.schema.version}">
       <interfaces>
          <interface name="default">

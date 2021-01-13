@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 
 import javax.naming.InitialContext;
 import javax.naming.spi.NamingManager;
+import javax.net.ServerSocketFactory;
+import javax.net.SocketFactory;
 import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
@@ -43,6 +45,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -52,6 +55,8 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.transport.jgroups.NamedSocketFactory;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -65,6 +70,7 @@ import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
+import org.infinispan.server.configuration.security.TransportSecurityConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ProtocolServer;
@@ -278,7 +284,8 @@ public class Server implements ServerManagement, AutoCloseable {
 
          // base the global configuration to the default
          configurationBuilderHolder = new ConfigurationBuilderHolder();
-         configurationBuilderHolder.getGlobalConfigurationBuilder()
+         GlobalConfigurationBuilder global = configurationBuilderHolder.getGlobalConfigurationBuilder();
+         global
                .read(defaultsHolder.getGlobalConfigurationBuilder().build())
                .classLoader(classLoader);
 
@@ -298,18 +305,9 @@ public class Server implements ServerManagement, AutoCloseable {
             StringBuilderWriter sw = new StringBuilderWriter();
             try (ConfigurationWriter w = ConfigurationWriter.to(sw).build()) {
                Map<String, Configuration> configs = configurationBuilderHolder.getNamedConfigurationBuilders().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
-               parser.serialize(w, configurationBuilderHolder.getGlobalConfigurationBuilder().build(), configs);
+               parser.serialize(w, global.build(), configs);
             }
             log.debugf("Actual configuration: %s", sw);
-         }
-
-         // Set the operation handler on all endpoints
-         ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
-         ServerConfigurationBuilder serverConfigurationBuilder = configurationBuilderHolder.getGlobalConfigurationBuilder().module(ServerConfigurationBuilder.class);
-         for (EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
-            for (ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
-               connector.adminOperationsHandler(adminOperationsHandler);
-            }
          }
 
          // Amend the named caches configurations with the defaults
@@ -319,6 +317,29 @@ public class Server implements ServerManagement, AutoCloseable {
             ConfigurationBuilder rebased = new ConfigurationBuilder().read(defaultCfg.build());
             rebased.read(cfg);
             entry.setValue(rebased);
+         }
+
+         // Process the server configuration
+         ServerConfigurationBuilder serverBuilder = global.module(ServerConfigurationBuilder.class);
+
+         // Set up transport security
+         TransportSecurityConfiguration transportSecurityConfiguration = serverBuilder.security().transport().create();
+         if (transportSecurityConfiguration.securityRealm() != null) {
+            String securityRealm = transportSecurityConfiguration.securityRealm();
+            ServerSocketFactory serverSocketFactory = serverBuilder.getSSLContext(securityRealm).getServerSocketFactory();
+            SocketFactory clientSocketFactory = serverBuilder.getClientSSLContext(securityRealm).getSocketFactory();
+            NamedSocketFactory namedSocketFactory = new NamedSocketFactory(clientSocketFactory, serverSocketFactory);
+            global.transport().addProperty(JGroupsTransport.SOCKET_FACTORY, namedSocketFactory);
+            Server.log.sslTransport(securityRealm);
+         }
+
+         // Set the operation handler on all endpoints
+         ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
+         ServerConfigurationBuilder serverConfigurationBuilder = global.module(ServerConfigurationBuilder.class);
+         for (EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
+            for (ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
+               connector.adminOperationsHandler(adminOperationsHandler);
+            }
          }
 
          configurationBuilderHolder.validate();

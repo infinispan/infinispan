@@ -64,6 +64,7 @@ import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 @Namespaces({
       @Namespace(root = "server"),
       @Namespace(uri = "urn:infinispan:server:*", root = "server"),
+      @Namespace(uri = "urn:infinispan:server:*", root = "transport"),
 })
 public class ServerConfigurationParser implements ConfigurationParser {
    private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
@@ -1348,7 +1349,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          throw Server.log.missingCredential(Element.CONNECTION_FACTORY.toString(), Attribute.PASSWORD.toString());
       }
       if (element == Element.CONNECTION_PROPERTIES) {
-         for(int i = 0; i < reader.getAttributeCount(); i++) {
+         for (int i = 0; i < reader.getAttributeCount(); i++) {
             dataSourceBuilder.addProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
          }
          ParseUtils.requireNoContent(reader);
@@ -1610,6 +1611,23 @@ public class ServerConfigurationParser implements ConfigurationParser {
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
+      }
+   }
+
+   @Override
+   public void readAttribute(ConfigurationReader reader, String elementName, int attributeIndex, ConfigurationBuilderHolder holder) {
+      if (org.infinispan.configuration.parsing.Element.forName(elementName) == org.infinispan.configuration.parsing.Element.TRANSPORT) {
+         ServerConfigurationBuilder serverBuilder = holder.getGlobalConfigurationBuilder().addModule(ServerConfigurationBuilder.class);
+         String attributeName = reader.getAttributeName(attributeIndex);
+         switch (Attribute.forName(attributeName)) {
+            case SECURITY_REALM:
+               serverBuilder.security().transport().securityRealm(reader.getAttributeValue(attributeIndex));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, attributeName);
+         }
+      } else {
+         throw ParseUtils.unexpectedElement(reader, elementName);
       }
    }
 }

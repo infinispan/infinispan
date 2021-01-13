@@ -22,7 +22,7 @@ public interface ConfigurationParser {
 
    Namespace[] getNamespaces();
 
-   default void readAttribute(ConfigurationReader reader, String name, String attributeName, String attributeValue, ConfigurationBuilderHolder holder) {
+   default void readAttribute(ConfigurationReader reader, String elementName, int attributeIndex, ConfigurationBuilderHolder holder) {
       throw new UnsupportedOperationException("This parser cannot handle namespaced attributes");
    }
 }

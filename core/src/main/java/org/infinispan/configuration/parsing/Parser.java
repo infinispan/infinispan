@@ -558,15 +558,34 @@ public class Parser extends CacheParser {
    }
 
    private void parseJGroupsRelay(ConfigurationReader reader, ConfigurationBuilderHolder holder, EmbeddedJGroupsChannelConfigurator stackConfigurator) {
-      String defaultStack = ParseUtils.requireSingleAttribute(reader, Attribute.DEFAULT_STACK);
+      String defaultStack = ParseUtils.requireAttributes(reader, Attribute.DEFAULT_STACK)[0];
+      String defaultCluster = "xsite";
       if (holder.getJGroupsStack(defaultStack) == null) {
          throw CONFIG.missingJGroupsStack(defaultStack);
+      }
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         if (!ParseUtils.isNoNamespaceAttribute(reader, i))
+            continue;
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case DEFAULT_STACK:
+               // Already seen
+               break;
+            case CLUSTER:
+               defaultCluster = value;
+               break;
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
       }
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case REMOTE_SITE:
                String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+               String cluster = defaultCluster;
                String stack = defaultStack;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -579,12 +598,15 @@ public class Parser extends CacheParser {
                            throw CONFIG.missingJGroupsStack(stack);
                         }
                         break;
+                     case CLUSTER:
+                        cluster = reader.getAttributeValue(i);
+                        break;
                      default:
                         throw ParseUtils.unexpectedAttribute(reader, i);
                   }
                }
                ParseUtils.requireNoContent(reader);
-               stackConfigurator.addRemoteSite(remoteSite, holder.getJGroupsStack(stack));
+               stackConfigurator.addRemoteSite(remoteSite, cluster, holder.getJGroupsStack(stack));
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);

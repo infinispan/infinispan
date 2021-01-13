@@ -334,23 +334,23 @@ public interface Log extends BasicLogger {
 //   void msgOrMsgBufferEmpty();
 
    @LogMessage(level = INFO)
-   @Message(value = "Starting JGroups channel %s", id = 78)
+   @Message(value = "Starting JGroups channel `%s`", id = 78)
    void startingJGroupsChannel(String cluster);
 
    @LogMessage(level = INFO)
-   @Message(value = "Starting JGroups channel %s with stack %s", id = 78)
+   @Message(value = "Starting JGroups channel `%s` with stack `%s`", id = 78)
    void startingJGroupsChannel(String cluster, String stack);
 
    @LogMessage(level = INFO)
-   @Message(value = "Channel %s local address is %s, physical addresses are %s", id = 79)
+   @Message(value = "Channel `%s` local address is `%s`, physical addresses are `%s`", id = 79)
    void localAndPhysicalAddress(String cluster, Address address, List<Address> physicalAddresses);
 
    @LogMessage(level = INFO)
-   @Message(value = "Disconnecting JGroups channel %s", id = 80)
+   @Message(value = "Disconnecting JGroups channel `%s`", id = 80)
    void disconnectJGroups(String cluster);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Problem closing channel %s; setting it to null", id = 81)
+   @Message(value = "Problem closing channel `%s`; setting it to null", id = 81)
    void problemClosingChannel(@Cause Exception e, String cluster);
 
 //   @LogMessage(level = INFO)

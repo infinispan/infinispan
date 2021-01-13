@@ -4,8 +4,10 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
@@ -22,11 +24,11 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
    private final GlobalConfigurationBuilder globalConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
-   private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
    private final Deque<String> scope;
    private final JGroupsConfigurationBuilder jgroupsBuilder;
    private NamespaceMappingParser namespaceMappingParser;
+   private final List<ConfigurationParserListener> listeners = new ArrayList<>();
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -39,7 +41,6 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
    public ConfigurationBuilderHolder(ClassLoader classLoader, GlobalConfigurationBuilder globalConfigurationBuilder) {
       this.globalConfigurationBuilder = globalConfigurationBuilder;
       this.namedConfigurationBuilders = new HashMap<>();
-      this.parserContexts = new HashMap<>();
       this.jgroupsBuilder = this.globalConfigurationBuilder.transport().jgroups();
       this.classLoader = new WeakReference<>(classLoader);
       scope = new ArrayDeque<>();
@@ -97,21 +98,18 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       return scope.peek();
    }
 
-   @SuppressWarnings("unchecked")
-   public <T extends ParserContext> T getParserContext(Class<? extends ConfigurationParser> parserClass) {
-      return (T) parserContexts.get(parserClass);
+   public void addParserListener(ConfigurationParserListener listener) {
+      listeners.add(listener);
    }
 
-   public void setParserContext(Class<? extends ConfigurationParser> parserClass, ParserContext context) {
-      parserContexts.put(parserClass, context);
+   public void fireParserListeners() {
+      for (ConfigurationParserListener listener : listeners) {
+         listener.parsingComplete(this);
+      }
    }
 
    public ClassLoader getClassLoader() {
       return classLoader.get();
-   }
-
-   Map<Class<? extends ConfigurationParser>, ParserContext> getParserContexts() {
-      return parserContexts;
    }
 
    public void validate() {
