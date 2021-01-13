@@ -20,8 +20,8 @@ import org.testng.annotations.Test;
  *
  * @since 11.0
  */
-@Test(groups = "functional", testName = "upgrade.hotrod.HotRodUpgradeEncodings")
-public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
+@Test(groups = "functional", testName = "upgrade.hotrod.HotRodUpgradeEncodingsTest")
+public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
 
    private static final String CACHE_NAME = "encoded";
 
@@ -32,9 +32,8 @@ public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new HotRodUpgradeEncodings().withStorage(StorageType.BINARY),
-            new HotRodUpgradeEncodings().withStorage(StorageType.OBJECT),
-            new HotRodUpgradeEncodings().withStorage(StorageType.OFF_HEAP)
+            new HotRodUpgradeEncodingsTest().withStorage(StorageType.HEAP),
+            new HotRodUpgradeEncodingsTest().withStorage(StorageType.OFF_HEAP)
       };
    }
 
@@ -43,7 +42,7 @@ public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
       return "[" + storageType.toString() + "]";
    }
 
-   public HotRodUpgradeEncodings withStorage(StorageType storageType) {
+   public HotRodUpgradeEncodingsTest withStorage(StorageType storageType) {
       this.storageType = storageType;
       return this;
    }
@@ -52,7 +51,7 @@ public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
    public void setup() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.clustering().hash().numSegments(2);
-      configurationBuilder.memory().storageType(storageType);
+      configurationBuilder.memory().storage(storageType);
       sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .cache().name(CACHE_NAME)
             .configuredWith(configurationBuilder)
@@ -73,9 +72,7 @@ public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
 
    void loadSourceCluster(int entries) {
       RemoteCache<String, String> remoteCache = sourceCluster.getRemoteCache(CACHE_NAME);
-      range(0, entries).boxed().parallel().map(String::valueOf).forEach(k -> {
-         remoteCache.put(k, "value" + k);
-      });
+      range(0, entries).boxed().parallel().map(String::valueOf).forEach(k -> remoteCache.put(k, "value" + k));
    }
 
    @Test
@@ -85,7 +82,7 @@ public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
 
       RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(CACHE_NAME);
       rum.synchronizeData("hotrod", 10, 2);
-      targetCluster.disconnectSource("hotrod");
+      targetCluster.disconnectSource(CACHE_NAME);
 
       assertEquals(targetCluster.getRemoteCache(CACHE_NAME).size(), entries);
    }

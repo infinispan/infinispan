@@ -97,6 +97,7 @@ public class RollingUpgradeIT {
 
       // Assert data was migrated successfully
       assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClientTarget));
+      assertEquals("name-35", getPersonName("35", restClientTarget));
    }
 
    private int getCacheSize(String cacheName, RestClient restClient) {
