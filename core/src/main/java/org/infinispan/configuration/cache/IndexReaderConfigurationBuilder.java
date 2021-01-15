@@ -2,9 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.IndexReaderConfiguration.REFRESH_INTERVAL;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -18,8 +15,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurationChildBuilder
       implements Builder<IndexReaderConfiguration>, ConfigurationBuilderInfo {
 
-   private static final String REFRESH_INTERVAL_KEY = "hibernate.search.backend.io.refresh_interval";
-
    private final AttributeSet attributes;
    private final Attribute<Long> refreshInterval;
 
@@ -29,21 +24,9 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
       this.refreshInterval = attributes.attribute(REFRESH_INTERVAL);
    }
 
-   Map<String, Object> asInternalProperties() {
-      Map<String, Object> props = new HashMap<>();
-      if (refreshInterval.isModified() && refreshInterval.get() != 0) {
-         props.put(REFRESH_INTERVAL_KEY, refreshInterval());
-      }
-      return props;
-   }
-
    public IndexReaderConfigurationBuilder refreshInterval(long valueMillis) {
       refreshInterval.set(valueMillis);
       return this;
-   }
-
-   long refreshInterval() {
-      return refreshInterval.get();
    }
 
    @Override

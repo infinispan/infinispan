@@ -25,7 +25,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -38,8 +37,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    private static final String BACKEND_PREFIX = "hibernate.search.backend.";
 
    private static final String DIRECTORY_PROVIDER_KEY = BACKEND_PREFIX + "directory.type";
-
-   private static final String DIRECTORY_ROOT_KEY = BACKEND_PREFIX + "directory.root";
 
    private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
 
@@ -59,8 +56,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    private static final String RAM_DIRECTORY_PROVIDER = "ram";
 
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
-
-   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
 
    private final AttributeSet attributes;
 
@@ -378,20 +373,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       }
 
       // todo [anistor] if storage media type is not configured then log a warning because this is not supported with indexing
-      if (enabled()) {
-         IndexStorage storage = attributes.attribute(STORAGE).get();
-         if (storage.equals(IndexStorage.LOCAL_HEAP)) {
-            typedProperties.put(DIRECTORY_PROVIDER_KEY, LOCAL_HEAP_DIRECTORY_PROVIDER);
-         } else {
-            typedProperties.put(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
-            String path = attributes.attribute(PATH).get();
-            if (path != null) {
-               typedProperties.put(DIRECTORY_ROOT_KEY, StringPropertyReplacer.replaceProperties(path));
-            }
-         }
-         typedProperties.putAll(readerConfigurationBuilder.asInternalProperties());
-         typedProperties.putAll(writerConfigurationBuilder.asInternalProperties());
-      }
 
       return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(), writerConfigurationBuilder.create());
    }

@@ -33,12 +33,12 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().enabled());
-      assertEquals(memoryCfg.indexing().properties().size(), 3);
+      assertTrue(memoryCfg.indexing().properties().isEmpty());
       assertEquals(IndexStorage.LOCAL_HEAP, memoryCfg.indexing().storage());
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 4);
+      assertTrue(diskCfg.indexing().properties().isEmpty());
       assertEquals(diskCfg.indexing().storage(), IndexStorage.FILESYSTEM);
       assertEquals(diskCfg.indexing().path(), "target/");
 
@@ -53,7 +53,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
       Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
-      assertEquals(defaultConfiguration.indexing().properties().size(), 3);
+      assertTrue(defaultConfiguration.indexing().properties().isEmpty());
       assertTrue(defaultConfiguration.indexing().enabled());
       assertEquals(IndexStorage.LOCAL_HEAP, defaultConfiguration.indexing().storage());
 
@@ -62,16 +62,16 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration simpleCfg = namedConfigurations.get("simple").build();
       assertTrue(simpleCfg.indexing().enabled());
-      assertEquals(simpleCfg.indexing().properties().size(), 3);
+      assertTrue(simpleCfg.indexing().properties().isEmpty());
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().enabled());
-      assertEquals(memoryCfg.indexing().properties().size(), 3);
+      assertTrue(memoryCfg.indexing().properties().isEmpty());
       assertEquals(memoryCfg.indexing().storage(), IndexStorage.LOCAL_HEAP);
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 4);
+      assertTrue(diskCfg.indexing().properties().isEmpty());
       assertEquals(diskCfg.indexing().storage(), IndexStorage.FILESYSTEM);
       assertEquals(diskCfg.indexing().path(), "target/");
    }

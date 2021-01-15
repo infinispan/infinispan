@@ -1,8 +1,10 @@
 package org.infinispan.query.config;
 
+import static org.infinispan.query.impl.config.SearchPropertyExtractor.extractProperties;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.commons.util.TypedProperties;
+import java.util.Map;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -34,8 +36,7 @@ public class EngineConfigTest extends SingleCacheManagerTest {
    @Test
    public void testPropertiesGeneration() {
       cache.put(1, new Person("name", "blurb", 12));
-
-      TypedProperties properties = cache.getCacheConfiguration().indexing().properties();
+      Map<String, Object> properties = extractProperties(cache.getCacheConfiguration().indexing(), this.getClass().getClassLoader());
 
       // Storage
       assertEquals("local-filesystem", properties.get("hibernate.search.backend.directory.type"));
