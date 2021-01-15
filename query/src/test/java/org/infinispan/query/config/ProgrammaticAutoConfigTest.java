@@ -2,6 +2,7 @@ package org.infinispan.query.config;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,16 +18,13 @@ public class ProgrammaticAutoConfigTest {
 
    @Test
    public void testWithoutAutoConfig() {
-      IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing().enable().create();
-      assertEquals(cfg.properties().size(), 3);
+      IndexingConfiguration cfg = new ConfigurationBuilder().indexing().enable().create();
+      assertTrue("No property was explicitly defined", cfg.properties().isEmpty());
    }
 
    @Test
    public void testLocalWitAutoConfig() {
-      IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing().enable().autoConfig(true)
-              .create();
+      IndexingConfiguration cfg = new ConfigurationBuilder().indexing().enable().autoConfig(true).create();
 
       assertFalse(cfg.properties().isEmpty());
       assertEquals(cfg.properties().get("hibernate.search.backend.directory.type"), "local-filesystem");
@@ -35,9 +33,9 @@ public class ProgrammaticAutoConfigTest {
    @Test
    public void testDistWitAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
-              .clustering().cacheMode(CacheMode.DIST_SYNC)
-              .indexing().enable().autoConfig(true)
-              .create();
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .indexing().enable().autoConfig(true)
+            .create();
 
       assertFalse(cfg.properties().isEmpty());
       assertEquals(cfg.properties().get("hibernate.search.backend.directory.type"), "local-filesystem");
@@ -47,10 +45,10 @@ public class ProgrammaticAutoConfigTest {
    public void testOverride() {
       String override = "hibernate.search.default.exclusive_index_use";
       IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing()
-              .enable()
-              .autoConfig(true)
-              .addProperty(override, "false").create();
+            .indexing()
+            .enable()
+            .autoConfig(true)
+            .addProperty(override, "false").create();
 
       assertEquals(cfg.properties().get(override), "false");
    }

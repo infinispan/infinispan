@@ -10,9 +10,7 @@ import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -26,17 +24,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurationChildBuilder
       implements Builder<IndexWriterConfiguration>, ConfigurationBuilderInfo {
-
-   private static final String BACKEND_PREFIX = "hibernate.search.backend.";
-   private static final String QUEUE_COUNT_KEY = BACKEND_PREFIX + "indexing.queue_count";
-   private static final String QUEUE_SIZE_KEY = BACKEND_PREFIX + "indexing.queue_size";
-   private static final String THREAD_POOL_KEY = BACKEND_PREFIX + "thread_pool.size";
-
-   private static final String IO_PREFIX = "hibernate.search.backend.io.";
-   private static final String COMMIT_INTERVAL_KEY = IO_PREFIX + "commit_interval";
-   private static final String RAM_BUFFER_KEY = IO_PREFIX + "writer.ram_buffer_size";
-   private static final String MAX_BUFFER_ENTRIES_KEY = IO_PREFIX + "writer.max_buffered_docs";
-   private static final String LOW_LEVEL_TRACE_KEY = IO_PREFIX + "writer.infostream";
 
    private final AttributeSet attributes;
    private final IndexMergeConfigurationBuilder indexMergeConfigurationBuilder;
@@ -68,41 +55,8 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       return subElements;
    }
 
-   Map<String, Object> asInternalProperties() {
-      Map<String, Object> props = new HashMap<>();
-      if (!commitInterval.isNull()) {
-         props.put(COMMIT_INTERVAL_KEY, commitInterval());
-      }
-      if (!threadPoolSize.isNull()) {
-         props.put(THREAD_POOL_KEY, threadPoolSize());
-      }
-      if (!queueCount.isNull()) {
-         props.put(QUEUE_COUNT_KEY, queueCount());
-      }
-      if (!queueSize.isNull()) {
-         props.put(QUEUE_SIZE_KEY, queueSize());
-      }
-      if (!ramBufferSize.isNull()) {
-         props.put(RAM_BUFFER_KEY, ramBufferSize());
-      }
-      if (!maxBufferedEntries.isNull()) {
-         props.put(MAX_BUFFER_ENTRIES_KEY, maxBufferedEntries());
-      }
-      if (lowLevelTrace.isModified()) {
-         props.put(LOW_LEVEL_TRACE_KEY, isLowLevelTrace());
-      }
-      props.putAll(indexMergeConfigurationBuilder.asInternalProperties());
-      return props;
-   }
-
-
-
    public IndexMergeConfigurationBuilder merge() {
       return indexMergeConfigurationBuilder;
-   }
-
-   public int threadPoolSize() {
-      return threadPoolSize.get();
    }
 
    public IndexWriterConfigurationBuilder threadPoolSize(int value) {
@@ -110,17 +64,9 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       return this;
    }
 
-   public int queueCount() {
-      return queueCount.get();
-   }
-
    public IndexWriterConfigurationBuilder queueCount(int value) {
       queueCount.set(value);
       return this;
-   }
-
-   public int queueSize() {
-      return queueSize.get();
    }
 
    public IndexWriterConfigurationBuilder queueSize(int value) {
@@ -128,17 +74,9 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       return this;
    }
 
-   public int commitInterval() {
-      return commitInterval.get();
-   }
-
    public IndexWriterConfigurationBuilder commitInterval(int value) {
       commitInterval.set(value);
       return this;
-   }
-
-   public int ramBufferSize() {
-      return ramBufferSize.get();
    }
 
    public IndexWriterConfigurationBuilder ramBufferSize(int value) {
@@ -146,17 +84,9 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       return this;
    }
 
-   public int maxBufferedEntries() {
-      return maxBufferedEntries.get();
-   }
-
    public IndexWriterConfigurationBuilder maxBufferedEntries(int value) {
       maxBufferedEntries.set(value);
       return this;
-   }
-
-   public boolean isLowLevelTrace() {
-      return lowLevelTrace.get();
    }
 
    public IndexWriterConfigurationBuilder setLowLevelTrace(boolean value) {

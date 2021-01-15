@@ -2089,11 +2089,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Indexing configuration using properties has been deprecated and will be removed in a future " +
          "version, please consult the docs for the replacements. The following properties have been found: '%s'", id = 612)
+   @Once
    void indexingPropertiesDeprecated(Properties properties);
 
    @LogMessage(level = WARN)
    @Message(value = "Indexing configuration using properties has been deprecated and will be removed in a future " +
          "version, please use the <index-writer> and <index-reader> elements to configure indexing behavior.", id = 613)
+   @Once
    void deprecatedIndexProperties();
 
    @Message(value = "It is not allowed to have different indexing configuration for each indexed type in a cache.", id = 614)

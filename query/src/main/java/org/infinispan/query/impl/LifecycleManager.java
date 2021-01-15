@@ -1,12 +1,12 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.impl.config.SearchPropertyExtractor.extractProperties;
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
-import org.hibernate.search.backend.lucene.analysis.LuceneAnalysisConfigurer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -69,7 +68,6 @@ import org.infinispan.query.impl.externalizers.LuceneTotalHitsExternalizer;
 import org.infinispan.query.impl.externalizers.PojoRawTypeIdentifierExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
-import org.infinispan.query.logging.Log;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
@@ -77,10 +75,8 @@ import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
-import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
 import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -91,9 +87,6 @@ import org.infinispan.util.logging.LogFactory;
 @InfinispanModule(name = "query", requiredModules = {"core", "query-core", "clustered-lock"}, optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
 
-   private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
-
-   private static final String ANALYSIS_CONFIGURER_PROPERTY_NAME = "analysis.configurer";
    private static final String HS5_CONF_STRATEGY_PROPERTY = "hibernate.search.indexing_strategy";
    private static final String HS5_CONF_STRATEGY_MANUAL = "manual";
 
@@ -308,27 +301,9 @@ public class LifecycleManager implements ModuleLifecycle {
       Collection<ProgrammaticSearchMappingProvider> mappingProviders =
             ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
 
-      Map<String, Object> properties = new LinkedHashMap<>();
-
-      // load LuceneAnalysisDefinitionProvider from classpath
-      Collection<LuceneAnalysisConfigurer> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisConfigurer.class, aggregatedClassLoader);
-      if (analyzerDefProviders.size() == 1) {
-         properties.put(ANALYSIS_CONFIGURER_PROPERTY_NAME, analyzerDefProviders.iterator().next());
-      } else if (!analyzerDefProviders.isEmpty()) {
-         properties.put(ANALYSIS_CONFIGURER_PROPERTY_NAME, new CompositeAnalysisConfigurer(analyzerDefProviders));
-      }
-
-      // provide user defined properties
-      for (Map.Entry<Object, Object> entry : indexingConfiguration.properties().entrySet()) {
-         if (!(entry.getKey() instanceof String)) {
-            throw log.invalidPropertyKey(entry.getKey());
-         }
-         properties.put((String) entry.getKey(), entry.getValue());
-      }
-
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
-            properties, aggregatedClassLoader, mappingProviders);
+            extractProperties(indexingConfiguration, aggregatedClassLoader), aggregatedClassLoader, mappingProviders);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
