@@ -2,6 +2,7 @@
       includeClasses = {
             Book.class,
             Author.class,
+            UUIDAdapter.class,
       },
       schemaFileName = "library.proto", <1>
       schemaFilePath = "proto/", <2>

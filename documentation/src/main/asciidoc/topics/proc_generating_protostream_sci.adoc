@@ -1,30 +1,26 @@
 [id='generating_protostream_sci-{context}']
 = Generating Serialization Context Initializers
-A ProtoStream `SerializationContext` contains Protobuf type definitions for
-custom Java objects, loaded from Protobuf schemas, and the accompanying
-marshallers for those objects.
+Annotate Java objects in your classes to include them in an implementation of the ProtoStream `SerializationContextInitializer` interface so that the ProtoStream library can encode your Java objects to Protobuf format and {brandname} can transmit and store them.
 
-{brandname} provides a `protostream-processor` artifact that processes Java
-annotations in your classes at compile time. The processor generates Protobuf
-schemas, marshallers, and a concrete implementation of the
-`SerializationContextInitializer` interface that you can use to initialize a
-ProtoStream `SerializationContext`.
+.Prerequisites
+
+{brandname} provides a `protostream-processor` artifact that processes Java annotations in your classes at compile time.
+The processor generates Protobuf schemas, marshallers, and a concrete implementation of the `SerializationContextInitializer` interface that you can use to initialize a ProtoStream `SerializationContext`.
 
 [NOTE]
 ====
-By default, implementation names are the annotated class name with an "Impl"
-suffix.
+By default, implementation names are the annotated class name with an "Impl" suffix.
 ====
 
-.Procedure
-
-. Add the `protostream-processor` dependency to your `pom.xml`.
+* Add the `protostream-processor` dependency to your `pom.xml`.
 +
 [source,xml]
 ----
 include::dependencies_maven/protostream-processor.xml[]
 ----
-+
+
+.Procedure
+
 . Annotate the Java objects that you want to marshall with `@ProtoField` and `@ProtoFactory`.
 +
 [source,java]
@@ -39,7 +35,15 @@ include::code_examples/Author.java[]
 include::code_examples/Book.java[]
 ----
 +
-. Define an interface that extends `SerializationContextInitializer` and is annotated with `@AutoProtoSchemaBuilder`.
+. If necessary, create an adaptor class for any external, third-party Java object classes and add the `@ProtoAdaptor` annotation.
++
+[source,java]
+----
+include::code_examples/ProtoAdaptor.java[]
+----
++
+. Define an interface that extends `SerializationContextInitializer`.
+. Annotate the interface with `@AutoProtoSchemaBuilder` so that {brandname} automatically registers your `SerializationContextInitializer` implementation.
 +
 [source,java]
 ----
@@ -51,28 +55,7 @@ include::code_examples/LibraryInitializer.java[]
 
 .Next steps
 
-{brandname} automatically registers any `SerializationContextInitializer`
-implementations on the application classpath. After you generate a
-`SerializationContextInitializer`, {brandname} is ready to marshall your Java
-objects.
-
-[NOTE]
-====
-If you do not want {brandname} to automatically register your
-`SerializationContextInitializer` implementation, you should set a value of
-`false` for the `AutoProtoSchemaBuilder.service` annotation. However, you must
-then declare the implementation in your {brandname} configuration to register
-it.
-
-[source,java]
-----
-@AutoProtoSchemaBuilder(
-      includeClasses = SomeClass.class,
-      ...
-      service = false
-)
-----
-====
+{brandname} is ready to marshall your Java objects.
 
 .Reference
 
