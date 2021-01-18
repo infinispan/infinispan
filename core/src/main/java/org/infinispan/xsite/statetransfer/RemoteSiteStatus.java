@@ -18,18 +18,24 @@ import net.jcip.annotations.GuardedBy;
 public class RemoteSiteStatus {
 
    private final XSiteBackup backup;
+   private final boolean isSync;
    @GuardedBy("this")
    private StateTransferStatus status;
    @GuardedBy("this")
    private XSiteStateTransferCollector collector;
 
-   public RemoteSiteStatus(XSiteBackup backup) {
+   private RemoteSiteStatus(XSiteBackup backup, boolean isSync) {
       this.backup = Objects.requireNonNull(backup);
+      this.isSync = isSync;
       this.status = StateTransferStatus.IDLE;
    }
 
    public XSiteBackup getBackup() {
       return backup;
+   }
+
+   public boolean isSync() {
+      return isSync;
    }
 
    public String getSiteName() {
@@ -97,6 +103,6 @@ public class RemoteSiteStatus {
 
    public static RemoteSiteStatus fromConfiguration(BackupConfiguration configuration) {
       XSiteBackup backup = new XSiteBackup(configuration.site(), true, configuration.replicationTimeout());
-      return new RemoteSiteStatus(backup);
+      return new RemoteSiteStatus(backup, configuration.isSyncBackup());
    }
 }

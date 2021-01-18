@@ -1,5 +1,6 @@
 package org.infinispan.xsite.irac;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
@@ -9,6 +10,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
  * An {@link IracManager} implementation that can be controlled for testing purpose.
@@ -28,6 +30,11 @@ public class ControlledIracManager implements IracManager {
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       actual.trackUpdatedKey(segment, key, lockOwner);
+   }
+
+   @Override
+   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+      return actual.trackForStateTransfer(stateList);
    }
 
    @Override

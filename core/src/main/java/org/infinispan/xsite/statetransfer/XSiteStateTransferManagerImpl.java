@@ -86,15 +86,18 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
             return null;
          });
 
-         sendStateTransferFinishToRemoteSite(status).exceptionally(t -> {
-            log.xsiteCancelReceiveFailed(t, getLocalSite(), siteName);
-            return null;
-         });
+         if (status.isSync()) {
+            //with async cross-site, the remote site doesn't have the concept of state transfer.
+            sendStateTransferFinishToRemoteSite(status).exceptionally(t -> {
+               log.xsiteCancelReceiveFailed(t, getLocalSite(), siteName);
+               return null;
+            });
+         }
       }
    }
 
    @Override
-   public final void startPushState(String siteName) throws Throwable {
+   public final void startPushState(String siteName) {
       RemoteSiteStatus status = validateSite(siteName);
       if (!status.startStateTransfer(rpcManager.getMembers())) {
          throw log.xsiteStateTransferAlreadyInProgress(siteName);
@@ -102,8 +105,12 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
       try {
          //prepare remote site to receive state
-         XSiteReplicateCommand<?> remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand();
-         rpcManager.blocking(rpcManager.invokeXSite(status.getBackup(), remoteSiteCommand));
+         if (status.isSync()) {
+            //with async cross-site, the remote site doesn't have the concept of state transfer.
+            //the remote site receives normal updates and apply conflict resolution if required.
+            XSiteReplicateCommand<?> remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand();
+            rpcManager.blocking(rpcManager.invokeXSite(status.getBackup(), remoteSiteCommand));
+         }
          if (!isStateTransferInProgress) {
             //only if we are in balanced cluster, we start to send the data!
             XSiteStateTransferStartSendCommand cmd = commandsFactory.buildXSiteStateTransferStartSendCommand(siteName, currentTopologyId);
@@ -152,12 +159,15 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       });
       rsp.dependsOn(cancelSending);
 
-      CompletionStage<Void> cancelReceiving = sendStateTransferFinishToRemoteSite(status);
-      cancelReceiving.exceptionally(t -> {
-         log.xsiteCancelReceiveFailed(t, getLocalSite(), siteName);
-         return null;
-      });
-      rsp.dependsOn(cancelReceiving);
+      if (status.isSync()) {
+         //with async cross-site, the remote site doesn't have the concept of state transfer.
+         CompletionStage<Void> cancelReceiving = sendStateTransferFinishToRemoteSite(status);
+         cancelReceiving.exceptionally(t -> {
+            log.xsiteCancelReceiveFailed(t, getLocalSite(), siteName);
+            return null;
+         });
+         rsp.dependsOn(cancelReceiving);
+      }
       rsp.freeze().toCompletableFuture().join();
    }
 
@@ -326,6 +336,11 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          rsp.exceptionally(t -> DEBUG_CANCEL_FAIL.apply(t, siteName));
       }
 
+      if (!siteStatus.isSync()) {
+         return;
+      }
+
+      //with async cross-site, the remote site doesn't have the concept of state transfer.
       rsp = sendStateTransferFinishToRemoteSite(siteStatus);
       if (log.isDebugEnabled()) {
          rsp.exceptionally(t -> {

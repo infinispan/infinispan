@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.xsite.irac.IracManager;
 
 /**
  * It contains the logic to send state to another site.
@@ -61,6 +62,11 @@ public interface XSiteStateProvider {
     * Exposes {@link RpcManager} to {@link XSiteStatePushTask}.
     */
    RpcManager getRpcManager();
+
+   /**
+    * Exposes {@link IracManager} to {@link XSiteStatePushTask}.
+    */
+   IracManager getIracManager();
 
    /**
     * Exposes timeout {@link ScheduledExecutorService} to {@link XSiteStatePushTask}.
