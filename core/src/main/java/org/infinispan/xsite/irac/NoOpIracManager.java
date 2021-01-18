@@ -1,5 +1,6 @@
 package org.infinispan.xsite.irac;
 
+import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.IntSet;
@@ -9,6 +10,7 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
  * A no-op implementation of {@link IracManager} for cache without asynchronous remote site backups.
@@ -31,6 +33,11 @@ public class NoOpIracManager implements IracManager {
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       //no-op
+   }
+
+   @Override
+   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+      return CompletableFutures.completedNull();
    }
 
    @Override

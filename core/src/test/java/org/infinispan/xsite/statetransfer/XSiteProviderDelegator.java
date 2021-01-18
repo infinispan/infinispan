@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.xsite.irac.IracManager;
 
 /**
  * {@link org.infinispan.xsite.statetransfer.XSiteStateProvider} delegator. Mean to be overridden. For test purpose
@@ -56,6 +57,11 @@ public class XSiteProviderDelegator implements XSiteStateProvider {
    @Override
    public RpcManager getRpcManager() {
       return xSiteStateProvider.getRpcManager();
+   }
+
+   @Override
+   public IracManager getIracManager() {
+      return xSiteStateProvider.getIracManager();
    }
 
    @Override

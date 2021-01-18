@@ -43,14 +43,18 @@ public interface XSiteStateProviderState {
    boolean isOriginatorMissing(Collection<Address> members);
 
    /**
+    * @return {@code true} if the backup is configured to synchronous cross-site replication.
+    */
+   boolean isSync();
+
+   /**
     * Factory for {@link XSiteStateProviderState} instances.
     *
     * @param config The {@link BackupConfiguration}.
     * @return The {@link XSiteStateProviderState} instance.
     */
    static XSiteStateProviderState fromBackupConfiguration(BackupConfiguration config) {
-      //only a single implementation available for now.
-      return SyncProviderState.create(config);
+      return config.isSyncBackup() ? SyncProviderState.create(config) : AsyncProviderState.create(config);
    }
 
 }

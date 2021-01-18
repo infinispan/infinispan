@@ -1,5 +1,6 @@
 package org.infinispan.xsite.irac;
 
+import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.IntSet;
@@ -8,6 +9,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
  * It manages the keys changed in the local cluster and sends to all asynchronous backup configured.
@@ -29,6 +31,19 @@ public interface IracManager {
     * @param lockOwner The lock owner who updated the key.
     */
    void trackUpdatedKey(int segment, Object key, Object lockOwner);
+
+   /**
+    * Tracks a set of keys to be send to the remote site.
+    * <p>
+    * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, Object)}. It just returns
+    * a {@link CompletionStage} to notify when the keys were sent. It is required by the cross-site state transfer
+    * protocol to know when it has finish.
+    *
+    * @param stateList The list of {@link XSiteState}.
+    * @return A {@link CompletionStage} which is completed when all the keys in {@code stateList} have been sent to the
+    * remote site.
+    */
+   CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList);
 
    /**
     * Sets all keys as removed.

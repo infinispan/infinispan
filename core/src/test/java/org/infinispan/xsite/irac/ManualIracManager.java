@@ -1,7 +1,13 @@
 package org.infinispan.xsite.irac;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
@@ -9,6 +15,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -26,11 +33,13 @@ public class ManualIracManager extends ControlledIracManager {
    private final Map<Object, Object> pendingKeys;
    @GuardedBy("this")
    private boolean enabled;
+   private final List<StateTransferRequest> pendingStateTransfer;
    @Inject KeyPartitioner keyPartitioner;
 
    private ManualIracManager(IracManager actual) {
       super(actual);
       pendingKeys = new HashMap<>();
+      pendingStateTransfer = new ArrayList<>(2);
    }
 
    public static ManualIracManager wrapCache(Cache<?, ?> cache) {
@@ -51,6 +60,17 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
+   public synchronized CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+      if (enabled) {
+         StateTransferRequest request = new StateTransferRequest(stateList);
+         pendingStateTransfer.add(request);
+         return request;
+      } else {
+         return super.trackForStateTransfer(stateList);
+      }
+   }
+
+   @Override
    public synchronized void requestState(Address origin, IntSet segments) {
       //send the state for the keys we have pending in this instance!
       asDefaultIracManager()
@@ -61,6 +81,11 @@ public class ManualIracManager extends ControlledIracManager {
    public synchronized void sendKeys() {
       pendingKeys.forEach((key, lockOwner) -> super.trackUpdatedKey(keyPartitioner.getSegment(key), key, lockOwner));
       pendingKeys.clear();
+      pendingStateTransfer.forEach(request -> {
+         CompletionStage<Void> rsp = super.trackForStateTransfer(request.state);
+         rsp.whenComplete(request);
+      });
+      pendingStateTransfer.clear();
    }
 
    public synchronized void enable() {
@@ -72,6 +97,7 @@ public class ManualIracManager extends ControlledIracManager {
       switch (disableMode) {
          case DROP:
             pendingKeys.clear();
+            pendingStateTransfer.clear();
             break;
          case SEND:
             sendKeys();
@@ -83,5 +109,23 @@ public class ManualIracManager extends ControlledIracManager {
    public enum DisableMode {
       SEND,
       DROP
+   }
+
+   private static class StateTransferRequest extends CompletableFuture<Void> implements BiConsumer<Void, Throwable> {
+      private final Collection<XSiteState> state;
+
+      private StateTransferRequest(Collection<XSiteState> state) {
+         this.state = new ArrayList<>(state);
+      }
+
+
+      @Override
+      public void accept(Void unused, Throwable throwable) {
+         if (throwable != null) {
+            completeExceptionally(throwable);
+         } else {
+            complete(null);
+         }
+      }
    }
 }

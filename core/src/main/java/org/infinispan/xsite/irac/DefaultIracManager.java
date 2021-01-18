@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -22,6 +23,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -45,6 +47,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -128,6 +131,22 @@ public class DefaultIracManager implements IracManager {
       }
       updatedKeys.put(key, new State(segment, key, lockOwner));
       iracExecutor.run();
+   }
+
+   @Override
+   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+      AggregateCompletionStage<Void> cf = CompletionStages.aggregateCompletionStage();
+      LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
+      for (XSiteState state : stateList) {
+         int segment = topology.getSegment(state.key());
+         CompletableState completableState = new CompletableState(segment, state.key(), "state-transfer");
+         //if an update is in progress, we don't need to send the same value again.
+         if (updatedKeys.putIfAbsent(state.key(), completableState) == null) {
+            cf.dependsOn(completableState.completableFuture);
+         }
+      }
+      iracExecutor.run();
+      return cf.freeze();
    }
 
    @Override
@@ -413,7 +432,7 @@ public class DefaultIracManager implements IracManager {
       private final Object owner;
       private final int segment;
       @GuardedBy("this")
-      private StateStatus stateStatus;
+      StateStatus stateStatus;
       private volatile IracMetadata tombstone;
 
       private State(int segment, Object key, Object owner) {
@@ -482,6 +501,34 @@ public class DefaultIracManager implements IracManager {
             }
             removeStateFromCluster(this);
          }
+      }
+   }
+
+   private class CompletableState extends State {
+
+      private final CompletableFuture<Void> completableFuture;
+
+      private CompletableState(int segment, Object key, Object owner) {
+         super(segment, key, owner);
+         completableFuture = new CompletableFuture<>();
+      }
+
+      @Override
+      synchronized void discard() {
+         super.discard();
+         completableFuture.complete(null);
+      }
+
+      @Override
+      public void accept(IracResponseCollector.Result result, Throwable throwable) {
+         super.accept(result, throwable);
+         if (isCompleted()) {
+            completableFuture.complete(null);
+         }
+      }
+
+      synchronized boolean isCompleted() {
+         return stateStatus == StateStatus.COMPLETED;
       }
    }
 }

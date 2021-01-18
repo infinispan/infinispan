@@ -36,6 +36,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
+import org.infinispan.xsite.irac.IracManager;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -59,6 +60,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
    @Inject ComponentRef<XSiteStateTransferManager> stateTransferManager;
+   @Inject IracManager iracManager;
    @Inject StateTransferLock stateTransferLock;
    @Inject
    @ComponentName(NON_BLOCKING_EXECUTOR)
@@ -101,7 +103,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       }
 
       IntSet segments = localPrimarySegments();
-      Flowable<XSiteState> flowable = Flowable.concat(publishDataContainerEntries(segments), publishStoreEntries(segments));
+      Flowable<XSiteState> flowable = Flowable.concat(publishDataContainerEntries(segments), publishStoreEntries(segments, state.isSync()));
       task.execute(flowable, stateTransferLock.topologyFuture(minTopologyId));
 
       checkCoordinatorAlive(siteName, origin);
@@ -153,6 +155,11 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    }
 
    @Override
+   public IracManager getIracManager() {
+      return iracManager;
+   }
+
+   @Override
    public ScheduledExecutorService getScheduledExecutorService() {
       return timeoutExecutor;
    }
@@ -181,9 +188,10 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             .map(XSiteState::fromDataContainer);
    }
 
-   private Flowable<XSiteState> publishStoreEntries(IntSet segments) {
+   private Flowable<XSiteState> publishStoreEntries(IntSet segments, boolean syncBackup) {
+      //async backup only needs the key
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-            persistenceManager.publishEntries(segments, this::missingInDataContainer, true, true,
+            persistenceManager.publishEntries(segments, this::missingInDataContainer, syncBackup, syncBackup,
                   Configurations::isStateTransferStore);
       return Flowable.fromPublisher(loaderPublisher).map(XSiteState::fromCacheLoader);
    }

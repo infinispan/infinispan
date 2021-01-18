@@ -2,12 +2,10 @@ package org.infinispan.xsite.statetransfer;
 
 import static org.infinispan.util.logging.Log.XSITE;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -17,14 +15,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.CompletableSource;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.functions.Predicate;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -33,18 +25,12 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 12.0
  */
-public class SyncProviderState implements XSiteStateProviderState {
+public class SyncProviderState extends BaseXSiteStateProviderState<SyncProviderState.SyncOutboundTask> {
 
    private static final Log log = LogFactory.getLog(SyncProviderState.class);
-   private static final AtomicReferenceFieldUpdater<SyncProviderState, OutboundTask> TASK_UPDATER = AtomicReferenceFieldUpdater.newUpdater(SyncProviderState.class, OutboundTask.class, "task");
-
-   private final XSiteBackup backup;
-   private final XSiteStateTransferConfiguration configuration;
-   private volatile OutboundTask task;
 
    private SyncProviderState(XSiteBackup backup, XSiteStateTransferConfiguration configuration) {
-      this.backup = backup;
-      this.configuration = configuration;
+      super(backup, configuration);
    }
 
    public static SyncProviderState create(BackupConfiguration config) {
@@ -53,109 +39,19 @@ public class SyncProviderState implements XSiteStateProviderState {
    }
 
    @Override
-   public XSiteStatePushTask createPushTask(Address originator, XSiteStateProvider provider) {
-      OutboundTask newTask = new OutboundTask(originator, provider, this);
-      return TASK_UPDATER.compareAndSet(this, null, newTask) ? newTask : null;
+   public boolean isSync() {
+      return true;
    }
 
    @Override
-   public void cancelTransfer() {
-      OutboundTask currentTask = TASK_UPDATER.getAndSet(this, null);
-      if (currentTask != null) {
-         currentTask.cancel();
-      }
+   SyncOutboundTask createTask(Address originator, XSiteStateProvider provider) {
+      return new SyncOutboundTask(originator, provider, this);
    }
 
-   @Override
-   public boolean isSending() {
-      return task != null;
-   }
+   static class SyncOutboundTask extends BaseXSiteStateProviderState.OutboundTask {
 
-   @Override
-   public boolean isOriginatorMissing(Collection<Address> members) {
-      OutboundTask currentTask = task;
-      return currentTask != null && !members.contains(currentTask.coordinator);
-   }
-
-   // methods for OutboundTask
-   void taskFinished() {
-      TASK_UPDATER.set(this, null);
-   }
-
-   XSiteBackup getBackup() {
-      return backup;
-   }
-
-   int getChunkSize() {
-      return configuration.chunkSize();
-   }
-
-   long getWaitTimeMillis() {
-      return configuration.waitTime();
-   }
-
-   int getMaxRetries() {
-      return configuration.maxRetries();
-   }
-
-   private static class OutboundTask implements XSiteStatePushTask, Predicate<List<XSiteState>>, Function<List<XSiteState>, CompletableSource>, CompletableObserver {
-
-      private final Address coordinator;
-      private final XSiteStateProvider provider;
-      private final SyncProviderState state;
-      private volatile boolean canceled = false;
-
-      private OutboundTask(Address coordinator, XSiteStateProvider provider, SyncProviderState state) {
-         this.coordinator = coordinator;
-         this.provider = provider;
-         this.state = state;
-      }
-
-      @Override
-      public void execute(Flowable<XSiteState> flowable, CompletionStage<Void> delayer) {
-         //delayer is the cache topology future. we need to ensure the topology id is installed before iterating
-         delayer.thenRunAsync(() -> flowable
-                     .buffer(state.getChunkSize())
-                     .takeUntil(this)
-                     .concatMapCompletable(this, 1)
-                     .subscribe(this),
-               provider.getExecutor());
-
-      }
-
-      public void cancel() {
-         canceled = true;
-      }
-
-      @Override
-      public boolean test(List<XSiteState> ignored) {
-         //Flowable#takeUntil method
-         return canceled;
-      }
-
-      @Override
-      public void onSubscribe(@NonNull Disposable d) {
-
-      }
-
-      @Override
-      public void onComplete() {
-         //if canceled, the coordinator already cleanup the resources. There is nothing to be done here.
-         if (canceled) {
-            return;
-         }
-         provider.notifyStateTransferEnd(state.getBackup().getSiteName(), coordinator, true);
-         state.taskFinished();
-      }
-
-      @Override
-      public void onError(@NonNull Throwable e) {
-         //if canceled, the coordinator already cleanup the resources. There is nothing to be done here.
-         if (canceled) {
-            return;
-         }
-         provider.notifyStateTransferEnd(state.getBackup().getSiteName(), coordinator, false);
-         state.taskFinished();
+      SyncOutboundTask(Address coordinator, XSiteStateProvider provider, SyncProviderState state) {
+         super(coordinator, provider, state);
       }
 
       @Override
