@@ -165,7 +165,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       if (sslContextBuilder == null) return null;
       if (sslContext == null) {
          if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
-            sslContextBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
+            sslContextBuilder.setSecurityDomain(getServerSecurityRealm().getSecurityDomain());
          }
          sslContextBuilder.setWrap(false);
          String sslProvider = SslContextFactory.getSslProvider();

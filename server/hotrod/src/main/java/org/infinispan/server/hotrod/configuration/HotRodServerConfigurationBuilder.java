@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.configuration;
 
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
 
@@ -27,6 +28,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
    private final TopologyCacheConfigurationBuilder topologyCache = new TopologyCacheConfigurationBuilder();
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
+   private static final String DEFAULT_NAME = "hotrod";
 
    public HotRodServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, HotRodServerConfiguration.attributeDefinitionSet());
@@ -98,6 +100,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
     * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the
     * other nodes. Defaults to true.
+    *
     * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
    @Override
@@ -109,6 +112,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
 
    @Override
    public HotRodServerConfiguration create() {
+      if (!attributes.attribute(NAME).isModified()) {
+         String socketBinding = socketBinding();
+         name(DEFAULT_NAME + (socketBinding == null ? "" : "-" + socketBinding));
+      }
       return new HotRodServerConfiguration(attributes.protect(), topologyCache.create(), ssl.create(), authentication.create(), encryption.create());
    }
 

@@ -71,31 +71,49 @@ public class AuthenticationMultiEndpointIT {
 
          String userPrefix = "alternate".equals(realm) ? "alternate_" : "";
          // We test against different ports with different configurations
-         for (int p = 11222; p < 11225; p++) {
+         for (int p = 11222; p < 11227; p++) {
             Integer port = Integer.valueOf(p);
 
             final boolean isAnonymous;
             final boolean isAdmin;
             final boolean isPlain;
-            final boolean isAlternateRealm;
+            final boolean isAlternateRealmHotRod;
+            final boolean isAlternateRealmHTTP;
             switch (p) {
                case 11222:
                   isAnonymous = false;
                   isAdmin = true;
                   isPlain = true;
-                  isAlternateRealm = false;
+                  isAlternateRealmHotRod = false;
+                  isAlternateRealmHTTP = false;
                   break;
                case 11223:
                   isAnonymous = true;
                   isAdmin = false;
                   isPlain = false;
-                  isAlternateRealm = false;
+                  isAlternateRealmHotRod = false;
+                  isAlternateRealmHTTP = false;
                   break;
                case 11224:
                   isAnonymous = false;
                   isAdmin = false;
                   isPlain = true;
-                  isAlternateRealm = true;
+                  isAlternateRealmHotRod = true;
+                  isAlternateRealmHTTP = true;
+                  break;
+               case 11225:
+                  isAnonymous = false;
+                  isAdmin = true;
+                  isPlain = false;
+                  isAlternateRealmHotRod = true;
+                  isAlternateRealmHTTP = false;
+                  break;
+               case 11226:
+                  isAnonymous = false;
+                  isAdmin = true;
+                  isPlain = false;
+                  isAlternateRealmHotRod = false;
+                  isAlternateRealmHTTP = false;
                   break;
                default:
                   throw new IllegalArgumentException();
@@ -103,11 +121,11 @@ public class AuthenticationMultiEndpointIT {
 
             // We test with different Hot Rod mechs
             Common.SASL_MECHS.stream().map(m -> m[0]).forEach(m -> {
-               params.add(new Object[]{"Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealm});
+               params.add(new Object[]{"Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHotRod});
             });
 
             Common.HTTP_MECHS.stream().map(m -> m[0]).forEach(m -> {
-               params.add(new Object[]{Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealm});
+               params.add(new Object[]{Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHTTP});
             });
          }
       }

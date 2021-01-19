@@ -196,5 +196,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException missingCredential(String element, String attribute);
 
    @Message(value = "The request authentication mechanism '%s' is not supported", id = 80052)
-   IllegalArgumentException unsupportedMechanism(String mechName);
+   SecurityException unsupportedMechanism(String mechName);
+
+   @Message(value = "Encryption cannot be configured without a security realm", id = 80053)
+   CacheConfigurationException encryptionWithoutSecurityRealm();
 }
