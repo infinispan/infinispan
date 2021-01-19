@@ -13,7 +13,6 @@ include::{topics}/con_eviction.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_memory_size.adoc[leveloffset=+3]
 include::{topics}/proc_configuring_memory_size_bytes.adoc[leveloffset=+3]
 include::{topics}/ref_eviction_examples.adoc[leveloffset=+3]
-include::{topics}/con_eviction_custom_classes.adoc[leveloffset=+3]
 
 //Expiration
 include::{topics}/con_expiration.adoc[leveloffset=+2]
