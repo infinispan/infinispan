@@ -1870,8 +1870,8 @@
     <xs:attribute name="segmented" type="xs:boolean" default="true">
       <xs:annotation>
         <xs:documentation>
-          Configures cache stores to store data in hash space segments, with the
-          "hash.numSegments" property defining the number of segments.
+          Configures cache stores to store data in hash space segments, with the cache's
+          "segments" attribute defining the number of segments.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
