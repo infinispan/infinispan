@@ -19,12 +19,18 @@
       <xi:include href="security/properties-alternate.xml"/>
 
       <!-- Port 11222 has explicit authentication and admin -->
-      <xi:include href="endpoints/default-auth-explicit.xml"/>
+      <xi:include href="endpoints/auth-explicit.xml"/>
 
       <!-- Port 11223 has no auth and admin is disabled -->
       <xi:include href="endpoints/alternate.xml"/>
 
       <!-- Port 11224 has plain auth with an alternate realm and admin is disabled -->
       <xi:include href="endpoints/alternate-auth.xml"/>
+
+      <!-- Port 11225 has Hot Rod with implicit security on the alternate realm the default REST-->
+      <xi:include href="endpoints/alternate-hotrod.xml"/>
+
+      <!-- Port 11226 has an empty endpoint declaration with the default realm -->
+      <xi:include href="endpoints/alternate-empty.xml"/>
    </server>
 </infinispan>
