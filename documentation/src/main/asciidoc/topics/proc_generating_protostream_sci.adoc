@@ -1,16 +1,13 @@
 [id='generating_protostream_sci-{context}']
 = Generating Serialization Context Initializers
-Annotate Java objects in your classes to include them in an implementation of the ProtoStream `SerializationContextInitializer` interface so that the ProtoStream library can encode your Java objects to Protobuf format and {brandname} can transmit and store them.
-
-.Prerequisites
-
-{brandname} provides a `protostream-processor` artifact that processes Java annotations in your classes at compile time.
-The processor generates Protobuf schemas, marshallers, and a concrete implementation of the `SerializationContextInitializer` interface that you can use to initialize a ProtoStream `SerializationContext`.
+{brandname} provides a `protostream-processor` artifact processes Java annotations in your classes at compile time to generate Protobuf schemas, marshallers, and a concrete implementation of the `SerializationContextInitializer` interface.
 
 [NOTE]
 ====
 By default, implementation names are the annotated class name with an "Impl" suffix.
 ====
+
+.Prerequisites
 
 * Add the `protostream-processor` dependency to your `pom.xml`.
 +
@@ -52,10 +49,6 @@ include::code_examples/LibraryInitializer.java[]
 +
 <1> Names the generated `.proto` schema file.
 <2> Sets the path under `target/classes` where the schema file is generated.
-
-.Next steps
-
-{brandname} is ready to marshall your Java objects.
 
 .Reference
 
