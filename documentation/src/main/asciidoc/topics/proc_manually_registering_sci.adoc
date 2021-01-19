@@ -1,16 +1,27 @@
 [id='manually_registering_sci-{context}']
 = Manually Registering Serialization Context Initializers
-Declare `SerializationContextInitializer` implementations in your
-{brandname} configuration to register them manually.
+If you prefer, you can disable automatic registration of `SerializationContextInitializer` implementations and then register them manually.
 
-* You must declare `SerializationContextInitializer` implementations that you manually implement.
-* If you disable automatic registration of `SerializationContextInitializer` implementations that you generate, then you must manually register them.
-* Manually registering `SerializationContextInitializer` implementations disables automatic registration. In other words, if you manually register one
-`SerializationContextInitializer` implementation, you must register all other implementations for them to take effect.
+[NOTE]
+====
+Manually registering `SerializationContextInitializer` implementations disables automatic registration.
+If you manually register one `SerializationContextInitializer` implementation, you must register all other implementations for them to take effect.
+====
 
 .Procedure
 
-* Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
+. Set a value of `false` for the `AutoProtoSchemaBuilder.service` annotation.
++
+[source,java]
+----
+@AutoProtoSchemaBuilder(
+      includeClasses = SomeClass.class,
+      ...
+      service = false
+)
+----
++
+. Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
 
 .Programmatic configuration
 
