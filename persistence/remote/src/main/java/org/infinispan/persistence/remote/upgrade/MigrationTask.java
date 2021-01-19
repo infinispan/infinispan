@@ -1,12 +1,10 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Iterator;
@@ -26,11 +24,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
@@ -46,7 +42,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -60,7 +55,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    private final Set<Integer> segments;
    private final int readBatch;
    private final int threads;
-   private final Set<WrappedByteArray> deletedKeys = ConcurrentHashMap.newKeySet();
+   private final Set<Object> deletedKeys = ConcurrentHashMap.newKeySet();
 
    public MigrationTask(String cacheName, Set<Integer> segments, int readBatch, int threads) {
       this.cacheName = cacheName;
@@ -81,25 +76,14 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
          PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
          Set<RemoteStore<Object, Object>> stores = (Set) loaderManager.getStores(RemoteStore.class);
-         Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassAllowList());
          listener = new RemoveListener();
          cache.addFilteredListener(listener, new RemovedFilter<>(), null, Util.asSet(CacheEntryRemoved.class));
-         byte[] ignoredKey;
-         try {
-            ignoredKey = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
-         } catch (Exception e) {
-            throw new CacheException(e);
-         }
 
          Iterator<RemoteStore<Object, Object>> storeIterator = stores.iterator();
          if (storeIterator.hasNext()) {
             RemoteStore<Object, Object> store = storeIterator.next();
             RemoteCache<Object, Object> storeCache = store.getRemoteCache();
-            RemoteStoreConfiguration storeConfig = store.getConfiguration();
-            if (!storeConfig.hotRodWrapping()) {
-               throw log.remoteStoreNoHotRodWrapping(cache.getName());
-            }
-            migrateEntriesWithMetadata(storeCache, counter, ignoredKey, executorService, cache);
+            migrateEntriesWithMetadata(storeCache, counter, executorService, cache);
          }
       } finally {
          if (listener != null) {
@@ -116,35 +100,33 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    private class RemoveListener {
       @CacheEntryRemoved
       public void entryRemoved(CacheEntryRemovedEvent event) {
-         deletedKeys.add(new WrappedByteArray((byte[]) event.getKey()));
+         deletedKeys.add(ByteArrayWrapper.INSTANCE.wrap(event.getKey()));
       }
    }
 
    private void migrateEntriesWithMetadata(RemoteCache<Object, Object> sourceCache, AtomicInteger counter,
-                                           byte[] ignoredKey, ExecutorService executorService, Cache<Object, Object> cache) {
+                                           ExecutorService executorService, Cache<Object, Object> cache) {
       AdvancedCache<Object, Object> destinationCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.ROLLING_UPGRADE);
       try (CloseableIterator<Map.Entry<Object, MetadataValue<Object>>> iterator = sourceCache.retrieveEntriesWithMetadata(segments, readBatch)) {
          CompletableFuture<?>[] completableFutures = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
                .map(entry -> {
                   Object key = entry.getKey();
-                  if (!Arrays.equals((byte[]) key, ignoredKey)) {
-                     MetadataValue<Object> metadataValue = entry.getValue();
-                     int lifespan = metadataValue.getLifespan();
-                     int maxIdle = metadataValue.getMaxIdle();
-                     long version = metadataValue.getVersion();
-                     Metadata metadata = new EmbeddedMetadata.Builder()
-                           .version(new NumericVersion(version))
-                           .lifespan(lifespan, TimeUnit.SECONDS)
-                           .maxIdle(maxIdle, TimeUnit.SECONDS)
-                           .build();
-                     if (!deletedKeys.contains(new WrappedByteArray((byte[]) key))) {
-                        return CompletableFuture.supplyAsync(() -> {
-                           int currentCount = counter.incrementAndGet();
-                           if (log.isDebugEnabled() && currentCount % 100 == 0)
-                              log.debugf(">>    Migrated %s entries\n", currentCount);
-                           return destinationCache.putIfAbsent(entry.getKey(), entry.getValue().getValue(), metadata);
-                        }, executorService);
-                     }
+                  MetadataValue<Object> metadataValue = entry.getValue();
+                  int lifespan = metadataValue.getLifespan();
+                  int maxIdle = metadataValue.getMaxIdle();
+                  long version = metadataValue.getVersion();
+                  Metadata metadata = new EmbeddedMetadata.Builder()
+                        .version(new NumericVersion(version))
+                        .lifespan(lifespan, TimeUnit.SECONDS)
+                        .maxIdle(maxIdle, TimeUnit.SECONDS)
+                        .build();
+                  if (!deletedKeys.contains(ByteArrayWrapper.INSTANCE.wrap(key))) {
+                     return CompletableFuture.supplyAsync(() -> {
+                        int currentCount = counter.incrementAndGet();
+                        if (log.isDebugEnabled() && currentCount % 100 == 0)
+                           log.debugf(">>    Migrated %s entries\n", currentCount);
+                        return destinationCache.putIfAbsent(key, entry.getValue().getValue(), metadata);
+                     }, executorService);
                   }
                   return CompletableFuture.completedFuture(null);
                }).toArray(CompletableFuture[]::new);
