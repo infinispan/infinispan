@@ -234,7 +234,15 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       } else {
          Object unwrappedKey = unwrap(key);
          return remoteCache.getAsync(unwrappedKey)
-               .thenApply(value -> value == null ? null : entryFactory.create(key, (MarshalledValue) value));
+               .thenApply(value -> {
+                  if(value == null) {
+                     return null;
+                  }
+                  if(value instanceof MarshalledValue) {
+                     return entryFactory.create(key, (MarshalledValue) value);
+                  }
+                  return entryFactory.create(key, value);
+               });
       }
    }
 

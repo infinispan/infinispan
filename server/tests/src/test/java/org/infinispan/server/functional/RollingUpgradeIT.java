@@ -74,6 +74,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
 
       // Assert data was migrated successfully
       assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClientTarget));
+      assertEquals("name-35", getPersonName("35", restClientTarget));
    }
 
    protected void disconnectSource(RestClient client) {

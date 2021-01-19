@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -44,7 +45,7 @@ class TestCluster {
       this.remoteCacheManager = remoteCacheManager;
    }
 
-   RemoteCache<String, String> getRemoteCache(String cacheName) {
+   <K, V> RemoteCache<K, V> getRemoteCache(String cacheName) {
       return remoteCacheManager.getCache(cacheName);
    }
 
@@ -57,7 +58,7 @@ class TestCluster {
       remoteCacheManager = null;
    }
 
-   Cache<Object, Object> getEmbeddedCache(String name) {
+   <K, V> Cache<K, V> getEmbeddedCache(String name) {
       return embeddedCacheManagers.get(0).getCache(name);
    }
 
@@ -111,9 +112,21 @@ class TestCluster {
       private char[] keyStorePassword;
       private String keyStoreFileName;
       private boolean segmented;
+      private SerializationCtx ctx;
+      private Class<? extends Marshaller> marshaller;
 
       Builder setNumMembers(int numMembers) {
          this.numMembers = numMembers;
+         return this;
+      }
+
+      public Builder marshaller(Class<? extends Marshaller> marshaller) {
+         this.marshaller = marshaller;
+         return this;
+      }
+
+      public Builder ctx(SerializationCtx ctx) {
+         this.ctx = ctx;
          return this;
       }
 
@@ -132,6 +145,9 @@ class TestCluster {
          private String name;
          private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
          private Integer remotePort;
+         private boolean wrapping = true;
+         private boolean rawValues = true;
+         private Class<? extends Marshaller> marshaller;
 
          CacheDefinitionBuilder(Builder builder) {
             this.builder = builder;
@@ -144,6 +160,21 @@ class TestCluster {
 
          CacheDefinitionBuilder remotePort(Integer remotePort) {
             this.remotePort = remotePort;
+            return this;
+         }
+
+         CacheDefinitionBuilder remoteStoreWrapping(boolean wrapping) {
+            this.wrapping = wrapping;
+            return this;
+         }
+
+         CacheDefinitionBuilder remoteStoreRawValues(boolean rawValues) {
+            this.rawValues = rawValues;
+            return this;
+         }
+
+         CacheDefinitionBuilder remoteStoreMarshaller(Class<? extends Marshaller> marshaller) {
+            this.marshaller = marshaller;
             return this;
          }
 
@@ -171,7 +202,7 @@ class TestCluster {
                configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
             if (remotePort != null) {
                RemoteStoreConfigurationBuilder store = configurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
-               store.hotRodWrapping(true)
+               store.hotRodWrapping(wrapping).rawValues(rawValues)
                      .remoteCacheName(name).protocolVersion(protocolVersion).shared(true)
                      .addServer().host("localhost").port(remotePort);
                if (builder.trustStoreFileName != null) {
@@ -187,6 +218,9 @@ class TestCluster {
                   store.segmented(true);
                } else {
                   store.segmented(false);
+               }
+               if(marshaller != null) {
+                  store.marshaller(marshaller);
                }
             }
             builder.addCache(name, configurationBuilder);
@@ -227,28 +261,39 @@ class TestCluster {
 
          for (int i = 0; i < numMembers; i++) {
             GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+            gcb.serialization().allowList().addClasses(CustomObject.class);
+            if (ctx != null) {
+               gcb.serialization().addContextInitializer(ctx);
+            }
             gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
             gcb.transport().defaultTransport().clusterName(name);
             EmbeddedCacheManager clusteredCacheManager =
                   createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
-            caches.entrySet().forEach(entry ->
-                  clusteredCacheManager.defineConfiguration(entry.getKey(), entry.getValue().build()));
+            caches.forEach((key, value) -> clusteredCacheManager.defineConfiguration(key, value.build()));
 
             embeddedCacheManagers.add(clusteredCacheManager);
             hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager, hotRodBuilder));
          }
 
          int port = hotRodServers.get(0).getPort();
-         org.infinispan.client.hotrod.configuration.ConfigurationBuilder build = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-         build.addServer().port(port).host("localhost");
+         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+         clientBuilder.addServer().port(port).host("localhost");
+         if (ctx != null) {
+            clientBuilder.addContextInitializer(ctx);
+         }
          if (trustStoreFileName != null) {
-            build.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword);
+            clientBuilder.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword);
          }
          if (keyStoreFileName != null) {
-            build.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
+            clientBuilder.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
          }
-
-         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(build.marshaller(GenericJBossMarshaller.class).build()));
+         if (marshaller != null) {
+            clientBuilder.marshaller(marshaller);
+         } else {
+            clientBuilder.marshaller(GenericJBossMarshaller.class);
+         }
+         clientBuilder.addJavaSerialAllowList(".*");
+         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(clientBuilder.build()));
       }
 
    }
