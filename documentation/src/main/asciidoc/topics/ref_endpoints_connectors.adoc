@@ -18,6 +18,8 @@ and whether clients must present valid TLS certificates.
 * `<memcached-connector socket-binding="memcached"/>` declares a Memcached
 connector that uses the memcached socket binding.
 
+Declaring an empty `<endpoints/>` element implicitly enables the Hot Rod and REST connectors.
+
 It is possible to have multiple `endpoints` bound to different sockets.
 These can use different security realms and offer different authentication and encryption configurations.
 The following configuration enables two endpoints on distinct socket bindings, each one with a dedicated security realm.

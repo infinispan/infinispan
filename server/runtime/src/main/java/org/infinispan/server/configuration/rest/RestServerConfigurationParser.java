@@ -2,9 +2,6 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
-import java.nio.file.Paths;
-
-import javax.net.ssl.SSLContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -77,14 +74,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
-      boolean userDefinedName = false;
+      ServerSecurityRealm securityRealm = null;
       EndpointConfigurationBuilder endpoint = serverBuilder.endpoints().current();
       RestServerConfigurationBuilder builder = endpoint.addConnector(RestServerConfigurationBuilder.class);
-      if (endpoint.admin()) {
-         String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
-         builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
-      }
-      builder.authentication().metricsAuth(endpoint.metricsAuth());
+      ServerConfigurationParser.configureEndpoint(reader.getProperties(), endpoint, builder);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -100,7 +93,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case NAME: {
                builder.name(value);
-               userDefinedName = true;
                break;
             }
             case MAX_CONTENT_LENGTH: {
@@ -118,30 +110,29 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                dedicatedSocketBinding = true;
                break;
             }
+            case SECURITY_REALM: {
+               securityRealm = serverBuilder.getSecurityRealm(value);
+            }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
          }
       }
-      if (!userDefinedName) {
-         if (dedicatedSocketBinding) {
-            builder.name("rest-" + builder.socketBinding());
-         } else {
-            builder.name("rest-" + endpoint.singlePort().socketBinding());
-         }
+      if (!dedicatedSocketBinding) {
+         builder.socketBinding(endpoint.singlePort().socketBinding());
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHENTICATION: {
-               parseAuthentication(reader, serverBuilder, builder.authentication().enable());
+               parseAuthentication(reader, serverBuilder, builder.authentication().enable(), securityRealm);
                break;
             }
             case ENCRYPTION: {
                if (!dedicatedSocketBinding) {
                   throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
                }
-               parseEncryption(reader, serverBuilder, builder.encryption());
+               parseEncryption(reader, serverBuilder, builder.encryption(), securityRealm);
                break;
             }
             case CORS_RULES: {
@@ -151,6 +142,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
+      }
+      if (securityRealm != null) {
+         EndpointConfigurationBuilder.enableImplicitAuthentication(serverBuilder, securityRealm, builder);
       }
    }
 
@@ -223,8 +217,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
-      ServerSecurityRealm securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
+   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) throws XMLStreamException {
+      if (securityRealm == null) {
+         securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
+      }
       String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -257,10 +253,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, builder.mechanisms()));
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption) throws XMLStreamException {
-      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
-      SSLContext sslContext = serverBuilder.getSSLContext(securityRealm);
-      encryption.realm(securityRealm).sslContext(sslContext);
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
@@ -271,13 +264,20 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-               // Already seen
+               securityRealm = serverBuilder.getSecurityRealm(value);
                break;
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
+      }
+
+      if (securityRealm == null) {
+         throw Server.log.encryptionWithoutSecurityRealm();
+      } else {
+         String name = securityRealm.getName();
+         encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
       }
 
       //Since nextTag() moves the pointer, we need to make sure we won't move too far

@@ -305,7 +305,7 @@
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
                <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:rest-connector" name="rest-connector" maxOccurs="unbounded"/>
+               <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="socket-binding" type="xs:string" use="required">
@@ -361,6 +361,11 @@
             <xs:attribute name="external-port" type="xs:int" use="optional">
                <xs:annotation>
                   <xs:documentation>Sets an external port for this node. Defaults to the server socket binding port.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="security-realm" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
@@ -422,6 +427,11 @@
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="security-realm" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
@@ -460,7 +470,7 @@
       </xs:all>
       <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
-            <xs:documentation>Names the security realm to use for authentication and authorization.</xs:documentation>
+            <xs:documentation>Names the security realm to use for authentication and authorization. Deprecated since 12.1. Use the security-realm attribute on the connector instead.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -646,7 +656,7 @@
       <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
             <xs:documentation>The security realm to use for authentication/authorization purposes. Defaults to none (no
-               authentication).
+               authentication).  Deprecated since 12.1. Use the security-realm attribute on the connector instead.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -682,7 +692,7 @@
       <xs:attribute name="security-realm" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-              Names the security realm that contains the SSL keystore.
+              Names the security realm that contains the SSL keystore. Deprecated since 12.1. Use the security-realm attribute on the connector instead.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

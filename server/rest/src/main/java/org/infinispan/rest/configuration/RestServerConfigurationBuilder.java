@@ -4,6 +4,7 @@ import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESS
 import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_PATH;
 import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
 import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -37,7 +38,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
-      name(DEFAULT_NAME);
       this.authentication = new AuthenticationConfigurationBuilder(this);
       this.cors = new CorsConfigurationBuilder();
    }
@@ -96,6 +96,10 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
+      if (!attributes.attribute(NAME).isModified()) {
+         String socketBinding = socketBinding();
+         name(DEFAULT_NAME + (socketBinding == null ? "" : "-" + socketBinding));
+      }
       return new RestServerConfiguration(attributes.protect(), ssl.create(), staticResources, authentication.create(), cors.create(), encryption.create());
    }
 

@@ -18,6 +18,6 @@
 
       <xi:include href="security/tls.xml"/>
 
-      <xi:include href="endpoints/default-auth-implicit.xml"/>
+      <xi:include href="endpoints/auth-implicit.xml"/>
    </server>
 </infinispan>

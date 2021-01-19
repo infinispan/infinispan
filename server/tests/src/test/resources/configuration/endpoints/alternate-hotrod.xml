@@ -1,7 +1,7 @@
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:12.1 https://infinispan.org/schemas/infinispan-server-12.1.xsd"
            xmlns="urn:infinispan:server:12.1"
-           socket-binding="default" security-realm="default">
-   <hotrod-connector />
-   <rest-connector />
+           socket-binding="alternate-3" security-realm="default">
+   <hotrod-connector security-realm="alternate"/>
+   <rest-connector/>
 </endpoints>

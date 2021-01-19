@@ -100,9 +100,9 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       for (ProtocolServerConfigurationBuilder<?, ?> builder : connectorBuilders) {
          if (implicitSecurity) {
             if (builder instanceof HotRodServerConfigurationBuilder) {
-               enableImplicitAuthentication(singlePortBuilder.securityRealm(), (HotRodServerConfigurationBuilder) builder);
+               enableImplicitAuthentication(serverConfigurationBuilder, singlePortBuilder.securityRealm(), (HotRodServerConfigurationBuilder) builder);
             } else if (builder instanceof RestServerConfigurationBuilder) {
-               enableImplicitAuthentication(singlePortBuilder.securityRealm(), (RestServerConfigurationBuilder) builder);
+               enableImplicitAuthentication(serverConfigurationBuilder, singlePortBuilder.securityRealm(), (RestServerConfigurationBuilder) builder);
             }
          }
          connectors.add(builder.create());
@@ -116,7 +116,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return this;
    }
 
-   private void enableImplicitAuthentication(ServerSecurityRealm securityRealm, HotRodServerConfigurationBuilder builder) {
+   public static void enableImplicitAuthentication(ServerConfigurationBuilder serverConfigurationBuilder, ServerSecurityRealm securityRealm, HotRodServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
       AuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
@@ -168,7 +168,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             Server.log.debug("Enabled SCRAM, DIGEST and CRAM mechanisms for Hot Rod");
 
             // Only enable PLAIN if encryption is on
-            if (singlePortBuilder.ssl().isEnabled()) {
+            if (serverConfigurationBuilder.hasSSLContext(securityRealm.getName())) {
                authentication
                      .enable()
                      .addMechanisms(SaslMechanismInformation.Names.PLAIN);
@@ -179,7 +179,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
    }
 
-   private void enableImplicitAuthentication(ServerSecurityRealm securityRealm, RestServerConfigurationBuilder builder) {
+   public static void enableImplicitAuthentication(ServerConfigurationBuilder serverConfigurationBuilder, ServerSecurityRealm securityRealm, RestServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
       org.infinispan.rest.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
@@ -218,7 +218,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             Server.log.debug("Enabled DIGEST for HTTP");
 
             // Only enable PLAIN if encryption is on
-            if (singlePortBuilder.ssl().isEnabled()) {
+            if (serverConfigurationBuilder.hasSSLContext(securityRealm.getName())) {
                authentication
                      .enable()
                      .addMechanisms("BASIC");

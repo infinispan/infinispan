@@ -3,6 +3,8 @@ package org.infinispan.server.configuration;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -19,6 +21,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.CredentialStoreConfigurationBuilder;
@@ -45,6 +48,7 @@ import org.infinispan.server.configuration.security.TokenRealmConfigurationBuild
 import org.infinispan.server.configuration.security.TrustStoreRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
@@ -1299,7 +1303,20 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          reader.handleAny(holder);
       }
+      if (endpoint.connectors().isEmpty()) {
+         endpoint.addConnector(HotRodServerConfigurationBuilder.class).socketBinding(socketBinding);
+         RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).socketBinding(socketBinding);
+         configureEndpoint(reader.getProperties(), endpoint, rest);
+      }
       holder.popScope();
+   }
+
+   public static void configureEndpoint(Properties properties, EndpointConfigurationBuilder endpoint, RestServerConfigurationBuilder builder) {
+      if (endpoint.admin()) {
+         String serverHome = properties.getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
+         builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
+      }
+      builder.authentication().metricsAuth(endpoint.metricsAuth());
    }
 
    public static void parseCommonConnectorAttributes(XMLExtendedStreamReader reader, int index, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?> builder) throws XMLStreamException {
