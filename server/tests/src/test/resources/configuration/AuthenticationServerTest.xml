@@ -18,6 +18,6 @@
 
       <xi:include href="security/properties.xml"/>
 
-      <xi:include href="endpoints/default-auth-explicit.xml"/>
+      <xi:include href="endpoints/auth-explicit.xml"/>
    </server>
 </infinispan>

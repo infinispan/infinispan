@@ -1,5 +1,1 @@
-<endpoints socket-binding="default">
-   <hotrod-connector/>
-   <rest-connector/>
-   <memcached-connector socket-binding="memcached"/>
-</endpoints>
+<endpoints socket-binding="default" security-realm="default"/>
