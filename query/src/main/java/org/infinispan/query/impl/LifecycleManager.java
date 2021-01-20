@@ -297,13 +297,15 @@ public class LifecycleManager implements ModuleLifecycle {
          throw new IllegalStateException("SearchIntegrator already initialized!");
       }
 
+      GlobalConfiguration globalConfiguration = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+
       // load ProgrammaticSearchMappingProviders from classpath
       Collection<ProgrammaticSearchMappingProvider> mappingProviders =
             ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
-            extractProperties(indexingConfiguration, aggregatedClassLoader), aggregatedClassLoader, mappingProviders);
+            extractProperties(globalConfiguration, indexingConfiguration, aggregatedClassLoader), aggregatedClassLoader, mappingProviders);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
