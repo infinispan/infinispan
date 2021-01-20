@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -12,8 +13,8 @@ import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
- * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#put(Object, Object)}
- * to add a key/value pair.
+ * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#put(Object, Object)} to add a
+ * key/value pair.
  *
  * @author Katia Aresti - karesti@redhat.com
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
@@ -30,10 +31,17 @@ public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
 
    @Override
    public Void apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
-      Bucket<V> bucket = new Bucket<>();
-      bucket.add(value);
-      entryView.find().map(bucket::addAll);
-      entryView.set(bucket);
+      Optional<Bucket<V>> existing = entryView.peek();
+      if (existing.isPresent()) {
+         Bucket<V> newBucket = existing.get().add(value);
+         //don't change the cache is the value already exists. it avoids replicating a no-op
+         if (newBucket != null) {
+            entryView.set(newBucket);
+         }
+      } else {
+         entryView.set(new Bucket<>(value));
+      }
+
       return null;
    }
 

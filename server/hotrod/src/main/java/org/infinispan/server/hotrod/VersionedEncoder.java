@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.CacheSet;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
@@ -72,7 +71,7 @@ public interface VersionedEncoder {
 
    ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, Collection<byte[]> values);
 
-   ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce, Collection<byte[]> result);
+   ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<byte[], Collection<byte[]>> ce);
 
    ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, Channel channel, boolean result);
 

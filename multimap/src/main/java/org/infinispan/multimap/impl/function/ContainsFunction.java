@@ -45,14 +45,9 @@ public final class ContainsFunction<K, V> implements BaseFunction<K, V, Boolean>
 
    @Override
    public Boolean apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
-      Boolean contains;
-      if (value == null) {
-         contains = entryView.find().isPresent();
-      } else {
-         contains = entryView.find().map(values -> values.contains(value)).orElse(Boolean.FALSE);
-      }
-
-      return contains;
+      return value == null ?
+            entryView.find().isPresent() :
+            entryView.find().map(values -> values.contains(value)).orElse(Boolean.FALSE);
    }
 
    private static class Externalizer implements AdvancedExternalizer<ContainsFunction> {

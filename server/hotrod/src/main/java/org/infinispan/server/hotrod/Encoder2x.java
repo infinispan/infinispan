@@ -28,7 +28,6 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
@@ -346,10 +345,11 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> entry, Collection<byte[]> values) {
+   public ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<byte[], Collection<byte[]>> entry) {
       ByteBuf buf = writeHeader(header, server, channel, status);
       MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
             MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
+      Collection<byte[]> values = entry.getValue();
       if (values == null) {
          buf.writeByte(0);
       } else {

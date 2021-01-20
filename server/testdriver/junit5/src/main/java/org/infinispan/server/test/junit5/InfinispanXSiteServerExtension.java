@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -110,5 +111,10 @@ public class InfinispanXSiteServerExtension implements
    @Override
    public CounterManager getCounterManager(String siteName) {
       return testClients.get(siteName).getCounterManager();
+   }
+
+   @Override
+   public <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName) {
+      return testClients.get(siteName).getRemoteMultimapCacheManager();
    }
 }

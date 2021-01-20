@@ -6,10 +6,10 @@ import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -77,7 +77,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
 
    protected List<SerializationContextInitializer> contextInitializers() {
       SerializationContextInitializer sci = contextInitializer();
-      return sci == null ? Collections.emptyList() : Arrays.asList(sci);
+      return sci == null ? Collections.emptyList() : Collections.singletonList(sci);
    }
 
    protected int maxRetries() {
@@ -134,16 +134,26 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       return server;
    }
 
+   protected HotRodServer addHotRodServerAndClient(ConfigurationBuilder builder) {
+      int index = servers.size();
+      HotRodServer server = addHotRodServer(builder);
+      // Block until views have been received
+      blockUntilViewReceived(manager(index).getCache(), servers.size());
+      blockUntilCacheStatusAchieved(manager(index).getCache(), ComponentStatus.RUNNING, 10000);
+      clients.add(createClient(index));
+      return server;
+   }
+
    protected HotRodServer server(int i) {
       return servers.get(i);
    }
 
    protected void killAll() {
-      while(clients.size() > 0) {
+      while (clients.size() > 0) {
          clients.get(0).stop();
          clients.remove(0);
       }
-      while(servers.size() > 0) {
+      while (servers.size() > 0) {
          killServer(0);
       }
    }
@@ -162,9 +172,14 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
 
    protected void defineInAll(String cacheName, ConfigurationBuilder builder) {
       for (HotRodServer server : servers) {
-         server.getCacheManager().defineConfiguration(cacheName, builder.build());
-         server.getCacheManager().getCache(cacheName);
+         defineCache(server, cacheName, builder);
       }
+   }
+
+   protected void defineCache(HotRodServer server, String cacheName, ConfigurationBuilder builder) {
+      server.getCacheManager().defineConfiguration(cacheName, builder.build());
+      Cache<?, ?> cache = server.getCacheManager().getCache(cacheName);
+      blockUntilCacheStatusAchieved(cache, ComponentStatus.RUNNING, 10000);
    }
 
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {

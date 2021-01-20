@@ -12,12 +12,12 @@ import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
- * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#remove(Object)} and
- * {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#remove(Object, Object)} to remove a key or a key/value
- * pair from the Multimap Cache, if such exists.
+ * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#remove(Object)} and {@link
+ * org.infinispan.multimap.impl.EmbeddedMultimapCache#remove(Object, Object)} to remove a key or a key/value pair from
+ * the Multimap Cache, if such exists.
  * <p>
- * {@link #apply(EntryView.ReadWriteEntryView)} will return {@link Boolean#TRUE} when the operation removed a key or
- * a key/value pair and will return {@link Boolean#FALSE} if the key or key/value pair does not exist
+ * {@link #apply(EntryView.ReadWriteEntryView)} will return {@link Boolean#TRUE} when the operation removed a key or a
+ * key/value pair and will return {@link Boolean#FALSE} if the key or key/value pair does not exist
  *
  * @author Katia Aresti - karesti@redhat.com
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
@@ -57,20 +57,16 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
 
    private Boolean removeKeyValue(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       return entryView.find().map(bucket -> {
-               if (bucket.contains(value)) {
-                  Bucket<V> newBucket = new Bucket<>();
-                  newBucket.addAll(bucket);
-                  newBucket.remove(value);
+               Bucket<V> newBucket = bucket.remove(value);
+               if (newBucket != null) {
                   if (newBucket.isEmpty()) {
-                     // If the collection is empty after remove, remove the key
                      entryView.remove();
                   } else {
                      entryView.set(newBucket);
                   }
-                  return newBucket.size() < bucket.size();
-               } else {
-                  return Boolean.FALSE;
+                  return Boolean.TRUE;
                }
+               return Boolean.FALSE;
             }
       ).orElse(Boolean.FALSE);
    }

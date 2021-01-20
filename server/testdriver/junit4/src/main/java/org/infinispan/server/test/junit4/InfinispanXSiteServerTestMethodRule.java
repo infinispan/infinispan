@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
@@ -48,6 +49,11 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    @Override
    public CounterManager getCounterManager(String siteName) {
       return testClients.get(siteName).getCounterManager();
+   }
+
+   @Override
+   public <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName) {
+      return testClients.get(siteName).getRemoteMultimapCacheManager();
    }
 
    // Used for internal test

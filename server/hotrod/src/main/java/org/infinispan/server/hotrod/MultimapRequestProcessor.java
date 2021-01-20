@@ -2,14 +2,11 @@ package org.infinispan.server.hotrod;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -27,12 +24,11 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       if (log.isTraceEnabled()) {
          log.trace("Call get");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      server.multimap(header, subject).get(keyWrappped).whenComplete(
+      server.multimap(header, subject).get(key).whenComplete(
             (result, throwable) -> handleGet(header, result, throwable));
    }
 
-   private void handleGet(HotRodHeader header, Collection<WrappedByteArray> result, Throwable throwable) {
+   private void handleGet(HotRodHeader header, Collection<byte[]> result, Throwable throwable) {
       if (throwable != null) {
          writeException(header, throwable);
       } else try {
@@ -40,8 +36,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
          if (result.isEmpty()) {
             status = OperationStatus.KeyDoesNotExist;
          }
-         writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel, status,
-               mapToCollectionOfByteArrays(result)));
+         writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel, status, result));
       } catch (Throwable t2) {
          writeException(header, t2);
       }
@@ -51,11 +46,10 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       if (log.isTraceEnabled()) {
          log.trace("Call getWithMetadata");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      server.multimap(header, subject).getEntry(keyWrappped).whenComplete((entry, throwable) -> handleGetWithMetadata(header, entry, throwable));
+      server.multimap(header, subject).getEntry(key).whenComplete((entry, throwable) -> handleGetWithMetadata(header, entry, throwable));
    }
 
-   private void handleGetWithMetadata(HotRodHeader header, Optional<CacheEntry<WrappedByteArray, Collection<WrappedByteArray>>> entry, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, Optional<CacheEntry<byte[], Collection<byte[]>>> entry, Throwable throwable) {
       if (throwable != null) {
          writeException(header, throwable);
       } else try {
@@ -64,25 +58,18 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
             return;
          }
          OperationStatus status = OperationStatus.Success;
-         CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce = entry.get();
-         Collection<byte[]> result = mapToCollectionOfByteArrays(ce.getValue());
-         writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel, status, ce, result));
+         CacheEntry<byte[], Collection<byte[]>> ce = entry.get();
+         writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel, status, ce));
       } catch (Throwable t2) {
          writeException(header, t2);
       }
-   }
-
-   private Set<byte[]> mapToCollectionOfByteArrays(Collection<WrappedByteArray> result) {
-      return result.stream().map(WrappedByteArray::getBytes).collect(Collectors.toSet());
    }
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       if (log.isTraceEnabled()) {
          log.trace("Call put");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      WrappedByteArray valueWrapped = new WrappedByteArray(value);
-      server.multimap(header, subject).put(keyWrappped, valueWrapped).whenComplete((result, throwable) -> {
+      server.multimap(header, subject).put(key, value).whenComplete((result, throwable) -> {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
@@ -95,15 +82,12 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       if (log.isTraceEnabled()) {
          log.trace("Call removeKey");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      server.multimap(header, subject).remove(keyWrappped).whenComplete(handleBoolean(header));
+      server.multimap(header, subject).remove(key).whenComplete(handleBoolean(header));
    }
 
    void removeEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       log.trace("Call removeEntry");
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      WrappedByteArray valueWrapped = new WrappedByteArray(value);
-      server.multimap(header, subject).remove(keyWrappped, valueWrapped).whenComplete(handleBoolean(header));
+      server.multimap(header, subject).remove(key, value).whenComplete(handleBoolean(header));
    }
 
    void size(HotRodHeader header, Subject subject) {
@@ -119,21 +103,17 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
 
    void containsEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       log.trace("Call containsEntry");
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      WrappedByteArray valueWrapped = new WrappedByteArray(value);
-      server.multimap(header, subject).containsEntry(keyWrappped, valueWrapped).whenComplete(handleBoolean(header));
+      server.multimap(header, subject).containsEntry(key, value).whenComplete(handleBoolean(header));
    }
 
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
       log.trace("Call containsKey");
-      WrappedByteArray keyWrappped = new WrappedByteArray(key);
-      server.multimap(header, subject).containsKey(keyWrappped).whenComplete(handleBoolean(header));
+      server.multimap(header, subject).containsKey(key).whenComplete(handleBoolean(header));
    }
 
    void containsValue(HotRodHeader header, Subject subject, byte[] value) {
       log.trace("Call containsValue");
-      WrappedByteArray valueWrapped = new WrappedByteArray(value);
-      server.multimap(header, subject).containsValue(valueWrapped).whenComplete(handleBoolean(header));
+      server.multimap(header, subject).containsValue(value).whenComplete(handleBoolean(header));
    }
 
    private BiConsumer<Boolean, Throwable> handleBoolean(HotRodHeader header) {
