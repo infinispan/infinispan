@@ -1,5 +1,6 @@
 package org.infinispan.server.test.api;
 
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.counter.api.CounterManager;
 
 /**
@@ -19,6 +20,7 @@ public interface TestClientXSiteDriver {
 
    /**
     * Get the REST instance for hotrod api operations
+    *
     * @return {@link RestTestClientDriver} instance}
     */
    RestTestClientDriver rest(String siteName);
@@ -36,4 +38,11 @@ public interface TestClientXSiteDriver {
     * @return the {@link CounterManager} instance
     */
    CounterManager getCounterManager(String siteName);
+
+   /**
+    * Access to the {@link MultimapCacheManager} to perform multimap operations on tests.
+    *
+    * @return the {@link MultimapCacheManager} instance.
+    */
+   <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName);
 }

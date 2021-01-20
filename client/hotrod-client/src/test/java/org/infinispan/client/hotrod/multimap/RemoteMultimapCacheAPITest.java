@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod;
+package org.infinispan.client.hotrod.multimap;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -7,11 +7,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.multimap.MetadataCollection;
-import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
-import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
-import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -51,12 +48,12 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
       return true;
    }
 
-   public void testGetNotExist() throws Exception {
+   public void testGetNotExist() {
       Collection<String> kValues = multimapCache.get("k").join();
       assertEquals(0, kValues.size());
    }
 
-   public void testGetWithMetadataNotExist() throws Exception {
+   public void testGetWithMetadataNotExist() {
       CompletableFuture<MetadataCollection<String>> k = multimapCache.getWithMetadata("k");
       assertEquals(0, k.join().getCollection().size());
    }
@@ -74,7 +71,7 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
       assertTrue(kValues.contains("c"));
    }
 
-   public void testPutWithDuplicates() throws Exception {
+   public void testPutWithDuplicates() {
       multimapCache.put("k", "a").join();
       multimapCache.put("k", "a").join();
       multimapCache.put("k", "a").join();
@@ -96,7 +93,7 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
       assertEquals(0, metadataCollection.getVersion());
    }
 
-   public void testRemoveKey() throws Exception {
+   public void testRemoveKey() {
       multimapCache.put("k", "a").join();
       Collection<String> kValues = multimapCache.get("k").join();
       assertEquals(1, kValues.size());
@@ -107,7 +104,7 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
       assertFalse(multimapCache.remove("k").join());
    }
 
-   public void testRemoveKeyValue() throws Exception {
+   public void testRemoveKeyValue() {
       multimapCache.put("k", "a").join();
       multimapCache.put("k", "b").join();
       multimapCache.put("k", "c").join();
@@ -126,19 +123,19 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
       assertEquals(Long.valueOf(2), multimapCache.size().join());
    }
 
-   public void testContainsEntry() throws Exception {
+   public void testContainsEntry() {
       multimapCache.put("k", "a").join();
       assertTrue(multimapCache.containsEntry("k", "a").join());
       assertFalse(multimapCache.containsEntry("k", "b").join());
    }
 
-   public void testContainsKey() throws Exception {
+   public void testContainsKey() {
       multimapCache.put("k", "a").join();
       assertTrue(multimapCache.containsKey("k").join());
       assertFalse(multimapCache.containsKey("l").join());
    }
 
-   public void testContainsValue() throws Exception {
+   public void testContainsValue() {
       multimapCache.put("k", "a").join();
       assertTrue(multimapCache.containsValue("a").join());
       assertFalse(multimapCache.containsValue("b").join());

@@ -8,16 +8,28 @@ import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
+import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,8 +84,64 @@ public class XSiteHotRodCacheOperations {
 
       IntStream.range(0, 300).forEach(i -> lonCache.put(i, i));
 
-      eventuallyEquals(300, () -> nycCache.size());
+      eventuallyEquals(300, nycCache::size);
       assertEquals(100, getTotalMemoryEntries(lonXML));
+   }
+
+   @Test
+   public void testMultimap() {
+      String multimapCacheName = "multimap";
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.sites().addBackup()
+            .site(NYC).strategy(BackupConfiguration.BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN);
+      builder.sites().addBackup()
+            .site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN);
+      SERVER_TEST.hotrod(LON).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
+      SERVER_TEST.hotrod(NYC).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
+
+
+      RemoteMultimapCache<String, String> lonCache = multimapCache(LON, multimapCacheName);
+      RemoteMultimapCache<String, String> nycCache = multimapCache(NYC, multimapCacheName);
+
+      String key = UUID.randomUUID().toString();
+      Collection<String> values = createValues(4);
+      storeMultimapValues(lonCache, key, values);
+      assertMultimapData(lonCache, key, values);
+      assertMultimapData(nycCache, key, values);
+
+      key = UUID.randomUUID().toString();
+      values = createValues(5);
+      storeMultimapValues(nycCache, key, values);
+      assertMultimapData(lonCache, key, values);
+      assertMultimapData(nycCache, key, values);
+   }
+
+   private void assertMultimapData(RemoteMultimapCache<String, String> cache, String key, Collection<String> values) {
+      Collection<String> data = cache.get(key).join();
+      Assert.assertEquals(values.size(), data.size());
+      for (String v : values) {
+         Assert.assertTrue(data.contains(v));
+      }
+   }
+
+   private RemoteMultimapCache<String, String> multimapCache(String site, String cacheName) {
+      MultimapCacheManager<String, String> multimapCacheManager = SERVER_TEST.getMultimapCacheManager(site);
+      return multimapCacheManager.get(cacheName);
+   }
+
+   private static void storeMultimapValues(RemoteMultimapCache<String, String> rmc, String key, Collection<String> values) {
+      for (String v : values) {
+         rmc.put(key, v).join();
+      }
+   }
+
+   private static List<String> createValues(int size) {
+      List<String> values = new ArrayList<>(size);
+      for (int i = 0; i < size; ++i) {
+         values.add(UUID.randomUUID().toString());
+      }
+      return values;
    }
 
    private int getTotalMemoryEntries(String lonXML) {
@@ -94,7 +162,7 @@ public class XSiteHotRodCacheOperations {
       if(allSitesBackup) {
          eventuallyEquals("v2", () -> lonCache.get("k2"));
       } else {
-         assertEquals(null, lonCache.get("k2"));
+         assertNull(lonCache.get("k2"));
       }
       assertEquals ("v2", nycCache.get("k2"));
    }

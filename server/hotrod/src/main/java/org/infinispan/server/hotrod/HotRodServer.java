@@ -34,7 +34,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -163,7 +162,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    /**
     * Class used to create to empty filter converters that ignores marshalling of keys and values
     */
-   class ToEmptyBytesFactory implements ParamKeyValueFilterConverterFactory {
+   static class ToEmptyBytesFactory implements ParamKeyValueFilterConverterFactory {
       @Override
       public KeyValueFilterConverter getFilterConverter(Object[] params) {
          return ToEmptyBytesKeyValueFilterConverter.INSTANCE;
@@ -361,7 +360,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return cache;
    }
 
-   public EmbeddedMultimapCache<WrappedByteArray, WrappedByteArray> multimap(HotRodHeader header, Subject subject) {
+   public EmbeddedMultimapCache<byte[], byte[]> multimap(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = cache(getCacheInfo(header), header, subject).withStorageMediaType();
       return new EmbeddedMultimapCache(cache);
    }

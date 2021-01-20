@@ -119,18 +119,14 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    @Override
    public CompletableFuture<Void> remove(Predicate<? super V> p) {
       requireNonNull(p, "predicate can't be null");
-      CompletableFuture<Void> cf = CompletableFutures.completedNull();
       try {
-         if (isExplicitTxContext()) {
-            // block on explicit tx
-            cf = completedFuture(this.removeInternal(p));
-         } else {
-            cf = runAsync(() -> this.removeInternal(p));
-         }
+         // block on explicit tx
+         return isExplicitTxContext() ?
+               completedFuture(this.removeInternal(p)) :
+               runAsync(() -> this.removeInternal(p));
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
-      return cf;
    }
 
    @Override
@@ -142,18 +138,14 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    @Override
    public CompletableFuture<Boolean> containsValue(V value) {
       requireNonNull(value, "value can't be null");
-      CompletableFuture<Boolean> cf = CompletableFutures.completedNull();
       try {
-         if (isExplicitTxContext()) {
-            // block on explicit tx
-            cf = completedFuture(containsEntryInternal(value));
-         } else {
-            cf = supplyAsync(() -> containsEntryInternal(value));
-         }
+         // block on explicit tx
+         return isExplicitTxContext() ?
+               completedFuture(containsEntryInternal(value)) :
+               supplyAsync(() -> containsEntryInternal(value));
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
-      return cf;
    }
 
    @Override
@@ -165,18 +157,14 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
    @Override
    public CompletableFuture<Long> size() {
-      CompletableFuture<Long> cf = CompletableFutures.completedNull();
       try {
-         if (isExplicitTxContext()) {
-            // block on explicit tx
-            cf = completedFuture(sizeInternal());
-         } else {
-            cf = supplyAsync(() -> sizeInternal());
-         }
+         // block on explicit tx
+         return isExplicitTxContext() ?
+               completedFuture(sizeInternal()) :
+               supplyAsync(this::sizeInternal);
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
-      return cf;
    }
 
    private boolean isExplicitTxContext() throws SystemException {
@@ -185,12 +173,10 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    }
 
    private Void removeInternal(Predicate<? super V> p) {
-      cache.keySet().stream().forEach((c, key) -> c.computeIfPresent(key, (o, o1) -> {
-         Bucket<V> bucket = (Bucket<V>) o1;
-         Bucket<V> newBucket = new Bucket<>();
-         for (V v : bucket.values) {
-            if (!p.test(v))
-               newBucket.add(v);
+      cache.keySet().stream().forEach((c, key) -> c.computeIfPresent(key, (k, bucket) -> {
+         Bucket<V> newBucket = ((Bucket<V>) bucket).removeIf(p);
+         if (newBucket == null) {
+            return bucket;
          }
          return newBucket.isEmpty() ? null : newBucket;
       }));
@@ -202,7 +188,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    }
 
    private Long sizeInternal() {
-      return cache.values().parallelStream().mapToLong(value -> value.size()).sum();
+      return cache.values().parallelStream().mapToLong(Bucket::size).sum();
    }
 
    @Override

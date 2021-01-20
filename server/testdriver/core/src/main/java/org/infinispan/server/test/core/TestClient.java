@@ -1,9 +1,18 @@
 package org.infinispan.server.test.core;
 
-import net.spy.memcached.MemcachedClient;
+import java.io.Closeable;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
+import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -13,13 +22,7 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
-import java.io.Closeable;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import net.spy.memcached.MemcachedClient;
 
 /**
  * Holds the client part of the testing utilities
@@ -60,6 +63,11 @@ public class TestClient {
    public CounterManager getCounterManager() {
       RemoteCacheManager remoteCacheManager = registerResource(testServer.newHotRodClient());
       return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager);
+   }
+
+   public <K, V> MultimapCacheManager<K, V> getRemoteMultimapCacheManager() {
+      RemoteCacheManager remoteCacheManager = registerResource(testServer.newHotRodClient());
+      return RemoteMultimapCacheManagerFactory.from(remoteCacheManager);
    }
 
    public void setMethodName(String methodName) {
