@@ -9,6 +9,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 
@@ -30,6 +32,13 @@ public final class Security {
    private static final ThreadLocal<Boolean> PRIVILEGED = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
    private static final ThreadLocal<Deque<Subject>> SUBJECT = new ThreadLocal<>();
+   /*new InheritableThreadLocal() {
+      @Override
+      protected Object childValue(Object parentValue) {
+         System.out.println("Inheriting " + parentValue);
+         return parentValue;
+      }
+   };*/
 
    private static boolean isTrustedClass(Class<?> klass) {
       // TODO: implement a better way
@@ -95,6 +104,24 @@ public final class Security {
       Deque<Subject> stack = pre(subject);
       try {
          action.run();
+      } finally {
+         post(subject, stack);
+      }
+   }
+
+   public static <T, R> R doAs(final Subject subject, Function<T, R> function, T t) {
+      Deque<Subject> stack = pre(subject);
+      try {
+         return function.apply(t);
+      } finally {
+         post(subject, stack);
+      }
+   }
+
+   public static <T, U, R> R doAs(final Subject subject, BiFunction<T, U, R> function, T t, U u) {
+      Deque<Subject> stack = pre(subject);
+      try {
+         return function.apply(t, u);
       } finally {
          post(subject, stack);
       }

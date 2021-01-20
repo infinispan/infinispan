@@ -18,11 +18,11 @@ import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.LoggingResource;
-import org.infinispan.rest.resources.LoginResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.ProtobufResource;
 import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
+import org.infinispan.rest.resources.SecurityResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
@@ -143,10 +143,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (server != null) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
-         resourceManager.registerResource(restContext, new LoginResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
+         resourceManager.registerResource(restContext, new SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
          registerLoggingResource(resourceManager, restContext);
       }
-      this.restDispatcher = new RestDispatcherImpl(resourceManager);
+      this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());
    }
 
    private void registerLoggingResource(ResourceManager resourceManager, String restContext) {

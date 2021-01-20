@@ -100,7 +100,7 @@ public class SearchAdminResource implements ResourceHandler {
       }
       Configuration cacheConfiguration = cache.getCacheConfiguration();
       if (!cacheConfiguration.statistics().enabled()) {
-         responseBuilder.status(NOT_FOUND).build();
+         return completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
 
       String scopeParam = restRequest.getParameter("scope");

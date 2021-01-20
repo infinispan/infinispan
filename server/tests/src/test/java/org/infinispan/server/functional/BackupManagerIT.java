@@ -38,7 +38,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.Element;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.server.test.core.Common;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -165,7 +165,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertEquals(202, response.getStatus());
 
       // Now wait until the backup has actually been deleted so that we successfully create another with the same name
-      awaitStatus(() -> cm.deleteBackup(backupName), 202, 404);
+      Common.awaitStatus(() -> cm.deleteBackup(backupName), 202, 404);
 
       response = await(cm.createBackup(backupName));
       assertEquals(202, response.getStatus());
@@ -253,23 +253,12 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       );
    }
 
-   private RestResponse awaitOk(Supplier<CompletionStage<RestResponse>> request) {
-      return awaitStatus(request, 202, 200);
+   private static RestResponse awaitOk(Supplier<CompletionStage<RestResponse>> request) {
+      return Common.awaitStatus(request, 202, 200);
    }
 
-   private RestResponse awaitCreated(Supplier<CompletionStage<RestResponse>> request) {
-      return awaitStatus(request, 202, 201);
-   }
-
-   private RestResponse awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
-      int count = 0;
-      RestResponse response;
-      while ((response = await(request.get())).getStatus() == pendingStatus || count++ < 100) {
-         TestingUtil.sleepThread(10);
-         response.close();
-      }
-      assertEquals(completeStatus, response.getStatus());
-      return response;
+   private static RestResponse awaitCreated(Supplier<CompletionStage<RestResponse>> request) {
+      return Common.awaitStatus(request, 202, 201);
    }
 
    private void performTest(Function<RestClient, RestResponse> backupAndDownload,

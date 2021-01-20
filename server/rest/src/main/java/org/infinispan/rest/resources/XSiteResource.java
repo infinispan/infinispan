@@ -19,18 +19,23 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -77,22 +82,54 @@ public class XSiteResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status").handleWith(this::clearPushStateStatus)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").handleWith(this::backupStatus)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").withAction("push-state-status").handleWith(this::pushStateStatus)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").handleWith(this::siteStatus)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeSiteOffline)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringSiteOnline)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startStatePush)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushState)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::getXSiteTakeOffline)
-            .invocation().methods(PUT).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::updateTakeOffline)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/").handleWith(this::globalStatus)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE PUSH STATE STATUS CLEAR").auditContext(AuditContext.CACHE)
+               .handleWith(this::clearPushStateStatus)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE BACKUP STATUS").auditContext(AuditContext.CACHE)
+               .handleWith(this::backupStatus)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").withAction("push-state-status")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE PUSH STATE STATUS").auditContext(AuditContext.CACHE)
+               .handleWith(this::pushStateStatus)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE BACKUPS SITE STATUS").auditContext(AuditContext.CACHE)
+               .handleWith(this::siteStatus)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE OFFLINE").auditContext(AuditContext.CACHE)
+               .handleWith(this::takeSiteOffline)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE BRING ONLINE").auditContext(AuditContext.CACHE)
+               .handleWith(this::bringSiteOnline)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE START PUSH STATE").auditContext(AuditContext.CACHE)
+               .handleWith(this::startStatePush)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL PUSH STATE").auditContext(AuditContext.CACHE)
+               .handleWith(this::cancelPushState)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE OFFLINE CONFIG").auditContext(AuditContext.CACHE)
+               .handleWith(this::getXSiteTakeOffline)
+            .invocation().methods(PUT).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE OFFLINE CONFIG UPDATE").auditContext(AuditContext.CACHE)
+               .handleWith(this::updateTakeOffline)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL RECEIVE STATE").auditContext(AuditContext.CACHE)
+               .handleWith(this::cancelReceiveState)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL STATUS").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::globalStatus)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE BRING ALL ONLINE").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::bringAllOnline)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE ALL OFFLINE").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::takeAllOffline)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE START PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::startPushAll)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::cancelPushAll)
             .create();
    }
 
@@ -199,7 +236,7 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build());
       }
       return CompletableFuture.supplyAsync(() -> {
-         String status = xsiteAdmin.amendTakeOffline(site, afterFailures, minWait);
+         String status = Subject.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(site);
          }
@@ -232,7 +269,10 @@ public class XSiteResource implements ResourceHandler {
       }
 
       return CompletableFuture.supplyAsync(
-            () -> addEntityAsJson(Json.make(xsiteAdmin.nodeStatus(site)), responseBuilder).build()
+            () -> {
+               Map<Address, String> result = Subject.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> xsiteAdmin.nodeStatus(site));
+               return addEntityAsJson(Json.make(result), responseBuilder).build();
+            }
             , invocationHelper.getExecutor());
    }
 
@@ -242,7 +282,7 @@ public class XSiteResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(
             () -> {
-               T result = Security.doAs(request.getSubject(), (PrivilegedAction<T>) () -> op.apply(xsiteAdmin));
+               T result = Security.doAs(request.getSubject(), op, xsiteAdmin);
                return addEntityAsJson(Json.make(result), responseBuilder).build();
             },
             invocationHelper.getExecutor());
@@ -274,7 +314,7 @@ public class XSiteResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(
             () -> {
-               Map<String, String> result = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, String>>) () -> operation.apply(globalXSiteAdmin, site));
+               Map<String, String> result = Security.doAs(request.getSubject(), operation, globalXSiteAdmin, site);
                return addEntityAsJson(Json.make(result), responseBuilder).build();
             },
             invocationHelper.getExecutor()
@@ -292,7 +332,7 @@ public class XSiteResource implements ResourceHandler {
       }
 
       return CompletableFuture.supplyAsync(() -> {
-         String result = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteOp.apply(xsiteAdmin, site));
+         String result = Security.doAs(request.getSubject(), xsiteOp, xsiteAdmin, site);
          if (!result.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(result);
          }

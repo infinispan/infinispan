@@ -51,8 +51,8 @@ public class DefaultExecutorFactory implements SecurityAwareExecutorFactory {
          threadGroup = Boolean.parseBoolean(blocking) ? new BlockingThreadFactory.ISPNBlockingThreadGroup(threadNamePrefix + "-group") :
                new NonBlockingThreadFactory.ISPNNonBlockingThreadGroup(threadNamePrefix + "-group");
       }
-      BlockingQueue<Runnable> queue = queueSize == 0 ? new SynchronousQueue<Runnable>()
-            : new LinkedBlockingQueue<Runnable>(queueSize);
+      BlockingQueue<Runnable> queue = queueSize == 0 ? new SynchronousQueue<>()
+            : new LinkedBlockingQueue<>(queueSize);
       ThreadFactory tf = new ThreadFactory() {
 
          private Thread createThread(Runnable r) {

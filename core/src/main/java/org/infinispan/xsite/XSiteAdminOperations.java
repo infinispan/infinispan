@@ -28,7 +28,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.StateTransferStatus;
@@ -63,7 +63,8 @@ public class XSiteAdminOperations {
    @Inject XSiteStateTransferManager stateTransferManager;
    @Inject CommandsFactory commandsFactory;
    @Inject TakeOfflineManager takeOfflineManager;
-   @Inject AuthorizationHelper authorizationHelper;
+   @Inject
+   Authorizer authorizer;
 
    public static String siteStatusToString(SiteStatus status, Function<CacheMixedSiteStatus, String> mixedFunction) {
       if (status.isOffline()) {
@@ -81,7 +82,7 @@ public class XSiteAdminOperations {
    }
 
    public Map<String, SiteStatus> clusterStatus() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       Map<String, Boolean> localNodeStatus = takeOfflineManager.status();
       CacheRpcCommand command = commandsFactory.buildXSiteStatusCommand();
       XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
@@ -143,7 +144,7 @@ public class XSiteAdminOperations {
     * @return a Map&lt;String, String&gt; with the Address and the status of each node in the site
     */
    public Map<Address, String> nodeStatus(String site) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       SiteState state = takeOfflineManager.getSiteState(site);
       if (state == SiteState.NOT_FOUND) {
          throw new IllegalArgumentException(incorrectSiteName(site));
@@ -169,7 +170,7 @@ public class XSiteAdminOperations {
 
    @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.", displayName = "Takes this site offline in all nodes in the cluster.")
    public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       TakeSiteOfflineResponse rsp = takeOfflineManager.takeSiteOffline(site);
       if (rsp == TakeSiteOfflineResponse.NO_SUCH_SITE) {
          return incorrectSiteName(site);
@@ -218,18 +219,18 @@ public class XSiteAdminOperations {
    }
 
    public TakeOfflineConfiguration getTakeOfflineConfiguration(String site) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return takeOfflineManager.getConfiguration(site);
    }
 
    public boolean checkSite(String site) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return takeOfflineManager.getSiteState(site) != SiteState.NOT_FOUND;
    }
 
    @ManagedOperation(description = "Brings the given site back online on all the cluster.", displayName = "Brings the given site back online on all the cluster.")
    public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       BringSiteOnlineResponse rsp = takeOfflineManager.bringSiteOnline(site);
       if (rsp == BringSiteOnlineResponse.NO_SUCH_SITE) {
          return incorrectSiteName(site);
@@ -246,7 +247,7 @@ public class XSiteAdminOperations {
                        "The remote site will be bring back online",
          name = "pushState")
    public final String pushState(@Parameter(description = "The destination site name", name = "SiteName") String siteName) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       try {
          String status = bringSiteOnline(siteName);
          if (!SUCCESS.equals(status)) {
@@ -271,7 +272,7 @@ public class XSiteAdminOperations {
          description = "Shows a map with destination site name and the state transfer status.",
          name = "PushStateStatus")
    public final Map<String, String> getPushStateStatus() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       try {
          return stateTransferManager.getClusterStatus()
                .entrySet()
@@ -286,7 +287,7 @@ public class XSiteAdminOperations {
          description = "Clears the state transfer status.",
          name = "ClearPushStateStatus")
    public final String clearPushStateStatus() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return performOperation("clearPushStateStatus", "(local)", () -> stateTransferManager.clearClusterStatus());
    }
 
@@ -295,7 +296,7 @@ public class XSiteAdminOperations {
          name = "CancelPushState")
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
                                           final String siteName) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return performOperation("cancelPushState", siteName, () -> stateTransferManager.cancelPushState(siteName));
    }
 
@@ -305,7 +306,7 @@ public class XSiteAdminOperations {
          name = "CancelReceiveState")
    public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
                                              final String siteName) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return performOperation("cancelReceiveState", siteName, () -> stateTransferManager.cancelReceive(siteName));
    }
 
@@ -313,7 +314,7 @@ public class XSiteAdminOperations {
          description = "Returns the site name from which this site is receiving state.",
          name = "SendingSiteName")
    public final String getSendingSiteName() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return stateTransferManager.getSendingSiteName();
    }
 
@@ -328,7 +329,7 @@ public class XSiteAdminOperations {
    }
 
    private String takeOffline(String site, Integer afterFailures, Long minTimeToWait) {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       if (takeOfflineManager.getSiteState(site) == SiteState.NOT_FOUND) {
          return incorrectSiteName(site);
       }

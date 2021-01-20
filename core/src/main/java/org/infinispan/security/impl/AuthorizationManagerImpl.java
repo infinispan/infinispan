@@ -26,7 +26,8 @@ import org.infinispan.security.GlobalSecurityManager;
 @Scope(Scopes.NAMED_CACHE)
 public class AuthorizationManagerImpl implements AuthorizationManager {
    private AuthorizationConfiguration configuration;
-   private AuthorizationHelper authzHelper;
+   private Authorizer authorizer;
+   private AuthorizationPermission writePermission;
 
    public AuthorizationManagerImpl() {
    }
@@ -38,30 +39,36 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
       this.configuration = configuration.security().authorization();
       Cache<CachePrincipalPair, SubjectACL> globalACLCache =
             (Cache<CachePrincipalPair, SubjectACL>) globalSecurityManager.globalACLCache();
-      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHE, cacheName,
-            globalACLCache);
+      this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHE, cacheName, globalACLCache);
       if (globalACLCache != null) {
          SecurityActions.addCacheDependency(cacheManager, cacheName, globalACLCache.getName());
       }
+      this.writePermission = configuration.module(CreatePermissionConfiguration.class) != null ?
+            AuthorizationPermission.CREATE : AuthorizationPermission.WRITE;
    }
 
    @Override
    public void checkPermission(AuthorizationPermission perm) {
-      authzHelper.checkPermission(configuration, null, perm, null);
+      authorizer.checkPermission(configuration, null, perm, null);
    }
 
    @Override
    public void checkPermission(Subject subject, AuthorizationPermission perm) {
-      authzHelper.checkPermission(configuration, subject, perm, null);
+      authorizer.checkPermission(configuration, subject, perm, null);
    }
 
    @Override
    public void checkPermission(AuthorizationPermission perm, String role) {
-      authzHelper.checkPermission(configuration, null, perm, role);
+      authorizer.checkPermission(configuration, null, perm, role);
    }
 
    @Override
    public void checkPermission(Subject subject, AuthorizationPermission perm, String role) {
-      authzHelper.checkPermission(configuration, subject, perm, role);
+      authorizer.checkPermission(configuration, subject, perm, role);
+   }
+
+   @Override
+   public AuthorizationPermission getWritePermission() {
+      return writePermission;
    }
 }

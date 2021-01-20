@@ -14,6 +14,11 @@ import org.infinispan.tasks.TaskContext;
  */
 public interface ScriptingManager {
    String SCRIPT_CACHE = "___script_cache";
+
+   /**
+    * @deprecated since 12.1. Will be removed in 15.0. Use the CREATE permission instead.
+    */
+   @Deprecated
    String SCRIPT_MANAGER_ROLE = "___script_manager";
 
    /**

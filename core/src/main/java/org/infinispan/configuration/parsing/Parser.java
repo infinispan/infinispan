@@ -788,6 +788,10 @@ public class Parser extends CacheParser {
                builder.auditLogger(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
+            case CACHE_SIZE: {
+               builder.cacheSize(Long.parseLong(value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

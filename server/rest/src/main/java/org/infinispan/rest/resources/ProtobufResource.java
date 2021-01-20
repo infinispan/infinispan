@@ -30,6 +30,8 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -52,10 +54,16 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return new Invocations.Builder()
             // Key related operations
             .invocation().methods(GET).path("/v2/schemas").handleWith(this::getSchemasNames)
-            .invocation().methods(POST).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r, true))
-            .invocation().methods(PUT).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r, false))
+            .invocation().methods(POST).path("/v2/schemas/{schemaName}")
+               .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA CREATE")
+               .handleWith(r -> createOrReplace(r, true))
+            .invocation().methods(PUT).path("/v2/schemas/{schemaName}")
+               .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA CREATE")
+               .handleWith(r -> createOrReplace(r, false))
             .invocation().methods(GET).path("/v2/schemas/{schemaName}").handleWith(this::getSchema)
-            .invocation().method(DELETE).path("/v2/schemas/{schemaName}").handleWith(this::deleteSchema)
+            .invocation().method(DELETE).path("/v2/schemas/{schemaName}")
+               .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA DELETE")
+               .handleWith(this::deleteSchema)
             .create();
    }
 

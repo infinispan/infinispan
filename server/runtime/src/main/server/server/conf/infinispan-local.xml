@@ -5,7 +5,11 @@
         xmlns="urn:infinispan:config:12.1"
         xmlns:server="urn:infinispan:server:12.1">
 
-   <cache-container name="default" statistics="true"/>
+   <cache-container name="default" statistics="true">
+      <security>
+         <authorization/>
+      </security>
+   </cache-container>
 
    <server xmlns="urn:infinispan:server:12.1">
       <interfaces>

@@ -139,7 +139,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
       @Override
       public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
             AuditResponse response) {
-         lastLogRecord = formatLogRecord(permission.toString(), response.toString(), subject.toString());
+         lastLogRecord = formatLogRecord(String.valueOf(permission), String.valueOf(response), String.valueOf(subject));
       }
 
       public String getLastRecord() {

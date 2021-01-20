@@ -45,7 +45,7 @@ class CacheConfigResource extends AbstractContainerResource {
    public void prepareAndValidateBackup() {
       Set<String> configs = wildcard ? cm.getCacheConfigurationNames() : resources;
       for (String configName : configs) {
-         Configuration config = cm.getCacheConfiguration(configName);
+         Configuration config = cm.getCacheConfiguration(configName);//SecurityActions.getConfiguration(cm, configName);
 
          if (wildcard) {
             // For wildcard resources, we ignore internal caches, however explicitly requested internal caches are allowed

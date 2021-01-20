@@ -23,4 +23,9 @@ public interface Role {
     * Returns a pre-computed access mask which contains the permissions specified by this role
     */
    int getMask();
+
+   /**
+    * Whether this role can be implicitly inherited.
+    */
+   boolean isInheritable();
 }

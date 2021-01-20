@@ -16,6 +16,7 @@ import org.infinispan.security.impl.CacheRoleImpl;
  */
 public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements GlobalRolesConfigurationChildBuilder, Builder<Role> {
    private Set<AuthorizationPermission> permissions = new HashSet<>();
+   private boolean inheritable = true;
    private final GlobalAuthorizationConfigurationBuilder builder;
    private final String name;
 
@@ -75,19 +76,31 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
       return builder.role(name);
    }
 
+   /**
+    * Whether this role should be implicitly inherited by secure caches which don't define their roles.
+    * @param inheritable
+    * @return
+    */
+   @Override
+   public GlobalRoleConfigurationBuilder inheritable(boolean inheritable) {
+      this.inheritable = inheritable;
+      return this;
+   }
+
    @Override
    public void validate() {
    }
 
    @Override
    public Role create() {
-      return new CacheRoleImpl(name, permissions);
+      return new CacheRoleImpl(name, inheritable, permissions);
    }
 
    @Override
    public Builder<?> read(Role template) {
       permissions.clear();
       permissions.addAll(template.getPermissions());
+      inheritable = template.isInheritable();
       return this;
    }
 }

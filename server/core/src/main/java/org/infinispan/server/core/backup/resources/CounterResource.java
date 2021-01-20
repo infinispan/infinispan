@@ -20,9 +20,6 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -46,12 +43,11 @@ public class CounterResource extends AbstractContainerResource {
    private final CounterManager counterManager;
    private final ImmutableSerializationContext serCtx;
 
-   CounterResource(BlockingManager blockingManager, EmbeddedCacheManager cm,
+   CounterResource(CounterManager counterManager, BlockingManager blockingManager, ImmutableSerializationContext serCtx,
                    BackupManager.Resources params, Path root) {
       super(COUNTERS, params, blockingManager, root);
-      GlobalComponentRegistry gcr = cm.getGlobalComponentRegistry();
-      this.counterManager = gcr.getComponent(CounterManager.class);
-      this.serCtx = gcr.getComponent(SerializationContextRegistry.class).getPersistenceCtx();
+      this.counterManager = counterManager;
+      this.serCtx = serCtx;
    }
 
    @Override

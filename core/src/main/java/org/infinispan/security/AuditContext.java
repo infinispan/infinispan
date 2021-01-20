@@ -8,7 +8,9 @@ package org.infinispan.security;
  */
 public enum AuditContext {
    CACHE("cache"),
-   CACHEMANAGER("container");
+   CACHEMANAGER("container"),
+   COUNTER("counter"),
+   SERVER("server");
 
    private final String name;
 

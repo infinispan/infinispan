@@ -15,6 +15,8 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.operations.exceptions.MalformedRequest;
 import org.infinispan.rest.operations.exceptions.NotAllowedException;
 import org.infinispan.rest.operations.exceptions.ResourceNotFoundException;
+import org.infinispan.security.Security;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -32,9 +34,11 @@ public class RestDispatcherImpl implements RestDispatcher {
          CompletableFutures.completedExceptionFuture(new MalformedRequest("Invalid 'action' parameter supplied"));
 
    private final ResourceManager manager;
+   private final Authorizer authorizer;
 
-   public RestDispatcherImpl(ResourceManager manager) {
+   public RestDispatcherImpl(ResourceManager manager, Authorizer authorizer) {
       this.manager = manager;
+      this.authorizer = authorizer;
    }
 
    @Override
@@ -72,7 +76,14 @@ public class RestDispatcherImpl implements RestDispatcher {
       Invocation invocation = lookupResult.getInvocation();
 
       try {
-         return invocation.handler().apply(restRequest);
+         if (invocation.permission() != null) {
+               authorizer.checkPermission(restRequest.getSubject(), invocation.permission(), invocation.getName(), invocation.auditContext());
+            }
+            if (restRequest.getSubject() != null) {
+               return Security.doAs(restRequest.getSubject(), invocation.handler(), restRequest);
+         } else {
+            return invocation.handler().apply(restRequest);
+         }
       } catch (Throwable t) {
          return CompletableFutures.completedExceptionFuture(t);
       }

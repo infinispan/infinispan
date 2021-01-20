@@ -24,6 +24,7 @@ import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
+import org.infinispan.client.rest.RestSecurityClient;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
@@ -246,6 +247,11 @@ public class RestClientOkHttp implements RestClient {
       return new RestSchemasClientOkHttp(this);
    }
 
+   @Override
+   public RestSecurityClient security() {
+      return new RestSecurityClientOkHttp(this);
+   }
+
    CompletionStage<RestResponse> execute(Request.Builder builder) {
       Request request = builder.build();
       log.tracef("Request %s", request);
@@ -286,6 +292,9 @@ public class RestClientOkHttp implements RestClient {
       if (subPaths != null) {
          StringBuilder sb = new StringBuilder(basePath);
          for (String subPath : subPaths) {
+            if (subPath == null) {
+               continue;
+            }
             if (!subPath.startsWith("/")) {
                sb.append("/");
             }

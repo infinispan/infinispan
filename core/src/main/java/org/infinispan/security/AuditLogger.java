@@ -9,5 +9,5 @@ import javax.security.auth.Subject;
  * @since 7.0
  */
 public interface AuditLogger {
-   public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission, AuditResponse response);
+   void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission, AuditResponse response);
 }

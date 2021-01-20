@@ -38,4 +38,9 @@ public interface AuthorizationManager {
     * A {@link SecurityException} is thrown otherwise.
     */
    void checkPermission(Subject subject, AuthorizationPermission permission, String role);
+
+   /**
+    * Returns the permission required to write to the resource associated with this AuthorizationManager.
+    */
+   AuthorizationPermission getWritePermission();
 }

@@ -5,10 +5,11 @@ import static org.infinispan.configuration.global.PrincipalRoleMapperConfigurati
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 
 public class PrincipalRoleMapperConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<PrincipalRoleMapperConfiguration> {
    private final AttributeSet attributes;
-   private PrincipalRoleMapper principalRoleMapper;
+   private PrincipalRoleMapper principalRoleMapper = new ClusterRoleMapper();
 
    PrincipalRoleMapperConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);

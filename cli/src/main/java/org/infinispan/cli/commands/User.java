@@ -12,6 +12,7 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
+import org.infinispan.cli.commands.rest.Roles;
 import org.infinispan.cli.completers.EncryptionAlgorithmCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.user.UserTool;
@@ -23,7 +24,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "user", description = "User operations", groupCommands = {User.Create.class, User.Describe.class, User.Remove.class, User.Password.class, User.Groups.class, User.Ls.class, User.Encrypt.class})
+@GroupCommandDefinition(name = "user", description = "User operations", groupCommands = {User.Create.class, User.Describe.class, User.Remove.class, User.Password.class, User.Groups.class, User.Ls.class, User.Encrypt.class, Roles.class})
 public class User extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)

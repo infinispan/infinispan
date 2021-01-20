@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.Security;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
@@ -48,13 +49,16 @@ public class RestCacheManager<V> {
    private final boolean allowInternalCacheAccess;
    private final Map<String, CacheInfo<Object, V>> knownCaches = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final RemoveCacheListener removeCacheListener;
+   private final Authorizer authorizer;
 
    public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
       this.instance = instance;
       this.isCacheIgnored = isCacheIgnored;
       this.icr = SecurityActions.getGlobalComponentRegistry(instance).getComponent(InternalCacheRegistry.class);
+      this.authorizer = SecurityActions.getGlobalComponentRegistry(instance).getComponent(Authorizer.class);
       this.allowInternalCacheAccess = SecurityActions.getCacheManagerConfiguration(instance)
             .security().authorization().enabled();
+
       removeCacheListener = new RemoveCacheListener();
       SecurityActions.addListener(instance, removeCacheListener);
    }
@@ -171,6 +175,10 @@ public class RestCacheManager<V> {
 
    public EmbeddedCacheManager getInstance() {
       return instance;
+   }
+
+   public Authorizer getAuthorizer() {
+      return authorizer;
    }
 
    public EmbeddedCacheManagerAdmin getCacheManagerAdmin(RestRequest restRequest) {

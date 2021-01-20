@@ -10,7 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 
 /**
  * The default implementation of {@link EmbeddedCacheManagerAdmin}
@@ -22,14 +22,14 @@ import org.infinispan.security.impl.AuthorizationHelper;
 public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    private final EmbeddedCacheManager cacheManager;
    private final GlobalConfigurationManager clusterConfigurationManager;
-   private final AuthorizationHelper authzHelper;
+   private final Authorizer authorizer;
    private final EnumSet<AdminFlag> flags;
    private final Subject subject;
 
-   DefaultCacheManagerAdmin(EmbeddedCacheManager cm, AuthorizationHelper authzHelper, EnumSet<AdminFlag> flags,
+   DefaultCacheManagerAdmin(EmbeddedCacheManager cm, Authorizer authorizer, EnumSet<AdminFlag> flags,
                             Subject subject, GlobalConfigurationManager clusterConfigurationManager) {
       this.cacheManager = cm;
-      this.authzHelper = authzHelper;
+      this.authorizer = authorizer;
       this.clusterConfigurationManager = clusterConfigurationManager;
       this.flags = flags;
       this.subject = subject;
@@ -37,54 +37,54 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
 
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, Configuration configuration) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.createCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Configuration configuration) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, String template) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.createCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, String template) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public void createTemplate(String name, Configuration configuration) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.createTemplate(name, configuration, flags));
    }
 
    @Override
    public Configuration getOrCreateTemplate(String name, Configuration configuration) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
       return cacheManager.getCacheConfiguration(name);
    }
 
    @Override
    public void removeTemplate(String name) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.removeTemplate(name, flags));
    }
 
    @Override
    public void removeCache(String cacheName) {
-      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       uncheckedAwait(clusterConfigurationManager.removeCache(cacheName, flags));
    }
 
@@ -92,18 +92,18 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public EmbeddedCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       for (AdminFlag flag : flags) newFlags.add(flag);
-      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager);
    }
 
    @Override
    public EmbeddedCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       newFlags.addAll(flags);
-      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager);
    }
 
    @Override
    public EmbeddedCacheManagerAdmin withSubject(Subject subject) {
-      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, flags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, flags, subject, clusterConfigurationManager);
    }
 }

@@ -383,7 +383,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       }
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.security().authorization().enable();
+      global.security().authorization().enable().principalRoleMapper(null);
       global.addModule(NonValidatingBuilder.class);
       try {
          global.validate();

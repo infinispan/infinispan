@@ -7,12 +7,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.MutablePrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapperContext;
 
 /**
@@ -21,12 +25,12 @@ import org.infinispan.security.PrincipalRoleMapperContext;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class ClusterRoleMapper implements PrincipalRoleMapper {
+public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
    private EmbeddedCacheManager cacheManager;
-   private static final String CLUSTER_ROLE_MAPPER_CACHE = "___cluster_role_mapper";
-   private Cache<String, Set<String>> clusterRoleMap;
+   private static final String CLUSTER_ROLE_MAPPER_CACHE = "org.infinispan.ROLES";
+   private Cache<String, RoleSet> clusterRoleMap;
 
-   private Cache<String, Set<String>> getClusterRoleMap() {
+   private Cache<String, RoleSet> getClusterRoleMap() {
       if (clusterRoleMap == null) {
          if (cacheManager != null) {
             clusterRoleMap = cacheManager.getCache(CLUSTER_ROLE_MAPPER_CACHE);
@@ -37,8 +41,13 @@ public class ClusterRoleMapper implements PrincipalRoleMapper {
 
    @Override
    public Set<String> principalToRoles(Principal principal) {
-      if (getClusterRoleMap() != null) {
-         return clusterRoleMap.get(principal.getName());
+      Cache<String, RoleSet> roleMap = getClusterRoleMap();
+      if (roleMap == null) {
+         return Collections.singleton(principal.getName());
+      }
+      RoleSet roleSet = roleMap.get(principal.getName());
+      if (!roleSet.roles.isEmpty()) {
+         return roleSet.roles;
       } else {
          return Collections.singleton(principal.getName());
       }
@@ -59,32 +68,56 @@ public class ClusterRoleMapper implements PrincipalRoleMapper {
       internalCacheRegistry.registerInternalCache(CLUSTER_ROLE_MAPPER_CACHE, cfg.build(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
    }
 
+   @Override
    public void grant(String roleName, String principalName) {
-      Set<String> roleSet = getClusterRoleMap().computeIfAbsent(principalName, n -> new HashSet<>() );
-      roleSet.add(roleName);
+      RoleSet roleSet = getClusterRoleMap().computeIfAbsent(principalName, n -> new RoleSet() );
+      roleSet.roles.add(roleName);
       clusterRoleMap.put(principalName, roleSet);
    }
 
+   @Override
    public void deny(String roleName, String principalName) {
-      Set<String> roleSet = getClusterRoleMap().computeIfAbsent(principalName, n -> new HashSet<>() );
-      roleSet.remove(roleName);
+      RoleSet roleSet = getClusterRoleMap().computeIfAbsent(principalName, n -> new RoleSet() );
+      roleSet.roles.remove(roleName);
       clusterRoleMap.put(principalName, roleSet);
    }
 
+   @Override
    public Set<String> list(String principalName) {
-      Set<String> roleSet = getClusterRoleMap().get(principalName);
+      RoleSet roleSet = getClusterRoleMap().get(principalName);
       if (roleSet != null) {
-         return Collections.unmodifiableSet(roleSet);
+         return Collections.unmodifiableSet(roleSet.roles);
       } else {
-         return Collections.emptySet();
+         return Collections.singleton(principalName);
       }
    }
 
+   @Override
    public String listAll() {
       StringBuilder sb = new StringBuilder();
-      for(Set<String> set : getClusterRoleMap().values()) {
-         sb.append(set.toString());
+      for(RoleSet set : getClusterRoleMap().values()) {
+         sb.append(set.roles.toString());
       }
       return sb.toString();
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.ROLE_SET)
+   public static class RoleSet {
+      @ProtoField(number = 1, collectionImplementation = HashSet.class)
+      final Set<String> roles;
+
+      RoleSet() {
+         this(new HashSet());
+      }
+
+      @ProtoFactory
+      RoleSet(Set<String> roles) {
+         this.roles = roles;
+      }
+
+
+      public Set<String> getRoles() {
+         return roles;
+      }
    }
 }

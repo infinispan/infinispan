@@ -8,7 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 
 /**
  * SecurityActions for the org.infinispan.server.tasks.admin package. Do not move and do not change class and method
@@ -32,7 +32,7 @@ final class SecurityActions {
    }
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
-      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
-      authzHelper.checkPermission(Security.getSubject(), permission);
+      Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
+      authorizer.checkPermission(Security.getSubject(), permission);
    }
 }

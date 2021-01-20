@@ -8,7 +8,7 @@ import org.infinispan.Cache;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public enum AuthorizationPermission {
+public enum  AuthorizationPermission {
    /**
     * Allows control of a cache's lifecycle (i.e. invoke {@link Cache#start()} and
     * {@link Cache#stop()}
@@ -42,6 +42,10 @@ public enum AuthorizationPermission {
     * Allows performing "administrative" operations on a cache
     */
    ADMIN(1 << 7),
+   /**
+    * Allows creation of resources (caches, counters, schemas, tasks)
+    */
+   CREATE(1 << 8),
    /**
     * Aggregate permission which implies all of the others
     */

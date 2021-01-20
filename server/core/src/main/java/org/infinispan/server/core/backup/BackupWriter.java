@@ -94,13 +94,13 @@ class BackupWriter {
       try {
          Files.createDirectories(containerRoot);
       } catch (IOException e) {
-         throw new CacheException("Unable to create directories " + containerRoot.toString());
+         throw new CacheException("Unable to create directories " + containerRoot);
       }
-      GlobalComponentRegistry gcr = cm.getGlobalComponentRegistry();
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cm);
       BlockingManager blockingManager = gcr.getComponent(BlockingManager.class);
 
       Collection<ContainerResource> resources = ContainerResourceFactory
-            .getResources(params, blockingManager, cm, parserRegistry, containerRoot);
+            .getResources(params, blockingManager, cm, gcr, parserRegistry, containerRoot);
 
       // Prepare and ensure all requested resources are valid before starting the backup process
       resources.forEach(ContainerResource::prepareAndValidateBackup);

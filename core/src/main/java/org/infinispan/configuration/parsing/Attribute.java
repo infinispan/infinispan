@@ -35,6 +35,7 @@ public enum Attribute {
     BIAS_ACQUISITION,
     BIAS_LIFESPAN,
     BLOCKING_EXECUTOR,
+    CACHE_SIZE,
     CALIBRATE_BY_DELETES,
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE,
@@ -199,8 +200,8 @@ public enum Attribute {
     WHEN_SPLIT,
     WHEN_FULL,
     WRITE_SKEW_CHECK("write-skew"),
-    ZERO_CAPACITY_NODE
-    ;
+    ZERO_CAPACITY_NODE,
+   ;
 
     private final String name;
 
