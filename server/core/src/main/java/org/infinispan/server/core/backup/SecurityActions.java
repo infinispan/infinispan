@@ -20,7 +20,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 
 final class SecurityActions {
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
@@ -42,7 +42,7 @@ final class SecurityActions {
    }
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
-      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
-      authzHelper.checkPermission(cacheManager.getSubject(), permission);
+      Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
+      authorizer.checkPermission(cacheManager.getSubject(), permission);
    }
 }

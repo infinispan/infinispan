@@ -1,4 +1,4 @@
-package org.infinispan.rest.resources;
+package org.infinispan.rest.framework.impl;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -9,7 +9,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.security.AuthorizationPermission;
@@ -22,7 +21,7 @@ import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.impl.Authorizer;
 
 /**
- * SecurityActions for the org.infinispan.rest.cachemanager package.
+ * SecurityActions for the org.infinispan.rest.framework.impl package.
  * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other {@link
  * java.security.CodeSource}s, thus granting privilege escalation to external code.
@@ -59,10 +58,6 @@ final class SecurityActions {
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
-   }
-
-   public static EncoderRegistry getEncoderRegistry(AdvancedCache<?, ?> cache) {
-      return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
    }
 
    static void checkPermission(InvocationHelper invocationHelper, RestRequest request, AuthorizationPermission permission) {

@@ -18,6 +18,9 @@
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:cluster}" stack="xsite"/>
+      <security>
+         <authorization/>
+      </security>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:12.1">

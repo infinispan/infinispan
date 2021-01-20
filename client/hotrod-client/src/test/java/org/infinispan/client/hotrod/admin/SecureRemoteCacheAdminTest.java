@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
@@ -52,7 +51,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
          HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
          serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
          SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
-         sap.addUser("admin", "realm", "password".toCharArray(), "admin", ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
+         sap.addUser("admin", "realm", "password".toCharArray(), "admin");
          serverBuilder.authentication()
                       .enable()
                       .serverAuthenticationProvider(sap)

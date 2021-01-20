@@ -71,7 +71,7 @@
       </stack>
       <!-- Add a relay configuration using a previously declared stack to talk to the remote site -->
       <stack name="xsite" extends="udp">
-         <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"/>
+         <relay.RELAY2 site="LON" xmlns="urn:org:jgroups" max_site_masters="1000"/>
          <remote-sites default-stack="tcpgossip">
             <remote-site name="NYC" stack="tcp"/>
          </remote-sites>
@@ -103,10 +103,12 @@
       <security>
          <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper/>
-            <role name="peasant" permissions="READ"/>
-            <role name="vavasour" permissions="READ WRITE"/>
-            <role name="vassal" permissions="READ WRITE LISTEN"/>
-            <role name="king" permissions="ALL"/>
+            <roles>
+               <role name="peasant" permissions="READ"/>
+               <role name="vavasour" permissions="READ WRITE"/>
+               <role name="vassal" permissions="READ WRITE LISTEN"/>
+               <role name="king" permissions="ALL"/>
+            </roles>
          </authorization>
       </security>
       <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">

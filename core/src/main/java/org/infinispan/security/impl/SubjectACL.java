@@ -1,7 +1,10 @@
 package org.infinispan.security.impl;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
+
+import org.infinispan.security.AuthorizationPermission;
 
 /**
  * SubjectACL.
@@ -37,5 +40,15 @@ public class SubjectACL {
    @Override
    public String toString() {
       return "SubjectACL [roles=" + roles + ", mask=" + mask + "]";
+   }
+
+   public EnumSet<AuthorizationPermission> getPermissions() {
+      EnumSet<AuthorizationPermission> permissions = EnumSet.noneOf(AuthorizationPermission.class);
+      for(AuthorizationPermission permission : AuthorizationPermission.values()) {
+         if ((mask & permission.getMask()) != 0) {
+            permissions.add(permission);
+         }
+      }
+      return permissions;
    }
 }

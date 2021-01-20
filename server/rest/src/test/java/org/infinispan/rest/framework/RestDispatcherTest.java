@@ -13,11 +13,22 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.security.auth.Subject;
+
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.framework.impl.SimpleRequest;
 import org.infinispan.rest.framework.impl.SimpleRestResponse;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.CustomAuditLoggerTest;
+import org.infinispan.security.impl.Authorizer;
+import org.infinispan.security.mappers.IdentityRoleMapper;
+import org.infinispan.test.TestingUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -36,7 +47,9 @@ public class RestDispatcherTest {
       manager.registerResource("ctx", new EchoResource());
       manager.registerResource("ctx", new FileResource());
 
-      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager);
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+
+      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test"));
 
       RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/").build();
       CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
@@ -99,6 +112,40 @@ public class RestDispatcherTest {
       restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/dir1/dir2/file.txt").build();
       response = restDispatcher.dispatch(restRequest);
       assertEquals("/ctx/web/dir1/dir2/file.txt", join(response).getEntity().toString());
+   }
+
+   @Test
+   public void testDispatchWithAuthz() {
+      final Subject ADMIN = TestingUtil.makeSubject("admin");
+      final Subject LIFECYCLE = TestingUtil.makeSubject("lifecycle");
+
+      ResourceManagerImpl manager = new ResourceManagerImpl();
+      manager.registerResource("ctx", new SecureResource());
+
+      CustomAuditLoggerTest.TestAuditLogger auditLogger = new CustomAuditLoggerTest.TestAuditLogger();
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().security().authorization().enable()
+            .auditLogger(auditLogger).principalRoleMapper(new IdentityRoleMapper()).build();
+
+
+      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test"));
+
+      // Anonymous
+      RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/secure").build();
+      CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
+      Exceptions.expectCompletionException(SecurityException.class, response);
+      assertEquals("Permission to ADMIN is DENY for user null", auditLogger.getLastRecord());
+
+      // Wrong user
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/secure").setSubject(LIFECYCLE).build();
+      response = restDispatcher.dispatch(restRequest);
+      Exceptions.expectCompletionException(SecurityException.class, response);
+      assertEquals("Permission to ADMIN is DENY for user Subject:\n\tPrincipal: TestPrincipal [name=lifecycle]\n", auditLogger.getLastRecord());
+
+      // Correct user
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/secure").setSubject(ADMIN).build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("Subject:\n\tPrincipal: TestPrincipal [name=admin]\n", join(response).getEntity().toString());
+      assertEquals("Permission to ADMIN is ALLOW for user Subject:\n\tPrincipal: TestPrincipal [name=admin]\n", auditLogger.getLastRecord());
    }
 
    private void assertNoResource(RestDispatcher dispatcher, RestRequest restRequest) {
@@ -229,5 +276,19 @@ public class RestDispatcherTest {
          return completedFuture(new SimpleRestResponse.Builder().entity(path).build());
       }
 
+   }
+
+   static class SecureResource implements ResourceHandler {
+
+      @Override
+      public Invocations getInvocations() {
+         return new Invocations.Builder()
+               .invocation().method(GET).path("/secure").permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::handleGet)
+               .create();
+      }
+
+      private CompletionStage<RestResponse> handleGet(RestRequest restRequest) {
+         return completedFuture(new SimpleRestResponse.Builder().entity(restRequest.getSubject().toString()).build());
+      }
    }
 }

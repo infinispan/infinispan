@@ -24,11 +24,17 @@ SYNOPSIS
 
 *user encrypt-all*
 
+*user roles ls* 'principal'
+
+*user roles grant* --roles='role1'[,'role2'...] 'principal'
+
+*user roles deny* --roles='role1'[,'role2'...] 'principal'
 
 DESCRIPTION
 -----------
-Manage (list, create, describe, remove, modify) users stored in a property security realm.
-Note: You can use this command only with property realms.
+Manage (list, create, describe, remove, modify) users stored in a property security realm. The `roles` subcommand
+allows listing and manipulation of the principal <> role mapping, provided the server is using the `cluster-role-mapper`.
+Note: The `ls`, `create`, `describe`, `remove`, `password`, `groups` and `encrypt-all` subcommands can only be used with property realms.
 
 
 COMMAND SYNOPSIS
@@ -54,6 +60,15 @@ Sets the groups to which a user belongs.
 
 *user encrypt-all*::
 Encrypt all passwords in a plain-text user property file.
+
+*user roles ls* 'principal'::
+Lists all roles of the specified principal (user or group).
+
+*user roles grant* --roles='role1'[,'role2'...] 'principal'::
+Grants one or more roles to the specified principal.
+
+*user roles deny* --roles='role1'[,'role2'...] 'principal'::
+Denies one or more roles to the specified principal.
 
 
 COMMON OPTIONS

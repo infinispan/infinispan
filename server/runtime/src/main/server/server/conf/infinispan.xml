@@ -7,6 +7,9 @@
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+      <security>
+         <authorization/>
+      </security>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:12.1">

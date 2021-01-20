@@ -1,6 +1,7 @@
 package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
+import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
@@ -21,6 +23,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.test.TestingUtil;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -80,6 +83,17 @@ public class Common {
       HTTP_KERBEROS_MECHS = new ArrayList<>();
       HTTP_KERBEROS_MECHS.add(new Object[]{""});
       HTTP_KERBEROS_MECHS.add(new Object[]{HttpConstants.SPNEGO_NAME});
+   }
+
+   public static RestResponse awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
+      int count = 0;
+      RestResponse response;
+      while ((response = await(request.get())).getStatus() == pendingStatus || count++ < 100) {
+         TestingUtil.sleepThread(10);
+         response.close();
+      }
+      assertEquals(completeStatus, response.getStatus());
+      return response;
    }
 
    public static class User {

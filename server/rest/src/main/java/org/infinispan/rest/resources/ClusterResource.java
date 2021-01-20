@@ -20,6 +20,8 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 
@@ -39,11 +41,21 @@ public class ClusterResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(POST).path("/v2/cluster").withAction("stop").handleWith(this::stop)
-            .invocation().methods(GET, HEAD).path("/v2/cluster/backups").handleWith(this::getAllBackupNames)
-            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cluster/backups/{backupName}").handleWith(this::backup)
-            .invocation().methods(GET).path("/v2/cluster/restores").handleWith(this::getAllRestoreNames)
-            .invocation().methods(DELETE, HEAD, POST).path("/v2/cluster/restores/{restoreName}").handleWith(this::restore)
+            .invocation().methods(POST).path("/v2/cluster").withAction("stop")
+               .permission(AuthorizationPermission.LIFECYCLE).name("CLUSTER STOP").auditContext(AuditContext.SERVER)
+               .handleWith(this::stop)
+            .invocation().methods(GET, HEAD).path("/v2/cluster/backups")
+               .permission(AuthorizationPermission.ADMIN).name("BACKUP NAMES").auditContext(AuditContext.SERVER)
+               .handleWith(this::getAllBackupNames)
+            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cluster/backups/{backupName}")
+               .permission(AuthorizationPermission.ADMIN).name("BACKUP").auditContext(AuditContext.SERVER)
+               .handleWith(this::backup)
+            .invocation().methods(GET).path("/v2/cluster/restores")
+               .permission(AuthorizationPermission.ADMIN).name("RESTORE NAMES").auditContext(AuditContext.SERVER)
+               .handleWith(this::getAllRestoreNames)
+            .invocation().methods(DELETE, HEAD, POST).path("/v2/cluster/restores/{restoreName}")
+               .permission(AuthorizationPermission.ADMIN).name("RESTORE").auditContext(AuditContext.SERVER)
+               .handleWith(this::restore)
             .create();
    }
 

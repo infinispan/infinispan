@@ -53,6 +53,8 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
@@ -113,9 +115,15 @@ public class CacheManagerResource implements ResourceHandler {
 
             // BackupManager
             .invocation().methods(GET).path("/v2/cache-managers/{name}/backups").handleWith(this::getAllBackupNames)
-            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}").handleWith(this::backup)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/restores").handleWith(this::getAllRestoreNames)
-            .invocation().methods(DELETE, HEAD, POST).path("/v2/cache-managers/{name}/restores/{restoreName}").handleWith(this::restore)
+            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .handleWith(this::backup)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/restores")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .handleWith(this::getAllRestoreNames)
+            .invocation().methods(DELETE, HEAD, POST).path("/v2/cache-managers/{name}/restores/{restoreName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .handleWith(this::restore)
             .create();
    }
 

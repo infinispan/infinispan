@@ -5,7 +5,9 @@ import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
 import static org.infinispan.scripting.ScriptingManager.SCRIPT_MANAGER_ROLE;
 
 import java.util.EnumSet;
+import java.util.Map;
 
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -20,7 +22,9 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Role;
 import org.infinispan.security.impl.CacheRoleImpl;
+import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 
 /**
  * LifecycleCallbacks.
@@ -71,10 +75,13 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       cfg.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       if (globalConfiguration.security().authorization().enabled()) {
-         globalConfiguration.security().authorization().roles()
-                            .put(SCRIPT_MANAGER_ROLE,
-                                 new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));
-         cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);
+         Map<String, Role> globalRoles = globalConfiguration.security().authorization().roles();
+         globalRoles.put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, false, AuthorizationPermission.ALL));
+         AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
+         // Copy all global roles
+         globalRoles.keySet().forEach(role -> authorization.role(role));
+         // Add a special module which translates permissions
+         cfg.addModule(CreatePermissionConfigurationBuilder.class);
       }
       return cfg;
    }

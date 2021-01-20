@@ -19,12 +19,13 @@ public class CacheRoleImpl implements Role {
    private final String name;
    private final Set<AuthorizationPermission> permissions;
    private final int mask;
+   private final boolean inheritable;
 
-   public CacheRoleImpl(String name, AuthorizationPermission... authorizationPermissions) {
-      this(name, new HashSet<>(Arrays.asList(authorizationPermissions)));
+   public CacheRoleImpl(String name, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
+      this(name, inheritable, new HashSet<>(Arrays.asList(authorizationPermissions)));
    }
 
-   public CacheRoleImpl(String name, Set<AuthorizationPermission> permissions) {
+   public CacheRoleImpl(String name, boolean inheritable, Set<AuthorizationPermission> permissions) {
       this.name = name;
       this.permissions = Collections.unmodifiableSet(permissions);
       int permMask = 0;
@@ -32,6 +33,7 @@ public class CacheRoleImpl implements Role {
          permMask |= permission.getMask();
       }
       this.mask = permMask;
+      this.inheritable = inheritable;
    }
 
    @Override
@@ -50,8 +52,18 @@ public class CacheRoleImpl implements Role {
    }
 
    @Override
+   public boolean isInheritable() {
+      return inheritable;
+   }
+
+   @Override
    public String toString() {
-      return "CacheRoleImpl [name=" + name + ", permissions=" + permissions + ", mask=" + mask + "]";
+      return "CacheRoleImpl{" +
+            "name='" + name + '\'' +
+            ", permissions=" + permissions +
+            ", mask=" + mask +
+            ", inheritable=" + inheritable +
+            '}';
    }
 
    @Override

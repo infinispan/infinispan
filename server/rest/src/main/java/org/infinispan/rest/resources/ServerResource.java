@@ -39,6 +39,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Messages;
+import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.ProtocolServer;
@@ -64,23 +65,50 @@ public class ServerResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path("/v2/server/").handleWith(this::info)
-            .invocation().methods(GET).path("/v2/server/config").handleWith(this::config)
-            .invocation().methods(GET).path("/v2/server/env").handleWith(this::env)
-            .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
-            .invocation().methods(POST).path("/v2/server/").withAction("stop").handleWith(this::stop)
-            .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
-            .invocation().methods(GET).path("/v2/server/report").handleWith(this::report)
-            .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
-            .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}").handleWith(this::listIgnored)
-            .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache-manager}/{cache}").handleWith(this::doIgnoreOp)
-            .invocation().methods(GET).path("/v2/server/connectors").handleWith(this::listConnectors)
-            .invocation().methods(GET).path("/v2/server/connectors/{connector}").handleWith(this::connectorStatus)
-            .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("start").handleWith(this::connectorStartStop)
-            .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("stop").handleWith(this::connectorStartStop)
-            .invocation().methods(GET).path("/v2/server/connectors/{connector}/ip-filter").handleWith(this::connectorIpFilterList)
-            .invocation().methods(POST).path("/v2/server/connectors/{connector}/ip-filter").handleWith(this::connectorIpFilterSet)
-            .invocation().methods(DELETE).path("/v2/server/connectors/{connector}/ip-filter").handleWith(this::connectorIpFilterClear)
+            .invocation().methods(GET).path("/v2/server/")
+               .handleWith(this::info)
+            .invocation().methods(GET).path("/v2/server/config")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::config)
+            .invocation().methods(GET).path("/v2/server/env")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::env)
+            .invocation().methods(GET).path("/v2/server/memory")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::memory)
+            .invocation().methods(POST).path("/v2/server/").withAction("stop")
+               .permission(AuthorizationPermission.ADMIN)
+               .handleWith(this::stop)
+            .invocation().methods(GET).path("/v2/server/threads")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::threads)
+            .invocation().methods(GET).path("/v2/server/report")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::report)
+            .invocation().methods(GET).path("/v2/server/cache-managers")
+               .handleWith(this::cacheManagers)
+            .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listIgnored)
+            .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache-manager}/{cache}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::doIgnoreOp)
+            .invocation().methods(GET).path("/v2/server/connectors")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR LIST").auditContext(AuditContext.SERVER)
+               .handleWith(this::listConnectors)
+            .invocation().methods(GET).path("/v2/server/connectors/{connector}")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR GET").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStatus)
+            .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("start")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR START").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStartStop)
+            .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("stop")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR STOP").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStartStop)
+            .invocation().methods(GET).path("/v2/server/connectors/{connector}/ip-filter")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER GET").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterList)
+            .invocation().methods(POST).path("/v2/server/connectors/{connector}/ip-filter")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER SET").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterSet)
+            .invocation().methods(DELETE).path("/v2/server/connectors/{connector}/ip-filter")
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER DELETE").auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterClear)
             .create();
    }
 
@@ -121,7 +149,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> connectorStartStop(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
       String connectorName = restRequest.variables().get("connector");
       ProtocolServer connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
@@ -143,7 +170,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> connectorStatus(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
       String connectorName = restRequest.variables().get("connector");
 
@@ -173,7 +199,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> connectorIpFilterList(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
 
       ProtocolServer connector = getProtocolServer(restRequest);
@@ -197,7 +222,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> connectorIpFilterClear(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
 
       String connectorName = restRequest.variables().get("connector");
@@ -210,12 +234,10 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> listConnectors(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       return asJsonResponseFuture(Json.make(invocationHelper.getServer().getProtocolServers().keySet()));
    }
 
    private CompletionStage<RestResponse> connectorIpFilterSet(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
 
       String connectorName = restRequest.variables().get("connector");
@@ -251,12 +273,10 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       return asJsonResponseFuture(new JVMMemoryInfoInfo().toJson());
    }
 
    private CompletionStage<RestResponse> env(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       return asJsonResponseFuture(Json.make(System.getProperties()));
    }
 
@@ -265,7 +285,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> threads(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       return completedFuture(new NettyRestResponse.Builder()
             .contentType(TEXT_PLAIN).entity(Util.threadDump())
             .build());
@@ -304,7 +323,6 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> config(RestRequest restRequest) {
-      SecurityActions.checkPermission(invocationHelper, restRequest, AuthorizationPermission.ADMIN);
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String json = invocationHelper.getJsonWriter().toJSON(invocationHelper.getServer().getConfiguration());
       responseBuilder.entity(json).contentType(APPLICATION_JSON);

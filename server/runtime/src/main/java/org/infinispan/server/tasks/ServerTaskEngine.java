@@ -15,7 +15,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
@@ -28,7 +28,7 @@ public class ServerTaskEngine implements TaskEngine {
    private final LocalServerTaskRunner localRunner;
    private final DistributedServerTaskRunner distributedRunner;
 
-   private final AuthorizationHelper globalAuthzHelper;
+   private final Authorizer globalauthorizer;
    private final ScriptConversions scriptConversions;
    private final Map<String, ServerTaskWrapper> tasks;
 
@@ -39,7 +39,7 @@ public class ServerTaskEngine implements TaskEngine {
       serializationContextRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
       EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
       this.scriptConversions = new ScriptConversions(encoderRegistry);
-      this.globalAuthzHelper = registry.getComponent(AuthorizationHelper.class);
+      this.globalauthorizer = registry.getComponent(Authorizer.class);
       this.tasks = tasks;
       this.localRunner = new LocalServerTaskRunner(this);
       this.distributedRunner = new DistributedServerTaskRunner();
@@ -90,7 +90,7 @@ public class ServerTaskEngine implements TaskEngine {
 
    private <T> void checkPermissions(TaskContext context, ServerTaskWrapper<T> task) {
       String role = task.getRole().orElse(null);
-      if (globalAuthzHelper != null) {
+      if (globalauthorizer != null) {
          if (context.getCache().isPresent()) {
             AuthorizationManager authorizationManager = context.getCache().get().getAdvancedCache().getAuthorizationManager();
             if (authorizationManager != null) {
@@ -98,7 +98,7 @@ public class ServerTaskEngine implements TaskEngine {
                return;
             }
          }
-         globalAuthzHelper.checkPermission(null, null, AuthorizationPermission.EXEC, role);
+         globalauthorizer.checkPermission(null, null, AuthorizationPermission.EXEC, role);
       }
    }
 

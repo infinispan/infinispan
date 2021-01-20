@@ -525,34 +525,47 @@
                 </xs:complexType>
               </xs:element>
             </xs:choice>
-            <xs:element name="role" minOccurs="0" maxOccurs="unbounded">
-              <xs:annotation>
-                <xs:documentation>
-                  Defines a new role name and assigns permissions to it.
-                </xs:documentation>
-              </xs:annotation>
-              <xs:complexType>
-                <xs:attribute name="name" use="required" type="xs:string">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Defines the name of the role.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="permissions" use="required" type="tns:permission-list">
-                  <xs:annotation>
-                    <xs:documentation>
-                      Defines the list of permissions for the role.
-                    </xs:documentation>
-                  </xs:annotation>
-                </xs:attribute>
-              </xs:complexType>
-            </xs:element>
+            <xs:element name="roles" type="tns:roles" minOccurs="0" />
           </xs:sequence>
           <xs:attribute name="audit-logger" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 Class of the audit logger.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="cache-size" type="xs:long">
+            <xs:annotation>
+              <xs:documentation>
+                The ACL cache size.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="roles">
+    <xs:sequence>
+      <xs:element name="role" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Defines a new role name and assigns permissions to it.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="name" use="required" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Defines the name of the role.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="permissions" use="required" type="tns:permission-list">
+            <xs:annotation>
+              <xs:documentation>
+                Defines the list of permissions for the role.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -2882,5 +2895,4 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
-
 </xs:schema>

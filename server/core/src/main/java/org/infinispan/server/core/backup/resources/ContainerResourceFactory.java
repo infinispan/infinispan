@@ -10,6 +10,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.ContainerResource;
 import org.infinispan.server.core.logging.Log;
@@ -26,9 +27,8 @@ public class ContainerResourceFactory {
    private static final Log log = LogFactory.getLog(ContainerResourceFactory.class, Log.class);
 
    public static Collection<ContainerResource> getResources(BackupManager.Resources params, BlockingManager blockingManager,
-                                                            EmbeddedCacheManager cm, ParserRegistry parserRegistry,
+                                                            EmbeddedCacheManager cm, GlobalComponentRegistry gcr, ParserRegistry parserRegistry,
                                                             Path containerRoot) {
-      GlobalComponentRegistry gcr = cm.getGlobalComponentRegistry();
       return params.includeTypes().stream()
             .map(type -> {
                switch (type) {
@@ -40,7 +40,7 @@ public class ContainerResourceFactory {
                      CounterManager counterManager = gcr.getComponent(CounterManager.class);
                      return counterManager == null ?
                            missingResource(type) :
-                           new CounterResource(blockingManager, cm, params, containerRoot);
+                           new CounterResource(counterManager, blockingManager, gcr.getComponent(SerializationContextRegistry.class).getPersistenceCtx(), params, containerRoot);
                   case PROTO_SCHEMAS:
                   case TASKS:
                      ContainerResource cr = InternalCacheResource.create(type, blockingManager, cm, params, containerRoot);

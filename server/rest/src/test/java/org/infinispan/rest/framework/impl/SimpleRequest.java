@@ -28,7 +28,7 @@ public class SimpleRequest implements RestRequest {
    private String action;
    private Subject subject;
 
-   private SimpleRequest(Method method, String path, Map<String, String> headers, ContentSource contents) {
+   private SimpleRequest(Method method, String path, Map<String, String> headers, ContentSource contents, Subject subject) {
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(path);
       Map<String, List<String>> parameters = queryStringDecoder.parameters();
       this.path = queryStringDecoder.path();
@@ -39,6 +39,7 @@ public class SimpleRequest implements RestRequest {
       }
       this.method = method;
       this.contents = contents;
+      this.subject = subject;
    }
 
    @Override
@@ -202,6 +203,7 @@ public class SimpleRequest implements RestRequest {
       private String path;
       private Map<String, String> headers;
       private ContentSource contents;
+      private Subject subject;
 
       public Builder setMethod(Method method) {
          this.method = method;
@@ -223,8 +225,13 @@ public class SimpleRequest implements RestRequest {
          return this;
       }
 
+      public Builder setSubject(Subject subject) {
+         this.subject = subject;
+         return this;
+      }
+
       public SimpleRequest build() {
-         return new SimpleRequest(method, path, headers, contents);
+         return new SimpleRequest(method, path, headers, contents, subject);
       }
    }
 }

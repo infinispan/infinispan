@@ -4,6 +4,9 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
+
 /**
  * Defines an invocation to a REST resource.
  *
@@ -48,4 +51,11 @@ public interface Invocation {
     * @return true if the invocation is deprecated
     */
    boolean deprecated();
+
+   /**
+    * @return the required permission for this invocation when authorization is enabled
+    */
+   AuthorizationPermission permission();
+
+   AuditContext auditContext();
 }

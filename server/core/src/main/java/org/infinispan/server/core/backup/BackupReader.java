@@ -23,6 +23,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.BackupManager;
@@ -79,12 +80,13 @@ class BackupReader {
    private CompletionStage<Void> restoreContainer(String containerName, BackupManager.Resources params, ZipFile zip) {
       // TODO validate container config
       EmbeddedCacheManager cm = cacheManagers.get(containerName);
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cm);
       Path containerRoot = Paths.get(CONTAINER_KEY, containerName);
 
       Properties properties = readProperties(containerRoot.resolve(CONTAINERS_PROPERTIES_FILE), zip);
 
       Collection<ContainerResource> resources = ContainerResourceFactory
-            .getResources(params, blockingManager, cm, parserRegistry, containerRoot);
+            .getResources(params, blockingManager, cm, gcr, parserRegistry, containerRoot);
 
       resources.forEach(r -> r.prepareAndValidateRestore(properties));
 

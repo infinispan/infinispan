@@ -118,7 +118,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Exception {
-      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN_USER, () -> {
          for (int i = 0; i < NUM_SERVERS; i++) {
             GlobalConfigurationBuilder configForNode = getGlobalConfigForNode(i);
             addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
@@ -150,7 +150,6 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
             restServers.add(restServerHelper);
          }
-         return null;
       });
       client = RestClient.forConfiguration(getClientConfig().build());
    }

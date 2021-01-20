@@ -18,7 +18,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 
@@ -115,8 +115,8 @@ final class SecurityActions {
    }
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
-      AuthorizationHelper authzHelper = getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
-      authzHelper.checkPermission(cacheManager.getSubject(), permission);
+      Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
+      authorizer.checkPermission(cacheManager.getSubject(), permission);
    }
 
    static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {

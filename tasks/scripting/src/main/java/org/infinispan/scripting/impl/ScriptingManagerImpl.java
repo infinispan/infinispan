@@ -31,7 +31,7 @@ import org.infinispan.scripting.logging.Log;
 import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.logging.LogFactory;
@@ -49,7 +49,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject TaskManager taskManager;
-   @Inject AuthorizationHelper globalAuthzHelper;
+   @Inject
+   Authorizer authorizer;
    @Inject EncoderRegistry encoderRegistry;
    @Inject GlobalConfiguration globalConfiguration;
 
@@ -143,13 +144,13 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Override
    public <T> CompletableFuture<T> runScript(String scriptName, TaskContext context) {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
-      if (globalAuthzHelper != null) {
+      if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
                SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
          if (authorizationManager != null) {
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          } else {
-            globalAuthzHelper.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
+            authorizer.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          }
 
       }

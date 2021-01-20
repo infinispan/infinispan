@@ -10,7 +10,7 @@ import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.util.concurrent.CompletionStages;
 
 import java.util.Map;
@@ -32,17 +32,17 @@ public final class InfinispanQueryStatisticsInfo {
 
    private final QueryStatistics queryStatistics;
    private final IndexStatistics indexStatistics;
-   private final AuthorizationHelper authorizationHelper;
+   private final Authorizer authorizer;
 
-   InfinispanQueryStatisticsInfo(SearchStatistics searchStatistics, AuthorizationHelper authorizationHelper) {
+   InfinispanQueryStatisticsInfo(SearchStatistics searchStatistics, Authorizer authorizer) {
       this.queryStatistics = searchStatistics.getQueryStatistics();
       this.indexStatistics = searchStatistics.getIndexStatistics();
-      this.authorizationHelper = authorizationHelper;
+      this.authorizer = authorizer;
    }
 
    @ManagedOperation
    public void clear() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       queryStatistics.clear();
    }
 

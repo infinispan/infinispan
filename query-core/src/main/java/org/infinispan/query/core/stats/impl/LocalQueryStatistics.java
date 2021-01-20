@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.stats.QueryStatisticsSnapshot;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.Authorizer;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -44,7 +44,7 @@ public class LocalQueryStatistics implements QueryStatisticsSnapshot {
    Configuration configuration;
 
    @Inject
-   AuthorizationHelper authorizationHelper;
+   Authorizer authorizer;
 
 
    public LocalQueryStatistics() {
@@ -305,7 +305,7 @@ public class LocalQueryStatistics implements QueryStatisticsSnapshot {
 
    @Override
    public void clear() {
-      authorizationHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
       localIndexedQueries.clear();
       distIndexedQueries.clear();
       nonIndexedQueries.clear();

@@ -54,6 +54,7 @@ import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.audit.LoggingAuditLogger;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -269,6 +270,9 @@ public class Server implements ServerManagement, AutoCloseable {
          // load the defaults first
          URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
          defaultsHolder = parser.parse(defaults);
+
+         // Set a default audit logger
+         defaultsHolder.getGlobalConfigurationBuilder().security().authorization().auditLogger(new LoggingAuditLogger());
 
          // base the global configuration to the default
          configurationBuilderHolder = new ConfigurationBuilderHolder();

@@ -58,6 +58,7 @@ public interface ProtoStreamTypeIds {
    int IRAC_SITE_VERSION = CORE_LOWER_BOUND + 7;
    int IRAC_VERSION_ENTRY = CORE_LOWER_BOUND + 8;
    int IRAC_METADATA = CORE_LOWER_BOUND + 9;
+   int ROLE_SET = CORE_LOWER_BOUND + 10;
 
    // Counter range 4000 -> 4199
    int COUNTERS_LOWER_BOUND = CORE_LOWER_BOUND + 3000;

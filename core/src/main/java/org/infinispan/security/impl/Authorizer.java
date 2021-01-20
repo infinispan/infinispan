@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.SECURITY;
 
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,22 +29,21 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * AuthorizationHelper. Some utility methods for computing access masks and verifying them against
- * permissions
+ * Authorizer. Some utility methods for computing access masks and verifying them against permissions
  *
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class AuthorizationHelper {
-   private static final Log log = LogFactory.getLog(AuthorizationHelper.class);
+public class Authorizer {
+   private static final Log log = LogFactory.getLog(Authorizer.class);
+   public static final SubjectACL SUPERUSER = new SubjectACL(Collections.emptySet(), AuthorizationPermission.ALL.getMask());
    private final GlobalSecurityConfiguration globalConfiguration;
    private final AuditLogger audit;
    private final AuditContext context;
    private final String name;
    private final ConcurrentMap<CachePrincipalPair, SubjectACL> aclCache;
 
-   public AuthorizationHelper(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name,
-         ConcurrentMap<CachePrincipalPair, SubjectACL> aclCache) {
+   public Authorizer(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, ConcurrentMap<CachePrincipalPair, SubjectACL> aclCache) {
       this.globalConfiguration = globalConfiguration;
       this.audit = globalConfiguration.authorization().auditLogger();
       this.context = context;
@@ -51,33 +51,56 @@ public class AuthorizationHelper {
       this.aclCache = aclCache;
    }
 
-   public AuthorizationHelper(GlobalSecurityConfiguration security, AuditContext context, String name) {
-      this(security, context, name, security.authorization().enabled() ? createAclCache() : null);
+   public Authorizer(GlobalSecurityConfiguration security, AuditContext context, String name) {
+      this(security, context, name, security.authorization().enabled() ? createAclCache(security.authorization().cacheSize()) : null);
    }
 
-   private static <K, V> ConcurrentMap<K, V> createAclCache() {
-      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(10).build();
+   private static <K, V> ConcurrentMap<K, V> createAclCache(long size) {
+      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(size).build();
       return cache.asMap();
    }
 
    public void checkPermission(AuthorizationPermission perm) {
-      checkPermission(null, null, perm, null);
+      checkPermission(null, null, name, context, null, perm);
    }
 
    public void checkPermission(AuthorizationPermission perm, String role) {
-      checkPermission(null, null, perm, role);
+      checkPermission(null, null, name, context, role, perm);
    }
 
    public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
-      checkPermission(configuration, null, perm, null);
+      checkPermission(configuration, null, name, context, null, perm);
    }
 
    public void checkPermission(Subject subject, AuthorizationPermission perm) {
-      checkPermission(null, subject, perm, null);
+      checkPermission(null, subject, name, context, null, perm);
    }
 
-   public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm,
-         String role) {
+   public SubjectACL getACL(Subject subject) {
+      return getACL(subject, null);
+   }
+
+   public SubjectACL getACL(Subject subject, AuthorizationConfiguration configuration) {
+      if (globalConfiguration.authorization().enabled() && (configuration == null || configuration.enabled())) {
+         return computeSubjectACL(subject, configuration);
+      } else {
+         return SUPERUSER;
+      }
+   }
+
+   public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm, String role) {
+      checkPermission(configuration, subject, null, context, role, perm);
+   }
+
+   public void checkPermission(Subject subject, AuthorizationPermission perm, AuditContext explicitContext) {
+      checkPermission(null, subject, null, explicitContext, null, perm);
+   }
+
+   public void checkPermission(Subject subject, AuthorizationPermission perm, String contextName, AuditContext auditContext) {
+      checkPermission(null, subject, contextName, auditContext, null, perm);
+   }
+
+   public void checkPermission(AuthorizationConfiguration configuration, Subject subject, String explicitName, AuditContext explicitContext, String role, AuthorizationPermission perm) {
       if (globalConfiguration.authorization().enabled()) {
          if (Security.isPrivileged()) {
             Security.checkPermission(perm.getSecurityPermission());
@@ -86,7 +109,7 @@ public class AuthorizationHelper {
             try {
                if (subject != null) {
                   if (checkSubjectPermissionAndRole(subject, configuration, perm, role)) {
-                     audit.audit(subject, context, name, perm, AuditResponse.ALLOW);
+                     audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.ALLOW);
                   } else {
                      checkSecurityManagerPermission(perm);
                   }
@@ -94,7 +117,7 @@ public class AuthorizationHelper {
                   checkSecurityManagerPermission(perm);
                }
             } catch (SecurityException e) {
-               audit.audit(subject, context, name, perm, AuditResponse.DENY);
+               audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.DENY);
                throw SECURITY.unauthorizedAccess(Util.prettyPrintSubject(subject), perm.toString());
             }
          }
@@ -110,7 +133,7 @@ public class AuthorizationHelper {
    }
 
    private boolean checkSubjectPermissionAndRole(Subject subject, AuthorizationConfiguration configuration,
-         AuthorizationPermission requiredPermission, String requestedRole) {
+                                                 AuthorizationPermission requiredPermission, String requestedRole) {
       Principal userPrincipal = Security.getSubjectUserPrincipal(subject);
       if (userPrincipal != null) {
          CachePrincipalPair cpp = new CachePrincipalPair(userPrincipal, name);
@@ -135,18 +158,22 @@ public class AuthorizationHelper {
       PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
       Set<Principal> principals = subject.getPrincipals();
       Set<String> allRoles = new HashSet<>(principals.size());
+      // Map all of the Subject's principals to roles using the role mapper. There maybe be more than one role per principal
       for (Principal principal : principals) {
          Set<String> roleNames = roleMapper.principalToRoles(principal);
          if (roleNames != null) {
             allRoles.addAll(roleNames);
          }
       }
+      // Create a bitmask of the permissions this Subject has for the resource identified by the configuration
       int subjectMask = 0;
       Map<String, Role> globalRoles = globalConfiguration.authorization().roles();
+      // If this resource has not declared any roles, all of the inheritable global roles will be checked
+      boolean implicit = configuration != null ? configuration.roles().isEmpty() : false;
       for (String role : allRoles) {
-         if (configuration == null || configuration.roles().isEmpty() || configuration.roles().contains(role)) {
+         if (configuration == null || implicit || configuration.roles().contains(role)) {
             Role globalRole = globalRoles.get(role);
-            if (globalRole != null) {
+            if (globalRole != null && (!implicit || globalRole.isInheritable())) {
                subjectMask |= globalRole.getMask();
             }
          }

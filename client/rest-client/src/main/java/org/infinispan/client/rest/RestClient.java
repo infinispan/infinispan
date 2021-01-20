@@ -94,4 +94,9 @@ public interface RestClient extends Closeable {
    static RestClient forConfiguration(RestClientConfiguration configuration) {
       return new RestClientOkHttp(configuration);
    }
+
+   /**
+    * Server security
+    */
+   RestSecurityClient security();
 }
