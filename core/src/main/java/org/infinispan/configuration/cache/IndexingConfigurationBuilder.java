@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
@@ -10,6 +11,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.PATH;
 import static org.infinispan.configuration.cache.IndexingConfiguration.STORAGE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -340,12 +342,24 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       if (enabled()) {
+         applyLegacyProperties(attributes.attribute(PROPERTIES).get());
          // Check that the query module is on the classpath.
          try {
             String clazz = "org.infinispan.query.Search";
             Util.loadClassStrict(clazz, globalConfig.classLoader());
          } catch (ClassNotFoundException e) {
             throw CONFIG.invalidConfigurationIndexingWithoutModule();
+         }
+         if (attributes.attribute(STORAGE).get() == IndexStorage.FILESYSTEM) {
+            boolean globalStateEnabled = globalConfig.globalState().enabled();
+            String path = replaceProperties(attributes.attribute(PATH).get());
+            if (!globalStateEnabled) {
+               if (path == null) {
+                  CONFIG.indexLocationWorkingDir();
+               } else if (!Paths.get(path).isAbsolute()) {
+                  CONFIG.indexRelativeWorkingDir(path);
+               }
+            }
          }
       }
    }
@@ -391,7 +405,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
                storage(IndexStorage.FILESYSTEM);
             }
          }
-         if (prop.endsWith(".indexBase")) path(propValue);
+         if (prop.endsWith(".indexBase")) path(replaceProperties(propValue));
          if (prop.endsWith(".merge_factor")) writer().merge().factor(Integer.parseInt(propValue));
          if (prop.endsWith(".merge_max_size")) writer().merge().maxSize(Integer.parseInt(propValue));
          if (prop.endsWith(".ram_buffer_size")) writer().ramBufferSize(Integer.parseInt(propValue));

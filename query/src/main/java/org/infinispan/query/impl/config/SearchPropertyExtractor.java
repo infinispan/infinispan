@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.config;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -7,12 +9,13 @@ import java.util.Map;
 
 import org.hibernate.search.backend.lucene.analysis.LuceneAnalysisConfigurer;
 import org.infinispan.commons.util.ServiceFinder;
-import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexReaderConfiguration;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +57,9 @@ public class SearchPropertyExtractor {
 
    private static final String ANALYSIS_CONFIGURER_PROPERTY_NAME = "analysis.configurer";
 
-   public static Map<String, Object> extractProperties(IndexingConfiguration configuration, ClassLoader aggregatedClassLoader) {
+   public static Map<String, Object> extractProperties(GlobalConfiguration globalConfiguration,
+                                                       IndexingConfiguration configuration,
+                                                       ClassLoader aggregatedClassLoader) {
       Map<String, Object> props = new LinkedHashMap<>();
 
       // load LuceneAnalysisDefinitionProvider from classpath
@@ -78,10 +83,8 @@ public class SearchPropertyExtractor {
             props.put(DIRECTORY_PROVIDER_KEY, LOCAL_HEAP_DIRECTORY_PROVIDER);
          } else {
             props.put(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
-            String path = configuration.path();
-            if (path != null) {
-               props.put(DIRECTORY_ROOT_KEY, StringPropertyReplacer.replaceProperties(path));
-            }
+            Path location = getIndexLocation(globalConfiguration, configuration.path());
+            props.put(DIRECTORY_ROOT_KEY, location.toFile().getPath());
          }
          IndexReaderConfiguration readerConfiguration = configuration.reader();
          long refreshInterval = readerConfiguration.getRefreshInterval();
@@ -149,5 +152,16 @@ public class SearchPropertyExtractor {
       props.putIfAbsent(LUCENE_VERSION_PROPERTY_NAME, LUCENE_VERSION_LATEST);
 
       return Collections.unmodifiableMap(props);
+   }
+
+   public static Path getIndexLocation(GlobalConfiguration globalConfiguration, String location) {
+      GlobalStateConfiguration globalState = globalConfiguration.globalState();
+      Path persistentLocation = Paths.get(globalState.persistentLocation());
+
+      if (location == null) return persistentLocation;
+
+      Path path = Paths.get(location);
+
+      return path.isAbsolute() ? path : persistentLocation.resolve(path);
    }
 }

@@ -961,6 +961,9 @@
             <xs:annotation>
               <xs:documentation>
                 Specifies a filesystem path for the index when storage is 'filesystem'.
+                The value can be a relative or absolute path. Relative paths are created
+                relative to the configured global persistent location, or to the current
+                working directory when global state is disabled.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

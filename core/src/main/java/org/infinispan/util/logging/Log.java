@@ -2132,4 +2132,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Attribute '%s' has been removed with no replacement", id = 624)
    XMLStreamException attributeRemoved(String attributeName, @Param Location location);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Index path not provided and global state disabled, will use the current working directory for storage.", id = 625)
+   void indexLocationWorkingDir();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Index path '%s' is not absolute and global state is disabled, will use a dir relative to the current working directory.", id = 626)
+   void indexRelativeWorkingDir(String path);
 }
