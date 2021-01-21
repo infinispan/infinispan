@@ -1,6 +1,7 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
 
@@ -28,8 +29,8 @@ public class WrappedByteArraySizeCalculator<K, V> extends AbstractEntrySizeCalcu
       } else {
          keyToUse = key;
       }
-      if (value instanceof WrappedByteArray) {
-         valueToUse = ((WrappedByteArray) value).getBytes();
+      if (value instanceof WrappedBytes) {
+         valueToUse = ((WrappedBytes) value).getBytes();
          // WBA object, the class pointer and the pointer to the byte[]
          size += roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE * 2);
       } else {
