@@ -26,6 +26,18 @@ named _authors_, which is the _Author_ message type.
 . Use the `org.infinispan.protostream.MessageMarshaller` interface to implement
 marshallers for your classes.
 +
+[NOTE]
+====
+The `MessageMarshaller` interface is now deprecated.
+
+ifndef::productized[]
+{brandname} 12 provides an alternative implementation that lets you create an adaptor class that uses the `@ProtoAdaptor` annotation for any external, third-party Java object classes.
+endif::productized[]
+ifdef::productized[]
+The next version of {brandname} provides an alternative implementation that lets you create an adaptor class that uses the `@ProtoAdaptor` annotation for any external, third-party Java object classes.
+endif::productized[]
+====
++
 [source,java]
 .BookMarshaller.java
 ----
