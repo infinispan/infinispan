@@ -4,7 +4,7 @@ metadata:
   name: infinispan
   namespace: {{NAMESPACE}}
 spec:
-  channel: 2.0.x
+  channel: 2.1.x
   installPlanApproval: Automatic
   name: infinispan
   source: community-operators
