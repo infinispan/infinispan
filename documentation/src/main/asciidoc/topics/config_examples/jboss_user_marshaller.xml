@@ -1,1 +1,6 @@
-<serialization marshaller="org.infinispan.jboss.marshalling.core.JBossUserMarshaller"/>
+<serialization marshaller="org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller">
+  <allow-list>
+      <class>org.infinispan.concrete.SomeClass</class>
+      <regex>org.infinispan.example.*</regex>
+  </allow-list>
+</serialization>
