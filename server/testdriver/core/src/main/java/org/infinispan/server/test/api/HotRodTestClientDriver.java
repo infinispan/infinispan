@@ -25,6 +25,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       this.testClient = testClient;
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.maxRetries(1).connectionPool().maxActive(1);
       if (testServer.isContainerRunWithDefaultServerConfig()) {
          // Init with the admin user
          // Client intelligence basic by default

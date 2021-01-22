@@ -29,21 +29,21 @@ public class SslContextFactory {
    private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
-   private static final String SSL_PROTOCOL_PREFIX;
+   private static final String SSL_PROVIDER;
 
    static {
-      String sslProtocolPrefix = "";
+      String sslProvider = null;
       if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl", "true"))) {
          try {
             OpenSSLProvider.register();
             SSL.getInstance();
-            sslProtocolPrefix = "openssl.";
+            sslProvider = "openssl";
             SECURITY.openSSLAvailable();
          } catch (Throwable e) {
             SECURITY.openSSLNotAvailable();
          }
       }
-      SSL_PROTOCOL_PREFIX = sslProtocolPrefix;
+      SSL_PROVIDER = sslProvider;
    }
 
    private String keyStoreFileName;
@@ -134,8 +134,12 @@ public class SslContextFactory {
             TrustManagerFactory tmf = getTrustManagerFactory();
             trustManagers = tmf.getTrustManagers();
          }
-         String protocol = useNativeIfAvailable ? SSL_PROTOCOL_PREFIX + sslProtocol : sslProtocol;
-         SSLContext sslContext = SSLContext.getInstance(protocol);
+         SSLContext sslContext;
+         if (useNativeIfAvailable && SSL_PROVIDER != null) {
+            sslContext = SSLContext.getInstance(sslProtocol, SSL_PROVIDER);
+         } else {
+            sslContext = SSLContext.getInstance(sslProtocol);
+         }
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;
       } catch (Exception e) {
@@ -172,6 +176,9 @@ public class SslContextFactory {
       return tmf;
    }
 
+   public static String getSslProvider() {
+      return SSL_PROVIDER;
+   }
 
    public static SSLEngine getEngine(SSLContext sslContext, boolean useClientMode, boolean needClientAuth) {
       SSLEngine sslEngine = sslContext.createSSLEngine();
