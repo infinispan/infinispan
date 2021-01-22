@@ -1,7 +1,6 @@
 [id='jboss_marshalling']
 = Using JBoss Marshalling
-JBoss Marshalling is a serialization-based marshalling library and was the
-default marshaller in previous {brandname} versions.
+JBoss Marshalling is a serialization-based marshalling library and was the default marshaller in previous {brandname} versions.
 
 [NOTE]
 ====
@@ -18,7 +17,7 @@ JBoss Marshalling.
 .Procedure
 
 . Add the `infinispan-jboss-marshalling` dependency to your classpath.
-. Configure {brandname} to use the `JBossUserMarshaller`.
+. Configure {brandname} to use the `GenericJBossMarshaller`.
 . Add your Java classes to the deserialization allowlist.
 
 * Programmatically:
