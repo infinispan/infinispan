@@ -273,8 +273,9 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
             .createHotRodClientConfigurationBuilder(host, serverPort);
       clientBuilder.forceReturnValues(false);
-      TransactionSetup.amendJTA(clientBuilder);
-      clientBuilder.transaction().transactionMode(transactionMode);
+      for (String cacheName : Arrays.asList(CACHE_A, CACHE_B, CACHE_C)) {
+         TransactionSetup.amendJTA(clientBuilder.remoteCache(cacheName)).transactionMode(transactionMode);
+      }
       if (useJavaSerialization) {
          clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }

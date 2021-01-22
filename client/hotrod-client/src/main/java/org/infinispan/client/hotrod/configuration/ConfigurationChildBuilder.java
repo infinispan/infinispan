@@ -2,7 +2,11 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.net.URI;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
+import javax.transaction.Synchronization;
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
@@ -246,6 +250,21 @@ public interface ConfigurationChildBuilder {
     * @return the {@link RemoteCacheConfigurationBuilder} for the cache
     */
    RemoteCacheConfigurationBuilder remoteCache(String name);
+
+   /**
+    * Sets the transaction's timeout.
+    * <p>
+    * This timeout is used by the server to rollback unrecoverable transaction when they are idle for this amount of
+    * time.
+    * <p>
+    * An unrecoverable transaction are transaction enlisted as {@link Synchronization} ({@link TransactionMode#NON_XA})
+    * or {@link XAResource} without recovery enabled ({@link TransactionMode#NON_DURABLE_XA}).
+    * <p>
+    * For {@link XAResource}, this value is overwritten by {@link XAResource#setTransactionTimeout(int)}.
+    * <p>
+    * It defaults to 1 minute.
+    */
+   ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit);
 
    /**
     * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.

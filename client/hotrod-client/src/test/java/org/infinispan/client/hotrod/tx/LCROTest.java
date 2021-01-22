@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 
 import javax.transaction.TransactionManager;
@@ -120,10 +121,14 @@ public class LCROTest extends MultiHotRodServersTest {
             .createHotRodClientConfigurationBuilder(host, serverPort);
       //force the return value
       clientBuilder.forceReturnValues(true);
-      //use our TM to test it to extract the XaResource.
-      clientBuilder.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
-      //only for XA modes
-      clientBuilder.transaction().transactionMode(TransactionMode.NON_DURABLE_XA);
+
+      for (String cacheName : Arrays.asList(CACHE_A, CACHE_B, CACHE_C)) {
+         clientBuilder.remoteCache(cacheName)
+               //use our TM to test it to extract the XaResource.
+               .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance())
+               //only for XA modes
+               .transactionMode(TransactionMode.NON_DURABLE_XA);
+      }
       return clientBuilder;
    }
 

@@ -341,13 +341,13 @@
  *          <td><b>infinispan.client.hotrod.transaction.transaction_manager_lookup</b></td>
  *          <td>String (class name)</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#defaultTransactionManagerLookup() GenericTransactionManagerLookup}</td>
- *          <td>A class to {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionManagerLookup(org.infinispan.commons.tx.lookup.TransactionManagerLookup) lookup} available transaction managers.</td>
+ *          <td>[Deprecated] A class to {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionManagerLookup(org.infinispan.commons.tx.lookup.TransactionManagerLookup) lookup} available transaction managers.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.transaction.transaction_mode</b></td>
  *          <td>String ({@link org.infinispan.client.hotrod.configuration.TransactionMode} enum name)</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionMode#NONE NONE}</td>
- *          <td>The default {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode}</td>
+ *          <td>[Deprecated] The default {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode}</td>
  *       </tr>
  *        <tr>
  *          <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
@@ -464,7 +464,12 @@
  *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionMode#NONE NONE}</td>
  *          <td>The default {@link org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode} for the specified cache.</td>
  *       </tr>
-
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.transaction.transaction_manager_lookup</b></td>
+ *          <td>String (class name)</td>
+ *          <td>{@link org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup GenericTransactionManagerLookup}</td>
+ *          <td>The {@link org.infinispan.commons.tx.lookup.TransactionManagerLookup} for the specified cache.</td>
+ *       </tr>
  *    </tbody>
  * </table>
  *

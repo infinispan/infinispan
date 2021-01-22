@@ -25,7 +25,9 @@ import org.infinispan.commons.util.TypedProperties;
  *
  * @author Pedro Ruivo
  * @since 9.3
+ * @deprecated since 12.0. To be removed in Infinispan 14.
  */
+@Deprecated
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements
       Builder<TransactionConfiguration> {
 
@@ -45,7 +47,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    /**
     * The {@link TransactionManagerLookup} to lookup for the {@link TransactionManager} to interact with.
+    * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link RemoteCacheConfigurationBuilder#transactionManagerLookup(TransactionManagerLookup)}
     */
+   @Deprecated
    public TransactionConfigurationBuilder transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
       this.transactionManagerLookup = transactionManagerLookup;
       return this;
@@ -53,7 +57,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    /**
     * The {@link TransactionMode} in which a {@link RemoteCache} will be enlisted.
+    * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link RemoteCacheConfigurationBuilder#transactionMode(TransactionMode)}
     */
+   @Deprecated
    public TransactionConfigurationBuilder transactionMode(TransactionMode transactionMode) {
       this.transactionMode = transactionMode;
       return this;
@@ -71,7 +77,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * For {@link XAResource}, this value is overwritten by {@link XAResource#setTransactionTimeout(int)}.
     * <p>
     * It defaults to 1 minute.
+    * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link ConfigurationBuilder#transactionTimeout(long, TimeUnit)}
     */
+   @Deprecated
    public TransactionConfigurationBuilder timeout(long timeout, TimeUnit timeUnit) {
       setTimeoutMillis(timeUnit.toMillis(timeout));
       return this;

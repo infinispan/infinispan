@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -63,6 +64,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -105,7 +107,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
    private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
    private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
-   private Configuration configuration;
+   private final Configuration configuration;
    private Codec codec;
 
    private Marshaller marshaller;
@@ -184,8 +186,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    public RemoteCacheManager(Configuration configuration, boolean start) {
       this.configuration = configuration;
       this.counterManager = new RemoteCounterManager();
-      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
-      this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
+      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transactionTimeout());
+      this.xaTransactionTable = new XaModeTransactionTable(configuration.transactionTimeout());
       registerMBean();
       if (start) start();
    }
@@ -225,8 +227,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
       this.configuration = builder.build();
       this.counterManager = new RemoteCounterManager();
-      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
-      this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
+      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transactionTimeout());
+      this.xaTransactionTable = new XaModeTransactionTable(configuration.transactionTimeout());
       registerMBean();
       if (start) actualStart();
    }
@@ -462,7 +464,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
                                                       TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
       RemoteCacheConfiguration cacheConfiguration = findConfiguration(cacheName);
-      boolean forceReturnValue = forceReturnValueOverride ? true : (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
+      boolean forceReturnValue = forceReturnValueOverride || (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
       RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValue);
       if (cacheName2RemoteCache.containsKey(key)) {
          return cacheName2RemoteCache.get(key).remoteCache();
@@ -495,7 +497,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          pingResponse = PingResponse.EMPTY;
       }
 
-      TransactionMode transactionMode = getTransactionMode(transactionModeOverride);
+      TransactionMode transactionMode = getTransactionMode(transactionModeOverride, cacheConfiguration);
       InternalRemoteCache<K, V> remoteCache;
       if (transactionMode == TransactionMode.NONE) {
          remoteCache = createRemoteCache(cacheName);
@@ -503,7 +505,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          if (!await(checkTransactionSupport(cacheName, operationsFactory).toCompletableFuture())) {
             throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
          } else {
-            TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
+            TransactionManager transactionManager = getTransactionManager(transactionManagerOverride, cacheConfiguration);
             remoteCache = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
                   transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
          }
@@ -646,17 +648,22 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return xaTransactionTable.getXaResource();
    }
 
-   private TransactionManager getTransactionManager(TransactionManager override) {
+   private TransactionManager getTransactionManager(TransactionManager override, RemoteCacheConfiguration cacheConfiguration) {
       try {
-         return override == null ? configuration.transaction().transactionManagerLookup()
-               .getTransactionManager() : override;
+         return override == null ?
+               (cacheConfiguration == null ?
+                     GenericTransactionManagerLookup.getInstance().getTransactionManager() :
+                     cacheConfiguration.transactionManagerLookup().getTransactionManager()) :
+               override;
       } catch (Exception e) {
          throw new HotRodClientException(e);
       }
    }
 
-   private TransactionMode getTransactionMode(TransactionMode override) {
-      return override == null ? configuration.transaction().transactionMode() : override;
+   private TransactionMode getTransactionMode(TransactionMode override, RemoteCacheConfiguration cacheConfiguration) {
+      return override == null ?
+            (cacheConfiguration == null ? TransactionMode.NONE : cacheConfiguration.transactionMode()) :
+            override;
    }
 
    private TransactionTable getTransactionTable(TransactionMode transactionMode) {
@@ -735,7 +742,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          RemoteCacheKey that = (RemoteCacheKey) o;
 
          if (forceReturnValue != that.forceReturnValue) return false;
-         return !(cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null);
+         return Objects.equals(cacheName, that.cacheName);
       }
 
       @Override

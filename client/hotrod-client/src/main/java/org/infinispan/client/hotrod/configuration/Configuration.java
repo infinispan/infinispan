@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -104,6 +105,7 @@ public class Configuration {
    private final int batchSize;
    private final ClassAllowList classAllowList;
    private final StatisticsConfiguration statistics;
+   @Deprecated
    private final TransactionConfiguration transaction;
    private final Features features;
    private final List<SerializationContextInitializer> contextInitializers;
@@ -314,8 +316,20 @@ public class Configuration {
       return statistics;
    }
 
+   /**
+    * @deprecated since 12.0. To be removed in Infinispan 14.
+    */
+   @Deprecated
    public TransactionConfiguration transaction() {
       return transaction;
+   }
+
+   /**
+    * see {@link ConfigurationBuilder#transactionTimeout(long, TimeUnit)},
+    */
+   public long transactionTimeout() {
+      //TODO replace with field in this class then TransactionConfiguration is removed.
+      return transaction.timeout();
    }
 
    public Features features() {

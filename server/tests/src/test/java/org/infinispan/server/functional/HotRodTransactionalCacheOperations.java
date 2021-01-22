@@ -61,8 +61,9 @@ public class HotRodTransactionalCacheOperations {
    @Test
    public void testTransactionalCache() throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.transaction().transactionMode(TransactionMode.NON_XA);
-      config.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
+      config.remoteCache(SERVER_TEST.getMethodName())
+            .transactionMode(TransactionMode.NON_XA)
+            .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
 
       String xml = String.format(TEST_CACHE_XML_CONFIG, SERVER_TEST.getMethodName(), txMode.name());
 
