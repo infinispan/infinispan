@@ -13,6 +13,7 @@ import javax.net.ssl.SSLContext;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
 import org.infinispan.server.security.realm.CachingSecurityRealm;
@@ -167,6 +168,10 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
             sslContextBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
          }
          sslContextBuilder.setWrap(false);
+         String sslProvider = SslContextFactory.getSslProvider();
+         if (sslProvider != null) {
+            sslContextBuilder.setProviderName(sslProvider);
+         }
          try {
             sslContext = sslContextBuilder.build().create();
          } catch (GeneralSecurityException e) {

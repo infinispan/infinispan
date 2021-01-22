@@ -60,6 +60,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
+   public static final String KEY_ALGORITHM = "RSA";
+   public static final String KEY_SIGNATURE_ALGORITHM = "SHA256withRSA";
+   public static final String KEYSTORE_TYPE = "pkcs12";
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
@@ -267,14 +270,14 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     */
    protected void createKeyStores() {
       try {
-         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
          KeyPair keyPair = keyPairGenerator.generateKeyPair();
          PrivateKey signingKey = keyPair.getPrivate();
          PublicKey publicKey = keyPair.getPublic();
 
          X500Principal CA_DN = dn("CA");
 
-         KeyStore trustStore = KeyStore.getInstance("pkcs12");
+         KeyStore trustStore = KeyStore.getInstance(KEYSTORE_TYPE);
          trustStore.load(null);
 
          SelfSignedX509CertificateAndSigningKey ca = createSelfSignedCertificate(CA_DN, true, "ca");
@@ -305,8 +308,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected SelfSignedX509CertificateAndSigningKey createSelfSignedCertificate(X500Principal dn, boolean isCA, String name) {
       SelfSignedX509CertificateAndSigningKey.Builder certificateBuilder = SelfSignedX509CertificateAndSigningKey.builder()
             .setDn(dn)
-            .setKeyAlgorithmName("RSA")
-            .setSignatureAlgorithmName("SHA1withRSA");
+            .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
+            .setKeyAlgorithmName(KEY_ALGORITHM);
+
       if (isCA) {
          certificateBuilder.addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647");
       }
@@ -332,7 +336,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       X509Certificate certificate = new X509CertificateBuilder()
             .setIssuerDn(issuerDN)
             .setSubjectDn(dn(name))
-            .setSignatureAlgorithmName("SHA1withRSA")
+            .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
             .setSigningKey(ca.getSigningKey())
             .setPublicKey(publicKey)
             .setSerialNumber(BigInteger.valueOf(certSerial.getAndIncrement()))
@@ -358,7 +362,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    private static void writeKeyStore(File file, Consumer<KeyStore> consumer) {
       try (FileOutputStream os = new FileOutputStream(file)) {
-         KeyStore keyStore = KeyStore.getInstance("pkcs12");
+         KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
          keyStore.load(null);
          consumer.accept(keyStore);
          keyStore.store(os, KEY_PASSWORD.toCharArray());
