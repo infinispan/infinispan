@@ -15,7 +15,6 @@ import java.util.function.Function;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
-import org.infinispan.client.hotrod.tx.util.TransactionSetup;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -164,7 +163,6 @@ public class APITest<K, V> extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
             .createHotRodClientConfigurationBuilder(host, serverPort);
       clientBuilder.forceReturnValues(false);
-      TransactionSetup.amendJTA(clientBuilder);
       if (useJavaSerialization) {
          clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }

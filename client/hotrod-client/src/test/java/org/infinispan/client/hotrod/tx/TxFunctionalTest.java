@@ -461,8 +461,7 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
             .createHotRodClientConfigurationBuilder(host, serverPort);
       clientBuilder.forceReturnValues(false);
-      TransactionSetup.amendJTA(clientBuilder);
-      clientBuilder.transaction().transactionMode(transactionMode);
+      TransactionSetup.amendJTA(clientBuilder.remoteCache(cacheName())).transactionMode(transactionMode);
       if (useJavaSerialization) {
          clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }

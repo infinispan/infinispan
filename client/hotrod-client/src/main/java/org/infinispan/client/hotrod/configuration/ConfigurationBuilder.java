@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -382,6 +383,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit) {
+      //TODO replace this invocation with a long field in this class when TransactionConfigurationBuilder is removed.
+      transaction.timeout(timeout, timeUnit);
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -452,6 +460,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
+      //TODO read TRANSACTION_TIMEOUT property after TransactionConfigurationBuilder is removed.
       transaction.withTransactionProperties(typed);
       nearCache.withProperties(properties);
 

@@ -505,10 +505,10 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
    public void testNoTransactionOverwrite() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.transaction()
+      builder.remoteCache("tx-cache")
             .transactionMode(TransactionMode.FULL_XA)
-            .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance())
-            .timeout(1234, TimeUnit.MILLISECONDS);
+            .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
+      builder.transactionTimeout(1234, TimeUnit.MILLISECONDS);
       Properties p = new Properties();
       p.setProperty(SERVER_LIST, "host1:11222; host2:11222");
       p.setProperty(AUTH_USERNAME, "admin");
@@ -517,9 +517,9 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(SASL_MECHANISM, "SCRAM-SHA-512");
       builder.withProperties(p);
       Configuration config = builder.build();
-      assertEquals(TransactionMode.FULL_XA, config.transaction().transactionMode());
-      assertEquals(RemoteTransactionManagerLookup.getInstance(), config.transaction().transactionManagerLookup());
-      assertEquals(1234, config.transaction().timeout());
+      assertEquals(TransactionMode.FULL_XA, config.remoteCaches().get("tx-cache").transactionMode());
+      assertEquals(RemoteTransactionManagerLookup.getInstance(), config.remoteCaches().get("tx-cache").transactionManagerLookup());
+      assertEquals(1234, config.transactionTimeout());
       assertEquals(2, config.servers().size());
       assertServer("host1", 11222, config.servers().get(0));
       assertServer("host2", 11222, config.servers().get(1));
@@ -531,6 +531,21 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals("admin", bch.getUsername());
       assertArrayEquals("password".toCharArray(), bch.getPassword());
       assertEquals("default", bch.getRealm());
+   }
+
+   public void testNoTransactionOverwriteWithProperties() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+
+      Properties p = new Properties();
+      p.setProperty("infinispan.client.hotrod.cache.tx-cache.transaction.transaction_mode", "FULL_XA");
+      p.setProperty("infinispan.client.hotrod.cache.tx-cache.transaction.transaction_manager_lookup", RemoteTransactionManagerLookup.class.getName());
+      p.setProperty("infinispan.client.hotrod.transaction.timeout", "1234");
+
+      builder.withProperties(p);
+      Configuration config = builder.build();
+      assertEquals(TransactionMode.FULL_XA, config.remoteCaches().get("tx-cache").transactionMode());
+      assertEquals(RemoteTransactionManagerLookup.getInstance(), config.remoteCaches().get("tx-cache").transactionManagerLookup());
+      assertEquals(1234, config.transactionTimeout());
    }
 
    private void assertServer(String host, int port, ServerConfiguration serverCfg) {

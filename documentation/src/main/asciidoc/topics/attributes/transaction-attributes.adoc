@@ -12,6 +12,7 @@
 :rc: link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
 :tx-mode: link:{javadocroot}/org/infinispan/client/hotrod/configuration/TransactionMode.html[TransactionMode]
 :cb: link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]
+:rccb: link:{javadocroot}/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[RemoteCacheConfigurationBuilder]
 :gtml: link:{javadocroot}/org/infinispan/client/hotrod/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]
 :rtml: link:{javadocroot}/org/infinispan/client/hotrod/transaction/lookup/RemoteTransactionManagerLookup.html[RemoteTransactionManagerLookup]
 :rtm: link:{javadocroot}/org/infinispan/client/hotrod/transaction/manager/RemoteTransactionManager.html[RemoteTransactionManager]

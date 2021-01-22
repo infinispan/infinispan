@@ -116,7 +116,8 @@ public class ConfigurationProperties {
    public static final String CACHE_NEAR_CACHE_MODE_SUFFIX = ".near_cache.mode";
    public static final String CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX = ".near_cache.max_entries";
    public static final String CACHE_TEMPLATE_NAME_SUFFIX = ".template_name";
-   public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction_mode";
+   public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction.transaction_mode";
+   public static final String CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX = ".transaction.transaction_manager_lookup";
 
    // defaults
    /**

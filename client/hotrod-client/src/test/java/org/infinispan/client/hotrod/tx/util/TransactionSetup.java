@@ -2,12 +2,12 @@ package org.infinispan.client.hotrod.tx.util;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.util.tx.lookup.GeronimoTransactionManagerLookup;
 
 /**
@@ -51,8 +51,8 @@ public final class TransactionSetup {
       }
    }
 
-   public static void amendJTA(ConfigurationBuilder builder) {
-      builder.transaction().transactionManagerLookup(lookup);
+   public static RemoteCacheConfigurationBuilder amendJTA(RemoteCacheConfigurationBuilder builder) {
+      return builder.transactionManagerLookup(lookup);
    }
 
 }

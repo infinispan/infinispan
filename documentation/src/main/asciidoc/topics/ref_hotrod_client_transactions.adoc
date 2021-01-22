@@ -6,7 +6,8 @@ To participate in a transaction, the Hot Rod client requires the {tm} with which
 
 [IMPORTANT]
 ====
-Transactions are optimistic in that clients acquire write locks on entries during the prepare phase. To avoid data inconsistency, be sure to read about link:#hr_transactions_force_return_value[Detecting Conflicts with Transactions].
+Transactions are optimistic in that clients acquire write locks on entries during the prepare phase.
+To avoid data inconsistency, be sure to read about link:#hr_transactions_force_return_value[Detecting Conflicts with Transactions].
 ====
 
 [[hr_transactions_config_server]]
@@ -16,8 +17,9 @@ Caches in the server must also be transactional for clients to participate in JT
 The following server configuration is required, otherwise transactions rollback only:
 
 * Isolation level must be `REPEATABLE_READ`.
-* Locking mode must be `PESSIMISTIC`. In a future release, `OPTIMISTIC` locking mode will be supported.
-* Transaction mode should be `NON_XA` or `NON_DURABLE_XA`. Hot Rod transactions should not use `FULL_XA` because it degrades performance.
+* `PESSIMISTIC` locking mode is recommended but `OPTIMISTIC` can be used.
+* Transaction mode should be `NON_XA` or `NON_DURABLE_XA`.
+Hot Rod transactions should not use `FULL_XA` because it degrades performance.
 
 For example:
 
@@ -33,119 +35,111 @@ Hot Rod transactions have their own recovery mechanism.
 
 [[hr_transactions_config_client]]
 == Configuring Hot Rod Clients
-When you create the {rcm}, you can set the default {tm} and {tx-mode} that the {rc} uses.
 
-The {rcm} lets you create only one configuration for transactional caches, as in the following example:
+Transactional {rc} are configured per-cache basis.
+The exception is the transaction's `timeout` which is global, because a single transaction can interact with multiple {rc}s.
+
+The following example shows how to configure a transactional {rc} for cache `my-cache`:
 
 [source,java]
 ----
 org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
 //other client configuration parameters
-cb.transaction().transactionManagerLookup(GenericTransactionManagerLookup.getInstance());
-cb.transaction().transactionMode(TransactionMode.NON_XA);
-cb.transaction().timeout(1, TimeUnit.MINUTES)
-RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
+cb.transactionTimeout(1, TimeUnit.MINUTES);
+cb.remoteCache("my-cache")
+   .transactionManagerLookup(GenericTransactionManagerLookup.getInstance())
+   .transactionMode(TransactionMode.NON_XA);
 ----
 
-The preceding configuration applies to all instances of a remote cache. If you need to apply different configurations to remote cache instances, you can override the {rc} configuration. See link:#hr_transactions_override_rcm[Overriding RemoteCacheManager Configuration].
-
-See {cb} Javadoc for documentation on configuration parameters.
+See {cb} and {rccb} Javadoc for documentation on configuration parameters.
 
 You can also configure the Java Hot Rod client with a properties file, as in the following example:
 
 [source]
 ----
-infinispan.client.hotrod.transaction.transaction_manager_lookup = org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup
-infinispan.client.hotrod.transaction.transaction_mode = NON_XA
+infinispan.client.hotrod.cache.my-cache.transaction.transaction_manager_lookup = org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup
+infinispan.client.hotrod.cache.my-cache.transaction.transaction_mode = NON_XA
 infinispan.client.hotrod.transaction.timeout = 60000
 ----
 
 [[hr_transactions_tmlookup]]
 === TransactionManagerLookup Interface
+
 `TransactionManagerLookup` provides an entry point to fetch a {tm}.
 
 Available implementations of `TransactionManagerLookup`:
 
 {gtml}::
-A lookup class that locates {tm}s running in Java EE application servers. Defaults to the {rtm} if it cannot find a {tm}. This is the default for Hot Rod Java clients.
+A lookup class that locates {tm}s running in Java EE application servers.
+Defaults to the {rtm} if it cannot find a {tm}.
+This is the default for Hot Rod Java clients.
 
 [TIP]
 ====
-In most cases, {gtml} is suitable. However, you can implement the `TransactionManagerLookup` interface if you need to integrate a custom {tm}.
+In most cases, {gtml} is suitable.
+However, you can implement the `TransactionManagerLookup` interface if you need to integrate a custom {tm}.
 ====
 
 {rtml}::
-A basic, and volatile, {tm} if no other implementation is available. Note that this implementation has significant limitations when handling concurrent transactions and recovery.
+A basic, and volatile, {tm} if no other implementation is available.
+Note that this implementation has significant limitations when handling concurrent transactions and recovery.
 
 [[hr_transactions_modes]]
 == Transaction Modes
+
 {tx-mode} controls how a {rc} interacts with the {tm}.
 
 [IMPORTANT]
 ====
-Configure transaction modes on both the {brandname} server and your client application. If clients attempt to perform transactional operations on non-transactional caches, runtime exceptions can occur.
+Configure transaction modes on both the {brandname} server and your client application.
+If clients attempt to perform transactional operations on non-transactional caches, runtime exceptions can occur.
 ====
 
-Transaction modes are the same in both the {brandname} configuration and client settings. Use the following modes with your client, see the {brandname} configuration schema for the server:
+Transaction modes are the same in both the {brandname} configuration and client settings.
+Use the following modes with your client, see the {brandname} configuration schema for the server:
 
 `NONE`::
-The {rc} does not interact with the {tm}. This is the default mode and is non-transactional.
+The {rc} does not interact with the {tm}.
+This is the default mode and is non-transactional.
 
 `NON_XA`::
 The {rc} interacts with the {tm} via {sync}.
 
 `NON_DURABLE_XA`::
-The {rc} interacts with the {tm} via {xa}. Recovery capabilities are disabled.
+The {rc} interacts with the {tm} via {xa}.
+Recovery capabilities are disabled.
 
 `FULL_XA`::
-The {rc} interacts with the {tm} via {xa}. Recovery capabilities are enabled. Invoke the `XaResource.recover()` method to retrieve transactions to recover.
-
-[[hr_transactions_override_rcm]]
-== Overriding Configuration for Cache Instances
-Because {rcm} does not support different configurations for each cache instance. However, {rcm} includes the `getCache(String)` method that returns the {rc} instances and lets you override some configuration parameters, as follows:
-
-`getCache(String cacheName, TransactionMode transactionMode)`::
-Returns a {rc} and overrides the configured {tx-mode}.
-
-`getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode)`::
-Same as previous, but can also force return values for write operations.
-
-`getCache(String cacheName, TransactionManager transactionManager)`::
-Returns a {rc} and overrides the configured {tm}.
-
-`getCache(String cacheName, boolean forceReturnValue, TransactionManager transactionManager)`::
-Same as previous, but can also force return values for write operations.
-
-`getCache(String cacheName, TransactionMode transactionMode, TransactionManager transactionManager)`::
-Returns a {rc} and overrides the configured {tm} and {tx-mode}. Uses the configured values, if `transactionManager` or `transactionMode` is null.
-
-`getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode, TransactionManager transactionManager)`::
-Same as previous, but can also force return values for write operations.
-
-[NOTE]
-====
-The `getCache(String)` method returns {rc} instances regardless of whether they are transaction or not. {rc} includes a `getTransactionManager()` method that returns the {tm} that the cache uses. If the {rc} is not transactional, the method returns `null`.
-====
+The {rc} interacts with the {tm} via {xa}.
+Recovery capabilities are enabled.
+Invoke the `XaResource.recover()` method to retrieve transactions to recover.
 
 [[hr_transactions_force_return_value]]
 == Detecting Conflicts with Transactions
+
 Transactions use the initial values of keys to detect conflicts.
 
-For example, "k" has a value of "v" when a transaction begins. During the prepare phase, the transaction fetches "k" from the server to read the value. If the value has changed, the transaction rolls back to avoid a conflict.
+For example, "k" has a value of "v" when a transaction begins.
+During the prepare phase, the transaction fetches "k" from the server to read the value.
+If the value has changed, the transaction rolls back to avoid a conflict.
 
 [NOTE]
 ====
 Transactions use versions to detect changes instead of checking value equality.
 ====
 
-The `forceReturnValue` parameter controls write operations to the {rc} and helps avoid conflicts. It has the following values:
+The `forceReturnValue` parameter controls write operations to the {rc} and helps avoid conflicts.
+It has the following values:
 
-* If `true`, the {tm} fetches the most recent value from the server before performing write operations. However, the `forceReturnValue` parameter applies only to write operations that access the key for the first time.
+* If `true`, the {tm} fetches the most recent value from the server before performing write operations.
+However, the `forceReturnValue` parameter applies only to write operations that access the key for the first time.
+
 * If `false`, the {tm} does not fetch the most recent value from the server before performing write operations.
 
 [NOTE]
 ====
-This parameter does not affect _conditional_ write operations such as `replace` or `putIfAbsent` because they require the most recent value.
+This parameter does not affect _conditional_ write operations such as `replace` or `putIfAbsent`
+because they require the most recent value.
 ====
 
 The following transactions provide an example where the `forceReturnValue` parameter can prevent conflicting write operations:
@@ -172,11 +166,16 @@ cache.put("k", "v2");
 tm.commit();
 ----
 
-In this example, TX1 and TX2 are executed in parallel. The initial value of "k" is "v".
+In this example, TX1 and TX2 are executed in parallel.
+The initial value of "k" is "v".
 
-* If `forceReturnValue = true`, the `cache.put()` operation fetches the value for "k" from the server in both TX1 and TX2. The transaction that acquires the lock for "k" first then commits. The other transaction rolls back during the commit phase because the transaction can detect that "k" has a value other than "v".
+* If `forceReturnValue = true`, the `cache.put()` operation fetches the value for "k" from the server in both TX1 and TX2.
+The transaction that acquires the lock for "k" first then commits.
+The other transaction rolls back during the commit phase because the transaction can detect that "k" has a value other than "v".
 
-* If `forceReturnValue = false`, the `cache.put()` operation does not fetch the value for "k" from the server and returns null. Both TX1 and TX2 can successfully commit, which results in a conflict. This occurs because neither transaction can detect that the initial value of "k" changed.
+* If `forceReturnValue = false`, the `cache.put()` operation does not fetch the value for "k" from the server and returns null.
+Both TX1 and TX2 can successfully commit, which results in a conflict.
+This occurs because neither transaction can detect that the initial value of "k" changed.
 
 The following transactions include `cache.get()` operations to read the value for "k" before doing the `cache.put()` operations:
 
@@ -204,7 +203,10 @@ cache.put("k", "v2");
 tm.commit();
 ----
 
-In the preceding examples, TX1 and TX2 both read the key so the `forceReturnValue` parameter does not take effect. One transaction commits, the other rolls back. However, the `cache.get()` operation requires an additional server request. If you do not need the return value for the `cache.put()` operation that server request is inefficient.
+In the preceding examples, TX1 and TX2 both read the key so the `forceReturnValue` parameter does not take effect.
+One transaction commits, the other rolls back.
+However, the `cache.get()` operation requires an additional server request.
+If you do not need the return value for the `cache.put()` operation that server request is inefficient.
 
 [[hr_transactions_ex_use_config]]
 == Using the Configured Transaction Manager and Transaction Mode
@@ -215,67 +217,14 @@ The following example shows how to use the `TransactionManager` and `Transaction
 ----
 //Configure the transaction manager and transaction mode.
 org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
-cb.transaction().transactionMode(TransactionMode.NON_XA);
+cb.remoteCache("my-cache")
+    .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance())
+    .transactionMode(TransactionMode.NON_XA);
 
 RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
 
 //The my-cache instance uses the RemoteCacheManager configuration.
 RemoteCache<String, String> cache = rcm.getCache("my-cache");
-
-//Return the transaction manager that the cache uses.
-TransactionManager tm = cache.getTransactionManager();
-
-//Perform a simple transaction.
-tm.begin();
-cache.put("k1", "v1");
-System.out.println("K1 value is " + cache.get("k1"));
-tm.commit();
-----
-
-[[hr_transactions_ex_override_tm]]
-== Overriding the Transaction Manager
-
-The following example shows how to override `TransactionManager` with the `getCache` method:
-
-[source,java]
-----
-//Configure the transaction manager and transaction mode.
-org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
-cb.transaction().transactionMode(TransactionMode.NON_XA);
-
-RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
-
-//Define a custom TransactionManager.
-TransactionManager myCustomTM = ...
-
-//Override the TransactionManager for the my-cache instance. Use the default configuration if null is returned.
-RemoteCache<String, String> cache = rcm.getCache("my-cache", null, myCustomTM);
-
-//Perform a simple transaction.
-myCustomTM.begin();
-cache.put("k1", "v1");
-System.out.println("K1 value is " + cache.get("k1"));
-myCustomTM.commit();
-----
-
-[[hr_transactions_ex_override_mode]]
-== Overriding the Transaction Mode
-
-The following example shows how to override `TransactionMode` with the `getCache` method:
-
-[source,java]
-----
-//Configure the transaction manager and transaction mode.
-org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
-cb.transaction().transactionMode(TransactionMode.NON_XA);
-
-RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
-
-//Override the transaction mode for the my-cache instance.
-RemoteCache<String, String> cache = rcm.getCache("my-cache", TransactionMode.NON_DURABLE_XA, null);
 
 //Return the transaction manager that the cache uses.
 TransactionManager tm = cache.getTransactionManager();

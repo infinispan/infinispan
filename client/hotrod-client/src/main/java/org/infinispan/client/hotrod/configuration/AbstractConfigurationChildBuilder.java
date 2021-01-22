@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.net.URI;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
@@ -214,6 +215,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public RemoteCacheConfigurationBuilder remoteCache(String name) {
       return builder.remoteCache(name);
+   }
+
+   @Override
+   public ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit) {
+      return builder.transactionTimeout(timeout, timeUnit);
    }
 
    @Override

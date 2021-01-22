@@ -1,11 +1,11 @@
 package org.infinispan.client.hotrod.configuration;
 
-import javax.transaction.TransactionManager;
-
+import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -21,7 +21,7 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<Boolean> NEAR_CACHE_BLOOM_FILTER = AttributeDefinition.builder("near-cache-bloom-filter", false).build();
    public static final AttributeDefinition<String> TEMPLATE_NAME = AttributeDefinition.builder("template-name", null, String.class).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
-   public static final AttributeDefinition<TransactionManager> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", null, TransactionManager.class).build();
+   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", GenericTransactionManagerLookup.getInstance(), TransactionManagerLookup.class).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
@@ -35,7 +35,7 @@ public class RemoteCacheConfiguration {
    private final Attribute<Boolean> nearCacheBloomFilter;
    private final Attribute<String> templateName;
    private final Attribute<TransactionMode> transactionMode;
-   private final Attribute<TransactionManager> transactionManager;
+   private final Attribute<TransactionManagerLookup> transactionManager;
    private final AttributeSet attributes;
 
    RemoteCacheConfiguration(AttributeSet attributes) {
@@ -81,6 +81,10 @@ public class RemoteCacheConfiguration {
 
    public TransactionMode transactionMode() {
       return transactionMode.get();
+   }
+
+   public TransactionManagerLookup transactionManagerLookup() {
+      return transactionManager.get();
    }
 
    AttributeSet attributes() {

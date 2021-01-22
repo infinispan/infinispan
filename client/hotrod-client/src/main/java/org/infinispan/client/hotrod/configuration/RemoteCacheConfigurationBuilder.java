@@ -9,6 +9,9 @@ import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguratio
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+import static org.infinispan.commons.util.Util.getInstance;
+import static org.infinispan.commons.util.Util.loadClass;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -22,9 +25,11 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -139,11 +144,25 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    /**
     * The {@link javax.transaction.TransactionManager} to use for the cache
+    *
     * @param manager an instance of a TransactionManager
     * @return an instance of the builder
+    * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link #transactionManagerLookup(TransactionManagerLookup)}
+    * instead.
     */
+   @Deprecated
    public RemoteCacheConfigurationBuilder transactionManager(TransactionManager manager) {
-      attributes.attribute(TRANSACTION_MANAGER).set(manager);
+      return transactionManagerLookup(() -> manager);
+   }
+
+   /**
+    * The {@link TransactionManagerLookup} to lookup for the {@link TransactionManager} to interact with.
+    *
+    * @param lookup A {@link TransactionManagerLookup} instance.
+    * @return An instance of the builder.
+    */
+   public RemoteCacheConfigurationBuilder transactionManagerLookup(TransactionManagerLookup lookup) {
+      attributes.attribute(TRANSACTION_MANAGER).set(lookup);
       return this;
    }
 
@@ -151,6 +170,12 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    public void validate() {
       if (attributes.attribute(CONFIGURATION).isModified() && attributes.attribute(TEMPLATE_NAME).isModified()) {
          throw Log.HOTROD.remoteCacheTemplateNameXorConfiguration(attributes.attribute(NAME).get());
+      }
+      if (attributes.attribute(TRANSACTION_MODE).get() == null) {
+         throw HOTROD.invalidTransactionMode();
+      }
+      if (attributes.attribute(TRANSACTION_MANAGER).get() == null) {
+         throw HOTROD.invalidTransactionManagerLookup();
       }
    }
 
@@ -168,15 +193,22 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
-      findCacheProperty(typed, ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX, v -> this.configuration(v));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX, this::configuration);
       findCacheProperty(typed, ConfigurationProperties.CACHE_CONFIGURATION_URI_SUFFIX, v -> this.configurationURI(URI.create(v)));
-      findCacheProperty(typed, ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, v -> this.templateName(v));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, this::templateName);
       findCacheProperty(typed, ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX, v -> this.forceReturnValues(Boolean.parseBoolean(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX, v -> this.nearCacheMode(NearCacheMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
-
+      findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX, this::transactionManagerLookupClass);
       return builder;
+   }
+
+   private void transactionManagerLookupClass(String lookupClass) {
+      TransactionManagerLookup lookup = lookupClass == null || GenericTransactionManagerLookup.class.getName().equals(lookupClass) ?
+            GenericTransactionManagerLookup.getInstance() :
+            getInstance(loadClass(lookupClass, builder.classLoader()));
+      transactionManagerLookup(lookup);
    }
 
    private void findCacheProperty(TypedProperties properties, String name, Consumer<String> consumer) {
