@@ -8,6 +8,7 @@ import org.infinispan.commons.test.Eventually;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -32,9 +33,10 @@ import okhttp3.Response;
  * @since 10.0
  */
 public class RequestTracingIT {
+   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/app-sre/jaegertracing-all-in-one:latest");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
-   private static JaegerAllInOne JAEGER = new JaegerAllInOne("jaegertracing/all-in-one:latest");
+   private static JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE);
 
    @ClassRule
    public static final InfinispanServerRule SERVER =

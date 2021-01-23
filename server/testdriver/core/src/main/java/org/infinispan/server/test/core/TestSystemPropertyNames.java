@@ -77,4 +77,8 @@ public class TestSystemPropertyNames {
     * Specifies the keycloak realm
     */
    public static final String KEYCLOAK_REALM = "org.infinispan.test.keycloakRealm";
+   /**
+    * Specifies the name of the Jaeger image
+    */
+   public static final String JAEGER_IMAGE = "org.infinispan.test.jaegerImage";
 }
