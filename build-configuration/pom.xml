@@ -95,7 +95,7 @@
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
-      <infinispan.codename>N/A</infinispan.codename>
+      <infinispan.codename>Lockdown</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>12.0</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
