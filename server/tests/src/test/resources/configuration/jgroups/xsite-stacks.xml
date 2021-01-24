@@ -1,8 +1,8 @@
 <jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="urn:infinispan:config:12.0 https://infinispan.org/schemas/infinispan-config-fragment-12.0.xsd
+         xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-fragment-12.1.xsd
                              urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
-         xmlns="urn:infinispan:config:12.0"
-         xmlns:ispn="urn:infinispan:config:12.0">
+         xmlns="urn:infinispan:config:12.1"
+         xmlns:ispn="urn:infinispan:config:12.1">
    <stack name="test-tcp" extends="tcp">
       <MPING mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
              mcast_port="${jgroups.cluster.mcast_port}"
