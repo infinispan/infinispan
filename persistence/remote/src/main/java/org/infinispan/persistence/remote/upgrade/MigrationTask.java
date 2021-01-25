@@ -125,7 +125,8 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
                         int currentCount = counter.incrementAndGet();
                         if (log.isDebugEnabled() && currentCount % 100 == 0)
                            log.debugf(">>    Migrated %s entries\n", currentCount);
-                        return destinationCache.putIfAbsent(key, entry.getValue().getValue(), metadata);
+                        Object entryValue = entry.getValue().getValue();
+                        return destinationCache.compute(key, (k, v) -> v == null ? entryValue : v, metadata);
                      }, executorService);
                   }
                   return CompletableFuture.completedFuture(null);
