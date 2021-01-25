@@ -22,6 +22,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.MIGRATION_TASK, new MigrationTask.Externalizer());
       externalizerMap.put(ExternalizerIds.REMOVED_FILTER, new RemovedFilter.Externalizer());
+      externalizerMap.put(ExternalizerIds.ENTRY_WRITER, new MigrationTask.EntryWriterExternalizer());
    }
 
 }

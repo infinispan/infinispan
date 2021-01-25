@@ -11,6 +11,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -76,7 +77,7 @@ public class WriteSkewHelper {
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) cacheEntry;
 
                CompletionStage<Boolean> skewStage = entry.performWriteSkewCheck(entryLoader, segment, context,
-                     prepareCommand.getVersionsSeen().get(k), versionGenerator);
+                     prepareCommand.getVersionsSeen().get(k), versionGenerator, c.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE));
                aggregateCompletionStage.dependsOn(skewStage.thenAccept(passSkew -> {
                   if (!passSkew) {
                      throw new WriteSkewException("Write skew detected on key " + entry.getKey() + " for transaction " +

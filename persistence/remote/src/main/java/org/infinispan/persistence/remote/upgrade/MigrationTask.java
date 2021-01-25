@@ -8,7 +8,7 @@ import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,21 +16,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -41,6 +49,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.ExternalizerIds;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,6 +65,10 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    private final int readBatch;
    private final int threads;
    private final Set<Object> deletedKeys = ConcurrentHashMap.newKeySet();
+
+   private InvocationHelper invocationHelper;
+   private CommandsFactory commandsFactory;
+   private KeyPartitioner keyPartitioner;
 
    public MigrationTask(String cacheName, Set<Integer> segments, int readBatch, int threads) {
       this.cacheName = cacheName;
@@ -74,6 +87,9 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       Cache cache = advancedCache.withStorageMediaType();
       try {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+         invocationHelper = cr.getComponent(InvocationHelper.class);
+         commandsFactory = cr.getCommandsFactory();
+         keyPartitioner = cr.getComponent(KeyPartitioner.class);
          PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
          Set<RemoteStore<Object, Object>> stores = (Set) loaderManager.getStores(RemoteStore.class);
          listener = new RemoveListener();
@@ -106,8 +122,10 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
 
    private void migrateEntriesWithMetadata(RemoteCache<Object, Object> sourceCache, AtomicInteger counter,
                                            ExecutorService executorService, Cache<Object, Object> cache) {
-      AdvancedCache<Object, Object> destinationCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.ROLLING_UPGRADE);
-      try (CloseableIterator<Map.Entry<Object, MetadataValue<Object>>> iterator = sourceCache.retrieveEntriesWithMetadata(segments, readBatch)) {
+      AdvancedCache<Object, Object> destinationCache = cache.getAdvancedCache();
+      DataConversion keyDataConversion = destinationCache.getKeyDataConversion();
+      DataConversion valueDataConversion = destinationCache.getValueDataConversion();
+      try (CloseableIterator<Entry<Object, MetadataValue<Object>>> iterator = sourceCache.retrieveEntriesWithMetadata(segments, readBatch)) {
          CompletableFuture<?>[] completableFutures = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
                .map(entry -> {
                   Object key = entry.getKey();
@@ -125,8 +143,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
                         int currentCount = counter.incrementAndGet();
                         if (log.isDebugEnabled() && currentCount % 100 == 0)
                            log.debugf(">>    Migrated %s entries\n", currentCount);
-                        Object entryValue = entry.getValue().getValue();
-                        return destinationCache.compute(key, (k, v) -> v == null ? entryValue : v, metadata);
+                        return writeToDestinationCache(entry, metadata, keyDataConversion, valueDataConversion);
                      }, executorService);
                   }
                   return CompletableFuture.completedFuture(null);
@@ -134,6 +151,17 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
 
          CompletableFuture.allOf(completableFutures).join();
       }
+   }
+
+   private Object writeToDestinationCache(Entry<Object, MetadataValue<Object>> entry, Metadata metadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      Object key = keyDataConversion.toStorage(entry.getKey());
+      Object value = valueDataConversion.toStorage(entry.getValue().getValue());
+
+      int segment = keyPartitioner.getSegment(key);
+      long flags = EnumUtil.bitSetOf(Flag.SKIP_CACHE_LOAD, Flag.ROLLING_UPGRADE);
+      ComputeCommand computeCommand = commandsFactory.buildComputeCommand(key, new EntryWriter<>(value), false, segment, metadata, flags);
+      InvocationContext context = invocationHelper.createInvocationContextWithImplicitTransaction(1, true);
+      return invocationHelper.invoke(context, computeCommand);
    }
 
    public static class Externalizer extends AbstractExternalizer<MigrationTask> {
@@ -171,4 +199,41 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       }
    }
 
+
+   public static class EntryWriter<K, V> implements BiFunction<K, V, V> {
+      private final V newEntry;
+
+      public EntryWriter(V newEntry) {
+         this.newEntry = newEntry;
+      }
+
+      @Override
+      public V apply(K k, V v) {
+         return v == null ? newEntry : v;
+      }
+   }
+
+   public static class EntryWriterExternalizer extends AbstractExternalizer<EntryWriter> {
+
+      @Override
+      public Set<Class<? extends EntryWriter>> getTypeClasses() {
+         return Collections.singleton(EntryWriter.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.ENTRY_WRITER;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, EntryWriter object) throws IOException {
+         output.writeObject(object.newEntry);
+      }
+
+      @Override
+      public EntryWriter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object newEntry = input.readObject();
+         return new EntryWriter(newEntry);
+      }
+   }
 }
