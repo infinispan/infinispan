@@ -1,7 +1,7 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -11,6 +11,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.MetadataValue;
@@ -43,12 +44,12 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setup() throws Exception {
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(1)
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .cache().name(OLD_CACHE)
             .cache().name(TEST_CACHE)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(1)
+      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
             .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
             .build();
@@ -87,17 +88,36 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    }
 
-   public void testSynchronizationWithClientChanges() throws Exception {
+   public void testSynchronizationWithClientDeleteBefore() throws Exception {
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
       // Change data in the target cluster
       RemoteCache<String, String> remoteCache = targetCluster.getRemoteCache(TEST_CACHE);
       remoteCache.remove("G");
+
+      assertFalse(remoteCache.containsKey("G"));
+
+      // Perform rolling upgrade
+      RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(TEST_CACHE);
+      rum.synchronizeData("hotrod");
+      rum.disconnectSource("hotrod");
+
+      // Verify data is consistent
+      assertFalse(remoteCache.containsKey("G"));
+      assertEquals("A", remoteCache.get("A"));
+      assertEquals("U", remoteCache.get("U"));
+   }
+
+   public void testSynchronizationWithClientWriteBefore() throws Exception {
+      // fill source cluster with data
+      fillCluster(sourceCluster, TEST_CACHE);
+
+      // Writes data in the target cluster
+      RemoteCache<String, String> remoteCache = targetCluster.getRemoteCache(TEST_CACHE);
       remoteCache.put("U", "I");
       remoteCache.put("a", "a");
 
-      assertFalse(remoteCache.containsKey("G"));
       assertEquals("a", remoteCache.get("a"));
       assertEquals("I", remoteCache.get("U"));
 
@@ -107,11 +127,26 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       rum.disconnectSource("hotrod");
 
       // Verify data is consistent
-      assertFalse(remoteCache.containsKey("G"));
       assertEquals("a", remoteCache.get("a"));
       assertEquals("I", remoteCache.get("U"));
    }
 
+   public void testSynchronizationWithClientReadsBefore() throws Exception {
+      // fill source cluster with data
+      fillCluster(sourceCluster, TEST_CACHE);
+
+      // Read data in the target cluster
+      RemoteCache<String, String> remoteCache = targetCluster.getRemoteCache(TEST_CACHE);
+      assertEquals("X", remoteCache.get("X"));
+
+      // Perform rolling upgrade
+      RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(TEST_CACHE);
+      rum.synchronizeData("hotrod");
+      rum.disconnectSource("hotrod");
+
+      // Verify data is consistent
+      assertEquals("X", remoteCache.get("X"));
+   }
 
    @Test
    public void testSynchronizationWithInFlightUpdates() throws Exception {
@@ -145,6 +180,23 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       // Verify data is not re-added
       assertNull(remoteCache.get("L"));
+      assertEquals("A", remoteCache.get("A"));
+      assertEquals("I", remoteCache.get("I"));
+   }
+
+   public void testSynchronizationWithInFlightReads() throws Exception {
+      // fill source cluster with data
+      fillCluster(sourceCluster, TEST_CACHE);
+
+      RemoteCache<String, String> remoteCache = targetCluster.getRemoteCache(TEST_CACHE);
+
+      doWhenSourceIterationReaches("G", targetCluster, TEST_CACHE, key -> remoteCache.get("G"));
+
+      RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(TEST_CACHE);
+      rum.synchronizeData("hotrod");
+      rum.disconnectSource("hotrod");
+
+      assertEquals("G", remoteCache.get("G"));
    }
 
 
@@ -156,7 +208,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
          RemoteCacheImpl spy = spy(remoteCache);
          doAnswer(invocation -> {
             Object[] params = invocation.getArguments();
-            CloseableIterator<Map.Entry<Object, Object>> iterator = remoteCache.retrieveEntriesWithMetadata(null, (int) params[1]);
+            CloseableIterator<Map.Entry<Object, Object>> iterator = remoteCache.retrieveEntriesWithMetadata((Set<Integer>) params[0], (int) params[1]);
             Marshaller marshaller = new GenericJBossMarshaller();
             return new IteratorMapper<>(iterator, entry -> {
                try {
@@ -168,7 +220,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
                }
                return entry;
             });
-         }).when(spy).retrieveEntriesWithMetadata(isNull(), anyInt());
+         }).when(spy).retrieveEntriesWithMetadata(anySet(), anyInt());
          TestingUtil.replaceField(spy, "remoteCache", remoteStore, RemoteStore.class);
       });
    }

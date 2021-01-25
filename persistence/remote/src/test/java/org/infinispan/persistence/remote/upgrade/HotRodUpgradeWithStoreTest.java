@@ -40,11 +40,11 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("targetStore");
 
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(1)
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).configuredWith(sourceStoreBuilder)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(1)
+      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).configuredWith(targetStoreBuilder)
             .build();
    }
@@ -75,7 +75,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
 
       // Synchronize data
       RollingUpgradeManager upgradeManager = targetCluster.getRollingUpgradeManager(CACHE_NAME);
-      long migrated = upgradeManager.synchronizeData("hotrod",10,1);
+      long migrated = upgradeManager.synchronizeData("hotrod", 10, 1);
       upgradeManager.disconnectSource("hotrod");
 
       assertEquals(INITIAL_NUM_ENTRIES - 1, migrated);
@@ -88,7 +88,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
       // Verify data correctly migrated
       assertFalse(targetRemoteCache.containsKey("5"));
       assertFalse(targetRemoteCache.containsKey("1"));
-      assertEquals("4",targetRemoteCache.get("4"));
+      assertEquals("4", targetRemoteCache.get("4"));
       assertEquals("changed", targetRemoteCache.get("8"));
       assertEquals("new value", targetRemoteCache.get("new key"));
 
