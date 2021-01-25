@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote.upgrade;
 import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_23;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
+import static org.infinispan.test.TestingUtil.waitForNoRebalanceAcrossManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
 import java.util.ArrayList;
@@ -270,10 +271,12 @@ class TestCluster {
             EmbeddedCacheManager clusteredCacheManager =
                   createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
             caches.forEach((key, value) -> clusteredCacheManager.defineConfiguration(key, value.build()));
-
             embeddedCacheManagers.add(clusteredCacheManager);
             hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager, hotRodBuilder));
          }
+
+         embeddedCacheManagers.forEach(cm -> caches.keySet().forEach(cm::getCache));
+         waitForNoRebalanceAcrossManagers(embeddedCacheManagers.toArray(new EmbeddedCacheManager[0]));
 
          int port = hotRodServers.get(0).getPort();
          org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();

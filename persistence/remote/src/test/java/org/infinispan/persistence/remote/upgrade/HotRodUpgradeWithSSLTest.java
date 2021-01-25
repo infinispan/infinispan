@@ -19,7 +19,7 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
             .keyAlias("hotrod")
             .trustStoreFileName(cl.getResource("ca.jks").getPath())
             .trustStorePassword("secret".toCharArray());
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(1)
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .withSSLKeyStore(cl.getResource("keystore_client.jks").getPath(), "secret".toCharArray())
             .withSSLTrustStore(cl.getResource("ca.jks").getPath(), "secret".toCharArray())
             .withHotRodBuilder(sourceHotRodBuilder)
@@ -37,7 +37,7 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
             .keyAlias("hotrod")
             .trustStoreFileName(cl.getResource("ca.jks").getPath())
             .trustStorePassword("secret".toCharArray());
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(1)
+      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .withSSLKeyStore(cl.getResource("keystore_client.jks").getPath(), "secret".toCharArray())
             .withSSLTrustStore(cl.getResource("ca.jks").getPath(), "secret".toCharArray())
             .withHotRodBuilder(targetHotRodBuilder)
