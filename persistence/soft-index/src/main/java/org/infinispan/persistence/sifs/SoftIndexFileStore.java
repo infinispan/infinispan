@@ -184,6 +184,12 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
             migrateData = true;
          } else if (index.isLoaded()) {
             log.debug("Not building the index - loaded from persisted state");
+            try {
+               maxSeqId.set(index.getMaxSeqId());
+            } catch (IOException e) {
+               log.debug("Failed to load index. Rebuilding it.");
+               buildIndex(maxSeqId);
+            }
          } else {
             log.debug("Building the index");
             buildIndex(maxSeqId);

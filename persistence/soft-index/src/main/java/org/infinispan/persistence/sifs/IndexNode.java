@@ -36,12 +36,12 @@ class IndexNode {
    public static final int RESERVED_SPACE
          = INNER_NODE_HEADER_SIZE + 2 * Math.max(INNER_NODE_REFERENCE_SIZE, LEAF_NODE_REFERENCE_SIZE);
 
-   private Index.Segment segment;
+   private final Index.Segment segment;
    private byte[] prefix;
    private byte[][] keyParts;
    private InnerNode[] innerNodes;
    private LeafNode[] leafNodes;
-   private ReadWriteLock lock = new ReentrantReadWriteLock();
+   private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private long offset = -1;
    private short contentLength = -1;
    private short totalLength = -1;
@@ -299,10 +299,41 @@ class IndexNode {
       }
    }
 
+   public static long calculateMaxSeqId(Index.Segment segment, Lock lock) throws IOException {
+      lock.lock();
+      try {
+         return calculateMaxSeqId(segment.getRoot(), segment);
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   private static long calculateMaxSeqId(IndexNode node, Index.Segment segment) throws IOException {
+      long maxSeqId = 0;
+      node.lock.readLock().lock();
+      try {
+         if (node.leafNodes != null) {
+            for (LeafNode ln : node.leafNodes) {
+               EntryRecord record = ln.loadHeaderAndKey(segment.getFileProvider());
+               maxSeqId = Math.max(maxSeqId, record.getHeader().seqId());
+            }
+         }
+         if (node.innerNodes != null) {
+            for (InnerNode in : node.innerNodes) {
+               maxSeqId = Math.max(maxSeqId, calculateMaxSeqId(in.getIndexNode(segment), segment));
+            }
+         }
+      } catch (IndexNodeOutdatedException e) {
+         throw log.indexLooksCorrupt(e);
+      } finally {
+         node.lock.readLock().unlock();
+      }
+      return maxSeqId;
+   }
+
    public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       IndexNode node = root;
       Stack<Path> stack = new Stack<>();
-      boolean trace = log.isTraceEnabled();
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
          stack.push(new Path(node, insertionPoint));
@@ -463,7 +494,7 @@ class IndexNode {
    private static IndexNode join(IndexNode left, byte[] middleKey, IndexNode right) throws IOException {
       byte[] newPrefix = commonPrefix(left.prefix, right.prefix);
       byte[][] newKeyParts = new byte[left.keyParts.length + right.keyParts.length + 1][];
-      newPrefix = commonPrefix(newPrefix == null ? left.prefix : newPrefix, middleKey);
+      newPrefix = commonPrefix(newPrefix, middleKey);
       copyKeyParts(left.keyParts, 0, newKeyParts, 0, left.keyParts.length, left.prefix, newPrefix);
       byte[] rightmostKey;
       try {
@@ -532,7 +563,7 @@ class IndexNode {
       } else {
          for (LeafNode leafNode : leafNodes) {
             EntryRecord hak = leafNode.loadHeaderAndKey(segment.getFileProvider());
-            if (hak != null && hak.getKey() != null) return hak.getKey();
+            if (hak.getKey() != null) return hak.getKey();
          }
       }
       return null;
@@ -547,7 +578,7 @@ class IndexNode {
       } else {
          for (int i = leafNodes.length - 1; i >= 0; --i) {
             EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
-            if (hak != null && hak.getKey() != null) return hak.getKey();
+            if (hak.getKey() != null) return hak.getKey();
          }
       }
       return null;
@@ -923,7 +954,7 @@ class IndexNode {
    }
 
    private static class LeafNode extends EntryInfo {
-      private static LeafNode[] EMPTY_ARRAY = new LeafNode[0];
+      private static final LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
 
       LeafNode(int file, int offset, short numRecords) {
