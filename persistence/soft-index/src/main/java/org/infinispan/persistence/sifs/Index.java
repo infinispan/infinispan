@@ -21,9 +21,9 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Keeps the entry positions persisted in a file. It consists of couple of segments, each for one modulo-range
- * of key's hashcodes (according to DataContainer's key equivalence configuration) - writes to each index segment
- * are performed by single thread, having multiple segments spreads the load between them.
+ * Keeps the entry positions persisted in a file. It consists of couple of segments, each for one modulo-range of key's
+ * hashcodes (according to DataContainer's key equivalence configuration) - writes to each index segment are performed
+ * by single thread, having multiple segments spreads the load between them.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
@@ -146,16 +146,28 @@ class Index {
       return size;
    }
 
+   public long getMaxSeqId() throws IOException {
+      long maxSeqId = 0;
+      lock.readLock().lock();
+      try {
+         for (Segment seg : segments) {
+            maxSeqId = Math.max(maxSeqId, IndexNode.calculateMaxSeqId(seg, seg.rootReadLock()));
+         }
+      } finally {
+         lock.readLock().unlock();
+      }
+      return maxSeqId;
+   }
+
    class Segment extends Thread {
       private final BlockingQueue<IndexRequest> indexQueue;
       private final TemporaryTable temporaryTable;
       private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
-      private final File indexFileFile;
       private final boolean loaded;
-      private FileChannel indexFile;
+      private final FileChannel indexFile;
       private long indexFileSize;
-      private AtomicLong size = new AtomicLong();
+      private final AtomicLong size = new AtomicLong();
 
       private volatile IndexNode root;
 
@@ -166,7 +178,7 @@ class Index {
          this.indexQueue = indexQueue;
          this.temporaryTable = temporaryTable;
 
-         this.indexFileFile = new File(indexDir.toFile(), "index." + id);
+         File indexFileFile = new File(indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
@@ -243,10 +255,10 @@ class Index {
                      }
                      continue;
                   case STOP:
-                     assert indexQueue.poll() == null;
+                     assert indexQueue.peek() == null;
                      shutdown();
                      return;
-                  case GET_SIZE :
+                  case GET_SIZE:
                      request.setResult(size.get());
                      continue;
                   case MOVED:
@@ -503,7 +515,7 @@ class Index {
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
-         if (o == null || !(o instanceof IndexSpace)) return false;
+         if (!(o instanceof IndexSpace)) return false;
 
          IndexSpace innerNode = (IndexSpace) o;
 
