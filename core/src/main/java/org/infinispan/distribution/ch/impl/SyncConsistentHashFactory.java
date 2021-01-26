@@ -340,7 +340,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          } else {
             key[0] = address.hashCode();
          }
-         return MurmurHash3.MurmurHash3_x64_64(key, virtualNode) & Long.MAX_VALUE;
+         return MurmurHash3.hash(key, virtualNode) & Long.MAX_VALUE;
       }
 
       /**

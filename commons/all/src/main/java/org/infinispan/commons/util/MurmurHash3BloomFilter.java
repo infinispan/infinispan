@@ -45,7 +45,7 @@ public class MurmurHash3BloomFilter extends BloomFilter<byte[]> {
       List<ToIntFunction<byte[]>> functions = new ArrayList<>(hashFunctions);
       for (int i = 0; i < hashFunctions; ++i) {
          int prime = getPrime(i);
-         functions.add(bytes -> MurmurHash3.MurmurHash3_x64_32(bytes, prime));
+         functions.add(bytes -> MurmurHash3.hash(bytes, prime));
       }
       return functions;
    }

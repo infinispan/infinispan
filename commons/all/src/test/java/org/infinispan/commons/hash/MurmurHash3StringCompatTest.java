@@ -13,6 +13,7 @@ public class MurmurHash3StringCompatTest {
    private static final long NUM_KEYS = 100000;
    private static final int MAX_KEY_SIZE = 5;
 
+   // this will fail
    @Test
    public void compareHashes() {
       Random random = new Random(9005);
