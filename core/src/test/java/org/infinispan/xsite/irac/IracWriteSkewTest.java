@@ -86,6 +86,10 @@ public class IracWriteSkewTest extends AbstractMultipleSitesTest {
       final Transaction tx = tm.suspend();
       if (testMode.isRemove) {
          lonCache.remove(key);
+         //Make sure the entry is replicated to NYC before attempting to commit NYC transaction
+         //If the transaction is committed without IRAC finishes, it generates an IRAC conflict and the LON update wins
+         //It makes the assertion on line 106 to fail.
+         eventually(() -> iracManager(siteName(0), CACHE_NAME, 0).isEmpty());
          eventuallyAssertInAllSitesAndCaches(CACHE_NAME, c -> Objects.isNull(c.get(key)));
       } else {
          lonCache.put(key, "write-skew-value");
