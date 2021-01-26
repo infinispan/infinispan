@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.multimap;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -9,7 +12,6 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -67,15 +69,15 @@ public class RemoteMultimapStateTransferTest extends MultiHotRodServersTest {
    private void assertData(int index, String key, List<String> values) {
       RemoteMultimapCache<String, String> mc = multimapCache(index);
       Collection<String> data = mc.get(key).join();
-      AssertJUnit.assertEquals(values.size(), data.size());
+      assertEquals(values.size(), data.size());
       for (String v : values) {
-         AssertJUnit.assertTrue(data.contains(v));
+         assertTrue(data.contains(v));
       }
    }
 
    private static void storeValues(RemoteMultimapCache<String, String> rmc, String key, List<String> values) {
       for (String v : values) {
-         rmc.put(key, v);
+         rmc.put(key, v).join();
       }
    }
 
