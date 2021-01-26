@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -110,12 +111,14 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public String getLocalSite() {
-      if (cacheManager.getTransport() == null) return null;
+      if (cacheManager.getTransport() == null) return "local";
       return cacheManager.getTransport().localSiteName();
    }
 
-   private String getLogicalAddressString() {
-      return cacheManager.getAddress() == null ? "local" : cacheManager.getAddress().toString();
+   public Collection<String> getSites() {
+      return cacheManager.getTransport() == null ?
+            Collections.emptyList() :
+            cacheManager.getTransport().getSitesView();
    }
 
    @Override
@@ -136,7 +139,8 @@ public class CacheManagerInfo implements JsonSerialization {
             .set("cluster_members_physical_addresses", Json.make(getClusterMembersPhysicalAddresses()))
             .set("cluster_size", getClusterSize())
             .set("defined_caches", Json.make(getDefinedCaches()))
-            .set("local_site", getLocalSite());
+            .set("local_site", getLocalSite())
+            .set("sites_view", Json.make(getSites()));
    }
 
    static class BasicCacheInfo implements JsonSerialization {

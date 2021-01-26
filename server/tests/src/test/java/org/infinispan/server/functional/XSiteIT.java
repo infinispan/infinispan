@@ -1,5 +1,6 @@
 package org.infinispan.server.functional;
 
+import org.infinispan.server.cli.XSiteCliOperations;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRuleBuilder;
@@ -17,12 +18,13 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
       XSiteHotRodCacheOperations.class,
-      XSiteRestCacheOperations.class
+      XSiteRestCacheOperations.class,
+      XSiteCliOperations.class
 })
 public class XSiteIT {
 
-   protected static final String LON = "LON";
-   protected static final String NYC = "NYC";
+   public static final String LON = "LON";
+   public static final String NYC = "NYC";
    protected static final int NUM_SERVERS = 3;
    protected static final String LON_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +

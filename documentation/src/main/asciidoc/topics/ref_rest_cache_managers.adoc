@@ -30,6 +30,10 @@ For possible values, check the https://docs.jboss.org/infinispan/9.4/apidocs/org
 * `cluster_members` and `cluster_members_physical_addresses` an array of logical and physical addresses of the members of the cluster
 * `cluster_size` number of members in the cluster
 * `defined_caches` A list of all caches defined in the cache manager, excluding private caches but including internal caches that are accessible
+* `local_site` The name of the local site. +
+If cross-site replication is not configured, {brandname} returns "local".
+* `sites_view` The list of sites that participate in cross-site replication. +
+If cross-site replication is not configured, {brandname} returns an empty list.
 
 
 [id='rest_v2_cache_manager_health']

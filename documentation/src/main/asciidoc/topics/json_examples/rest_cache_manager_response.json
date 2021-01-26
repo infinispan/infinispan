@@ -41,6 +41,10 @@
             "name":"cache2",
             "started":true
         }
+    ],
+    "local_site": "LON",
+    "sites_view": [
+        "LON",
+        "NYC"
     ]
-
 }

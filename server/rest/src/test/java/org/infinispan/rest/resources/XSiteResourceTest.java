@@ -9,10 +9,12 @@ import static org.infinispan.rest.helper.RestResponses.responseStatus;
 import static org.infinispan.xsite.XSiteAdminOperations.OFFLINE;
 import static org.infinispan.xsite.XSiteAdminOperations.ONLINE;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -348,6 +350,21 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
       assertEquals("CANCELED", pushStatusCache1.at(SFO).asString());
       assertEquals("CANCELED", pushStatusCache2.at(SFO).asString());
+   }
+
+   @Test
+   public void testXsiteView() {
+      assertXSiteView(jsonResponseBody(clientPerSite.get(LON).cacheManager(CACHE_MANAGER).info()));
+      assertXSiteView(jsonResponseBody(clientPerSite.get(NYC).cacheManager(CACHE_MANAGER).info()));
+      assertXSiteView(jsonResponseBody(clientPerSite.get(SFO).cacheManager(CACHE_MANAGER).info()));
+   }
+
+   private void assertXSiteView(Json rsp) {
+      List<Object> view = rsp.asJsonMap().get("sites_view").asList();
+      assertTrue(view.contains(LON));
+      assertTrue(view.contains(NYC));
+      assertTrue(view.contains(SFO));
+      assertEquals(3, view.size());
    }
 
    private int getCacheSize(RestCacheClient cacheClient) {
