@@ -39,9 +39,6 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    protected int clusterPortOffset() {
-      if (configuration.site() != null)
-         configuration.sitePortOffset();
-
       return configuration.site() == null ? configuration.getPortOffset() : configuration.sitePortOffset();
    }
 

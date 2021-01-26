@@ -24,6 +24,10 @@ SYNOPSIS
 
 *site push-site-status* ['OPTIONS']
 
+*site name*
+
+*site view*
+
 
 OPTIONS
 -------
@@ -62,3 +66,9 @@ Cancels the operation to receive state from `NYC`.
 
 `site clear-push-state-status --cache=myCache` +
 Clears the status of the push state operation for `mycache`.
+
+`site name` +
+Returns the name of the local site. If cross-site replication is not configured, the name of the local site is always "local".
+
+`site view` +
+Returns a list of names for all sites or an empty list ("[]") if cross-site replication is not configured.

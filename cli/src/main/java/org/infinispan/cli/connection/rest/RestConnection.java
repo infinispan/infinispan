@@ -54,7 +54,9 @@ public class RestConnection implements Connection, Closeable {
    private boolean connected;
    private String serverVersion;
    private String serverInfo;
-   private Path workingDir;
+   private List<String> sitesView;
+   private String localSite;
+   private final Path workingDir;
 
    public RestConnection(RestClientConfigurationBuilder builder) {
       this.builder = builder;
@@ -270,9 +272,9 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getAvailableSites(String container, String cache) {
-      CompletionStage<RestResponse> response = client.cache(cache).xsiteBackups();
-      return null;
+   public Collection<String> getAvailableSites(String container, String cache) throws IOException {
+      Map<String, String> sites = parseBody(fetch(() -> client.cache(cache).xsiteBackups()), Map.class);
+      return sites == null ? Collections.emptyList() : sites.keySet();
    }
 
    @Override
@@ -356,6 +358,16 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getSitesView() {
+      return sitesView;
+   }
+
+   @Override
+   public String getLocalSiteName() {
+      return localSite;
+   }
+
+   @Override
    public void refreshServerInfo() throws IOException {
       try {
          ContainerResource container = getActiveContainer();
@@ -373,6 +385,9 @@ public class RestConnection implements Connection, Closeable {
 
          String nodeAddress = (String) cacheManagerInfo.get("node_address");
          String clusterName = (String) cacheManagerInfo.get("cluster_name");
+         localSite = (String) cacheManagerInfo.get("local_site");
+         sitesView = new ArrayList<>((Collection<String>) cacheManagerInfo.get("sites_view"));
+         Collections.sort(sitesView);
          clusterMembers = (Collection<String>) cacheManagerInfo.get("cluster_members");
          if (nodeAddress != null) {
             serverInfo = nodeAddress + "@" + clusterName;

@@ -73,6 +73,10 @@ public interface Connection extends Closeable {
 
    Collection<String> getBackupNames(String container) throws IOException;
 
+   Collection<String> getSitesView();
+
+   String getLocalSiteName();
+
    MediaType getEncoding();
 
    void setEncoding(MediaType encoding);

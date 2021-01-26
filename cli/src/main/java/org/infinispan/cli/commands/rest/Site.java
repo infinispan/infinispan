@@ -1,15 +1,18 @@
 package org.infinispan.cli.commands.rest;
 
+import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
+import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.client.rest.RestClient;
@@ -32,6 +35,8 @@ import org.kohsuke.MetaInfServices;
             Site.CancelReceiveState.class,
             Site.PushSiteStatus.class,
             Site.ClearPushStateStatus.class,
+            Site.View.class,
+            Site.Name.class,
       }
 )
 public class Site extends CliCommand {
@@ -139,7 +144,7 @@ public class Site extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "cancel-push-state", description = "Cacncels pushing state to a site", activator = ConnectionActivator.class)
+   @CommandDefinition(name = "cancel-push-state", description = "Cancels pushing state to a site", activator = ConnectionActivator.class)
    public static class CancelPushState extends RestCliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
@@ -218,6 +223,55 @@ public class Site extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache).clearPushStateStatus();
+      }
+   }
+
+   @CommandDefinition(name = "view", description = "Prints the global sites view", activator = ConnectionActivator.class)
+   public static class View extends CliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         try {
+            Connection connection = invocation.getContext().getConnection();
+            connection.refreshServerInfo();
+            invocation.println(connection.getSitesView().toString());
+            return CommandResult.SUCCESS;
+         } catch (IOException e) {
+            throw new CommandException(e);
+         }
+      }
+
+   }
+
+   @CommandDefinition(name = "name", description = "Prints the local site name", activator = ConnectionActivator.class)
+   public static class Name extends CliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         try {
+            Connection connection = invocation.getContext().getConnection();
+            connection.refreshServerInfo();
+            invocation.println(connection.getLocalSiteName());
+            return CommandResult.SUCCESS;
+         } catch (IOException e) {
+            throw new CommandException(e);
+         }
       }
    }
 }
