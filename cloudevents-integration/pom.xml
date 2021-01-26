@@ -53,6 +53,11 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
       </dependency>
+      <!-- jackson-core is an optional dependency in protostream, but it is required for converting to JSON -->
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-core</artifactId>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>

@@ -1,5 +1,6 @@
 package org.infinispan.cloudevents;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,8 @@ public class MockKafkaEventSender implements KafkaEventSender {
          }
          TestingUtil.sleepThread(10);
       }
-      log.tracef("Completed send %s", getProducer().history().get(getProducer().history().size() - 1).key());
+      List<ProducerRecord<byte[], byte[]>> history = getProducer().history();
+      log.tracef("Completed send %s", history.get(history.size() - 1).key());
    }
 
    public void completeSend(int count) {
