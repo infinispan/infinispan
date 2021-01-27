@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.search.backend.lucene.index.LuceneIndexManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,9 +22,12 @@ import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
+import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -36,8 +40,6 @@ public class StatsTest extends MultipleCacheManagersTest {
 
    // Wild guess: an empty index shouldn't be more than this many bytes
    private static final long MAX_EMPTY_INDEX_SIZE = 300L;
-   // Wild guess: a non-empty index (populated with addData) should be more than this many bytes
-   private static final long MIN_NON_EMPTY_INDEX_SIZE = 1000L;
 
    private Cache<String, Object> cache0;
    private Cache<String, Object> cache1;
@@ -119,7 +121,7 @@ public class StatsTest extends MultipleCacheManagersTest {
 
       Set<String> expectedEntities = new HashSet<>(Arrays.asList(Person.class.getName(), Transaction.class.getName()));
       int expectDocuments = cacheManagers.size() * cache0.getCacheConfiguration().clustering().hash().numOwners();
-
+      flushAll();
       Set<String> totalEntities = new HashSet<>();
       int totalCount = 0;
       long totalSize = 0L;
@@ -134,7 +136,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       }
       assertEquals(totalEntities, expectedEntities);
       assertEquals(totalCount, expectDocuments);
-      assertThat(totalSize).isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
+      assertEquals(totalSize, totalIndexSize());
 
       SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
       Map<String, IndexInfo> classIndexInfoMap = await(clusteredStats.getIndexStatistics().computeIndexInfos());
@@ -145,7 +147,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(reduceCount.intValue(), clusteredExpectDocuments);
 
       Long reduceSize = classIndexInfoMap.values().stream().map(IndexInfo::size).reduce(0L, Long::sum);
-      assertThat(reduceSize.longValue()).isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
+      assertEquals(reduceSize.longValue(), totalIndexSize());
    }
 
    private void testClean() {
@@ -306,6 +308,21 @@ public class StatsTest extends MultipleCacheManagersTest {
       cache0.put("1", person1);
       cache0.put("2", person2);
       cache0.put("3", new Transaction(12, "sss"));
+   }
+
+   private void flushAll() {
+      caches().forEach(c -> ComponentRegistryUtils.getSearchMapping(c).scopeAll().workspace().flush());
+   }
+
+   private long totalIndexSize() {
+      long totalSize = 0;
+      for (Cache<?, ?> cache : caches()) {
+         SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+         for (SearchIndexedEntity indexedEntity : searchMapping.allIndexedEntities()) {
+            totalSize += indexedEntity.indexManager().unwrap(LuceneIndexManager.class).computeSizeInBytes();
+         }
+      }
+      return totalSize;
    }
 
 }
