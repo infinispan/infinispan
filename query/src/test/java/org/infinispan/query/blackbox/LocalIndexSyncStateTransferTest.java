@@ -1,18 +1,21 @@
 package org.infinispan.query.blackbox;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.infinispan.functional.FunctionalTestUtils.await;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import org.apache.lucene.index.DirectoryReader;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.IndexAccessor;
+import org.infinispan.query.Search;
+import org.infinispan.query.core.stats.IndexInfo;
+import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -44,14 +47,21 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
       caches.forEach(this::assertIndexesSynced);
    }
 
+   private Map<String, Long> getIndexCountPerEntity(Cache<Integer, Object> cache) {
+      IndexStatistics indexStatistics = Search.getSearchStatistics(cache).getIndexStatistics();
+      Map<String, IndexInfo> stringIndexInfoMap = await(indexStatistics.computeIndexInfos().toCompletableFuture());
+      return stringIndexInfoMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().count()));
+   }
+
    private void assertIndexesSynced(Cache<Integer, Object> c) {
       String address = c.getAdvancedCache().getRpcManager().getAddress().toString();
       Map<Class<?>, AtomicInteger> countPerEntity = getEntityCountPerClass(c);
+      Map<String, Long> indexInfo = getIndexCountPerEntity(c);
       countPerEntity.forEach((entity, count) -> {
-         DirectoryReader reader = IndexAccessor.of(c, entity).getIndexReader();
+         long indexed = indexInfo.get(entity.getName());
          Supplier<String> messageSupplier = () -> String.format("On node %s index contains %d entries for entity %s," +
-               " but data container has %d", address, reader.numDocs(), entity.getName(), count.get());
-         eventually(messageSupplier, () -> reader.numDocs() == count.get());
+               " but data container has %d", address, indexed, entity.getName(), count.get());
+         eventually(messageSupplier, () -> indexed == count.get());
       });
    }
 
