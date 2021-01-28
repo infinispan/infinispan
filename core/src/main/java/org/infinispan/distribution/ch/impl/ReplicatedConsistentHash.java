@@ -125,7 +125,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    private static List<Address> parseMembers(ScopedPersistentState state, String numMembersPropertyName,
                                              String memberPropertyFormat) {
-      int numMembers = Integer.parseInt(state.getProperty(numMembersPropertyName));
+      String property = state.getProperty(numMembersPropertyName);
+      if (property == null) {
+          return Collections.emptyList();
+      }
+      int numMembers = Integer.parseInt(property);
       List<Address> members = new ArrayList<>(numMembers);
       for (int i = 0; i < numMembers; i++) {
          PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
