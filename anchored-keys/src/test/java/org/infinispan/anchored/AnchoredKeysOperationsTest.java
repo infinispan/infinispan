@@ -23,7 +23,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.rehash.TestWriteOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -35,6 +34,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestDataSCI;
+import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
@@ -125,9 +125,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
       AdvancedCache<Object, Object> originator = advancedCache(0);
       for (Cache<Object, Object> cache : caches()) {
          MagicKey key = new MagicKey(cache);
-         if (op.getPreviousValue() != null) {
-            originator.put(key, op.getPreviousValue());
-         }
+         op.insertPreviousValue(originator, key);
          Object returnValue = op.perform(originator, key);
          assertEquals(op.getReturnValue(), returnValue);
          assertValue(key, op.getValue());

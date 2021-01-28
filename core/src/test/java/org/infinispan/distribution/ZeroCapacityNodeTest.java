@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,6 +23,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.op.TestFunctionalWriteOperation;
+import org.infinispan.test.op.TestOperation;
+import org.infinispan.test.op.TestWriteOperation;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -61,8 +65,7 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
    }
 
    @Test(dataProvider = "cm_chf")
-   public void testCapacityFactorContainingAZeroCapacityNode(CacheMode cacheMode,
-                                                             ConsistentHashFactory<?> consistentHashFactory) {
+   public void testCapacityFactors(CacheMode cacheMode, ConsistentHashFactory<?> consistentHashFactory) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(cacheMode);
       cb.clustering().hash().numSegments(NUM_SEGMENTS).consistentHashFactory(consistentHashFactory);
@@ -88,8 +91,37 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       assertEquals(Collections.emptySet(), ch2.getPrimarySegmentsForOwner(zeroCapacityNode.getAddress()));
       assertEquals(Collections.emptySet(), ch2.getSegmentsForOwner(zeroCapacityNode.getAddress()));
 
+      // Test simple put and get
       zeroCapacityCache.put("key", "value");
       assertEquals("value", zeroCapacityCache.get("key"));
+   }
+
+   public void testReplicatedWriteOperations() {
+      String cacheName = "replConditional";
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      createCache(builder, cacheName);
+
+      for (TestOperation op : TestWriteOperation.values()) {
+         doTestReplicatedWriteOperation(cacheName, op);
+      }
+      for (TestFunctionalWriteOperation op : TestFunctionalWriteOperation.values()) {
+         doTestReplicatedWriteOperation(cacheName, op);
+      }
+   }
+
+   private void doTestReplicatedWriteOperation(String cacheName, TestOperation op) {
+      log.debugf("Testing %s", op);
+      for (Cache<Object, Object> cache : caches(cacheName)) {
+         String key = String.format("key-%s-%s", op, address(cache));
+         op.insertPreviousValue(cache.getAdvancedCache(), key);
+
+         Object result = op.perform(cache.getAdvancedCache(), key);
+         assertEquals(op.getReturnValue(), result);
+
+         cache.clear();
+         assertTrue(cache.isEmpty());
+      }
    }
 
    public void testReplicatedClusteredListener() {

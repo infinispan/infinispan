@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.test.op.TestWriteOperation;
 import org.testng.annotations.Test;
 
 /**

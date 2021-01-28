@@ -1,5 +1,6 @@
 package org.infinispan.distribution.rehash;
 
+import org.infinispan.test.op.TestWriteOperation;
 import org.testng.annotations.Test;
 
 /**
