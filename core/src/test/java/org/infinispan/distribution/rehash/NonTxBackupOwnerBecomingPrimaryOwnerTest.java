@@ -43,6 +43,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.test.op.TestOperation;
+import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
@@ -103,12 +105,10 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       doTest(TestWriteOperation.REMOVE_EXACT);
    }
 
-   protected void doTest(final TestWriteOperation op) throws Exception {
+   protected void doTest(final TestOperation op) throws Exception {
       final String key = "testkey";
       final String cacheName = getDefaultCacheName();
-      if (op.getPreviousValue() != null) {
-         cache(0, cacheName).put(key, op.getPreviousValue());
-      }
+      op.insertPreviousValue(advancedCache(0, cacheName), key);
 
       CheckPoint checkPoint = new CheckPoint();
       LocalTopologyManager ltm0 = extractGlobalComponent(manager(0), LocalTopologyManager.class);
@@ -179,7 +179,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       extractInterceptorChain(cache2).addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
-      Future<Object> future = fork(() -> perform(op, cache0, key));
+      Future<Object> future = fork(() -> op.perform(cache0, key));
 
       // Wait for the command to be executed on cache2 and unblock it
       afterCache2Barrier.await(10, TimeUnit.SECONDS);
@@ -222,10 +222,6 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       assertFalse(cache0.getAdvancedCache().getLockManager().isLocked(key));
       assertFalse(cache1.getAdvancedCache().getLockManager().isLocked(key));
       assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
-   }
-
-   protected Object perform(TestWriteOperation op, AdvancedCache<Object, Object> cache0, String key) {
-      return op.perform(cache0, key);
    }
 
    @ProtoName("BackupOwnerCustomConsistentHashFactory")
