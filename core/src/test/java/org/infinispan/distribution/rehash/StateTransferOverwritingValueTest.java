@@ -38,6 +38,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;

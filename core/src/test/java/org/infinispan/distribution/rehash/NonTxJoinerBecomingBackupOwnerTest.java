@@ -10,11 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -22,6 +22,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.op.TestOperation;
+import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -73,7 +75,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       doTest(TestWriteOperation.REMOVE_EXACT);
    }
 
-   protected void doTest(final TestWriteOperation op) throws Exception {
+   protected void doTest(TestOperation op) throws Exception {
       final StateSequencer sequencer = new StateSequencer();
       sequencer.logicalThread("st", "st:cache0_before_send_state");
       sequencer.logicalThread("write", "write:before_start", "write:start", "write:cache1_before_return", "write:cache2_before_dist", "write:end", "write:after_end");

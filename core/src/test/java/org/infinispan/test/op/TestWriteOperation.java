@@ -1,4 +1,4 @@
-package org.infinispan.distribution.rehash;
+package org.infinispan.test.op;
 
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
@@ -6,14 +6,13 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.context.Flag;
 
 /**
 * Represents a write operation to test.
@@ -21,7 +20,7 @@ import org.infinispan.commands.write.ValueMatcher;
 * @author Dan Berindei
 * @since 6.0
 */
-public enum TestWriteOperation {
+public enum TestWriteOperation implements TestOperation {
    PUT_CREATE(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, "v1"),
    PUT_OVERWRITE(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v1"),
    PUT_IF_ABSENT(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
@@ -30,19 +29,7 @@ public enum TestWriteOperation {
    REMOVE(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REMOVE_EXACT(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    PUT_MAP_CREATE(PutMapCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
-
-   // Functional put create must return null even on retry (as opposed to non-functional)
-   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),
-   // Functional put overwrite must return the previous value (as opposed to non-functional)
-   PUT_OVERWRITE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v0"),
-   PUT_IF_ABSENT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
-   // Functional replace must return the previous value (as opposed to non-functional)
-   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v0"),
-   REMOVE_FUNCTIONAL(ReadWriteKeyCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
-   REPLACE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   REMOVE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   // Functional replace
-   REPLACE_META_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, true, true)
+   // TODO Add TestWriteOperation enum values for compute/computeIfAbsent/computeIfPresent/merge
    ;
 
    private final Class<? extends VisitableCommand> commandClass;
@@ -69,47 +56,53 @@ public enum TestWriteOperation {
       this.returnValueWithRetry = returnValueWithRetry;
    }
 
+   @Override
    public Class<? extends VisitableCommand> getCommandClass() {
       return commandClass;
    }
 
+   @Override
    public Class<? extends ReplicableCommand> getBackupCommandClass() {
       return backupCommandClass;
    }
 
+   @Override
    public Object getValue() {
       return value;
    }
 
+   @Override
    public Object getPreviousValue() {
       return previousValue;
    }
 
+   @Override
    public Object getReturnValue() {
       return returnValue;
    }
 
+   @Override
+   public void insertPreviousValue(AdvancedCache<Object, Object> cache, Object key) {
+      if (previousValue != null) {
+         cache.withFlags(Flag.IGNORE_RETURN_VALUES).put(key, previousValue);
+      }
+   }
+
+   @Override
    public Object perform(AdvancedCache<Object, Object> cache, Object key) {
       switch (this) {
          case PUT_CREATE:
          case PUT_OVERWRITE:
-         case PUT_CREATE_FUNCTIONAL:
-         case PUT_OVERWRITE_FUNCTIONAL:
             return cache.put(key, value);
          case PUT_IF_ABSENT:
-         case PUT_IF_ABSENT_FUNCTIONAL:
             return cache.putIfAbsent(key, value);
          case REPLACE:
-         case REPLACE_FUNCTIONAL:
             return cache.replace(key, value);
          case REPLACE_EXACT:
-         case REPLACE_EXACT_FUNCTIONAL:
             return cache.replace(key, previousValue, value);
          case REMOVE:
-         case REMOVE_FUNCTIONAL:
             return cache.remove(key);
          case REMOVE_EXACT:
-         case REMOVE_EXACT_FUNCTIONAL:
             return cache.remove(key, previousValue);
          case PUT_MAP_CREATE:
             cache.putAll(Collections.singletonMap(key, value));
@@ -119,27 +112,21 @@ public enum TestWriteOperation {
       }
    }
 
+   @Override
    public CompletionStage<?> performAsync(AdvancedCache<Object, Object> cache, Object key) {
       switch (this) {
          case PUT_CREATE:
          case PUT_OVERWRITE:
-         case PUT_CREATE_FUNCTIONAL:
-         case PUT_OVERWRITE_FUNCTIONAL:
             return cache.putAsync(key, value);
          case PUT_IF_ABSENT:
-         case PUT_IF_ABSENT_FUNCTIONAL:
             return cache.putIfAbsentAsync(key, value);
          case REPLACE:
-         case REPLACE_FUNCTIONAL:
             return cache.replaceAsync(key, value);
          case REPLACE_EXACT:
-         case REPLACE_EXACT_FUNCTIONAL:
             return cache.replaceAsync(key, previousValue, value);
          case REMOVE:
-         case REMOVE_FUNCTIONAL:
             return cache.removeAsync(key);
          case REMOVE_EXACT:
-         case REMOVE_EXACT_FUNCTIONAL:
             return cache.removeAsync(key, previousValue);
          case PUT_MAP_CREATE:
             return cache.putAllAsync(Collections.singletonMap(key, value));
@@ -148,10 +135,12 @@ public enum TestWriteOperation {
       }
    }
 
+   @Override
    public ValueMatcher getValueMatcher() {
       return valueMatcher;
    }
 
+   @Override
    public Object getReturnValueWithRetry() {
       return returnValueWithRetry;
    }

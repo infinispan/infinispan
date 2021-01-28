@@ -1,10 +1,10 @@
 package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -31,12 +32,12 @@ import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CacheEntryDelegator;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
+import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledRpcManager;

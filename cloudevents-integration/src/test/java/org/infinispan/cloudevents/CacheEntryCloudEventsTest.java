@@ -47,7 +47,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.rehash.TestWriteOperation;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -55,6 +54,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.op.TestWriteOperation;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -86,7 +86,6 @@ public class CacheEntryCloudEventsTest extends MultipleCacheManagersTest {
             {TestWriteOperation.REMOVE},
             {TestWriteOperation.REMOVE_EXACT},
             {TestWriteOperation.PUT_MAP_CREATE},
-            // TODO Add TestWriteOperation enum values for compute/computeIfAbsent/computeIfPresent/merge
             };
    }
 
@@ -279,7 +278,6 @@ public class CacheEntryCloudEventsTest extends MultipleCacheManagersTest {
    private static String translateType(TestWriteOperation op) {
       switch (op) {
          case PUT_CREATE:
-         case PUT_CREATE_FUNCTIONAL:
          case PUT_IF_ABSENT:
          case PUT_MAP_CREATE:
             return "org.infinispan.entry.created";
@@ -288,17 +286,11 @@ public class CacheEntryCloudEventsTest extends MultipleCacheManagersTest {
 //         case CACHE_ENTRY_EXPIRED:
 //            return "org.infinispan.entry.expired";
          case PUT_OVERWRITE:
-         case PUT_OVERWRITE_FUNCTIONAL:
          case REPLACE:
          case REPLACE_EXACT:
-         case REPLACE_FUNCTIONAL:
-         case REPLACE_EXACT_FUNCTIONAL:
-         case REPLACE_META_FUNCTIONAL:
             return "org.infinispan.entry.modified";
          case REMOVE:
          case REMOVE_EXACT:
-         case REMOVE_FUNCTIONAL:
-         case REMOVE_EXACT_FUNCTIONAL:
             return "org.infinispan.entry.removed";
          default:
             throw new IllegalArgumentException("Unsupported event type: " + op);
