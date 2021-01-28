@@ -257,8 +257,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private void migrateFromV11() {
-      PERSISTENCE.startMigratingPersistenceData();
-      File newFile = new File(file.getParentFile(), ctx.getCache().getName() + "_new.dat");
+      String cacheName = ctx.getCache().getName();
+      PERSISTENCE.startMigratingPersistenceData(cacheName);
+      File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
       if (newFile.exists()) {
          newFile.delete();
       }
@@ -348,10 +349,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             newFilePos += newChannel.write(buf, newFilePos);
          }
       } catch (IOException | ClassNotFoundException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
-         throw PERSISTENCE.persistedDataMigrationFailed(e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
 
       try {
@@ -363,9 +364,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          channel = new RandomAccessFile(file, "rw").getChannel();
          //update file position
          filePos = newFilePos;
-         PERSISTENCE.persistedDataSuccessfulMigrated();
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
       } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
    }
 
