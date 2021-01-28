@@ -148,14 +148,14 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                tableManager.updateMetaTable(connection);
             } else {
                // The meta table does not exist, therefore we must be reading from a 11.x store. Migrate the old data
-               org.infinispan.util.logging.Log.PERSISTENCE.startMigratingPersistenceData();
+               org.infinispan.util.logging.Log.PERSISTENCE.startMigratingPersistenceData(cacheName);
                try {
                   migrateFromV11();
                } catch (SQLException e) {
-                  throw org.infinispan.util.logging.Log.PERSISTENCE.persistedDataMigrationFailed(e);
+                  throw org.infinispan.util.logging.Log.PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
                }
                tableManager.createMetaTable(connection);
-               org.infinispan.util.logging.Log.PERSISTENCE.persistedDataSuccessfulMigrated();
+               org.infinispan.util.logging.Log.PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
             }
          } finally {
             connectionFactory.releaseConnection(connection);

@@ -1966,15 +1966,15 @@ public interface Log extends BasicLogger {
    MarshallingException missingTypeForUnwrappedPayload();
 
    @LogMessage(level = INFO)
-   @Message(value = "Migrating persisted data to new format...", id = 578)
-   void startMigratingPersistenceData();
+   @Message(value = "Migrating '%s' persisted data to new format...", id = 578)
+   void startMigratingPersistenceData(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Persisted data successfully migrated.", id = 579)
-   void persistedDataSuccessfulMigrated();
+   @Message(value = "'%s' persisted data successfully migrated.", id = 579)
+   void persistedDataSuccessfulMigrated(String cacheName);
 
-   @Message(value = "Failed to migrate persisted data.", id = 580)
-   PersistenceException persistedDataMigrationFailed(@Cause Throwable cause);
+   @Message(value = "Failed to migrate '%s' persisted data.", id = 580)
+   PersistenceException persistedDataMigrationFailed(String cacheName, @Cause Throwable cause);
 
    @Message(value = "The indexing 'enabled' and the legacy 'index' configs attributes are mutually exclusive", id = 581)
    CacheConfigurationException indexEnabledAndIndexModeAreExclusive();

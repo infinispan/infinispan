@@ -138,10 +138,11 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             initDefaultHandler();
             MetadataImpl existingMeta = handler.loadMetadata();
             if (existingMeta == null && !configuration.purgeOnStartup()) {
+               String cacheName = ctx.getCache().getName();
                // Metadata does not exist, therefore we must be reading from a pre-12.x store. Migrate the old data
-               PERSISTENCE.startMigratingPersistenceData();
+               PERSISTENCE.startMigratingPersistenceData(cacheName);
                migrateFromV11();
-               PERSISTENCE.persistedDataSuccessfulMigrated();
+               PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
             }
             // Update the metadata entry to use the current Infinispan version
             handler.writeMetadata();

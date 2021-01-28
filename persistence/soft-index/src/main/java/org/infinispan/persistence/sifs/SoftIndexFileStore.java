@@ -180,7 +180,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
          }
          oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0);
          if (oldFileProvider.hasFiles()) {
-            PERSISTENCE.startMigratingPersistenceData();
             migrateFromOldFormat(oldFileProvider);
             migrateData = true;
          } else if (index.isLoaded()) {
@@ -198,10 +197,12 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
    }
 
    private void migrateFromOldFormat(FileProvider oldFileProvider) {
+      String cacheName = ctx.getCache().getName();
+      PERSISTENCE.startMigratingPersistenceData(cacheName);
       try {
          index.clear();
       } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
       // Only update the key/value/meta bytes if the default marshaller is configured
       boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
@@ -246,9 +247,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
             // file is read. can be removed.
             oldFileProvider.deleteFile(fileId);
          }
-         PERSISTENCE.persistedDataSuccessfulMigrated();
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
       } catch (InterruptedException | IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
    }
 
