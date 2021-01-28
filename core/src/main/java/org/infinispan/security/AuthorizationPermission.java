@@ -8,7 +8,7 @@ import org.infinispan.Cache;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public enum AuthorizationPermission {
+public enum  AuthorizationPermission {
    /**
     * Allows control of a cache's lifecycle (i.e. invoke {@link Cache#start()} and
     * {@link Cache#stop()}
@@ -82,4 +82,6 @@ public enum AuthorizationPermission {
    public boolean implies(AuthorizationPermission that) {
       return ((this.mask & that.mask) == that.mask);
    }
+
+
 }

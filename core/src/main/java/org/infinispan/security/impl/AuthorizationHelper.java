@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.SECURITY;
 
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class AuthorizationHelper {
    }
 
    private static <K, V> ConcurrentMap<K, V> createAclCache() {
-      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(10).build();
+      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(1000).build();
       return cache.asMap();
    }
 
@@ -74,6 +75,18 @@ public class AuthorizationHelper {
 
    public void checkPermission(Subject subject, AuthorizationPermission perm) {
       checkPermission(null, subject, perm, null);
+   }
+
+   public SubjectACL getACL(Subject subject) {
+      return getACL(subject, null);
+   }
+
+   public SubjectACL getACL(Subject subject, AuthorizationConfiguration configuration) {
+      if (globalConfiguration.authorization().enabled()) {
+         return computeSubjectACL(subject, configuration);
+      } else {
+         return new SubjectACL(Collections.emptySet(), AuthorizationPermission.ALL.getMask());
+      }
    }
 
    public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm,
