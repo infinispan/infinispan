@@ -63,6 +63,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -215,6 +216,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       DistributionInfo info = cacheTopology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key,
             keyPartitioner));
+
+      if (isReplicated && command.hasAnyFlag(FlagBitSets.BACKUP_WRITE) && !info.isWriteOwner()) {
+         // Replicated caches will
+         command.fail();
+         return null;
+      }
+
       if (entry == null) {
          boolean load = shouldLoad(ctx, command, info);
          if (info.isPrimary()) {
@@ -267,14 +275,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          command.setValueMatcher(originalMatcher.matcherForRetry());
          return localResult;
       }
-      MapResponseCollector collector = MapResponseCollector.ignoreLeavers(isReplicated, owners.size());
+      VoidResponseCollector collector = VoidResponseCollector.ignoreLeavers();
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
       // Mark the command as a backup write so it can skip some checks
       command.addFlags(FlagBitSets.BACKUP_WRITE);
-      CompletionStage<Map<Address, Response>> remoteInvocation = isReplicated ?
+      CompletionStage<Void> remoteInvocation = isReplicated ?
             rpcManager.invokeCommandOnAll(command, collector, rpcOptions) :
             rpcManager.invokeCommand(owners, command, collector, rpcOptions);
-      return asyncValue(remoteInvocation.handle((responses, t) -> {
+      return asyncValue(remoteInvocation.handle((ignored, t) -> {
          // Unset the backup write bit as the command will be retried
          command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.BACKUP_WRITE);
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
