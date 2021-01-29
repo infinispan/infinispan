@@ -84,7 +84,20 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * @throws CacheConfigurationException if there is a problem wiring the instance
     */
    public void wireDependencies(Object target) throws CacheConfigurationException {
-      boolean startDependencies = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
+      basicComponentRegistry.wireDependencies(target, true);
+   }
+
+   /**
+    * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
+    * as needed based on the Configuration passed in if these additional components don't exist in the {@link
+    * ComponentRegistry}.  Strictly for components that don't otherwise live in the registry and have a lifecycle, such
+    * as Commands.
+    *
+    * @param target object to wire
+    * @param startDependencies whether to start injected components (if not already started)
+    * @throws CacheConfigurationException if there is a problem wiring the instance
+    */
+   public void wireDependencies(Object target, boolean startDependencies) throws CacheConfigurationException {
       basicComponentRegistry.wireDependencies(target, startDependencies);
    }
 

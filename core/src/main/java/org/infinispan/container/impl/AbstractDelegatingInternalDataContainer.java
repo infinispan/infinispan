@@ -1,5 +1,11 @@
 package org.infinispan.container.impl;
 
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
+
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.ComponentRegistry;
@@ -10,12 +16,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
-
 /**
  * Delegating data container that delegates all calls to the container returned from {@link #delegate()}
  * @author wburns
@@ -25,7 +25,7 @@ import java.util.function.ObjIntConsumer;
 public abstract class AbstractDelegatingInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
    @Inject
    void inject(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(delegate());
+      componentRegistry.wireDependencies(delegate(), false);
    }
 
    protected abstract InternalDataContainer<K, V> delegate();

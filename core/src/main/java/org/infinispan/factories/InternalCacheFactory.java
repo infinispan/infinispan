@@ -115,7 +115,7 @@ public class InternalCacheFactory<K, V> {
       // TODO Register the cache without encoding in the component registry
       bootstrap(cacheName, encodedCache, configuration, globalComponentRegistry, marshaller);
       if (marshaller != null) {
-         componentRegistry.wireDependencies(marshaller);
+         componentRegistry.wireDependencies(marshaller, false);
       }
       return encodedCache;
    }
@@ -213,7 +213,7 @@ public class InternalCacheFactory<K, V> {
       @Inject
       public void wireRealCache() {
          // Wire the cache to ensure all components are ready
-         componentRegistry.wireDependencies(cache);
+         componentRegistry.wireDependencies(cache, false);
       }
 
       /**

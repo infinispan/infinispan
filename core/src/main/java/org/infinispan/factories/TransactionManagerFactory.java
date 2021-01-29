@@ -3,8 +3,8 @@ package org.infinispan.factories;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -33,7 +33,7 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       TransactionManagerLookup lookup = configuration.transaction().transactionManagerLookup();
       try {
          if (lookup != null) {
-            componentRegistry.wireDependencies(lookup);
+            componentRegistry.wireDependencies(lookup, false);
             transactionManager = lookup.getTransactionManager();
          }
       } catch (Exception e) {
