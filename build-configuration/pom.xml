@@ -222,7 +222,7 @@
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0-M5</version.maven.surefire>
       <version.org.wildfly.build-tools>1.2.13.Final</version.org.wildfly.build-tools>
-      <version.owasp-dependency-check-plugin>6.0.2</version.owasp-dependency-check-plugin>
+      <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>8.32</versionx.com.puppycrawl.tools.checkstyle>
