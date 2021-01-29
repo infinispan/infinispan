@@ -149,6 +149,11 @@ public final class LifecycleManager implements ModuleLifecycle {
          // a remote query manager must be added for each non-internal cache
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
+         // RemoteQueryManager can manipulate the registry, so create it before rewiring the cache below
+         // to avoid triggering a state transfer
+         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
+         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
+
          SearchMappingCommonBuilding commonBuilding = cr.getComponent(SearchMappingCommonBuilding.class);
          SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
          if (commonBuilding != null && searchMapping == null) {
@@ -167,9 +172,6 @@ public final class LifecycleManager implements ModuleLifecycle {
                bcr.rewire();
             }
          }
-
-         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
-         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
 
          if (cfg.indexing().enabled()) {
             AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
