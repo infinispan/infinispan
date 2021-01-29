@@ -195,7 +195,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public void wrapEntryForExpired(InvocationContext ctx, Object key, int segment) {
+   public void wrapEntryForWritingSkipExpiration(InvocationContext ctx, Object key, int segment, boolean isOwner) {
       CacheEntry contextEntry = getFromContext(ctx, key);
       if (contextEntry instanceof MVCCEntry) {
          // Nothing to do, already wrapped.
@@ -206,7 +206,7 @@ public class EntryFactoryImpl implements EntryFactory {
          ctx.putLookedUpEntry(key, mvccEntry);
          if (log.isTraceEnabled())
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
-      } else {
+      } else if (isOwner) {
          // Not in the context yet.
          CacheEntry cacheEntry = getFromContainer(key, segment);
          if (cacheEntry == null) {
