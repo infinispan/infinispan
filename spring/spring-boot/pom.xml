@@ -29,6 +29,9 @@
                     <groups combine.self="override">${defaultJUnitGroups}</groups>
                     <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                     <disableXmlReport>false</disableXmlReport>
+                    <systemPropertyVariables>
+                        <org.infinispan.test.server.dir>${org.infinispan.test.server.dir}</org.infinispan.test.server.dir>
+                    </systemPropertyVariables>
                     <properties>
                         <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
                         <usedefaultlisteners>false</usedefaultlisteners>

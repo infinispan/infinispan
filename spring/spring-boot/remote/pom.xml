@@ -9,6 +9,10 @@
   <name>Infinispan Spring Boot Starter Remote</name>
   <artifactId>infinispan-spring-boot-starter-remote</artifactId>
 
+  <properties>
+    <org.infinispan.test.server.dir>${project.basedir}/../../../server/runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
