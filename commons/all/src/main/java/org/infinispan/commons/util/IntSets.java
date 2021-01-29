@@ -35,6 +35,9 @@ public class IntSets {
     * @return immutable IntSet
     */
    public static IntSet immutableSet(IntSet set) {
+      if (set instanceof AbstractImmutableIntSet)
+         return set;
+
       return new ImmutableIntSet(set);
    }
 

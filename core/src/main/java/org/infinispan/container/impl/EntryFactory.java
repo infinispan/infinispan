@@ -125,8 +125,9 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param segment segment for the key
+    * @param isOwner is the local node a read owner?
     */
-   void wrapEntryForExpired(InvocationContext ctx, Object key, int segment);
+   void wrapEntryForWritingSkipExpiration(InvocationContext ctx, Object key, int segment, boolean isOwner);
 
    /**
     * Insert an external entry (e.g. loaded from a cache loader or from a remote node) into the context.

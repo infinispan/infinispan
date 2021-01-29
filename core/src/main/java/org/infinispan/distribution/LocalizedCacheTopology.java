@@ -274,4 +274,8 @@ public class LocalizedCacheTopology extends CacheTopology {
    public boolean isConnected() {
       return connected;
    }
+
+   public int getNumSegments() {
+      return numSegments;
+   }
 }

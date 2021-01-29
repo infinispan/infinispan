@@ -355,12 +355,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
-      // The command is from a backup, we don't care if the entry is expired or not
+
+      // Non-owners should not wrap entries (unless L1 is enabled)
+      boolean isOwner = ignoreOwnership(command) || canRead(command);
+
       if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE)) {
-         entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
+         // The command has been forwarded to a backup, we don't care if the entry is expired or not
+         entryFactory.wrapEntryForWritingSkipExpiration(ctx, command.getKey(), command.getSegment(), isOwner);
          return CompletableFutures.completedNull();
       }
-      return entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+      return entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), isOwner,
+                                              command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
    }
 
    private void removeFromContextOnRetry(InvocationContext ctx, Object key) {
@@ -411,7 +416,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
-      entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
+      boolean isOwner = ignoreOwnership(command) || canRead(command);
+      entryFactory.wrapEntryForWritingSkipExpiration(ctx, command.getKey(), command.getSegment(), isOwner);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, CompletableFutures.completedNull());
    }
 
@@ -867,7 +873,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       @Override
       public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
-         entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
+         boolean isOwner = ignoreOwnership(command) || canRead(command);
+         entryFactory.wrapEntryForWritingSkipExpiration(ctx, command.getKey(), command.getSegment(), isOwner);
          return invokeNext(ctx, command);
       }
 
