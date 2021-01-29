@@ -32,7 +32,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
@@ -97,32 +96,27 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    private JdbcStringBasedStoreConfiguration configuration;
 
    private InitializationContext ctx;
-   private GlobalConfiguration globalConfiguration;
    private Key2StringMapper key2StringMapper;
-   private String cacheName;
    private ConnectionFactory connectionFactory;
    private MarshallableEntryFactory<K, V> marshalledEntryFactory;
    private PersistenceMarshaller marshaller;
    private TableManager tableManager;
    private TimeService timeService;
    private KeyPartitioner keyPartitioner;
-   private boolean isDistributedCache;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
-      this.cacheName = ctx.getCache().getName();
-      this.globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
       this.marshalledEntryFactory = ctx.getMarshallableEntryFactory();
       this.marshaller = ctx.getPersistenceMarshaller();
       this.timeService = ctx.getTimeService();
       this.keyPartitioner = configuration.segmented() ? ctx.getKeyPartitioner() : null;
-      this.isDistributedCache = ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
    @Override
    public void start() {
+      String cacheName = ctx.getCache().getName();
       if (configuration.manageConnectionFactory()) {
          ConnectionFactory factory = ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
          factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
@@ -164,7 +158,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
 
       try {
          Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
-                                              globalConfiguration.classLoader()).newInstance();
+                                              ctx.getGlobalConfiguration().classLoader()).newInstance();
          if (mapper instanceof Key2StringMapper) key2StringMapper = (Key2StringMapper) mapper;
       } catch (Exception e) {
          log.errorf("Trying to instantiate %s, however it failed due to %s", configuration.key2StringMapper(),
@@ -177,7 +171,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       if (configuration.preload()) {
          enforceTwoWayMapper("preload");
       }
-      if (isDistributedCache) {
+      if (ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed()) {
          enforceTwoWayMapper("distribution/rehashing");
       }
    }
