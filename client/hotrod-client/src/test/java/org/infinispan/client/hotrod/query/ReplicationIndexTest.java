@@ -4,17 +4,12 @@ import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
-import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -24,14 +19,12 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -72,13 +65,6 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("Entity");
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
-
-      // Wait for state transfer on the test caches
-      Cache<?, ?> cache = cacheManager.getCache(CACHE_NAME);
-      blockUntilViewReceived(cache, index);
-      blockUntilCacheStatusAchieved(cache, ComponentStatus.RUNNING, 10000);
-      Collection<Cache<?, ?>> caches = cacheManagers.stream().map(cm -> cm.getCache(CACHE_NAME)).collect(Collectors.toList());
-      TestingUtil.waitForNoRebalance(caches);
    }
 
    protected boolean isTransactional() {
@@ -140,6 +126,8 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       assertIndexed(remoteCache);
 
       addNode();
+
+      waitForClusterToForm(CACHE_NAME);
 
       RemoteCache<Object, Object> secondRemoteCache = clients.get(1).getCache(CACHE_NAME);
       assertIndexed(secondRemoteCache);
