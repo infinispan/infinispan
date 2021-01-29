@@ -17,6 +17,7 @@
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
+      <org.infinispan.test.server.dir>${project.basedir}/../../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
    </properties>
    <dependencies>
       <dependency>
@@ -47,6 +48,9 @@
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <disableXmlReport>false</disableXmlReport>
+               <systemPropertyVariables>
+                  <org.infinispan.test.server.dir>${org.infinispan.test.server.dir}</org.infinispan.test.server.dir>
+               </systemPropertyVariables>
                <properties>
                   <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
                   <usedefaultlisteners>false</usedefaultlisteners>
