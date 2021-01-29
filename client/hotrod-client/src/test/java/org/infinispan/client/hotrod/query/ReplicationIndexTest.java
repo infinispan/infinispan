@@ -67,6 +67,12 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
    }
 
+   private void killLastNode() {
+      int index = serverCount.decrementAndGet();
+      clients.remove(index).close();
+      killServer(index);
+   }
+
    protected boolean isTransactional() {
       return false;
    }
@@ -127,10 +133,14 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
 
       addNode();
 
-      waitForClusterToForm(CACHE_NAME);
+      try {
+         waitForClusterToForm(CACHE_NAME);
 
-      RemoteCache<Object, Object> secondRemoteCache = clients.get(1).getCache(CACHE_NAME);
-      assertIndexed(secondRemoteCache);
+         RemoteCache<Object, Object> secondRemoteCache = clients.get(1).getCache(CACHE_NAME);
+         assertIndexed(secondRemoteCache);
+      } finally {
+         killLastNode();
+      }
    }
 
    private void assertIndexed(RemoteCache<?, ?> remoteCache) {
