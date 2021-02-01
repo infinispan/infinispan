@@ -9,6 +9,7 @@
         send_buf_size="640k"
         sock_conn_timeout="300"
         bundler_type="no-bundler"
+        max_bundle_size="3000"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
@@ -56,5 +57,5 @@
    <MFC max_credits="4m"
         min_threshold="0.40"
    />
-   <FRAG3/>
+   <FRAG3 frag_size="2000"/>
 </config>
