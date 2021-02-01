@@ -7,7 +7,7 @@
   <Appenders>
     <!-- Colored output on the console -->
     <Console name="STDOUT">
-      <PatternLayout pattern="%highlight{%d{HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+      <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
     </Console>
 
     <!-- Rolling file -->
