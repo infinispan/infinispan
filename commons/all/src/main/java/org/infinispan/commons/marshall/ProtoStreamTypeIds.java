@@ -126,4 +126,8 @@ public interface ProtoStreamTypeIds {
    // JDBC Store 5800 -> 5899
    int JDBC_LOWER_BOUND = SERVER_CORE_LOWER_BOUND + 400;
    int JDBC_PERSISTED_METADATA = JDBC_LOWER_BOUND;
+
+   // Spring integration 5900 -> 5999
+   int SPRING_LOWER_BOUND = JDBC_LOWER_BOUND + 100;
+   int SPRING_NULL_VALUE = SPRING_LOWER_BOUND;
 }

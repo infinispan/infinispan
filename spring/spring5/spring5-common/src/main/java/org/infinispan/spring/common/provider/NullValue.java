@@ -2,6 +2,9 @@ package org.infinispan.spring.common.provider;
 
 import java.io.Serializable;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.springframework.cache.Cache.ValueWrapper;
 
 /**
@@ -10,6 +13,7 @@ import org.springframework.cache.Cache.ValueWrapper;
  * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.SPRING_NULL_VALUE)
 public final class NullValue implements ValueWrapper, Serializable {
 
    /** The serialVersionUID */
@@ -32,6 +36,11 @@ public final class NullValue implements ValueWrapper, Serializable {
    }
 
    private Object readResolve() {
+      return NULL;
+   }
+
+   @ProtoFactory
+   public static NullValue getInstance() {
       return NULL;
    }
 

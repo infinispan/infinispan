@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,6 +21,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -43,15 +46,39 @@ public class SpringCacheTest extends SingleCacheManagerTest {
 
    private final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> fb = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
 
+   private final String mediaType;
+
    private org.infinispan.Cache<Object, Object> nativeCache;
 
    private Cache cache;
 
+   @Factory(dataProvider = "encodings")
+   public SpringCacheTest(String mediaType) {
+      this.mediaType = mediaType;
+   }
+
+   @DataProvider
+   public static Object[][] encodings() {
+      return new Object[][] {
+            {MediaType.APPLICATION_OBJECT_TYPE},
+            {MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE},
+            {MediaType.APPLICATION_PROTOSTREAM_TYPE},
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + mediaType + "]";
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      ConfigurationBuilder defaultCacheBuilder = new ConfigurationBuilder();
+      defaultCacheBuilder.encoding().mediaType(mediaType);
+
       return TestCacheManagerFactory.createCacheManager(
             new GlobalConfigurationBuilder().defaultCacheName(CACHE_NAME),
-            new ConfigurationBuilder()
+            defaultCacheBuilder
       );
    }
 
@@ -150,7 +177,7 @@ public class SpringCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = IllegalStateException.class)
    public void testThrowingIllegalStateExceptionWhenClassCastReturnDifferentClass() throws Exception {
       //given
-      this.cache.put("test", new Object());
+      this.cache.put("test", 1);
 
       //when
       cache.get("test", String.class);
