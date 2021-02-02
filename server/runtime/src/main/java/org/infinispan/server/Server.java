@@ -434,7 +434,11 @@ public class Server implements ServerManagement, AutoCloseable {
          loginConfiguration.put("clientId", realmConfiguration.clientId());
       } else {
          loginConfiguration.put("mode", "HTTP");
+         for (String mechanism: rest.authentication().mechanisms()) {
+            loginConfiguration.put(mechanism, "true");
+         }
       }
+
       Authenticator authenticator = rest.authentication().authenticator();
       loginConfiguration.put("ready", Boolean.toString(authenticator == null || authenticator.isReadyForHttpChallenge()));
 
