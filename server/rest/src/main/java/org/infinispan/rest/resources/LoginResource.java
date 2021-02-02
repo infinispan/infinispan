@@ -37,7 +37,7 @@ public class LoginResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/login").withAction("config").anonymous(true).handleWith(this::loginConfiguration)
             .invocation().methods(GET, POST).deprecated().path("/v2/login").withAction("login").handleWith(this::login)
-            .invocation().methods(GET).path("/v2/login").handleWith(this::login)
+            .invocation().methods(GET).deprecated().path("/v2/login").handleWith(this::login)
             .create();
    }
 
