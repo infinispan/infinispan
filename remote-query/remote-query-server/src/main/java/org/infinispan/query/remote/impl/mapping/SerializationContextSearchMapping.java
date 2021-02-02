@@ -10,7 +10,6 @@ import org.infinispan.query.remote.impl.mapping.model.ProtobufBootstrapIntrospec
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.typebridge.ProtobufMessageBinder;
 import org.infinispan.search.mapper.common.EntityReference;
-import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 
@@ -19,10 +18,10 @@ public final class SerializationContextSearchMapping {
    private SerializationContextSearchMapping() {
    }
 
-   public static SearchMapping buildMapping(SearchMappingCommonBuilding commonBuilding,
-                                            EntityLoader<EntityReference, ?> entityLoader,
-                                            Set<String> indexedEntityTypes,
-                                            SerializationContext serializationContext) {
+   public static SearchMappingBuilder createBuilder(SearchMappingCommonBuilding commonBuilding,
+                                                    EntityLoader<EntityReference, ?> entityLoader,
+                                                    Set<String> indexedEntityTypes,
+                                                    SerializationContext serializationContext) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
       ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
       SearchMappingBuilder builder = commonBuilding.builder(introspector);
@@ -46,6 +45,6 @@ public final class SerializationContextSearchMapping {
          builder.addEntityType(byte[].class, fullName);
       }
 
-      return existIndexedEntities ? builder.build() : null;
+      return existIndexedEntities ? builder : null;
    }
 }

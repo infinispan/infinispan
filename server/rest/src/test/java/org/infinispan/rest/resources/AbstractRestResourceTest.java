@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.helper.RestServerHelper.CLIENT_KEY_STORE;
 import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
@@ -121,7 +122,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
          }
          cacheManagers.forEach(this::defineCaches);
-         cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().indexing().enabled(true).addIndexedEntities("invalid").build()));
+         cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().encoding().mediaType(APPLICATION_OBJECT_TYPE).indexing().enabled(true).addIndexedEntities("invalid").build()));
          for (EmbeddedCacheManager cm : cacheManagers) {
             cm.getClassAllowList().addClasses(TestClass.class);
             waitForClusterToForm(cm.getCacheNames().stream().filter(name -> {

@@ -355,6 +355,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String invalidConfig = "<infinispan>\n" +
             " <cache-container>\n" +
             "   <replicated-cache name=\"books\">\n" +
+            "     <encoding media-type=\"application/x-java-object\"/>\n" +
             "     <indexing>\n" +
             "       <indexed-entities>\n" +
             "         <indexed-entity>Dummy</indexed-entity>\n" +
@@ -365,7 +366,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
             "</infinispan>";
 
       CompletionStage<RestResponse> response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
-      assertThat(response).isBadRequest().hasReturnedText("The declared indexed type 'Dummy' is not known. Please register its proto schema file first.");
+      assertThat(response).isBadRequest().hasReturnedText("Unable to instantiate class Dummy");
 
       response = client.cache("CACHE").exists();
       assertThat(response).isOk();
@@ -742,8 +743,52 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertThat(statJson.at("index").at("types").at("Entity").at("size").asLong())
             .isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
       assertThat(statJson.at("index").at("types").at("Another").at("size").asLong())
-              .isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
+            .isGreaterThan(MIN_NON_EMPTY_INDEX_SIZE);
       assertFalse(statJson.at("index").at("reindexing").asBoolean());
+   }
+
+   @Test
+   public void testLazySearchMapping() {
+      String proto = " package future;\n" +
+            " /* @Indexed */\n" +
+            " message Entity {\n" +
+            "    /* @Field */\n" +
+            "    optional string name=1;\n" +
+            " }";
+
+      String value = Json.object().set("_type", "future.Entity").set("name", "Kim").toString();
+      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, value);
+
+      // Create a cache with a declared, not yet registered protobuf entity
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable().storage(LOCAL_HEAP).addIndexedEntities("future.Entity");
+      String cacheConfig = new JsonWriter().toJSON(builder.build());
+
+      RestCacheClient cacheClient = client.cache("index-lazy");
+      RestEntity config = RestEntity.create(APPLICATION_JSON, cacheConfig);
+
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(config);
+      assertThat(response).isOk();
+
+      // Queries should return error
+      RestResponse restResponse = join(cacheClient.query("From future.Entity"));
+      assertThat(restResponse).containsReturnedText("Unknown type name : future.Entity");
+
+      // Writes too
+      restResponse = join(cacheClient.put("key", restEntity));
+      assertThat(restResponse).containsReturnedText("Unknown type name : future.Entity");
+
+      // Register the protobuf
+      restResponse = join(client.schemas().put("future.proto", proto));
+      assertThat(restResponse).isOk();
+
+      // All operations should work
+      restResponse = join(cacheClient.put("key", restEntity));
+      assertThat(restResponse).isOk();
+
+      restResponse = join(cacheClient.query("From future.Entity"));
+      assertThat(restResponse).isOk();
+      assertThat(restResponse).containsReturnedText("Kim");
    }
 
    private void assertQueryStatEmpty(Json queryTypeStats) {

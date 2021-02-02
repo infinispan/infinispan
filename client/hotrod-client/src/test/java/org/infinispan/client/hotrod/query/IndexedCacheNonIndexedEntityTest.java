@@ -118,5 +118,9 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
                   "</infinispan>";
 
       remoteCacheManager.administration().withFlags(VOLATILE).createCache(CACHE_NAME, new XMLStringConfiguration(config));
+
+      // The SearchMapping is started lazily for protobuf caches, so the exception only happens after first usage
+      RemoteCache<Object, Object> cache = remoteCacheManager.getCache(CACHE_NAME);
+      cache.put("1", new Entity("name"));
    }
 }
