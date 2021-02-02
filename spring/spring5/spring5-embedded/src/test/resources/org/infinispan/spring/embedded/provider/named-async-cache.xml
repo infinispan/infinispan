@@ -13,6 +13,12 @@
             <state-transfer enabled="false" timeout="240000" chunk-size="10000"/>
         </replicated-cache>
         <replicated-cache name="asyncCache" mode="ASYNC"/>
+        <distributed-cache name="protoCache" mode="SYNC">
+            <encoding>
+                <key media-type="application/x-protostream"/>
+                <value media-type="application/x-protostream"/>
+            </encoding>
+        </distributed-cache>
     </cache-container>
 
 </infinispan>
