@@ -70,6 +70,11 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
 
       RestCacheClient cacheClient = client.cache(CACHE_NAME);
       response = cacheClient.createWithConfiguration(configEntity, VOLATILE);
+      // The SearchMapping is started lazily, creating and starting the cache will not throw errors
+      ResponseAssertion.assertThat(response).isOk();
+
+      // Force initialization of the SearchMapping
+      response = cacheClient.query("FROM NonIndexed");
       ResponseAssertion.assertThat(response).isBadRequest();
       ResponseAssertion.assertThat(response).containsReturnedText("The configured indexed-entity type 'NonIndexed' must be indexed. Please annotate it with @Indexed");
    }

@@ -5,13 +5,11 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.util.Map;
-import java.util.Set;
 
 import javax.management.ObjectName;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -47,7 +45,6 @@ import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCache
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.logging.Log;
-import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -159,33 +156,16 @@ public final class LifecycleManager implements ModuleLifecycle {
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
 
-            searchMapping = SerializationContextSearchMapping.buildMapping(commonBuilding,
-                  new EntityLoader<>(queryStatistics, cache, keyTransformationHandler),
-                  cache.getCacheConfiguration().indexing().indexedEntityTypes(), serCtx);
+            EntityLoader<?> entityLoader = new EntityLoader<>(queryStatistics, cache, keyTransformationHandler);
 
-            if (searchMapping != null) {
-               cr.registerComponent(searchMapping, SearchMapping.class);
-               BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
-               bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
-               bcr.rewire();
-            }
+            searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager);
+
+            cr.registerComponent(searchMapping, SearchMapping.class);
+            BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+            bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
+            bcr.rewire();
          }
 
-         if (cfg.indexing().enabled()) {
-            AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-            if (cache.getValueDataConversion().getStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM)) {
-               // Try to resolve the indexed type names to protobuf type names.
-               Set<String> knownTypes = protobufMetadataManager.getSerializationContext().getGenericDescriptors().keySet();
-               for (String typeName : cfg.indexing().indexedEntityTypes()) {
-                  if (!knownTypes.contains(typeName)) {
-                     throw new CacheConfigurationException("The declared indexed type '" + typeName + "' is not known. Please register its proto schema file first.");
-                  }
-                  if (searchMapping == null || searchMapping.indexedEntity(typeName) == null) {
-                     throw log.typeNotIndexed(typeName);
-                  }
-               }
-            }
-         }
       }
    }
 
