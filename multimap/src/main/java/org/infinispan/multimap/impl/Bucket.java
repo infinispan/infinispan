@@ -41,12 +41,12 @@ public class Bucket<V> {
    }
 
    @ProtoFactory
-   Bucket(HashSet<MarshallableUserObject<V>> wrappedValues) {
+   Bucket(Collection<MarshallableUserObject<V>> wrappedValues) {
       this(wrappedValues.stream().map(MarshallableUserObject::get).collect(Collectors.toList()));
    }
 
-   @ProtoField(number = 1, collectionImplementation = HashSet.class)
-   Set<MarshallableUserObject<V>> getWrappedValues() {
+   @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+   Collection<MarshallableUserObject<V>> getWrappedValues() {
       return this.values.stream().map(MarshallableUserObject::new).collect(Collectors.toSet());
    }
 
