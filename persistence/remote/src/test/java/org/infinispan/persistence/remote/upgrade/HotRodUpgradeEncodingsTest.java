@@ -72,7 +72,7 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
 
    void loadSourceCluster(int entries) {
       RemoteCache<String, String> remoteCache = sourceCluster.getRemoteCache(CACHE_NAME);
-      range(0, entries).boxed().parallel().map(String::valueOf).forEach(k -> remoteCache.put(k, "value" + k));
+      range(0, entries).boxed().map(String::valueOf).forEach(k -> remoteCache.put(k, "value" + k));
    }
 
    @Test
