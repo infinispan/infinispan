@@ -42,6 +42,7 @@
             </property>
             -->
             <property name="javaVmArguments">
+                -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
             </property>
         </configuration>
     </container>
