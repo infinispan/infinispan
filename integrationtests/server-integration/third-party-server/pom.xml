@@ -233,6 +233,7 @@
             <properties>
                 <infinispan.server.integration.launch>eap</infinispan.server.integration.launch>
                 <jbossHome>${project.build.directory}/eap</jbossHome>
+                <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
             </properties>
             <dependencies>
                 <dependency>
@@ -240,35 +241,6 @@
                     <artifactId>wildfly-arquillian-container-managed</artifactId>
                 </dependency>
             </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>${skipTests}</skip>
-                                    <target>
-                                        <echo message="unzipping eap server" />
-                                        <unzip src="${eap.zip}" dest="${project.build.directory}/eap" />
-                                        <pathconvert property="eap.unzip.dir">
-                                            <dirset dir="${project.build.directory}/eap" includes="jboss-eap-*"/>
-                                        </pathconvert>
-                                        <move todir="${project.build.directory}/eap">
-                                            <fileset dir="${eap.unzip.dir}"/>
-                                        </move>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>
