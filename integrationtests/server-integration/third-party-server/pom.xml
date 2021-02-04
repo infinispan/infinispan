@@ -134,8 +134,6 @@
             <properties>
                 <infinispan.server.integration.launch>tomcat</infinispan.server.integration.launch>
                 <catalinaHome>${project.build.directory}/tomcat</catalinaHome>
-                <!-- jws=jws-*/tomcat -->
-                <catalinaUnzipExpression>apache-tomcat-*</catalinaUnzipExpression>
                 <infinispan.server.integration.data-source>java:comp/env/datasources/ExampleDS</infinispan.server.integration.data-source>
             </properties>
             <dependencies>
@@ -161,16 +159,8 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <echo message="unzipping tomcat server" />
-                                        <unzip src="${tomcat.zip}" dest="${project.build.directory}/tomcat" />
-                                        <pathconvert property="tomcat.unzip.dir">
-                                            <dirset dir="${project.build.directory}/tomcat" includes="${catalinaUnzipExpression}"/>
-                                        </pathconvert>
-                                        <move todir="${project.build.directory}/tomcat">
-                                            <fileset dir="${tomcat.unzip.dir}"/>
-                                        </move>
-                                        <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${project.build.directory}/tomcat/conf" overwrite="true" />
-                                        <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${project.build.directory}/tomcat/conf" overwrite="true" />
+                                        <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${catalinaHome}/conf" overwrite="true" />
+                                        <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${catalinaHome}/conf" overwrite="true" />
                                     </target>
                                 </configuration>
                             </execution>
