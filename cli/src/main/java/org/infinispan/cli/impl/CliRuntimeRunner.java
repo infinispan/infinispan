@@ -10,17 +10,13 @@ import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.command.validator.OptionValidatorException;
 
 public class CliRuntimeRunner {
-   private final String comandName;
+   private final String commandName;
    private final CommandRuntime runtime;
    private String[] args;
 
-   private CliRuntimeRunner(String commandName, CommandRuntime runtime) {
-      this.comandName = commandName;
+   public CliRuntimeRunner(String commandName, CommandRuntime runtime) {
+      this.commandName = commandName;
       this.runtime = runtime;
-   }
-
-   public static CliRuntimeRunner builder(String comandName, CommandRuntime runtime) {
-      return new CliRuntimeRunner(comandName, runtime);
    }
 
    public CliRuntimeRunner args(String[] args) {
@@ -28,8 +24,8 @@ public class CliRuntimeRunner {
       return this;
    }
 
-   public void execute() {
-      StringBuilder sb = new StringBuilder(comandName);
+   public int execute() {
+      StringBuilder sb = new StringBuilder(commandName);
       if (args.length > 0) {
          sb.append(" ");
          if (args.length == 1) {
@@ -44,18 +40,19 @@ public class CliRuntimeRunner {
             }
          }
       }
-
       try {
          runtime.executeCommand(sb.toString());
+         return ExitCodeResultHandler.exitCode;
       } catch (CommandNotFoundException e) {
-         System.err.println("Command not found: " + sb.toString());
+         System.err.println("Command not found: " + sb);
+         return 1;
       } catch (CommandException | CommandLineParserException | CommandValidatorException | OptionValidatorException e) {
-         showHelpIfNeeded(runtime, comandName, e);
+         showHelpIfNeeded(runtime, commandName, e);
+         return 1;
       } catch (InterruptedException | IOException e) {
          System.err.println(e.getMessage());
+         return 1;
       }
-
-
    }
 
    private static void showHelpIfNeeded(CommandRuntime runtime, String commandName, Exception e) {

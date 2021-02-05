@@ -22,6 +22,7 @@ import org.infinispan.cli.commands.rest.Shutdown;
 import org.infinispan.cli.commands.rest.Site;
 import org.infinispan.cli.commands.rest.Stats;
 import org.infinispan.cli.commands.rest.Task;
+import org.infinispan.cli.impl.ExitCodeResultHandler;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -65,7 +66,7 @@ import org.infinispan.cli.commands.rest.Task;
             Task.class,
             User.class,
             Version.class
-      })
+      }, resultHandler = ExitCodeResultHandler.class)
 public class Batch implements Command {
 
    @Override

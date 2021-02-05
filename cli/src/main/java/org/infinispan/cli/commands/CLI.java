@@ -14,13 +14,11 @@ import java.util.Properties;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.aesh.AeshRuntimeRunner;
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.impl.AeshCommandRuntime;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
@@ -175,7 +173,7 @@ public class CLI extends CliCommand {
       }
 
       if (properties != null) {
-         try(Reader r = Files.newBufferedReader(Paths.get(properties))) {
+         try (Reader r = Files.newBufferedReader(Paths.get(properties))) {
             Properties loaded = new Properties();
             loaded.load(r);
             loaded.forEach(context.getProperties()::putIfAbsent);
@@ -232,7 +230,7 @@ public class CLI extends CliCommand {
 
       runtimeBuilder.shell(shell);
 
-      CliRuntimeRunner cliRunner = CliRuntimeRunner.builder("batch", runtimeBuilder.build());
+      CliRuntimeRunner cliRunner = new CliRuntimeRunner("batch", runtimeBuilder.build());
       cliRunner
             .args(new String[]{"run", inputFile})
             .execute();
@@ -267,7 +265,7 @@ public class CLI extends CliCommand {
             .quitHandler(new ContextAwareQuitHandler(context));
 
       if (shell instanceof AeshDelegatingShell) {
-         settings.connection(((AeshDelegatingShell)shell).getConnection());
+         settings.connection(((AeshDelegatingShell) shell).getConnection());
       }
 
       ReadlineConsole console = new ReadlineConsole(settings.build());
@@ -321,25 +319,23 @@ public class CLI extends CliCommand {
       return ProcessInfo.getInstance().getName().contains("kubectl") || Boolean.getBoolean("infinispan.cli.kubernetes");
    }
 
-   public static void main(Shell shell, String[] args, Properties properties) {
+   public static int main(Shell shell, String[] args, Properties properties) {
+      CommandRuntime runtime = null;
       try {
          SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
-         CommandRuntime runtime = initialCommandRuntimeBuilder(shell, properties).build();
-         AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
-         Util.close((AutoCloseable) runtime.getAeshContext());
+         runtime = initialCommandRuntimeBuilder(shell, properties).build();
+         int exitCode = new CliRuntimeRunner("cli", runtime).args(args).execute();
+         return exitCode;
       } catch (Exception e) {
          throw new RuntimeException(e);
+      } finally {
+         if (runtime != null) {
+            Util.close((AutoCloseable) runtime.getAeshContext());
+         }
       }
    }
 
    public static void main(String[] args) {
-      try {
-         SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
-         CommandRuntime runtime = (AeshCommandRuntime) initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties()).build();
-         AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
-         Util.close((AutoCloseable) runtime.getAeshContext());
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
+      System.exit(main(new DefaultShell(), args, System.getProperties()));
    }
 }
