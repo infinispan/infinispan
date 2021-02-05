@@ -12,6 +12,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.impl.ExitCodeResultHandler;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.kohsuke.MetaInfServices;
 
@@ -20,7 +21,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = "run", description = "Reads and executes commands from one or more files")
+@CommandDefinition(name = "run", description = "Reads and executes commands from one or more files", resultHandler = ExitCodeResultHandler.class)
 public class Run extends CliCommand {
 
    @Arguments(required = true, completer = FileOptionCompleter.class)
@@ -36,7 +37,6 @@ public class Run extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-
       if (arguments != null && arguments.size() > 0) {
          for (Resource resource : arguments) {
             try (BufferedReader br = new BufferedReader("-".equals(resource.getName()) ? new InputStreamReader(System.in) : new InputStreamReader(resource.read()))) {
