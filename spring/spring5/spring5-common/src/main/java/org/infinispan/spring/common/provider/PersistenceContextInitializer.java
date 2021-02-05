@@ -1,8 +1,7 @@
-package org.infinispan.spring.common;
+package org.infinispan.spring.common.provider;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.spring.common.provider.NullValue;
 
 /**
  * Interface used to initialise a {@link org.infinispan.protostream.SerializationContext} using the specified Pojos,
@@ -15,9 +14,9 @@ import org.infinispan.spring.common.provider.NullValue;
       includeClasses = {
             NullValue.class,
       },
-      schemaFileName = "persistence.spring.proto",
+      schemaFileName = "persistence.spring5.provider.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.spring",
+      schemaPackageName = "org.infinispan.persistence.spring.provider",
       service = false
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
