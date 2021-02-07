@@ -3,6 +3,11 @@
 = Interacting with the {brandname} REST API
 The {brandname} REST API lets you monitor, maintain, and manage {brandname}
 deployments and provides access to your data.
+[NOTE]
+====
+By default {brandname} REST API operations return `200 (OK)` when successful.
+However, when some operations are processed successfully, they return an HTTP status code such as `204` or `202` instead of `200`.
+====
 
 [id='rest_v2_cache_operations']
 == Creating and Managing Caches

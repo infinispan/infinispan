@@ -119,8 +119,11 @@ The preceding request places the payload, or request body, in the `cacheName`
 cache with the `cacheKey` key. The request replaces any data that already
 exists and updates the `Time-To-Live` and `Last-Modified` values, if they apply.
 
-If a value already exists for the specified key, the `POST` request returns an
-HTTP `CONFLICT` status and does not modify the value. To update values, you
+If the entry is created successfully, the service returns `204 (No Content)`.
+
+If a value already exists for the specified key, the `POST` request returns
+`409 (Conflict)` and does not modify the value.
+To update values, you
 should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
 
 .Headers
@@ -180,7 +183,7 @@ PUT /rest/v2/caches/{cacheName}/{cacheKey}
 
 If a value already exists for the specified key, the `PUT` request updates the
 value. If you do not want to modify existing values, use `POST` requests that
-return HTTP `CONFLICT` status instead of modifying values. See
+return `409 (Conflict)` instead of modifying values. See
 link:#rest_v2_add_entries[Adding Values].
 
 [id='rest_v2_retrieve_cache']
@@ -372,6 +375,7 @@ To delete all data from a cache, invoke a `POST` request with the
 POST /rest/v2/caches/{cacheName}?action=clear
 ----
 
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_cache_size']
 = Getting Cache Size
@@ -470,8 +474,8 @@ POST  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
 
 Values for the `mode` parameter are as follows:
 
-* `sync` returns a response of `200` only after the re-indexing operation is complete.
-* `async` returns a response of `200` immediately and the re-indexing operation continues running in the cluster. You can check the status with the link:#rest_v2_query_index_stats[Index Statistics] REST call.
+* `sync` returns `204 (No Content)` only after the re-indexing operation is complete.
+* `async` returns `204 (No Content)` immediately and the re-indexing operation continues running in the cluster. You can check the status with the link:#rest_v2_query_index_stats[Index Statistics] REST call.
 
 [id='rest_v2_query_purge_index']
 = Purging Indexes
@@ -482,6 +486,7 @@ parameter.
 ----
 POST  /v2/caches/{cacheName}/search/indexes?action=clear
 ----
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_search_stats']
 = Retrieving Query and Index Statistics

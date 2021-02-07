@@ -2,8 +2,10 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.MULTIPLE_CHOICES;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
@@ -69,12 +71,12 @@ public class SearchAdminResource implements ResourceHandler {
       String cacheName = restRequest.variables().get("cacheName");
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
       if (cache == null) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return null;
       }
       Configuration cacheConfiguration = cache.getCacheConfiguration();
       if (!cacheConfiguration.statistics().enabled()) {
-         responseBuilder.status(NOT_FOUND.code()).build();
+         responseBuilder.status(NOT_FOUND).build();
       }
 
       String scopeParam = restRequest.getParameter("scope");
@@ -93,12 +95,12 @@ public class SearchAdminResource implements ResourceHandler {
       String cacheName = restRequest.variables().get("cacheName");
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
       if (cache == null) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return null;
       }
       Configuration cacheConfiguration = cache.getCacheConfiguration();
       if (!cacheConfiguration.statistics().enabled()) {
-         responseBuilder.status(NOT_FOUND.code()).build();
+         responseBuilder.status(NOT_FOUND).build();
       }
 
       String scopeParam = restRequest.getParameter("scope");
@@ -163,7 +165,7 @@ public class SearchAdminResource implements ResourceHandler {
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
       int status = responseBuilder.getStatus();
-      if (status < 200 || status > 299) {
+      if (status < OK.code() || status >= MULTIPLE_CHOICES.code()) {
          return completedFuture(responseBuilder.build());
       }
 
@@ -182,16 +184,16 @@ public class SearchAdminResource implements ResourceHandler {
                }
             });
          } catch (Exception e) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause());
+            responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error executing the MassIndexer " + e.getCause());
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
       return op.apply(indexer).exceptionally(e -> {
          if (e instanceof MassIndexerAlreadyStartedException) {
-            responseBuilder.status(BAD_REQUEST.code()).entity("MassIndexer already started");
+            responseBuilder.status(BAD_REQUEST).entity("MassIndexer already started");
          } else {
-            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause());
+            responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error executing the MassIndexer " + e.getCause());
          }
          return null;
       }).thenApply(v -> responseBuilder.build());
@@ -201,12 +203,12 @@ public class SearchAdminResource implements ResourceHandler {
       String cacheName = request.variables().get("cacheName");
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null) {
-         builder.status(HttpResponseStatus.NOT_FOUND.code());
+         builder.status(HttpResponseStatus.NOT_FOUND);
          return null;
       }
       Configuration cacheConfiguration = cache.getCacheConfiguration();
       if (!cacheConfiguration.indexing().enabled()) {
-         builder.entity("cache is not indexed").status(BAD_REQUEST.code()).build();
+         builder.entity("cache is not indexed").status(BAD_REQUEST).build();
       }
       return cache;
    }
@@ -216,7 +218,7 @@ public class SearchAdminResource implements ResourceHandler {
       if (cache != null) {
          Configuration cacheConfiguration = cache.getCacheConfiguration();
          if (!cacheConfiguration.statistics().enabled()) {
-            builder.entity("statistics not enabled").status(BAD_REQUEST.code());
+            builder.entity("statistics not enabled").status(BAD_REQUEST);
          }
       }
       return cache;

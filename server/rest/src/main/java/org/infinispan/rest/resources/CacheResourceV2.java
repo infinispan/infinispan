@@ -246,7 +246,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.supplyAsync(() -> {
          restCacheManager.getCacheManagerAdmin(request).removeCache(cacheName);
          return new NettyRestResponse.Builder()
-               .status(NO_CONTENT)
                .status(OK)
                .build();
       }, invocationHelper.getExecutor());
@@ -263,7 +262,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private CompletableFuture<RestResponse> createCache(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
 

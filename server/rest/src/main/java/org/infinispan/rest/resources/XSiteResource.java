@@ -174,11 +174,11 @@ public class XSiteResource implements ResourceHandler {
       TakeOfflineConfiguration current = Security.doAs(request.getSubject(), (PrivilegedAction<TakeOfflineConfiguration>) () -> xsiteAdmin.getTakeOfflineConfiguration(site));
 
       if (current == null) {
-         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
       }
       String content = request.contents().asString();
       if (content == null || content.isEmpty()) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
 
       int afterFailures, minWait;
@@ -196,12 +196,12 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(rootCause.getMessage()).build());
       }
       if (afterFailures == current.afterFailures() && minWait == current.minTimeToWait()) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build());
       }
       return CompletableFuture.supplyAsync(() -> {
          String status = xsiteAdmin.amendTakeOffline(site, afterFailures, minWait);
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(site);
+            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(site);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -214,7 +214,7 @@ public class XSiteResource implements ResourceHandler {
       XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
       TakeOfflineConfiguration config = xsiteAdmin.getTakeOfflineConfiguration(site);
       if (config == null) {
-         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
       }
 
       return completedFuture(addEntityAsJson(new TakeOffline(config), responseBuilder).build()
@@ -228,7 +228,7 @@ public class XSiteResource implements ResourceHandler {
       XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
 
       if (!xsiteAdmin.checkSite(site)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
       }
 
       return CompletableFuture.supplyAsync(
@@ -288,13 +288,13 @@ public class XSiteResource implements ResourceHandler {
       XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
 
       if (xsiteAdmin == null || !xsiteAdmin.checkSite(site)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
       }
 
       return CompletableFuture.supplyAsync(() -> {
          String result = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteOp.apply(xsiteAdmin, site));
          if (!result.equals(XSiteAdminOperations.SUCCESS)) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(result);
+            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(result);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());

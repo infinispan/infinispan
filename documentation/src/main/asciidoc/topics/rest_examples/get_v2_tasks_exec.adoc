@@ -1,1 +1,1 @@
-GET /rest/v2/tasks/myTask?action=exec&param.p1=v1&param.p2=v2
+POST /rest/v2/tasks/myTask?action=exec&param.p1=v1&param.p2=v2

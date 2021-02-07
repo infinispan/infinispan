@@ -222,6 +222,8 @@ stored in the cache manager.
 POST /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
 ----
 
+If a backup with the same name already exists, the service responds with `409 (Conflict)`.
+If the `directory` parameter is not valid, the service returns `400 (Bad Request)`.
 A `202` response indicates that the backup request is accepted for processing.
 
 Optionally include a JSON payload with your request that contains parameters
@@ -419,8 +421,8 @@ Verify that a restore operation is complete.
 HEAD /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
 ----
 
-A `200` response indicates the restore operation is completed.
-A `202` response indicates the backup operation is in progress.
+A `201 (Created)` response indicates the restore operation is completed.
+A `202 (Accepted)` response indicates the backup operation is in progress.
 
 [id='rest_v2_restore_manager_delete']
 = Deleting Restore Metadata
@@ -433,6 +435,6 @@ the request metadata, you can use the request name to perform subsequent restore
 DELETE /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
 ----
 
-A `204` response indicates that the restore metadata is deleted.
-A `202` response indicates that the restore operation is in progress and will be deleted when the operation
+A `204 (No Content)` response indicates that the restore metadata is deleted.
+A `202 (Accepted)` response indicates that the restore operation is in progress and will be deleted when the operation
 completes.

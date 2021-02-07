@@ -41,32 +41,6 @@ GET /rest/v2/counters/{counterName}/config
 
 {brandname} responds with the counter configuration in JSON format.
 
-
-[id='rest_server_counters_add']
-= Adding Values to Counters
-Add values to specific counters with `POST` requests.
-
-[IMPORTANT]
-====
-This method processes `plain/text` content only.
-====
-
-[source,options="nowrap",subs=attributes+]
-----
-POST /rest/v2/counters/{counterName}
-----
-
-If the request payload is empty, the counter is incremented by one, otherwise
-the payload is interpreted as a signed long and added to the counter.
-
-[NOTE]
-====
-`WEAK` counters never respond after operations.
-
-`STRONG` counters return the current value after each operation.
-====
-
-
 [id='rest_server_counters_get']
 = Getting Counter Values
 Retrieve counter values with `GET` requests.
@@ -96,7 +70,7 @@ Restore the intial value of counters without `POST` requests and the
 ----
 POST /rest/v2/counters/{counterName}?action=reset
 ----
-
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_server_counters_inc_weak']
 = Incrementing Counters
@@ -110,9 +84,9 @@ POST /rest/v2/counters/{counterName}?action=increment
 
 [NOTE]
 ====
-`WEAK` counters never respond after operations.
+`WEAK` counters never respond after operations and return `204 (No Content)`.
 
-`STRONG` counters return the current value after each operation.
+`STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
 
@@ -128,9 +102,9 @@ POST /rest/v2/counters/{counterName}?action=add&delta={delta}
 
 [NOTE]
 ====
-`WEAK` counters never respond after operations.
+`WEAK` counters never respond after operations and return `204 (No Content)`.
 
-`STRONG` counters return the current value after each operation.
+`STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
 
@@ -146,9 +120,9 @@ POST /rest/v2/counters/{counterName}?action=decrement
 
 [NOTE]
 ====
-`WEAK` counters never respond after operations.
+`WEAK` counters never respond after operations and return `204 (No Content)`.
 
-`STRONG` counters return the current value after each operation.
+`STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
 

@@ -20,3 +20,5 @@ cluster with `POST` requests and the `?action=disconnect-source` parameter:
 ----
 POST /v2/caches/{cacheName}?action=disconnect-source
 ----
+
+If the operation successfully completes, the service returns `204 (No Content)`.

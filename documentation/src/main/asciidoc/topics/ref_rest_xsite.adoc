@@ -191,6 +191,7 @@ follows:
 ----
 PUT /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_xsite_cancel_receive_state']
 = Canceling State Transfer from Receiving Sites

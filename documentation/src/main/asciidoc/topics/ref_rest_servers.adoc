@@ -28,6 +28,11 @@ GET /rest/v2/server/cache-managers
 {brandname} responds with an array of the cache manager names configured for
 the server.
 
+[NOTE]
+====
+{brandname} currently supports one cache manager per server only.
+====
+
 
 [id='rest_v2_cache_ignore']
 = Adding Caches to Ignore Lists
@@ -40,8 +45,7 @@ name and the cache.
 POST /v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
-{brandname} returns a service unavailable status (`503`) for REST client
-requests and a Server Error (`code 0x85`) for Hot Rod client requests.
+{brandname} responds with `204 (No Content)` if the cache is successfully added to the ignore list or `404 (Not Found)` if the cache or cache manager are not found.
 
 [NOTE]
 ====
@@ -59,6 +63,7 @@ Remove caches from the ignore list with `DELETE` requests.
 DELETE /v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
+{brandname} responds with `204 (No Content)` if the cache is successfully removed from ignore list or `404 (Not Found)` if the cache or cache manager are not found.
 
 [id='rest_v2_cache_ignore_confirm']
 = Confirming Ignored Caches
@@ -146,4 +151,4 @@ Stop {brandname} servers with `POST` requests.
 POST /rest/v2/server?action=stop
 ----
 
-{brandname} responds with `200(OK)` and then stops running.
+{brandname} responds with `204 (No Content)` and then stops running.
