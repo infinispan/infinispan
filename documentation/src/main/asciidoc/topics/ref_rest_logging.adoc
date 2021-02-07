@@ -44,6 +44,7 @@ PUT /rest/v2/logging/loggers/{loggerName}?level={level}&appender={appender}&appe
 Optionally, it is possible to set one or more appenders for the logger.
 If no appenders are specified, those specified in the root logger will be used.
 
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_logging_remove_logger']
 = Removing a logger
@@ -55,3 +56,5 @@ DELETE /rest/v2/logging/loggers/{loggerName}
 ----
 
 {brandname} removes the logger identified by `{loggerName}`, effectively reverting to the use of the root logger configuration.
+
+If operation processed successfully, the service returns a response code `204 (No Content)`.

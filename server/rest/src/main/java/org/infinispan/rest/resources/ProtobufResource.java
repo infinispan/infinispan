@@ -143,9 +143,9 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          if (entry == null) {
-            responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+            responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          } else {
-            responseBuilder.status(HttpResponseStatus.OK.code());
+            responseBuilder.status(HttpResponseStatus.OK);
             responseBuilder.contentType(MediaType.TEXT_PLAIN);
             responseBuilder.entity(entry.getValue());
          }
@@ -164,7 +164,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
-            responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
+            responseBuilder.status(HttpResponseStatus.NO_CONTENT);
             return restCacheManager.remove(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, schemaName,
                   MediaType.MATCH_ALL, request)
                   .thenApply(v -> responseBuilder.build());

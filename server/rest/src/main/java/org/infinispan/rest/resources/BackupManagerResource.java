@@ -83,12 +83,12 @@ class BackupManagerResource {
 
       Json json = Json.read(request.contents().asString());
       Json dirJson = json.at(DIR_KEY);
-      Path workingDIr = dirJson == null ? null : Paths.get(dirJson.asString());
-      if (workingDIr != null && !Files.isDirectory(workingDIr))
+      Path workingDir = dirJson == null ? null : Paths.get(dirJson.asString());
+      if (workingDir != null && !Files.isDirectory(workingDir))
          return responseFuture(BAD_REQUEST, String.format("'%s' must be a directory", DIR_KEY));
 
       Json requestsJson = json.at(RESOURCES_KEY);
-      creationConsumer.accept(name, workingDIr, requestsJson);
+      creationConsumer.accept(name, workingDir, requestsJson);
       return responseFuture(ACCEPTED);
    }
 

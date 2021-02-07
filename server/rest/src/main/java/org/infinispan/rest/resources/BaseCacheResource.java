@@ -70,11 +70,11 @@ public class BaseCacheResource {
             String etag = calcETAG(ice.getValue());
             String clientEtag = request.getEtagIfNoneMatchHeader();
             if (clientEtag == null || clientEtag.equals(etag)) {
-               responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
+               responseBuilder.status(HttpResponseStatus.NO_CONTENT);
                return restCacheManager.remove(cacheName, key, keyContentType, request).thenApply(v -> responseBuilder.build());
             } else {
                //ETags don't match, so preconditions failed
-               responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED.code());
+               responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED);
             }
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
@@ -102,7 +102,7 @@ public class BaseCacheResource {
 
       return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
          if (request.method() == POST && entry != null) {
-            return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT.code()).entity("An entry already exists").build());
+            return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT).entity("An entry already exists").build());
          }
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry ice = (InternalCacheEntry) entry;
@@ -111,7 +111,7 @@ public class BaseCacheResource {
                String etag = calcETAG(ice.getValue());
                if (etagNoneMatch.equals(etag)) {
                   //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
-                  responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code());
+                  responseBuilder.status(HttpResponseStatus.NOT_MODIFIED);
                   return CompletableFuture.completedFuture(responseBuilder.build());
                }
             }
@@ -124,7 +124,7 @@ public class BaseCacheResource {
       String cacheName = request.variables().get("cacheName");
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
+      responseBuilder.status(HttpResponseStatus.NO_CONTENT);
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
@@ -148,7 +148,7 @@ public class BaseCacheResource {
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;

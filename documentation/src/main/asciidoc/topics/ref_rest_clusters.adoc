@@ -7,7 +7,7 @@ Shut down entire {brandname} clusters with `POST` requests.
 POST /rest/v2/cluster?action=stop
 ----
 
-{brandname} responds with `200(OK)` and then performs an orderly shutdown of
+{brandname} responds with `204 (No Content)` and then performs an orderly shutdown of
 the entire cluster.
 
 
@@ -21,7 +21,7 @@ requests and the `?action=stop&server` parameter.
 POST /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
 ----
 
-{brandname} responds with `200(OK)`.
+{brandname} responds with `204 (No Content)`.
 
 [id='rest_v2_backup_cluster']
 = Backing Up {brandname} Clusters
@@ -46,6 +46,10 @@ for the backup operation, as follows:
 |Specifies a location on the server to create and store the backup archive.
 
 |===
+
+If the backup operation successfully completes, the service returns `202 (Accepted)`.
+If a backup with the same name already exists, the service returns  `409 (Conflict)`.
+If the `directory` parameter is not valid, the service returns `400 (Bad Request)`.
 
 [id='rest_v2_backup_cluster_list']
 = Listing Backups
@@ -198,7 +202,7 @@ Verify that a restore operation is complete.
 HEAD /rest/v2/cluster/restores/{restoreName}
 ----
 
-A `200` response indicates the restore operation is completed.
+A `201 (Created)` response indicates the restore operation is completed.
 A `202` response indicates the backup operation is in progress.
 
 [id='rest_v2_restore_cluster_delete']

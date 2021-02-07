@@ -30,7 +30,7 @@ include::json_examples/rest_tasks_response.json[]
 
 [id='rest_v2_tasks_execute']
 = Executing Tasks
-Execute tasks with `GET` requests that include the task name and required parameters prefixed with `param`.
+Execute tasks with `POST` requests that include the task name and required parameters prefixed with `param`.
 
 [source,options="nowrap",subs=attributes+]
 ----

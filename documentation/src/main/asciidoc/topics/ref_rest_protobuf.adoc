@@ -8,7 +8,7 @@ include the content of a protobuf file in the payload.
 POST /rest/v2/schemas/{schemaName}
 ----
 
-If the schema already exists, {brandname} returns `CONFLICT`.
+If the schema already exists, {brandname} returns HTTP `409 (Conflict)`.
 If the schema is not valid, either because of syntax errors, or because some of its dependencies are missing,
 {brandname} stores the schema and returns the error in the response body.
 
@@ -21,6 +21,8 @@ include::json_examples/rest_protobuf_create_update_schema_response.json[]
 
 * `name` is the name of the Protobuf schema.
 * `error` is `null` for valid Protobuf schemas. If {brandname} cannot successfully validate the schema, it returns errors.
+
+If the operation successfully completes, the service returns `201 (Created)`.
 
 [id='rest_v2_get_protobuf']
 = Reading Protobuf Schemas
@@ -59,6 +61,7 @@ Remove Protobuf schemas from {brandname} clusters with `DELETE` requests.
 ----
 DELETE /rest/v2/schemas/{schemaName}
 ----
+If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_list_protobuf']
 = Listing Protobuf Schemas
