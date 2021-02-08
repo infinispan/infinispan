@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.cdi;
+package org.infinispan.test.integration.cdi;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -11,7 +11,7 @@ import javax.inject.Qualifier;
 /**
  * <p>The greeting cache qualifier.</p>
  *
- * <p>This qualifier will be associated to the greeting cache in the {@link Config} class.</p>
+ * <p>This qualifier will be associated to the greeting cache in the {@link CdiConfig} class.</p>
  *
  * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  */

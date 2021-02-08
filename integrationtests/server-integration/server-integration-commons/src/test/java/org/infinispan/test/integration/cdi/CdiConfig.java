@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.cdi;
+package org.infinispan.test.integration.cdi;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -16,7 +16,7 @@ import org.infinispan.manager.DefaultCacheManager;
  * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  * @author Galder Zamarreño
  */
-public class Config {
+public class CdiConfig {
 
    /**
     * <p>This producer defines the greeting cache configuration.</p>

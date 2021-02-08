@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.cdi;
+package org.infinispan.test.integration.cdi;
 
 import javax.cache.annotation.CacheResult;
 
@@ -15,7 +15,7 @@ import javax.cache.annotation.CacheResult;
 public class GreetingService {
 
    @CacheResult(cacheName = "greeting-cache")
-   public java.lang.String greet(String name) {
+   public String greet(String name) {
       return "Hello " + name + " :)";
    }
 
