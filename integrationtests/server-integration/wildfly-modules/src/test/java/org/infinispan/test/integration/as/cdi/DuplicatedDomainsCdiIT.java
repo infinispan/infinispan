@@ -1,10 +1,9 @@
 package org.infinispan.test.integration.as.cdi;
 
-import javax.inject.Inject;
-
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Version;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.integration.cdi.AbstractDuplicatedDomainsCdiIT;
+import org.infinispan.test.integration.cdi.CdiConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -14,7 +13,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
-import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 /**
@@ -23,14 +22,16 @@ import org.junit.runner.RunWith;
  *
  * @author Sebastian Laskawiec
  */
+@Ignore("ISPN-12712")
 @RunWith(Arquillian.class)
-public class DuplicatedDomainsCdiIT {
+public class DuplicatedDomainsCdiIT extends AbstractDuplicatedDomainsCdiIT {
 
    @Deployment
    public static Archive<?> deployment() {
       WebArchive webArchive = ShrinkWrap
             .create(WebArchive.class, "cdi.war")
-            .addClass(DuplicatedDomainsCdiIT.class)
+            .addClass(AbstractDuplicatedDomainsCdiIT.class)
+            .addClass(CdiConfig.class)
             .add(manifest(), "META-INF/MANIFEST.MF");
       return webArchive;
    }
@@ -39,18 +40,5 @@ public class DuplicatedDomainsCdiIT {
       String manifest = Descriptors.create(ManifestDescriptor.class)
             .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
-   }
-
-   @Inject
-   private AdvancedCache<Object, Object> greetingCache;
-
-   /**
-    * Creates new {@link DefaultCacheManager}.
-    * This test will fail if CDI Extension registers and won't set Cache Manager's name.
-    */
-   @Test
-   public void testIfCreatingDefaultCacheManagerSucceeds() {
-      DefaultCacheManager cacheManager = new DefaultCacheManager();
-      cacheManager.stop();
    }
 }
