@@ -1,5 +1,6 @@
 package org.infinispan.remoting.transport.impl;
 
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
@@ -50,7 +51,7 @@ public class VoidResponseCollector extends ValidResponseCollector<Void> {
    private void recordException(Exception e) {
       if (this.exception == null) {
          this.exception = e;
-      } else {
+      } else if (this.exception instanceof RemoteException) {
          this.exception.addSuppressed(e);
       }
    }

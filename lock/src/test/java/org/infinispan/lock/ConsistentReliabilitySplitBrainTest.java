@@ -1,15 +1,13 @@
 package org.infinispan.lock;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.commons.test.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.lock.api.ClusteredLock;
@@ -68,12 +66,7 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
 
       asList(lock0, lock1, lock2, lock3, lock4, lock5).forEach(lock -> {
          assertNotNull(lock);
-         await(lock.tryLock().whenComplete((r, ex) -> {
-            fail("should go the exceptionally! result=" + r + " exception= " + ex);
-         }).exceptionally(t -> {
-            assertException(CompletionException.class, ClusteredLockException.class, AvailabilityException.class, t);
-            return null;
-         }));
+         expectCompletionException(ClusteredLockException.class, AvailabilityException.class, lock.tryLock());
       });
    }
 
@@ -159,25 +152,14 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
    }
 
    private void assertTryLock(ClusteredLock lock) {
-      assertTrue("Lock acquisition should be true " + lock, await(lock.tryLock(29, TimeUnit.SECONDS)
-            .thenApply(tryLockRequest -> {
-               if (tryLockRequest) {
-                  await(lock.unlock());
-               }
-               return tryLockRequest;
-            }).exceptionally(ex -> {
-               fail("Should not be failing from majority partition " + lock + " " + ex.getMessage());
-               return Boolean.FALSE;
-            })));
+      Boolean locked = await(lock.tryLock(29, TimeUnit.SECONDS));
+      if (locked) {
+         await(lock.unlock());
+      }
+      assertTrue("Lock acquisition should be true " + lock, locked);
    }
 
    private void assertFailureFromMinorityPartition(ClusteredLock lock) {
-      await(lock.tryLock()
-            .whenComplete((r, ex) -> {
-               fail("Should fail from minority partition");
-            }).exceptionally(ex -> {
-               assertException(CompletionException.class, ClusteredLockException.class, AvailabilityException.class, ex);
-               return null;
-            }));
+      expectCompletionException(ClusteredLockException.class, AvailabilityException.class, lock.tryLock());
    }
 }
