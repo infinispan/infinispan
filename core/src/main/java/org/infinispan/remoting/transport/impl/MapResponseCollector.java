@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -68,7 +69,7 @@ public abstract class MapResponseCollector extends ValidResponseCollector<Map<Ad
    protected void recordException(Exception e) {
       if (this.exception == null) {
          this.exception = e;
-      } else if (this.exception != e) {
+      } else if (this.exception instanceof RemoteException) {
          this.exception.addSuppressed(e);
       }
    }
