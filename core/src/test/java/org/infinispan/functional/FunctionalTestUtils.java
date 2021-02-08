@@ -23,6 +23,7 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 
 public final class FunctionalTestUtils {
 
@@ -61,11 +62,7 @@ public final class FunctionalTestUtils {
    }
 
    public static <T> T await(CompletableFuture<T> cf) {
-      try {
-         return cf.get(MAX_WAIT_SECS, TimeUnit.SECONDS);
-      } catch (TimeoutException | InterruptedException | ExecutionException e) {
-         throw new Error(e);
-      }
+      return CompletionStages.join(cf);
    }
 
    public static <T> T await(CompletionStage<T> cf) {
