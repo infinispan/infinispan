@@ -78,7 +78,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    @Inject
    protected void injectDependencies(ComponentRegistry componentRegistry, QueryCache queryCache) {
       this.queryCache = queryCache;
-      cacheName = componentRegistry.getCache().getName();
+      cacheName = componentRegistry.getCache().wired().getName();
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {
          throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());

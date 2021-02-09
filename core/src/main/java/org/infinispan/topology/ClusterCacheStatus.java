@@ -1099,7 +1099,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
                   // TODO When CR fails because a node left the cluster, the new CR can start before we cancel the old one
                   Log.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
-                  eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
+                  eventLogger.error(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
                      topology.getMembers(), topology.getTopologyId(), rootCause.getMessage()));
                   // If a node is suspected then we can't restart the CR until a new view is received, so we leave conflictResolution != null
                   // so that on a new view restartConflictResolution can return true
