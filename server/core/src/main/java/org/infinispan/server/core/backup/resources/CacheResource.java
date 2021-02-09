@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -117,6 +118,7 @@ public class CacheResource extends AbstractContainerResource {
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
                ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null);
                Configuration cfg = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
+               log.debugf("Restoring Cache %s: %s", cacheName, cfg.toXMLString(cacheName));
                // GetOrCreate in the event that a default cache is defined. This also allows cache-configurations to be
                // modified prior to a restore if only the backed up data is required
                cm.administration().getOrCreateCache(cacheName, cfg);
@@ -145,6 +147,8 @@ public class CacheResource extends AbstractContainerResource {
 
             SerializationContextRegistry ctxRegistry = cm.getGlobalComponentRegistry().getComponent(SerializationContextRegistry.class);
             ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
+
+            int entries = 0;
             try (InputStream is = zip.getInputStream(zipEntry)) {
                while (is.available() > 0) {
                   CacheBackupEntry entry = readMessageStream(serCtx, CacheBackupEntry.class, is);
@@ -157,10 +161,12 @@ public class CacheResource extends AbstractContainerResource {
                         internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
                   cmd.setInternalMetadata(entry.internalMetadata);
                   invocationHelper.invoke(cmd, 1);
+                  entries++;
                }
             } catch (IOException e) {
                throw new CacheException(e);
             }
+            log.debugf("Cache %s restored %d entries", cacheName, entries);
          }, "restore-cache-" + cacheName));
       }
       return stages.freeze();
@@ -206,6 +212,8 @@ public class CacheResource extends AbstractContainerResource {
          PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
          Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
+         log.debugf("Backing up Cache %s", configuration.toXMLString(cacheName));
+         final AtomicInteger entries = new AtomicInteger();
          Flowable.using(
                () -> Files.newOutputStream(datFile),
                output ->
@@ -220,8 +228,12 @@ public class CacheResource extends AbstractContainerResource {
                               be.lastUsed = e.getLastUsed();
                               return be;
                            })
-                           .doOnNext(e -> writeMessageStream(e, serCtx, output))
-                           .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper()),
+                           .doOnNext(e -> {
+                              entries.incrementAndGet();
+                              writeMessageStream(e, serCtx, output);
+                           })
+                           .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper())
+                           .doOnComplete(() -> log.debugf("Cache %s backed up %d entries", cacheName, entries.get())),
                OutputStream::close)
                .subscribe();
       }, "backup-cache");
