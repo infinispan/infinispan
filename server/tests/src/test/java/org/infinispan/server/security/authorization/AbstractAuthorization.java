@@ -2,9 +2,12 @@ package org.infinispan.server.security.authorization;
 
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -198,8 +201,23 @@ public abstract class AbstractAuthorization {
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.getAll(bulkData.keySet())
       );
+      //make sure iterator() is invoked (ISPN-12716)
+      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+            () -> new ArrayList<>(readerCache.keySet())
+      );
+      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+            () -> new ArrayList<>(readerCache.values())
+      );
+      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+            () -> new ArrayList<>(readerCache.entrySet())
+      );
+
       RemoteCache<String, String> supervisorCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("supervisor")).get();
       supervisorCache.getAll(bulkData.keySet());
+      //make sure iterator() is invoked (ISPN-12716)
+      assertFalse(new HashSet<>(supervisorCache.keySet()).isEmpty());
+      assertFalse(new HashSet<>(supervisorCache.values()).isEmpty());
+      assertFalse(new HashSet<>(supervisorCache.entrySet()).isEmpty());
    }
 
    @Test
