@@ -40,9 +40,9 @@ import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.NullCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -95,6 +95,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Inject EntryMergePolicyFactoryRegistry mergePolicyRegistry;
    @Inject TimeService timeService;
    @Inject BlockingManager blockingManager;
+   @Inject InternalEntryFactory internalEntryFactory;
 
    private String cacheName;
    private Address localAddress;
@@ -390,8 +391,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          if (keyOwners.contains(localAddress)) {
             GetCacheEntryCommand cmd = commandsFactory.buildGetCacheEntryCommand(key, info.segmentId(), localFlags);
             InvocationContext ctx = invocationContextFactory.createNonTxInvocationContext();
-            InternalCacheEntry<K, V> internalCacheEntry = (InternalCacheEntry<K, V>) interceptorChain.running().invoke(ctx, cmd);
-            InternalCacheValue<V> icv = internalCacheEntry == null ? null : internalCacheEntry.toInternalCacheValue();
+            CacheEntry<K, V> entry = (CacheEntry<K, V>) interceptorChain.running().invoke(ctx, cmd);
+            InternalCacheValue<V> icv = entry != null ? internalEntryFactory.createValue(entry) : null;
             synchronized (versionsMap) {
                versionsMap.put(localAddress, icv);
             }
