@@ -110,7 +110,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Start
    public void start() {
-      this.cacheName = cache.getName();
+      this.cacheName = cache.wired().getName();
       this.localAddress = rpcManager.getAddress();
 
       PartitionHandlingConfiguration config = cacheConfiguration.clustering().partitionHandling();
@@ -251,7 +251,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             .toCompletableFuture();
       return conflictFuture.whenComplete((Void, t) -> {
          if (t != null) {
-            log.errorf("Cache %s encountered exception whilst trying to resolve conflicts on merge: %s", cacheName, t);
             if (conflictSpliterator != null) {
                conflictSpliterator.stop();
                conflictSpliterator = null;

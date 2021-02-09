@@ -1788,7 +1788,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Conflict resolution finished for cache %s with topology %s", id = 523)
    void finishedConflictResolution(String cacheName, CacheTopology currentTopology);
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = ERROR)
    @Message(value = "Conflict resolution failed for cache %s with topology %s", id = 524)
    void failedConflictResolution(String cacheName, CacheTopology currentTopology, @Cause Throwable t);
 
