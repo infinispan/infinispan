@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.BaseCacheStream;
-import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -43,7 +42,6 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
 /**
@@ -51,7 +49,7 @@ import com.github.benmanes.caffeine.cache.RemovalListener;
  * @since 8.0
  */
 class IterationSegmentsListener implements BaseCacheStream.SegmentCompletionListener {
-   private Set<Integer> finished = new HashSet<>();
+   private final Set<Integer> finished = new HashSet<>();
    private Set<Integer> justFinished = new HashSet<>();
 
    Set<Integer> getFinished(boolean endOfIteration) {
@@ -131,37 +129,34 @@ public class DefaultIterationManager implements IterationManager {
 
    public DefaultIterationManager(TimeService timeService) {
       Caffeine<Object, Object> builder = Caffeine.newBuilder();
-      builder.expireAfterAccess(5, TimeUnit.MINUTES).removalListener(new RemovalListener<String, DefaultIterationState>() {
-         @Override
-         public void onRemoval(String key, DefaultIterationState value, RemovalCause cause) {
-            value.close();
-            if (cause.wasEvicted()) {
-               log.removedUnclosedIterator(key);
-            }
-         }
-      }).ticker(new TimeServiceTicker(timeService)).executor(new WithinThreadExecutor());
+      builder.expireAfterAccess(5, TimeUnit.MINUTES).removalListener(
+            (RemovalListener<String, DefaultIterationState>) (key, value, cause) -> {
+               value.close();
+               if (cause.wasEvicted()) {
+                  log.removedUnclosedIterator(key);
+               }
+            }).ticker(new TimeServiceTicker(timeService)).executor(new WithinThreadExecutor());
       iterationStateMap = builder.build();
    }
 
    @Override
-   public IterationState start(Cache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
+   public IterationState start(AdvancedCache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
       String iterationId = Util.threadLocalRandomUUID().toString();
-      AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
 
-      EmbeddedCacheManager cacheManager = cache.getAdvancedCache().getCacheManager();
-      EncoderRegistry encoderRegistry = cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
-      DataConversion valueDataConversion = advancedCache.getValueDataConversion();
+      EmbeddedCacheManager cacheManager = SecurityActions.getEmbeddedCacheManager(cache);
+      EncoderRegistry encoderRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EncoderRegistry.class);
+      DataConversion valueDataConversion = cache.getValueDataConversion();
       Function<Object, Object> unmarshaller = p -> encoderRegistry.convert(p, requestValueType, APPLICATION_OBJECT);
 
-      MediaType storageMediaType = advancedCache.getValueDataConversion().getStorageMediaType();
+      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
 
       IterationSegmentsListener segmentListener = new IterationSegmentsListener();
       CacheStream<CacheEntry<Object, Object>> stream;
       Stream<CacheEntry<Object, Object>> filteredStream;
       Function<Object, Object> resultTransformer = Function.identity();
-      AdvancedCache iterationCache = advancedCache;
+      AdvancedCache iterationCache = cache;
       if (filterConverterFactory == null) {
-         stream = advancedCache.cacheEntrySet().stream();
+         stream = cache.cacheEntrySet().stream();
          if (segments != null) {
             stream.filterKeySegments(segments.stream().boxed().collect(Collectors.toSet()));
          }
@@ -173,7 +168,7 @@ public class DefaultIterationManager implements IterationManager {
          MediaType filterMediaType = customFilter.format();
 
          if (filterMediaType != null && filterMediaType.equals(storageMediaType)) {
-            iterationCache = advancedCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType, filterMediaType);
+            iterationCache = cache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType, filterMediaType);
          }
          stream = iterationCache.cacheEntrySet().stream();
          if (segments != null) {
