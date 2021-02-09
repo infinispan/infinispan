@@ -83,6 +83,7 @@ class InternalCacheResource extends AbstractContainerResource {
                } catch (IOException e) {
                   throw new CacheException(String.format("Unable to create %s", file), e);
                }
+               log.debugf("Backup up %s %s", type, fileName);
             }
          }
       }, "write-" + type.toString());
@@ -97,6 +98,7 @@ class InternalCacheResource extends AbstractContainerResource {
                  BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                String content = reader.lines().collect(Collectors.joining("\n"));
                cache.put(file, content);
+               log.debugf("Restoring %s %s", type, file);
             } catch (IOException e) {
                throw new CacheException(e);
             }

@@ -87,7 +87,10 @@ public class CounterResource extends AbstractContainerResource {
                                        CompletionStages.join(counterManager.getStrongCounter(counter).getValue());
                                  return e;
                               })
-                              .doOnNext(e -> writeMessageStream(e, serCtx, output))
+                              .doOnNext(e -> {
+                                 writeMessageStream(e, serCtx, output);
+                                 log.debugf("Counter added to backup: %s", e);
+                              })
                               .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper()),
                   OutputStream::close
             ), "write-counters");
@@ -121,6 +124,7 @@ public class CounterResource extends AbstractContainerResource {
                   StrongCounter counter = counterManager.getStrongCounter(entry.name);
                   counter.compareAndSet(config.initialValue(), entry.value);
                }
+               log.debugf("Counter restored: %s", entry);
             }
          } catch (IOException e) {
             throw new CacheException(e);
@@ -142,5 +146,14 @@ public class CounterResource extends AbstractContainerResource {
 
       @ProtoField(number = 3, defaultValue = "-1")
       long value;
+
+      @Override
+      public String toString() {
+         return "CounterBackupEntry{" +
+               "name='" + name + '\'' +
+               ", configuration=" + configuration +
+               ", value=" + value +
+               '}';
+      }
    }
 }
