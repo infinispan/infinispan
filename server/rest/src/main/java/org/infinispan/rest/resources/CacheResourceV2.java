@@ -331,17 +331,33 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private RestResponse getDetailResponse(Cache<?, ?> cache) {
-      Stats stats = cache.getAdvancedCache().getStats();
-      Configuration configuration = cache.getCacheConfiguration();
-      boolean statistics = configuration.statistics().enabled();
-      int size = cache.getAdvancedCache().size();
-      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+      Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      Stats stats = null;
+      Boolean rehashInProgress = null;
+      Boolean indexingInProgress = null;
+      Boolean queryable = null;
+      try {
+         stats = cache.getAdvancedCache().getStats();
+         DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+         rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
+         queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
+      } catch (SecurityException ex) {
+         // Admin is needed
+      }
+
+      Integer size = null;
+      try {
+         size = cache.size();
+      } catch (SecurityException ex) {
+         // Bulk Read is needed
+      }
+
       SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
       IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
-      boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
-      boolean indexingInProgress = indexStatistics.reindexing();
+      indexingInProgress = indexStatistics.reindexing();
+
+      boolean statistics = configuration.statistics().enabled();
       boolean indexed = configuration.indexing().enabled();
-      boolean queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
 
       CacheFullDetail fullDetail = new CacheFullDetail();
       fullDetail.stats = stats;
@@ -350,7 +366,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.rehashInProgress = rehashInProgress;
       fullDetail.indexingInProgress = indexingInProgress;
       fullDetail.persistent = configuration.persistence().usingStores();
-      fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
+      fullDetail.bounded = configuration.memory().whenFull().isEnabled();
       fullDetail.indexed = indexed;
       fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
       fullDetail.secured = configuration.security().authorization().enabled();
@@ -405,35 +421,52 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private static class CacheFullDetail implements JsonSerialization {
       public Stats stats;
-      public int size;
+      public Integer size;
       public String configuration;
-      public boolean rehashInProgress;
+      public Boolean rehashInProgress;
       public boolean bounded;
       public boolean indexed;
       public boolean persistent;
       public boolean transactional;
       public boolean secured;
       public boolean hasRemoteBackup;
-      public boolean indexingInProgress;
+      public Boolean indexingInProgress;
       public boolean statistics;
-      public boolean queryable;
+      public Boolean queryable;
 
       @Override
       public Json toJson() {
-         return Json.object()
-               .set("stats", stats.toJson())
-               .set("size", size)
+         Json json = Json.object();
+
+         if (stats != null) {
+            json.set("stats", stats.toJson());
+         }
+
+         if (size != null) {
+            json.set("size", size);
+         }
+
+         if (rehashInProgress != null) {
+            json.set("rehash_in_progress", rehashInProgress);
+         }
+
+         if (indexingInProgress != null) {
+            json.set("indexing_in_progress", indexingInProgress);
+         }
+
+         if (queryable != null) {
+            json.set("queryable", queryable);
+         }
+
+         return json
                .set("configuration", Json.factory().raw(configuration))
-               .set("rehash_in_progress", rehashInProgress)
                .set("bounded", bounded)
                .set("indexed", indexed)
                .set("persistent", persistent)
                .set("transactional", transactional)
                .set("secured", secured)
                .set("has_remote_backup", hasRemoteBackup)
-               .set("indexing_in_progress", indexingInProgress)
-               .set("statistics", statistics)
-               .set("queryable", queryable);
+               .set("statistics", statistics);
       }
    }
 }
