@@ -28,13 +28,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.AdvancedCache;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -43,13 +45,15 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -67,6 +71,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -78,12 +83,14 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    private static Log log = LogFactory.getLog(DefaultConflictManager.class);
 
-   private static final long localFlags = EnumUtil.bitSetOf(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK, Flag.SKIP_LOCKING);
-   private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};
-   private static final Flag[] autoMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER, Flag.SKIP_REMOTE_LOOKUP};
+   private static final long localFlags = FlagBitSets.CACHE_MODE_LOCAL| FlagBitSets.SKIP_OWNERSHIP_CHECK| FlagBitSets.SKIP_LOCKING;
+   private static final long userMergeFlags = FlagBitSets.IGNORE_RETURN_VALUES;
+   private static final long autoMergeFlags = FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject String cacheName;
    @Inject ComponentRef<AsyncInterceptorChain> interceptorChain;
-   @Inject ComponentRef<AdvancedCache<K, V>> cache;
+   @Inject InvocationHelper invocationHelper;
    @Inject Configuration cacheConfiguration;
    @Inject CommandsFactory commandsFactory;
    @Inject DistributionManager distributionManager;
@@ -95,8 +102,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Inject TimeService timeService;
    @Inject BlockingManager blockingManager;
    @Inject InternalEntryFactory internalEntryFactory;
+   @Inject TransactionManager transactionManager;
+   @Inject KeyPartitioner keyPartitioner;
 
-   private String cacheName;
    private Address localAddress;
    private long conflictTimeout;
    private EntryMergePolicy<K, V> entryMergePolicy;
@@ -110,7 +118,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Start
    public void start() {
-      this.cacheName = cache.wired().getName();
       this.localAddress = rpcManager.getAddress();
 
       PartitionHandlingConfiguration config = cacheConfiguration.clustering().partitionHandling();
@@ -271,7 +278,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                                    final Set<Address> preferredNodes) {
       boolean userCall = preferredNodes == null;
       final Set<Address> preferredPartition = userCall ? new HashSet<>(topology.getCurrentCH().getMembers()) : preferredNodes;
-      final AdvancedCache<K, V> cache = this.cache.wired().withFlags(userCall ? userMergeFlags : autoMergeFlags);
 
       if (log.isTraceEnabled())
          log.tracef("Cache %s attempting to resolve conflicts.  All Members %s, Installed topology %s, Preferred Partition %s",
@@ -315,16 +321,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             CacheEntry<K, V> mergedEntry = mergePolicy.merge(entry, otherEntries);
 
             CompletableFuture<V> future;
-            if (mergedEntry == null) {
-               if (log.isTraceEnabled()) log.tracef("Cache %s executing remove on conflict: key %s", cacheName, key);
-               future = cache.removeAsync(key);
-            } else {
-               if (log.isTraceEnabled()) log.tracef("Cache %s executing update on conflict: key %s with value %s", cacheName, key, mergedEntry.getValue());
-               future = cache.putAsync(key, mergedEntry.getValue(), mergedEntry.getMetadata());
-            }
-            future.whenComplete((responseMap, exception) -> {
-               if (log.isTraceEnabled()) log.tracef("Cache %s resolveConflicts future complete for key %s: ResponseMap=%s, Exception=%s",
-                     cacheName, key, responseMap, exception);
+         future = applyMergeResult(userCall, key, mergedEntry);
+         future.whenComplete((responseMap, exception) -> {
+               if (log.isTraceEnabled()) log.tracef("Cache %s resolveConflicts future complete for key %s: ResponseMap=%s",
+                     cacheName, key, responseMap);
 
                phaser.arriveAndDeregister();
                if (exception != null)
@@ -334,6 +334,27 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       phaser.arriveAndAwaitAdvance();
 
       if (log.isTraceEnabled()) log.tracef("Cache %s finished resolving conflicts for topologyId=%s", cacheName,  topology.getTopologyId());
+   }
+
+   private CompletableFuture<V> applyMergeResult(boolean userCall, K key, CacheEntry<K, V> mergedEntry) {
+      long flags = userCall ? userMergeFlags : autoMergeFlags;
+      VisitableCommand command;
+      if (mergedEntry == null) {
+         if (log.isTraceEnabled()) log.tracef("Cache %s executing remove on conflict: key %s", cacheName, key);
+         command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flags);
+      } else {
+         if (log.isTraceEnabled()) log.tracef("Cache %s executing update on conflict: key %s with value %s", cacheName, key, mergedEntry
+               .getValue());
+         command = commandsFactory.buildPutKeyValueCommand(key, mergedEntry.getValue(), keyPartitioner.getSegment(key),
+                                                           mergedEntry.getMetadata(), flags);
+      }
+      try {
+         assert transactionManager == null || transactionManager.getTransaction() == null : "Transaction active on conflict resolution thread";
+         InvocationContext ctx = invocationHelper.createInvocationContextWithImplicitTransaction(1, true);
+         return invocationHelper.invokeAsync(ctx, command);
+      } catch (Exception e) {
+         return CompletableFutures.completedExceptionFuture(e);
+      }
    }
 
    @Override
