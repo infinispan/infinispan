@@ -156,7 +156,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
-      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST);
+      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
+            configuration.maxFileSize());
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
       logAppender = new LogAppender(storeQueue, indexQueue, temporaryTable, compactor, fileProvider, configuration.syncWrites(), configuration.maxFileSize());
       try {
@@ -174,11 +175,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       if (!configuration.purgeOnStartup()) {
          // we don't destroy the data on startup
          // get the old files
-         FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1);
+         FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
+               configuration.maxFileSize());
          if (oldFileProvider.hasFiles()) {
             throw PERSISTENCE.persistedDataMigrationAcrossMajorVersions();
          }
-         oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0);
+         oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
+               configuration.maxFileSize());
          if (oldFileProvider.hasFiles()) {
             migrateFromOldFormat(oldFileProvider);
             migrateData = true;
