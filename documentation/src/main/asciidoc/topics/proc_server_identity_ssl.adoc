@@ -1,11 +1,10 @@
 [id='ssl_identity-{context}']
-= Setting Up SSL Identities
-SSL identities use keystores that contain either a certificate or chain of
-certificates.
+= Setting Up TLS/SSL Identities
+Use certificates, or chains of certificates, to verify the identity of {brandname} Server to clients.
 
 [NOTE]
 ====
-If security realms contain SSL identities, {brandname} servers automatically
+If security realms contain TLS/SSL identities, {brandname} servers automatically
 enable encryption for the endpoints that use those security realms.
 ====
 
@@ -25,3 +24,9 @@ Certificate Authority, either Root or Intermediate CA.
 . Add the keystore to the `$ISPN_HOME/server/conf` directory.
 . Add a `server-identities` definition to the {brandname} server security realm.
 . Specify the name of the keystore along with the password and alias.
+. If required, add a trust store that contains client certificates.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_ssl_identity_truststore.xml[]
+----

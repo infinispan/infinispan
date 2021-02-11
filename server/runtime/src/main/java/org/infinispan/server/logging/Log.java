@@ -200,4 +200,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Encryption cannot be configured without a security realm", id = 80053)
    CacheConfigurationException encryptionWithoutSecurityRealm();
+
+   @Message(value = "No default trust manager available", id = 80054)
+   CacheConfigurationException noDefaultTrustManager();
 }

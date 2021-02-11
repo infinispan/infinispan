@@ -10,7 +10,7 @@ import org.infinispan.commons.configuration.Builder;
  * @since 10.0
  */
 public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdentitiesConfiguration> {
-   private final List<SSLConfigurationBuilder> sslConfigurations = new ArrayList<>();
+   SSLConfigurationBuilder sslConfigurationBuilder;
    private final List<KerberosSecurityFactoryConfigurationBuilder> kerberosConfigurations = new ArrayList<>();
    private final RealmConfigurationBuilder realmBuilder;
 
@@ -22,10 +22,11 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
    public void validate() {
    }
 
-   public SSLConfigurationBuilder addSslConfiguration() {
-      SSLConfigurationBuilder ssl = new SSLConfigurationBuilder(realmBuilder);
-      sslConfigurations.add(ssl);
-      return ssl;
+   public SSLConfigurationBuilder sslConfiguration() {
+      if (sslConfigurationBuilder == null) {
+         sslConfigurationBuilder = new SSLConfigurationBuilder(realmBuilder);
+      }
+      return sslConfigurationBuilder;
    }
 
    public KerberosSecurityFactoryConfigurationBuilder addKerberosConfiguration() {
@@ -36,17 +37,17 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
 
    @Override
    public ServerIdentitiesConfiguration create() {
-      List<SSLConfiguration> sslConfigurations = this.sslConfigurations.stream()
-            .map(SSLConfigurationBuilder::create).collect(Collectors.toList());
+      SSLConfiguration sslConfiguration = this.sslConfigurationBuilder == null ? null : this.sslConfigurationBuilder.create();
       List<KerberosSecurityFactoryConfiguration> kerberosConfigurations = this.kerberosConfigurations.stream()
             .map(KerberosSecurityFactoryConfigurationBuilder::create).collect(Collectors.toList());
-      return new ServerIdentitiesConfiguration(sslConfigurations, kerberosConfigurations);
+      return new ServerIdentitiesConfiguration(sslConfiguration, kerberosConfigurations);
    }
 
    @Override
    public ServerIdentitiesConfigurationBuilder read(ServerIdentitiesConfiguration template) {
-      sslConfigurations.clear();
-      template.sslConfigurations().forEach(s -> addSslConfiguration().read(s));
+      if (template.sslConfiguration() != null) {
+         sslConfiguration().read(template.sslConfiguration());
+      }
       kerberosConfigurations.clear();
       template.kerberosConfigurations().forEach(s -> addKerberosConfiguration().read(s));
       return this;

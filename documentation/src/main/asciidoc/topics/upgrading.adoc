@@ -1,3 +1,40 @@
+= Upgrading from 12.0 to 12.1
+
+== Server Trust Store
+
+The trust store configuration is now part of the server identity to allow client certificate validation
+without requiring authentication. Adding a `truststore-realm` will reference the identity's trust store.
+
+[source,xml]
+----
+<!-- 12.0 -->
+<security-realm name="default">
+   <server-identities>
+      <ssl>
+         <keystore path="server.pfx"
+                   keystore-password="password" alias="server"/>
+      </ssl>
+   </server-identities>
+   <truststore-realm path="trust.pfx" password="secret"/>
+</security-realm>
+----
+
+[source,xml]
+----
+<!-- 12.1 -->
+<security-realm name="default">
+   <server-identities>
+      <ssl>
+         <keystore path="server.pfx"
+                   keystore-password="password" alias="server"/>
+         <truststore path="trust.pfx" password="secret"/>
+      </ssl>
+   </server-identities>
+   <truststore-realm/>
+</security-realm>
+----
+
+
 = Upgrading from 11.0 to 12.0
 
 == Encoding

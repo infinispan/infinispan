@@ -16,8 +16,8 @@
 
       <xi:include href="socket-bindings/default.xml"/>
 
-      <xi:include href="security/trustrealm.xml"/>
+      <xi:include href="security/tls-truststore.xml"/>
 
-      <xi:include href="endpoints/auth-tls-external.xml"/>
+      <xi:include href="endpoints/cert-implicit.xml"/>
    </server>
 </infinispan>
