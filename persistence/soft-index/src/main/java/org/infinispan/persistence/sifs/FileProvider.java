@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.persistence.sifs.pmem.PmemUtilWrapper;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -35,6 +36,7 @@ public class FileProvider {
          LogFactory.getLog(FileProvider.class, org.infinispan.persistence.sifs.Log.class);
 
    private static final String REGEX_FORMAT = "^%s[0-9]+$";
+   private static final boolean ATTEMPT_PMEM;
 
    private final File dataDir;
    private final int openFileLimit;
@@ -45,14 +47,28 @@ public class FileProvider {
    private final Set<Integer> logFiles = new HashSet<>();
    private final Set<FileIterator> iterators = ConcurrentHashMap.newKeySet();
    private final String prefix;
+   private final int maxFileSize;
 
    private int nextFileId = 0;
 
-   public FileProvider(Path dataDir, int openFileLimit, String prefix) {
+   static {
+      boolean attemptPmem = false;
+      try {
+         Class.forName("io.mashona.logwriting.PmemUtil");
+         // use persistent memory if available, otherwise fallback to regular file.
+         attemptPmem = true;
+      } catch (ClassNotFoundException e) {
+         log.debug("Persistent Memory not in classpath, not attempting");
+      }
+      ATTEMPT_PMEM = attemptPmem;
+   }
+
+   public FileProvider(Path dataDir, int openFileLimit, String prefix, int maxFileSize) {
       this.openFileLimit = openFileLimit;
       this.recordQueue = new ArrayBlockingQueue<>(openFileLimit);
       this.dataDir = dataDir.toFile();
       this.prefix = prefix;
+      this.maxFileSize = maxFileSize;
       //noinspection ResultOfMethodCallIgnored
       this.dataDir.mkdirs();
    }
@@ -172,7 +188,23 @@ public class FileProvider {
    }
 
    protected FileChannel openChannel(int fileId) throws FileNotFoundException {
-      return new RandomAccessFile(newFile(fileId), "r").getChannel();
+      return openChannel(newFile(fileId), false, true);
+   }
+
+   protected FileChannel openChannel(File file, boolean create, boolean readSharedMeadata) throws FileNotFoundException {
+      log.debugf("openChannel(%s)", file.getAbsolutePath());
+
+      FileChannel fileChannel = ATTEMPT_PMEM ? PmemUtilWrapper.pmemChannelFor(file, maxFileSize, create, readSharedMeadata) : null;
+
+      if (fileChannel == null) {
+         if (create) {
+            fileChannel = new FileOutputStream(file).getChannel();
+         } else {
+            fileChannel = new RandomAccessFile(file, "r").getChannel();
+         }
+      }
+
+      return fileChannel;
    }
 
    public Log getFileForLog() throws IOException {
@@ -191,7 +223,14 @@ public class FileProvider {
                for (FileIterator it : iterators) {
                   it.add(nextFileId);
                }
-               return new Log(nextFileId, new FileOutputStream(newFile(nextFileId)).getChannel());
+
+               // use persistent memory if available, otherwise fallback to regular file.
+               FileChannel fileChannel = openChannel(f, true, false);
+               if (fileChannel == null) {
+                  fileChannel = new FileOutputStream(f).getChannel();
+               }
+
+               return new Log(nextFileId, fileChannel);
             }
          }
       } finally {

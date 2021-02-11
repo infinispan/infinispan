@@ -620,6 +620,11 @@
             <version>${versionx.io.fabric8.kubernetes-client}</version>
          </dependency>
          <dependency>
+            <groupId>io.mashona</groupId>
+            <artifactId>mashona-logwriting</artifactId>
+            <version>${version.io.mashona}</version>
+         </dependency>
+         <dependency>
             <groupId>io.smallrye.config</groupId>
             <artifactId>smallrye-config</artifactId>
             <version>${version.smallrye-config}</version>
