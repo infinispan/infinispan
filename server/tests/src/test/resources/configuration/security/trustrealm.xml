@@ -7,9 +7,10 @@
             <ssl>
                <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
                          alias="server"/>
+               <truststore path="trust.pfx"  relative-to="infinispan.server.config.path" password="secret"/>
             </ssl>
          </server-identities>
-         <truststore-realm path="trust.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"/>
+         <truststore-realm/>
       </security-realm>
    </security-realms>
 </security>

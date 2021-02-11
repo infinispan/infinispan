@@ -125,9 +125,9 @@ public class ServerConfigurationParserTest {
       assertEquals(socketBindings.get("memcached").getPort(), server.endpoints().endpoints().get(0).connectors().get(2).port());
 
       assertEquals("strongPassword", realmConfiguration.ldapConfiguration().attributes().attribute("credential").get());
-      assertEquals("secret", new String((char[]) realmConfiguration.trustStoreConfiguration().attributes().attribute("keystorePassword").get())); //stores it as char[]
+      assertEquals("secret", new String((char[]) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute("password").get())); //stores it as char[]
       assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", realmConfiguration.tokenConfiguration().oauth2Configuration().attributes().attribute("clientSecret").get());
-      assertEquals("password", new String((char[]) realmConfiguration.serverIdentitiesConfiguration().sslConfigurations().get(0).keyStore().attributes().attribute("keystorePassword").get()));
+      assertEquals("password", new String((char[]) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().keyStore().attributes().attribute("keystorePassword").get()));
    }
 
    @Test
@@ -274,10 +274,8 @@ public class ServerConfigurationParserTest {
       assertEquals("***", oauth.at("client-secret").asString());
 
       Json trustStoreRealm = defaultRealm.at("truststore-realm");
-      assertEquals("truststore.p12", trustStoreRealm.at("path").asString());
-      assertEquals("SunJSSE", trustStoreRealm.at("provider").asString());
-      assertEquals(serverConfigPath, trustStoreRealm.at("relative-to").asString());
-      assertEquals("***", trustStoreRealm.at("keystore-password").asString());
+      assertEquals(1, trustStoreRealm.asMap().size());
+      assertEquals("trust", trustStoreRealm.at("name").asString());
 
       Json endpoints = serverNode.at("endpoints");
       assertEquals("default", endpoints.at("socket-binding").asString());

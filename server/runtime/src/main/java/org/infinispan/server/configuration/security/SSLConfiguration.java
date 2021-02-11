@@ -17,17 +17,23 @@ public class SSLConfiguration implements ConfigurationInfo {
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SSL.toString());
 
    private final KeyStoreConfiguration keyStore;
+   private final TrustStoreConfiguration trustStore;
    private final SSLEngineConfiguration engine;
    private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
-   SSLConfiguration(KeyStoreConfiguration keyStore, SSLEngineConfiguration engine) {
+   SSLConfiguration(KeyStoreConfiguration keyStore, TrustStoreConfiguration trustStore, SSLEngineConfiguration engine) {
       this.keyStore = keyStore;
+      this.trustStore = trustStore;
       this.engine = engine;
       this.subElements.addAll(Arrays.asList(keyStore, engine));
    }
 
    public KeyStoreConfiguration keyStore() {
       return keyStore;
+   }
+
+   public TrustStoreConfiguration trustStore() {
+      return trustStore;
    }
 
    SSLEngineConfiguration engine() {
@@ -43,4 +49,5 @@ public class SSLConfiguration implements ConfigurationInfo {
    public List<ConfigurationInfo> subElements() {
       return subElements;
    }
+
 }

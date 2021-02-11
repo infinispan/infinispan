@@ -30,7 +30,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Exception reported", id = 5003)
    void exceptionReported(@Cause Throwable t);
-
    @LogMessage(level = WARN)
    @Message(value = "No members for new topology after applying consistent hash %s filtering into base topology %s", id = 5019)
    void noMembersInHashTopology(ConsistentHash ch, String topologyMap);

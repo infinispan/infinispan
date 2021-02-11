@@ -15,21 +15,23 @@ import org.wildfly.security.credential.source.CredentialSource;
  */
 public class ServerIdentitiesConfiguration implements ConfigurationInfo {
 
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERVER_IDENTITIES.toString());
+   private static final ElementDefinition<ServerIdentitiesConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.SERVER_IDENTITIES.toString());
 
-   private final List<SSLConfiguration> sslConfigurations;
+   private final SSLConfiguration sslConfiguration;
    private final List<KerberosSecurityFactoryConfiguration> kerberosConfigurations;
    private final List<ConfigurationInfo> elements = new ArrayList<>();
 
-   ServerIdentitiesConfiguration(List<SSLConfiguration> sslConfigurations, List<KerberosSecurityFactoryConfiguration> kerberosConfigurations) {
-      this.sslConfigurations = sslConfigurations;
-      this.elements.addAll(sslConfigurations);
+   ServerIdentitiesConfiguration(SSLConfiguration sslConfiguration, List<KerberosSecurityFactoryConfiguration> kerberosConfigurations) {
+      this.sslConfiguration = sslConfiguration;
+      if (sslConfiguration != null) {
+         this.elements.add(sslConfiguration);
+      }
       this.kerberosConfigurations = kerberosConfigurations;
       this.elements.addAll(kerberosConfigurations);
    }
 
-   public List<SSLConfiguration> sslConfigurations() {
-      return sslConfigurations;
+   public SSLConfiguration sslConfiguration() {
+      return sslConfiguration;
    }
 
    public List<KerberosSecurityFactoryConfiguration> kerberosConfigurations() {
@@ -37,7 +39,7 @@ public class ServerIdentitiesConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<ServerIdentitiesConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
 

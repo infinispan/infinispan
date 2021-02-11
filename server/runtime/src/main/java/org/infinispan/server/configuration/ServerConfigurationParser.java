@@ -45,6 +45,7 @@ import org.infinispan.server.configuration.security.SSLConfigurationBuilder;
 import org.infinispan.server.configuration.security.SSLEngineConfigurationBuilder;
 import org.infinispan.server.configuration.security.ServerIdentitiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.TokenRealmConfigurationBuilder;
+import org.infinispan.server.configuration.security.TrustStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.TrustStoreRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -424,7 +425,11 @@ public class ServerConfigurationParser implements ConfigurationParser {
          element = nextElement(reader);
       }
       if (element == Element.TRUSTSTORE_REALM) {
-         parseTrustStoreRealm(reader, builder, securityRealmBuilder.trustStoreConfiguration());
+         if (reader.getSchema().since(12, 1)) {
+            parseTrustStoreRealm(reader, securityRealmBuilder.trustStoreConfiguration());
+         } else {
+            parseLegacyTrustStoreRealm(reader, builder, securityRealmBuilder.trustStoreConfiguration(), securityRealmBuilder.serverIdentitiesConfiguration());
+         }
          element = nextElement(reader);
       }
       if (element != null) {
@@ -916,10 +921,14 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseSSL(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, ServerIdentitiesConfigurationBuilder identitiesBuilder) throws
          XMLStreamException {
-      SSLConfigurationBuilder serverIdentitiesBuilder = identitiesBuilder.addSslConfiguration();
+      SSLConfigurationBuilder serverIdentitiesBuilder = identitiesBuilder.sslConfiguration();
       Element element = nextElement(reader);
       if (element == Element.KEYSTORE) {
          parseKeyStore(reader, builder, serverIdentitiesBuilder.keyStore());
+         element = nextElement(reader);
+      }
+      if (element == Element.TRUSTSTORE) {
+         parseTrustStore(reader, builder, serverIdentitiesBuilder.trustStore());
          element = nextElement(reader);
       }
       if (element == Element.ENGINE) {
@@ -972,6 +981,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                keyStoreBuilder.relativeTo(relativeTo);
                break;
+            case PASSWORD:
             case KEYSTORE_PASSWORD:
                keyStoreBuilder.keyStorePassword(value.toCharArray());
                credentialSet = true;
@@ -1008,7 +1018,75 @@ public class ServerConfigurationParser implements ConfigurationParser {
       keyStoreBuilder.build();
    }
 
-   private void parseTrustStoreRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, TrustStoreRealmConfigurationBuilder trustStoreBuilder) throws
+   private void parseTrustStore(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, TrustStoreConfigurationBuilder trustStoreBuilder) throws
+         XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
+      trustStoreBuilder.path(attributes[0]);
+      String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
+      trustStoreBuilder.relativeTo(relativeTo);
+      boolean credentialSet = false;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case PATH:
+               // Already seen
+               break;
+            case PROVIDER:
+               trustStoreBuilder.provider(value);
+               break;
+            case RELATIVE_TO:
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+               trustStoreBuilder.relativeTo(relativeTo);
+               break;
+            case PASSWORD:
+               trustStoreBuilder.password(value.toCharArray());
+               credentialSet = true;
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      Element element = nextElement(reader);
+      if (element == Element.CREDENTIAL_REFERENCE) {
+         if (credentialSet) {
+            throw Server.log.cannotOverrideCredential(Element.TRUSTSTORE.toString(), Attribute.PASSWORD.toString());
+         }
+         String credential = parseCredentialReference(reader, builder);
+         trustStoreBuilder.password(credential.toCharArray());
+         credentialSet = true;
+         element = nextElement(reader);
+      }
+      if (!credentialSet) {
+         throw Server.log.missingCredential(Element.TRUSTSTORE.toString(), Attribute.PASSWORD.toString());
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
+      trustStoreBuilder.build();
+   }
+
+   private void parseTrustStoreRealm(XMLExtendedStreamReader reader, TrustStoreRealmConfigurationBuilder trustStoreBuilder) throws XMLStreamException {
+      String name = "trust";
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case NAME:
+               name = value;
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+      trustStoreBuilder.name(name);
+      trustStoreBuilder.build();
+   }
+
+   private void parseLegacyTrustStoreRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, TrustStoreRealmConfigurationBuilder trustStoreBuilder, ServerIdentitiesConfigurationBuilder serverIdentitiesConfigurationBuilder) throws
          XMLStreamException {
       String name = "trust";
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
@@ -1058,7 +1136,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
       }
-      trustStoreBuilder.name(name).path(path).relativeTo(relativeTo).keyStorePassword(keyStorePassword).provider(keyStoreProvider);
+      serverIdentitiesConfigurationBuilder.sslConfiguration().trustStore().path(path).relativeTo(relativeTo).password(keyStorePassword).provider(keyStoreProvider);
+      trustStoreBuilder.name(name);
       trustStoreBuilder.build();
    }
 

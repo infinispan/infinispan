@@ -951,7 +951,7 @@
          <xs:element type="tns:security-realm-local" name="local-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-token" name="token-realm" minOccurs="0"/>
-         <xs:element type="tns:security-realm-truststore" name="truststore-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-trust" name="truststore-realm" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute name="name" type="xs:string" use="required"/>
       <xs:attribute name="cache-max-size" type="xs:int" default="256">
@@ -1006,6 +1006,7 @@
    <xs:complexType name="security-realm-ssl">
       <xs:sequence>
          <xs:element type="tns:security-realm-keystore" name="keystore"/>
+         <xs:element type="tns:security-realm-truststore" name="truststore" minOccurs="0"/>
          <xs:element type="tns:security-realm-ssl-engine" name="engine" minOccurs="0"/>
       </xs:sequence>
    </xs:complexType>
@@ -1016,9 +1017,20 @@
       <xs:attribute type="xs:string" name="path" use="required"/>
       <xs:attribute type="xs:string" name="relative-to"/>
       <xs:attribute type="xs:string" name="keystore-password"/>
+      <xs:attribute type="xs:string" name="password"/>
       <xs:attribute type="xs:string" name="alias"/>
       <xs:attribute type="xs:string" name="key-password"/>
       <xs:attribute type="xs:string" name="generate-self-signed-certificate-host"/>
+      <xs:attribute type="xs:string" name="provider"/>
+   </xs:complexType>
+   <xs:complexType name="security-realm-truststore">
+      <xs:sequence>
+         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="path" use="required"/>
+      <xs:attribute type="xs:string" name="relative-to"/>
+      <xs:attribute type="xs:string" name="password"/>
+      <xs:attribute type="xs:string" name="provider"/>
    </xs:complexType>
    <xs:complexType name="security-realm-ssl-engine">
       <xs:attribute type="tns:name-list" name="enabled-protocols"/>
@@ -1535,13 +1547,7 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="security-realm-truststore">
-      <xs:sequence>
-         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
-      </xs:sequence>
-      <xs:attribute type="xs:string" name="path" use="required"/>
-      <xs:attribute type="xs:string" name="provider"/>
-      <xs:attribute type="xs:string" name="keystore-password"/>
-      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.data.path"/>
+   <xs:complexType name="security-realm-trust">
+      <xs:attribute type="xs:string" name="name"/>
    </xs:complexType>
 </xs:schema>
