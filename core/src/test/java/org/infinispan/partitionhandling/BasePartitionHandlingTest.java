@@ -22,6 +22,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -33,10 +35,8 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -81,9 +81,17 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
+      if (lockingMode != null) {
+         dcc.transaction().lockingMode(lockingMode);
+      }
+      customizeCacheConfiguration(dcc);
       createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc,
                             new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
+   }
+
+   protected void customizeCacheConfiguration(ConfigurationBuilder dcc) {
+
    }
 
    @AfterMethod(alwaysRun = true)

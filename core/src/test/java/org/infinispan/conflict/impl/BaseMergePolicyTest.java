@@ -87,7 +87,8 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       cache(p0.node(0)).put(conflictKey, "BEFORE SPLIT");
    }
 
-   protected void duringSplit(AdvancedCache preferredPartitionCache, AdvancedCache otherCache) {
+   protected void duringSplit(AdvancedCache preferredPartitionCache, AdvancedCache otherCache)
+         throws Exception {
       preferredPartitionCache.put(conflictKey, "DURING SPLIT");
    }
 
