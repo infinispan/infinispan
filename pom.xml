@@ -401,7 +401,7 @@
       <!-- Version 0.33.0 is not compatible -->
       <versionx.org.opentracing.api>0.31.0</versionx.org.opentracing.api>
       <versionx.io.jaegertracing.jaeger-client>1.5.0</versionx.io.jaegertracing.jaeger-client>
-      <versionx.org.testcontainers.testcontainers>1.15.1</versionx.org.testcontainers.testcontainers>
+      <versionx.org.testcontainers.testcontainers>1.15.2</versionx.org.testcontainers.testcontainers>
       <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
