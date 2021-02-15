@@ -1,0 +1,23 @@
+<data-sources>
+   <!-- Defines a unique name for the datasource, JNDI name, and enables statisitics. -->
+   <data-source name="ds" jndi-name="jdbc/datasource" statistics="true">
+      <!-- Specifies the JDBC driver that creates connections. -->
+      <connection-factory driver="org.database.Driver"
+                          username="db_user"
+                          password="secret"
+                          url="jdbc:db://database-host:10000/dbname"
+                          new-connection-sql="SELECT 1"
+                          transaction-isolation="READ_COMMITTED">
+         <!-- Sets optional JDBC driver-specific connection properties. -->
+         <connection-property name="name">value</connection-property>
+      </connection-factory>
+      <!-- Defines connection pool properties. -->
+      <connection-pool initial-size="1"
+                       max-size="10"
+                       min-size="3"
+                       background-validation="1000"
+                       idle-removal="1"
+                       blocking-timeout="1000"
+                       leak-detection="10000"/>
+   </data-source>
+</data-sources>

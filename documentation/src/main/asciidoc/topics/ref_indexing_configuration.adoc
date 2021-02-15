@@ -13,20 +13,13 @@ You should store indexes in JVM heap memory only for small datasets.
 .File system
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-     ...
-   </indexing>
-</distributed-cache>
+include::config_examples/indexing_file_system.xml[]
 ----
 
 .JVM heap memory
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-  <indexing storage="local-heap">
-   ...
-</distributed-cache>
+include::config_examples/indexing_jvm_heap.xml[]
 ----
 
 == Index Reader
@@ -37,13 +30,8 @@ By default {brandname} reads the index before each query if the index changed si
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-    <index-reader refresh-interval="1000"/> <1>
-     ...
-</distributed-cache>
+include::config_examples/indexing_index_reader.xml[]
 ----
-<1> Sets an interval of one second for the `IndexReader`.
 
 == Index Writer
 
@@ -62,23 +50,7 @@ The defaults should work for most cases and custom configurations should only be
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-    <index-writer commit-interval="2000"
-                  low-level-trace="false"
-                  max-buffered-entries="32"
-                  queue-count="1"
-                  queue-size="10000"
-                  ram-buffer-size="400"
-                  thread-pool-size="2">
-      <index-merge calibrate-by-deletes="true"
-                   factor="3"
-                   max-entries="2000"
-                   min-size="10"
-                   max-size="20"/>
-    </index-writer>
-      ...
-</distributed-cache>
+include::config_examples/indexing_index_writer.xml[]
 ----
 
 .Index writer configuration attributes

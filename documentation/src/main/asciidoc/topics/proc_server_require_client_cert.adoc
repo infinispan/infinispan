@@ -11,5 +11,3 @@ clients when establishing connections.
 ----
 include::config_examples/server_endpoint_require_client_cert.xml[]
 ----
-
-<1> requires Hot Rod clients to present SSL certificates to connect to {brandname} servers.

@@ -1,99 +1,79 @@
 [id='eviction_example-{context}']
 = Eviction Examples
 
-You configure eviction as part of your cache definition.
+Configure eviction as part of your cache definition.
 
 .Default memory configuration
 
-Eviction is not enabled, which is the default configuration. {brandname} stores
-cache entries as objects in the JVM heap.
+Eviction is not enabled, which is the default configuration. {brandname} stores cache entries as objects in the JVM heap.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory />
+include::config_examples/infinispan_memory.xml[]
 ----
 
 .Eviction based on the total number of entries
 
-{brandname} stores cache entries as objects in the JVM heap. Eviction happens
-when there are 100 entries in the data container and {brandname} gets a request
-to create a new entry:
+{brandname} stores cache entries as objects in the JVM heap. Eviction happens when there are 100 entries in the data container and {brandname} gets a request to create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory max-count="100"/>
+include::config_examples/infinispan_max_count.xml[]
 ----
 
 .Eviction based maximum size in bytes
 
-{brandname} stores cache entries as `byte[]` arrays if you encode entries with
-binary storage formats, for example: `application/x-protostream` format.
+{brandname} stores cache entries as `byte[]` arrays if you encode entries with binary storage formats, for example: `application/x-protostream` format.
 
-In the following example, {brandname} performs eviction when the size of the
-data container reaches 500 MB (megabytes) in size and it gets a request to
-create a new entry:
+In the following example, {brandname} performs eviction when the size of the data container reaches 500 MB (megabytes) in size and it gets a request to create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<encoding media-type="application/x-protostream"/> <1>
-<memory max-size="500 MB"/> <2>
+include::config_examples/infinispan_binary_storage.xml[]
 ----
-
-<1> Specifies a binary format for entries in the cache.
-<2> Defines the maximum size of the data container as MB (megabytes).
 
 .Off-heap storage
 
-{brandname} stores cache entries as bytes in native memory. Eviction happens
-when there are 100 entries in the data container and {brandname} gets a request
-to create a new entry:
+{brandname} stores cache entries as bytes in native memory.
+Eviction happens when there are 100 entries in the data container and {brandname} gets a request to create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory storage="OFF_HEAP" max-count="100"/>
+include::config_examples/infinispan_off_heap.xml[]
 ----
 
 .Off-heap storage with the exception strategy
 
-{brandname} stores cache entries as bytes in native memory. When there are 100
-entries in the data container, and {brandname} gets a request to create a new
-entry, it throws an exception and does not allow the new entry:
+{brandname} stores cache entries as bytes in native memory.
+When there are 100 entries in the data container, and {brandname} gets a request to create a new entry, it throws an exception and does not allow the new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<transaction mode="NONE"/>
-
-<memory storage="OFF_HEAP" max-count="100" when-full="EXCEPTION"/>
+include::config_examples/infinispan_off_heap_exception.xml[]
 ----
 
 .Manual eviction
 
-{brandname} stores cache entries as objects in the JVM heap. Eviction is not
-enabled but performed manually using the `evict()` method.
+{brandname} stores cache entries as objects in the JVM heap. Eviction is not enabled but performed manually using the `evict()` method.
 
 [TIP]
 ====
-This configuration prevents a warning message when you enable passivation but
-do not configure eviction.
+This configuration prevents a warning message when you enable passivation but do not configure eviction.
 ====
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory when-full="MANUAL"/>
+include::config_examples/infinispan_manual_eviction.xml[]
 ----
 
 .Passivation with eviction
 
-Passivation persists data to cache stores when {brandname} evicts entries. You
-should always enable eviction if you enable passivation, for example:
+Passivation persists data to cache stores when {brandname} evicts entries.
+You should always enable eviction if you enable passivation, for example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence passivation="true">
-  ...
-</persistence>
-
-<memory max-count="100"/>
+include::config_examples/infinispan_eviction_passivation.xml[]
 ----
 
 .References

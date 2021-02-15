@@ -1,0 +1,11 @@
+<infinispan>
+  <cache-container>
+    <!-- Uses the `*` wildcard to match any cache names that start with "basecache". -->
+    <local-cache-configuration name="basecache*">
+      <expiration interval="10500" lifespan="11" max-idle="11"/>
+    </local-cache-configuration>
+    <!-- Adds local caches that use the "basecache*" configuration. -->
+    <local-cache name="basecache-1"/>
+    <local-cache name="basecache-2"/>
+  </cache-container>
+</infinispan>

@@ -1,5 +1,0 @@
-<azure.AZURE_PING
-	storage_account_name="replace this with your account name"
-	storage_access_key="replace this with your access key"
-	container="replace this with your container name"
-/>

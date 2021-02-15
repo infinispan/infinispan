@@ -14,7 +14,7 @@ Custom interceptors can be added on a per named cache basis. This is because eac
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/cache_with_custom_interceptors.xml[]
+include::config_examples/custom_interceptors.xml[]
 ----
 
 == Adding custom interceptors programatically

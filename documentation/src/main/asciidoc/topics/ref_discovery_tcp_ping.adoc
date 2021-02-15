@@ -9,7 +9,6 @@ With TCPPING, you manually specify the IP address or hostname of each node in th
 ----
 include::config_examples/tcpping.xml[]
 ----
-<1> For reliable discovery, Red Hat recommends `port-range=0`.
 
 .Reference
 

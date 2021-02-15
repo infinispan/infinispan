@@ -1,22 +1,29 @@
 <infinispan>
-    <jgroups>
-         <stack name="encrypt-tcp" extends="tcp"> <1>
-           <SSL_KEY_EXCHANGE keystore_name="mykeystore.jks" <2>
-                             keystore_password="changeit" <3>
-                             stack.combine="INSERT_AFTER"
-                             stack.position="VERIFY_SUSPECT"/> <4>
-           <ASYM_ENCRYPT asym_keylength="2048" <5>
-                    asym_algorithm="RSA" <6>
-                    change_key_on_coord_leave = "false" <7>
-                    change_key_on_leave = "false" <8>
-                    use_external_key_exchange = "true" <9>
+  <jgroups>
+    <!-- Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack. -->
+    <stack name="encrypt-tcp" extends="tcp">
+      <!-- Adds a keystore that nodes use to perform certificate authentication. -->
+      <!-- Uses the stack.combine and stack.position attributes to insert SSL_KEY_EXCHANGE into the default TCP stack after VERIFY_SUSPECT. -->
+      <SSL_KEY_EXCHANGE keystore_name="mykeystore.jks"
+                        keystore_password="changeit"
+                        stack.combine="INSERT_AFTER"
+                        stack.position="VERIFY_SUSPECT"/>
+      <!-- Configures ASYM_ENCRYPT -->
+      <!-- Uses the stack.combine and stack.position attributes to insert ASYM_ENCRYPT into the default TCP stack before pbcast.NAKACK2. -->
+      <!-- The use_external_key_exchange = "true" attribute configures nodes to use the `SSL_KEY_EXCHANGE` protocol for certificate authentication. -->
+      <ASYM_ENCRYPT asym_keylength="2048"
+                    asym_algorithm="RSA"
+                    change_key_on_coord_leave = "false"
+                    change_key_on_leave = "false"
+                    use_external_key_exchange = "true"
                     stack.combine="INSERT_BEFORE"
-                    stack.position="pbcast.NAKACK2"/> <10>
-         </stack>
-    </jgroups>
-    <cache-container name="default" statistics="true">
-      <transport cluster="${infinispan.cluster.name}"
-                 stack="encrypt-tcp" <11>
-                 node-name="${infinispan.node.name:}"/>
-   </cache-container>
+                    stack.position="pbcast.NAKACK2"/>
+    </stack>
+  </jgroups>
+  <cache-container name="default" statistics="true">
+    <!-- Configures the cluster to use the JGroups stack. -->
+    <transport cluster="${infinispan.cluster.name}"
+               stack="encrypt-tcp"
+               node-name="${infinispan.node.name:}"/>
+  </cache-container>
 </infinispan>

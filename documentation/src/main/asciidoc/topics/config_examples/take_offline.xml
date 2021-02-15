@@ -1,9 +1,0 @@
-<replicated-cache name="bestEffortBackup">
-   ...
-   <backups>
-     <backup site="NYC" strategy="SYNC" failure-policy="FAIL">
-         <take-offline after-failures="500" min-wait="10000"/>
-     </backup>
-   </backups>
-    ...
-</replicated-cache>

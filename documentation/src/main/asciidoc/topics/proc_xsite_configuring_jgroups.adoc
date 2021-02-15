@@ -1,23 +1,16 @@
 [id='configure_relay-{context}']
 = Configuring Cluster Transport for Cross-Site Replication
-Add JGroups RELAY2 to your transport layer so that {brandname} clusters can
-communicate with backup locations.
+Add JGroups RELAY2 to your transport layer so that {brandname} clusters can communicate with backup locations.
 
 .Procedure
 
 . Open `infinispan.xml` for editing.
-. Add the RELAY2 protocol to a JGroups stack, for example:
+. Add the RELAY2 protocol to a JGroups stack.
+. Configure {brandname} cluster transport to use the stack.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/jgroups_stack_xsite.xml[]
-----
-+
-. Configure {brandname} cluster transport to use the stack, as in the following example:
-+
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/config_cache_container_xsite.xml[]
 ----
 +
 . Save and close `infinispan.xml`.

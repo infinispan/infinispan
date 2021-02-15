@@ -8,6 +8,3 @@ it to search LDAP servers.
 ----
 include::config_examples/server_ldap_realm_rewriter.xml[]
 ----
-
-<1> Defines a rewriter that extracts the username from the principal using a
-regular expression.

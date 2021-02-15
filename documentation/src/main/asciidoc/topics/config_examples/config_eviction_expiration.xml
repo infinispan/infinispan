@@ -1,6 +1,0 @@
-<!-- Eviction -->
-<memory>
-   <object size="2000"/>
-</memory>
-<!-- Expiration -->
-<expiration lifespan="1000" max-idle="500" interval="1000" />

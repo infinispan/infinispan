@@ -1,0 +1,9 @@
+<infinispan>
+  <jgroups>
+     <stack-file name="relay-global" path="jgroups-relay.xml"/>
+  </jgroups>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="relay-global" />
+    <replicated-cache name="replicatedCache"/>
+  </cache-container>
+</infinispan>

@@ -3,11 +3,15 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
-         <properties-realm groups-attribute="Roles"> <1>
-            <user-properties path="users.properties" <2>
-                             relative-to="infinispan.server.config.path" <3>
-                             plain-text="true"/> <4>
-            <group-properties path="groups.properties" <5>
+         <!-- Defines groups as roles for server authorization. -->
+         <properties-realm groups-attribute="Roles">
+            <!-- Specifies the properties file that holds usernames and passwords. -->
+            <!-- The plain-text="true" attribute stores passwords in plain text. -->
+            <user-properties path="users.properties"
+                             relative-to="infinispan.server.config.path"
+                             plain-text="true"/>
+            <!-- Specifies the properties file that defines roles for users. -->
+            <group-properties path="groups.properties"
                               relative-to="infinispan.server.config.path"/>
          </properties-realm>
       </security-realm>

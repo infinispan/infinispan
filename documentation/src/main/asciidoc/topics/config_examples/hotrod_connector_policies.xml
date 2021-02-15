@@ -1,9 +1,11 @@
 <hotrod-connector socket-binding="hotrod" cache-container="default">
    <authentication security-realm="ApplicationRealm">
+      <!-- Specifies multiple SASL authentication mechanisms for the Hot Rod connector. -->
       <sasl server-name="myhotrodserver"
-            mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL" <1>
+            mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL"
             qop="auth">
-         <policy> <2>
+         <!-- Defines policies for SASL mechanisms. -->
+         <policy>
             <no-active value="true" />
             <no-anonymous value="true" />
             <no-plain-text value="true" />

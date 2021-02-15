@@ -1,7 +1,0 @@
-<config>
-    <TCP bind_port="7800" />
-    <org.jgroups.aws.s3.NATIVE_S3_PING
-            region_name="replace this with your region (e.g. eu-west-1)"
-            bucket_name="replace this with your bucket name"
-            bucket_prefix="replace this with a prefix to use for entries in the bucket (optional)" />
-</config>

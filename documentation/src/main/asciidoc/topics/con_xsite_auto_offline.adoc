@@ -7,18 +7,13 @@ error messages and consumes resources.
 
 .Timeout for backup operations
 Backup configurations include timeout values for operations to replicate data.
-If operations do not complete before the timeout occurs, Infinispan records
+If operations do not complete before the timeout occurs, {brandname} records
 them as failures.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<backup site="NYC" strategy="ASYNC" timeout="10000"> <1>
-	...
-</backup>
+include::config_examples/xsite_backup_timeout.xml[]
 ----
-
-<1> Operations to replicate data to **NYC** are recorded as failures if they do
-not complete after 10 seconds.
 
 .Number of failures
 You can specify the number of **consecutive** failures that can occur before
@@ -29,13 +24,8 @@ failed operations before it goes offline:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<backup site="NYC" strategy="ASYNC" timeout="10000">
-	<take-offline after-failures="5"/> <1>
-</backup>
+include::config_examples/xsite_backup_number_failures.xml[]
 ----
-
-<1> If a cluster attempts to replicate data to **NYC** and five consecutive
-operations fail, {brandname} automatically takes the backup offline.
 
 .Time to wait
 You can also specify how long to wait before taking sites offline when backup
@@ -44,20 +34,12 @@ operations fail. If a backup request succeeds before the wait time runs out,
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<backup site="NYC" strategy="ASYNC" timeout="10000">
-	<take-offline after-failures="5"
-                min-wait="15000"/> <1>
-</backup>
+include::config_examples/xsite_backup_time_wait.xml[]
 ----
-
-<1> If a cluster attempts to replicate data to **NYC** and there are five
-consecutive failures and 15 seconds elapse after the first failed operation,
-{brandname} automatically takes the backup offline.
 
 [TIP]
 ====
-Set a negative or zero value for the `after-failures` attribute if you want to
-use only a minimum time to wait to take sites offline.
+Set a negative or zero value for the `after-failures` attribute if you want to use only a minimum time to wait to take sites offline.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----

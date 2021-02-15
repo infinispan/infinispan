@@ -2,14 +2,17 @@
            xsi:schemaLocation="urn:infinispan:server:{schemaversion}
            https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default" security-realm="default"> <1>
+           socket-binding="default"
+           security-realm="default">
    <hotrod-connector>
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 <2>
+         <!-- Specifies SASL mechanisms to use for authentication. -->
+         <!-- Defines the name that the server declares to clients. -->
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256
                            SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384
                            DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"
-               server-name="infinispan" <3>
-               qop="auth"/> <4>
+               server-name="infinispan"
+               qop="auth"/>
       </authentication>
    </hotrod-connector>
 </endpoints>

@@ -1,0 +1,6 @@
+<distributed-cache name="binary_storage">
+  <!-- Encodes the cache with a binary storage format. -->
+  <encoding media-type="application/x-protostream"/>
+  <!-- Bounds the data container to a maximum size in MB (megabytes). -->
+  <memory max-size="500 MB"/>
+</distributed-cache>

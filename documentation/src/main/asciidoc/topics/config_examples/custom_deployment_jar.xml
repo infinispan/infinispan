@@ -1,6 +1,0 @@
-<cache-container name="local" default-cache="default">
-   <modules>
-     <module name="deployment.my-entities.jar"/>
-   </modules>
-   ...
-</cache-container>

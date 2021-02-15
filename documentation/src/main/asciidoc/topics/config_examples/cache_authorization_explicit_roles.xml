@@ -11,9 +11,9 @@
       </security>
       <local-cache name="secured">
          <security>
-            <authorization roles="admin supervisor reader"/> <1>
+            <!-- Explicitly define which roles can access the cache. -->
+            <authorization roles="admin supervisor"/>
          </security>
       </local-cache>
    </cache-container>
-
 </infinispan>

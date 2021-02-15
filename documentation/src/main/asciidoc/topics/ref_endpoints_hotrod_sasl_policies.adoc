@@ -47,9 +47,6 @@ logic to cache authorization.
 include::config_examples/hotrod_connector_policies.xml[]
 ----
 
-<1> Specifies multiple SASL authentication mechanisms for the Hot Rod connector.
-<2> Defines policies for SASL mechanisms.
-
 As a result of the preceding configuration, the Hot Rod connector uses the
 `GSSAPI` mechanism because it is the only mechanism that complies with all
 policies.

@@ -4,24 +4,10 @@
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<jgroups>
-   <stack name="xsite" <1>
-          extends="udp"> <2>
-      <relay.RELAY2 xmlns="urn:org:jgroups" <3>
-                    site="LON" <4>
-                    max_site_masters="1000"/> <5>
-      <remote-sites default-stack="tcp"> <6>
-         <remote-site name="LON"/> <7>
-         <remote-site name="NYC"/>
-      </remote-sites>
-   </stack>
-</jgroups>
+include::config_examples/jgroups_relay.xml[]
 ----
 
-<1> Defines a stack named "xsite" that declares which protocols to use for your {brandname} cluster transport.
-<2> Uses the default JGroups UDP stack for intra-cluster traffic.
-<3> Adds `RELAY2` to the stack for inter-cluster transport.
-<4> Names the local site. {brandname} replicates data in caches from this site to backup locations.
-<5> Configures a maximum of 1000 site masters for the local cluster. You should set `max_site_masters` >= the number of nodes in the {brandname} cluster for optimal performance with backup requests.
-<6> Specifies all site names and uses the default JGroups TCP stack for inter-cluster transport.
-<7> Names each remote site as a backup location.
+[TIP]
+====
+Set `max_site_masters` >= the number of nodes in the {brandname} cluster for optimal performance with backup requests.
+====

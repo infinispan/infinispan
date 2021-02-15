@@ -1,7 +1,0 @@
-<infinispan>
-  <jgroups/>
-  <cache-container default-cache="repl">
-     <transport/>
-     <replicated-cache name="repl" mode="SYNC" />
-  </cache-container>
-</infinispan>

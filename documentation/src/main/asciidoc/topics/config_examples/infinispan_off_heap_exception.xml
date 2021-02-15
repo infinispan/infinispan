@@ -1,0 +1,3 @@
+<distributed-cache name="eviction_exception">
+  <memory storage="OFF_HEAP" max-count="100" when-full="EXCEPTION"/>
+</distributed-cache>

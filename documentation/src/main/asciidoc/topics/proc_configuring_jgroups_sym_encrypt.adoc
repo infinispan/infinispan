@@ -9,21 +9,12 @@ Configure {brandname} clusters to encrypt JGroups messages with secret keys from
 +
 For {brandname} Server, you put the keystore in the {server_home} directory.
 +
-. Add the `SYM_ENCRYPT` protocol to a JGroups stack in your {brandname} configuration, as in the following example:
-+
+. Add the `SYM_ENCRYPT` protocol to a JGroups stack in your {brandname} configuration.
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/jgroups_sym_encrypt.xml[]
 ----
-+
-<1> Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack for {brandname}.
-<2> Names the keystore from which nodes obtain secret keys.
-<3> Specifies the keystore type. JGroups uses JCEKS by default.
-<4> Specifies the keystore password.
-<5> Specifies the secret key password.
-<6> Specifies the secret key alias.
-<7> Uses the `stack.combine` and `stack.position` attributes to insert `SYM_ENCRYPT` into the default TCP stack after the `VERIFY_SUSPECT` protocol.
-<8> Configures the {brandname} cluster to use the secure JGroups stack.
 
 .Verification
 

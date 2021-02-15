@@ -10,23 +10,12 @@ Configure {brandname} to export gauges and histograms.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container statistics="true"> <1>
-  <metrics gauges="true" histograms="true" /> <2>
-</cache-container>
+include::config_examples/metrics_cache_container.xml[]
 ----
-
-<1> Computes and collects statistics about the Cache Manager.
-<2> Exports collected statistics as gauge and histogram metrics.
 
 .Programmatically
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .statistics().enable() <1>
-  .metrics().gauges(true).histograms(true) <2>
-  .build();
+include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----
-
-<1> Computes and collects statistics about the Cache Manager.
-<2> Exports collected statistics as gauge and histogram metrics.

@@ -12,13 +12,13 @@ Specify the algorithm name of the implementation to use when conflict happens.
 .Using {brandname} algorithm
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_xsite_resolver_provided.xml[]
+include::config_examples/xsite_resolver_provided.xml[]
 ----
 
 .Using a custom implementation
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_xsite_resolver_custom.xml[]
+include::config_examples/xsite_resolver_custom.xml[]
 ----
 
 .Reference

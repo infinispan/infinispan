@@ -19,9 +19,8 @@ endif::server_mode[]
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_transport_stack.xml[]
+include::config_examples/jgroups_cluster_transport.xml[]
 ----
-<1> Uses `default-jgroups-udp.xml` for cluster transport.
 
 ifdef::embedded_mode[]
 * Use the `addProperty()` method to set the JGroups stack file:
@@ -36,7 +35,7 @@ endif::embedded_mode[]
 ifdef::server_mode[]
 * Use the `cluster-stack` argument when you start the server:
 +
-[source,options="nowrap",subs=attributes+]
+[source,sh,options="nowrap",subs=attributes+]
 ----
 $ bin/server.sh --cluster-stack=udp
 ----

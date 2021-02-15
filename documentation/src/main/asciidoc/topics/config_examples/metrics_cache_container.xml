@@ -1,0 +1,5 @@
+<!-- Computes and collects statistics for the Cache Manager. -->
+<cache-container statistics="true">
+  <!-- Exports collected statistics as gauge and histogram metrics. -->
+  <metrics gauges="true" histograms="true" />
+</cache-container>

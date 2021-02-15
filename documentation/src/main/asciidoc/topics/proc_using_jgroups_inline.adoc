@@ -8,9 +8,5 @@ You can insert complete JGroups stack definitions into `infinispan.xml` files.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_inline_jgroups.xml[]
+include::config_examples/jgroups_inline_stack.xml[]
 ----
-+
-<1> Contains one or more JGroups stack definitions.
-<2> Defines a custom JGroups stack named "prod".
-<3> Configures {brandname} to use "prod" for cluster transport.

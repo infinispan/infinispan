@@ -1,0 +1,8 @@
+<!-- Creates a Cache Manager named "default" and exports metrics. -->
+<cache-container name="default"
+                 statistics="true">
+  <!-- Adds cluster transport that uses the default JGroups TCP stack. -->
+  <transport cluster="${infinispan.cluster.name:cluster}"
+             stack="${infinispan.cluster.stack:tcp}"
+             node-name="${infinispan.node.name:}"/>
+</cache-container>

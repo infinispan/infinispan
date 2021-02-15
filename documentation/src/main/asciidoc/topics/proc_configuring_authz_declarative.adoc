@@ -6,27 +6,19 @@ Configure authorization in your `infinispan.xml` file.
 
 . Configure the global authorization settings in the `cache-container` that specify a role mapper, and define a set of roles and permissions.
 . Configure authorization for caches to restrict access based on user roles.
-+
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/cache_authorization.xml[]
 ----
-+
-<1> Enables {brandname} authorization for the Cache Manager.
-<2> Specifies an implementation of `PrincipalRoleMapper` that maps Principals
-to roles.
-<3> Defines roles and their associated permissions.
-<4> Implicitly adds all roles from the global configuration.
-+
-If you do not want to apply all roles to a cache, explicitly define the roles
-that are authorized for caches as follows:
-+
+
+In the following example, users who have the either the `reader` or `writer` role cannot access the "secured" cache.
+{brandname} denies any access requests from those users:
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/cache_authorization_explicit_roles.xml[]
 ----
-+
-<1> Defines authorized roles for the cache. In this example, users who have the `writer` role only are not authorized for the "secured" cache. {brandname} denies any access requests from those users.
 
 .Reference
 

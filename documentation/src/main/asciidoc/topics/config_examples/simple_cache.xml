@@ -1,3 +1,3 @@
 <local-cache name="mySimpleCache" simple-cache="true">
-    <!-- expiration, eviction, security... -->
+    <!-- Cache configuration elements. -->
 </local-cache>

@@ -5,25 +5,8 @@ upgrades, as follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence passivation="false"> <1>
-   <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
-                 cache="myDistCache" <2>
-                 protocol-version="2.5" <3>
-                 hotrod-wrapping="true" <4>
-                 raw-values="true" <5>
-                 segmented="false"> <6>
-      <remote-server host="127.0.0.1" port="11222"/> <7>
-   </remote-store>
-</persistence>
+include::config_examples/rolling_upgrade_remote_store.xml[]
 ----
-
-<1> Disables passivation. Remote cache stores for rolling upgrades must disable passivation.
-<2> Matches the name of a cache in the source cluster. Target clusters load data from this cache using the remote cache store.
-<3> Matches the Hot Rod protocol version of the source cluster. `2.5` is the minimum version and is suitable for any upgrade paths. You do not need to set another Hot Rod version.
-<4> Ensures that entries are wrapped in a suitable format for the Hot Rod protocol.
-<5> Stores data in the remote cache store in raw format. This ensures that clients can use data directly from the remote cache store.
-<6> Disables segmentation for the remote cache store. You should enable segmentation for remote cache stores only if the number of segments in the target cluster matches the number of segements for the cache in the source cluster.
-<7> Points to the location of the source cluster.
 
 .Reference
 

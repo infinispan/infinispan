@@ -1,0 +1,4 @@
+<distributed-cache name="my-cache">
+  <indexing storage="local-heap">
+   ...
+</distributed-cache>

@@ -31,14 +31,14 @@ should not fetch state or purge on startup.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/file_store.xml[]
+include::config_examples/persistence_file_store.xml[]
 ----
 
 .Shared custom cache store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/custom_cache_store.xml[]
+include::config_examples/persistence_custom_file_store.xml[]
 ----
 
 .Single file store

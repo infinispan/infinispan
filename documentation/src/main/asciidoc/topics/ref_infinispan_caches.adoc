@@ -1,0 +1,22 @@
+[id='cache_configuration']
+= Cache Configuration
+You can provide cache configuration in XML or JSON format.
+
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+.XML
+----
+include::config_examples/infinispan_distributed_cache.xml[]
+----
+
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+----
+include::config_examples/infinispan_distributed_cache.json[]
+----
+
+[discrete]
+== JSON format
+
+Cache configuration in JSON format must follow the structure of an XML configuration.
+* XML elements become JSON objects.
+* XML attributes become JSON fields.

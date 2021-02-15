@@ -15,11 +15,7 @@ include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
 //REST
 include::{topics}/proc_creating_caches_rest.adoc[leveloffset=+1]
 
-== {brandname} Configuration
-{brandname} configuration in XML and JSON format.
-
-include::{topics}/ref_xml_configuration.adoc[leveloffset=+2]
-include::{topics}/ref_json_configuration.adoc[leveloffset=+2]
+include::{topics}/ref_infinispan_caches.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

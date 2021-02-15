@@ -1,3 +1,0 @@
-<persistence>
-   <cli-loader connection="jmx://1.2.3.4:4444/MyCacheManager/myCache" />
-</persistence>

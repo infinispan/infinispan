@@ -25,12 +25,6 @@ include::config_examples/server_groups.properties[]
 include::config_examples/server_properties_realm.xml[]
 ----
 
-<1> Defines groups as roles for {brandname} server authorization.
-<2> Specifies the `users.properties` file.
-<3> Specifies that the file is relative to the `$ISPN_HOME/server/conf` directory.
-<4> Specifies that the passwords in `users.properties` are in plain-text format.
-<5> Specifies the `groups.properties` file.
-
 .Supported authentication mechanisms
 
 Property realms support the following authentication mechanisms:

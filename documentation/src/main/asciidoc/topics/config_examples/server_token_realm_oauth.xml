@@ -3,12 +3,14 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
+         <!-- Specifies the URL of the authentication server. -->
          <token-realm name="token"
-                      auth-server-url="https://oauth-server/auth/"> <1>
+                      auth-server-url="https://oauth-server/auth/">
+            <!-- Specifies the URL of the token introspection endpoint. -->
             <oauth2-introspection
-                    introspection-url="https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect" <2>
-                    client-id="infinispan-server" <3>
-                    client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/> <4>
+                    introspection-url="https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+                    client-id="infinispan-server"
+                    client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
          </token-realm>
       </security-realm>
    </security-realms>

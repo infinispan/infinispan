@@ -4,20 +4,8 @@ You can use wildcards to match cache definitions to configuration templates.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-    <cache-container>
-        <local-cache-configuration name="basecache*"> <1>
-            <expiration interval="10500" lifespan="11" max-idle="11"/>
-        </local-cache-configuration>
-        <local-cache name="basecache-1"/> <2>
-        <local-cache name="basecache-2"/> <3>
-    </cache-container>
-</infinispan>
+include::config_examples/config_wildcards.xml[]
 ----
-
-<1> uses the `*` wildcard to match any cache names that start with "basecache".
-<2> names a local cache "basecache-1" that uses the "basecache*" configuration template.
-<3> names a local cache "basecache-2" that uses the "basecache*" configuration template.
 
 [NOTE]
 ====

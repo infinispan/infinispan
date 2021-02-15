@@ -2,27 +2,13 @@
 = Multiple Configuration Files
 {brandname} supports XML inclusions (XInclude) that allow you to split configuration across multiple files.
 
-For example, the following configuration uses an XInclude:
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
-    <cache-container default-cache="cache-1">
-        <xi:include href="local.xml" /> <1>
-    </cache-container>
-</infinispan>
-----
-
-<1> includes an `local.xml` file that contains the following cache definition:
-+
-[source,xml,options="nowrap",subs=attributes+]
-----
-<local-cache name="mycache"/>
+include::config_examples/config_xincluded.xml[]
 ----
 
 If you want to use a schema for your included fragments, use the `infinispan-config-fragment-{schemaversion}.xsd` schema:
 
-.include-with-schema.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/config_xincluded_with_schema.xml[]
@@ -30,9 +16,7 @@ include::config_examples/config_xincluded_with_schema.xml[]
 
 [NOTE]
 ====
-{brandname} configurations provides only minimal support for the XInclude
-specification. For example, you cannot use the `xpointer` attribute, the
-`xi:fallback` element, text processing, or content negotiation.
+{brandname} configuration provides only minimal support for the XInclude specification. For example, you cannot use the `xpointer` attribute, the `xi:fallback` element, text processing, or content negotiation.
 ====
 
 .Reference

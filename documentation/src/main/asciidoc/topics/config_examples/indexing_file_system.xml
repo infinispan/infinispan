@@ -1,0 +1,5 @@
+<distributed-cache name="my-cache">
+   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
+     ...
+   </indexing>
+</distributed-cache>

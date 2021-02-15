@@ -24,14 +24,14 @@ interchangeably, specify the `application/x-protostream` MediaType so
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/cache_encoding.xml[]
+include::config_examples/encoding_cache.xml[]
 ----
 
 * Use a different encoding for keys and values:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/encoding_media_type.xml[]
+include::config_examples/encoding_keys_values.xml[]
 ----
 
 .Programmatic examples

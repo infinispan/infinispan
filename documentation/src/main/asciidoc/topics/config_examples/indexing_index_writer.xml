@@ -1,0 +1,17 @@
+<distributed-cache name="my-cache">
+  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
+    <index-writer commit-interval="2000"
+                  low-level-trace="false"
+                  max-buffered-entries="32"
+                  queue-count="1"
+                  queue-size="10000"
+                  ram-buffer-size="400"
+                  thread-pool-size="2">
+      <index-merge calibrate-by-deletes="true"
+                   factor="3"
+                   max-entries="2000"
+                   min-size="10"
+                   max-size="20"/>
+    </index-writer>
+      ...
+</distributed-cache>

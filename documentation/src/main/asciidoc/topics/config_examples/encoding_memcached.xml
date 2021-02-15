@@ -1,4 +1,6 @@
-<encoding>
-  <key media-type="text/plain"/>
-  <value media-type="application/x-protostream"/>
-</encoding>
+<distributed-cache name="mycache">
+  <encoding>
+    <key media-type="text/plain"/>
+    <value media-type="application/x-protostream"/>
+  </encoding>
+</distributed-cache>

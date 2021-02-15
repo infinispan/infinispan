@@ -1,9 +1,0 @@
-<replicated-cache name="xSiteStateTransfer">
-   ...
-   <backups>
-      <backup site="NYC" strategy="SYNC" failure-policy="FAIL">
-         <state-transfer chunk-size="512" timeout="1200000" max-retries="30" wait-time="2000" />
-      </backup>
-   </backups>
-    ...
-</replicated-cache>

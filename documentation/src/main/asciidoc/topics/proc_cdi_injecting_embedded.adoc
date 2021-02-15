@@ -19,7 +19,7 @@ public @interface GreetingCache { <1>
 }
 ----
 +
-<1> creates a `@GreetingCache` qualifier.
+<1> Creates a `@GreetingCache` qualifier.
 +
 . Add a producer method that defines the cache configuration.
 +
@@ -45,8 +45,8 @@ public class Config {
 }
 ----
 +
-<1> names the cache to inject.
-<2> adds the cache qualifier.
+<1> Names the cache to inject.
+<2> Adds the cache qualifier.
 +
 . Add a producer method that creates a clustered cache manager, if required
 +
@@ -67,9 +67,9 @@ public class Config {
 }
 ----
 +
-<1> adds the cache qualifier.
-<2> creates the bean once for the application. Producers that create cache managers should always include the `@ApplicationScoped` annotation to avoid creating multiple cache managers.
-<3> creates a new `DefaultCacheManager` instance that is bound to the `@GreetingCache` qualifier.
+<1> Adds the cache qualifier.
+<2> Creates the bean once for the application. Producers that create cache managers should always include the `@ApplicationScoped` annotation to avoid creating multiple cache managers.
+<3> Creates a new `DefaultCacheManager` instance that is bound to the `@GreetingCache` qualifier.
 +
 [NOTE]
 ====
