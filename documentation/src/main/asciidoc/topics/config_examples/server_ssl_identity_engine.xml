@@ -9,9 +9,9 @@
                <keystore path="server.p12"
                          relative-to="infinispan.server.config.path"
                          keystore-password="secret" alias="server"/>
-               <engine enabled-protocols="TLSv1.2 TLSv1.1" <1>
-                       enabled-ciphersuites="SSL_RSA_WITH_AES_128_GCM_SHA256 <2>
-                       SSL_RSA_WITH_AES_128_CBC_SHA256"/>
+               <!-- Configures the SSL engine to use TLS v1 and v2 protocols with specific cipher suites. -->
+               <engine enabled-protocols="TLSv1.2 TLSv1.1"
+                       enabled-ciphersuites="SSL_RSA_WITH_AES_128_GCM_SHA256 SSL_RSA_WITH_AES_128_CBC_SHA256"/>
             </ssl>
          </server-identities>
       </security-realm>

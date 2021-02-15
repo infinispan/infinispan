@@ -128,7 +128,7 @@ threads to the number of concurrent client requests:
 [source,xml,options="nowrap",subs=attributes+]
 .Hot Rod Server worker thread pool size
 ----
-include::config_examples/hot_rod_worker_threads.xml[]
+include::config_examples/hotrod_worker_threads.xml[]
 ----
 
 = Cache Store performance

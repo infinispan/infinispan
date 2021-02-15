@@ -21,13 +21,7 @@ POST /rest/v2/caches/{cacheName}
 | `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
-.References
-
-* link:#ref_xml_configuration[{brandname} XML Configuration]
-* link:#ref_json_configuration[{brandname} JSON Configuration]
-
-include::ref_xml_configuration.adoc[leveloffset=+1]
-include::ref_json_configuration.adoc[leveloffset=+1]
+include::ref_infinispan_caches.adoc[leveloffset=+1]
 
 [id='rest_v2_cache_exists']
 = Verifying Caches

@@ -12,5 +12,5 @@ For example, the following configuration backs up the "customers" cache on
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_xsite_backupfor.xml[]
+include::config_examples/xsite_backup_for.xml[]
 ----

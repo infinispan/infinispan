@@ -8,15 +8,9 @@
 include::config_examples/rest_connector_authentication.xml[]
 ----
 
-<1> Enables authentication against the security realm named "default".
-<2> Specifies SASL mechanisms to use for authentication
-
 .REST connector with Kerberos authentication
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/rest_connector_authentication_spnego.xml[]
 ----
-
-<1> Enables the `SPENGO` mechanism for Kerberos authentication.
-<2> Specifies the Kerberos identity for the server.

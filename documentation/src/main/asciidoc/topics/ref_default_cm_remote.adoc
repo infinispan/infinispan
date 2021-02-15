@@ -8,20 +8,8 @@ create caches at run-time.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container name="default" <1>
-                 statistics="true"> <2>
-  <transport cluster="${infinispan.cluster.name:cluster}" <3>
-             stack="${infinispan.cluster.stack:tcp}" <4>
-             node-name="${infinispan.node.name:}"/> <5>
-</cache-container>
+include::config_examples/default_cache_container.xml[]
 ----
-
-<1> Creates a Cache Manager named "default".
-<2> Exports Cache Manager statistics through the `metrics` endpoint.
-<3> Adds a JGroups cluster transport that allows {ProductName} servers to
-automatically discover each other and form clusters.
-<4> Uses the default TCP stack for cluster traffic.
-<5> Individual name for the node, must be unique across the cluster. Uses a unified hostname by default.
 
 .Examining the Cache Manager
 
@@ -31,6 +19,7 @@ as follows:
 
 * CLI: Use the [command]`describe` command in the default container.
 +
+[source,sh,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> describe
 ----

@@ -53,14 +53,14 @@
         <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotRodWrapping}">
           <xs:annotation>
             <xs:documentation>
-              Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade
+              Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="raw-values" type="xs:boolean" default="${RemoteStore.rawValues}">
           <xs:annotation>
             <xs:documentation>
-              Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This will make the remote cache interoperable between direct RemoteCacheManager clients and RemoteCacheStore stores
+              Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This ensures that clients can use data directly from the remote cache store.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

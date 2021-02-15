@@ -25,7 +25,7 @@ security role in `JSON` format, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/rest_tasks_response.json[]
+include::json_examples/rest_tasks_response.json[]
 ----
 
 [id='rest_v2_tasks_execute']

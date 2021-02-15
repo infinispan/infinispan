@@ -1,0 +1,5 @@
+<!-- Enables statistics for the Cache Manager. -->
+<cache-container statistics="true">
+  <!-- Enables statistics for the named cache. -->
+  <local-cache name="mycache" statistics="true"/>
+</cache-container>

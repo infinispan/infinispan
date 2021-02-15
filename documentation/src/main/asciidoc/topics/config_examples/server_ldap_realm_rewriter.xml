@@ -7,7 +7,8 @@
                      url="ldap://${org.infinispan.test.host.address}:10389"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org"
                      credential="strongPassword">
-            <name-rewriter> <1>
+            <name-rewriter>
+               <!-- Defines a rewriter that extracts the username from the principal using a regular expression. -->
                <regex-principal-transformer name="domain-remover"
                                             pattern="(.*)@INFINISPAN\.ORG"
                                             replacement="$1"/>

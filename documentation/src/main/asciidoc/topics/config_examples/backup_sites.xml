@@ -1,7 +1,0 @@
-<distributed-cache name="users">
-  <backups>
-    <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12000"/>
-    <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC"/>
-    <backup site="LON" strategy="SYNC" enabled="false"/>
-  </backups>
-</distributed-cache>

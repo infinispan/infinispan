@@ -1,7 +1,0 @@
-<infinispan>
-  <cache-container default-cache="replicatedCache">
-    <transport cluster="${infinispan.cluster.name}"
-               stack="udp" <1>
-               node-name="${infinispan.node.name:}"/>
-  </cache-container>
-</infinispan>

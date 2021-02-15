@@ -1,29 +1,13 @@
 [id='declarative-{context}']
 = Declarative Configuration
-You configure {brandname} caches by defining properties in `infinispan.xml`.
+Declarative configuration conforms to a schema and is defined in XML or JSON formatted files.
 
 The following example shows the basic structure of a {brandname} configuration:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan> <1>
-   <cache-container default-cache="local"> <2>
-      <transport stack="udp" cluster="mycluster"/> <3>
-      <local-cache name="local"/> <4>
-      <invalidation-cache name="invalidation"/> <5>
-      <replicated-cache name="replicated"/> <6>
-      <distributed-cache name="distributed"/> <7>
-   </cache-container>
-</infinispan>
+include::config_examples/infinispan.xml[]
 ----
-
-<1> adds the root element for the {brandname} configuration. The minimum valid configuration is `<infinispan />`; however this provides very basic capabilities with no clustering and no cache instances.
-<2> defines properties for all caches within the container and names the default cache.
-<3> defines transport properties for clustered cache modes. In the preceding example, `stack="udp"` specifies the default JGroups UDP transport stack and names the {brandname} cluster.
-<4> local cache.
-<5> invalidation cache.
-<6> replicated cache.
-<7> distributed cache.
 
 .Reference
 

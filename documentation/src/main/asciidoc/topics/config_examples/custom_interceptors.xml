@@ -1,0 +1,17 @@
+<local-cache name="cacheWithCustomInterceptors">
+  <!-- Define custom interceptors. -->
+  <!-- Custom interceptors should extend
+       org.infinispan.interceptors.BaseCustomAsyncInterceptor -->
+  <custom-interceptors>
+    <interceptor position="FIRST" class="com.mycompany.CustomInterceptor1">
+      <property name="attributeOne">value1</property>
+      <property name="attributeTwo">value2</property>
+    </interceptor>
+    <interceptor position="LAST" class="com.mycompany.CustomInterceptor2"/>
+    <interceptor index="3" class="com.mycompany.CustomInterceptor1"/>
+    <interceptor before="org.infinispanpan.interceptors.CallInterceptor"
+                 class="com.mycompany.CustomInterceptor2"/>
+    <interceptor after="org.infinispanpan.interceptors.CallInterceptor"
+                 class="com.mycompany.CustomInterceptor1"/>
+  </custom-interceptors>
+</local-cache>

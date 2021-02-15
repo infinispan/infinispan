@@ -20,6 +20,3 @@ want to use; for example HTTP/2 ALPN.
 ----
 include::config_examples/server_ssl_identity_engine.xml[]
 ----
-
-<1> Configures the SSL engine to use TLS v1 and v2 protocols.
-<2> Configures the SSL engine to use the specified cipher suites.

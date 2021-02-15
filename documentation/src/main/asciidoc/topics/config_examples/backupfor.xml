@@ -1,7 +1,0 @@
-<infinispan>
-  <cache-container default-cache="">
-     <distributed-cache name="usersLONBackup">
-        <backup-for remote-cache="users" remote-site="LON"/>
-     </distributed-cache>
-  </cache-container>
-</infinispan>

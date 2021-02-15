@@ -3,17 +3,22 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
-        <ldap-realm name="ldap" <1>
-                    url="ldap://my-ldap-server:10389" <2>
-                    principal="uid=admin,ou=People,dc=infinispan,dc=org" <3>
+        <!-- Names an LDAP realm and specifies connection properties. -->
+        <ldap-realm name="ldap"
+                    url="ldap://my-ldap-server:10389"
+                    principal="uid=admin,ou=People,dc=infinispan,dc=org"
                     credential="strongPassword"
-                    connection-timeout="3000" read-timeout="30000" <4>
-                    connection-pooling="true" referral-mode="ignore"
+                    connection-timeout="3000"
+                    read-timeout="30000"
+                    connection-pooling="true"
+                    referral-mode="ignore"
                     page-size="30"
-                    direct-verification="true"> <5>
-            <identity-mapping rdn-identifier="uid" <6>
-                              search-dn="ou=People,dc=infinispan,dc=org"> <7>
-               <attribute-mapping> <8>
+                    direct-verification="true">
+            <!-- Defines how principals are mapped to LDAP entries. -->
+            <identity-mapping rdn-identifier="uid"
+                              search-dn="ou=People,dc=infinispan,dc=org">
+               <!-- Retrieves all the groups of which the user is a member. -->
+               <attribute-mapping>
                   <attribute from="cn"
                              to="Roles"
                              filter="(&amp;(objectClass=groupOfNames)(member={1}))"

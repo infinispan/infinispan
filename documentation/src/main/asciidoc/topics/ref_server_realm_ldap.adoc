@@ -6,10 +6,8 @@ users and obtain membership information.
 
 [NOTE]
 ====
-LDAP servers can have different entry layouts, depending on the type of server
-and deployment. For this reason, LDAP realm configuration is complex. It is
-beyond the scope of this document to provide examples for all possibile
-configurations.
+LDAP servers can have different entry layouts, depending on the type of server and deployment.
+It is beyond the scope of this document to provide examples for all possible configurations.
 ====
 
 .LDAP realm configuration
@@ -19,22 +17,18 @@ configurations.
 include::config_examples/server_ldap_realm.xml[]
 ----
 
-<1> Names the LDAP realm.
-<2> Specifies the LDAP server connection URL.
-<3> Specifies a principal and credentials to connect to the LDAP server.
-+
 [IMPORTANT]
 ====
 The principal for LDAP connections must have necessary privileges to perform
 LDAP queries and access specific attributes.
 ====
-+
-<4> Optionally tunes LDAP server connections by specifying connection timeouts and so on.
-<5> Verifies user credentials. {brandname} attempts to connect to the LDAP server using the configured credentials. Alternatively, you can use the `user-password-mapper` element that specifies a password.
-<6> Maps LDAP entries to identities. The `rdn-identifier` specifies an LDAP attribute that finds the user entry based on a provided identifier, which is typically a username; for example, the `uid` or `sAMAccountName` attribute.
-<7> Defines a starting context that limits searches to the LDAP subtree that contains the user entries.
-<8> Retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
-+
+
+As an alternative to verifying user credentials with the `direct-verification` attribute, you can specify a LDAP password with the `user-password-mapper` element.
+
+The `rdn-identifier` attribute specifies an LDAP attribute that finds the user entry based on a provided identifier, which is typically a username; for example, the `uid` or `sAMAccountName` attribute.
+
+The `attribute-mapping` element retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
+
 * Under group entries that usually have class `groupOfNames` in the `member` attribute. In this case, you can use an attribute filter as in the preceding example configuration. This filter searches for entries that match the supplied filter, which locates groups with a `member` attribute equal to the user's DN. The filter then extracts the group entry's CN as specified by `from`, and adds it to the user's `Roles`.
 * In the user entry in the `memberOf` attribute. In this case you should use an attribute reference such as the following:
 +

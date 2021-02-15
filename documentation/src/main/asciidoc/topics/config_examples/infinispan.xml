@@ -1,0 +1,16 @@
+<infinispan>
+   <!-- Defines properties for all caches within the container and optionally names a default cache. -->
+   <cache-container default-cache="local">
+      <!-- Configures transport properties for clustered cache modes. -->
+      <!-- Specifies the default JGroups UDP stack and names the cluster. -->
+      <transport stack="udp" cluster="mycluster"/>
+      <!-- Configures a local cache. -->
+      <local-cache name="local"/>
+      <!-- Configures an invalidation cache. -->
+      <invalidation-cache name="invalidation"/>
+      <!-- Configures a replicated cache. -->
+      <replicated-cache name="replicated"/>
+      <!-- Configures a distributed cache. -->
+      <distributed-cache name="distributed"/>
+   </cache-container>
+</infinispan>

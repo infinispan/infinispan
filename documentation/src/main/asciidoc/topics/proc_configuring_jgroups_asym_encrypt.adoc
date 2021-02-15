@@ -15,18 +15,6 @@ For {brandname} Server, you put the keystore in the {server_home} directory.
 ----
 include::config_examples/jgroups_asym_encrypt.xml[]
 ----
-+
-<1> Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack for {brandname}.
-<2> Names the keystore that nodes use to perform certificate authentication.
-<3> Specifies the keystore password.
-<4> Uses the `stack.combine` and `stack.position` attributes to insert `SSL_KEY_EXCHANGE` into the default TCP stack after the `VERIFY_SUSPECT` protocol.
-<5> Specifies the length of the secret key that the coordinator node generates. The default value is `2048`.
-<6> Specifies the cipher engine the coordinator node uses to generate secret keys. The default value is `RSA`.
-<7> Configures {brandname} to generate and distribute a new secret key when the coordinator node changes.
-<8> Configures {brandname} to generate and distribute a new secret key when nodes leave.
-<9> Configures {brandname} nodes to use the `SSL_KEY_EXCHANGE` protocol for certificate authentication.
-<10> Uses the `stack.combine` and `stack.position` attributes to insert `ASYM_ENCRYPT` into the default TCP stack before the `pbcast.NAKACK2` protocol.
-<11> Configures the {brandname} cluster to use the secure JGroups stack.
 
 .Verification
 
@@ -40,6 +28,7 @@ When you start your {brandname} cluster, the following log message indicates tha
 {brandname} nodes can join the cluster only if they use `ASYM_ENCRYPT` and can obtain the secret key from the coordinator node.
 Otherwise the following message is written to {brandname} logs:
 
+[source,bash,options="nowrap"]
 ----
 [org.jgroups.protocols.ASYM_ENCRYPT] <hostname>: received message without encrypt header from <hostname>; dropping it
 ----

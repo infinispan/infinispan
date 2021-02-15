@@ -1,0 +1,12 @@
+<infinispan>
+  <jgroups>
+     <!-- Creates a "prod-tcp" stack that references an external file. -->
+     <stack-file name="prod-tcp" path="prod-jgroups-tcp.xml"/>
+  </jgroups>
+  <cache-container default-cache="replicatedCache">
+    <!-- Use the "prod-tcp" stack for cluster transport. -->
+    <transport stack="prod-tcp" />
+    <replicated-cache name="replicatedCache"/>
+  </cache-container>
+  ...
+</infinispan>

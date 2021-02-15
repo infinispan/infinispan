@@ -1,0 +1,20 @@
+<jgroups>
+  <!-- Uses TCPPING instead of MPING for discovery. -->
+   <stack name="relay-global" extends="tcp">
+     <MPING stack.combine="REMOVE"/>
+     <TCPPING initial_hosts="192.0.2.0[7800]"
+              stack.combine="INSERT_AFTER"
+              stack.position="TCP"/>
+   </stack>
+   <!-- Extends the default UDP stack with RELAY2. -->
+   <!-- Specifies RELAY2 properties. -->
+   <stack name="xsite" extends="udp">
+      <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"
+                    max_site_masters="10"
+                    can_become_site_master="true"/>
+      <remote-sites default-stack="relay-global">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+</jgroups>

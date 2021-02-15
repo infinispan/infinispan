@@ -17,8 +17,5 @@ Alternatively you can specify an absolute path when you declare the external sta
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_external_jgroups.xml[]
+include::config_examples/jgroups_external_stack.xml[]
 ----
-+
-<1> Creates a stack named "prod-tcp" that uses the "prod-jgroups-tcp.xml" definition.
-<2> Configures {brandname} to use "prod-tcp" for cluster transport.

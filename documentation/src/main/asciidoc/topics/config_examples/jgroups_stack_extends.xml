@@ -1,0 +1,31 @@
+<infinispan>
+  <jgroups>
+    <!-- Creates a custom JGroups stack named "my-stack". -->
+    <!-- Inherits properties from the default TCP stack. -->
+    <stack name="my-stack" extends="tcp">
+      <!-- Uses TCPGOSSIP as the discovery mechanism instead of MPING -->
+      <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
+             stack.combine="REPLACE"
+             stack.position="MPING" />
+      <!-- Removes the FD_SOCK protocol from the stack. -->
+      <FD_SOCK stack.combine="REMOVE"/>
+      <!-- Modifies the timeout value for the VERIFY_SUSPECT protocol. -->
+      <VERIFY_SUSPECT timeout="2000"/>
+      <!-- Adds SYM_ENCRYPT to the stack after VERIFY_SUSPECT. -->
+      <SYM_ENCRYPT sym_algorithm="AES"
+                   keystore_name="mykeystore.p12"
+                   keystore_type="PKCS12"
+                   store_password="changeit"
+                   key_password="changeit"
+                   alias="myKey"
+                   stack.combine="INSERT_AFTER"
+                   stack.position="VERIFY_SUSPECT" />
+    </stack>
+    <cache-container name="default" statistics="true">
+      <!-- Uses "my-stack" for cluster transport. -->
+      <transport cluster="${infinispan.cluster.name}"
+                 stack="my-stack"
+                 node-name="${infinispan.node.name:}"/>
+   </cache-container>
+  </jgroups>
+</infinispan>

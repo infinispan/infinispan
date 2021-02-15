@@ -21,14 +21,14 @@ strategies. {brandname} replicates data based on cache names.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_repl_xsite_nyc.xml[]
+include::config_examples/xsite_backup_nyc.xml[]
 ----
 
 .Example "customers" configuration in **NYC**
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/config_dist_xsite_lon.xml[]
+include::config_examples/xsite_backup_lon.xml[]
 ----
 
 .Reference

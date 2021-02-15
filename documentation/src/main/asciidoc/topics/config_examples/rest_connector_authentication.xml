@@ -1,8 +1,10 @@
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default" security-realm="default"> <1>
+           socket-binding="default"
+           security-realm="default">
    <rest-connector>
-      <authentication mechanisms="DIGEST BASIC"/> <2>
+      <!-- Specifies SASL mechanisms to use for authentication. -->
+      <authentication mechanisms="DIGEST BASIC"/>
    </rest-connector>
 </endpoints>

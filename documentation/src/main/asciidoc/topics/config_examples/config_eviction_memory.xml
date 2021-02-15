@@ -1,4 +1,0 @@
-<!-- Enable memory based eviction with 1 GB/> -->
-<memory>
-   <binary size="1000000000" eviction="MEMORY"/>
-</memory>

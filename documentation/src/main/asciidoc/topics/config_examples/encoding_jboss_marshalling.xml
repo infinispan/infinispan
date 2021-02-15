@@ -1,6 +1,0 @@
-<distributed-cache name="my-cache">
-   <encoding>
-      <key media-type="application/x-jboss-marshalling"/>
-      <value media-type="application/x-jboss-marshalling"/>
-   </encoding>
-</distributed-cache>

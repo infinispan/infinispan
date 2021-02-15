@@ -5,16 +5,19 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.p12" <1>
-                         relative-to="infinispan.server.config.path" <2>
-                         keystore-password="secret" <3>
-                         alias="server"/> <4>
-               <truststore path="trust.p12" <5>
+               <!-- Provides an SSL server identity with a keystore that contains server certificates. -->
+               <keystore path="server.p12"
+                         relative-to="infinispan.server.config.path"
+                         keystore-password="secret"
+                         alias="server"/>
+               <!-- Provides a trust store that verifies client identities to the server. -->
+               <truststore path="trust.p12"
                            relative-to="infinispan.server.config.path"
                            password="secret"/>
             </ssl>
          </server-identities>
-         <truststore-realm/> <6>
+         <!-- Authenticates client identities against the trust store, if required. -->
+         <truststore-realm/>
       </security-realm>
    </security-realms>
 </security>

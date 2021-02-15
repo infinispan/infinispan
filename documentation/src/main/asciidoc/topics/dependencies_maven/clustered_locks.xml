@@ -1,4 +1,0 @@
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-clustered-lock</artifactId>
-</dependency>

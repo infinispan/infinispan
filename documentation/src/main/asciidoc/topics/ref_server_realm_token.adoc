@@ -9,11 +9,6 @@ that are compatible with RFC-7662 (OAuth2 Token Introspection), such as
 include::config_examples/server_token_realm_oauth.xml[]
 ----
 
-<1> Specifies the URL of the authentication server.
-<2> Specifies the URL of the token introspection endpoint.
-<3> Names the client identifier for {brandname} server.
-<4> Specifies the client secret for {brandname} server.
-
 .Supported authentication mechanisms
 
 Token realms support the following authentication mechanisms:

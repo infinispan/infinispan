@@ -4,7 +4,7 @@ You can access the Health API from the Command Line Interface (CLI), as in the f
 
 The following is a sample result for the CLI invocation:
 
-[source,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs=attributes+]
 ----
-include::cli_examples/server_health.adoc[]
+include::json_examples/server_health.json[]
 ----

@@ -3,12 +3,17 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
-         <server-identities> <1>
-            <kerberos keytab-path="hotrod.keytab" <2>
-                      principal="hotrod/datagrid@INFINISPAN.ORG" <3>
-                      required="true"/> <4>
-            <kerberos keytab-path="http.keytab" <5>
-                      principal="HTTP/localhost@INFINISPAN.ORG" <6>
+         <server-identities>
+            <!-- Specifies a keytab file that provides a Kerberos identity for the Hot Rod connector. -->
+            <!-- Names the Kerberos service principal for the Hot Rod connector. -->
+            <!-- The required="true" attribute specifies that the keytab file must be present when the server starts. -->
+            <kerberos keytab-path="hotrod.keytab"
+                      principal="hotrod/datagrid@INFINISPAN.ORG"
+                      required="true"/>
+            <!-- Specifies a keytab file that provides a Kerberos identity for the REST connector. -->
+            <!-- Names the Kerberos service principal for the REST connector. -->
+            <kerberos keytab-path="http.keytab"
+                      principal="HTTP/localhost@INFINISPAN.ORG"
                       required="true"/>
          </server-identities>
       </security-realm>

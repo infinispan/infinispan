@@ -1,5 +1,0 @@
-<infinispan>
-  <cache-container>
-    <transport/>
-  </cache-container>
-</infinispan>

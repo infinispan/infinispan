@@ -1,12 +1,15 @@
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default" security-realm="default">
+           socket-binding="default"
+           security-realm="default">
    <hotrod-connector>
       <authentication>
-         <sasl mechanisms="GSSAPI GS2-KRB5" <1>
-               server-name="datagrid" <2>
-               server-principal="hotrod/datagrid@INFINISPAN.ORG"/> <3>
+         <!-- Enables the GSSAPI and GS2-KRB5 mechanisms for Kerberos authentication. -->
+         <!-- Defines the server name, which is equivalent to the Kerberos service name, and specifies the Kerberos identity for the server. -->
+         <sasl mechanisms="GSSAPI GS2-KRB5"
+               server-name="datagrid"
+               server-principal="hotrod/datagrid@INFINISPAN.ORG"/>
       </authentication>
    </hotrod-connector>
 </endpoints>

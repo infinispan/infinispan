@@ -1,6 +1,0 @@
-<SASL mech="DIGEST-MD5"
-    client_name="node_user"
-    client_password="node_password"
-    server_callback_handler_class="org.example.infinispan.security.JGroupsSaslServerCallbackHandler"
-    client_callback_handler_class="org.example.infinispan.security.JGroupsSaslClientCallbackHandler"
-    sasl_props="com.sun.security.sasl.digest.realm=test_realm" />

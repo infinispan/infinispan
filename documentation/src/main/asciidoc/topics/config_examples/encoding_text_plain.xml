@@ -1,6 +1,6 @@
-<cache>
+<distributed-cache name="mycache">
    <encoding>
       <key media-type="text/plain; charset=UTF-8"/>
       <value media-type="text/plain; charset=UTF-8"/>
    </encoding>
-</cache>
+</distributed-cache>

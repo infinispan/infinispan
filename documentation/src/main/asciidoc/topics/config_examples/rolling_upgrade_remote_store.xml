@@ -1,0 +1,15 @@
+<!-- Remote cache stores for rolling upgrades must disable passivation. -->
+<persistence passivation="false">
+   <!-- The value of the cache attribute matches the name of a cache in the source cluster. Target clusters load data from this cache using the remote cache store. -->
+   <!-- The "protocol-version" attribute matches the Hot Rod protocol version of the source cluster. 2.5 is the minimum version and is suitable for any upgrade path. -->
+   <!-- You should enable segmentation for remote cache stores only if the number of segments in the target cluster matches the number of segments for the cache in the source cluster. -->
+   <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
+                 cache="myDistCache"
+                 protocol-version="2.5"
+                 hotrod-wrapping="true"
+                 raw-values="true"
+                 segmented="false">
+      <!-- Points to the location of the source cluster. -->
+      <remote-server host="127.0.0.1" port="11222"/>
+   </remote-store>
+</persistence>

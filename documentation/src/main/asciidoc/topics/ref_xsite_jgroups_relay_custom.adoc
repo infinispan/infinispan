@@ -1,41 +1,25 @@
 [id='ref_relay_custom-{context}']
 = Custom JGroups RELAY2 Stacks
 
-[source,xml,options="nowrap",subs=attributes+]
-----
-<jgroups>
-   <stack name="relay-global" extends="tcp"> <1>
-         <MPING stack.combine="REMOVE"/>
-         <TCPPING initial_hosts="192.0.2.0[7800]" stack.combine="INSERT_AFTER" stack.position="TCP"/>
-    </stack>
-   <stack name="xsite" extends="udp">
-      <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"
-                    max_site_masters="10" <2>
-                    can_become_site_master="true"/>
-      <remote-sites default-stack="relay-global">
-         <remote-site name="LON"/>
-         <remote-site name="NYC"/>
-      </remote-sites>
-   </stack>
-</jgroups>
-----
-
-<1> Adds a custom RELAY2 stack that extends the TCP stack and uses TCPPING instead of MPING for discovery.
-<2> Sets the maximum number of site masters and optionally specifies additional RELAY2 properties. See JGroups RELAY2 documentation.
-
-You can also reference externally defined JGroups stack files as follows:
+The following configuration adds a custom RELAY2 stack that extends the default TCP stack:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<stack-file name="relay-global" path="jgroups-relay.xml"/>
+include::config_examples/jgroups_custom_relay_extends.xml[]
 ----
 
-In the preceding configuration `jgroups-relay.xml` provides a JGroups stack
-such as this:
+You can also reference externally defined JGroups stack files, for example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups-relay.xml[]
+include::config_examples/jgroups_custom_relay_external.xml[]
+----
+
+Where `jgroups-relay.xml` references a JGroups stack file such as:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jgroups_custom_relay.xml[]
 ----
 
 .Reference

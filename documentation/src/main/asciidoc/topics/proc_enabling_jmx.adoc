@@ -7,26 +7,18 @@ attributes.
 
 .Procedure
 
-* Enable JMX declaratively or programmatically.
+* Enable JMX declaratively or programmatically to register {brandname} JMX MBeans.
 
 .Declaratively
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container>
-  <jmx enabled="true" /> <1>
-</cache-container>
+include::config_examples/jmx_enabled_cache_container.xml[]
 ----
-
-<1> Registers {brandname} JMX MBeans.
 
 .Programmatically
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .jmx().enable() <1>
-  .build();
+include::code_examples/JmxGlobalConfigurationBuilder.java[]
 ----
-
-<1> Registers {brandname} JMX MBeans.

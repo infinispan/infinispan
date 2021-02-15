@@ -1,5 +1,0 @@
-<cache-container name="mycache" default-cache="default">
-   <modules>
-     <module name="deployment.analyzers.jar"/>
-   </modules>
-...

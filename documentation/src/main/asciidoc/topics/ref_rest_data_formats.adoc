@@ -5,11 +5,11 @@ https://en.wikipedia.org/wiki/Media_type[MediaType].
 
 See the link:{dev_docs}#data_encoding[Encoding] section for more information about MediaTypes and encoding data with {brandname}.
 
-The following example configures storage format for entries:
+The following example configures the storage format for entries:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/encoding_media_type.xml[]
+include::config_examples/encoding_keys_values.xml[]
 ----
 
 If you do not configure a MediaType, {brandname} defaults to

@@ -1,0 +1,3 @@
+<distributed-cache name="default_memory">
+  <memory />
+</distributed-cache>

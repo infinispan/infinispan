@@ -17,28 +17,12 @@ caches that it controls. You must explicitly enable statistics for your caches.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container statistics="true"> <1>
-  <local-cache name="mycache" statistics="true"/> <2>
-</cache-container>
+include::config_examples/statistics.xml[]
 ----
-
-<1> Enables statistics for the Cache Manager.
-<2> Enables statistics for the named cache.
 
 .Programmatically
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .cacheContainer().statistics(true) <1>
-  .build();
-
- ...
-
-Configuration config = new ConfigurationBuilder()
-  .statistics().enable() <2>
-  .build();
+include::code_examples/StatisticsGlobalConfigurationBuilder.java[]
 ----
-
-<1> Enables statistics for the Cache Manager.
-<2> Enables statistics for the named cache.

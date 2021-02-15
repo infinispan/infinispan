@@ -1,3 +1,0 @@
-<cache-container name="default" statistics="true">
-  <transport cluster="${cluster.name}" stack="xsite"/>
-</cache-container>

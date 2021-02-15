@@ -13,25 +13,16 @@ Create indexes of values in your caches to improve query performance and use ful
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <indexing> <1>
-      ...
-   </indexing>
-</distributed-cache>
+include::config_examples/indexing_enable.xml[]
 ----
-<1> Adding an `<indexing>` element automatically enables indexing. You do not need to include the `enabled` attribute, even though the default value of the `enabled` attribute is `false` in the configuration schema.
++
+Adding an `<indexing>` element automatically enables indexing. You do not need to include the `enabled` attribute, even though the default value of the `enabled` attribute is `false` in the configuration schema.
 +
 . Specify each entity that you want to index as a value for the `indexed-entity` element.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <indexing>
-     <indexed-entities>
-       <indexed-entity>...</indexed-entity>
-     </indexed-entities>
-   </indexing>
-</distributed-cache>
+include::config_examples/indexing_entities.xml[]
 ----
 
 .Plain Old Java Objects
@@ -40,10 +31,7 @@ For caches that store POJOs, you specify the fully qualified class name that is 
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<indexed-entities>
-  <indexed-entity>org.infinispan.sample.Car</indexed-entity>
-  <indexed-entity>org.infinispan.sample.Truck</indexed-entity>
-</indexed-entities>
+include::config_examples/indexing_entities_pojo.xml[]
 ----
 
 .Protobuf
@@ -61,7 +49,5 @@ You should then specify the following value for the `indexed-entity` element:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<indexed-entities>
-  <indexed-entity>book_sample.Book</indexed-entity>
-</indexed-entities>
+include::config_examples/indexing_entities_proto.xml[]
 ----

@@ -1,6 +1,0 @@
-<indexing storage="local-heap">
-   <index-reader refresh-interval="1000"/>
-   <indexed-entities>
-      <indexed-entity>someEntity</indexed-entity>
-   </indexed-entities>
-</indexing>

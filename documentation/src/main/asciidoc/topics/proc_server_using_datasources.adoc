@@ -15,22 +15,5 @@ configuration of your cache configuration, as in the following example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache-configuration name="persistent-cache" xmlns:jdbc="urn:infinispan:config:store:jdbc:{schemaversion}">
-    <persistence>
-        <jdbc:string-keyed-jdbc-store>
-            <jdbc:data-source jndi-url="jdbc/postgres"/> <1>
-            <jdbc:string-keyed-table drop-on-exit="true"
-                          create-on-start="true"
-                          prefix="TBL">
-                <jdbc:id-column name="ID" type="VARCHAR(255)"/>
-                <jdbc:data-column name="DATA" type="BYTEA"/>
-                <jdbc:timestamp-column name="TS" type="BIGINT"/>
-                <jdbc:segment-column name="S" type="INT"/>
-            </jdbc:string-keyed-table>
-        </jdbc:string-keyed-jdbc-store>
-    </persistence>
-</distributed-cache-configuration>
+include::config_examples/server_jdbc_cache_stores.xml[]
 ----
-
-<1> Specifies the JNDI name that you provided for the datasource connection in
-your {brandname} server configuration.

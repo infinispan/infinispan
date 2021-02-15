@@ -30,6 +30,7 @@
         <asciidoctor.maven.plugin.version>2.0.0-RC.1</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>1.5.0-alpha.18</asciidoctorj.pdf.version>
         <jruby.version>9.2.9.0</jruby.version>
+        <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
     </properties>
@@ -59,7 +60,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-rocksdb</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-clustered-counter</artifactId>
@@ -127,6 +127,11 @@
                         <artifactId>jruby-complete</artifactId>
                         <version>${jruby.version}</version>
                     </dependency>
+                    <dependency>
+                      <groupId>com.bmuschko</groupId>
+                      <artifactId>asciidoctorj-tabbed-code-extension</artifactId>
+                      <version>${asciidoctorj.tabbed.code.version}</version>
+                    </dependency>
                 </dependencies>
                 <executions>
                     <execution>
@@ -144,6 +149,7 @@
                             <relativeBaseDir>true</relativeBaseDir>
                             <sourceDocumentExtensions>
                                 <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
+                                <sourceDocumentExtension>asciidoctorj-tabbed-code-extension</sourceDocumentExtension>
                             </sourceDocumentExtensions>
                             <sourceHighlighter>coderay</sourceHighlighter>
                             <attributes>
@@ -217,6 +223,7 @@
                                     <relativeBaseDir>true</relativeBaseDir>
                                     <sourceDocumentExtensions>
                                         <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
+                                        <sourceDocumentExtension>asciidoctorj-tabbed-code-extension</sourceDocumentExtension>
                                     </sourceDocumentExtensions>
                                     <sourceHighlighter>coderay</sourceHighlighter>
                                     <attributes>

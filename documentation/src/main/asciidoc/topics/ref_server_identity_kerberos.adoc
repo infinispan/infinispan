@@ -1,16 +1,9 @@
 [id='kerberos_identity_config-{context}']
 = Kerberos Identity Configuration
 
-The following example configures Kerberos identities for {brandname} server:
+The following example configures Kerberos identities for {brandname} Server:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_identities_kerberos.xml[]
 ----
-
-<1> Defines identities for {brandname} server.
-<2> Specifies a keytab file that provides a Kerberos identity for the Hot Rod connector.
-<3> Names the Kerberos service principal for the Hot Rod connector.
-<4> Specifies that the keytab file must exist when {brandname} server starts.
-<5> Specifies a keytab file that provides a Kerberos identity for the REST connector.
-<6> Names the Kerberos service principal for the REST connector.
