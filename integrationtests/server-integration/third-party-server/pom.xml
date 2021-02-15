@@ -206,7 +206,7 @@
                                     <skip>${skipTests}</skip>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>org.wildfly</groupId>
+                                            <groupId>${appserver.groupId}</groupId>
                                             <artifactId>wildfly-dist</artifactId>
                                             <version>${version.wildfly}</version>
                                             <type>zip</type>
