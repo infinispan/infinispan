@@ -7,9 +7,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
@@ -38,6 +41,38 @@ import org.testng.annotations.Test;
 public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedStreamIteratorTest {
    public DistributedStreamIteratorRepeatableReadTxTest() {
       super(true, CacheMode.DIST_SYNC);
+   }
+
+   /**
+    * See ISPN-12731 Cache collections ignore values added in transaction
+    */
+   public void testCacheCollectionsIncludesEntriesNotYetCommitted() throws Exception {
+      Cache<Object, String> cache = cache(0, CACHE_NAME);
+      TransactionManager tm = tm(cache);
+      tm.begin();
+      try {
+         Map<Object, String> inserted = new LinkedHashMap<>();
+         for (int i = 0; i < 3; ++i) {
+            Object key = new MagicKey(cache(i, CACHE_NAME));
+            cache.put(key, key.toString());
+            inserted.put(key, key.toString());
+         }
+
+         // cache collections use streams internally
+         Set<Object> expectedKeys = inserted.keySet();
+         Set<Object> keySetResults = new HashSet<>(cache.keySet());
+         assertEquals(expectedKeys, keySetResults);
+
+         Set<String> expectedValues = new HashSet<>(inserted.values());
+         Set<String> valuesResults = new HashSet<>(cache.values());
+         assertEquals(expectedValues, valuesResults);
+
+         Set<Map.Entry<Object, String>> expectedEntries = inserted.entrySet();
+         Set<Map.Entry<Object, String>> entrySetResults = new HashSet<>(cache.entrySet());
+         assertEquals(expectedEntries, entrySetResults);
+      } finally {
+         tm.rollback();
+      }
    }
 
    public void testFilterWithExistingTransaction() throws Exception {

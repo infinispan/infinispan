@@ -37,6 +37,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
@@ -47,7 +48,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.MarshallableFunctions;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
@@ -355,10 +355,10 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       Publisher<R> publisherToSubscribeTo;
       SegmentCompletionPublisher<R> publisher;
       if (toKeyFunction == null) {
-         publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, null, includeLoader,
+         publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, invocationContext, includeLoader,
                deliveryGuarantee, distributedBatchSize, usedTransformer);
       } else {
-         publisher = cpm.entryPublisher(segmentsToFilter, keysToFilter, null, includeLoader,
+         publisher = cpm.entryPublisher(segmentsToFilter, keysToFilter, invocationContext, includeLoader,
                deliveryGuarantee, distributedBatchSize, usedTransformer);
       }
 
