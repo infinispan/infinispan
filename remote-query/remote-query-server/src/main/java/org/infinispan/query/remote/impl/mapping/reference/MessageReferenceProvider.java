@@ -1,5 +1,8 @@
 package org.infinispan.query.remote.impl.mapping.reference;
 
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.FIELD_ANNOTATION;
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.INDEXED_ANNOTATION;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +24,7 @@ public class MessageReferenceProvider {
       this.fields = new ArrayList<>(descriptor.getFields().size());
       this.embedded = new ArrayList<>();
 
-      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(INDEXED_ANNOTATION);
       if (indexingMetadata == null) {
          return;
       }
@@ -29,7 +32,11 @@ public class MessageReferenceProvider {
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
          String fieldName = fieldDescriptor.getName();
          if (Type.MESSAGE.equals(fieldDescriptor.getType())) {
-            embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
+            if (fieldDescriptor.getAnnotations().containsKey(FIELD_ANNOTATION)) {
+               if (hasFieldAnnotation(fieldDescriptor.getMessageType())) {
+                  embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
+               }
+            }
             continue;
          }
 
@@ -44,6 +51,10 @@ public class MessageReferenceProvider {
             fields.add(fieldReferenceProvider);
          }
       }
+   }
+
+   private boolean hasFieldAnnotation(Descriptor descriptor) {
+      return descriptor.getFields().stream().anyMatch(f -> f.getAnnotations().containsKey(FIELD_ANNOTATION));
    }
 
    public boolean isEmpty() {
