@@ -64,29 +64,29 @@ same, {brandname} cannot read data from the cache store.
 |`version`
 |Specifies the marshaller version for source cache stores. Set one of the following values:
 
-ifndef::productized[]
+ifdef::community[]
 * `8` for {brandname} 8.x
-endif::productized[]
+endif::community[]
 
-ifdef::productized[]
+ifdef::downstream[]
 * `8` for {brandname} 7.2.x
-endif::productized[]
+endif::downstream[]
 
-ifndef::productized[]
+ifdef::community[]
 * `9` for {brandname} 9.x
-endif::productized[]
+endif::community[]
 
-ifdef::productized[]
+ifdef::downstream[]
 * `9` for {brandname} 7.3.x
-endif::productized[]
+endif::downstream[]
 
-ifndef::productized[]
+ifdef::community[]
 * `10` {brandname} 10.x
-endif::productized[]
+endif::community[]
 
-ifdef::productized[]
+ifdef::downstream[]
 * `10` {brandname} 8.x
-endif::productized[]
+endif::downstream[]
 
 |Required for source stores only.
 

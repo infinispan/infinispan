@@ -30,12 +30,14 @@ marshallers for your classes.
 ====
 The `MessageMarshaller` interface is now deprecated.
 
-ifndef::productized[]
+//Community content
+ifdef::community[]
 {brandname} 12 provides an alternative implementation that lets you create an adaptor class that uses the `@ProtoAdaptor` annotation for any external, third-party Java object classes.
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
 The next version of {brandname} provides an alternative implementation that lets you create an adaptor class that uses the `@ProtoAdaptor` annotation for any external, third-party Java object classes.
-endif::productized[]
+endif::downstream[]
 ====
 +
 [source,java]

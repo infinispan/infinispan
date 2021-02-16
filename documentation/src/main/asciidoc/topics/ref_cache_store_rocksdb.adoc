@@ -95,7 +95,7 @@ significantly increases cache store start time.
 * link:http://rocksdb.org/[rocksdb.org]
 * link:https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide[RocksDB Tuning Guide]
 //Community only
-ifndef::productized[]
+ifdef::community[]
 * link:https://github.com/infinispan/infinispan/blob/master/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/config/ConfigurationTest.java[RocksDB Cache Store test]
 * link:https://github.com/infinispan/infinispan/tree/master/persistence/rocksdb/src/test/resources/config/[RocksDB Cache Store test configuration]
-endif::productized[]
+endif::community[]

@@ -5,10 +5,10 @@ interface (CLI) and the **user** command. The CLI lets you create and manage
 users, passwords, and authorization roles for accessing the REST endpoint.
 
 //Community Only
-ifndef::productized[]
+ifdef::community[]
 When running the Docker image, configure authentication with the `APP_USER` and
 `APP_PASS` command line arguments.
-endif::productized[]
+endif::community[]
 
 .Reference
 
