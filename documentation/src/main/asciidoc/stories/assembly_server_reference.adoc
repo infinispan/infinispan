@@ -3,9 +3,9 @@
 = Reference
 
 //Downstream
-ifdef::productized[]
+ifdef::downstream[]
 include::{server_readme}[leveloffset=+1]
-endif::productized[]
+endif::downstream[]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

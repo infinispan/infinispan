@@ -3,11 +3,7 @@
 {brandname} caches store data in formats that you can define with a
 https://en.wikipedia.org/wiki/Media_type[MediaType].
 
-//Community Link
-ifndef::productized[]
-See the link:../developing/developing.html#data_encoding[Encoding] section for
-more information about MediaTypes and encoding data with {brandname}.
-endif::productized[]
+See the link:{dev_docs}#data_encoding[Encoding] section for more information about MediaTypes and encoding data with {brandname}.
 
 The following example configures storage format for entries:
 

@@ -12,20 +12,22 @@ include::{topics}/counters.adoc[leveloffset=+0]
 include::{topics}/locking.adoc[leveloffset=+0]
 include::assembly_cdi.adoc[leveloffset=+0]
 include::{topics}/transactions.adoc[leveloffset=+0]
-//Community only
-ifndef::productized[]
+//Community content
+ifdef::community[]
 include::{topics}/functional_api.adoc[leveloffset=+0]
-endif::productized[]
+endif::community[]
 include::{topics}/execute_grid.adoc[leveloffset=+0]
 include::{topics}/streams.adoc[leveloffset=+0]
 include::{topics}/jcache.adoc[leveloffset=+0]
 include::{topics}/multimapcache.adoc[leveloffset=+0]
-ifndef::productized[]
+//Community content
+ifdef::community[]
 include::{topics}/anchored_keys.adoc[leveloffset=+0]
-endif::productized[]
-ifndef::productized[]
+endif::community[]
+//Community content
+ifdef::community[]
 include::{topics}/cloudevents_integration.adoc[leveloffset=+0]
-endif::productized[]
+endif::community[]
 
 
 // Restore the parent context.

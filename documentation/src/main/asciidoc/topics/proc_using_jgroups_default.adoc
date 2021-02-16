@@ -50,8 +50,8 @@ endif::server_mode[]
 ----
 
 //RH KCS article
-ifdef::productized[]
+ifdef::downstream[]
 .Reference
 
 * link:https://access.redhat.com/solutions/5608391[JGroups cluster transport configuration for {brandname} 8.x] ({RedHat} knowledgebase article)
-endif::productized[]
+endif::downstream[]
