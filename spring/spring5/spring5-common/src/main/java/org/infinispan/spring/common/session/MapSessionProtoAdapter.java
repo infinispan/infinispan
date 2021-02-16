@@ -10,10 +10,8 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
+import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -130,7 +128,7 @@ public class MapSessionProtoAdapter {
     * and {@link MapSessionProtoAdapter} must be stateless.</p>
     */
    public static final class SessionAttributeRawMarshaller extends GeneratedMarshallerBase
-         implements RawProtobufMarshaller<MapSessionProtoAdapter.SessionAttribute> {
+         implements ProtobufTagMarshaller<SessionAttribute> {
 
       private final JavaSerializationMarshaller javaSerializationMarshaller;
       private org.infinispan.protostream.impl.BaseMarshallerDelegate<WrappedMessage> wrappedMessageDelegate;
@@ -150,41 +148,40 @@ public class MapSessionProtoAdapter {
       }
 
       @Override
-      public MapSessionProtoAdapter.SessionAttribute readFrom(ImmutableSerializationContext serCtx,
-                                                              RawProtoStreamReader reader) throws java.io.IOException {
-         java.lang.String name = null;
+      public MapSessionProtoAdapter.SessionAttribute read(ReadContext ctx) throws IOException {
+         TagReader in = ctx.getReader();
+         String name = null;
          boolean done = false;
          Object value = null;
          while (!done) {
-            final int tag = reader.readTag();
+            final int tag = in.readTag();
             switch (tag) {
                case 0:
                   done = true;
                   break;
                case 10: {
-                  name = reader.readString();
+                  name = in.readString();
                   break;
                }
                case 18: {
                   if (wrappedMessageDelegate == null) {
-                     wrappedMessageDelegate =
-                           ((SerializationContextImpl) serCtx).getMarshallerDelegate(WrappedMessage.class);
+                     wrappedMessageDelegate = ((SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(WrappedMessage.class);
                   }
-                  int length = reader.readRawVarint32();
-                  int oldLimit = reader.pushLimit(length);
-                  WrappedMessage wrappedMessage = readMessage(wrappedMessageDelegate, reader);
+                  int length = in.readRawVarint32();
+                  int oldLimit = in.pushLimit(length);
+                  WrappedMessage wrappedMessage = readMessage(wrappedMessageDelegate, ctx);
                   value = wrappedMessage.getValue();
-                  reader.checkLastTagWas(0);
-                  reader.popLimit(oldLimit);
+                  in.checkLastTagWas(0);
+                  in.popLimit(oldLimit);
                   break;
                }
                case 26: {
-                  byte[] serializedBytes = reader.readByteArray();
+                  byte[] serializedBytes = in.readByteArray();
                   value = deserializeValue(serializedBytes);
                   break;
                }
                default: {
-                  if (!reader.skipField(tag)) done = true;
+                  if (!in.skipField(tag)) done = true;
                }
             }
          }
@@ -192,26 +189,24 @@ public class MapSessionProtoAdapter {
       }
 
       @Override
-      public void writeTo(ImmutableSerializationContext serCtx, RawProtoStreamWriter writer,
-                          MapSessionProtoAdapter.SessionAttribute attribute) throws java.io.IOException {
+      public void write(WriteContext ctx, MapSessionProtoAdapter.SessionAttribute attribute) throws IOException {
          final String name = attribute.getName();
-         if (name != null) writer.writeString(1, name);
+         if (name != null) ctx.getWriter().writeString(1, name);
 
          Object value = attribute.getValue();
          if (value != null) {
-            if (serCtx.canMarshall(value.getClass())) {
+            if (ctx.getSerializationContext().canMarshall(value.getClass())) {
                // The attribute value is an application class that can be marshalled with Protostream
                final WrappedMessage wrappedMessage = new WrappedMessage(value);
                if (wrappedMessageDelegate == null) {
-                  wrappedMessageDelegate =
-                        ((SerializationContextImpl) serCtx).getMarshallerDelegate(WrappedMessage.class);
+                  wrappedMessageDelegate = ((SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(WrappedMessage.class);
                }
-               writeNestedMessage(wrappedMessageDelegate, writer, 2, wrappedMessage);
+               writeNestedMessage(wrappedMessageDelegate, ctx, 2, wrappedMessage);
             } else {
                // The attribute value cannot be marshalled with Protostream, but Java Serialization should work
                // E.g. all sessions have a org.springframework.security.core.context.SecurityContext attribute
                byte[] serializedBytes = serializeValue(value);
-               writer.writeBytes(3, serializedBytes);
+               ctx.getWriter().writeBytes(3, serializedBytes);
             }
          }
       }

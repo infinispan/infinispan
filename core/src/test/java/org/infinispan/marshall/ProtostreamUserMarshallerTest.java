@@ -40,7 +40,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
    }
 
    @Test(expectedExceptions = MarshallingException.class,
-         expectedExceptionsMessageRegExp = "No marshaller registered for Java type org\\.infinispan\\.marshall\\.ProtostreamUserMarshallerTest\\$NonMarshallablePojo")
+         expectedExceptionsMessageRegExp = "No marshaller registered for object of Java type org\\.infinispan\\.marshall\\.ProtostreamUserMarshallerTest\\$NonMarshallablePojo : .*")
    public void testMarshallingException() throws Exception {
       PersistenceMarshaller pm = TestingUtil.extractPersistenceMarshaller(manager(0));
       pm.objectToBuffer(new NonMarshallablePojo());

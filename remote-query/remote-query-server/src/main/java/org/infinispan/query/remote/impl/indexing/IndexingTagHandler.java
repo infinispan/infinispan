@@ -38,9 +38,9 @@ public final class IndexingTagHandler implements TagHandler {
    private void addFieldToDocument(FieldDescriptor fieldDescriptor, Object value) {
       // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
       // different entity types to have different field types or different indexing options in the same index.
-      String fullFieldName = messageContext.getFullFieldName();
-      fullFieldName = fullFieldName != null ? fullFieldName + "." + fieldDescriptor.getName() : fieldDescriptor.getName();
-      IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fullFieldName);
+      String fieldPath = messageContext.getFieldPath();
+      fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
+      IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fieldPath);
       if (fieldReference != null) {
          messageContext.addValue(fieldReference, value);
       }
@@ -49,7 +49,7 @@ public final class IndexingTagHandler implements TagHandler {
    @Override
    public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       messageContext.markField(fieldNumber);
-      pushContext(fieldDescriptor.getName(), fieldDescriptor.getMessageType());
+      pushContext(fieldDescriptor, fieldDescriptor.getMessageType());
    }
 
    @Override
@@ -62,19 +62,19 @@ public final class IndexingTagHandler implements TagHandler {
       indexMissingFields();
    }
 
-   private void pushContext(String fieldName, Descriptor messageDescriptor) {
-      String fullFieldName = messageContext.getFullFieldName();
-      fullFieldName = fullFieldName != null ? fullFieldName + "." + fieldName : fieldName;
+   private void pushContext(FieldDescriptor fieldDescriptor, Descriptor messageDescriptor) {
+      String fieldPath = messageContext.getFieldPath();
+      fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
 
       DocumentElement documentElement = null;
       if (messageContext.getDocument() != null) {
-         IndexObjectFieldReference objectReference = indexReferenceHolder.getObjectReference(fullFieldName);
+         IndexObjectFieldReference objectReference = indexReferenceHolder.getObjectReference(fieldPath);
          if (objectReference != null) {
             documentElement = messageContext.getDocument().addObject(objectReference);
          }
       }
 
-      messageContext = new IndexingMessageContext(messageContext, fieldName, messageDescriptor, documentElement);
+      messageContext = new IndexingMessageContext(messageContext, fieldDescriptor, messageDescriptor, documentElement);
    }
 
    private void popContext() {

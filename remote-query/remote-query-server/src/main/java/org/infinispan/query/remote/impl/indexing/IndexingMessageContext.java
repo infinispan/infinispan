@@ -4,14 +4,15 @@ import org.hibernate.search.engine.backend.document.DocumentElement;
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 final class IndexingMessageContext extends MessageContext<IndexingMessageContext> {
 
    // null if the embedded is not indexed
    private final DocumentElement document;
 
-   public IndexingMessageContext(IndexingMessageContext parentContext, String fieldName, Descriptor messageDescriptor, DocumentElement document) {
-      super(parentContext, fieldName, messageDescriptor);
+   public IndexingMessageContext(IndexingMessageContext parentContext, FieldDescriptor fieldDescriptor, Descriptor messageDescriptor, DocumentElement document) {
+      super(parentContext, fieldDescriptor, messageDescriptor);
       this.document = document;
    }
 
