@@ -15,13 +15,13 @@
 [TIP]
 ====
 //Community
-ifndef::productized[]
+ifdef::community[]
 See the {brandname} Server README, available in the distribution, for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
-endif::productized[]
+endif::community[]
 //Downstream
-ifdef::productized[]
+ifdef::downstream[]
 See the link:{runtime_readme}[{brandname} Server README] for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
-endif::productized[]
+endif::downstream[]
 ====
 
 == Server Root Directory
@@ -82,9 +82,9 @@ Contains extension `JAR` files for custom filters, custom event listeners, JDBC 
 == `server/log`
 Holds {brandname} Server log files.
 
-ifdef::productized[]
+ifdef::downstream[]
 .Reference
 
 * link:{runtime_readme}[{brandname} Server README]
 * link:https://access.redhat.com/solutions/5455731[What is stored in the <server>/data directory used by a RHDG server] (Red Hat Knowledgebase)
-endif::productized[]
+endif::downstream[]

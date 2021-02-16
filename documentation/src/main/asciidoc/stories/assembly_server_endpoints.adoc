@@ -7,19 +7,19 @@ client applications.
 include::{topics}/con_endpoints.adoc[leveloffset=+1]
 include::{topics}/con_endpoints_hotrod.adoc[leveloffset=+2]
 include::{topics}/con_endpoints_rest.adoc[leveloffset=+2]
-//Memcached is Community Only
-ifndef::productized[]
+//Community content
+ifdef::community[]
 include::{topics}/con_endpoints_memcached.adoc[leveloffset=+2]
-endif::productized[]
+endif::community[]
 include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
 
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_hotrod_connector.adoc[leveloffset=+2]
 include::{topics}/ref_endpoints_rest_connector.adoc[leveloffset=+2]
-//Memcached is Community Only
-ifndef::productized[]
+//Community content
+ifdef::community[]
 include::{topics}/ref_endpoints_memcached_connector.adoc[leveloffset=+2]
-endif::productized[]
+endif::community[]
 include::{topics}/ref_server_ports.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_firewall.adoc[leveloffset=+2]
 

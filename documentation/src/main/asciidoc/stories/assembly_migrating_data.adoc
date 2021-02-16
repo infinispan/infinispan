@@ -10,21 +10,21 @@ versions do not allow backwards compatibility between cache stores. You can use
 version.
 
 For example, upgrading to {brandname}
-ifndef::productized[]
+ifdef::community[]
 10.0
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+ifdef::downstream[]
 8.0
-endif::productized[]
+endif::downstream[]
 changes the default marshaller to Protostream. In previous {brandname}
 versions, cache stores use a binary format that is not compatible with the
 changes to marshalling. This means that {brandname}
-ifndef::productized[]
+ifdef::community[]
 10.1
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+ifdef::downstream[]
 8.0
-endif::productized[]
+endif::downstream[]
 cannot read from cache stores with previous {brandname} versions.
 
 In other cases {brandname} versions deprecate or remove cache store

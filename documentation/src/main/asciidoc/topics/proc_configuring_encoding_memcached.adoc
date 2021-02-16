@@ -43,10 +43,10 @@ include::config_examples/encoding_memcached_clients.xml[]
 
 .Reference
 
-ifndef::productized[]
+ifdef::community[]
 link:{memcached_docs}[{brandname} Memcached Client Guide]
-endif::productized[]
+endif::community[]
 
-ifdef::productized[]
+ifdef::downstream[]
 link:https://access.redhat.com/solutions/5163441[Red Hat Knowledge Base: Memcached Endpoint for {brandname}]
-endif::productized[]
+endif::downstream[]
