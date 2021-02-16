@@ -25,13 +25,13 @@ configuration. Alternatively set the allow list using system properties.
 .Reference
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 * link:../developing/developing.html#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
 * link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
-endif::productized[]
+endif::community[]
 
-//Product
-ifdef::productized[]
+//Downstream
+ifdef::downstream[]
 * link:{dev_docs}#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
 * link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
-endif::productized[]
+endif::downstream[]

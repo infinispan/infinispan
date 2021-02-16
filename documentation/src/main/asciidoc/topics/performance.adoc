@@ -3,9 +3,9 @@ This guide will give you information and tweaks about tuning {brandname} perform
 = Capacity planning
 
 Data in {brandname} is either stored as plain Java objects or in a serialized form, depending on operating mode (embedded or server) or on specific configuration options such as store-as-binary.
-ifndef::productized[]
+ifdef::community[]
 For more information, see link:../developing/developing.html#store_as_binary[store-as-binary].
-endif::productized[]
+endif::community[]
 Data size can be estimated using sophisticated tools like  http://openjdk.java.net/projects/code-tools/jol/[Java Object Layout]
 and the total amount of required memory can be roughly estimated using the following formulas:
 

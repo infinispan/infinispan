@@ -13,14 +13,14 @@ To use Kryo marshalling with {brandname} servers, add a JAR that includes the
 runtime class files for the Kryo marshalling implementation as follows:
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 . Download the
 link:http://central.maven.org/maven2/org/infinispan/infinispan-marshaller-kryo-bundle/{infinispanversion}/infinispan-marshaller-kryo-bundle-{infinispanversion}.jar[Kryo Bundle].
-endif::productized[]
-//Product
-ifdef::productized[]
+endif::community[]
+//Downstream
+ifdef::downstream[]
 . Copy `infinispan-marshaller-kryo-bundle.jar` from the {brandname} Maven repository.
-endif::productized[]
+endif::downstream[]
 . Add the JAR file to the `server/lib` directory in your {brandname} server installation directory.
 
 .Prerequisites for {brandname} Library Mode

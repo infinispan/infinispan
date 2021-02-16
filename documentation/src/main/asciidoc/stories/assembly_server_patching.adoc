@@ -11,10 +11,10 @@ downtime, create a new cluster with the target version and perform a rolling
 upgrade to that version instead of patching.
 
 include::{topics}/ref_server_patches.adoc[leveloffset=+1]
-//Product only
-ifdef::productized[]
+//Downstream content
+ifdef::downstream[]
 include::{topics}/proc_server_downloading_patches.adoc[leveloffset=+1]
-endif::productized[]
+endif::downstream[]
 include::{topics}/proc_server_creating_patches.adoc[leveloffset=+1]
 include::{topics}/proc_server_installing_patches.adoc[leveloffset=+1]
 include::{topics}/proc_server_rolling_back_patches.adoc[leveloffset=+1]

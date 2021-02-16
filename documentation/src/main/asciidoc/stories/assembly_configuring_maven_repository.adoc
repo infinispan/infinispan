@@ -3,20 +3,20 @@
 = Configuring the {brandname} Maven Repository
 {brandname} Java distributions are available from Maven.
 
-//Community
-ifndef::productized[]
+//Community content
+ifdef::community[]
 {brandname} artifacts are available from Maven central. See the link:https://search.maven.org/search?q=g:org.infinispan[org.infinispan] group for available {brandname} artifacts.
-endif::productized[]
+endif::community[]
 
-//Product only
-ifdef::productized[]
+//Downstream content
+ifdef::downstream[]
 You can download the {brandname} Maven repository from the customer portal or
 pull {brandname} dependencies from the public {RedHat} Enterprise Maven
 repository.
 
 include::{topics}/proc_downloading_maven_repository.adoc[leveloffset=+1]
 include::{topics}/proc_adding_maven_repository.adoc[leveloffset=+1]
-endif::productized[]
+endif::downstream[]
 
 include::{topics}/proc_configuring_pom_xml.adoc[leveloffset=+1]
 

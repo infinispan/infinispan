@@ -9,18 +9,18 @@ Download and install {brandname} modules for {wildflybrandname}.
 
 .Procedure
 
-//Product
-ifdef::productized[]
+//Downstream content
+ifdef::downstream[]
 . Log in to the {portal}.
-endif::productized[]
+endif::downstream[]
 . Download the ZIP archive for the  modules from the link:{download_url}[{brandname} software downloads].
 . Extract the ZIP archive and copy the contents of `modules` to the `modules` directory of your {wildflybrandname} installation so that you get the resulting structure:
 +
-//Community
-ifndef::productized[]
+//Community content
+ifdef::community[]
 `$WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/{infinispanslot}`
-endif::productized[]
-//Product
-ifdef::productized[]
+endif::community[]
+//Downstream
+ifdef::downstream[]
 `$EAP_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/{infinispanslot}`
-endif::productized[]
+endif::downstream[]
