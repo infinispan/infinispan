@@ -4,7 +4,7 @@ The {brandname} server distribution is an archive of Java libraries (`JAR` files
 
 .Procedure
 //Community
-ifndef::productized[]
+ifdef::community[]
 . Download {brandname} {infinispanversion} Server from link:{download_url}[{brandname} downloads].
 . Run the `sha1sum` command with the server download archive as the argument, for example:
 +
@@ -14,9 +14,9 @@ include::cmd_examples/sha_ispn_server.adoc[]
 ----
 +
 . Compare with the `SHA-1` checksum value on the {brandname} downloads page.
-endif::productized[]
-//Product
-ifdef::productized[]
+endif::community[]
+//Downstream
+ifdef::downstream[]
 . Access the {portal}.
 . Download {FullProductName} {ProductVersion} Server from the link:{download_url}[software downloads section].
 . Run the `md5sum` or `sha256sum` command with the server download archive as the argument, for example:
@@ -27,15 +27,15 @@ include::cmd_examples/sha_rhdg_server.adoc[]
 ----
 +
 . Compare with the `MD5` or `SHA-256` checksum value on the {brandname} *Software Details* page.
-endif::productized[]
+endif::downstream[]
 
 .Reference
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 The {brandname} Server README, available in the distribution, provides example commands for running the server, describes folders in the `{server_home}` directory, and lists system properties you can use to customize the filesystem.
-endif::productized[]
+endif::community[]
 //Downstream
-ifdef::productized[]
+ifdef::downstream[]
 * link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.
-endif::productized[]
+endif::downstream[]

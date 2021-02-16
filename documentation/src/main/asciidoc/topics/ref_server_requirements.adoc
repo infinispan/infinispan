@@ -2,7 +2,7 @@
 = {brandname} Server Requirements
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 {brandname} Server requires a Java Virtual Machine and works with Java 11 and later.
 
 [NOTE]
@@ -10,9 +10,9 @@ ifndef::productized[]
 {brandname} Server does not support Java 8. However, you can use Java 8 with
 Hot Rod Java clients.
 ====
-endif::productized[]
+endif::community[]
 
-//Product
-ifdef::productized[]
+//Downstream
+ifdef::downstream[]
 {brandname} Server requires a Java Virtual Machine. See the link:{rhdg_configurations}[{brandname} Supported Configurations] for details on supported versions.
-endif::productized[]
+endif::downstream[]

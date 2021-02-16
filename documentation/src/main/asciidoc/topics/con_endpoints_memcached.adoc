@@ -9,7 +9,7 @@ release.
 ====
 
 //Community Only
-ifndef::productized[]
+ifdef::community[]
 The {brandname} Memcached endpoint supports clustering with replicated and
 distributed cache modes.
 
@@ -17,11 +17,11 @@ There are some Memcached client implementations, such as the Cache::Memcached
 Perl client, that can offer load balancing and failover detection capabilities
 with static lists of {brandname} server addresses that require manual updates
 when cluster topology changes occur.
-endif::productized[]
+endif::community[]
 
 //Community Only
-ifndef::productized[]
+ifdef::community[]
 .Reference
 * link:../memcached/memcached.html[{brandname} Memcached Server]
 * link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]
-endif::productized[]
+endif::community[]

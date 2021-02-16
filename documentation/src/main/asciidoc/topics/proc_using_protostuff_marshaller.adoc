@@ -14,16 +14,16 @@ To use Protostuff marshalling with {brandname} servers, add a JAR that includes
 the runtime class files for the Protostuff marshalling implementation as
 follows:
 
-//Community
-ifndef::productized[]
+//Community content
+ifdef::community[]
 . Download the
 link:http://central.maven.org/maven2/org/infinispan/infinispan-marshaller-protostuff-bundle/{infinispanversion}/infinispan-marshaller-protostuff-bundle-{infinispanversion}.jar[Protostuff Bundle JAR].
-endif::productized[]
-//Product
-ifdef::productized[]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
 . Copy `infinispan-marshaller-protostuff-bundle.jar` from the {brandname} Maven
 repository.
-endif::productized[]
+endif::downstream[]
 . Add the JAR file to the `server/lib` directory in your {brandname} server installation directory.
 
 .Prerequisites for {brandname} Library Mode

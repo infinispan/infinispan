@@ -1,6 +1,6 @@
-ifndef::productized[]
+ifdef::community[]
 $ unzip infinispan-server-{ispn_version}.zip
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+ifdef::downstream[]
 $ unzip redhat-datagrid-{FullProductVersion}-server.zip
-endif::productized[]
+endif::downstream[]
