@@ -7,14 +7,12 @@ import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.RawProtoStreamReader;
-import org.infinispan.protostream.RawProtoStreamWriter;
-import org.infinispan.protostream.RawProtobufMarshaller;
+import org.infinispan.protostream.ProtobufTagMarshaller;
+import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.impl.WireFormat;
+import org.infinispan.protostream.descriptors.WireType;
 
 /**
  * A wrapper message used by ProtoStream Marshallers to allow user objects to be marshalled/unmarshalled via the {@link
@@ -99,7 +97,7 @@ public class MarshallableUserObject<T> {
       }
    }
 
-   public static class Marshaller implements RawProtobufMarshaller<MarshallableUserObject> {
+   public static class Marshaller implements ProtobufTagMarshaller<MarshallableUserObject> {
 
       private final String typeName;
       private final org.infinispan.commons.marshall.Marshaller userMarshaller;
@@ -116,17 +114,20 @@ public class MarshallableUserObject<T> {
       public String getTypeName() { return typeName; }
 
       @Override
-      public MarshallableUserObject readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+      public MarshallableUserObject read(ReadContext ctx) throws IOException {
+         TagReader in = ctx.getReader();
          try {
             byte[] bytes = null;
             boolean done = false;
             while (!done) {
                final int tag = in.readTag();
                switch (tag) {
+                  // end of message
                   case 0:
                      done = true;
                      break;
-                  case 1 << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
+                  // field number 1
+                  case 1 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
                      bytes = in.readByteArray();
                      break;
                   }
@@ -143,11 +144,12 @@ public class MarshallableUserObject<T> {
       }
 
       @Override
-      public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, MarshallableUserObject marshallableUserObject) throws IOException {
+      public void write(WriteContext ctx, MarshallableUserObject marshallableUserObject) throws IOException {
          try {
             Object userObject = marshallableUserObject.get();
             byte[] bytes = userMarshaller.objectToByteBuffer(userObject);
-            out.writeBytes(1, bytes);
+            // field number 1
+            ctx.getWriter().writeBytes(1, bytes);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new CacheException(e);

@@ -108,7 +108,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
             AttributeNode<FieldDescriptor, Integer> attrNode = currentNode.getChild(fieldNumber);
             if (attrNode != null) { // ignore 'uninteresting' tags
                messageContext.markField(fieldNumber);
-               pushContext(fieldDescriptor.getName(), fieldDescriptor.getMessageType());
+               pushContext(fieldDescriptor, fieldDescriptor.getMessageType());
                currentNode = attrNode;
                return;
             }
@@ -162,8 +162,8 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
       }
    }
 
-   private void pushContext(String fieldName, Descriptor messageDescriptor) {
-      messageContext = new MessageContext<>(messageContext, fieldName, messageDescriptor);
+   private void pushContext(FieldDescriptor fieldDescriptor, Descriptor messageDescriptor) {
+      messageContext = new MessageContext<>(messageContext, fieldDescriptor, messageDescriptor);
    }
 
    private void popContext() {
