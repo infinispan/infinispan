@@ -3,7 +3,7 @@
 You can create patches for {brandname} servers from an existing server
 installation.
 
-ifndef::productized[]
+ifdef::community[]
 You can create patches for {brandname} servers starting from 10.1.7. You can
 patch any 10.1 or later server installation. However you cannot patch 9.4.x or
 earlier servers with 10.1.7 or later.
@@ -11,8 +11,8 @@ earlier servers with 10.1.7 or later.
 You can also create patches that either upgrade or downgrade the {brandname}
 server version. For example, you can create a patch from version 10.1.7 and use
 it to upgrade version 10.1.5 or downgrade version 11.0.0.
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+ifdef::downstream[]
 You can create patches for {brandname} servers starting from 8.0.1. You can
 patch 8.0 GA servers with 8.0.1. However you cannot patch 7.3.x or earlier
 servers with 8.0.1 or later.
@@ -27,7 +27,7 @@ it to upgrade version 8.0 GA or downgrade a later version.
 download from the {portal}. {RedHat} does not support server patches that you
 create yourself.
 ====
-endif::productized[]
+endif::downstream[]
 
 .Procedure
 

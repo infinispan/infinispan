@@ -5,12 +5,12 @@ version.
 
 .Prerequisites
 
-ifndef::productized[]
+ifdef::community[]
 * Create a server patch for the target version.
-endif::productized[]
-ifdef::productized[]
+endif::community[]
+ifdef::downstream[]
 * Download a server patch for the target version.
-endif::productized[]
+endif::downstream[]
 
 
 .Procedure

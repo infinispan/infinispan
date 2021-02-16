@@ -23,7 +23,7 @@ possible to route Hot Rod client requests directly to primary owners.
 .Reference
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 * link:../hotrod_java/hotrod_java.html[{brandname} Hot Rod Server]
 * link:http://www.infinispan.org/hotrod-clients[Hot Rod client implementations]
-endif::productized[]
+endif::community[]

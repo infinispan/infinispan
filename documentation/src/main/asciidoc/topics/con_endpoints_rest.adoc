@@ -10,7 +10,7 @@ occur.
 //Community only
 .Reference
 
-ifndef::productized[]
+ifdef::community[]
 * link:../rest/rest.html[{brandname} REST Server]
 * link:http://www.jboss.org/mod_cluster[mod_cluster HTTP load balancer]
-endif::productized[]
+endif::community[]

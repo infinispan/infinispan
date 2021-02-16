@@ -5,7 +5,7 @@ The cache mode that you should choose depends on the qualities and guarantees yo
 The following table summarizes the primary differences between cache modes:
 
 //Community
-ifndef::productized[]
+ifdef::community[]
 [cols="20,^15,^15,^15,^15,^15,^15",options="header"]
 |============================================================
 |                  | Simple      | Local       | Invalidation | Replicated | Distributed | Scattered
@@ -30,10 +30,10 @@ stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
 | Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes* | [yellow]*Owner nodes*
 | Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* | [yellow]*No TX*
 |============================================================
-endif::productized[]
+endif::community[]
 
-//Product
-ifdef::productized[]
+//Downstream
+ifdef::downstream[]
 [cols="15,^15,^15,^15,^20,^15,^15",options="header"]
 |===
 
@@ -95,4 +95,4 @@ ifdef::productized[]
 
 |===
 
-endif::productized[]
+endif::downstream[]

@@ -18,6 +18,6 @@ Running {brandname} on hosted platforms requires using discovery mechanisms that
 
 * link:{jgroups_docs}#DiscoveryProtocols[JGroups Discovery Protocols]
 //RH KCS article
-ifdef::productized[]
+ifdef::downstream[]
 * link:https://access.redhat.com/solutions/5608391[JGroups cluster transport configuration for {brandname} 8.x] ({RedHat} knowledgebase article)
-endif::productized[]
+endif::downstream[]

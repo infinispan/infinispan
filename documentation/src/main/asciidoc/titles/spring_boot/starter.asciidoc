@@ -12,7 +12,6 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :toclevels: 3
 :numbered:
 :stem: asciimath
-:context: server
 
 = {brandname} Spring Boot Starter
 
