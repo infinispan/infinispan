@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 import org.infinispan.query.impl.DefaultTransformer;
 
 /**
- * If you annotate your object with this, it can be used as a valid key for Infinispan to index (unless your key type is
- * a boxed primitive, a String or a byte array in which case it can be used without a transformer).
+ * Annotate objects to convert them to keys that Infinispan can index.
+ * You need to annotate custom types only.
  *
  * @author Manik Surtani
  * @since 4.0
