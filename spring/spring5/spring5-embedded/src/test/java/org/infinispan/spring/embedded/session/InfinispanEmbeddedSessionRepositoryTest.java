@@ -1,5 +1,6 @@
 package org.infinispan.spring.embedded.session;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
@@ -16,10 +17,17 @@ import org.testng.annotations.Test;
 public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRepositoryTCK {
 
    private EmbeddedCacheManager embeddedCacheManager;
+   private EmbeddedCacheManager cacheManager2;
+   private EmbeddedCacheManager cacheManager3;
+
 
    @BeforeClass
    public void beforeClass() {
-      embeddedCacheManager = TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
+      ConfigurationBuilder defaultCacheBuilder = new ConfigurationBuilder();
+      defaultCacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      embeddedCacheManager = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);
+      cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);
+      cacheManager3 = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);
    }
 
    @AfterMethod
@@ -30,6 +38,8 @@ public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRe
    @AfterClass
    public void afterClass() {
       embeddedCacheManager.stop();
+      cacheManager2.stop();
+      cacheManager3.stop();
    }
 
    @BeforeMethod

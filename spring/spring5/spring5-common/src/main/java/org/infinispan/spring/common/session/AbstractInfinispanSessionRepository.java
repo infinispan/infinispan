@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -100,10 +99,15 @@ public abstract class AbstractInfinispanSessionRepository implements FindByIndex
     * @return Session or <code>null</code> if it doesn't exist.
     */
    public MapSession getSession(String id, boolean updateTTL) {
-      return Optional.ofNullable(cache.get(id))
-            .map(v -> (MapSession) v.get())
-            .map(v -> updateTTL(v, updateTTL))
-            .orElse(null);
+      ValueWrapper wrapper = cache.get(id);
+      if (wrapper == null) {
+         return null;
+      }
+      MapSession session = (MapSession) wrapper.get();
+      assert session != null;
+      // Copy the MapSession instance to prevent concurrent access to the same instance
+      // Even if the cache is remote, it might store the instance in a near-cache
+      return updateTTL(new MapSession(session), updateTTL);
    }
 
    protected MapSession updateTTL(MapSession session, boolean updateTTL) {
