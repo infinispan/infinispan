@@ -1,12 +1,13 @@
 package org.infinispan.distribution;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * It manages the order of updates from the primary owner to backup owner.
@@ -30,8 +31,8 @@ public class TriangleOrderManager {
 
    public TriangleOrderManager(int segments) {
       TriangleSequencer[] triangleSequencers = new TriangleSequencer[segments];
-      for (int i = 0; i < segments; ++i) {
-         triangleSequencers[i] = new TriangleSequencer();
+      for (int segment = 0; segment < segments; ++segment) {
+         triangleSequencers[segment] = new TriangleSequencer(segment);
       }
       sequencers = triangleSequencers;
    }
@@ -49,11 +50,20 @@ public class TriangleOrderManager {
    public boolean isNext(int segmentId, long sequenceNumber, int commandTopologyId) {
       final int topologyId = distributionManager.getCacheTopology().getTopologyId();
       return commandTopologyId < topologyId ||
-            (commandTopologyId == topologyId && checkIfNext(segmentId, commandTopologyId, sequenceNumber));
+             (commandTopologyId == topologyId && checkIfNext(segmentId, commandTopologyId, sequenceNumber));
    }
 
    public void markDelivered(int segmentId, long sequenceNumber, int commandTopologyId) {
       sequencers[segmentId].deliver(commandTopologyId, sequenceNumber);
+   }
+
+   /**
+    * Meant for testing only.
+    *
+    * @return The latest sequence number sent for segment {@code segmentId} in topology {@code topologyId}.
+    */
+   public long latestSent(int segmentId, int topologyId) {
+      return sequencers[segmentId].latestSent(topologyId);
    }
 
    private long getNext(int segmentId, int topologyId) {
@@ -70,7 +80,8 @@ public class TriangleOrderManager {
       }
    }
 
-   private class TriangleSequencer {
+   private static class TriangleSequencer {
+      private final int segment;
       @GuardedBy("this")
       private int senderTopologyId = -1;
       @GuardedBy("this")
@@ -80,17 +91,20 @@ public class TriangleOrderManager {
       @GuardedBy("this")
       private long receiverSequenceNumber = 1;
 
+      private TriangleSequencer(int segment) {
+         this.segment = segment;
+      }
+
       private synchronized long next(int commandTopologyId) {
          if (senderTopologyId == commandTopologyId) {
             if (log.isTraceEnabled()) {
-               log.tracef("Sender Increment sequence (%s:%s). commandTopologyId=%s", senderTopologyId,
-                     senderSequenceNumber, commandTopologyId);
+               log.tracef("Sender %d new sequence %d:%d", segment, senderTopologyId, senderSequenceNumber);
             }
             return senderSequenceNumber++;
          } else if (senderTopologyId < commandTopologyId) {
             if (log.isTraceEnabled()) {
-               log.tracef("Sender update topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
-                     commandTopologyId);
+               log.tracef("Sender %d new sequence %d:1 (changed topology from %d)",
+                          segment, senderTopologyId, commandTopologyId);
             }
             //update topology. this command will be the first
             senderTopologyId = commandTopologyId;
@@ -98,8 +112,8 @@ public class TriangleOrderManager {
             return 1;
          } else {
             if (log.isTraceEnabled()) {
-               log.tracef("Sender old topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
-                     commandTopologyId);
+               log.tracef("Sender %d retrying because of outdated topology: %d < %d",
+                          segment, commandTopologyId, senderTopologyId);
             }
             //this topology is higher than the command topology id.
             //another topology was installed. this command will fail with OutdatedTopologyException.
@@ -107,36 +121,37 @@ public class TriangleOrderManager {
          }
       }
 
+      private synchronized long latestSent(int topologyId) {
+         if (topologyId < senderTopologyId)
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+
+         if (senderTopologyId < topologyId)
+            return 0;
+
+         return senderSequenceNumber - 1;
+      }
+
       private synchronized void deliver(int commandTopologyId, long sequenceNumber) {
          if (receiverTopologyId == commandTopologyId && receiverSequenceNumber == sequenceNumber) {
             receiverSequenceNumber++;
             if (log.isTraceEnabled()) {
-               log.tracef("Deliver done. Next sequence (%s:%s)", receiverTopologyId, receiverSequenceNumber);
+               log.tracef("Receiver %d delivered sequence %d:%d", segment, commandTopologyId, sequenceNumber);
             }
          }
       }
 
       private synchronized boolean isNext(int commandTopologyId, long sequenceNumber) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Receiver %d checking sequence %d:%d, current sequence is %d:%d",
+                       segment, commandTopologyId, sequenceNumber, receiverTopologyId, receiverSequenceNumber);
+         }
          if (receiverTopologyId == commandTopologyId) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
-                     receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
-            }
             return receiverSequenceNumber == sequenceNumber;
          } else if (receiverTopologyId < commandTopologyId) {
-            //update topology. this command will be the first
-            if (log.isTraceEnabled()) {
-               log.tracef("Receiver update topology. CommandTopologyId=%s, command sequence=%s", commandTopologyId,
-                     sequenceNumber);
-            }
             receiverTopologyId = commandTopologyId;
             receiverSequenceNumber = 1;
             return 1 == sequenceNumber;
          } else {
-            if (log.isTraceEnabled()) {
-               log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
-                     receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
-            }
             //this topology is higher than the command topology id.
             //another topology was installed. this command will fail with OutdatedTopologyException.
             return true;

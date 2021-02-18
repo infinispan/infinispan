@@ -34,6 +34,7 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
+import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -105,6 +106,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             PutMapBackupWriteCommand.class,
             MultiEntriesFunctionalBackupWriteCommand.class,
             MultiKeyFunctionalBackupWriteCommand.class,
+            BackupNoopCommand.class,
             InvalidateVersionsCommand.class,
             RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
             MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,

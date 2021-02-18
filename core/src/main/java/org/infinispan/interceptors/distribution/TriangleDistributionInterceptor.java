@@ -33,6 +33,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
@@ -54,6 +55,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
@@ -279,19 +281,24 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       //local & sync
       final Set<Object> localKeys = filter.primaries.remove(localAddress);
       Collector<R> collector = commandAckCollector.createSegmentBasedCollector(command.getCommandInvocationId().getId(),
-            filter.backups, command.getTopologyId());
+                                                                               filter.backups, command.getTopologyId());
       CompletableFuture<R> localResult = new CompletableFuture<>();
-      forwardToPrimaryOwners(command, filter, localResult, mergeResults, commandCopy).handle((result, throwable) -> {
-         if (throwable != null) {
-            collector.primaryException(throwable);
-         } else {
-            collector.primaryResult(result, true);
-         }
-         return null;
-      });
+      try {
+         forwardToPrimaryOwners(command, filter, localResult, mergeResults, commandCopy)
+               .handle((result, throwable) -> {
+                  if (throwable != null) {
+                     collector.primaryException(throwable);
+                  } else {
+                     collector.primaryResult(result, true);
+                  }
+                  return null;
+               });
+      } catch (Throwable t) {
+         collector.primaryException(t);
+      }
       if (localKeys != null) {
          return makeStage(invokeNextWriteManyKeysInPrimary(ctx, command, localKeys, cacheTopology, commandCopy,
-               backupBuilder))
+                                                           backupBuilder))
                .andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
                   if (throwable != null) {
                      localResult.completeExceptionally(CompletableFutures.extractException(throwable));
@@ -325,11 +332,17 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          LocalizedCacheTopology cacheTopology,
          SubsetCommandCopy<C> commandCopy,
          MultiKeyBackupBuilder<C> backupBuilder) {
-      final VisitableCommand.LoadType loadType = command.loadType();
-      sendToBackups(command, keys, cacheTopology, backupBuilder);
-      C primaryCmd = commandCopy.copySubset(command, keys);
-      return asyncInvokeNext(ctx, primaryCmd,
-            checkRemoteGetIfNeeded(ctx, primaryCmd, keys, cacheTopology, loadType == PRIMARY || loadType == OWNER));
+      try {
+         sendToBackups(command, keys, cacheTopology, backupBuilder);
+         final VisitableCommand.LoadType loadType = command.loadType();
+         C primaryCmd = commandCopy.copySubset(command, keys);
+         return asyncInvokeNext(ctx, primaryCmd,
+                                checkRemoteGetIfNeeded(ctx, primaryCmd, keys, cacheTopology,
+                                                       loadType == PRIMARY || loadType == OWNER));
+      } catch (Throwable t) {
+         // Wrap marshalling exception in an invocation stage
+         return new ExceptionSyncInvocationStage(t);
+      }
    }
 
    private <C extends WriteCommand> void sendToBackups(C command, Collection<Object> keysToSend,
@@ -337,20 +350,25 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       int topologyId = command.getTopologyId();
       for (Map.Entry<Integer, Collection<Object>> entry : filterBySegment(cacheTopology, keysToSend).entrySet()) {
          int segmentId = entry.getKey();
-         Collection<Address> backups = cacheTopology.getDistributionForSegment(segmentId).writeBackups();
+         Collection<Address> backups = cacheTopology.getSegmentDistribution(segmentId).writeBackups();
          if (backups.isEmpty()) {
             // Only the primary owner. Other segments may have more than one owner, e.g. during rebalance.
             continue;
          }
          long sequence = triangleOrderManager.next(segmentId, topologyId);
-         BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command, entry.getValue());
-         backupCommand.setSequence(sequence);
-         backupCommand.setSegmentId(segmentId);
-         if (log.isTraceEnabled()) {
-            log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
-                  sequence);
+         try {
+            BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command, entry.getValue());
+            backupCommand.setSequence(sequence);
+            backupCommand.setSegmentId(segmentId);
+            if (log.isTraceEnabled()) {
+               log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
+                          sequence);
+            }
+            rpcManager.sendToMany(backups, backupCommand, DeliverOrder.NONE);
+         } catch (Throwable t) {
+            sendBackupNoopCommand(command, backups, segmentId, sequence);
+            throw t;
          }
-         rpcManager.sendToMany(backups, backupCommand, DeliverOrder.NONE);
       }
    }
 
@@ -440,17 +458,29 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             Collector<Object> collector = commandAckCollector.create(id.getId(),
                   sync ? backupOwners : Collections.emptyList(),
                   topologyId);
-            //check the topology after registering the collector.
-            //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-            checkTopologyId(topologyId, collector);
-            collector.primaryResult(rv, true);
-            sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
+            try {
+               //check the topology after registering the collector.
+               //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+               checkTopologyId(topologyId, collector);
+               sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
+               collector.primaryResult(rv, true);
+            } catch (Throwable t) {
+               collector.primaryException(t);
+            }
             return asyncValue(collector.getFuture());
          } else {
             sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
             return rv;
          }
       });
+   }
+
+   private void sendBackupNoopCommand(WriteCommand command, Collection<Address> targets, int segment, long sequence) {
+      BackupNoopCommand noopCommand = commandsFactory.buildBackupNoopCommand();
+      noopCommand.setWriteCommand(command);
+      noopCommand.setSegmentId(segment);
+      noopCommand.setSequence(sequence);
+      rpcManager.sendToMany(targets, noopCommand, DeliverOrder.NONE);
    }
 
    private <C extends DataWriteCommand> Object remotePrimaryOwnerWrite(InvocationContext context, C command,
@@ -483,15 +513,20 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
       long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
-      BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command);
-      backupCommand.setSequence(sequenceNumber);
-      backupCommand.setSegmentId(segmentId);
-      if (log.isTraceEnabled()) {
-         log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
+      try {
+         BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command);
+         backupCommand.setSequence(sequenceNumber);
+         backupCommand.setSegmentId(segmentId);
+         if (log.isTraceEnabled()) {
+            log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
+         }
+         // TODO Should we use sendToAll in replicated mode?
+         // we must send the message only after the collector is registered in the map
+         rpcManager.sendToMany(backupOwners, backupCommand, DeliverOrder.NONE);
+      } catch (Throwable t) {
+         sendBackupNoopCommand(command, backupOwners, segmentId, sequenceNumber);
+         throw t;
       }
-      // TODO Should we use sendToAll in replicated mode?
-      // we must send the message only after the collector is registered in the map
-      rpcManager.sendToMany(backupOwners, backupCommand, DeliverOrder.NONE);
    }
 
    private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
@@ -504,11 +539,16 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          Collector<Object> collector = commandAckCollector.create(invocationId.getId(),
                sync ? distributionInfo.writeBackups() : Collections.emptyList(),
                topologyId);
-         //check the topology after registering the collector.
-         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-         checkTopologyId(topologyId, collector);
-         forwardToPrimary(command, distributionInfo, collector);
-         return asyncValue(collector.getFuture());
+         try {
+            //check the topology after registering the collector.
+            //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+            checkTopologyId(topologyId, collector);
+            forwardToPrimary(command, distributionInfo, collector);
+            return asyncValue(collector.getFuture());
+         } catch (Throwable t) {
+            collector.primaryException(t);
+            throw t;
+         }
       } else {
          rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
          return null;
