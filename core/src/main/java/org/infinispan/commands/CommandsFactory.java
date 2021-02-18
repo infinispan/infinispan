@@ -59,6 +59,7 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
+import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -604,6 +605,8 @@ public interface CommandsFactory {
    MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand();
 
    MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand();
+
+   BackupNoopCommand buildBackupNoopCommand();
 
    <K, R> ReductionPublisherRequestCommand<K> buildKeyReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
          IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,

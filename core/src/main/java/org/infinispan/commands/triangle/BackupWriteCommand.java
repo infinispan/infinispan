@@ -16,6 +16,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A write operation sent from the primary owner to the backup owners.
@@ -45,6 +46,10 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
    @Override
    public final CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
       WriteCommand command = createWriteCommand();
+      if (command == null) {
+         // No-op command
+         return CompletableFutures.completedNull();
+      }
       command.init(componentRegistry);
       command.setFlagsBitSet(flags);
       // Mark the command as a backup write and skip locking

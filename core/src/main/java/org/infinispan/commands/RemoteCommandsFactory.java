@@ -59,6 +59,7 @@ import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.TopologyUpdateStableCommand;
+import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -416,6 +417,9 @@ public class RemoteCommandsFactory {
                break;
             case MultiKeyFunctionalBackupWriteCommand.COMMAND_ID:
                command = new MultiKeyFunctionalBackupWriteCommand(cacheName);
+               break;
+            case BackupNoopCommand.COMMAND_ID:
+               command = new BackupNoopCommand(cacheName);
                break;
             case InvalidateVersionsCommand.COMMAND_ID:
                command = new InvalidateVersionsCommand(cacheName);

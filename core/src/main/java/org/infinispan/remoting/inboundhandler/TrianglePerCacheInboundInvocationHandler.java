@@ -17,6 +17,7 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
+import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
@@ -83,6 +84,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                return;
             case SingleKeyBackupWriteCommand.COMMAND_ID:
             case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
+            case BackupNoopCommand.COMMAND_ID:
                handleSingleKeyBackupCommand((BackupWriteCommand) command);
                break;
             case PutMapBackupWriteCommand.COMMAND_ID:
