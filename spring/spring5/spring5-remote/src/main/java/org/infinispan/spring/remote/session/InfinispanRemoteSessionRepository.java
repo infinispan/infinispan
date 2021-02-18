@@ -1,15 +1,21 @@
 package org.infinispan.spring.remote.session;
 
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
+import org.infinispan.spring.common.session.PrincipalNameResolver;
+import org.springframework.session.MapSession;
 
 /**
  * Session Repository for Infinispan in client/server mode.
@@ -42,5 +48,17 @@ public class InfinispanRemoteSessionRepository extends AbstractInfinispanSession
       } else {
          remoteCache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).remove(originalId);
       }
+   }
+
+   @Override
+   public Map<String, MapSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+      if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
+         return Collections.emptyMap();
+      }
+
+      return cache.getNativeCache().values().stream()
+            .map(cacheValue -> (MapSession) cacheValue)
+            .filter(session -> indexValue.equals(PrincipalNameResolver.getInstance().resolvePrincipal(session)))
+            .collect(Collectors.toMap(MapSession::getId, Function.identity()));
    }
 }

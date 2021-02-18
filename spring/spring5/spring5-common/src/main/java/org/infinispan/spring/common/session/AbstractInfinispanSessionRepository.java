@@ -1,12 +1,8 @@
 package org.infinispan.spring.common.session;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.infinispan.spring.common.provider.SpringCache;
 import org.springframework.beans.factory.DisposableBean;
@@ -32,7 +28,6 @@ public abstract class AbstractInfinispanSessionRepository implements FindByIndex
 
    protected final AbstractApplicationPublisherBridge applicationEventPublisher;
    protected final SpringCache cache;
-   protected final PrincipalNameResolver principalNameResolver = new PrincipalNameResolver();
 
    protected AbstractInfinispanSessionRepository(SpringCache cache, AbstractApplicationPublisherBridge eventsBridge) {
       Objects.requireNonNull(cache, "SpringCache can not be null");
@@ -116,17 +111,5 @@ public abstract class AbstractInfinispanSessionRepository implements FindByIndex
          cache.put(session.getId(), session, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
       }
       return session;
-   }
-
-   @Override
-   public Map<String, MapSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
-      if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
-         return Collections.emptyMap();
-      }
-
-      return cache.getNativeCache().values().stream()
-            .map(cacheValue -> (MapSession) cacheValue)
-            .filter(session -> indexValue.equals(principalNameResolver.resolvePrincipal(session)))
-            .collect(Collectors.toMap(MapSession::getId, Function.identity()));
    }
 }
