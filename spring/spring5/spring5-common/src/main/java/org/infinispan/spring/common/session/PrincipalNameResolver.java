@@ -15,10 +15,15 @@ import org.springframework.session.Session;
  * @since 9.0
  */
 public class PrincipalNameResolver {
+   private static final PrincipalNameResolver INSTANCE = new PrincipalNameResolver();
 
    private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-   private SpelExpressionParser parser = new SpelExpressionParser();
+   private final SpelExpressionParser parser = new SpelExpressionParser();
+
+   public static PrincipalNameResolver getInstance() {
+      return INSTANCE;
+   }
 
    /**
     * Resolves Principal Name (e.g. user name) based on session.
