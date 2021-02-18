@@ -89,6 +89,14 @@ public class AuthorizationHelper {
       }
    }
 
+   public SubjectACL getCacheACL(Subject subject, AuthorizationConfiguration configuration) {
+      if (configuration != null && configuration.enabled()) {
+         return computeSubjectACL(subject, configuration);
+      } else {
+         return new SubjectACL(Collections.emptySet(), AuthorizationPermission.ALL.getMask());
+      }
+   }
+
    public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm,
          String role) {
       if (globalConfiguration.authorization().enabled()) {

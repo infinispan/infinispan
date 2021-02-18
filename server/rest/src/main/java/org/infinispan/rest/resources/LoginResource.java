@@ -63,7 +63,7 @@ public class LoginResource implements ResourceHandler {
       acl.set("caches", caches);
       for(String cacheName : cacheNames) {
          Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(rcm.getInstance(), cacheName);
-         SubjectACL cacheACL = authorizationHelper.getACL(subject, cacheConfiguration.security().authorization());
+         SubjectACL cacheACL = authorizationHelper.getCacheACL(subject, cacheConfiguration.security().authorization());
          caches.set(cacheName, aclToJson(cacheACL));
       }
       return asJsonResponseFuture(acl);
