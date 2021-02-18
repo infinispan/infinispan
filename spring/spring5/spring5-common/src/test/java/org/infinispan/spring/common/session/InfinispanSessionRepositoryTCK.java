@@ -1,16 +1,22 @@
 package org.infinispan.spring.common.session;
 
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.testng.annotations.Test;
@@ -42,7 +48,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       MapSession session = sessionRepository.createSession();
 
       //then
-      assertNotNull(session.getId() != null);
+      assertNotNull(session.getId());
       assertNotNull(session.getCreationTime());
       assertNull(sessionRepository.findById(session.getId()));
    }
@@ -110,8 +116,8 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       int sizeWithNullIndexName = ((FindByIndexNameSessionRepository) sessionRepository).findByIndexNameAndIndexValue(null, "").size();
 
       //then
-      assertTrue(sizeWithNullIndexName == 0);
-      assertTrue(sizeWithWrongIndexName == 0);
+      assertEquals(0, sizeWithNullIndexName);
+      assertEquals(0, sizeWithWrongIndexName);
    }
 
    @Test
@@ -128,8 +134,8 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
             .findByIndexNameAndIndexValue(PRINCIPAL_NAME_INDEX_NAME, "notExisting").size();
 
       //then
-      assertTrue(numberOfTest1Users == 1);
-      assertTrue(numberOfNonExistingUsers == 0);
+      assertEquals(1, numberOfTest1Users);
+      assertEquals(0, numberOfNonExistingUsers);
    }
 
    @Test
@@ -153,6 +159,27 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
 
       assertNotNull(sessionRepository.findById(newId));
       assertNull(sessionRepository.findById(originalId));
+   }
+
+   @Test
+   public void testConcurrentSessionAccess() {
+      //given
+      MapSession session = sessionRepository.createSession();
+      sessionRepository.save(session);
+
+      //when
+      MapSession concurrentRequestSession = sessionRepository.findById(session.getId());
+
+      //then
+      assertNotSame(session, concurrentRequestSession);
+
+      // iterate over the attributes in one request and add an attribute in the other
+      Map<String, Object> sessionAttrs = TestingUtil.extractField(session, "sessionAttrs");
+      Iterator<Map.Entry<String, Object>> iterator = sessionAttrs.entrySet().iterator();
+
+      concurrentRequestSession.setAttribute("foo", "bar");
+
+      assertFalse(iterator.hasNext());
    }
 
    protected void addEmptySessionWithPrincipal(AbstractInfinispanSessionRepository sessionRepository, String principalName) {
