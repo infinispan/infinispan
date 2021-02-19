@@ -29,6 +29,7 @@ import org.junit.Test;
  **/
 
 public abstract class AbstractAuthorization {
+   private static final int FORBIDDEN = 403;
    final Map<String, ConfigurationBuilder> hotRodBuilders;
    final Map<String, RestClientConfigurationBuilder> restBuilders;
    final Map<String, String> bulkData;
@@ -136,7 +137,7 @@ public abstract class AbstractAuthorization {
       restCreateAuthzCache(explicitRoles);
       RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("writer")).get().cache(getServerTest().getMethodName());
       sync(writerCache.put("k1", "v1"));
-      assertEquals(403, sync(writerCache.get("k1")).getStatus());
+      assertEquals(FORBIDDEN, sync(writerCache.get("k1")).getStatus());
       for (String user : Arrays.asList("reader", "supervisor")) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          assertEquals("v1", sync(userCache.get("k1")).getBody());
@@ -178,7 +179,7 @@ public abstract class AbstractAuthorization {
    private void testRestReaderCannotWrite(boolean explicitRoles) {
       restCreateAuthzCache(explicitRoles);
       RestCacheClient readerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("reader")).get().cache(getServerTest().getMethodName());
-      assertEquals(403, sync(readerCache.put("k1", "v1")).getStatus());
+      assertEquals(FORBIDDEN, sync(readerCache.put("k1", "v1")).getStatus());
       for (String user : Arrays.asList("writer", "supervisor")) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          userCache.put(user, user);
@@ -229,22 +230,22 @@ public abstract class AbstractAuthorization {
    @Test
    public void testRestNonAdminsMustNotShutdownServer() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().stop()).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().stop()).getStatus());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotShutdownCluster() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop()).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop()).getStatus());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyCacheIgnores() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().ignoreCache("default", "predefined")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().unIgnoreCache("default", "predefined")).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().ignoreCache("default", "predefined")).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().unIgnoreCache("default", "predefined")).getStatus());
       }
    }
 
@@ -257,36 +258,45 @@ public abstract class AbstractAuthorization {
    @Test
    public void testRestNonAdminsMustNotModifyLoggers() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER")).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT")).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER")).getStatus());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotObtainReport() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().report()).getStatus());
+         assertEquals(FORBIDDEN, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().report()).getStatus());
       }
+   }
+
+   @Test
+   public void testAdminsAccessToPerformXSiteOps() {
+      assertXSiteOps("admin", 200);
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessPerformXSiteOps() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").takeSiteOffline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").bringSiteOnline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelPushState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelReceiveState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").clearPushStateStatus()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushSiteState("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushStateStatus()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").xsiteBackups()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").backupStatus("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").getXSiteTakeOfflineConfig("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").updateXSiteTakeOfflineConfig("NYC", 10, 1000)).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").bringBackupOnline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").takeOffline("NYC")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").backupStatuses()).getStatus());
+         assertXSiteOps(user, FORBIDDEN);
       }
+   }
+
+   private void assertXSiteOps(String user, int status) {
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").takeSiteOffline("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").bringSiteOnline("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelPushState("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").cancelReceiveState("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").clearPushStateStatus()).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushSiteState("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").pushStateStatus()).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").xsiteBackups()).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").backupStatus("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").getXSiteTakeOfflineConfig("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache("xsite").updateXSiteTakeOfflineConfig("NYC", 10, 1000)).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").bringBackupOnline("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").takeOffline("NYC")).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default").backupStatuses()).getStatus());
    }
 
    @Test
@@ -295,28 +305,54 @@ public abstract class AbstractAuthorization {
       assertEquals(200, sync(getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().schemas().put("bank.proto", schema)).getStatus());
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User");
-      getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
+      RestClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get("admin"))
+            .withServerConfiguration(builder).create();
       String indexedCache = getServerTest().getMethodName();
+      RestCacheClient cache = restClient.cache(indexedCache);
 
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex()).getStatus());
+         searchActions(user, indexedCache, FORBIDDEN);
       }
+      searchActions("admin", indexedCache, 200);
+   }
+
+   private void searchActions(String user, String indexedCache, int status) {
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats()).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex()).getStatus());
+      assertEquals(status, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex()).getStatus());
+   }
+
+   @Test
+   public void testRestAdminsMustAccessBackupsAndRestores() {
+      backupAndRestore("admin", 200);
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().createBackup("backup")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackup("backup", true)).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackupNames()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteBackup("backup")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().restore("restore", "somewhere")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestoreNames()).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestore("restore")).getStatus());
-         assertEquals(403, sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteRestore("restore")).getStatus());
+         backupAndRestore(user, FORBIDDEN);
       }
+   }
+
+   private void backupAndRestore(String user, int status) {
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .getBackup("backup", true)).getStatus());
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .deleteBackup("backup")).getStatus());
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .restore("restore", "somewhere")).getStatus());
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .getRestoreNames()).getStatus());
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .getRestore("restore")).getStatus());
+      assertEquals(status,
+            sync(getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster()
+                  .deleteRestore("restore")).getStatus());
    }
 
    private RemoteCache<Object, Object> hotRodCreateAuthzCache(boolean explicitRoles) {
