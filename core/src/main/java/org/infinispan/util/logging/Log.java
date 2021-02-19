@@ -2136,4 +2136,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Index path '%s' is not absolute and global state is disabled, will use a dir relative to the current working directory.", id = 626)
    void indexRelativeWorkingDir(String path);
+
+   @Message(value = "Invalid cache loader configuration for '%s'.  This implementation only supports being segmented!", id = 627)
+   CacheConfigurationException storeRequiresBeingSegmented(String name);
 }

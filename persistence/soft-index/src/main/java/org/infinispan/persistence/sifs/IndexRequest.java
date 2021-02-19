@@ -11,19 +11,21 @@ import org.infinispan.commons.util.Util;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class IndexRequest extends CompletableFuture<Object> {
+class IndexRequest extends CompletableFuture<Void> {
    public enum Type {
       UPDATE,
       MOVED,
       DROPPED,
       FOUND_OLD,
       CLEAR,
+      // TODO: this can probably be removed and just let compactor delete the file - no reason for index to do that
       DELETE_FILE,
-      STOP,
-      GET_SIZE
+      // TODO: NEED TO REMOVE THIS
+      STOP
    }
 
    private final Type type;
+   private final int segment;
    private final Object key;
    // the file and offset are duplicate to those in TemporaryTable because we have to match the CAS requests
    private final int file;
@@ -35,8 +37,9 @@ class IndexRequest extends CompletableFuture<Object> {
    private volatile Object result;
    private AtomicInteger countDown;
 
-   private IndexRequest(Type type, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+   private IndexRequest(Type type, int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
       this.type = type;
+      this.segment = segment;
       this.key = key;
       this.file = file;
       this.offset = offset;
@@ -46,40 +49,40 @@ class IndexRequest extends CompletableFuture<Object> {
       this.size = size;
    }
 
-   public static IndexRequest update(Object key, byte[] serializedKey, int file, int offset, int size) {
-      return new IndexRequest(Type.UPDATE, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
+   public static IndexRequest update(int segment, Object key, byte[] serializedKey, int file, int offset, int size) {
+      return new IndexRequest(Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
-   public static IndexRequest moved(Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.MOVED, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
+   public static IndexRequest moved(int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.MOVED, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
    }
 
-   public static IndexRequest dropped(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.DROPPED, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
+   public static IndexRequest dropped(int segment, Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.DROPPED, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
-   public static IndexRequest foundOld(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.FOUND_OLD, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
+   public static IndexRequest foundOld(int segment, Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.FOUND_OLD, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
    public static IndexRequest clearRequest() {
-      return new IndexRequest(Type.CLEAR, null, null, -1, -1, -1, -1, -1);
+      return new IndexRequest(Type.CLEAR, -1, null, null, -1, -1, -1, -1, -1);
    }
 
    public static IndexRequest deleteFileRequest(int deletedFile) {
-      return new IndexRequest(Type.DELETE_FILE, null, null, deletedFile, -1, -1, -1, -1);
+      return new IndexRequest(Type.DELETE_FILE, -1, null, null, deletedFile, -1, -1, -1, -1);
    }
 
    public static IndexRequest stopRequest() {
-      return new IndexRequest(Type.STOP, null, null, -1, -1, -1, -1, -1);
-   }
-
-   public static IndexRequest sizeRequest() {
-      return new IndexRequest(Type.GET_SIZE, null, null, -1, -1, -1, -1, -1);
+      return new IndexRequest(Type.STOP, -1,null, null, -1, -1, -1, -1, -1);
    }
 
    public Type getType() {
       return type;
+   }
+
+   public int getSegment() {
+      return segment;
    }
 
    public Object getKey() {
@@ -105,6 +108,7 @@ class IndexRequest extends CompletableFuture<Object> {
       notifyAll();
    }
 
+
    public synchronized Object getResult() throws InterruptedException {
       while (result == null) {
          wait();
@@ -112,6 +116,7 @@ class IndexRequest extends CompletableFuture<Object> {
       return result;
    }
 
+   // TODO: delete this when replaced
    public void setCountDown(int countDown) {
       this.countDown = new AtomicInteger(countDown);
    }

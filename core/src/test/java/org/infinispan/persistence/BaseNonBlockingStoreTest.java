@@ -680,11 +680,16 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InitializationContext createContext(Configuration configuration) {
-      initializationContext = new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, getMarshaller())
+      PersistenceMockUtil.InvocationContextBuilder builder = new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, getMarshaller())
             .setTimeService(timeService)
-            .setKeyPartitioner(keyPartitioner)
-            .build();
+            .setKeyPartitioner(keyPartitioner);
+      modifyInitializationContext(builder);
+      initializationContext =  builder.build();
       return initializationContext;
+   }
+
+   protected void modifyInitializationContext(PersistenceMockUtil.InvocationContextBuilder contextBuilder) {
+      // Default does nothing
    }
 
    protected final void assertContains(Object k, boolean expected) {

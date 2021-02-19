@@ -16,7 +16,7 @@ public class SoftIndexFileStoreParallelIterationTest extends ParallelIterationTe
    protected void configurePersistence(ConfigurationBuilder cb) {
       location = CommonsTestingUtil.tmpDirectory(this.getClass());
       cb.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .segmented(false)
+            .segmented(true)
             .dataLocation(location + "/data")
             .indexLocation(location);
    }
@@ -27,4 +27,9 @@ public class SoftIndexFileStoreParallelIterationTest extends ParallelIterationTe
       Util.recursiveFileRemove(location);
    }
 
+   @Override
+   protected boolean hasMetadata(boolean fetchValues, int i) {
+      // We only include metadata if the value is requested
+      return fetchValues && super.insertMetadata(i);
+   }
 }

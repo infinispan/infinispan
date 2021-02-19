@@ -61,7 +61,7 @@ public class SoftIndexFileStoreCompatibilityTest extends PersistenceCompatibilit
    @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
       builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .segmented(false)
+            .segmented(true)
             .dataLocation(combinePath(tmpDirectory, "data"))
             .indexLocation(combinePath(tmpDirectory, "index"));
    }

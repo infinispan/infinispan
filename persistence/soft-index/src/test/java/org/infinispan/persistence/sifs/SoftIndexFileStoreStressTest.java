@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -122,7 +123,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       // remove index files
       Stream.of(new File(tmpDirectory).listFiles(file -> !file.isDirectory())).map(f -> f.delete());
       store.start(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller, timeService));
-      Flowable.fromPublisher(store.publishEntries(null, null, false)).blockingForEach(marshalledEntry -> {
+      Flowable.fromPublisher(store.publishEntries(IntSets.immutableSet(0), null, false)).blockingForEach(marshalledEntry -> {
          Object stored = entries.get(marshalledEntry.getKey());
          if (stored == null) {
             fail("Loaded " + marshalledEntry.getKey() + " -> " + marshalledEntry.getValue() + " but it's not in the map");
@@ -153,13 +154,13 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
                   lifespan = random.nextInt(3) == 0 ? random.nextInt(10) : -1;
                   ice = TestInternalCacheEntryFactory.<Object, Object>create(factory,
                      key(random), String.valueOf(random.nextInt()), lifespan);
-                  CompletionStages.join(store.write(-1, MarshalledEntryUtil.create(ice, marshaller)));
+                  CompletionStages.join(store.write(0, MarshalledEntryUtil.create(ice, marshaller)));
                   break;
                case 1:
-                  CompletionStages.join(store.delete(-1, key));
+                  CompletionStages.join(store.delete(0, key));
                   break;
                case 2:
-                  CompletionStages.join(store.load(-1, key));
+                  CompletionStages.join(store.load(0, key));
             }
          }
       }

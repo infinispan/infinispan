@@ -51,12 +51,19 @@ public class EntryRecord {
    }
 
    public EntryRecord loadMetadataAndValue(FileProvider.Handle handle, int offset) throws IOException {
-      if (header.metadataLength() > 0) {
-         meta = readMetadata(handle, header, offset);
+      loadMetadata(handle, offset);
+      if (value == null) {
+         value = readValue(handle, header, offset);
       }
-      value = readValue(handle, header, offset);
-      if (header.internalMetadataLength() > 0) {
+      if (internalMetadata == null && header.internalMetadataLength() > 0) {
          internalMetadata = readInternalMetadata(handle, header, offset);
+      }
+      return this;
+   }
+
+   public EntryRecord loadMetadata(FileProvider.Handle handle, int offset) throws IOException {
+      if (meta == null && header.metadataLength() > 0) {
+         meta = readMetadata(handle, header, offset);
       }
       return this;
    }
@@ -153,9 +160,7 @@ public class EntryRecord {
    public static void writeEntry(FileChannel fileChannel, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue,
                                  byte[] serializedInternalMetadata, long seqId, long expiration) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
-      EntryHeader.writeHeader(header,
-            (short) serializedKey.length,
-            metadata == null ? 0 : (short) metadata.length(),
+      EntryHeader.writeHeader(header, (short) serializedKey.length, metadata == null ? 0 : (short) metadata.length(),
             serializedValue == null ? 0 : serializedValue.length,
             serializedInternalMetadata == null ? 0 : (short) serializedInternalMetadata.length,
             seqId, expiration);
@@ -180,9 +185,7 @@ public class EntryRecord {
                                  org.infinispan.commons.io.ByteBuffer serializedValue,
                                  long seqId, long expiration, long created, long lastUsed) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
-      EntryHeader.writeHeader(header,
-            (short) serializedKey.getLength(),
-            EntryMetadata.size(serializedMetadata),
+      EntryHeader.writeHeader(header, (short) serializedKey.getLength(), EntryMetadata.size(serializedMetadata),
             serializedValue == null ? 0 : serializedValue.getLength(),
             serializedInternalMetadata == null ? 0 : (short) serializedInternalMetadata.getLength(),
             seqId, expiration);

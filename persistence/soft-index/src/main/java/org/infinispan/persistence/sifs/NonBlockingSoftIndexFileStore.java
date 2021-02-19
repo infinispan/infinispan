@@ -8,12 +8,15 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheException;
@@ -25,7 +28,10 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
@@ -42,6 +48,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * Local file-based cache store, optimized for write-through use with strong consistency guarantees
@@ -127,7 +134,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    private SoftIndexFileStoreConfiguration configuration;
    private TemporaryTable temporaryTable;
-   private IndexQueue indexQueue;
    private FileProvider fileProvider;
    private LogAppender logAppender;
    private Index index;
@@ -139,18 +145,32 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    private int maxKeyLength;
    private BlockingManager blockingManager;
    private ActionSequencer sizeAndClearSequencer;
+   private KeyPartitioner keyPartitioner;
    private InitializationContext ctx;
 
    @Override
    public Set<Characteristic> characteristics() {
       // Does not support segmented or expiration yet
-      return EnumSet.of(Characteristic.BULK_READ);
+      return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE);
+   }
+
+   @Override
+   public CompletionStage<Void> addSegments(IntSet segments) {
+      temporaryTable.addSegments(segments);
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> removeSegments(IntSet segments) {
+      temporaryTable.removeSegments(segments);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
       this.ctx = ctx;
 
+      keyPartitioner = ctx.getKeyPartitioner();
       blockingManager = ctx.getBlockingManager();
       sizeAndClearSequencer = new ActionSequencer(blockingManager.asExecutor("SIFS-sizeOrClear"),
             true, timeService);
@@ -161,22 +181,26 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       timeService = ctx.getTimeService();
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
 
-      temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
-      indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
+      Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
+      temporaryTable = new TemporaryTable(cacheConfig.clustering().hash().numSegments());
+      if (!cacheConfig.clustering().cacheMode().needsStateTransfer()) {
+         temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
+      }
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());
-      compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
-      logAppender = new LogAppender(ctx.getNonBlockingManager(), indexQueue, temporaryTable, compactor, fileProvider,
-            configuration.syncWrites(), configuration.maxFileSize());
-      logAppender.start(blockingManager.asExecutor("log-processor"));
+      compactor = new Compactor(fileProvider, temporaryTable, marshaller, timeService, keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
+            blockingManager.asExecutor("compactor"));
       try {
          index = new Index(fileProvider, getIndexLocation(), configuration.indexSegments(),
                configuration.minNodeSize(), configuration.maxNodeSize(),
-               indexQueue, temporaryTable, compactor, timeService);
+               temporaryTable, compactor, timeService);
       } catch (IOException e) {
          throw log.cannotOpenIndex(configuration.indexLocation(), e);
       }
       compactor.setIndex(index);
+      logAppender = new LogAppender(ctx.getNonBlockingManager(), index, temporaryTable, compactor, fileProvider,
+            configuration.syncWrites(), configuration.maxFileSize());
+      logAppender.start(blockingManager.asExecutor("log-processor"));
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
 
@@ -253,14 +277,15 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                               throw new MarshallingException(e);
                            }
                         });
+                  int segment = keyPartitioner.getSegment(entry.getKey());
                   // entry is null if expired or removed (tombstone), in both case, we can ignore it.
                   //noinspection ConstantConditions (entry is not null!)
                   if (entry.getValueBytes() != null) {
                      // using the storeQueue (instead of binary copy) to avoid building the index later
-                     CompletionStages.join(logAppender.storeRequest(entry));
+                     CompletionStages.join(logAppender.storeRequest(segment, entry));
                   } else {
                      // delete the entry. The file is append only so we can have a put() and later a remove() for the same key
-                     CompletionStages.join(logAppender.deleteRequest(entry.getKey(), entry.getKeyBytes()));
+                     CompletionStages.join(logAppender.deleteRequest(segment, entry.getKey(), entry.getKeyBytes()));
                   }
                   offset += header.totalLength();
                }
@@ -301,17 +326,14 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                if (log.isTraceEnabled()) {
                   log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
                }
-               try {
-                  // We may check the seqId safely as we are the only thread writing to index
-                  if (isSeqIdOld(seqId, key, serializedKey)) {
-                     indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
-                     return null;
-                  }
-                  temporaryTable.set(key, file, offset);
-                  indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
-               } catch (InterruptedException e) {
-                  log.error("Interrupted building of index, the index won't be built properly!", e);
+               int segment = keyPartitioner.getSegment(key);
+               // We may check the seqId safely as we are the only thread writing to index
+               if (isSeqIdOld(seqId, segment, key, serializedKey)) {
+                  index.handleRequest(IndexRequest.foundOld(segment, key, serializedKey, file, offset));
                   return null;
+               }
+               if (temporaryTable.set(segment, key, file, offset)) {
+                  index.handleRequest(IndexRequest.update(segment, key, serializedKey, file, offset, size));
                }
                return null;
             }).ignoreElements()
@@ -327,9 +349,9 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.indexLocation(), ctx.getCache().getName(), "index");
    }
 
-   protected boolean isSeqIdOld(long seqId, Object key, byte[] serializedKey) throws IOException {
+   protected boolean isSeqIdOld(long seqId, int segment, Object key, byte[] serializedKey) throws IOException {
       for (; ; ) {
-         EntryPosition entry = temporaryTable.get(key);
+         EntryPosition entry = temporaryTable.get(segment, key);
          if (entry == null) {
             entry = index.getInfo(key, serializedKey);
          }
@@ -377,12 +399,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             logAppender.stop();
             compactor.stopOperations();
             compactor = null;
-            index.stopOperations();
+            CompletionStages.join(index.stop());
             index = null;
             fileProvider.stop();
             fileProvider = null;
             temporaryTable = null;
-            indexQueue = null;
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw log.interruptedWhileStopping(e);
@@ -399,28 +420,25 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public CompletionStage<Void> clear() {
-      return sizeAndClearSequencer.orderOnKey(this, () ->
-            blockingManager.thenRunBlocking(logAppender.clearAndPause(), () -> {
-               try {
-                  compactor.clearAndPause();
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  throw log.interruptedWhileClearing(e);
-               }
-               try {
-                  index.clear();
-               } catch (IOException e) {
-                  throw log.cannotClearIndex(e);
-               }
-               try {
-                  fileProvider.clear();
-               } catch (IOException e) {
-                  throw log.cannotClearData(e);
-               }
-               temporaryTable.clear();
-               compactor.resumeAfterPause();
-            }, "soft-index-clear")
-                  .thenCompose(v -> logAppender.resume())
+      return sizeAndClearSequencer.orderOnKey(this, () -> {
+               CompletionStage<CompletionStage<Void>> compactorSubStage = blockingManager.thenApplyBlocking(logAppender.clearAndPause(),
+                     ignore -> compactor.clearAndPause(), "soft-index-clear-compactor");
+               return blockingManager.thenRunBlocking(compactorSubStage.thenCompose(Function.identity()), () -> {
+                  try {
+                     index.clear();
+                  } catch (IOException e) {
+                     throw log.cannotClearIndex(e);
+                  }
+                  try {
+                     fileProvider.clear();
+                  } catch (IOException e) {
+                     throw log.cannotClearData(e);
+                  }
+                  temporaryTable.clear();
+                  compactor.resumeAfterPause();
+               }, "soft-index-clear")
+                     .thenCompose(v -> logAppender.resume());
+            }
       );
    }
 
@@ -453,7 +471,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
       }
       try {
-         return logAppender.storeRequest(entry);
+         return logAppender.storeRequest(segment, entry);
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -462,7 +480,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
       try {
-         return logAppender.deleteRequest(key, toBuffer(marshaller.objectToByteBuffer(key)));
+         return logAppender.deleteRequest(segment, key, toBuffer(marshaller.objectToByteBuffer(key)));
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -473,7 +491,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       try {
          for (;;) {
             // TODO: consider storing expiration timestamp in temporary table
-            EntryPosition entry = temporaryTable.get(key);
+            EntryPosition entry = temporaryTable.get(segment, key);
             if (entry != null) {
                if (entry.offset < 0) {
                   return CompletableFutures.completedFalse();
@@ -511,25 +529,15 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       return blockingManager.supplyBlocking(() -> {
          try {
             for (;;) {
-               EntryPosition entry = temporaryTable.get(key);
+               EntryPosition entry = temporaryTable.get(segment, key);
                if (entry != null) {
                   if (entry.offset < 0) {
                      log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone", key, entry.file, entry.offset);
                      return null;
                   }
-                  FileProvider.Handle handle = fileProvider.getFile(entry.file);
-                  if (handle != null) {
-                     try {
-                        EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
-                        if (header == null) {
-                           throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
-                        }
-                        return readEntry(handle, header, entry.offset, key, false,
-                              (serializedKey, value, meta, internalMeta, created, lastUsed) ->
-                                    marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed));
-                     } finally {
-                        handle.close();
-                     }
+                  MarshallableEntry<K, V> marshallableEntry = readValueFromFileOffset(key, entry);
+                  if (marshallableEntry != null) {
+                     return marshallableEntry;
                   }
                } else {
                   EntryRecord record = index.getRecord(key, marshaller.objectToByteBuffer(key));
@@ -542,6 +550,24 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             throw log.cannotLoadKeyFromIndex(key, e);
          }
       }, "soft-index-load");
+   }
+
+   private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry) throws IOException {
+      FileProvider.Handle handle = fileProvider.getFile(entry.file);
+      if (handle != null) {
+         try {
+            EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
+            if (header == null) {
+               throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
+            }
+            return readEntry(handle, header, entry.offset, key, false,
+                  (serializedKey, value, meta, internalMeta, created, lastUsed) ->
+                        marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed));
+         } finally {
+            handle.close();
+         }
+      }
+      return null;
    }
 
    private MarshallableEntry<K, V> readEntry(FileProvider.Handle handle, EntryHeader header, int offset,
@@ -589,7 +615,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       return entryCreator.create(serializedKey, value, serializedMetadata, internalMetadata, created, lastUsed);
    }
 
-   interface EntryCreator<K,V> {
+   public interface EntryCreator<K,V> {
       MarshallableEntry<K, V> create(ByteBuffer key, ByteBuffer value, ByteBuffer metadata,
                                      ByteBuffer internalMetadata, long created, long lastUsed) throws IOException;
    }
@@ -648,40 +674,51 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      return handleFilePublisher(filePublisher(), false, true,
-            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
-
-               final K key = (K) marshaller.objectFromByteBuffer(serializedKey);
-
-               if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
-                  return key;
-               }
-               return null;
-            });
+      // TODO: do this more efficiently later
+      return Flowable.fromPublisher(publishEntries(segments, filter, false))
+            .map(MarshallableEntry::getKey);
    }
 
    @Override
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
-      return handleFilePublisher(filePublisher(), includeValues, true,
-            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
+      return blockingManager.blockingPublisher(Flowable.defer(() -> {
+         Set<Object> seenKeys = new HashSet<>();
+         Flowable<Map.Entry<Object, EntryPosition>> tableFlowable = temporaryTable.publish(segments)
+               .doOnNext(entry -> seenKeys.add(entry.getKey()));
+         if (filter != null) {
+            tableFlowable = tableFlowable.filter(entry -> filter.test((K) entry.getKey()));
+         }
+         // TODO: add in filter here
+         Flowable<MarshallableEntry<K, V>> entryFlowable = tableFlowable.flatMapMaybe(entry -> {
+            EntryPosition position = entry.getValue();
+            if (position.offset < 0) {
+               return Maybe.empty();
+            }
+            MarshallableEntry<K, V> marshallableEntry = readValueFromFileOffset(entry.getKey(), position);
+            if (marshallableEntry == null) {
+               // Using the key partitioner here isn't the best, however this case should rarely happen
+               return Maybe.fromCompletionStage(load(keyPartitioner.getSegment(entry.getKey()), entry.getKey()));
+            }
+            return Maybe.just(marshallableEntry);
+         });
+         MarshallableEntry<K, V> emptyME = marshallableEntryFactory.getEmpty();
+         Flowable<MarshallableEntry<K, V>> indexFlowable = index.publish(segments, includeValues)
+               .filter(er -> er.getHeader().valueLength() > 0)
+               .map(er -> {
+                  final K key = (K) marshaller.objectFromByteBuffer(er.getKey());
+                  if ((filter != null && !filter.test(key)) || seenKeys.contains(key)) {
+                     return emptyME;
+                  }
 
-               final K key = (K) marshaller.objectFromByteBuffer(serializedKey);
+                  return marshallableEntryFactory.create(key, byteBufferFactory.newByteBuffer(er.getValue()),
+                        byteBufferFactory.newByteBuffer(er.getMetadata()),
+                        byteBufferFactory.newByteBuffer(er.getInternalMetadata()),
+                        er.getCreated(), er.getLastUsed());
+               })
+               .filter(me -> me != emptyME);
 
-               // SerializedValue is tested to handle when a remove is found
-               if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
-                  // EMPTY_BYTES is used to symbolize when fetchValue is false but there was an entry
-                  final Object value = serializedValue == Util.EMPTY_BYTE_ARRAY ? null : marshaller.objectFromByteBuffer(serializedValue);
-                  PrivateMetadata internalMetadata = serializedInternalMetadata == null ?
-                        null :
-                        (PrivateMetadata) marshaller.objectFromByteBuffer(serializedInternalMetadata);
-                  if (entryMetadata == null)
-                     return marshallableEntryFactory.create(key, value, null, internalMetadata, -1, -1);
-
-                  final Metadata metadata = (Metadata) marshaller.objectFromByteBuffer(entryMetadata.getBytes());
-                  return marshallableEntryFactory.create(key, value, metadata, internalMetadata, entryMetadata.getCreated(), entryMetadata.getLastUsed());
-               }
-               return null;
-            });
+         return Flowable.concat(entryFlowable, indexFlowable);
+      }));
    }
 
    private class HandleIterator<R> extends AbstractIterator<R> {

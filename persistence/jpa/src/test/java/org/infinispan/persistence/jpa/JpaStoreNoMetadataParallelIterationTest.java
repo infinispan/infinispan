@@ -15,7 +15,7 @@ public class JpaStoreNoMetadataParallelIterationTest extends JpaStoreParallelIte
    }
 
    @Override
-   protected boolean hasMetadata(int i) {
+   protected boolean hasMetadata(boolean fetchValues, int i) {
       return false;
    }
 }
