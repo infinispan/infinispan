@@ -19,7 +19,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.sifs.Log;
-import org.infinispan.persistence.sifs.SoftIndexFileStore;
+import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -27,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(SoftIndexFileStoreConfigurationBuilder.class, Log.class);
-   private static boolean NOTIFIED_SEGMENTED;
 
    private final IndexConfigurationBuilder index = new IndexConfigurationBuilder();
    private final DataConfigurationBuilder data = new DataConfigurationBuilder();
@@ -177,9 +176,8 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
    @Override
    protected void validate(boolean skipClassChecks) {
       Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
-      if ((!segmentedAttribute.isModified() || segmentedAttribute.get()) && !NOTIFIED_SEGMENTED) {
-         NOTIFIED_SEGMENTED = true;
-         org.infinispan.util.logging.Log.CONFIG.segmentedStoreUsesManyFileDescriptors(SoftIndexFileStore.class.getSimpleName());
+      if (!segmentedAttribute.isModified() || segmentedAttribute.get()) {
+         throw org.infinispan.util.logging.Log.CONFIG.storeDoesNotSupportBeingSegmented(NonBlockingSoftIndexFileStore.class.getSimpleName());
       }
       super.validate(skipClassChecks);
       index.validate();
@@ -191,7 +189,7 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-      PersistenceUtil.validateGlobalStateStoreLocation(globalConfig, SoftIndexFileStore.class.getSimpleName(),
+      PersistenceUtil.validateGlobalStateStoreLocation(globalConfig, NonBlockingSoftIndexFileStore.class.getSimpleName(),
             data.attributes().attribute(DataConfiguration.DATA_LOCATION),
             index.attributes().attribute(IndexConfiguration.INDEX_LOCATION));
 

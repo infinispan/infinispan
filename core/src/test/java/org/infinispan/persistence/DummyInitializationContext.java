@@ -13,6 +13,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 /**
  * @author Mircea Markus
@@ -29,6 +30,7 @@ public class DummyInitializationContext implements InitializationContext {
 
    GlobalConfiguration globalConfiguration;
    BlockingManager manager;
+   NonBlockingManager nonBlockingManager;
    TimeService timeService;
 
    public DummyInitializationContext() {
@@ -37,7 +39,7 @@ public class DummyInitializationContext implements InitializationContext {
    public DummyInitializationContext(StoreConfiguration clc, Cache cache, PersistenceMarshaller marshaller,
                                      ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshalledEntryFactory,
                                      ExecutorService executorService, GlobalConfiguration globalConfiguration,
-                                     BlockingManager manager, TimeService timeService) {
+                                     BlockingManager manager, NonBlockingManager nonBlockingManager, TimeService timeService) {
       this.clc = clc;
       this.cache = cache;
       this.marshaller = marshaller;
@@ -46,6 +48,7 @@ public class DummyInitializationContext implements InitializationContext {
       this.executorService = executorService;
       this.globalConfiguration = globalConfiguration;
       this.manager = manager;
+      this.nonBlockingManager = nonBlockingManager;
       this.timeService = timeService;
    }
 
@@ -93,6 +96,11 @@ public class DummyInitializationContext implements InitializationContext {
    @Override
    public BlockingManager getBlockingManager() {
       return manager;
+   }
+
+   @Override
+   public NonBlockingManager getNonBlockingManager() {
+      return nonBlockingManager;
    }
 
    @Override

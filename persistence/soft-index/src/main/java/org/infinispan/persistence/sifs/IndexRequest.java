@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.util.Util;
@@ -9,7 +11,7 @@ import org.infinispan.commons.util.Util;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class IndexRequest {
+class IndexRequest extends CompletableFuture<Object> {
    public enum Type {
       UPDATE,
       MOVED,
@@ -45,19 +47,19 @@ class IndexRequest {
    }
 
    public static IndexRequest update(Object key, byte[] serializedKey, int file, int offset, int size) {
-      return new IndexRequest(Type.UPDATE, key, serializedKey, file, offset, size, -1, -1);
+      return new IndexRequest(Type.UPDATE, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
    public static IndexRequest moved(Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.MOVED, key, serializedKey, file, offset, size, prevFile, prevOffset);
+      return new IndexRequest(Type.MOVED, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
    }
 
    public static IndexRequest dropped(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.DROPPED, key, serializedKey, -1, -1, -1, prevFile, prevOffset);
+      return new IndexRequest(Type.DROPPED, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
    public static IndexRequest foundOld(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.FOUND_OLD, key, serializedKey, -1, -1, -1, prevFile, prevOffset);
+      return new IndexRequest(Type.FOUND_OLD, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
    public static IndexRequest clearRequest() {

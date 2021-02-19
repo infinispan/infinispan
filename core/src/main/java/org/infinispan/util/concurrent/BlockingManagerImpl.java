@@ -288,6 +288,21 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    @Override
+   public Executor asExecutor(String name) {
+      if (!log.isTraceEnabled()) {
+         return blockingExecutor;
+      }
+
+      return task -> {
+         log.tracef("Submitting blocking run operation %s with name %s to blocking thread", task, name);
+         blockingExecutor.execute(() -> {
+            log.tracef("Running blocking operation %s with name %s on blocking thread", task, name);
+            task.run();
+         });
+      };
+   }
+
+   @Override
    public BlockingExecutor limitedBlockingExecutor(String name, int concurrentExecutions) {
       LimitedExecutor limitedExecutor = new LimitedExecutor(name, blockingExecutor, concurrentExecutions);
       return new LimitedBlockingExecutor(limitedExecutor);

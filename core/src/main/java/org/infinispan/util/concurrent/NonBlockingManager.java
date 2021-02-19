@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -19,4 +20,15 @@ public interface NonBlockingManager {
     * @return an AutoCloseable that cancels the scheduled task.
     */
    AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay, TimeUnit unit);
+
+   /**
+    * Completes the provided future with the given value. If the future does not have any dependents it will complete
+    * it in the invoking thread. However, if there are any dependents it will complete it in a non blocking thread.
+    * This is a best effort to prevent a context switch for a stage that does not yet have a dependent while also
+    * handing off the dependent processing to a non blocking thread if necessary.
+    * @param future the future to complete
+    * @param value the value to complete the future with
+    * @param <T> the type of the value
+    */
+   <T> void complete(CompletableFuture<? super T> future, T value);
 }

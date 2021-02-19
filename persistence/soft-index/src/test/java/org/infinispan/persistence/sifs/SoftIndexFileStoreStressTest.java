@@ -32,6 +32,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.util.PersistenceMockUtil;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -49,11 +50,12 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
 
    private TestObjectStreamMarshaller marshaller;
    private InternalEntryFactory factory;
-   private SoftIndexFileStore store;
+   private NonBlockingSoftIndexFileStore<Object, Object> store;
    private String tmpDirectory;
    private ExecutorService executorService;
    private volatile boolean terminate;
    private EmbeddedTimeService timeService;
+   private ConfigurationBuilder builder;
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
@@ -61,8 +63,8 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       Util.recursiveFileRemove(tmpDirectory);
       marshaller = new TestObjectStreamMarshaller();
       factory = new InternalEntryFactoryImpl();
-      store = new SoftIndexFileStore();
-      ConfigurationBuilder builder = TestCacheManagerFactory
+      store = new NonBlockingSoftIndexFileStore<>();
+      builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);
       log.info("Using directory " + tmpDirectory);
       builder.persistence()
@@ -72,9 +74,8 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
             .maxFileSize(1000);
 
       timeService = new EmbeddedTimeService();
-      store.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller, timeService));
       TestingUtil.inject(factory, timeService);
-      store.start();
+      CompletionStages.join(store.start(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller, timeService)));
       executorService = Executors.newFixedThreadPool(THREADS + 1);
    }
 
@@ -111,7 +112,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       Thread.sleep(100);
 
       Map<Object, Object> entries = new HashMap<>();
-      Flowable.fromPublisher(store.entryPublisher(null, true, false)).blockingForEach(marshalledEntry -> {
+      Flowable.fromPublisher(store.publishEntries(null, null, false)).blockingForEach(marshalledEntry -> {
          Object prev = entries.put(marshalledEntry.getKey(), marshalledEntry.getValue());
          if (prev != null) {
             fail("Returned entry twice: " + marshalledEntry.getKey() + " -> " + prev + ", " + marshalledEntry.getValue());
@@ -120,8 +121,8 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       store.stop();
       // remove index files
       Stream.of(new File(tmpDirectory).listFiles(file -> !file.isDirectory())).map(f -> f.delete());
-      store.start();
-      Flowable.fromPublisher(store.entryPublisher(null, true, false)).blockingForEach(marshalledEntry -> {
+      store.start(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller, timeService));
+      Flowable.fromPublisher(store.publishEntries(null, null, false)).blockingForEach(marshalledEntry -> {
          Object stored = entries.get(marshalledEntry.getKey());
          if (stored == null) {
             fail("Loaded " + marshalledEntry.getKey() + " -> " + marshalledEntry.getValue() + " but it's not in the map");
@@ -130,7 +131,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
          }
       });
       for (Map.Entry<Object, Object> entry : entries.entrySet()) {
-         MarshallableEntry loaded = store.loadEntry(entry.getKey());
+         MarshallableEntry loaded = CompletionStages.join(store.load(-1, entry.getKey()));
          if (loaded == null) {
             fail("Did not load " + entry.getKey() + " -> " + entry.getValue());
          } else if (!Objects.equals(entry.getValue(), loaded.getValue())) {
@@ -152,13 +153,13 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
                   lifespan = random.nextInt(3) == 0 ? random.nextInt(10) : -1;
                   ice = TestInternalCacheEntryFactory.<Object, Object>create(factory,
                      key(random), String.valueOf(random.nextInt()), lifespan);
-                  store.write(MarshalledEntryUtil.create(ice, marshaller));
+                  CompletionStages.join(store.write(-1, MarshalledEntryUtil.create(ice, marshaller)));
                   break;
                case 1:
-                  store.delete(key);
+                  CompletionStages.join(store.delete(-1, key));
                   break;
                case 2:
-                  store.loadEntry(key);
+                  CompletionStages.join(store.load(-1, key));
             }
          }
       }

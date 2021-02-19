@@ -198,7 +198,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }
                   InitializationContextImpl ctx =
                         new InitializationContextImpl(storeConfiguration, cache.wired(), keyPartitioner, persistenceMarshaller,
-                              timeService, byteBufferFactory, marshallableEntryFactory, nonBlockingExecutor, globalConfiguration, blockingManager);
+                              timeService, byteBufferFactory, marshallableEntryFactory, nonBlockingExecutor,
+                              globalConfiguration, blockingManager, nonBlockingManager);
                   CompletionStage<Void> stage = nonBlockingStore.start(ctx).whenComplete((ignore, t) -> {
                      // On exception, just put a status with only the store - this way we can still invoke stop on it later
                      if (t != null) {
