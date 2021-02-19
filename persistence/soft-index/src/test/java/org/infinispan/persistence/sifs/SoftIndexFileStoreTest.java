@@ -53,7 +53,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
    protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
       return configurationBuilder.persistence()
             .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-               .segmented(false)
+               .segmented(true)
                .indexLocation(tmpDirectory).dataLocation(tmpDirectory)
                .maxFileSize(1000)
             .build();

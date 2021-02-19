@@ -1,7 +1,6 @@
 package org.infinispan.persistence.sifs;
 
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -29,7 +28,7 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    private final NonBlockingManager nonBlockingManager;
-   private final BlockingQueue<IndexRequest> indexQueue;
+   private final Index index;
    private final TemporaryTable temporaryTable;
    private final Compactor compactor;
    private final FileProvider fileProvider;
@@ -45,11 +44,11 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
 
    private volatile FlowableProcessor<LogRequest> flowableProcessor;
 
-   public LogAppender(NonBlockingManager nonBlockingManager, BlockingQueue<IndexRequest> indexQueue,
+   public LogAppender(NonBlockingManager nonBlockingManager, Index index,
                       TemporaryTable temporaryTable, Compactor compactor,
                       FileProvider fileProvider, boolean syncWrites, int maxFileSize) {
       this.nonBlockingManager = nonBlockingManager;
-      this.indexQueue = indexQueue;
+      this.index = index;
       this.temporaryTable = temporaryTable;
       this.compactor = compactor;
       this.fileProvider = fileProvider;
@@ -138,14 +137,14 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
       return resumeRequest;
    }
 
-   public <K, V> CompletionStage<Void> storeRequest(MarshallableEntry<K, V> entry) {
-      LogRequest storeRequest = LogRequest.storeRequest(entry);
+   public <K, V> CompletionStage<Void> storeRequest(int segment, MarshallableEntry<K, V> entry) {
+      LogRequest storeRequest = LogRequest.storeRequest(segment, entry);
       flowableProcessor.onNext(storeRequest);
       return storeRequest;
    }
 
-   public CompletionStage<Boolean> deleteRequest(Object key, ByteBuffer serializedKey) {
-      LogRequest deleteRequest = LogRequest.deleteRequest(key, serializedKey);
+   public CompletionStage<Boolean> deleteRequest(int segment, Object key, ByteBuffer serializedKey) {
+      LogRequest deleteRequest = LogRequest.deleteRequest(segment, key, serializedKey);
       flowableProcessor.onNext(deleteRequest);
       return deleteRequest.thenApply(v -> {
          try {
@@ -192,12 +191,11 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
                request.getSerializedInternalMetadata(),
                request.getSerializedValue(), seqId, request.getExpiration(), request.getCreated(), request.getLastUsed());
          int offset = request.getSerializedValue() == null ? ~currentOffset : currentOffset;
-         temporaryTable.set(request.getKey(), logFile.fileId, offset);
-         IndexRequest indexRequest = IndexRequest.update(request.getKey(), raw(request.getSerializedKey()),
+         temporaryTable.set(request.getSement(), request.getKey(), logFile.fileId, offset);
+         IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), raw(request.getSerializedKey()),
                logFile.fileId, offset, request.length());
          request.setIndexRequest(indexRequest);
-         // TODO: This technically can block, but that should be okay.. or maybe rewrite index part as well?
-         indexQueue.put(indexRequest);
+         index.handleRequest(indexRequest);
          if (!syncWrites) {
             completeRequest(request);
          }

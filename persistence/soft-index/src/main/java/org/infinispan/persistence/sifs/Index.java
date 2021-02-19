@@ -10,15 +10,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.functions.Action;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Keeps the entry positions persisted in a file. It consists of couple of segments, each for one modulo-range of key's
@@ -29,9 +40,16 @@ import org.infinispan.util.logging.LogFactory;
  */
 class Index {
    private static final Log log = LogFactory.getLog(Index.class, Log.class);
-   private static final int GRACEFULLY = 0x512ACEF0;
+   // PRE ISPN 13 GRACEFULLY VALUE = 0x512ACEF0;
+   private static final int GRACEFULLY = 0x512ACEF1;
    private static final int DIRTY = 0xD112770C;
-   private static final int INDEX_FILE_HEADER_SIZE = 30;
+   // 4 bytes for graceful shutdown
+   // 4 bytes for segment max (this way the index can be regenerated if number of segments change
+   // 8 bytes root offset
+   // 2 bytes root occupied
+   // 8 bytes free block offset
+   // 8 bytes number of elements
+   private static final int INDEX_FILE_HEADER_SIZE = 34;
 
    private final Path indexDir;
    private final FileProvider fileProvider;
@@ -42,9 +60,10 @@ class Index {
    private final Segment[] segments;
    private final TimeService timeService;
 
+   private final FlowableProcessor<IndexRequest>[] flowableProcessors;
+
    public Index(FileProvider fileProvider, Path indexDir, int segments, int minNodeSize, int maxNodeSize,
-                IndexQueue indexQueue, TemporaryTable temporaryTable, Compactor compactor,
-                TimeService timeService) throws IOException {
+                TemporaryTable temporaryTable, Compactor compactor, TimeService timeService) throws IOException {
       this.fileProvider = fileProvider;
       this.compactor = compactor;
       this.timeService = timeService;
@@ -54,8 +73,14 @@ class Index {
       indexDir.toFile().mkdirs();
 
       this.segments = new Segment[segments];
+      this.flowableProcessors = new FlowableProcessor[segments];
       for (int i = 0; i < segments; ++i) {
-         this.segments[i] = new Segment(i, indexQueue.subQueue(i), temporaryTable);
+         UnicastProcessor<IndexRequest> flowableProcessor = UnicastProcessor.create();
+         Segment segment = new Segment(i, temporaryTable);
+
+         this.segments[i] = segment;
+         // It is possible to write from multiple threads
+         this.flowableProcessors[i] = flowableProcessor.toSerialized();
       }
    }
 
@@ -67,12 +92,6 @@ class Index {
          if (!segment.loaded) return false;
       }
       return true;
-   }
-
-   public void start() {
-      for (Segment segment : segments) {
-         segment.start();
-      }
    }
 
    /**
@@ -114,34 +133,57 @@ class Index {
       }
    }
 
-   public void clear() throws IOException {
+   public CompletionStage<Void> clear() throws IOException {
       lock.writeLock().lock();
       try {
-         ArrayList<CountDownLatch> pauses = new ArrayList<>();
-         for (Segment seg : segments) {
-            pauses.add(seg.pauseAndClear());
+         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+         for (FlowableProcessor<IndexRequest> processor : flowableProcessors) {
+            IndexRequest clearRequest = IndexRequest.clearRequest();
+            processor.onNext(clearRequest);
+            stage.dependsOn(clearRequest);
          }
-         for (CountDownLatch pause : pauses) {
-            pause.countDown();
-         }
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new RuntimeException(e);
+         return stage.freeze();
       } finally {
          lock.writeLock().unlock();
       }
    }
 
-   public void stopOperations() throws InterruptedException {
-      for (Segment seg : segments) {
-         seg.stopOperations();
-      }
+   public CompletionStage<Object> handleRequest(IndexRequest indexRequest) {
+      int processor = (indexRequest.getKey().hashCode() & Integer.MAX_VALUE) % segments.length;
+      flowableProcessors[processor].onNext(indexRequest);
+      return indexRequest;
    }
 
-   public long size() throws InterruptedException {
+   public CompletionStage<Void> stop() throws InterruptedException {
+      for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
+         flowableProcessor.onComplete();
+      }
+
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      for (Segment segment : segments) {
+         aggregateCompletionStage.dependsOn(segment);
+      }
+      return aggregateCompletionStage.freeze();
+   }
+
+   public CompletionStage<Long> size() {
+      AtomicLong size = new AtomicLong();
+      AggregateCompletionStage<AtomicLong> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(size);
+      for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
+         IndexRequest request = IndexRequest.sizeRequest();
+         flowableProcessor.onNext(request);
+         aggregateCompletionStage.dependsOn(request.thenAccept(count -> size.addAndGet((long) count)));
+      }
+      return aggregateCompletionStage.freeze().thenApply(AtomicLong::get);
+   }
+
+   public long approximateSize() {
       long size = 0;
       for (Segment seg : segments) {
-         size += seg.size();
+         size += seg.size.get();
+         if (size < 0) {
+            return Long.MAX_VALUE;
+         }
       }
       return size;
    }
@@ -159,8 +201,16 @@ class Index {
       return maxSeqId;
    }
 
-   class Segment extends Thread {
-      private final BlockingQueue<IndexRequest> indexQueue;
+   public void start(Executor executor) {
+      for (int i = 0; i < segments.length; ++i) {
+         Segment segment = segments[i];
+         flowableProcessors[i]
+               .observeOn(Schedulers.from(executor))
+               .subscribe(segment, segment::completeExceptionally, segment);
+      }
+   }
+
+   class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
       private final TemporaryTable temporaryTable;
       private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
@@ -172,21 +222,21 @@ class Index {
       private volatile IndexNode root;
 
 
-      private Segment(int id, BlockingQueue<IndexRequest> indexQueue, TemporaryTable temporaryTable) throws IOException {
-         super("BCS-IndexUpdater-" + id);
-         this.setDaemon(true);
-         this.indexQueue = indexQueue;
+      private Segment(int id, TemporaryTable temporaryTable) throws IOException {
          this.temporaryTable = temporaryTable;
 
+         int segmentMax = temporaryTable.getSegmentMax();
          File indexFileFile = new File(indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
-         if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer) && buffer.getInt(0) == GRACEFULLY) {
-            long rootOffset = buffer.getLong(4);
-            short rootOccupied = buffer.getShort(12);
-            long freeBlocksOffset = buffer.getLong(14);
-            size.set(buffer.getLong(22));
+         int gracefulValue, segmentValue;
+         if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
+               && (gracefulValue = buffer.getInt(0)) == GRACEFULLY && (segmentValue = buffer.getInt(4)) == segmentMax) {
+            long rootOffset = buffer.getLong(8);
+            short rootOccupied = buffer.getShort(16);
+            long freeBlocksOffset = buffer.getLong(18);
+            size.set(buffer.getLong(26));
             root = new IndexNode(this, rootOffset, rootOccupied);
             loadFreeBlocks(freeBlocksOffset);
             indexFileSize = freeBlocksOffset;
@@ -225,109 +275,84 @@ class Index {
       }
 
       @Override
-      public void run() {
-         try {
-            int counter = 0;
-            while (true) {
-               if (++counter % 30000 == 0) {
-                  log.debug("Queue size is " + indexQueue.size());
+      public void accept(IndexRequest request) throws Throwable {
+         if (log.isTraceEnabled()) log.trace("Indexing " + request);
+         IndexNode.OverwriteHook overwriteHook;
+         IndexNode.RecordChange recordChange;
+         switch (request.getType()) {
+            case CLEAR:
+               root = IndexNode.emptyWithLeaves(this);
+               indexFile.truncate(0);
+               indexFileSize = INDEX_FILE_HEADER_SIZE;
+               freeBlocks.clear();
+               size.set(0);
+               request.complete(null);
+               return;
+            case DELETE_FILE:
+               // the last segment that processes the delete request actually deletes the file
+               if (request.countDown()) {
+                  fileProvider.deleteFile(request.getFile());
+                  compactor.releaseStats(request.getFile());
                }
-               final IndexRequest request = indexQueue.take();
-               if (log.isTraceEnabled()) log.trace("Indexing " + request);
-               IndexNode.OverwriteHook overwriteHook;
-               IndexNode.RecordChange recordChange;
-               switch (request.getType()) {
-                  case CLEAR:
-                     IndexRequest cleared;
-                     while ((cleared = indexQueue.poll()) != null) {
-                        cleared.setResult(false);
-                     }
-                     CountDownLatch pause = new CountDownLatch(1);
-                     request.setResult(pause);
-                     log.debug("Waiting for cleared");
-                     pause.await();
-                     continue;
-                  case DELETE_FILE:
-                     // the last segment that processes the delete request actually deletes the file
-                     if (request.countDown()) {
-                        fileProvider.deleteFile(request.getFile());
-                        compactor.releaseStats(request.getFile());
-                     }
-                     continue;
-                  case STOP:
-                     assert indexQueue.peek() == null;
-                     shutdown();
-                     return;
-                  case GET_SIZE:
-                     request.setResult(size.get());
-                     continue;
-                  case MOVED:
-                     recordChange = IndexNode.RecordChange.MOVE;
-                     overwriteHook = new IndexNode.OverwriteHook() {
-                        @Override
-                        public boolean check(int oldFile, int oldOffset) {
-                           return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
-                        }
+               return;
+            case MOVED:
+               recordChange = IndexNode.RecordChange.MOVE;
+               overwriteHook = new IndexNode.OverwriteHook() {
+                  @Override
+                  public boolean check(int oldFile, int oldOffset) {
+                     return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
+                  }
 
-                        @Override
-                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
-                           if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                              size.decrementAndGet();
-                           }
-                        }
-                     };
-                     break;
-                  case UPDATE:
-                     recordChange = IndexNode.RecordChange.INCREASE;
-                     overwriteHook = (overwritten, prevFile, prevOffset) -> {
-                        request.setResult(overwritten);
-                        if (request.getOffset() >= 0 && prevOffset < 0) {
-                           size.incrementAndGet();
-                        } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                           size.decrementAndGet();
-                        }
-                     };
-                     break;
-                  case DROPPED:
-                     recordChange = IndexNode.RecordChange.DECREASE;
-                     overwriteHook = (overwritten, prevFile, prevOffset) -> {
-                        if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                           size.decrementAndGet();
-                        }
-                     };
-                     break;
-                  case FOUND_OLD:
-                     recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
-                     overwriteHook = IndexNode.NOOP_HOOK;
-                     break;
-                  default:
-                     throw new IllegalArgumentException(request.toString());
-               }
-               try {
-                  IndexNode.setPosition(root, request.getSerializedKey(), request.getFile(), request.getOffset(),
-                        request.getSize(), overwriteHook, recordChange);
-               } catch (IllegalStateException e) {
-                  throw new IllegalStateException(request.toString(), e);
-               }
-               temporaryTable.removeConditionally(request.getKey(), request.getFile(), request.getOffset());
-            }
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-         } catch (Throwable e) {
-            log.errorInIndexUpdater(e);
-         } finally {
-            try {
-               indexFile.close();
-            } catch (IOException e) {
-               log.failedToCloseIndex(e);
-            }
+                  @Override
+                  public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                     if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
+                        size.decrementAndGet();
+                     }
+                  }
+               };
+               break;
+            case UPDATE:
+               recordChange = IndexNode.RecordChange.INCREASE;
+               overwriteHook = (overwritten, prevFile, prevOffset) -> {
+                  request.setResult(overwritten);
+                  if (request.getOffset() >= 0 && prevOffset < 0) {
+                     size.incrementAndGet();
+                  } else if (request.getOffset() < 0 && prevOffset >= 0) {
+                     size.decrementAndGet();
+                  }
+               };
+               break;
+            case DROPPED:
+               recordChange = IndexNode.RecordChange.DECREASE;
+               overwriteHook = (overwritten, prevFile, prevOffset) -> {
+                  if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+                     size.decrementAndGet();
+                  }
+               };
+               break;
+            case FOUND_OLD:
+               recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
+               overwriteHook = IndexNode.NOOP_HOOK;
+               break;
+            case SIZE:
+               request.complete(size.get());
+               return;
+            default:
+               throw new IllegalArgumentException(request.toString());
          }
+         try {
+            IndexNode.setPosition(root, request.getSegment(), request.getSerializedKey(), request.getFile(), request.getOffset(),
+                  request.getSize(), overwriteHook, recordChange);
+         } catch (IllegalStateException e) {
+            request.completeExceptionally(e);
+         }
+         temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
+         request.complete(null);
       }
 
-      private void shutdown() throws IOException {
+      // This is ran when the flowable ends either via normal termination or error
+      @Override
+      public void run() throws IOException {
          IndexSpace rootSpace = allocateIndexSpace(root.length());
          root.store(rootSpace);
          indexFile.position(indexFileSize);
@@ -350,7 +375,7 @@ class Index {
             buffer.flip();
             write(indexFile, buffer);
          }
-         int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 4;
+         int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 8;
          buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
          buffer.position(0);
          // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
@@ -359,13 +384,16 @@ class Index {
          buffer.putShort(8, rootSpace.length);
          buffer.putLong(10, indexFileSize);
          buffer.putLong(18, size.get());
-         indexFile.position(4);
+         indexFile.position(8);
          write(indexFile, buffer);
          buffer.position(0);
-         buffer.limit(4);
+         buffer.limit(8);
          buffer.putInt(0, GRACEFULLY);
+         buffer.putInt(4, temporaryTable.getSegmentMax());
          indexFile.position(0);
          write(indexFile, buffer);
+
+         complete(null);
       }
 
       private void loadFreeBlocks(long freeBlocksOffset) throws IOException {
@@ -400,24 +428,6 @@ class Index {
             }
             freeBlocks.put((short) blockLength, list);
          }
-      }
-
-      CountDownLatch pauseAndClear() throws InterruptedException, IOException {
-         IndexRequest clear = IndexRequest.clearRequest();
-         indexQueue.put(clear);
-         CountDownLatch pause = (CountDownLatch) clear.getResult();
-         root = IndexNode.emptyWithLeaves(this);
-         indexFile.truncate(0);
-         indexFileSize = INDEX_FILE_HEADER_SIZE;
-         freeBlocks.clear();
-         size.set(0);
-         return pause;
-      }
-
-      public long size() throws InterruptedException {
-         IndexRequest sizeRequest = IndexRequest.sizeRequest();
-         indexQueue.put(sizeRequest);
-         return (Long) sizeRequest.getResult();
       }
 
       public FileChannel getIndexFile() {
@@ -484,11 +494,6 @@ class Index {
          return rootLock.readLock();
       }
 
-      void stopOperations() throws InterruptedException {
-         indexQueue.put(IndexRequest.stopRequest());
-         this.join();
-      }
-
       public TimeService getTimeService() {
          return timeService;
       }
@@ -529,4 +534,8 @@ class Index {
       }
    }
 
+   <V> Flowable<EntryRecord> publish(IntSet cacheSegments, boolean loadValues) {
+      return Flowable.fromArray(segments)
+            .flatMap(segment -> segment.root.publish(cacheSegments, loadValues));
+   }
 }

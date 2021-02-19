@@ -22,6 +22,7 @@ class LogRequest extends CompletableFuture<Void> {
    }
 
    private final Type type;
+   private final int segment;
    private final Object key;
    private final long expirationTime;
    private final ByteBuffer serializedKey;
@@ -32,8 +33,9 @@ class LogRequest extends CompletableFuture<Void> {
    private final long lastUsed;
    private volatile IndexRequest indexRequest;
 
-   private LogRequest(Type type, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
+   private LogRequest(Type type, int segment, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
                       ByteBuffer serializedInternalMetadata, ByteBuffer serializedValue, long created, long lastUsed) {
+      this.segment = segment;
       this.key = key;
       this.expirationTime = expirationTime;
       this.serializedKey = serializedKey;
@@ -46,16 +48,16 @@ class LogRequest extends CompletableFuture<Void> {
    }
 
    private LogRequest(Type type) {
-      this(type, null, 0, null, null, null, null, -1, -1);
+      this(type, -1, null, 0, null, null, null, null, -1, -1);
    }
 
-   public static LogRequest storeRequest(MarshallableEntry entry) {
-      return new LogRequest(Type.STORE, entry.getKey(), entry.expiryTime(), entry.getKeyBytes(), entry.getMetadataBytes(),
+   public static LogRequest storeRequest(int segment, MarshallableEntry entry) {
+      return new LogRequest(Type.STORE, segment, entry.getKey(), entry.expiryTime(), entry.getKeyBytes(), entry.getMetadataBytes(),
             entry.getInternalMetadataBytes(), entry.getValueBytes(), entry.created(), entry.lastUsed());
    }
 
-   public static LogRequest deleteRequest(Object key, ByteBuffer serializedKey) {
-      return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null, null, -1, -1);
+   public static LogRequest deleteRequest(int segment, Object key, ByteBuffer serializedKey) {
+      return new LogRequest(Type.DELETE, segment, key, -1, serializedKey, null, null, null, -1, -1);
    }
 
    public static LogRequest clearRequest() {
@@ -79,6 +81,10 @@ class LogRequest extends CompletableFuture<Void> {
 
    public Object getKey() {
       return key;
+   }
+
+   public int getSement() {
+      return segment;
    }
 
    public ByteBuffer getSerializedKey() {

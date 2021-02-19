@@ -56,11 +56,23 @@ public class PersistenceMockUtil {
       private ClassAllowList classAllowList;
       private TimeService timeService = AbstractInfinispanTest.TIME_SERVICE;
       private KeyPartitioner keyPartitioner = SingleSegmentKeyPartitioner.getInstance();
+      private NonBlockingManager nonBlockingManager;
+      private BlockingManager blockingManager;
 
       public InvocationContextBuilder(Class<?> testClass, Configuration configuration, PersistenceMarshaller persistenceMarshaller) {
          this.testClass = testClass;
          this.configuration = configuration;
          this.persistenceMarshaller = persistenceMarshaller;
+
+         blockingManager = new BlockingManagerImpl();
+         TestingUtil.inject(blockingManager,
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
+         TestingUtil.startComponent(blockingManager);
+         nonBlockingManager = new NonBlockingManagerImpl();
+         TestingUtil.inject(nonBlockingManager,
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
+         TestingUtil.startComponent(nonBlockingManager);
       }
 
       public InvocationContextBuilder setTimeService(TimeService timeService) {
@@ -78,17 +90,18 @@ public class PersistenceMockUtil {
          return this;
       }
 
+      public InvocationContextBuilder setBlockingManager(BlockingManager blockingManager) {
+         this.blockingManager = blockingManager;
+         return this;
+      }
+
+      public InvocationContextBuilder setNonBlockingManager(NonBlockingManager nonBlockingManager) {
+         this.nonBlockingManager = nonBlockingManager;
+         return this;
+      }
+
       public InitializationContext build() {
          Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList);
-         BlockingManager blockingManager = new BlockingManagerImpl();
-         TestingUtil.inject(blockingManager,
-               new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
-               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
-         TestingUtil.startComponent(blockingManager);
-         NonBlockingManager nonBlockingManager = new NonBlockingManagerImpl();
-         TestingUtil.inject(nonBlockingManager,
-               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
-         TestingUtil.startComponent(nonBlockingManager);
          MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
          global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));

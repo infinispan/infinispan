@@ -1,9 +1,16 @@
 package org.infinispan.persistence.sifs;
 
+import java.util.AbstractMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.IntConsumer;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Table holding the entry positions in log before these are persisted to the index.
@@ -12,15 +19,31 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TemporaryTable {
    private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
-   private ConcurrentMap<Object, Entry> table;
+   private final AtomicReferenceArray<ConcurrentMap<Object, Entry>> table;
 
-   public TemporaryTable(int capacity) {
-      table = new ConcurrentHashMap<>(capacity);
+   public TemporaryTable(int segments) {
+      table = new AtomicReferenceArray<>(segments);
    }
 
-   public void set(Object key, int file, int offset) {
+   public int getSegmentMax() {
+      return table.length();
+   }
+
+   public void addSegments(IntSet segments) {
+      segments.forEach((IntConsumer) segment -> table.set(segment, new ConcurrentHashMap<>()));
+   }
+
+   public void removeSegments(IntSet segments) {
+      segments.forEach((IntConsumer) segment -> table.set(segment, null));
+   }
+
+   public boolean set(int segment, Object key, int file, int offset) {
+      ConcurrentMap<Object, Entry> map = table.get(segment);
+      if (map == null) {
+         return false;
+      }
       for (; ; ) {
-         Entry entry = table.putIfAbsent(key, new Entry(file, offset, false));
+         Entry entry = map.putIfAbsent(key, new Entry(file, offset, false));
          if (entry != null) {
             synchronized (entry) {
                if (entry.isRemoved()) {
@@ -38,18 +61,21 @@ public class TemporaryTable {
                   }
                }
                entry.update(file, offset);
-               return;
+               break;
             }
-         } else {
-            return;
          }
       }
+      return true;
    }
 
-   public LockedEntry replaceOrLock(Object key, int file, int offset, int prevFile, int prevOffset) {
+   public LockedEntry replaceOrLock(int segment, Object key, int file, int offset, int prevFile, int prevOffset) {
+      ConcurrentMap<Object, Entry> map = table.get(segment);
+      if (map == null) {
+         return null;
+      }
       for (;;) {
          Entry lockedEntry = new Entry(-1, -1, true);
-         Entry entry = table.putIfAbsent(key, lockedEntry);
+         Entry entry = map.putIfAbsent(key, lockedEntry);
          if (entry != null) {
             synchronized (entry) {
                if (entry.isRemoved()) {
@@ -79,17 +105,24 @@ public class TemporaryTable {
       }
    }
 
-   public void removeAndUnlock(LockedEntry lockedEntry, Object key) {
+   public void removeAndUnlock(LockedEntry lockedEntry, int segment, Object key) {
       Entry entry = (Entry) lockedEntry;
       synchronized (entry) {
-         table.remove(key);
+         ConcurrentMap<Object, Entry> map = table.get(segment);
+         if (map != null) {
+            map.remove(key);
+         }
          entry.setRemoved(true);
          entry.notifyAll();
       }
    }
 
-   public EntryPosition get(Object key) {
-      Entry entry = table.get(key);
+   public EntryPosition get(int segment, Object key) {
+      ConcurrentMap<Object, Entry> map = table.get(segment);
+      if (map == null) {
+         return null;
+      }
+      Entry entry = map.get(key);
       if (entry == null) {
          return null;
       }
@@ -104,18 +137,27 @@ public class TemporaryTable {
    }
 
    public void clear() {
-      table.clear();
+      for (int i = 0; i < table.length(); ++i) {
+         ConcurrentMap<Object, Entry> map = table.get(i);
+         if (map != null) {
+            map.clear();
+         }
+      }
    }
 
-   public void removeConditionally(Object key, int file, int offset) {
-      Entry tempEntry = table.get(key);
+   public void removeConditionally(int segment, Object key, int file, int offset) {
+      ConcurrentMap<Object, Entry> map = table.get(segment);
+      if (map == null) {
+         return;
+      }
+      Entry tempEntry = map.get(key);
       if (tempEntry != null) {
          synchronized (tempEntry) {
             if (tempEntry.isLocked()) {
                return;
             }
             if (tempEntry.getFile() == file && tempEntry.getOffset() == offset) {
-               table.remove(key, tempEntry);
+               map.remove(key, tempEntry);
                tempEntry.setRemoved(true);
             }
          }
@@ -162,5 +204,19 @@ public class TemporaryTable {
 
    public abstract static class LockedEntry {
       private LockedEntry() {}
+   }
+
+   <K, V> Flowable<Map.Entry<Object, EntryPosition>> publish(IntSet segments) {
+      return Flowable.fromIterable(segments)
+            .flatMap(segment -> {
+               ConcurrentMap<Object, Entry> map = table.get(segment);
+               if (map == null) {
+                  return Flowable.empty();
+               }
+               return Flowable.fromIterable(map.entrySet())
+                     .filter(entry -> !entry.getValue().isLocked())
+                     .map(entry -> new AbstractMap.SimpleImmutableEntry<>(entry.getKey(),
+                           new EntryPosition(entry.getValue().getFile(), entry.getValue().getOffset())));
+            });
    }
 }

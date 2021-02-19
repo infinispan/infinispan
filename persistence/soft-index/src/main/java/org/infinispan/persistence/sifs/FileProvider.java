@@ -229,7 +229,6 @@ public class FileProvider {
                if (fileChannel == null) {
                   fileChannel = new FileOutputStream(f).getChannel();
                }
-
                return new Log(nextFileId, fileChannel);
             }
          }
