@@ -14,7 +14,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
 import org.infinispan.persistence.sifs.FileProvider;
-import org.infinispan.persistence.sifs.SoftIndexFileStore;
+import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
@@ -60,10 +60,10 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
 
       SoftIndexIterator() {
          if (majorVersion < 11) {
-            this.fileProvider = new FileProvider(location, 1000, SoftIndexFileStore.PREFIX_10_1, 1024 * 1024);
+            this.fileProvider = new FileProvider(location, 1000, NonBlockingSoftIndexFileStore.PREFIX_10_1, 1024 * 1024);
             this.reader = EntryRecord::read10_1EntryHeader;
          } else {
-            String prefix = majorVersion == 11 ? SoftIndexFileStore.PREFIX_11_0 : SoftIndexFileStore.PREFIX_12_0;
+            String prefix = majorVersion == 11 ? NonBlockingSoftIndexFileStore.PREFIX_11_0 : NonBlockingSoftIndexFileStore.PREFIX_12_0;
             this.fileProvider = new FileProvider(location, 1000, prefix, 1024 * 1024);
             this.reader = EntryRecord::readEntryHeader;
          }

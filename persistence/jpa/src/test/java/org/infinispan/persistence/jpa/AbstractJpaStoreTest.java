@@ -58,7 +58,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
       JpaStore store = new JpaStore();
       store.init(new DummyInitializationContext(builder.persistence().stores().get(0).create(), cm.getCache(),
-            marshaller, null, entryFactory, new WithinThreadExecutor(), gc, blockingManager,
+            marshaller, null, entryFactory, new WithinThreadExecutor(), gc, blockingManager, null,
             cm.getGlobalComponentRegistry().getTimeService()));
       store.start();
 

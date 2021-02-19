@@ -29,7 +29,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
-      persistence.addStore(SoftIndexFileStoreConfigurationBuilder.class).preload(preload).dataLocation(tmpDirectory + "/data").indexLocation(tmpDirectory);
+      persistence.addStore(SoftIndexFileStoreConfigurationBuilder.class).preload(preload).dataLocation(tmpDirectory + "/data").indexLocation(tmpDirectory).segmented(false);
       return persistence;
    }
 }

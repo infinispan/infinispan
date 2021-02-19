@@ -75,7 +75,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    protected static final int WRITE_DELETE_BATCH_MAX_ENTRIES = 120;
    protected TestObjectStreamMarshaller marshaller;
 
-   protected WaitNonBlockingStore<Object, Object> store;
+   protected EnsureNonBlockingStore<Object, Object> store;
    protected ControlledTimeService timeService;
    protected InternalEntryFactory internalEntryFactory;
    protected MarshallableEntryFactory marshallableEntryFactory;
@@ -83,6 +83,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    protected int segmentCount;
    protected InitializationContext initializationContext;
    protected KeyPartitioner keyPartitioner = k -> Math.abs(k.hashCode() % segmentCount);
+   protected Set<NonBlockingStore.Characteristic> characteristics;
    private IntSet segments;
 
    protected static <K, V> NonBlockingStore<K, V> asNonBlockingStore(CacheLoader<K, V> loader) {
@@ -131,6 +132,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       setConfiguration(buildConfig(builder));
       store.startAndWait(createContext(configuration));
+      characteristics = store.characteristics();
    }
 
    protected Object keyToStorage(Object key) {
@@ -204,6 +206,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreWithLifespan() throws Exception {
+      // Store doesn't support expiration, so don't test it
+      if (!characteristics.contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         return;
+      }
       assertIsEmpty();
 
       long lifespan = 120000;
@@ -249,6 +255,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
 
    public void testLoadAndStoreWithIdle() throws Exception {
+      // Store doesn't support expiration, so don't test it
+      if (!characteristics.contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         return;
+      }
       assertIsEmpty();
 
       long idle = 120000;
@@ -301,6 +311,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
+      // Store doesn't support expiration, so don't test it
+      if (!characteristics.contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         return;
+      }
       assertIsEmpty();
 
       long lifespan = 200000;
@@ -331,6 +345,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
+      // Store doesn't support expiration, so don't test it
+      if (!characteristics.contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         return;
+      }
       assertContains("k", false);
 
       long lifespan = 2000;
@@ -473,6 +491,10 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    public void testPurgeExpired() throws Exception {
+      // Store doesn't support expiration, so don't test it
+      if (!characteristics.contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         return;
+      }
       assertIsEmpty();
       // Increased lifespan and idle timeouts to accommodate slower cache stores
       // checking if cache store contains the entry right after inserting because

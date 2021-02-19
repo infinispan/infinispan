@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -333,7 +334,7 @@ class IndexNode {
 
    public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       IndexNode node = root;
-      Stack<Path> stack = new Stack<>();
+      Deque<Path> stack = new ArrayDeque<>();
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
          stack.push(new Path(node, insertionPoint));
@@ -352,7 +353,7 @@ class IndexNode {
                System.identityHashCode(copy), copy.length(), System.identityHashCode(node), node.length(), stack.size());
       }
 
-      Stack<IndexNode> garbage = new Stack<>();
+      Deque<IndexNode> garbage = new ArrayDeque<>();
       try {
          JoinSplitResult result = manageLength(root.segment, stack, node, copy, garbage);
          if (result == null) {
@@ -421,7 +422,7 @@ class IndexNode {
       }
    }
 
-   private static JoinSplitResult manageLength(Index.Segment segment, Stack<Path> stack, IndexNode node, IndexNode copy, Stack<IndexNode> garbage) throws IOException {
+   private static JoinSplitResult manageLength(Index.Segment segment, Deque<Path> stack, IndexNode node, IndexNode copy, Deque<IndexNode> garbage) throws IOException {
       int from, to;
       if (copy.length() < segment.getMinNodeSize() && !stack.isEmpty()) {
          Path parent = stack.peek();
@@ -913,14 +914,13 @@ class IndexNode {
       return new IndexNode(segment, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY_ARRAY, new InnerNode[]{ new InnerNode(-1L, (short) -1) });
    }
 
-   public static class OverwriteHook {
-      public static final OverwriteHook NOOP = new OverwriteHook();
+   static final OverwriteHook NOOP_HOOK = (boolean overwritten, int prevFile, int prevOffset) -> { };
 
-      public boolean check(int oldFile, int oldOffset) {
+   public interface OverwriteHook {
+      default boolean check(int oldFile, int oldOffset) {
          return true;
       }
-      public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
-      }
+      void setOverwritten(boolean overwritten, int prevFile, int prevOffset);
    }
 
    static class InnerNode extends Index.IndexSpace {
