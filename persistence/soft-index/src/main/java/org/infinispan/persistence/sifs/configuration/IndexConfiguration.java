@@ -12,7 +12,7 @@ public class IndexConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", null, String.class).immutable().autoPersist(false).xmlName("path").build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().autoPersist(false).xmlName("max-queue-length").build();
-   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
+   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 16).immutable().autoPersist(false).xmlName("segments").build();
    public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", 0).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().autoPersist(false).build();
 

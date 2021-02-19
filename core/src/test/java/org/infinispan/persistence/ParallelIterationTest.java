@@ -146,7 +146,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          } else {
             assertNull(entries.get(i), "For key " + i);
          }
-         if (hasMetadata(i)) {
+         if (hasMetadata(fetchValues, i)) {
             assertNotNull(metadata.get(i), "For key " + i);
             assertEquals(metadata.get(i).lifespan(), lifespan(i), "For key " + i);
             assertEquals(metadata.get(i).maxIdle(), maxIdle(i), "For key " + i);
@@ -173,7 +173,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       return i % 2 == 0;
    }
 
-   protected boolean hasMetadata(int i) {
+   protected boolean hasMetadata(boolean fetchValues, int i) {
       return insertMetadata(i);
    }
 

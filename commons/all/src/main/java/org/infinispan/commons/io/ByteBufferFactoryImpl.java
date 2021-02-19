@@ -10,4 +10,9 @@ public class ByteBufferFactoryImpl implements ByteBufferFactory {
    public ByteBuffer newByteBuffer(byte[] b, int offset, int length) {
       return ByteBufferImpl.create(b, offset, length);
    }
+
+   @Override
+   public ByteBuffer newByteBuffer(byte[] b) {
+      return ByteBufferImpl.create(b);
+   }
 }

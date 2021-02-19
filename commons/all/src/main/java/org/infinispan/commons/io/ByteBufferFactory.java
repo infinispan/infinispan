@@ -10,4 +10,6 @@ public interface ByteBufferFactory {
 
    ByteBuffer newByteBuffer(byte[] b, int offset, int length);
 
+   ByteBuffer newByteBuffer(byte[] b);
+
 }

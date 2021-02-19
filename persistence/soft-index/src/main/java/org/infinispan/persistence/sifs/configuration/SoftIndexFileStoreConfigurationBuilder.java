@@ -176,8 +176,8 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
    @Override
    protected void validate(boolean skipClassChecks) {
       Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
-      if (!segmentedAttribute.isModified() || segmentedAttribute.get()) {
-         throw org.infinispan.util.logging.Log.CONFIG.storeDoesNotSupportBeingSegmented(NonBlockingSoftIndexFileStore.class.getSimpleName());
+      if (segmentedAttribute.isModified() && !segmentedAttribute.get()) {
+         throw org.infinispan.util.logging.Log.CONFIG.storeRequiresBeingSegmented(NonBlockingSoftIndexFileStore.class.getSimpleName());
       }
       super.validate(skipClassChecks);
       index.validate();

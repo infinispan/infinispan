@@ -73,6 +73,14 @@ public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
             .toCompletionStage());
    }
 
+   default List<MarshallableEntry<K, V>> publishEntriesWait(IntSet segments, Predicate<? super K> filter,
+                                                            boolean includeValues) {
+      return join(Flowable.fromPublisher(publishEntries(segments, filter, includeValues))
+            .collect(Collectors.toList())
+            .toCompletionStage());
+
+   }
+
    default List<MarshallableEntry<K, V>> purge() {
       return join(Flowable.fromPublisher(purgeExpired())
             .collect(Collectors.toList())
