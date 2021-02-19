@@ -142,6 +142,15 @@
                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/11</outputDirectory>
                            <includes>**/*.class</includes>
                         </artifactItem>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-commons-jdk11</artifactId>
+                           <version>${project.version}</version>
+                           <type>jar</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                           <includes>META-INF/services/*</includes>
+                        </artifactItem>
                      </artifactItems>
                   </configuration>
                </execution>
