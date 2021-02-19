@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
@@ -23,8 +24,8 @@ import org.infinispan.util.logging.LogFactory;
 class Compactor extends Thread {
    private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
 
-   private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<Integer, Stats>();
-   private final BlockingQueue<Integer> scheduledCompaction = new LinkedBlockingQueue<Integer>();
+   private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<>();
+   private final BlockingQueue<Integer> scheduledCompaction = new LinkedBlockingQueue<>();
    private final BlockingQueue<IndexRequest> indexQueue;
    private final FileProvider fileProvider;
    private final TemporaryTable temporaryTable;
@@ -131,6 +132,8 @@ class Compactor extends Thread {
             try {
                scheduledFile = scheduledCompaction.poll(1, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new CacheException(e);
             }
             if (terminateSignal) {
                if (logFile != null) {

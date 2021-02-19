@@ -185,7 +185,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             .thenReturn(SingleSegmentKeyPartitioner.getInstance());
       CompletionStages.join(store.start(new DummyInitializationContext(storeConfiguration, cacheMock, marshaller, new ByteBufferFactoryImpl(),
             new MarshalledEntryFactoryImpl(marshaller), nonBlockingExecutor,
-            new GlobalConfigurationBuilder().globalState().persistentLocation(location).build(), blockingManager, new DefaultTimeService())));
+            new GlobalConfigurationBuilder().globalState().persistentLocation(location).build(), blockingManager, null, new DefaultTimeService())));
       return store;
    }
 

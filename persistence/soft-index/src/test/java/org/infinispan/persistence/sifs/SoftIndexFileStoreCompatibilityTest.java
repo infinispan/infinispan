@@ -1,7 +1,7 @@
 package org.infinispan.persistence.sifs;
 
-import static org.infinispan.persistence.sifs.SoftIndexFileStore.PREFIX_10_1;
-import static org.infinispan.persistence.sifs.SoftIndexFileStore.PREFIX_11_0;
+import static org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore.PREFIX_10_1;
+import static org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore.PREFIX_11_0;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,7 +18,7 @@ import org.infinispan.test.data.Value;
 import org.testng.annotations.Test;
 
 /**
- * Tests if {@link SoftIndexFileStore} can migrate data from Infinispan 10.1.x.
+ * Tests if {@link NonBlockingSoftIndexFileStore} can migrate data from Infinispan 10.1.x.
  *
  * @author Pedro Ruivo
  * @since 11.0

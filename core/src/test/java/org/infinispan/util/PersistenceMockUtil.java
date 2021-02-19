@@ -36,6 +36,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingManagerImpl;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
@@ -83,12 +85,16 @@ public class PersistenceMockUtil {
                new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
                new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
          TestingUtil.startComponent(blockingManager);
+         NonBlockingManager nonBlockingManager = new NonBlockingManagerImpl();
+         TestingUtil.inject(nonBlockingManager,
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
+         TestingUtil.startComponent(nonBlockingManager);
          MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
          global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
          return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                keyPartitioner, persistenceMarshaller, timeService, new ByteBufferFactoryImpl(), mef,
-               new WithinThreadExecutor(), global.build(), blockingManager);
+               new WithinThreadExecutor(), global.build(), blockingManager, nonBlockingManager);
       }
    }
 

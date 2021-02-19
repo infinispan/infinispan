@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent;
 
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -203,6 +204,16 @@ public interface BlockingManager {
     * @return a completion stage that completes once the publisher has completed.
     */
    <V> CompletionStage<Void> blockingPublisherToVoidStage(Publisher<V> publisher, Object traceId);
+
+   /**
+    * Returns an executor that will run the given tasks on a blocking thread as required.
+    * <p>
+    * Note that this executor will always submit the task to the blocking thread pool, even if the requestor
+    * is a blocking thread. This is different than other methods that will invoke the task in the invoking
+    * thread if the invoking thread is blocking.
+    * @return an executor that can run blocking commands.
+    */
+   Executor asExecutor(String name);
 
    /**
     * Provides a {@link BlockingExecutor} which is limited to the provided concurrency amount.
