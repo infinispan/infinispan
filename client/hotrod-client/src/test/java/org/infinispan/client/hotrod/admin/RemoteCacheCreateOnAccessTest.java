@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -194,7 +195,14 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
    }
 
    public void createOnAccessConfigurationURIDeclarative() throws Throwable {
-      String cacheName = "cache-from-config-uri-declarative";
+      createOnAccessConfigurationURI("uri-with-scheme", () -> Thread.currentThread().getContextClassLoader().getResource("uri-with-scheme-hotrod-client.properties").toString());
+   }
+
+   public void createOnAccessConfigurationSchemelessURIDeclarative() throws Throwable {
+      createOnAccessConfigurationURI("uri-without-scheme", () -> "uri-without-scheme-hotrod-client.properties");
+   }
+
+   private void createOnAccessConfigurationURI(String cacheName, Supplier<String> uri) throws Throwable {
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
       File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", cacheName));
       try (Writer w = Files.newBufferedWriter(file.toPath())) {
@@ -202,7 +210,7 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
       }
       Properties properties = new Properties();
       properties.put(ConfigurationProperties.SO_TIMEOUT, "3000");
-      properties.put(ConfigurationProperties.CACHE_PREFIX + cacheName + ConfigurationProperties.CACHE_CONFIGURATION_URI_SUFFIX, file.toURI().toString());
+      properties.put(ConfigurationProperties.CACHE_PREFIX + cacheName + ConfigurationProperties.CACHE_CONFIGURATION_URI_SUFFIX, uri.get());
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServer()

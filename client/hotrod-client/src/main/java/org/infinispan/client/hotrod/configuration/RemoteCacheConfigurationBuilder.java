@@ -14,6 +14,7 @@ import static org.infinispan.commons.util.Util.getInstance;
 import static org.infinispan.commons.util.Util.loadClass;
 
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Scanner;
@@ -30,6 +31,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -68,7 +70,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * Specifies the maximum number of entries that will be held in the near cache. Only works when {@link #nearCacheMode(NearCacheMode)} is not {@link NearCacheMode#DISABLED}.
+    * Specifies the maximum number of entries that will be held in the near cache. Only works when
+    * {@link #nearCacheMode(NearCacheMode)} is not {@link NearCacheMode#DISABLED}.
     *
     * @param maxEntries maximum entries in the near cache.
     * @return an instance of the builder
@@ -79,8 +82,9 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * Specifies whether bloom filter should be used for near cache to limit the number of write
-    * notifications for unrelated keys.
+    * Specifies whether bloom filter should be used for near cache to limit the number of write notifications for
+    * unrelated keys.
+    *
     * @param enable whether to enable bloom filter
     * @return an instance of this builder
     */
@@ -91,6 +95,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    /**
     * Specifies the declarative configuration to be used to create the cache if it doesn't already exist on the server.
+    *
     * @param configuration the XML representation of a cache configuration.
     * @return an instance of the builder
     */
@@ -100,13 +105,23 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * Specifies a URI pointing to the declarative configuration to be used to create the cache if it doesn't already exist on the server.
+    * Specifies a URI pointing to the declarative configuration to be used to create the cache if it doesn't already
+    * exist on the server.
+    *
     * @param uri the URI of the configuration.
     * @return an instance of the builder
     */
    public RemoteCacheConfigurationBuilder configurationURI(URI uri) {
-      try (Scanner scanner = new Scanner(uri.toURL().openStream(), StandardCharsets.UTF_8.toString()).useDelimiter("\\A")) {
-         return this.configuration(scanner.next());
+      try {
+         URL url;
+         if (!uri.isAbsolute()) {
+            url = FileLookupFactory.newInstance().lookupFileLocation(uri.toString(), this.getClass().getClassLoader());
+         } else {
+            url = uri.toURL();
+         }
+         try (Scanner scanner = new Scanner(url.openStream(), StandardCharsets.UTF_8.toString()).useDelimiter("\\A")) {
+            return this.configuration(scanner.next());
+         }
       } catch (Exception e) {
          throw new CacheConfigurationException(e);
       }
@@ -114,6 +129,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    /**
     * Specifies the name of a template to be used to create the cache if it doesn't already exist on the server.
+    *
     * @param templateName the name of the template.
     * @return an instance of the builder
     */
@@ -124,6 +140,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    /**
     * Specifies one of the default templates to be used to create the cache if it doesn't already exist on the server.
+    *
     * @param template the template to use
     * @return an instance of the builder
     */
@@ -134,6 +151,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    /**
     * The {@link TransactionMode} in which a {@link RemoteCache} will be enlisted.
+    *
     * @param mode the transaction mode
     * @return an instance of the builder
     */

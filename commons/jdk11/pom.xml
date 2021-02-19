@@ -13,6 +13,13 @@
    <name>Infinispan Commons JDK 11</name>
    <description>Infinispan Commons JDK 11</description>
 
+   <dependencies>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+      </dependency>
+   </dependencies>
+
    <build>
       <plugins>
          <plugin>
