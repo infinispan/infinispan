@@ -4,8 +4,11 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
+import java.security.Principal;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -56,6 +59,23 @@ public class LoginResource implements ResourceHandler {
       RestCacheManager<Object> rcm = invocationHelper.getRestCacheManager();
       Collection<String> cacheNames = rcm.getCacheNames();
       Json acl = Json.object();
+      if(subject == null) {
+         acl.set("subjects", Json.array());
+      } else {
+         Set<Principal> principals = subject.getPrincipals();
+         Iterator<Principal> iterator = principals.iterator();
+         Json jsonSubjects = Json.array();
+         while (iterator.hasNext()) {
+            Principal next = iterator.next();
+            String name = next.getName();
+            String type = next.getClass().toString();
+            Json principal = Json.object();
+            principal.set("name", name);
+            principal.set("type", type);
+            jsonSubjects.add(principal);
+         }
+         acl.set("subjects",  jsonSubjects);
+      }
       AuthorizationHelper authorizationHelper = rcm.getAuthorizationHelper();
       SubjectACL globalACL = authorizationHelper.getACL(subject);
       acl.set("global", aclToJson(globalACL));
