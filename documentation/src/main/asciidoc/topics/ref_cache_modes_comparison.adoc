@@ -28,7 +28,7 @@ ifdef::community[]
 stem:[(sum_(i=1)^"nodes""node_capacity")/"owners"] | [green]*Cluster* +
 stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
 | Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes* | [yellow]*Owner nodes*
-| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* | [yellow]*No TX*
+| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [red]*No indexing* | [green]*All* | [green]*All* | [yellow]*No TX*
 |============================================================
 endif::community[]
 
@@ -67,7 +67,7 @@ ifdef::downstream[]
 | _Low_ (all nodes, no data)
 | _Single node_
 | _Single node_
-| *Complete*
+| _Partial:_ no indexing.
 
 | Replicated
 | *Yes*
