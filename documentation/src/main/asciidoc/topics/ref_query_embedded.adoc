@@ -5,6 +5,7 @@ Use embedded queries when you add {brandname} as a library to custom application
 Protobuf mapping is not required with embedded queries.
 Indexing and querying are both done on top of Java objects.
 
+[id='embedded_query_example']
 == Embedded Query Example
 
 We're going to store `Book` instances in an {brandname} cache called "books". `Book` instances will be indexed, so we enable indexing for the cache:
@@ -51,6 +52,7 @@ Now assuming we stored several `Book` instances in our {brandname} `Cache`, we c
 include::code_examples/QueryExample.java[]
 ----
 
+[id='embedded_query_mapping']
 == Mapping Entities
 
 {brandname} relies on the API of link:http://hibernate.org/search/[Hibernate Search] in order to define fine grained configuration for indexing at entity level.
