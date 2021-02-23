@@ -1,11 +1,8 @@
 [id='hotrod_create_caches_on_access']
 = Creating Caches on First Access
-When Hot Rod Java clients attempt to access caches that do not exist, they
-return `null` for `getCache("$cacheName")` invocations.
+When Hot Rod Java clients attempt to access caches that do not exist, they return `null` for `cacheManager.getCache("$cacheName")` invocations.
 
-You can change this default behavior so that clients automatically create
-caches on first access using default configuration templates or {brandname}
-cache definitions in XML format.
+You can change this default behavior so that clients automatically create caches on first access using predefined cache templates or {brandname} cache configuration in XML format.
 
 .Programmatic procedure
 
