@@ -10,6 +10,7 @@ Additionally, remote queries require Protobuf schemas (`.proto` files) to define
 The benefit of using Protobuf with remote queries is that it is language neutral and works with Hot Rod Java clients as well as REST, C{plusplus}, C#, and Node.js clients.
 ====
 
+[id='remote_query_example']
 == Remote Query Example
 
 An object called `Book` will be stored in a {brandname} cache called "books". Book instances will be indexed, so we enable indexing for the cache:
@@ -52,6 +53,7 @@ Putting all together:
 include::code_examples/RemoteQuery.java[]
 ----
 
+[id='remote_query_register_protobuf']
 == Registering Protobuf Schemas
 
 To query protobuf entities, you must provide the client and server with the relevant metadata about your entities in a Protobuf schema (`.proto` file).
@@ -60,9 +62,12 @@ The descriptors are stored in a dedicated `___protobuf_metadata` cache on the se
 Both keys and values in this cache are plain strings.
 Registering a new schema is therefore as simple as performing a `put()` operation on this cache using the schema name as key and the schema file itself as the value.
 
-Alternatively you can use the [command]`schema` command with the {brandname} CLI, {brandname} Console, REST endpoint `/rest/v2/schemas`, or the `ProtobufMetadataManager` MBean via JMX.
+[NOTE]
+====
+If caches use authorization, users must belong to the `\___schema_manager` role to add entries in the `___protobuf_metadata` cache.
+====
 
-Note that, if you enable authorization on caches, users must belong to the ['___schema_manager'] role to add to the `___protobuf_metadata` cache.
+Alternatively you can use the [command]`schema` command with the {brandname} CLI, {brandname} Console, REST endpoint `/rest/v2/schemas`, or the `ProtobufMetadataManager` MBean via JMX.
 
 [NOTE]
 ====
@@ -73,10 +78,10 @@ Even if indexing is enabled for a cache no fields of Protobuf encoded entries wi
 
 * link:{cli_docs}#protobuf_query[CLI Guide: Querying Caches with Protobuf Metadata]
 
-[[analysis]]
+[id='analysis']
 == Analysis
 Analysis is a process that converts input data into one or more terms that you can index and query.
-While in link:#mapping_embedded[Embedded Query] mapping is done through link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_analysis[Hibernate Search annotations], that supports
+While in link:#embedded_query_mapping[Embedded Query] mapping is done through link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_analysis[Hibernate Search annotations], that supports
 a rich set of Lucene based analyzers, in client-server mode the analyzer definitions are declared in a platform neutral way.
 
 [discrete]
