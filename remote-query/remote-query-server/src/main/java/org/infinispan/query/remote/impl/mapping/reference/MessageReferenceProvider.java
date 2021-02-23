@@ -15,6 +15,11 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
+/**
+ * Provides indexing information about a {@link Descriptor}.
+ *
+ * @since 12.0
+ */
 public class MessageReferenceProvider {
 
    private final List<FieldReferenceProvider> fields;
@@ -25,6 +30,7 @@ public class MessageReferenceProvider {
       this.embedded = new ArrayList<>();
 
       IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(INDEXED_ANNOTATION);
+      // Skip if not annotated with @Indexed
       if (indexingMetadata == null) {
          return;
       }
@@ -32,8 +38,11 @@ public class MessageReferenceProvider {
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
          String fieldName = fieldDescriptor.getName();
          if (Type.MESSAGE.equals(fieldDescriptor.getType())) {
+            // If a protobuf field is a Message reference, only take it into account
+            // if the Message is @Indexed and has at least one @Field annotation
             if (fieldDescriptor.getAnnotations().containsKey(FIELD_ANNOTATION)) {
                if (hasFieldAnnotation(fieldDescriptor.getMessageType())) {
+                  // Hibernate Search can handle the @Field regardless of its attributes
                   embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
                }
             }
