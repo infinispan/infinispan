@@ -4,8 +4,6 @@ import static java.lang.String.valueOf;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -41,19 +39,19 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
    private static final int NUMBER_OF_KEYS = 10;
 
    public void testLock() throws Exception {
-      doTestLock(true, 10, 10);
+      doTestLock(true, 10);
    }
 
    public void testLockTwoTasks() throws Exception {
-      doTestLock(true, 2, 10);
+      doTestLock(true, 2);
    }
 
    public void testLockNoExplicitUnlock() throws Exception {
-      doTestLock(false, 10, 10);
+      doTestLock(false, 10);
    }
 
    public void testLockNoExplicitUnlockTwoTasks() throws Exception {
-      doTestLock(false, 10, 10);
+      doTestLock(false, 10);
    }
 
    @Override
@@ -63,7 +61,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   private void doTestLock(boolean withUnlock, int nThreads, long stepDelayMsec) throws Exception {
+   private void doTestLock(boolean withUnlock, int nThreads) throws Exception {
       for (int key = 1; key <= NUMBER_OF_KEYS; key++) {
          cache.put("" + key, "value");
       }
@@ -71,7 +69,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
       List<Future<Boolean>> results = new ArrayList<>(nThreads);
 
       for (int i = 1; i <= nThreads; i++) {
-         results.add(fork(new Worker(i, cache, withUnlock, stepDelayMsec)));
+         results.add(fork(new Worker(i, cache, withUnlock, 10)));
       }
 
       boolean success = true;
@@ -87,7 +85,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
 
    private static class Worker implements Callable<Boolean> {
 
-      private static String lockKey = "0";     // there is no cached Object with such key
+      private static final String lockKey = "0";     // there is no cached Object with such key
       private final Cache<Object, Object> cache;
       private final boolean withUnlock;
       private final long stepDelayMsec;
@@ -140,7 +138,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
                validateCache();
 
                if (withUnlock) {
-                  unlock(lockKey);
+                  unlock();
                }
 
             } else {
@@ -158,18 +156,14 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
          return cache.getAdvancedCache().lock(lockKey);
       }
 
-      private boolean unlock(String resourceId) {
+      private void unlock() {
          LockManager lockManager = cache.getAdvancedCache().getLockManager();
-         Object lockOwner = lockManager.getOwner(resourceId);
-         Collection<Object> keys = Collections.<Object>singletonList(resourceId);
-         lockManager.unlock(keys, lockOwner);
-         return true;
+         Object lockOwner = lockManager.getOwner(lockKey);
+         lockManager.unlock(lockKey, lockOwner);
       }
 
       /**
        * Checks if all cache entries are consistent
-       *
-       * @throws InterruptedException
        */
       private void validateCache() throws InterruptedException {
 
