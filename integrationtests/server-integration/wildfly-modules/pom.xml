@@ -19,7 +19,8 @@
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
       <jvm.x64.args />
-      <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
+      <!-- infinispan-custom.xml ignores the infinispan.cluster.stack system property and uses the test-tcp stack -->
+      <transport.stack/>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>

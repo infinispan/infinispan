@@ -35,13 +35,8 @@
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <serverMemoryJvmArgs>-Xmx500m</serverMemoryJvmArgs>
 
-      <!--
-      Note: Maven resource plugin replaces ${infinispan.cluster.stack} in infinispan.xml at build time,
-      so the module must be rebuilt in order to run with a different stack.
-      TODO Reuse test-tcp stack from server/tests (ISPN-11772)
-      -->
-      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
-      <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
+      <!-- infinispan.xml ignores the infinispan.cluster.stack system property and uses the test-tcp stack -->
+      <transport.stack/>
       <jvm.x64.args />
    </properties>
 

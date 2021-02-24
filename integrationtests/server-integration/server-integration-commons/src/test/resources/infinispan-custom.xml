@@ -8,13 +8,13 @@
         xmlns:server="urn:infinispan:server:12.1">
 
     <jgroups>
-        <stack name="wildfly-modules-it" extends="tcp">
+        <stack name="test-tcp" extends="tcp">
             <LOCAL_PING ispn:stack.combine="REPLACE" ispn:stack.position="MPING" xmlns="urn:org:jgroups"/>
         </stack>
     </jgroups>
 
     <cache-container default-cache="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name:cluster}" stack="wildfly-modules-it"/>
+        <transport cluster="${infinispan.cluster.name:wildfly-modules-it}" stack="test-tcp"/>
         <global-state />
         <local-cache name="default" />
     </cache-container>
