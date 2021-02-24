@@ -16,14 +16,13 @@ import org.infinispan.scattered.impl.ScatteredPartitionHandlingManagerImpl;
 public class PartitionHandlingManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
          if (configuration.clustering().cacheMode().isDistributed() ||
                configuration.clustering().cacheMode().isReplicated()) {
-            return new PartitionHandlingManagerImpl();
+            return new PartitionHandlingManagerImpl(configuration);
          } else if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredPartitionHandlingManagerImpl();
+            return new ScatteredPartitionHandlingManagerImpl(configuration);
          }
       }
       return AvailablePartitionHandlingManager.getInstance();

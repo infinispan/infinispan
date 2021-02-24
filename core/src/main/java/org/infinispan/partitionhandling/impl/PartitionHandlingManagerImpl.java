@@ -19,7 +19,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -28,7 +27,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -40,7 +38,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
@@ -53,7 +50,10 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);
+
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
+   private final PartitionHandling partitionHandling;
+
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
@@ -62,21 +62,11 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Inject LocalTopologyManager localTopologyManager;
    @Inject CacheNotifier<Object, Object> notifier;
    @Inject CommandsFactory commandsFactory;
-   @Inject Configuration configuration;
    @Inject RpcManager rpcManager;
    @Inject LockManager lockManager;
-   @Inject Transport transport;
 
-   private boolean isVersioned;
-   private PartitionHandling partitionHandling;
-
-   public PartitionHandlingManagerImpl() {
+   public PartitionHandlingManagerImpl(Configuration configuration) {
       partialTransactions = new ConcurrentHashMap<>();
-   }
-
-   @Start
-   public void start() {
-      isVersioned = Configurations.isTxVersioned(configuration);
       partitionHandling = configuration.clustering().partitionHandling().whenSplit();
    }
 
@@ -85,10 +75,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return availabilityMode;
    }
 
-   private CompletionStage<Void> updateAvailabilityMode(AvailabilityMode mode) {
-      log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, mode);
+   private void updateAvailabilityMode(AvailabilityMode mode) {
+      log.debugf("Updating availability for cache %s: %s -> %s", cacheName, availabilityMode, mode);
       this.availabilityMode = mode;
-      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -116,14 +105,14 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void checkClear() {
-      if (!isBulkOperationAllowed(true)) {
+      if (isBulkOperationForbidden(true)) {
          throw CONTAINER.clearDisallowedWhilePartitioned();
       }
    }
 
    @Override
    public void checkBulkRead() {
-      if (!isBulkOperationAllowed(false)) {
+      if (isBulkOperationForbidden(false)) {
          throw CONTAINER.partitionDegraded();
       }
    }
@@ -193,12 +182,14 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void onTopologyUpdate(CacheTopology cacheTopology) {
-      boolean isStable = isTopologyStable(cacheTopology);
-      if (isStable) {
-         if (log.isTraceEnabled()) {
-            log.tracef("On stable topology update. Pending txs: %d", partialTransactions.size());
+      if (isTopologyStable(cacheTopology)) {
+         if (log.isDebugEnabled()) {
+            log.debugf("On stable topology update. Pending txs: %d", partialTransactions.size());
          }
          for (TransactionInfo transactionInfo : partialTransactions.values()) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Completing transaction %s", transactionInfo.getGlobalTransaction());
+            }
             completeTransaction(transactionInfo, cacheTopology);
          }
       }
@@ -206,7 +197,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    private void completeTransaction(final TransactionInfo transactionInfo, CacheTopology cacheTopology) {
       List<Address> commitNodes = transactionInfo.getCommitNodes(cacheTopology);
-      TransactionBoundaryCommand command = transactionInfo.buildCommand(commandsFactory, isVersioned);
+      TransactionBoundaryCommand command = transactionInfo.buildCommand(commandsFactory);
       command.setTopologyId(cacheTopology.getTopologyId());
       CompletionStage<Map<Address, Response>> remoteInvocation = commitNodes != null ?
             rpcManager.invokeCommand(commitNodes, command, MapResponseCollector.validOnly(commitNodes.size()),
@@ -216,9 +207,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       remoteInvocation.whenComplete((responseMap, throwable) -> {
          final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
          if (throwable != null) {
-            if (log.isTraceEnabled()) {
-               log.tracef(throwable, "Exception for transaction %s. Retry later.", globalTransaction);
-            }
+            log.failedPartitionHandlingTxCompletion(globalTransaction, throwable);
             return;
          }
 
@@ -228,10 +217,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
          for (Response response : responseMap.values()) {
             if (response == UnsureResponse.INSTANCE || response == CacheNotFoundResponse.INSTANCE) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Another partition or topology changed for transaction %s. Retry later.",
-                             globalTransaction);
-               }
+               log.topologyChangedPartitionHandlingTxCompletion(globalTransaction);
                return;
             }
          }
@@ -254,7 +240,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (log.isTraceEnabled()) {
          log.tracef("Check if topology %s is stable. Last stable topology is %s", cacheTopology, stableTopology);
       }
-      return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers()) && cacheTopology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION;
+      return stableTopology != null && stableTopology.equals(cacheTopology);
    }
 
    protected void doCheck(Object key, boolean isWrite, long flagBitSet) {
@@ -263,16 +249,15 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
          return;
 
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      boolean operationAllowed = isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key);
-      if (!operationAllowed) {
-         if (log.isTraceEnabled()) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
-         if (EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK)) {
-            throw CONTAINER.degradedModeLockUnavailable(key);
-         } else {
-            throw CONTAINER.degradedModeKeyUnavailable(key);
-         }
-      } else {
+      if (isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key)) {
          if (log.isTraceEnabled()) log.tracef("Key %s is available.", key);
+         return;
+      }
+      if (log.isTraceEnabled()) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
+      if (EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK)) {
+         throw CONTAINER.degradedModeLockUnavailable(key);
+      } else {
+         throw CONTAINER.degradedModeKeyUnavailable(key);
       }
    }
 
@@ -283,7 +268,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
     * @param flagBitSet    reads with the {@link org.infinispan.context.Flag#FORCE_WRITE_LOCK} are treated as writes
     * @param cacheTopology actual members, or {@code null} for bulk operations
     * @param key           key owners, or {@code null} for bulk operations
-    * @return
+    * @return {@code true} if the operation is allowed, {@code false} otherwise.
     */
    protected boolean isKeyOperationAllowed(boolean isWrite, long flagBitSet,
                                            LocalizedCacheTopology cacheTopology, Object key) {
@@ -312,16 +297,16 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
    }
 
-   protected boolean isBulkOperationAllowed(boolean isWrite) {
+   private boolean isBulkOperationForbidden(boolean isWrite) {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
-         return true;
+         return false;
 
       assert partitionHandling != PartitionHandling.ALLOW_READ_WRITES :
          "ALLOW_READ_WRITES caches should always be AVAILABLE";
 
       // We reject bulk writes because some owners are always missing in degraded mode
       if (isWrite)
-         return false;
+         return true;
 
       switch (partitionHandling) {
          case ALLOW_READS:
@@ -330,11 +315,11 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
             for (int i = 0; i < cacheTopology.getReadConsistentHash().getNumSegments(); i++) {
                List<Address> owners = cacheTopology.getSegmentDistribution(i).readOwners();
                if (!InfinispanCollections.containsAny(owners, cacheTopology.getActualMembers()))
-                  return false;
+                  return true;
             }
-            return true;
-         case DENY_READ_WRITES:
             return false;
+         case DENY_READ_WRITES:
+            return true;
          default:
             throw new IllegalStateException("Unsupported partition handling type: " + partitionHandling);
       }
@@ -354,7 +339,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
       List<Address> getCommitNodes(CacheTopology stableTopology);
 
-      TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned);
+      TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory);
 
       GlobalTransaction getGlobalTransaction();
 
@@ -373,7 +358,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory) {
          return commandsFactory.buildRollbackCommand(getGlobalTransaction());
       }
 
@@ -395,8 +380,8 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
-         if (isVersioned) {
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory) {
+         if (newVersions != null) {
             VersionedCommitCommand commitCommand = commandsFactory.buildVersionedCommitCommand(getGlobalTransaction());
             commitCommand.setUpdatedVersions(newVersions);
             return commitCommand;
@@ -421,10 +406,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
-         if (isVersioned) {
-            throw new IllegalArgumentException("Cannot build a versioned one-phase-commit prepare command.");
-         }
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory) {
          return commandsFactory.buildPrepareCommand(getGlobalTransaction(), modifications, true);
       }
    }

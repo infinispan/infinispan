@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.List;
 
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -15,6 +16,10 @@ import org.infinispan.util.logging.LogFactory;
 
 public class ScatteredPartitionHandlingManagerImpl extends PartitionHandlingManagerImpl {
    private static final Log log = LogFactory.getLog(ScatteredPartitionHandlingManagerImpl.class);
+
+   public ScatteredPartitionHandlingManagerImpl(Configuration configuration) {
+      super(configuration);
+   }
 
    @Override
    public void doCheck(Object key, boolean isWrite, long flagBitSet) {
