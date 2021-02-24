@@ -4,8 +4,12 @@
       xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}"
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
+   <jgroups>
+      <stack-file name="test-tcp" path="stacks/tcp.xml"/>
+   </jgroups>
+
    <cache-container default-cache="default" statistics="false">
-      <transport stack="tcp"/>
+      <transport stack="test-tcp"/>
       <local-cache name="default">
          <indexing enabled="false"/>
       </local-cache>

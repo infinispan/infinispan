@@ -11,11 +11,11 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <jgroups>
-      <stack-file name="hibernate-jgroups" path="${hibernate.cache.infinispan.jgroups_cfg:default-configs/default-jgroups-tcp.xml}"/>
+      <stack-file name="2lc-test-tcp" path="2lc-test-tcp.xml"/>
    </jgroups>
 
    <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache" shutdown-hook="DEFAULT">
-      <transport stack="hibernate-jgroups" cluster="infinispan-hibernate-cluster"/>
+      <transport stack="2lc-test-tcp" cluster="infinispan-hibernate-cluster"/>
 
       <local-cache name="the-default-cache" statistics="false" />
 
