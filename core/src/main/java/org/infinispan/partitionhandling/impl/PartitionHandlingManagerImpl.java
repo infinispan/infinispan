@@ -238,7 +238,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
          if (log.isTraceEnabled()) {
             log.tracef("Performing cleanup for transaction %s", globalTransaction);
          }
-         lockManager.unlock(transactionInfo.getLockedKeys(), globalTransaction);
+         lockManager.unlockAll(transactionInfo.getLockedKeys(), globalTransaction);
          partialTransactions.remove(globalTransaction);
          TxCompletionNotificationCommand completionCommand =
                commandsFactory.buildTxCompletionNotificationCommand(null, globalTransaction);
