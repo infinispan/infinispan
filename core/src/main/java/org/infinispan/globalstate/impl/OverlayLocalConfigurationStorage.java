@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -37,6 +39,7 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
    private Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
+   private final Lock persistenceLock = new ReentrantLock();
 
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -90,6 +93,10 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    }
 
    private void storeAll() {
+      // Renaming is done using file locks, which are acquired by the entire JVM.
+      // Use a regular lock as well, so another thread cannot lock the file at the same time
+      // and cause an OverlappingFileLockException.
+      persistenceLock.lock();
       try {
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          File sharedDirectory = new File(globalConfiguration.globalState().sharedPersistentLocation());
@@ -110,6 +117,8 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          }
       } catch (Exception e) {
          throw CONFIG.errorPersistingGlobalConfiguration(e);
+      } finally {
+         persistenceLock.unlock();
       }
    }
 
