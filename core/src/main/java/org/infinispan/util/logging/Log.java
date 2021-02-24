@@ -2143,4 +2143,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid cache roles '%s'", id = 628)
    CacheConfigurationException noSuchGlobalRoles(Set<String> cacheRoles);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Exception completing partial completed transaction %s. Retrying later.", id = 629)
+   void failedPartitionHandlingTxCompletion(GlobalTransaction globalTransaction, @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Another partition or topology changed for while completing partial completed transaction %s. Retrying later.", id = 630)
+   void topologyChangedPartitionHandlingTxCompletion(GlobalTransaction globalTransaction);
 }
