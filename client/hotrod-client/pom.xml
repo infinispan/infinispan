@@ -75,6 +75,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-password-impl</artifactId>
+         <version>${version.org.wildfly.elytron}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
          <scope>test</scope>
