@@ -161,7 +161,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasEnabledBackups() ? new XSiteStateTransferManagerImpl(configuration)
                                                           : new NoOpXSiteStateTransferManager();
       } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
-         return new XSiteStateConsumerImpl();
+         return new XSiteStateConsumerImpl(configuration);
       } else if (componentName.equals(XSiteStateProvider.class.getName())) {
          return configuration.sites().hasEnabledBackups() ? new XSiteStateProviderImpl(configuration)
                                                           : NoOpXSiteStateProvider.getInstance();

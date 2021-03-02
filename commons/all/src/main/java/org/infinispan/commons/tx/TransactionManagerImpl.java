@@ -39,7 +39,7 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public abstract class TransactionManagerImpl implements TransactionManager {
    private static final Log log = LogFactory.getLog(TransactionManagerImpl.class);
-   private static ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
+   private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
    protected final UUID transactionManagerId = UUID.randomUUID();
 
    public static void dissociateTransaction() {
