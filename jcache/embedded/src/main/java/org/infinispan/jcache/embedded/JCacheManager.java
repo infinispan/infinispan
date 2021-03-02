@@ -111,7 +111,11 @@ public class JCacheManager extends AbstractJCacheManager {
          InputStream configurationStream = getURI().isAbsolute()
                ? fileLookup.lookupFileStrict(getURI(), classLoader)
                : fileLookup.lookupFileStrict(getURI().toString(), classLoader);
-         return new ParserRegistry(classLoader).parse(configurationStream, null);
+         Properties properties = new Properties(System.getProperties());
+         if (this.properties != null) {
+            properties.putAll(this.properties);
+         }
+         return new ParserRegistry(classLoader, false, properties).parse(configurationStream, null);
       } catch (FileNotFoundException e) {
          // No such file, lets use default CBH
          return new ConfigurationBuilderHolder(classLoader);
