@@ -155,7 +155,7 @@
                   </goals>
                   <phase>pre-integration-test</phase>
                   <configuration>
-                     <config-file>server-provisioning.xml</config-file>
+                     <config-file>../server-integration-commons/server-provisioning.xml</config-file>
                      <server-name>node1</server-name>
                   </configuration>
                </execution>
@@ -166,7 +166,7 @@
                   </goals>
                   <phase>pre-integration-test</phase>
                   <configuration>
-                     <config-file>server-provisioning.xml</config-file>
+                     <config-file>../server-integration-commons/server-provisioning.xml</config-file>
                      <server-name>node2</server-name>
                   </configuration>
                </execution>
