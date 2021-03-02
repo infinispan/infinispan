@@ -26,6 +26,7 @@ import java.util.jar.Manifest;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -53,14 +54,23 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
    public void testJCacheManagerWherePathContainsFileSchemaAndAbsolutePath() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
       withCachingProvider(provider -> {
+         Properties properties = getProperties();
          try (JCacheManager jCacheManager = new JCacheManager(
                uri,
                provider.getClass().getClassLoader(),
                provider,
-               null)) {
-            assertNotNull(jCacheManager.getCache("foo"));
+               properties)) {
+            Cache<Object, Object> cache = jCacheManager.getCache("foo");
+            assertNotNull(cache);
+            assertEquals(10000, cache.unwrap(AdvancedCache.class).getCacheConfiguration().memory().maxCount());
          }
       });
+   }
+
+   private Properties getProperties() {
+      Properties properties = new Properties();
+      properties.put("test.max-count", "10000");
+      return properties;
    }
 
    public class MyClassLoader extends URLClassLoader {
@@ -107,10 +117,10 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI() + "!" + fullTargetPath);
          withCachingProvider(provider -> {
             try (JCacheManager jCacheManager = new JCacheManager(
-                resourceInsideJarUri,
-                provider.getClass().getClassLoader(),
-                provider,
-                null)) {
+                  resourceInsideJarUri,
+                  provider.getClass().getClassLoader(),
+                  provider,
+                  getProperties())) {
 
                // then
                assertNotNull(jCacheManager.getCache("foo"));
@@ -146,7 +156,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
       withCachingProvider(provider -> {
          try (JCacheManager jCacheManager =
-                 new JCacheManager(uri, provider.getClass().getClassLoader(), provider, null)) {
+                    new JCacheManager(uri, provider.getClass().getClassLoader(), provider, getProperties())) {
             Cache<Object, Object> wildcache1 = jCacheManager.createCache("wildcache1", new MutableConfiguration<>());
             org.infinispan.Cache unwrap = wildcache1.unwrap(org.infinispan.Cache.class);
             Configuration configuration = unwrap.getCacheConfiguration();
@@ -184,7 +194,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testProgrammaticGlobalConfiguration() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
-      Properties properties = new Properties();
+      Properties properties = getProperties();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.addModule(PrivateGlobalConfigurationBuilder.class);
       properties.put(GlobalConfigurationBuilder.class.getName(), global);
@@ -199,7 +209,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testProgrammaticConfigurationHolder() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
-      Properties properties = new Properties();
+      Properties properties = getProperties();
       ConfigurationBuilderHolder cbh = new ConfigurationBuilderHolder();
       cbh.getGlobalConfigurationBuilder().addModule(PrivateGlobalConfigurationBuilder.class);
       properties.put(ConfigurationBuilderHolder.class.getName(), cbh);
@@ -214,7 +224,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testProgrammaticCacheConfiguration() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
-      Properties properties = new Properties();
+      Properties properties = getProperties();
       Function<String, Configuration> f = (s) -> new ConfigurationBuilder().memory().maxCount(1234l).build();
       properties.put(JCacheManager.CACHE_CONFIGURATION_FUNCTION, f);
       withCachingProvider(provider -> {
