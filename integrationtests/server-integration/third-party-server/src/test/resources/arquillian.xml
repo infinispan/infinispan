@@ -32,18 +32,4 @@
             </property>
         </configuration>
     </container>
-    <container qualifier="eap">
-        <configuration>
-            <property name="jbossHome">${jbossHome}</property>
-            <property name="javaHome">${server.jvm}</property>
-            <!--
-            <property name="javaVmArguments">
-                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
-            </property>
-            -->
-            <property name="javaVmArguments">
-                -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
-            </property>
-        </configuration>
-    </container>
 </arquillian>

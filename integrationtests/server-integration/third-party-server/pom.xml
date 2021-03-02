@@ -181,7 +181,7 @@
             </activation>
             <properties>
                 <infinispan.server.integration.launch>wildfly</infinispan.server.integration.launch>
-                <jbossHome>${project.build.directory}/wildfly-${version.wildfly}</jbossHome>
+                <jbossHome>${project.build.directory}/node1</jbossHome>
                 <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
             </properties>
             <dependencies>
@@ -193,54 +193,24 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
+                        <groupId>org.wildfly.build</groupId>
+                        <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>unpack</id>
-                                <phase>pre-integration-test</phase>
+                                <id>server-provisioning-node1</id>
                                 <goals>
-                                    <goal>unpack</goal>
+                                    <goal>build</goal>
                                 </goals>
+                                <phase>pre-integration-test</phase>
                                 <configuration>
-                                    <skip>${skipTests}</skip>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>${appserver.groupId}</groupId>
-                                            <artifactId>wildfly-dist</artifactId>
-                                            <version>${version.wildfly}</version>
-                                            <type>zip</type>
-                                            <overWrite>true</overWrite>
-                                            <outputDirectory>target</outputDirectory>
-                                        </artifactItem>
-                                    </artifactItems>
+                                    <config-file>../server-integration-commons/server-provisioning.xml</config-file>
+                                    <server-name>node1</server-name>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-
-        <profile>
-            <id>third-party-eap</id>
-            <activation>
-                <property>
-                    <name>infinispan.server.integration.launch</name>
-                    <value>eap</value>
-                </property>
-            </activation>
-            <properties>
-                <infinispan.server.integration.launch>eap</infinispan.server.integration.launch>
-                <jbossHome>${project.build.directory}/eap</jbossHome>
-                <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.wildfly.arquillian</groupId>
-                    <artifactId>wildfly-arquillian-container-managed</artifactId>
-                </dependency>
-            </dependencies>
         </profile>
     </profiles>
 </project>

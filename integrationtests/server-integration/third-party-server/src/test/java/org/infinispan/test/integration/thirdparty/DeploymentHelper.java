@@ -10,7 +10,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 public class DeploymentHelper {
 
-   private static final MavenResolverSystem MAVEN_RESOLVER = Maven.resolver();
+   private static final MavenResolverSystem MAVEN_RESOLVER = Maven.configureResolver().fromFile("../../../maven-settings.xml");
    private static final String ARQUILLIAN_LAUNCH = System.getProperty("arquillian.launch");
 
    public static WebArchive createDeployment() {
@@ -33,7 +33,7 @@ public class DeploymentHelper {
    }
 
    public static boolean isWildfly() {
-      return "wildfly".equals(ARQUILLIAN_LAUNCH) || "eap".equals(ARQUILLIAN_LAUNCH);
+      return "wildfly".equals(ARQUILLIAN_LAUNCH);
    }
 
    public static void addLibrary(WebArchive war, String canonicalForm) {
