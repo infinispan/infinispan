@@ -58,6 +58,7 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -120,11 +121,11 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return handlePrepareCommand(ctx, command);
    }
 
-   private Object handlePrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private Object handlePrepareCommand(TxInvocationContext<?> ctx, PrepareCommand command) {
       // Debugging for ISPN-5379
       ctx.getCacheTransaction().freezeModifications();
 
@@ -155,7 +156,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, CommitCommand command) throws Throwable {
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
       if (!ctx.isOriginLocal()) {
          GlobalTransaction gtx = ctx.getGlobalTransaction();
@@ -188,7 +189,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
       if (!ctx.isOriginLocal()) {
@@ -205,7 +206,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public Object visitLockControlCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
 
@@ -331,7 +332,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
       if (shouldEnlist(ctx)) {
-         enlist((TxInvocationContext) ctx);
+         assert ctx instanceof LocalTxInvocationContext;
+         enlist((LocalTxInvocationContext) ctx);
       }
    }
 
@@ -390,7 +392,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       if (shouldEnlist(ctx)) {
-         LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
+         assert ctx instanceof LocalTxInvocationContext;
+         LocalTransaction localTransaction = enlist((LocalTxInvocationContext) ctx);
          boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();
          if (implicitWith1Pc) {
             //in this situation we don't support concurrent updates so skip locking entirely
@@ -402,22 +405,25 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          if (t != null && !(t instanceof OutdatedTopologyException)) {
             // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
             if (rCtx.isOriginLocal() && rCtx.isInTxScope() && !writeCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY)) {
-               TxInvocationContext txCtx = (TxInvocationContext) rCtx;
+               TxInvocationContext<?> txCtx = (TxInvocationContext<?>) rCtx;
                txCtx.getTransaction().setRollbackOnly();
             }
          }
          if (t == null && shouldEnlist(rCtx) && writeCommand.isSuccessful()) {
-            TxInvocationContext<LocalTransaction> txContext = (TxInvocationContext<LocalTransaction>) rCtx;
-            txContext.getCacheTransaction().addModification(writeCommand);
+            assert rCtx instanceof LocalTxInvocationContext;
+            ((LocalTxInvocationContext) rCtx).getCacheTransaction().addModification(writeCommand);
          }
       });
    }
 
-   public LocalTransaction enlist(TxInvocationContext ctx) throws SystemException {
+   private LocalTransaction enlist(LocalTxInvocationContext ctx) throws SystemException {
       Transaction transaction = ctx.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
+      LocalTransaction localTransaction = ctx.getCacheTransaction();
+      if (localTransaction.isFromStateTransfer()) {
+         return localTransaction;
+      }
       int status = transaction.getStatus();
-      LocalTransaction localTransaction = (LocalTransaction) ctx.getCacheTransaction();
       if (isNotValid(status)) {
          if (!localTransaction.isEnlisted()) {
             // This transaction wouldn't be removed by TM.commit() or TM.rollback()
@@ -506,9 +512,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       // see if we need to clean up any acquired locks on our end.
       boolean alreadyCompleted = txTable.isTransactionCompleted(globalTransaction) || !txTable.containRemoteTx(globalTransaction);
 
-      boolean canRollback = command instanceof PrepareCommand && !((PrepareCommand) command).isOnePhaseCommit() ||
-            command instanceof LockControlCommand;
-
       if (log.isTraceEnabled()) {
          log.tracef("Verifying transaction: alreadyCompleted=%s", alreadyCompleted);
       }
@@ -522,6 +525,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          txTable.markTransactionCompleted(globalTransaction, false);
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
          return invokeNextAndFinally(ctx, rollback, (rCtx, rCommand, rv1, throwable1) -> {
+            //noinspection unchecked
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();
             remoteTx.markForRollback(true);
             txTable.removeRemoteTransaction(globalTransaction);
@@ -745,6 +749,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
 
       CloseableIterator<K> innerIterator() {
+         //noinspection unchecked
          return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
                                                            (TxInvocationContext<LocalTransaction>) rCtx, cache.wired());
       }
@@ -853,6 +858,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
 
       CloseableIterator<CacheEntry<K, V>> innerIterator() {
+         //noinspection unchecked
          return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
                                                              (TxInvocationContext<LocalTransaction>) rCtx, cache.wired());
       }
