@@ -143,7 +143,11 @@ public class JCacheManager extends AbstractJCacheManager {
             InputStream configurationStream = getURI().isAbsolute()
                   ? fileLookup.lookupFileStrict(getURI(), cbh.getClassLoader())
                   : fileLookup.lookupFileStrict(getURI().toString(), cbh.getClassLoader())) {
-         new ParserRegistry(cbh.getClassLoader()).parse(configurationStream, cbh, null, MediaType.fromExtension(getURI().toString()));
+         Properties properties = new Properties(System.getProperties());
+         if (this.properties != null) {
+            properties.putAll(this.properties);
+         }
+         new ParserRegistry(cbh.getClassLoader(), false, properties).parse(configurationStream, cbh, null, MediaType.fromExtension(getURI().toString()));
       } catch (IOException e) {
          // No such file, ignore for now (although we should probably handle this better in the future)
       }
