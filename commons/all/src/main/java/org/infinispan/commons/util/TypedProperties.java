@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import java.util.Properties;
+import java.util.function.Function;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -54,20 +55,18 @@ public class TypedProperties extends Properties {
    }
 
    public int getIntProperty(String key, int defaultValue, boolean doStringReplace) {
-      String value = getProperty(key);
-      if (value == null) return defaultValue;
-      value = value.trim();
-      if (value.length() == 0) return defaultValue;
-
-      if (doStringReplace)
-         value = StringPropertyReplacer.replaceProperties(value);
-
-      try {
-         return Integer.parseInt(value);
-      }
-      catch (NumberFormatException nfe) {
-         log.unableToConvertStringPropertyToInt(value, defaultValue);
-         return defaultValue;
+      Object value = this.get(key);
+      if (value instanceof Integer) {
+         return (int) value;
+      } else {
+         return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
+            try {
+               return Integer.parseInt(valueStr);
+            } catch (NumberFormatException nfe) {
+               log.unableToConvertStringPropertyToInt(valueStr, defaultValue);
+               return defaultValue;
+            }
+         });
       }
    }
 
@@ -76,20 +75,18 @@ public class TypedProperties extends Properties {
    }
 
    public long getLongProperty(String key, long defaultValue, boolean doStringReplace) {
-      String value = getProperty(key);
-      if (value == null) return defaultValue;
-      value = value.trim();
-      if (value.length() == 0) return defaultValue;
-
-      if (doStringReplace)
-         value = StringPropertyReplacer.replaceProperties(value);
-
-      try {
-         return Long.parseLong(value);
-      }
-      catch (NumberFormatException nfe) {
-         log.unableToConvertStringPropertyToLong(value, defaultValue);
-         return defaultValue;
+      Object value = this.get(key);
+      if (value instanceof Long) {
+         return (long) value;
+      } else {
+         return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
+            try {
+               return Long.parseLong(valueStr);
+            } catch (NumberFormatException nfe) {
+               log.unableToConvertStringPropertyToLong(valueStr, defaultValue);
+               return defaultValue;
+            }
+         });
       }
    }
 
@@ -98,20 +95,18 @@ public class TypedProperties extends Properties {
    }
 
    public boolean getBooleanProperty(String key, boolean defaultValue, boolean doStringReplace) {
-      String value = getProperty(key);
-      if (value == null) return defaultValue;
-      value = value.trim();
-      if (value.length() == 0) return defaultValue;
-
-      if (doStringReplace)
-         value = StringPropertyReplacer.replaceProperties(value);
-
-      try {
-         return Boolean.parseBoolean(value);
-      }
-      catch (Exception e) {
-         log.unableToConvertStringPropertyToBoolean(value, defaultValue);
-         return defaultValue;
+      Object value = this.get(key);
+      if (value instanceof Boolean) {
+         return (boolean) value;
+      } else {
+         return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
+            try {
+               return Boolean.parseBoolean(valueStr);
+            } catch (Exception e) {
+               log.unableToConvertStringPropertyToBoolean(valueStr, defaultValue);
+               return defaultValue;
+            }
+         });
       }
    }
 
@@ -120,19 +115,18 @@ public class TypedProperties extends Properties {
    }
 
    public <T extends Enum<T>> T getEnumProperty(String key, Class<T> enumClass, T defaultValue, boolean doStringReplace) {
-      String value = getProperty(key);
-      if (value == null) return defaultValue;
-      value = value.trim();
-      if (value.length() == 0) return defaultValue;
-
-      if (doStringReplace)
-         value = StringPropertyReplacer.replaceProperties(value);
-
-      try {
-         return Enum.valueOf(enumClass, value);
-      } catch (IllegalArgumentException e) {
-         log.unableToConvertStringPropertyToEnum(value, defaultValue.name());
-         return defaultValue;
+      Object value = this.get(key);
+      if (value instanceof Enum && enumClass.isInstance(value)) {
+         return (T) value;
+      } else {
+         return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
+            try {
+               return Enum.valueOf(enumClass, valueStr);
+            } catch (IllegalArgumentException e) {
+               log.unableToConvertStringPropertyToEnum(valueStr, defaultValue.name());
+               return defaultValue;
+            }
+         });
       }
    }
 
@@ -200,5 +194,19 @@ public class TypedProperties extends Properties {
    public synchronized TypedProperties setProperty(String key, boolean value) {
       super.setProperty(key, Boolean.toString(value));
       return this;
+   }
+
+   private <V> V getPropertyFn(Object value, V defaultValue, boolean doStringReplace, Function<String, V> action) {
+      String valueStr = null;
+      if (value instanceof String) {
+         valueStr = (String) value;
+      }
+      if (valueStr == null) return defaultValue;
+      valueStr = valueStr.trim();
+      if (valueStr.length() == 0) return defaultValue;
+
+      if (doStringReplace)
+         valueStr = StringPropertyReplacer.replaceProperties(valueStr);
+      return action.apply(valueStr);
    }
 }
