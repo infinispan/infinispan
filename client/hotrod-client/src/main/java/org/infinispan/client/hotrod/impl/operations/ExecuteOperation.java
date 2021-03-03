@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.net.SocketAddress;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -14,6 +15,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -67,5 +69,21 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList()));
+   }
+
+   @Override
+   protected void addParams(StringBuilder sb) {
+      sb.append(", taskName=").append(taskName);
+      sb.append(", params=[");
+      for (Iterator<Entry<String, byte[]>> iterator = marshalledParams.entrySet().iterator(); iterator.hasNext(); ) {
+         Entry<String, byte[]> entry = iterator.next();
+         String name = entry.getKey();
+         byte[] value = entry.getValue();
+         sb.append(name).append("=").append(Util.toStr(value));
+         if (iterator.hasNext()) {
+            sb.append(", ");
+         }
+      }
+      sb.append("]");
    }
 }
