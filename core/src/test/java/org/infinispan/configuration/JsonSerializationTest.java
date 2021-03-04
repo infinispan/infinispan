@@ -349,7 +349,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("20000000", tcp.at("recv_buf_size").asString());
       assertEquals("640000", tcp.at("send_buf_size").asString());
       assertEquals("300", tcp.at("sock_conn_timeout").asString());
-      assertEquals("no-bundler", tcp.at("bundler_type").asString());
+      assertEquals("transfer-queue", tcp.at("bundler_type").asString());
       assertEquals("0", tcp.at("thread_pool.min_threads").asString());
       assertEquals("25", tcp.at("thread_pool.max_threads").asString());
       assertEquals("5000", tcp.at("thread_pool.keep_alive_time").asString());

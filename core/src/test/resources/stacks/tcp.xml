@@ -9,7 +9,7 @@
          recv_buf_size="20m"
          send_buf_size="640k"
          enable_diagnostics="false"
-         bundler_type="no-bundler"
+         bundler_type="transfer-queue"
 
          thread_naming_pattern="pl"
 
