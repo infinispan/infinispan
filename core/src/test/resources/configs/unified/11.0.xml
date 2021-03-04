@@ -11,7 +11,7 @@
       <!-- Inline definition -->
       <stack name="mping">
          <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"
-              sock_conn_timeout="300" bundler_type="no-bundler"
+              sock_conn_timeout="300" bundler_type="transfer-queue"
               thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
               xmlns="urn:org:jgroups"/>
          <MPING break_on_coord_rsp="true"
