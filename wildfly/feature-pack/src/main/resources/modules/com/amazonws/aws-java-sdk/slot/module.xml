@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="com.amazonaws.aws-java-sdk" slot="@infinispan.module.slot@">
+   <resources>
+      <artifact name="${com.amazonaws:aws-java-sdk-core}"/>
+      <artifact name="${com.amazonaws:aws-java-sdk-s3}"/>
+      <artifact name="${com.amazonaws:aws-java-sdk-kms}"/>
+      <artifact name="${com.amazonaws:jmespath-java}"/>
+      <artifact name="${software.amazon.ion:ion-java}"/>
+   </resources>
+
+   <dependencies>
+      <module name="com.fasterxml.jackson.core.jackson-databind"/>
+      <module name="org.apache.commons.logging"/>
+      <module name="org.apache.httpcomponents"/>
+      <module name="org.joda.time"/>
+   </dependencies>
+</module>
