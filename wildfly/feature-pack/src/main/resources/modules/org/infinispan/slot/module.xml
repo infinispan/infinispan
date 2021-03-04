@@ -57,14 +57,6 @@
       <artifact name="${com.fasterxml.jackson.core:jackson-annotations}"/>
       <artifact name="${com.fasterxml.jackson.core:jackson-databind}"/>
 
-      <artifact name="${com.microsoft.azure:azure-storage}"/>
-
-      <artifact name="${com.amazonaws:aws-java-sdk-core}"/>
-      <artifact name="${com.amazonaws:aws-java-sdk-s3}"/>
-      <artifact name="${com.amazonaws:aws-java-sdk-kms}"/>
-      <artifact name="${com.amazonaws:jmespath-java}"/>
-      <artifact name="${software.amazon.ion:ion-java}"/>
-
       <artifact name="${org.antlr:antlr-runtime}"/>
 
       <artifact name="${org.hibernate.search:hibernate-search-engine}"/>
@@ -101,6 +93,8 @@
       <module name="org.jboss.weld.spi" />
       <module name="org.wildfly.security.elytron" services="import"/>
       <module name="org.hibernate"/>
-
+      
+      <module name="com.microsoft.azure:azure-storage" optional="true"/>
+      <module name="com.amazonaws.aws-java-sdk" slot="@infinispan.module.slot@" optional="true"/>
    </dependencies>
 </module>
