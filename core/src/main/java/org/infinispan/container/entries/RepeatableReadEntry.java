@@ -39,12 +39,6 @@ public class RepeatableReadEntry<K, V> extends ReadCommittedEntry<K, V> {
    }
 
    @Override
-   public void resetCurrentValue() {
-      value = oldValue;
-      metadata = oldMetadata;
-   }
-
-   @Override
    public void setRead() {
       setFlag(Flags.READ);
    }

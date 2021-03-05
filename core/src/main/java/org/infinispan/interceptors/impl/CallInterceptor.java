@@ -227,6 +227,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          }
       }
 
+      e.updatePreviousValue();
       o = e.setValue(value);
       Metadatas.updateMetadata(e, metadata);
       if (e.isRemoved()) {
@@ -849,8 +850,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             command.getValueDataConversion());
       Object ret = null;
       for (Mutation mutation : mutations) {
-         ret = mutation.apply(rw);
          entry.updatePreviousValue();
+         ret = mutation.apply(rw);
       }
       Function function = command.getFunction();
       if (function != null) {
@@ -905,8 +906,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          } else {
             EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
             for (Mutation mutation : innerMutations) {
-               ret = mutation.apply(rw);
                entry.updatePreviousValue();
+               ret = mutation.apply(rw);
             }
             ro = rw;
          }

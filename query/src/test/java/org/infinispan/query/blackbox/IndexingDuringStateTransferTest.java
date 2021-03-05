@@ -88,7 +88,6 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       test(c -> c.replace(KEY, FLUFFY), this::assertFluffyIndexed);
    }
 
-   @Test(enabled = false, description = "ISPN-11299")
    public void testRemove() {
       test(c -> c.remove(KEY), sm -> {
       });

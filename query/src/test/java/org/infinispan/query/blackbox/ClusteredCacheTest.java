@@ -408,23 +408,24 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache2.putForExternalRead("newGoat", person4);
       eventually(() -> cache2.get("newGoat") != null);
-      List<Person> found = createSelectAllQuery(cache2).execute().list();
-      assertEquals(4, found.size());
-
-      assertTrue(found.contains(person4));
+      Query<Person> query = createSelectAllQuery(cache2);
+      eventually(() -> {
+         List<Person> found = query.execute().list();
+         return found.size() == 4 && found.contains(person4);
+      });
 
       Person person5 = new Person();
       person5.setName("Abnormal Goat");
       person5.setBlurb("Plays with grass.");
       cache2.putForExternalRead("newGoat", person5);
 
-      QueryResult<Person> result = createSelectAllQuery(cache2).execute();
-      found = result.list();
-      assertEquals(4, found.size());
-      assertEquals(4, result.hitCount().orElse(-1));
+      eventually(() -> {
+         QueryResult<Person> result = query.execute();
+         List<Person> found = result.list();
+         return found.size() == 4 && result.hitCount().orElse(-1) == 4 &&
+               found.contains(person4) && !found.contains(person5);
+      });
 
-      assertFalse(found.contains(person5));
-      assertTrue(found.contains(person4));
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 

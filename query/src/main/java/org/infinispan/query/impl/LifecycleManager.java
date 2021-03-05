@@ -33,9 +33,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -185,12 +183,8 @@ public class LifecycleManager implements ModuleLifecycle {
       AsyncInterceptorChain ic = bcr.getComponent(AsyncInterceptorChain.class).wired();
 
       EntryWrappingInterceptor wrappingInterceptor = ic.findInterceptorExtending(EntryWrappingInterceptor.class);
-      AsyncInterceptor lastLoadingInterceptor = ic.findInterceptorExtending(CacheLoaderInterceptor.class);
-      if (lastLoadingInterceptor == null) {
-         lastLoadingInterceptor = wrappingInterceptor;
-      }
 
-      ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
+      ic.addInterceptorBefore(queryInterceptor, wrappingInterceptor.getClass());
       bcr.registerComponent(QueryInterceptor.class, queryInterceptor, true);
       bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), QueryInterceptor.class.getName());
 

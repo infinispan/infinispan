@@ -483,4 +483,15 @@ public abstract class CacheAPITest extends APINonTxTest {
       assertEquals(1, values.size());
       assertEquals("v1", values.iterator().next());
    }
+
+   public void testMultipleWritesSameKeyInTx() throws Exception {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      Object key = "key";
+      TestingUtil.withTx(tm, () -> {
+         assertNull(cache.put(key, "value1"));
+         assertEquals("value1", cache.put(key, "value2"));
+         assertEquals("value2", cache.put(key, "value3"));
+         return null;
+      });
+   }
 }
