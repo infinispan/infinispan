@@ -3,5 +3,10 @@
                  xmlns="urn:infinispan:config:12.1"
                  name="default" statistics="true">
    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
+   <serialization>
+      <allow-list>
+         <regex>.*</regex>
+      </allow-list>
+   </serialization>
    <metrics gauges="true" histograms="true"/>
 </cache-container>

@@ -15,7 +15,7 @@ public final class ClassWhiteList extends ClassAllowList {
       super(regexps);
    }
 
-   public ClassWhiteList(Collection<String> classes, List<String> regexps) {
-      super(classes, regexps);
+   public ClassWhiteList(Collection<String> classes, List<String> regexps, ClassLoader classLoader) {
+      super(classes, regexps, classLoader);
    }
 }

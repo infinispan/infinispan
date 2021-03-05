@@ -25,8 +25,10 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
    private final AttributeSet attributes;
    private final Set<String> classes = new HashSet<>();
    private final List<String> regexps = new ArrayList<>();
+   private final GlobalConfigurationBuilder globalBuilder;
 
-   AllowListConfigurationBuilder() {
+   AllowListConfigurationBuilder(GlobalConfigurationBuilder globalBuilder) {
+      this.globalBuilder = globalBuilder;
       attributes = AllowListConfiguration.attributeDefinitionSet();
    }
 
@@ -76,7 +78,7 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
 
       if (!regexps.isEmpty())
          attributes.attribute(REGEXPS).set(regexps);
-      return new AllowListConfiguration(attributes.protect());
+      return new AllowListConfiguration(attributes.protect(), globalBuilder.getClassLoader());
    }
 
    @Override

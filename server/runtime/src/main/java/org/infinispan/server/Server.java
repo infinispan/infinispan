@@ -163,6 +163,7 @@ public class Server implements ServerManagement, AutoCloseable {
 
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 
+   private final ClassLoader classLoader;
    private final TimeService timeService;
    private final File serverHome;
    private final File serverRoot;
@@ -215,6 +216,7 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    private Server(File serverRoot, Properties properties) {
+      this.classLoader = Thread.currentThread().getContextClassLoader();
       this.timeService = DefaultTimeService.INSTANCE;
       this.startTime = timeService.time();
       this.serverHome = new File(properties.getProperty(INFINISPAN_SERVER_HOME_PATH, ""));
@@ -262,7 +264,7 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    private void parseConfiguration(URL config) {
-      ParserRegistry parser = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
+      ParserRegistry parser = new ParserRegistry(classLoader, false, properties);
       try {
          // load the defaults first
          URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
@@ -270,7 +272,9 @@ public class Server implements ServerManagement, AutoCloseable {
 
          // base the global configuration to the default
          configurationBuilderHolder = new ConfigurationBuilderHolder();
-         configurationBuilderHolder.getGlobalConfigurationBuilder().read(defaultsHolder.getGlobalConfigurationBuilder().build());
+         configurationBuilderHolder.getGlobalConfigurationBuilder()
+               .read(defaultsHolder.getGlobalConfigurationBuilder().build())
+               .classLoader(classLoader);
 
          // Copy all default templates
          for (Map.Entry<String, ConfigurationBuilder> entry : defaultsHolder.getNamedConfigurationBuilders().entrySet()) {
@@ -327,7 +331,7 @@ public class Server implements ServerManagement, AutoCloseable {
       try {
          // Load any server extensions
          extensions = new Extensions();
-         extensions.load(Thread.currentThread().getContextClassLoader());
+         extensions.load(classLoader);
 
          // Create the cache manager
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);

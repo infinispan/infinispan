@@ -8,22 +8,26 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.util.Util;
 
 public class CheckedInputStream extends ObjectInputStream {
 
-   private final ClassAllowList whitelist;
+   private final ClassAllowList allowList;
 
-   public CheckedInputStream(InputStream in, ClassAllowList whitelist) throws IOException {
+   public CheckedInputStream(InputStream in, ClassAllowList allowList) throws IOException {
       super(in);
-      this.whitelist = whitelist;
+      this.allowList = allowList;
    }
 
    @Override
    protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-      boolean safeClass = whitelist.isSafeClass(desc.getName());
+      boolean safeClass = allowList.isSafeClass(desc.getName());
       if (!safeClass)
          throw CONTAINER.classNotInAllowList(desc.getName());
-
-      return super.resolveClass(desc);
+      try {
+         return Util.loadClass(desc.getName(), allowList.getClassLoader());
+      } catch (Exception e) {
+         return super.resolveClass(desc);
+      }
    }
 }
