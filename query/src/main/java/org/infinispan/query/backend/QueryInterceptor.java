@@ -1,5 +1,17 @@
 package org.infinispan.query.backend;
 
+import static java.util.concurrent.CompletableFuture.allOf;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -24,6 +36,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -43,18 +57,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static java.util.concurrent.CompletableFuture.allOf;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -145,40 +147,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          return invokeNext(ctx, command);
       }
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
-      if (ctx.isInTxScope()) {
-         // replay of modifications on remote node by EntryWrappingVisitor
-         if (entry != null && !entry.isChanged() && (entry.getValue() != null || !unreliablePreviousValue(command))) {
-            Map<Object, Object> oldValues = registerOldValues((TxInvocationContext) ctx);
-            oldValues.putIfAbsent(command.getKey(), entry.getValue());
-         }
-         return invokeNext(ctx, command);
-      } else {
-         Object prev = entry != null ? entry.getValue() : UNKNOWN;
-         if (prev == null && unreliablePreviousValue(command)) {
-            prev = UNKNOWN;
-         }
-         Object oldValue = prev;
-         return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-            if (!cmd.isSuccessful()) {
-               return rv;
-            }
-            CacheEntry entry2 = entry != null ? entry : rCtx.lookupEntry(cmd.getKey());
-            if (entry2 != null && entry2.isChanged()) {
-               // TODO: need to reduce the scope of the blocking thread to less if possible later as part of
-               // https://issues.redhat.com/browse/ISPN-11731
-               return asyncValue(processChange(rCtx, cmd, cmd.getKey(), oldValue, entry2.getValue())
-                     .thenApply(ignore -> rv));
-            }
+      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
+         if (!cmd.isSuccessful()) {
             return rv;
-         });
-      }
-   }
-
-   private Map<Object, Object> registerOldValues(TxInvocationContext ctx) {
-      return txOldValues.computeIfAbsent(ctx.getGlobalTransaction(), gid -> {
-         ctx.getCacheTransaction().addListener(() -> txOldValues.remove(gid));
-         return new HashMap<>();
+         }
+         boolean unreliablePrevious = unreliablePreviousValue(cmd);
+         if (rCtx.isInTxScope()) {
+            Map<Object, Object> oldValues = getOldValuesMap((TxInvocationContext<?>) rCtx);
+            registerOldValue(rCtx, cmd.getKey(), unreliablePrevious, oldValues);
+         } else {
+            return delayedValue(indexIfNeeded(rCtx, cmd, unreliablePrevious, cmd.getKey()), rv);
+         }
+         return rv;
       });
    }
 
@@ -186,37 +166,58 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          return invokeNext(ctx, command);
       }
-      if (ctx.isInTxScope()) {
-         Map<Object, Object> oldValues = registerOldValues((TxInvocationContext) ctx);
-         for (Object key : command.getAffectedKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry != null && !entry.isChanged() && (entry.getValue() != null || !unreliablePreviousValue(command))) {
-               oldValues.putIfAbsent(key, entry.getValue());
-            }
+      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
+         if (!cmd.isSuccessful()) {
+            return rv;
          }
-         return invokeNext(ctx, command);
-      } else {
-         Map<Object, Object> oldValues = new HashMap<>();
-         for (Object key : command.getAffectedKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry != null && (entry.getValue() != null || !unreliablePreviousValue(command))) {
-               oldValues.put(key, entry.getValue());
+         boolean unreliablePrevious = unreliablePreviousValue(cmd);
+         if (rCtx.isInTxScope()) {
+            Map<Object, Object> oldValues = getOldValuesMap((TxInvocationContext<?>) rCtx);
+            for (Object key : cmd.getAffectedKeys()) {
+               registerOldValue(rCtx, key, unreliablePrevious, oldValues);
             }
+            return rv;
+         } else {
+            return delayedValue(allOf(cmd.getAffectedKeys().stream().map(key -> indexIfNeeded(rCtx, cmd, unreliablePrevious, key)).toArray(CompletableFuture[]::new)), rv);
          }
-         return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-            if (!cmd.isSuccessful()) {
-               return rv;
-            }
-            return asyncValue(allOf(cmd.getAffectedKeys().stream().map(key -> {
-               CacheEntry<?, ?> entry = rCtx.lookupEntry(key);
-               if (entry != null && entry.isChanged()) {
-                  Object oldValue = oldValues.getOrDefault(key, UNKNOWN);
-                  return processChange(rCtx, cmd, key, oldValue, entry.getValue());
-               }
-               return CompletableFutures.completedNull();
-            }).toArray(CompletableFuture[]::new)));
-         });
+      });
+   }
+
+   private void registerOldValue(InvocationContext ctx, Object key, boolean unreliablePrevious, Map<Object, Object> oldValues) {
+      CacheEntry<?, ?> entryTx = ctx.lookupEntry(key);
+      if (entryTx != null && (entryTx.getValue() != null || !unreliablePrevious)) {
+         ReadCommittedEntry<?, ?> mvccEntry = (ReadCommittedEntry<?, ?>) entryTx;
+         oldValues.putIfAbsent(key, mvccEntry.getOldValue());
       }
+   }
+
+   private Map<Object, Object> getOldValuesMap(TxInvocationContext<?> ctx) {
+      return txOldValues.computeIfAbsent(ctx.getGlobalTransaction(), gid -> {
+         ctx.getCacheTransaction().addListener(() -> txOldValues.remove(gid));
+         return new HashMap<>();
+      });
+   }
+
+   private CompletableFuture<?> indexIfNeeded(InvocationContext rCtx, WriteCommand cmd, boolean unreliablePrevious, Object key) {
+      CacheEntry<?, ?> entry = rCtx.lookupEntry(key);
+      boolean isStale = false;
+      Object old = null;
+      if (entry instanceof MVCCEntry) {
+         ReadCommittedEntry<?, ?> mvccEntry = (ReadCommittedEntry<?, ?>) entry;
+         isStale = !mvccEntry.isCommitted();
+         old = unreliablePrevious ? UNKNOWN : mvccEntry.getOldValue();
+      }
+      if (entry != null && entry.isChanged() && !isStale) {
+         if (log.isDebugEnabled()) {
+            log.debugf("Try indexing command '%s',key='%s', oldValue='%s', stale='false'", cmd, key, old);
+         }
+         return processChange(rCtx, cmd, key, old, entry.getValue());
+      } else {
+         if (log.isDebugEnabled()) {
+            log.debugf("Skipping indexing for command '%s',key='%s', oldValue='%s', stale='%s'", cmd, key, old, isStale);
+         }
+      }
+      return CompletableFutures.completedNull();
    }
 
    private boolean unreliablePreviousValue(WriteCommand command) {
@@ -231,7 +232,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) throws Throwable {
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
       return handleDataWriteCommand(ctx, command);
    }
 

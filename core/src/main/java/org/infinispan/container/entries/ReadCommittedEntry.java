@@ -148,6 +148,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
       }
       // only do stuff if there are changes.
       if (shouldCommit()) {
+         setCommitted();
          if (isEvicted()) {
             return container.evict(segment, key);
          } else if (isRemoved()) {
@@ -162,8 +163,8 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    private boolean shouldCommit() {
       if (isChanged()) {
          if (log.isTraceEnabled())
-            log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s value=%s metadata=%s internalMetadata=%s)",
-                  toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata(), internalMetadata);
+            log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s committed=%s value=%s metadata=%s internalMetadata=%s)",
+                  toStr(getKey()), isRemoved(), isChanged(), isCreated(), isCommitted(), toStr(value), getMetadata(), internalMetadata);
          return true;
       }
       return false;
@@ -269,7 +270,8 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
 
    @Override
    public void resetCurrentValue() {
-      // noop, the entry is removed from context
+      value = oldValue;
+      metadata = oldMetadata;
    }
 
    @Override
@@ -355,6 +357,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isExpired=" + isExpired() +
+            ", isCommited=" + isCommitted() +
             ", skipLookup=" + skipLookup() +
             ", metadata=" + metadata +
             ", oldMetadata=" + oldMetadata +

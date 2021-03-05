@@ -731,7 +731,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
                   addVersionRead(txCtx, cacheEntry, key);
                }
-               ((MVCCEntry) cacheEntry).updatePreviousValue();
             }
          }
       }
@@ -775,7 +774,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                   && ((MVCCEntry) cacheEntry).isRead()) {
                addVersionRead((TxInvocationContext) ctx, cacheEntry, dataWriteCommand.getKey());
             }
-            ((MVCCEntry) cacheEntry).updatePreviousValue();
          }
       }
       return rv;
