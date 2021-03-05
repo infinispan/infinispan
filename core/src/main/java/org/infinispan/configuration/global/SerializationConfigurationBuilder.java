@@ -27,7 +27,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
-      this.allowListBuilder = new AllowListConfigurationBuilder();
+      this.allowListBuilder = new AllowListConfigurationBuilder(globalConfig);
       this.attributes = SerializationConfiguration.attributeDefinitionSet();
    }
 
