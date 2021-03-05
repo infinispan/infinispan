@@ -197,7 +197,9 @@ public class BlockingManagerImpl implements BlockingManager {
             log.tracef("Invoked thenRun on a blocking thread, joining %s in same blocking thread", traceId);
          }
          try {
-            return stage.thenRun(runnable);
+            CompletionStages.join(stage);
+            runnable.run();
+            return CompletableFutures.completedNull();
          } catch (Throwable t) {
             return CompletableFutures.completedExceptionFuture(t);
          }
