@@ -42,6 +42,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
@@ -136,8 +137,13 @@ public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
+   public static final short REQUEST_FLAGS_UNORDERED =
+         (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value() |
+                  Message.Flag.DONT_BUNDLE.value());
+   public static final short REQUEST_FLAGS_PER_SENDER = Message.Flag.NO_TOTAL_ORDER.value();
    public static final short REPLY_FLAGS =
-         (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+         (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() |
+                  Message.Flag.NO_TOTAL_ORDER.value() | Message.Flag.DONT_BUNDLE.value());
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
    public static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
@@ -1105,9 +1111,9 @@ public class JGroupsTransport implements Transport {
    private static short encodeDeliverMode(DeliverOrder deliverOrder) {
       switch (deliverOrder) {
          case PER_SENDER:
-            return Message.Flag.NO_TOTAL_ORDER.value();
+            return REQUEST_FLAGS_PER_SENDER;
          case NONE:
-            return (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+            return REQUEST_FLAGS_UNORDERED;
          default:
             throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
       }
@@ -1461,7 +1467,23 @@ public class JGroupsTransport implements Transport {
 
       @Override
       public void up(MessageBatch batch) {
-         batch.forEach((message, messages) -> processMessage(message));
+         ByRef<Message> firstMessage = new ByRef<>(null);
+         batch.forEach((message, messages) -> {
+            // Regular (non-OOB) messages must be processed in-order
+            // Normally a batch should either have only OOB or only regular messages,
+            // but we check for every message to be on the safe side.
+            if (!message.isFlagSet(Message.Flag.OOB)) {
+               processMessage(message);
+               return;
+            }
+
+            if (firstMessage.get() == null) {
+               firstMessage.set(message);
+               return;
+            }
+
+            nonBlockingExecutor.execute(() -> processMessage(message));
+         });
       }
    }
 }
