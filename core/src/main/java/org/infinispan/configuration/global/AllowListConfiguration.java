@@ -25,15 +25,16 @@ public class AllowListConfiguration implements ConfigurationInfo {
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ALLOW_LIST.getLocalName());
 
-
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AllowListConfiguration.class, CLASSES, REGEXPS);
    }
 
    private final AttributeSet attributes;
+   private final ClassLoader classLoader;
 
-   AllowListConfiguration(AttributeSet attributes) {
+   AllowListConfiguration(AttributeSet attributes, ClassLoader classLoader) {
       this.attributes = attributes.checkProtection();
+      this.classLoader = classLoader;
    }
 
    @Override
@@ -47,7 +48,7 @@ public class AllowListConfiguration implements ConfigurationInfo {
    }
 
    public ClassAllowList create() {
-      return new ClassAllowList(attributes.attribute(CLASSES).get(), attributes.attribute(REGEXPS).get());
+      return new ClassAllowList(attributes.attribute(CLASSES).get(), attributes.attribute(REGEXPS).get(), classLoader);
    }
 
    public Set<String> getClasses() {

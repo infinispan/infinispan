@@ -30,7 +30,7 @@ public class ConfigurationBuilderHolder {
    }
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
-      this(classLoader, new GlobalConfigurationBuilder());
+      this(classLoader, new GlobalConfigurationBuilder().classLoader(classLoader));
    }
 
    public ConfigurationBuilderHolder(ClassLoader classLoader, GlobalConfigurationBuilder globalConfigurationBuilder) {
