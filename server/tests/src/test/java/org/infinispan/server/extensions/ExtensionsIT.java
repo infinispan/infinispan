@@ -18,15 +18,16 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
       ScriptingTasks.class,
       ServerTasks.class,
+      PojoMarshalling.class
 })
 public class ExtensionsIT {
    @ClassRule
    public static final InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .runMode(ServerRunMode.CONTAINER)
-                                    .numServers(2)
-                                    .artifacts(artifacts())
-                                    .build();
+               .runMode(ServerRunMode.CONTAINER)
+               .numServers(2)
+               .artifacts(artifacts())
+               .build();
 
    public static JavaArchive[] artifacts() {
       JavaArchive hello = ShrinkWrap.create(JavaArchive.class, "hello-server-task.jar");
@@ -37,6 +38,9 @@ public class ExtensionsIT {
       distHello.addPackage(DistributedHelloServerTask.class.getPackage());
       distHello.addAsServiceProvider(ServerTask.class, DistributedHelloServerTask.class);
 
-      return new JavaArchive[] {hello, distHello};
+      JavaArchive pojo = ShrinkWrap.create(JavaArchive.class, "pojo.jar");
+      pojo.addClass(Person.class);
+
+      return new JavaArchive[]{hello, distHello, pojo};
    }
 }

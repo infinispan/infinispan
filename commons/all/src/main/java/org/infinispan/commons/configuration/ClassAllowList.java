@@ -120,21 +120,23 @@ public class ClassAllowList {
    private final Set<String> classes = new CopyOnWriteArraySet<>(SYS_ALLOWED_CLASSES);
    private final List<String> regexps = new CopyOnWriteArrayList<>(SYS_ALLOWED_REGEXP);
    private final List<Pattern> compiled = new CopyOnWriteArrayList<>();
+   private final ClassLoader classLoader;
 
    public ClassAllowList() {
-      this(Collections.emptySet(), Collections.emptyList());
+      this(Collections.emptySet(), Collections.emptyList(), null);
    }
 
    public ClassAllowList(List<String> regexps) {
-      this(Collections.emptySet(), regexps);
+      this(Collections.emptySet(), regexps, null);
    }
 
-   public ClassAllowList(Collection<String> classes, List<String> regexps) {
+   public ClassAllowList(Collection<String> classes, List<String> regexps, ClassLoader classLoader) {
       Collection<String> classList = requireNonNull(classes, "Classes must not be null");
       Collection<String> regexList = requireNonNull(regexps, "Regexps must not be null");
       this.classes.addAll(classList);
       this.regexps.addAll(regexList);
       this.compiled.addAll(this.regexps.stream().map(Pattern::compile).collect(Collectors.toList()));
+      this.classLoader = classLoader;
    }
 
    public boolean isSafeClass(String className) {
@@ -169,5 +171,9 @@ public class ClassAllowList {
       this.regexps.addAll(allowList.regexps);
       this.compiled.addAll(allowList.compiled);
       this.classes.addAll(allowList.classes);
+   }
+
+   public ClassLoader getClassLoader() {
+      return classLoader;
    }
 }
