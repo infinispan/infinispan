@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.distribution.BiasedScatteredDistributionInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
@@ -379,7 +380,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    public Object construct(String componentName) {
       try {
          if (configuration.simpleCache())
-            return null;
+            return EmptyAsyncInterceptorChain.INSTANCE;
 
          if (componentName.equals(AsyncInterceptorChain.class.getName())) {
             AsyncInterceptorChain asyncInterceptorChain = buildInterceptorChain();
