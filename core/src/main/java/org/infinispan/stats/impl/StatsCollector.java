@@ -51,9 +51,9 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
 
-   @Inject ComponentRef<AdvancedCache> cache;
+   @Inject ComponentRef<AdvancedCache<?, ?>> cache;
    @Inject TimeService timeService;
-   @Inject InternalDataContainer dataContainer;
+   @Inject ComponentRef<InternalDataContainer<?, ?>> dataContainer;
    @Inject OffHeapMemoryAllocator allocator;
    @Inject Configuration configuration;
    @Inject ComponentRegistry componentRegistry;
@@ -265,7 +265,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    )
    @Override
    public int getCurrentNumberOfEntriesInMemory() {
-      return dataContainer.size();
+      return dataContainer.running().size();
    }
 
    @ManagedAttribute(
@@ -306,7 +306,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @Override
    public long getDataMemoryUsed() {
       if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
-         return dataContainer.evictionSize();
+         return dataContainer.running().evictionSize();
       }
       return 0;
    }
@@ -353,6 +353,10 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       evictions.increment();
    }
 
+   public void recordEvictions(int evicted) {
+      evictions.add(evicted);
+   }
+
    public void recordStores(int stores, long time) {
       this.stores.add(stores);
       this.storeTimes.add(time);
@@ -373,7 +377,11 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       @Override
       public Object construct(String componentName) {
          if (componentName.equals(StatsCollector.class.getName())) {
-            return new StatsCollector();
+            if (configuration.simpleCache()) {
+               return new StatsCollector();
+            } else {
+               return null;
+            }
          } else {
             throw CONTAINER.factoryCannotConstructComponent(componentName);
          }
