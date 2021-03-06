@@ -47,9 +47,9 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
 
-   @Inject private ComponentRef<AdvancedCache> cache;
+   @Inject private ComponentRef<AdvancedCache<?, ?>> cache;
    @Inject private TimeService timeService;
-   @Inject private InternalDataContainer dataContainer;
+   @Inject private ComponentRef<InternalDataContainer<?, ?>> dataContainer;
    @Inject private OffHeapMemoryAllocator allocator;
    @Inject private Configuration configuration;
    @Inject private ComponentRegistry componentRegistry;
@@ -266,7 +266,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          displayType = DisplayType.SUMMARY
    )
    public int getCurrentNumberOfEntriesInMemory() {
-      return dataContainer.size();
+      return dataContainer.running().size();
    }
 
    @ManagedAttribute(
@@ -307,7 +307,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    )
    public long getDataMemoryUsed() {
       if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
-         return dataContainer.evictionSize();
+         return dataContainer.running().evictionSize();
       }
       return 0;
    }
@@ -354,6 +354,10 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
       evictions.increment();
    }
 
+   public void recordEvictions(int evicted) {
+      evictions.add(evicted);
+   }
+
    public void recordStores(int stores, long time) {
       this.stores.add(stores);
       this.storeTimes.add(time);
@@ -374,7 +378,11 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
       @Override
       public Object construct(String componentName) {
          if (componentName.equals(StatsCollector.class.getName())) {
-            return new StatsCollector();
+            if (configuration.simpleCache()) {
+               return new StatsCollector();
+            } else {
+               return null;
+            }
          } else {
             throw log.factoryCannotConstructComponent(componentName);
          }
