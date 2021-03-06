@@ -47,7 +47,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
-import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.TimeService;
@@ -155,9 +154,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override
          protected void bootstrapComponents() {
-            if (statisticsAvailable) {
-               registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
-            }
             registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
             registerComponent(new PassivationManagerStub(), PassivationManager.class);
             registerComponent(new ActivationManagerStub(), ActivationManager.class);

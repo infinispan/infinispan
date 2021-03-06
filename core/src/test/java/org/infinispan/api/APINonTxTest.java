@@ -66,8 +66,10 @@ public class APINonTxTest extends SingleCacheManagerTest {
    @AfterMethod
    public void checkForLeakedTransactions() {
       TransactionTable txTable = TestingUtil.getTransactionTable(cache);
-      assertEquals(0, txTable.getLocalTxCount());
-      assertEquals(0, txTable.getLocalTransactions().size());
+      if (txTable != null) {
+         assertEquals(0, txTable.getLocalTxCount());
+         assertEquals(0, txTable.getLocalTransactions().size());
+      }
    }
 
    @Override

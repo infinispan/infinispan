@@ -11,6 +11,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
+import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -44,9 +45,9 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
 
-   @Inject private AdvancedCache cache;
+   @Inject private AdvancedCache<?, ?> cache;
    @Inject private TimeService timeService;
-   @Inject private InternalDataContainer dataContainer;
+   @Inject private InternalDataContainer<?, ?> dataContainer;
    @Inject private OffHeapMemoryAllocator allocator;
    @Inject private Configuration configuration;
 
@@ -306,6 +307,10 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
       evictions.increment();
    }
 
+   public void recordEvictions(int evicted) {
+      evictions.add(evicted);
+   }
+
    public void recordStores(int stores, long time) {
       this.stores.add(stores);
       this.storeTimes.add(time);
@@ -322,11 +327,15 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @DefaultFactoryFor(classes = StatsCollector.class)
    @SurvivesRestarts
-   public static class Factory extends AbstractNamedCacheComponentFactory {
+   public static class Factory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
       @Override
       public <T> T construct(Class<T> componentType) {
          if (componentType.isAssignableFrom(StatsCollector.class)) {
-            return componentType.cast(new StatsCollector());
+            if (configuration.simpleCache()) {
+               return componentType.cast(new StatsCollector());
+            } else {
+               return null;
+            }
          } else {
             throw new CacheException("Don't know how to handle type " + componentType);
          }
