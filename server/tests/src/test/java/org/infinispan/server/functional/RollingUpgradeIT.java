@@ -46,7 +46,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
    }
 
    @Test
-   public void testRollingUpgrade() {
+   public void testRollingUpgrade() throws Exception {
       RestClient restClientSource = source.getClient();
       RestClient restClientTarget = target.getClient();
 
@@ -72,9 +72,15 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
       // Disconnect source from the remote store
       disconnectSource(restClientTarget);
 
-      // Assert data was migrated successfully
-      assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClientTarget));
-      assertEquals("name-35", getPersonName("35", restClientTarget));
+      // Stop source cluster
+      stopSourceCluster();
+
+      // Assert all nodes are disconnected and data was migrated successfully
+      for (int i = 0; i < target.getMembers().size(); i++) {
+         RestClient restClient = target.getClient(i);
+         assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClient));
+         assertEquals("name-35", getPersonName("35", restClient));
+      }
    }
 
    protected void disconnectSource(RestClient client) {
