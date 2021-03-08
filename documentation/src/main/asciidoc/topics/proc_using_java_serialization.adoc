@@ -1,29 +1,25 @@
-[id='java_serialization']
-= Using Java Serialization
-You can use Java serialization with {brandname} to marshall your objects, but
-only if your Java objects implement the Java `Serializable` interface.
+[id='using-java-serialization_{context}']
+= Using Java serialization
+You can use Java serialization with {brandname} to marshall objects that implement the Java `Serializable` interface.
 
 .Procedure
 
-. Configure {brandname} to use `JavaSerializationMarshaller` as the marshaller.
+. Configure {brandname} to use `JavaSerializationMarshaller`.
 . Add your Java classes to the deserialization allowlist.
-+
-* Programmatically:
-+
-[source,java]
-----
-include::code_examples/SerializationMarshaller.java[]
-----
-+
-* Declaratively:
-+
-[source,xml,options="nowrap",subs=attributes+]
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/serialization_marshaller.xml[]
 ----
 
-.Reference
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/SerializationMarshaller.java[]
+----
 
-* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
-* link:https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html[Serializable]
+[role="_additional-resources"]
+.Additional resources
+* link:{jdkdocroot}/java/io/Serializable.html[Serializable]
 * link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller.html[org.infinispan.commons.marshall.JavaSerializationMarshaller]

@@ -1,26 +1,6 @@
-[id='custom_marshallers']
-= Using Custom Marshallers
+[id='using-custom-marshallers_{context}']
+= Using custom marshallers
 {brandname} provides a `Marshaller` interface that you can implement for custom marshallers.
-
-.Procedure
-
-. Implement the `Marshaller` interface.
-. Configure {brandname} to use your marshaller.
-. Add your Java classes to the deserialization allowlist.
-
-* Programmatically:
-+
-[source,java]
-----
-include::code_examples/CustomMarshaller.java[]
-----
-
-* Declaratively:
-+
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/custom_marshaller.xml[]
-----
 
 [TIP]
 ====
@@ -28,7 +8,24 @@ Custom marshaller implementations can access a configured access list via the
 link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassAllowList)[initialize()] method, which is called during startup.
 ====
 
-.Reference
+.Procedure
 
+. Implement the `Marshaller` interface.
+. Configure {brandname} to use your marshaller.
+. Add your Java classes to the deserialization allowlist.
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/custom_marshaller.xml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/CustomMarshaller.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
-* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]

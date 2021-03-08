@@ -1,0 +1,7 @@
+//Reference user stories or topics.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::{stories}/assembly_cache_encoding.adoc[leveloffset=+1]
+include::{stories}/assembly_marshalling_protostream.adoc[leveloffset=+1]
+include::{stories}/assembly_marshalling_custom.adoc[leveloffset=+1]
+include::{stories}/assembly_data_conversion.adoc[leveloffset=+1]

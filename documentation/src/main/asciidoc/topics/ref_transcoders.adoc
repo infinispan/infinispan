@@ -1,0 +1,20 @@
+[id='transcoders_{context}']
+= Transcoders
+Transcoders convert entries to and from different media types.
+
+The default API is `org.infinispan.commons.dataconversion.Transcoder`:
+
+[source,java]
+----
+include::code_examples/Transcoder.java[]
+----
+
+[NOTE]
+====
+For embedded caches, you must add the following to your project:
+
+[source,options="nowrap"]
+----
+org.infinispan:infinispan-server-core
+----
+====
