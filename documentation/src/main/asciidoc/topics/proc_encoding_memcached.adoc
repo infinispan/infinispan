@@ -1,8 +1,7 @@
-[id='memcached_interoperability-{context}']
-= Configuring Cache Encoding for Memcached Clients
-{brandname} Server disables the Memcached endpoint by default. If you enable
-the Memcached endpoint, you should configure caches with a suitable encoding
-for Memcached clients.
+[id='memcached-encoding_{context}']
+= Configuring cache encoding for Memcached clients
+{brandname} Server disables the Memcached endpoint by default.
+If you enable the Memcached endpoint, you should configure your Memcached cache with a suitable encoding.
 
 [IMPORTANT]
 ====
@@ -13,21 +12,16 @@ or Hot Rod clients to interact on the same data set as Memcached clients.
 
 .Procedure
 
-. Configure cache encoding to use `text/plain` for keys.
-. Specify any appropriate MediaType, other than `application/x-java-
-object`, for values.
-+
-Memcached clients can handle keys as `text/plain` only. Values can be any MediaType
-that {brandname} stores as `byte[]`, which can be Protobuf, marshalled Java
-objects, or a text-based format.
+. Configure cache encoding for keys and values as appropriate.
+. Specify any appropriate media type for values.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/encoding_memcached.xml[]
 ----
 
-[TIP]
-====
+.Encoding
+
 The Memcached endpoint includes a `client-encoding` attribute that converts the
 encoding of values.
 
@@ -39,14 +33,12 @@ JSON, you can use the following configuration:
 ----
 include::config_examples/encoding_memcached_clients.xml[]
 ----
-====
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 ifdef::community[]
-link:{memcached_docs}[{brandname} Memcached Client Guide]
+* link:{memcached_docs}[{brandname} Memcached Client Guide]
 endif::community[]
-
 ifdef::downstream[]
-link:https://access.redhat.com/solutions/5163441[Red Hat Knowledge Base: Memcached Endpoint for {brandname}]
+* link:https://access.redhat.com/solutions/5163441[Red Hat Knowledge Base: Memcached Endpoint for {brandname}]
 endif::downstream[]

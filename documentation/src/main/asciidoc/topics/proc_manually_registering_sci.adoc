@@ -1,11 +1,11 @@
 [id='manually_registering_sci-{context}']
 = Manually Registering Serialization Context Initializers
-If you prefer, you can disable automatic registration of `SerializationContextInitializer` implementations and then register them manually.
+You can disable automatic registration of `SerializationContextInitializer` implementations and then register them manually.
 
-[NOTE]
+[IMPORTANT]
 ====
-Manually registering `SerializationContextInitializer` implementations disables automatic registration.
-If you manually register one `SerializationContextInitializer` implementation, you must register all other implementations for them to take effect.
+If you manually register one `SerializationContextInitializer` implementation, it disables automatic registration.
+You must then manually register all other implementations.
 ====
 
 .Procedure
@@ -21,18 +21,16 @@ If you manually register one `SerializationContextInitializer` implementation, y
 )
 ----
 +
-. Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
+. Manually register `SerializationContextInitializer` implementations, as in the following examples:
 
-.Programmatic configuration
-
-[source,java]
-----
-include::code_examples/ProtoStreamMarshaller.java[]
-----
-
-.Declarative configuration
-
-[source,xml,options="nowrap",subs=attributes+]
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/protostream_marshaller.xml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ProtoStreamMarshaller.java[]
 ----

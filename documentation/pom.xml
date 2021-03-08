@@ -33,6 +33,7 @@
         <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
+        <protostream.api.docs>https://www.javadoc.io/doc/org.infinispan.protostream/protostream/${version.protostream}</protostream.api.docs>
     </properties>
 
     <dependencies>
@@ -170,6 +171,7 @@
                                 <infinispanslot>${infinispanslot}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>
+                                <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
                                 <configdocroot>${configdoc.root}</configdocroot>
                                 <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
@@ -242,6 +244,7 @@
                                         <defaults>${defaults.file}</defaults>
                                         <infinispanslot>${infinispanslot}</infinispanslot>
                                         <javadocroot>${javadoc.root}</javadocroot>
+                                        <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
                                         <configdocroot>${configdoc.root}</configdocroot>
                                         <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>

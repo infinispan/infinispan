@@ -1,16 +1,13 @@
-[id='hotrod_data_formats']
-= Configuring Hot Rod Client Data Formats
-By default, Hot Rod client operations use the configured marshaller when
-reading and writing from {brandname} servers for both keys and values.
+[id='hotrod-data-format_{context}']
+= Hot Rod DataFormat API
+Read and write operations on remote caches via the Hot Rod endpoint use the client marshaller by default.
+Hot Rod provides a `DataFormat` API for Java clients that you can use to perform cache operations with different media type encodings.
 
-However, the `DataFormat` API lets you decorate remote caches so that all
-operations can happen with custom data formats.
+.Different marshallers for key and values
 
-.Using different marshallers for key and values
+You can override marshallers for keys and values at run time.
 
-Marshallers for keys and values can be overridden at run time. For example, to
-bypass all serialization in the Hot Rod client and read the `byte[]` as they
-are stored in the server:
+For example, to bypass all serialization in the Hot Rod client and read the `byte[]` array stored in the remote cache:
 
 [source,java]
 ----
@@ -31,14 +28,13 @@ remoteCache.withDataFormat(rawKeyAndValues);
 
 [IMPORTANT]
 ====
-Using different marshallers and formats for keys, with `keyMarshaller()` and
-`keyType()` methods might interfere with the client intelligence routing
-mechanism and cause extra hops within the {brandname} cluster to perform the
-operation. If performance is critical, you should use keys in the format stored
-by the server.
+Using different marshallers and data formats for keys with `keyMarshaller()` and `keyType()` methods can interfere with client intelligence routing mechanisms, causing extra network hops within the {brandname} cluster.
+If performance is critical, you should use the format for keys in the remote cache.
 ====
 
 .Returning XML Values
+
+The following code snippet returns values as XML:
 
 [source,java]
 ----
@@ -50,17 +46,16 @@ Object xmlValue = remoteCache
       .get(key);
 ----
 
-The preceding code example returns XML values as follows:
+For example, the preceding `get(key)` call returns values such as:
 
 [source,xml]
 ----
 <?xml version="1.0" ?><string>Hello!</string>
 ----
 
-.Reading data in different formats
+.Reading data in different encodings
 
-Request and send data in different formats specified by a
-`org.infinispan.commons.dataconversion.MediaType` as follows:
+Request and send data in different encodings specified by a `org.infinispan.commons.dataconversion.MediaType` as follows:
 
 [source,java]
 ----
@@ -92,9 +87,7 @@ RemoteCache<String, JsonNode> jsonNodeCache =
 remoteCache.withDataFormat(jsonNode);
 ----
 
-In the preceding example, data conversion happens in the {brandname} server.
-{brandname} throws an exception if it does not support conversion to and from a
-storage format.
+In the preceding example, {brandname} Server handles the data conversion and throws an exception if it does not support a specified media type.
 
 .Reference
 

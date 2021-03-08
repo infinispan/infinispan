@@ -1,0 +1,41 @@
+[id='encoding']
+= Cache encoding
+Encoding is the format, or media type, that {brandname} uses to store entries (key/value pairs) in caches.
+
+[discrete]
+== Remote caches
+
+{brandname} Server stores entries in remote caches without any media type information by default.
+
+Encoding configures how {brandname} stores entries in a remote cache.
+If you do not configure encoding for remote caches then {brandname} Server stores entries however clients provide them.
+In this case {brandname} Server also returns entries as they are stored in the remote cache for any client requests.
+With encoding, {brandname} converts keys and values, when necessary, to whatever media type you specify for the cache.
+
+[TIP]
+====
+Always configure an encoding for remote caches if you want to use multiple clients, such as {brandname} Console or CLI, Hot Rod, REST, as well as server-side tasks and scripts.
+
+{brandname} recommends application/x-protostream`.
+====
+
+[discrete]
+== Embedded caches
+
+{brandname} stores entries in embedded caches as Plain Old Java Objects (POJOs) by default.
+
+Storing POJOs in embedded caches means that object instances are mutable.
+For example if you store a `HashMap` any modifications to the map are seen by other users of the cache, causing race conditions.
+
+However, for clustered embedded caches, {brandname} needs to serialize any POJOs to a byte array that can be replicated between nodes and then deserialized back into POJOs.
+This requires you to configure a marshaller to perform serialization and deserialization for your embedded caches.
+
+[TIP]
+====
+Instead of using clustered embedded caches, {brandname} recommends using remote caches and Protobuf encoding.
+Remote caches separate {brandname} cluster configuration from application logic, which greatly reduces complexity.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}[{brandname} ProtoStream API]

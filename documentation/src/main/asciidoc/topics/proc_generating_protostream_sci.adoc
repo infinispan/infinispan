@@ -18,7 +18,7 @@ include::dependencies_maven/protostream-processor.xml[]
 
 .Procedure
 
-. Annotate the Java objects that you want to marshall with `@ProtoField` and `@ProtoFactory`.
+. Annotate your Java objects with `@ProtoField` and `@ProtoFactory`.
 +
 [source,java]
 .Author.java
@@ -32,7 +32,8 @@ include::code_examples/Author.java[]
 include::code_examples/Book.java[]
 ----
 +
-. If necessary, create an adaptor class for any external, third-party Java object classes and add the `@ProtoAdaptor` annotation.
+. If necessary, create an adaptor class for any external, third-party Java object classes.
+. Annotate the adaptor class with `@ProtoAdaptor`.
 +
 [source,java]
 ----
@@ -49,7 +50,3 @@ include::code_examples/LibraryInitializer.java[]
 +
 <1> Names the generated `.proto` schema file.
 <2> Sets the path under `target/classes` where the schema file is generated.
-
-.Reference
-
-* link:#manually_registering_sci-marshalling[Manually Registering Serialization Context Initializers]

@@ -1,0 +1,24 @@
+[id='clients-marshalled-objects_{context}']
+= Clients and marshalled objects
+If you configure cache encoding to store marshalled objects, then you also need to configure clients to operate on those caches.
+
+[discrete]
+== Hot Rod clients
+
+The media type you use to encode caches should match the client marshaller.
+For example, if you configure cache encoding with the `application/x-protostream` media type, you should use the ProtoStream marshaller.
+
+Likewise, if you use `JavaSerializationMarshaller` or `GenericJBossMarshaller` you should encode caches with the corresponding media type.
+
+Additionally, for ProtoStream and Java Serialization marshallers are available by default on {brandname} Server classpath.
+If you use another marshaller, such as JBoss marshalling or a custom implementation, you must add the marshaller JAR to the {brandname} Server classpath.
+
+[discrete]
+== REST clients
+
+{brandname} converts keys and values in the `application/x-protostream` media type to `application/json`.
+
+This allows REST clients to include the JSON media type in request headers and perform operations on caches that use Protobuf encoding:
+
+* `Accept: application/json` for read operations.
+* `Content-Type: application/json` for write operations.

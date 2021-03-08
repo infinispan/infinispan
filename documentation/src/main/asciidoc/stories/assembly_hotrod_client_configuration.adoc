@@ -21,10 +21,6 @@ include::{topics}/con_near_caches.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_nearcaching.adoc[leveloffset=+2]
 include::{topics}/proc_forcing_return_values.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_connection_pools.adoc[leveloffset=+1]
-include::{topics}/con_hotrod_marshalling.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_protostream.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_hotrod_marshalling.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_hotrod_data_formats.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

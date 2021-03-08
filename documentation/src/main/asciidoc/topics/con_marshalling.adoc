@@ -1,0 +1,12 @@
+[id='marshalling_{context}']
+= Marshalling
+Marshalling is a process that converts Java objects into a binary format that can be transferred across the network or stored to disk.
+The reverse process, unmarshalling, transforms data from a binary format back into Java objects.
+
+{brandname} performs marshalling and unmarshalling to:
+
+* Send data to other {brandname} nodes in a cluster.
+* Store data in persistent cache stores.
+* Transmit objects between clients and remote caches.
+* Store objects in off-heap memory.
+* Store objects in JVM heap memory when the cache encoding is other than `application/x-java-object`.

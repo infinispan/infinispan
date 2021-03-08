@@ -1,14 +1,25 @@
-[id='deserialization-allowlist_{context}']
-= Adding Java Classes to Deserialization Allow Lists
-{brandname} does not allow deserialization of arbitrary Java classes for
-security reasons, which applies to JSON, XML, and marshalled `byte[]` content.
+[id='adding-deserialization-allowlist_{context}']
+= Allowing deserialization of Java classes
+For security reasons {brandname} does not allow deserialization of arbitrary Java classes.
+If you use `JavaSerializationMarshaller` or `GenericJBossMarshaller`, you must add your Java classes to a deserialization allow list.
 
-You must add Java classes to a deserialization allow list, either using system
-properties or specifying them in the {brandname} configuration.
+[NOTE]
+====
+The deserialization allow list applies to the Cache Manager so your Java classes can be deserialized by all caches.
+====
+
+.Procedure
+
+* Add Java classes to the deserialization allow list in the {brandname} configuration or in system properties.
+
+.Declarative
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/deserialization_allowlist.xml[]
+----
 
 .System properties
-
-[source,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+,role="secondary"]
 ----
 // Specify a comma-separated list of fully qualified class names
 -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,com.myclass.Entity
@@ -16,17 +27,3 @@ properties or specifying them in the {brandname} configuration.
 // Specify a regular expression to match classes
 -Dinfinispan.deserialization.allowlist.regexps=.*
 ----
-
-.Declarative
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/deserialization_allowlist.xml[]
-----
-
-[NOTE]
-====
-Java classes that you add to the deserialization allow list apply to the
-{brandname} `CacheContainer` and can be deserialized by all caches that the
-`CacheContainer` controls.
-====

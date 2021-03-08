@@ -1,17 +1,10 @@
-[id='jboss_marshalling']
+[id='using-jboss-marshaller_{context}']
 = Using JBoss Marshalling
-JBoss Marshalling is a serialization-based marshalling library and was the default marshaller in previous {brandname} versions.
+JBoss Marshalling is a serialization-based marshalling library and was the default marshaller in previous {brandname} versions but is now deprecated.
 
 [NOTE]
 ====
-* You should not use serialization-based marshalling with {brandname}. Instead
-you should use Protostream, which is a high-performance binary wire format that
-ensures backwards compatibility.
-
-* JBoss Marshalling and the `AdvancedExternalizer` interface are deprecated and
-will be removed in a future release. However, {brandname} ignores
-`AdvancedExternalizer` implementations when persisting data unless you use
-JBoss Marshalling.
+Use JBoss Marshalling only if your use case requires the `AdvancedExternalizer` interface, which is now deprecated but depends on JBoss Marshalling, or if you are temporarily using JBoss Marshalling to migrate your client applications from an older version of {brandname}.
 ====
 
 .Procedure
@@ -20,21 +13,18 @@ JBoss Marshalling.
 . Configure {brandname} to use the `GenericJBossMarshaller`.
 . Add your Java classes to the deserialization allowlist.
 
-* Programmatically:
-+
-[source,java]
-----
-include::code_examples/JBossUserMarshaller.java[]
-----
-
-* Declaratively:
-+
-[source,xml,options="nowrap",subs=attributes+]
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/jboss_user_marshaller.xml[]
 ----
 
-.Reference
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/JBossUserMarshaller.java[]
+----
 
-* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]

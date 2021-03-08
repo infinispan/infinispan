@@ -1,0 +1,24 @@
+[id='encoding-caches-protobuf_{context}']
+= Encoding caches as Protobuf
+Configure {brandname} to store cache entries as Protobuf.
+
+.Procedure
+
+* Specify the `application/x-protostream` media type for keys and values.
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/encoding_protostream.xml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ConfigurationBuilderCacheEncoding.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} Schema Reference]
+* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
