@@ -16,6 +16,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Properties;
+import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -27,7 +29,12 @@ import javax.cache.configuration.MutableConfiguration;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.jcache.embedded.JCacheManager;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -93,11 +100,11 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
          originalClassLoader = Thread.currentThread().getContextClassLoader();
          MyClassLoader myClassLoader = new MyClassLoader(new URL[]{}, originalClassLoader);
-         myClassLoader.addURL(new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!/").toURL());
+         myClassLoader.addURL(new URI("jar:" + sampleJarWithResourceFile.toURI() + "!/").toURL());
          Thread.currentThread().setContextClassLoader(myClassLoader);
 
          // when
-         URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!" + fullTargetPath);
+         URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI() + "!" + fullTargetPath);
          withCachingProvider(provider -> {
             try (JCacheManager jCacheManager = new JCacheManager(
                 resourceInsideJarUri,
@@ -173,5 +180,51 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
          jarOutputStream.closeEntry();
       }
+   }
+
+   public void testProgrammaticGlobalConfiguration() throws Exception {
+      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
+      Properties properties = new Properties();
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.addModule(PrivateGlobalConfigurationBuilder.class);
+      properties.put(GlobalConfigurationBuilder.class.getName(), global);
+      withCachingProvider(provider -> {
+         try (JCacheManager jCacheManager =
+                    new JCacheManager(uri, provider.getClass().getClassLoader(), provider, properties)) {
+            DefaultCacheManager defaultCacheManager = jCacheManager.unwrap(DefaultCacheManager.class);
+            assertNotNull(defaultCacheManager.getCacheManagerConfiguration().module(PrivateGlobalConfiguration.class));
+         }
+      });
+   }
+
+   public void testProgrammaticConfigurationHolder() throws Exception {
+      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
+      Properties properties = new Properties();
+      ConfigurationBuilderHolder cbh = new ConfigurationBuilderHolder();
+      cbh.getGlobalConfigurationBuilder().addModule(PrivateGlobalConfigurationBuilder.class);
+      properties.put(ConfigurationBuilderHolder.class.getName(), cbh);
+      withCachingProvider(provider -> {
+         try (JCacheManager jCacheManager =
+                    new JCacheManager(uri, provider.getClass().getClassLoader(), provider, properties)) {
+            DefaultCacheManager defaultCacheManager = jCacheManager.unwrap(DefaultCacheManager.class);
+            assertNotNull(defaultCacheManager.getCacheManagerConfiguration().module(PrivateGlobalConfiguration.class));
+         }
+      });
+   }
+
+   public void testProgrammaticCacheConfiguration() throws Exception {
+      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
+      Properties properties = new Properties();
+      Function<String, Configuration> f = (s) -> new ConfigurationBuilder().memory().maxCount(1234l).build();
+      properties.put(JCacheManager.CACHE_CONFIGURATION_FUNCTION, f);
+      withCachingProvider(provider -> {
+         try (JCacheManager jCacheManager =
+                    new JCacheManager(uri, provider.getClass().getClassLoader(), provider, properties)) {
+            Cache<Object, Object> cache = jCacheManager.createCache("cache", new MutableConfiguration<>());
+            org.infinispan.Cache unwrap = cache.unwrap(org.infinispan.Cache.class);
+            Configuration configuration = unwrap.getCacheConfiguration();
+            assertEquals(1234l, configuration.memory().maxCount());
+         }
+      });
    }
 }
