@@ -1,18 +1,17 @@
 [id='server_endpoint_ipfilter-{context}']
 = {brandname} Server IP Filter Configuration
 
-{brandname} endpoints and connectors can specify one or more IP filtering rules. These rules specify the type of action
-to take when a client which matches a supplied CIDR block connects. IP filtering rules are applied in order up until the
-first one that matches.
+{brandname} endpoints and connectors can specify one or more IP filtering rules.
+These rules specify the type of action to take when a client which matches a supplied CIDR block connects.
+IP filtering rules are applied in order up until the first one that matches.
 
 A CIDR block is a compact representation of an IP address and its associated network mask.
 CIDR notation specifies an IP address, a slash ('/') character, and a decimal number.
 The decimal number is the count of leading 1 bits in the network mask.
-The number can also be thought of as the width (in bits) of the network prefix.
+The number can also be thought of as the width, in bits, of the network prefix.
 The IP address in CIDR notation is always represented according to the standards for IPv4 or IPv6.
 
-The address may denote a specific interface address (including a host identifier, such as 10.0.0.1/8), or it may be the
-beginning address of an entire network (using a host identifier of 0, as in 10.0.0.0/8 or its equivalent 10/8).
+The address can denote a specific interface address, including a host identifier, such as `10.0.0.1/8`, or it can be the beginning address of an entire network interface range using a host identifier of 0, as in `10.0.0.0/8` or `10/8`.
 
 For example:
 
@@ -36,6 +35,5 @@ or equivalently, its subnet mask `255.255.255.0`, which has 24 leading 1-bits.
 </endpoints>
 ----
 
-As a result of the preceding configuration, {brandname} servers will only accept connections coming from addresses in
-the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks and reject all other connections.
-
+As a result of the preceding configuration, {brandname} servers accept connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
+{brandname} servers reject all other connections.
