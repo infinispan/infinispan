@@ -1,0 +1,12 @@
+message Person {
+    optional int32 id = 1;
+    required string name = 2;
+    required string surname = 3;
+    optional Address address = 4;
+    repeated PhoneNumber phoneNumbers = 5;
+    optional uint32 age = 6;
+    enum Gender {
+        MALE = 0;
+        FEMALE = 1;
+    }
+}

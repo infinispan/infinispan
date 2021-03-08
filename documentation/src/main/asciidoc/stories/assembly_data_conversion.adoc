@@ -1,0 +1,12 @@
+[id='data-conversion']
+:context: transcoding
+= Data conversion
+{brandname} uses transcoders to convert data to and from various media type encodings.
+
+include::{topics}/ref_transcoders.adoc[leveloffset=+1]
+include::{topics}/proc_converting_data_on_demand.adoc[leveloffset=+1]
+include::{topics}/ref_hotrod_data_format.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

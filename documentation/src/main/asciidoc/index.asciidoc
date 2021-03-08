@@ -28,8 +28,9 @@ Written and maintained by the {brandname} community
 
 [unstyled]
 * link:titles/embedding/embedding.html[Embedding {brandname}]
-* link:titles/developing/developing.html[Developer's Guide]
 * link:titles/configuring/configuring.html[Configuring {brandname}]
+* link:titles/encoding/encoding.html[Marshalling and Encoding Data with {brandname}]
+* link:titles/developing/developing.html[Developer's Guide]
 * link:titles/xsite/xsite.html[Using Cross-Site Replication]
 * link:titles/developing/developing.html#search_api[Index and Search API]
 * link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]

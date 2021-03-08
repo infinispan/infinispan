@@ -1,0 +1,23 @@
+[id='text-encoding_{context}']
+= Text-based cache encoding
+Text-based encoding is human-readable content like plain text or HTML.
+The classic "Hello World" example entry could be stored in a cache as follows:
+
+[source,text,options="nowrap",subs=attributes+]
+----
+key=hello
+value=world
+----
+
+{brandname} supports the following text-based media types:
+
+* `text/plain`
+* `text/html`
+* `text/csv`
+
+For example, the following configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/encoding_text_plain.xml[]
+----

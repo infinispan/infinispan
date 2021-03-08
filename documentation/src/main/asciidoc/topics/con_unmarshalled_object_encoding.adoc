@@ -1,0 +1,7 @@
+[id='unmarshalled-object-encoding_{context}']
+= Unmarshalled Java objects
+
+For best performance, {brandname} recommends storing unmarshalled POJOs in embedded caches only.
+However, you can configure keys and values with the following media type:
+
+* `application/x-java-object`

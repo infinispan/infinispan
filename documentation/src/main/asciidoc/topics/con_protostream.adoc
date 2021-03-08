@@ -1,0 +1,15 @@
+[id='protostream_{context}']
+= ProtoStream marshalling
+{brandname} includes an implementation of the ProtoStream API that can marshall Java objects as Protocol Buffers (Protobuf).
+
+ProtoStream natively supports many different Java data types, which means you do not need to configure ProtoStream marshalling for those types.
+For custom or user types, you need to provide some information so that {brandname} can marshall those objects to and from your caches.
+
+`SerializationContext`:: A repository that contains Protobuf type definitions, loaded from Protobuf schemas (`.proto` files), and the accompanying marshallers.
+
+`SerializationContextInitializer`:: An interface that initializes a `SerializationContext`.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}/org/infinispan/protostream/SerializationContext.html[org.infinispan.protostream.SerializationContext]
+* link:{protostreamdocroot}/org/infinispan/protostream/SerializationContextInitializer.html[org.infinispan.protostream.SerializationContextInitializer]

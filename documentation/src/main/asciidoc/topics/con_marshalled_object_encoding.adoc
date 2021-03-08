@@ -1,0 +1,24 @@
+[id='marshalled-object-encoding_{context}']
+= Marshalled Java objects
+{brandname} stores marshalled Java objects in caches as wrapped `byte[]` arrays.
+For example, the following is a simple representation of a `Person` object stored in memory:
+
+[source,text,options="nowrap",subs=attributes+]
+----
+key=[61 6c 61 6e 0a]
+value={data=ByteArray{array=[70 61 72 74 72 69 64 67 65]}}
+----
+
+To store marshalled objects in caches, you should use the ProtoStream marshaller unless a strict requirement exists.
+For example, when migrating client applications from older versions of {brandname}, you might need to temporarily use JBoss marshalling with your Hot Rod Java clients.
+
+{brandname} stores marshalled Java objects as byte arrays with the following media types:
+
+* `application/x-protostream`
+* `application/x-jboss-marshalling`
+* `application/x-java-serialized-object`
+
+.Equality
+
+It is generally sensible to implement an `equals()` method on your objects and compare equality when storing in binary formats.
+The result of the `equals()` method for a key or value should be consistent in comparison with the serialized key or value.

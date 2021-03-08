@@ -1,0 +1,25 @@
+[id='clients-text-encoding_{context}']
+= Clients and text-based encoding
+If you configure encoding to store keys and values with a text-based media type, then you also need to configure clients to operate on those caches.
+
+[discrete]
+== Hot Rod clients
+
+{brandname} uses the ProtoStream library to handle `String` and `byte[]` types natively.
+If you configure cache encoding with the `text/plain` media type, Hot Rod clients do not need any marshaller configuration to perform cache operations.
+
+For other text-based media types, such as JSON or XML, Hot Rod clients can use the `org.infinispan.commons.marshall.UTF8StringMarshaller` marshaller that converts to and from the `text/plain` media type.
+
+[discrete]
+== REST clients
+
+REST clients must include the media type for caches in the request headers.
+
+For example if you configure cache encoding as `text/plain; charset=UTF-8` then REST clients should send the following headers:
+
+* `Accept: text/plain; charset=UTF-8` for read operations.
+* `Content-Type: text/plain; charset=UTF-8` for write operations.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/commons/marshall/UTF8StringMarshaller.html[org.infinispan.commons.marshall.UTF8StringMarshaller]
