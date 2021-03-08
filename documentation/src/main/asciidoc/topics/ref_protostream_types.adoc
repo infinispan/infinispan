@@ -1,10 +1,6 @@
 [id='protostream_types-{context}']
-= Supported Types
-{brandname} uses a ProtoStream API to encode and decode Java objects into
-Protocol Buffers (Protobuf); a language-neutral, backwards compatible format.
-
-ProtoStream can handle the following types for keys and values, as well as the
-unboxed equivalents in the case of primitive types:
+= ProtoStream types
+{brandname} uses a ProtoStream library that can handle the following types for keys and values, as well as the unboxed equivalents in the case of primitive types:
 
 * `byte[]`
 * `Byte`
@@ -19,7 +15,10 @@ unboxed equivalents in the case of primitive types:
 * `java.util.Date`
 * `java.time.Instant`
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}[{brandname} ProtoStream API]
+//Community content
+ifdef::community[]
 * link:https://github.com/infinispan/protostream[{brandname} ProtoStream library]
-* link:https://developers.google.com/protocol-buffers[Protocol Buffers]
+endif::community[]

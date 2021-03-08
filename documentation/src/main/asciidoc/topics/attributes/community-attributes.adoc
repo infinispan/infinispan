@@ -70,6 +70,9 @@
 //Dev
 :dev_docs: ../developing/developing.html
 
+//Marshalling and encoding
+:encoding_docs: ../encoding/encoding.html
+
 //Server
 :server_docs: ../server/server.html
 

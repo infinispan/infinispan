@@ -1,0 +1,23 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+
+//Title
+= Marshalling and Encoding Data
+
+{brandname} is a flexible data store that can hold key/value pairs in different formats.
+This document describes how {brandname} encodes data for remote and embedded caches and explains how use various media types with your applications.
+
+//User stories
+include::stories.adoc[]

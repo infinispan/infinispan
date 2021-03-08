@@ -1,0 +1,21 @@
+[id='adding-jars-server-classpath_{context}']
+= Adding JARs to {brandname} Server installations
+You can make custom JAR files available to {brandname} Server by adding them to the classpath.
+
+[IMPORTANT]
+====
+{brandname} loads JAR files during startup only.
+You should bring all nodes in the cluster down gracefully and make any JAR files available to each node before bringing the cluster back up.
+====
+
+.Procedure
+
+. Stop {brandname} Server if it is running.
+. Add JAR files to the `server/lib` directory, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+├── server
+│   └── lib
+│       └── UserObjects.jar
+----

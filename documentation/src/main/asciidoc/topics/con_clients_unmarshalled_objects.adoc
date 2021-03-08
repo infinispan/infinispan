@@ -1,0 +1,9 @@
+[id='clients-unmarshalled-objects_{context}']
+= Clients and unmarshalled objects
+If you configure cache encoding to store unmarshalled objects, then you also need to configure clients to operate on those caches.
+
+[discrete]
+== Hot Rod clients
+
+To store unmarshalled Java objects in remote caches, you need to add JAR files with your custom classes to the {brandname} Server classpath.
+Only Hot Rod Java clients can read and write unmarshalled Java objects in remote caches.

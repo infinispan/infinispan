@@ -1,0 +1,22 @@
+[id='converting-data-on-demand_{context}']
+= Converting data on demand
+In some complex scenarios you can use the `AdvancedCache` API to convert the keys and values to another media type on demand.
+This allows you to store data in a binary format, such as `application/x-protostream`, and perform cache operations using a different media type.
+
+The following example uses the `withMediaType()` method to return values as `application/json` on demand.
+
+.Advanced cache with MediaType
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/EncodeMediaTypeOverride.java[]
+----
+
+.Value returned in JSON format
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/john_doe.json[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]

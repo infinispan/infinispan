@@ -1,0 +1,5 @@
+{
+   "_type":"org.infinispan.sample.Person",
+   "name":"John",
+   "surname":"Doe"
+}
