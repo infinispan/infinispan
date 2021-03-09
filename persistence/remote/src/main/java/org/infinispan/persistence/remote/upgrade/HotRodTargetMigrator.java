@@ -158,8 +158,13 @@ public class HotRodTargetMigrator implements TargetMigrator {
 
    @Override
    public void disconnectSource(Cache<Object, Object> cache) throws CacheException {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
-      loaderManager.disableStore(RemoteStore.class.getName());
+      DisconnectRemoteStoreTask disconnectRemoteStoreTask = new DisconnectRemoteStoreTask(cache.getName());
+      ClusterExecutor executor = cache.getCacheManager().executor();
+      CompletableFuture<Void> future = executor.submitConsumer(disconnectRemoteStoreTask, (address, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+      });
+      CompletableFuture.allOf(future).join();
    }
 }
