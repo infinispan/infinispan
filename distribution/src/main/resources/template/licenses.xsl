@@ -155,6 +155,9 @@
             <xsl:when test="contains($filename, 'gpl2 w/')">
                 <xsl:text>gnu general public license v2.0 only, with classpath exception.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="contains($filename, 'gplv2+ce')">
+                <xsl:text>gnu general public license v2.0 only, with classpath exception.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'epl-v10')">
                 <xsl:text>eclipse public license 1.0.txt</xsl:text>
             </xsl:when>
