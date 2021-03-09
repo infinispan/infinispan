@@ -155,6 +155,16 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    }
 
    @Override
+   public boolean completeExceptionally(Throwable ex) {
+      // Timeout future is not set if the operation completes before scheduling a read:
+      // see RemoveClientListenerOperation.fetchChannelAndInvoke
+      if (timeoutFuture != null) {
+         timeoutFuture.cancel(false);
+      }
+      return super.completeExceptionally(ex);
+   }
+
+   @Override
    public boolean complete(T value) {
       // Timeout future is not set if the operation completes before scheduling a read:
       // see RemoveClientListenerOperation.fetchChannelAndInvoke
