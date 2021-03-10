@@ -31,7 +31,7 @@ public class RollingUpgradeCliIT extends RollingUpgradeIT {
    protected void disconnectSource(RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
-         terminal.readln("connect");
+         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster disconnect --cache=" + CACHE_NAME);
@@ -41,7 +41,7 @@ public class RollingUpgradeCliIT extends RollingUpgradeIT {
    protected void doRollingUpgrade(RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
-         terminal.readln("connect");
+         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster synchronize --cache=" + CACHE_NAME);
