@@ -129,6 +129,10 @@ class AbstractMultiClusterIT {
          return jsonNode.at("cluster_members").asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
       }
 
+      int getSinglePort(int server) {
+         return driver.getServerSocket(server, 11222).getPort();
+      }
+
       RestClient getClient() {
          return getClient(0);
       }
