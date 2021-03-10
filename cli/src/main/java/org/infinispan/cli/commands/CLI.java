@@ -16,6 +16,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
@@ -61,6 +62,7 @@ import org.infinispan.cli.impl.ContextAwareCommandInvocationProvider;
 import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.impl.DefaultShell;
+import org.infinispan.cli.impl.ExitCodeResultHandler;
 import org.infinispan.cli.impl.KubernetesContextImpl;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
@@ -116,7 +118,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Task.class,
             User.class,
             Version.class
-      })
+      }, resultHandler = ExitCodeResultHandler.class)
 public class CLI extends CliCommand {
 
    private Context context;
