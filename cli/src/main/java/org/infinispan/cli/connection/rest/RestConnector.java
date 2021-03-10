@@ -9,6 +9,7 @@ import org.infinispan.cli.connection.Connector;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.SslConfigurationBuilder;
+import org.infinispan.commons.dataconversion.StandardConversions;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -43,7 +44,9 @@ public class RestConnector implements Connector {
                String userInfo = url.getUserInfo();
                if (userInfo != null) {
                   String[] split = userInfo.split(":");
-                  builder.security().authentication().username(split[0]).password(split[1]);
+                  String username = (String) StandardConversions.urlDecode(split[0]);
+                  String password = (String) StandardConversions.urlDecode(split[1]);
+                  builder.security().authentication().username(username).password(password);
                }
                if (url.getProtocol().equals("https")) {
                   SslConfigurationBuilder ssl = builder.security().ssl().enable();
