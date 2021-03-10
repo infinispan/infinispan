@@ -16,7 +16,6 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
