@@ -57,7 +57,6 @@ import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -77,13 +76,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
 
-   private Marshaller defaultMarshaller;
    private final String name;
    private final RemoteCacheManager remoteCacheManager;
    protected OperationsFactory operationsFactory;
    private int batchSize;
    private volatile boolean isObjectStorage;
-   private final DataFormat defaultDataFormat;
    private DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
    private ObjectName mbeanObjectName;
@@ -98,7 +95,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       }
       this.name = name;
       this.remoteCacheManager = rcm;
-      this.defaultDataFormat = DataFormat.builder().build();
+      this.dataFormat = DataFormat.builder().build();
       this.clientStatistics = new ClientStatistics(rcm.getConfiguration().statistics().enabled(), timeService, nearCacheService);
    }
 
@@ -108,14 +105,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       }
       this.name = name;
       this.remoteCacheManager = rcm;
-      this.defaultDataFormat = DataFormat.builder().build();
+      this.dataFormat = DataFormat.builder().build();
       this.clientStatistics = clientStatistics;
    }
 
    @Override
-   public void init(Marshaller marshaller, OperationsFactory operationsFactory,
+   public void init(OperationsFactory operationsFactory,
                     Configuration configuration, ObjectName jmxParent) {
-      init(marshaller, operationsFactory, configuration);
+      init(operationsFactory, configuration);
       registerMBean(jmxParent);
    }
 
@@ -123,17 +120,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
     * Inititalize without mbeans
     */
    @Override
-   public void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration) {
-      init(marshaller, operationsFactory,
-           configuration.batchSize());
+   public void init(OperationsFactory operationsFactory, Configuration configuration) {
+      init(operationsFactory, configuration.batchSize());
    }
 
-   private void init(Marshaller marshaller, OperationsFactory operationsFactory,
-                     int batchSize) {
-      this.defaultMarshaller = marshaller;
+   private void init(OperationsFactory operationsFactory, int batchSize) {
       this.operationsFactory = operationsFactory;
       this.batchSize = batchSize;
-      this.dataFormat = defaultDataFormat;
    }
 
    private void registerMBean(ObjectName jmxParent) {
@@ -210,7 +203,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
          return Flowable.empty();
       }
       byte[][] params = marshallParams(filterConverterParams);
-      return new RemotePublisher<>(operationsFactory, defaultMarshaller, filterConverterFactory, params, segments,
+      return new RemotePublisher<>(operationsFactory, filterConverterFactory, params, segments,
             batchSize, false, dataFormat);
    }
 
@@ -236,7 +229,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
-      return new RemotePublisher<>(operationsFactory, defaultMarshaller, null, null, segments,
+      return new RemotePublisher<>(operationsFactory, null, null, segments,
             batchSize, true, dataFormat);
    }
 
@@ -655,7 +648,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public <T, U> InternalRemoteCache<T, U> withDataFormat(DataFormat newDataFormat) {
       Objects.requireNonNull(newDataFormat, "Data Format must not be null")
-            .initialize(remoteCacheManager, isObjectStorage);
+            .initialize(remoteCacheManager, name, isObjectStorage);
       RemoteCacheImpl<T, U> instance = newInstance();
       instance.dataFormat = newDataFormat;
       return instance;
@@ -663,13 +656,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    private <T, U> RemoteCacheImpl<T, U> newInstance() {
       RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
-      copy.init(this.defaultMarshaller, this.operationsFactory, this.batchSize);
+      copy.init(this.operationsFactory, this.batchSize);
       return copy;
    }
 
    public void resolveStorage(boolean objectStorage) {
       this.isObjectStorage = objectStorage;
-      this.defaultDataFormat.initialize(remoteCacheManager, isObjectStorage);
+      this.dataFormat.initialize(remoteCacheManager, name, isObjectStorage);
    }
 
    @Override
