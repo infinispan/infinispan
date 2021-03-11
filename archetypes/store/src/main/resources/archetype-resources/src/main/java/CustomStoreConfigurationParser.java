@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -52,7 +53,7 @@ public class CustomStoreConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SAMPLE_ATTRIBUTE: {
                storeBuilder.sampleAttribute(value);
