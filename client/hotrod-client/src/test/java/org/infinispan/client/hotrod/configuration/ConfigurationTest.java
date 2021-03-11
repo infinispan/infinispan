@@ -80,7 +80,9 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -707,4 +709,19 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.NON_XA, cache.transactionMode());
    }
 
+   @Test
+   public void testPerCacheMarshallerConfig() throws IOException {
+      Properties properties = new Properties();
+      try (InputStream is = this.getClass().getResourceAsStream("/hotrod-client-percache.properties")) {
+         properties.load(is);
+      }
+      Configuration configuration = new ConfigurationBuilder().withProperties(properties).build();
+
+      assertTrue(configuration.remoteCaches().get("mycache").marshaller() instanceof JavaSerializationMarshaller);
+      assertTrue(configuration.remoteCaches().get("org.infinispan.yourcache").marshaller() instanceof UTF8StringMarshaller);
+
+      Properties props = configuration.properties();
+      assertEquals(JavaSerializationMarshaller.class.getName(), props.getProperty("infinispan.client.hotrod.cache.mycache.marshaller"));
+      assertEquals(UTF8StringMarshaller.class.getName(), props.getProperty("infinispan.client.hotrod.cache.org.infinispan.yourcache.marshaller"));
+   }
 }

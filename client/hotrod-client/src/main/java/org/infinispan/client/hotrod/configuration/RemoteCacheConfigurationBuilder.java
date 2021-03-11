@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
@@ -29,6 +30,7 @@ import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManager
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -143,6 +145,36 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
+    * Specifies a custom {@link Marshaller} implementation. See {@link #marshaller(Marshaller)}.
+    *
+    * @param className Fully qualifies class name of the marshaller implementation.
+    */
+   public RemoteCacheConfigurationBuilder marshaller(String className) {
+      return marshaller(loadClass(className, Thread.currentThread().getContextClassLoader()));
+   }
+
+   /**
+    * Specifies a custom {@link Marshaller} implementation. See {@link #marshaller(Marshaller)}.
+    *
+    * @param marshallerClass the marshaller class.
+    */
+   public RemoteCacheConfigurationBuilder marshaller(Class<? extends Marshaller> marshallerClass) {
+      return marshaller(getInstance(marshallerClass));
+   }
+
+   /**
+    * Specifies a custom {@link Marshaller} implementation to serialize and deserialize user objects. If not configured,
+    * the marshaller from the {@link org.infinispan.client.hotrod.RemoteCacheManager} will be used for the cache
+    * operations.
+    *
+    * @param marshaller the marshaller instance
+    */
+   public RemoteCacheConfigurationBuilder marshaller(Marshaller marshaller) {
+      attributes.attribute(MARSHALLER).set(marshaller);
+      return this;
+   }
+
+   /**
     * The {@link javax.transaction.TransactionManager} to use for the cache
     *
     * @param manager an instance of a TransactionManager
@@ -201,6 +233,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX, this::transactionManagerLookupClass);
+      findCacheProperty(typed, ConfigurationProperties.CACHE_MARSHALLER, this::marshaller);
       return builder;
    }
 
