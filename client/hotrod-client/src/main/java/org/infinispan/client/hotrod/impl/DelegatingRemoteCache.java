@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -346,13 +345,13 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration, ObjectName jmxParent) {
-      delegate.init(marshaller, operationsFactory, configuration, jmxParent);
+   public void init(OperationsFactory operationsFactory, Configuration configuration, ObjectName jmxParent) {
+      delegate.init(operationsFactory, configuration, jmxParent);
    }
 
    @Override
-   public void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration) {
-      delegate.init(marshaller, operationsFactory, configuration);
+   public void init(OperationsFactory operationsFactory, Configuration configuration) {
+      delegate.init(operationsFactory, configuration);
    }
 
    @Override

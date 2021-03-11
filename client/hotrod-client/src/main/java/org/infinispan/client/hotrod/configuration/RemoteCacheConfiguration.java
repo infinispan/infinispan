@@ -5,6 +5,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
 /**
@@ -22,13 +23,15 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<String> TEMPLATE_NAME = AttributeDefinition.builder("template-name", null, String.class).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", GenericTransactionManagerLookup.getInstance(), TransactionManagerLookup.class).build();
+   public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
+      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, MARSHALLER, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
    }
 
    private final Attribute<String> configuration;
    private final Attribute<Boolean> forceReturnValues;
+   private final Attribute<Marshaller> marshaller;
    private final Attribute<String> name;
    private final Attribute<NearCacheMode> nearCacheMode;
    private final Attribute<Integer> nearCacheMaxEntries;
@@ -43,6 +46,7 @@ public class RemoteCacheConfiguration {
       configuration = attributes.attribute(CONFIGURATION);
       forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);
       name = attributes.attribute(NAME);
+      marshaller = attributes.attribute(MARSHALLER);
       nearCacheMode = attributes.attribute(NEAR_CACHE_MODE);
       nearCacheMaxEntries = attributes.attribute(NEAR_CACHE_MAX_ENTRIES);
       nearCacheBloomFilter = attributes.attribute(NEAR_CACHE_BLOOM_FILTER);
@@ -61,6 +65,10 @@ public class RemoteCacheConfiguration {
 
    public String name() {
       return name.get();
+   }
+
+   public Marshaller marshaller() {
+      return marshaller.get();
    }
 
    public NearCacheMode nearCacheMode() {

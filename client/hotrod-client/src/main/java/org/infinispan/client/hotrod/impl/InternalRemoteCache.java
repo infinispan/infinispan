@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 
@@ -50,10 +49,10 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
    @Override
    ClientStatistics clientStatistics();
 
-   void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration,
-         ObjectName jmxParent);
+   void init(OperationsFactory operationsFactory, Configuration configuration,
+             ObjectName jmxParent);
 
-   void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration);
+   void init(OperationsFactory operationsFactory, Configuration configuration);
 
    OperationsFactory getOperationsFactory();
 
