@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLI
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.BATCH_SIZE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX;
@@ -477,6 +478,9 @@ public class Configuration {
          }
          properties.setProperty(prefix + CACHE_NEAR_CACHE_MODE_SUFFIX, remoteCache.nearCacheMode().name());
          properties.setProperty(prefix + CACHE_NEAR_CACHE_MODE_SUFFIX, remoteCache.nearCacheMaxEntries());
+         if (remoteCache.marshaller() != null) {
+            properties.setProperty(prefix + CACHE_MARSHALLER, remoteCache.marshaller().getClass().getName());
+         }
       }
 
       return properties;

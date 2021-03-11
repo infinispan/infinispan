@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.obj2bytes;
 
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -62,10 +63,27 @@ public final class DataFormat {
       return marshaller == null ? null : marshaller.mediaType();
    }
 
+   /**
+    * @deprecated Replaced by {@link #initialize(RemoteCacheManager, String, boolean)}.
+    */
+   @Deprecated
    public void initialize(RemoteCacheManager remoteCacheManager, boolean serverObjectStorage) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
       this.isObjectStorage = serverObjectStorage;
+   }
+
+   public void initialize(RemoteCacheManager remoteCacheManager, String cacheName, boolean serverObjectStorage) {
+      this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
+      this.isObjectStorage = serverObjectStorage;
+      this.defaultMarshaller = remoteCacheManager.getMarshaller();
+      RemoteCacheConfiguration remoteCacheConfiguration = remoteCacheManager.getConfiguration().remoteCaches().get(cacheName);
+      if (remoteCacheConfiguration != null) {
+         Marshaller cacheMarshaller = remoteCacheConfiguration.marshaller();
+         if (cacheMarshaller != null) {
+            defaultMarshaller = cacheMarshaller;
+         }
+      }
    }
 
    private Marshaller resolveValueMarshaller() {

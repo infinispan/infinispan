@@ -572,9 +572,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    // Method that handles cache initialization - needed as a placeholder
    private void initRemoteCache(InternalRemoteCache<?, ?> remoteCache, OperationsFactory operationsFactory) {
       if (configuration.statistics().jmxEnabled()) {
-         remoteCache.init(marshaller, operationsFactory, configuration, mbeanObjectName);
+         remoteCache.init(operationsFactory, configuration, mbeanObjectName);
       } else {
-         remoteCache.init(marshaller, operationsFactory, configuration);
+         remoteCache.init(operationsFactory, configuration);
       }
    }
 

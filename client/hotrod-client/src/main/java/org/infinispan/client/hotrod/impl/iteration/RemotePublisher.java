@@ -23,7 +23,6 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -37,7 +36,6 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final OperationsFactory operationsFactory;
-   protected final Marshaller marshaller;
    private final String filterConverterFactory;
    private final byte[][] filterParams;
    private final IntSet segments;
@@ -48,10 +46,9 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
 
    private final Set<SocketAddress> failedServers = ConcurrentHashMap.newKeySet();
 
-   public RemotePublisher(OperationsFactory operationsFactory, Marshaller marshaller, String filterConverterFactory,
+   public RemotePublisher(OperationsFactory operationsFactory, String filterConverterFactory,
          byte[][] filterParams, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
       this.operationsFactory = operationsFactory;
-      this.marshaller = marshaller;
       this.filterConverterFactory = filterConverterFactory;
       this.filterParams = filterParams;
       SegmentConsistentHash segmentConsistentHash = (SegmentConsistentHash) operationsFactory.getConsistentHash();
