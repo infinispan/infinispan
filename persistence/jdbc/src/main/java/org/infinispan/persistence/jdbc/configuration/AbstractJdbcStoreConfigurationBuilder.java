@@ -4,6 +4,8 @@ import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreCon
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MINOR_VERSION;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DIALECT;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.MANAGE_CONNECTION_FACTORY;
+import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.READ_QUERY_TIMEOUT;
+import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.WRITE_QUERY_TIMEOUT;
 import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
 
 import java.lang.reflect.Constructor;
@@ -89,6 +91,16 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
 
    public S dbMinorVersion(Integer minorVersion) {
       attributes.attribute(DB_MINOR_VERSION).set(minorVersion);
+      return self();
+   }
+
+   public S readQueryTimeout(Integer queryTimeout) {
+      attributes.attribute(READ_QUERY_TIMEOUT).set(queryTimeout);
+      return self();
+   }
+
+   public S writeQueryTimeout(Integer queryTimeout) {
+      attributes.attribute(WRITE_QUERY_TIMEOUT).set(queryTimeout);
       return self();
    }
 
