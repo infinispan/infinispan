@@ -16,16 +16,20 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
    static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder("databaseType", null, DatabaseType.class).immutable().xmlName("dialect").build();
    static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder("databaseMajorVersion", null, Integer.class).immutable().xmlName("db-major-version").build();
    static final AttributeDefinition<Integer> DB_MINOR_VERSION = AttributeDefinition.builder("databaseMinorVersion", null, Integer.class).immutable().xmlName("db-minor-version").build();
+   static final AttributeDefinition<Integer> READ_QUERY_TIMEOUT = AttributeDefinition.builder("readQueryTimeout", 0, Integer.class).xmlName("read-query-timeout").build();
+   static final AttributeDefinition<Integer> WRITE_QUERY_TIMEOUT = AttributeDefinition.builder("writeQueryTimeout", 0, Integer.class).xmlName("write-query-timeout").build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractJdbcStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(),
-                              MANAGE_CONNECTION_FACTORY, DIALECT, DB_MAJOR_VERSION, DB_MINOR_VERSION);
+                              MANAGE_CONNECTION_FACTORY, DIALECT, DB_MAJOR_VERSION, DB_MINOR_VERSION, READ_QUERY_TIMEOUT, WRITE_QUERY_TIMEOUT);
    }
 
    private final Attribute<Boolean> manageConnectionFactory;
    private final Attribute<DatabaseType> dialect;
    private final Attribute<Integer> dbMajorVersion;
    private final Attribute<Integer> dbMinorVersion;
+   private final Attribute<Integer> readQueryTimeout;
+   private final Attribute<Integer> writeQueryTimeout;
    private final ConnectionFactoryConfiguration connectionFactory;
 
    private final List<ConfigurationInfo> subElements;
@@ -37,6 +41,8 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       dialect = attributes.attribute(DIALECT);
       dbMajorVersion = attributes.attribute(DB_MAJOR_VERSION);
       dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
+      readQueryTimeout = attributes.attribute(READ_QUERY_TIMEOUT);
+      writeQueryTimeout = attributes.attribute(WRITE_QUERY_TIMEOUT);
       subElements = new ArrayList<>(super.subElements());
       subElements.add(connectionFactory);
    }
@@ -64,6 +70,14 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
 
    public Integer dbMinorVersion() {
       return dbMinorVersion.get();
+   }
+
+   public Integer readQueryTimeout() {
+      return readQueryTimeout.get();
+   }
+
+   public Integer writeQueryTimeout() {
+      return writeQueryTimeout.get();
    }
 
    @Override

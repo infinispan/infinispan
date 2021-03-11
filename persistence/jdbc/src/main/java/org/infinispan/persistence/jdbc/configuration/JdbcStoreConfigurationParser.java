@@ -77,6 +77,12 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
             case DB_MINOR_VERSION:
                builder.dbMinorVersion(Integer.parseInt(value));
                break;
+            case READ_QUERY_TIMEOUT:
+               builder.readQueryTimeout(Integer.parseInt(value));
+               break;
+            case WRITE_QUERY_TIMEOUT:
+               builder.writeQueryTimeout(Integer.parseInt(value));
+               break;
             default:
                Parser.parseStoreAttribute(reader, i, builder);
                break;

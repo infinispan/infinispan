@@ -33,7 +33,16 @@
             <xs:documentation>Defines the minor version of the database.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-
+        <xs:attribute name="read-query-timeout" type="xs:nonNegativeInteger" use="optional">
+          <xs:annotation>
+            <xs:documentation>Defines the timeout in seconds for read queries. The default is 0 which indicates no timeout.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="write-query-timeout" type="xs:nonNegativeInteger" use="optional">
+          <xs:annotation>
+            <xs:documentation>Defines the timeout in seconds for write queries. The default is 0 which indicates no timeout.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

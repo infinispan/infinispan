@@ -337,6 +337,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
       } try {
          ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          prepareUpsertStatement(entry, keyStr, segment, ps);
          ps.executeUpdate();
       } finally {
@@ -344,8 +345,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void executeLegacyUpdate(Connection connection, MarshallableEntry entry, String keyStr, int segment)
-         throws InterruptedException, SQLException {
+   private void executeLegacyUpdate(Connection connection, MarshallableEntry entry, String keyStr, int segment) throws SQLException {
       String sql = tableManager.getSelectIdRowSql();
       if (log.isTraceEnabled()) {
          log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
@@ -353,6 +353,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       PreparedStatement ps = null;
       try {
          ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          ps.setString(1, keyStr);
          ResultSet rs = ps.executeQuery();
          boolean update = rs.next();
@@ -367,6 +368,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          prepareStatement(entry, keyStr, segment, ps, !update);
          ps.executeUpdate();
       } finally {
@@ -390,6 +392,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
             .using(() -> {
                      Connection connection = connectionFactory.getConnection();
                      PreparedStatement upsertBatch = connection.prepareStatement(tableManager.getUpsertRowSql());
+                     upsertBatch.setQueryTimeout(configuration.writeQueryTimeout());
                      return new KeyValuePair<>(connection, upsertBatch);
                   },
                   kvp -> createBatchFlowable(kvp.getValue(), publisher),
@@ -464,6 +467,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          String sql = tableManager.getSelectRowSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
+         ps.setQueryTimeout(configuration.readQueryTimeout());
          ps.setString(1, lockingKey);
          rs = ps.executeQuery();
          if (rs.next()) {
@@ -551,6 +555,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          }
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          ps.setString(1, keyStr);
          return ps.executeUpdate() == 1;
       } catch (SQLException ex) {

@@ -29,8 +29,10 @@ public enum Attribute {
    PASSWORD("password"),
    PREFIX("prefix"),
    PROPERTIES_FILE("properties-file"),
+   READ_QUERY_TIMEOUT("read-query-timeout"),
    TYPE("type"),
-   USERNAME("username")
+   USERNAME("username"),
+   WRITE_QUERY_TIMEOUT("write-query-timeout"),
    ;
 
    private final String name;
