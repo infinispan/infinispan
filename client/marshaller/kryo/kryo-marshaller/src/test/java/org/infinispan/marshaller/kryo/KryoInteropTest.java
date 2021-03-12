@@ -18,8 +18,7 @@ public class KryoInteropTest extends AbstractInteropTest {
    @BeforeClass
    protected void setup() throws Exception {
       KryoMarshaller marshaller = new KryoMarshaller();
-      Transcoder transcoder = new KryoTranscoder(marshaller);
-      cacheFactory = new EndpointsCacheFactory<>("KryoCache", marshaller, CacheMode.LOCAL, transcoder);
-      cacheFactory.setup();
+      Transcoder<Object> transcoder = new KryoTranscoder(marshaller);
+      cacheFactory = new EndpointsCacheFactory.Builder<String, Object>().withCacheName("KryoCache").withMarshaller(marshaller).withCacheMode(CacheMode.LOCAL).withMemcachedTranscoder(transcoder).build();
    }
 }

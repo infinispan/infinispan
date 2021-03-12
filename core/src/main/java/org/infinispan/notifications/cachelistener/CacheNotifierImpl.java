@@ -46,7 +46,6 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -1398,12 +1397,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             filterMediaType = useStorageFormat ? null : converter.format();
             if (filterMediaType == null) {
                // iterate in the storage format
-               chainedKeyDataConversion = chainedKeyDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(storage);
-               chainedValueDataConversion = chainedValueDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(storage);
+               chainedKeyDataConversion = chainedKeyDataConversion.withRequestMediaType(storage);
+               chainedValueDataConversion = chainedValueDataConversion.withRequestMediaType(storage);
             } else {
                // iterate in the filter format
-               chainedKeyDataConversion = chainedKeyDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(filterMediaType);
-               chainedValueDataConversion = chainedValueDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(filterMediaType);
+               chainedKeyDataConversion = chainedKeyDataConversion.withRequestMediaType(filterMediaType);
+               chainedValueDataConversion = chainedValueDataConversion.withRequestMediaType(filterMediaType);
             }
          }
 

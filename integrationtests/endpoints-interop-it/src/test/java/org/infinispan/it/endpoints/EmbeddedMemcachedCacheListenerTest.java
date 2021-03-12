@@ -29,8 +29,8 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, String>(
-            "memcachedCache", new SpyMemcachedMarshaller(), CacheMode.LOCAL, new MemcachedEncoder()).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, String>().withCacheName("memcachedCache")
+            .withMarshaller(new SpyMemcachedMarshaller()).withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterMethod

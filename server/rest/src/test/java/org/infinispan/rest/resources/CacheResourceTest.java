@@ -43,7 +43,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -192,8 +191,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    @Test
    public void shouldReadByteArrayWithPojoCache() {
       //given
-      Cache cache = restServer().getCacheManager().getCache("pojoCache").getAdvancedCache()
-            .withEncoding(IdentityEncoder.class);
+      Cache cache = restServer().getCacheManager().getCache("pojoCache").getAdvancedCache();
       cache.put("k1", "v1".getBytes());
 
       //when

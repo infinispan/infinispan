@@ -10,7 +10,9 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
  * Encoder that uses a {@link StreamingMarshaller} to convert objects to byte[] and back.
  *
  * @since 9.1
+ * @deprecated Since 12.1, to be removed in a future version.
  */
+@Deprecated
 public abstract class MarshallerEncoder implements Encoder {
 
    private final Marshaller marshaller;

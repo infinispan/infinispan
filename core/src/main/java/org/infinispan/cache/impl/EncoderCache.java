@@ -25,8 +25,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.InjectiveFunction;
@@ -538,21 +536,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       if (!required.isAssignableFrom(configured)) {
          throw CONTAINER.invalidEncodingClass(configured, required);
       }
-   }
-
-   /**
-    * If encoders and wrappers are all identity we should just return the normal cache and avoid all wrappings
-    *
-    * @param keyEncoderClass   the key encoder class
-    * @param valueEncoderClass the value encoder class
-    * @param keyWrapperClass   the key wrapper class
-    * @param valueWrapperClass the value wrapper class
-    * @return true if all classes are identity oness
-    */
-   private boolean allIdentity(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                               Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return keyEncoderClass == IdentityEncoder.class && valueEncoderClass == IdentityEncoder.class &&
-            keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class;
    }
 
    @Override

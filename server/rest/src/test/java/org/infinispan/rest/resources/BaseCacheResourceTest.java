@@ -32,7 +32,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -111,7 +110,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    public AdvancedCache getCache(String cacheName) {
-      return restServer().getCacheManager().getCache(cacheName, false).getAdvancedCache().withKeyEncoding(IdentityEncoder.class);
+      return restServer().getCacheManager().getCache(cacheName, false).getAdvancedCache();
    }
 
    @Test

@@ -30,8 +30,10 @@ public class DistEmbeddedHotRodBulkTest extends AbstractInfinispanTest {
 
     @BeforeClass
     protected void setup() throws Exception {
-        cacheFactory1 = new EndpointsCacheFactory<String, Integer>(CacheMode.DIST_SYNC, numOwners, false).setup();
-        cacheFactory2 = new EndpointsCacheFactory<String, Integer>(CacheMode.DIST_SYNC, numOwners, false).setup();
+        cacheFactory1 = new EndpointsCacheFactory.Builder<String, Integer>().withCacheMode(CacheMode.DIST_SYNC)
+              .withNumOwners(numOwners).withL1(false).build();
+        cacheFactory2 = new EndpointsCacheFactory.Builder<String, Integer>().withCacheMode(CacheMode.DIST_SYNC)
+              .withNumOwners(numOwners).withL1(false).build();
     }
 
     @AfterClass

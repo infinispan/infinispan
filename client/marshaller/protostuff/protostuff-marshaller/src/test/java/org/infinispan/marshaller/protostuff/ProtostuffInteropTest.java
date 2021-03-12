@@ -17,8 +17,8 @@ public class ProtostuffInteropTest extends AbstractInteropTest {
    @BeforeClass
    protected void setup() throws Exception {
       ProtostuffMarshaller marshaller = new ProtostuffMarshaller();
-      Transcoder transcoder = new ProtostuffTranscoder(marshaller);
-      cacheFactory = new EndpointsCacheFactory<>("protoCache", marshaller, CacheMode.LOCAL, transcoder);
-      cacheFactory.setup();
+      Transcoder<Object> transcoder = new ProtostuffTranscoder(marshaller);
+      cacheFactory = new EndpointsCacheFactory.Builder<String, Object>().withCacheName("protoCache")
+            .withMarshaller(marshaller).withCacheMode(CacheMode.LOCAL).withMemcachedTranscoder(transcoder).build();
    }
 }

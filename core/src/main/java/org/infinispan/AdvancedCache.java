@@ -818,7 +818,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param keyEncoder   {@link Encoder} for the keys.
     * @param valueEncoder {@link Encoder} for the values.
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoders.
+    * @deprecated Since 12.1, to be removed in a future version.
     */
+   @Deprecated
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder);
 
    /**
@@ -836,7 +838,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *
     * @param encoder {@link Encoder} used for both keys and values.
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoder.
+    * @deprecated Since 12.1, to be removed in a future version.
     */
+   @Deprecated
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder);
 
    /**
@@ -884,5 +888,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    DataConversion getValueDataConversion();
 
+   /**
+    * @deprecated Since 12.1, to be removed in a future version.
+    */
+   @Deprecated
    AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder);
 }

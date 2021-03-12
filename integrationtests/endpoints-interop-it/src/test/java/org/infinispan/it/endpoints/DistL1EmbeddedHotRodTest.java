@@ -25,8 +25,10 @@ public class DistL1EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<Integer, String>(CacheMode.DIST_SYNC, NUM_OWNERS, true).setup();
-      cacheFactory2 = new EndpointsCacheFactory<Integer, String>(CacheMode.DIST_SYNC, NUM_OWNERS, true).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<Integer, String>().withCacheMode(CacheMode.DIST_SYNC)
+            .withNumOwners(NUM_OWNERS).withL1(true).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<Integer, String>().withCacheMode(CacheMode.DIST_SYNC)
+            .withNumOwners(NUM_OWNERS).withL1(true).build();
 
       List<Cache<Integer, String>> caches = Arrays.asList(cacheFactory1.getEmbeddedCache(), cacheFactory2.getEmbeddedCache());
       TestingUtil.blockUntilViewsReceived(30000, caches);

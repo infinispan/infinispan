@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -32,8 +31,8 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
-      cacheFactory2 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
    }
 
    @AfterClass
@@ -60,8 +59,8 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
    public void testEmbeddedPutRestHotRodGet() {
       final String key = "2";
 
-      // 1. Put with Embedded, bypassing all encodings
-      Cache cache = cacheFactory2.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
+      // 1. Put with Embedded
+      Cache cache = cacheFactory2.getEmbeddedCache().getAdvancedCache();
       assertNull(cache.put(key, "v1"));
 
       // 2. Get with Hot Rod via remote client, will use the configured encoding
@@ -82,7 +81,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
 
       // 2. Get with Embedded
-      Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
+      Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache();
       assertEquals("v1", embeddedCache.get(key));
 
       // 3. Get with REST

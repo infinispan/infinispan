@@ -38,7 +38,7 @@ Will return the value in JSON format:
 }
 ----
 
-== Installing Transcoders in Embedded Deloyments
+== Installing Transcoders in Embedded Deployments
 {brandname} Server includes transcoders by default. However, when running
 {brandname} as a library, you must add the following to your project:
 
@@ -46,46 +46,3 @@ Will return the value in JSON format:
 ----
 org.infinispan:infinispan-server-core
 ----
-
-== Transcoders and Encoders
-Usually there will be none or only one data conversion involved in a cache operation:
-
- * No conversion by default on caches using in embedded or server mode;
- * _Encoder_ based conversion for embedded caches without MediaType configured, but using OFF_HEAP or BINARY;
- * _Transcoder_ based conversion for caches used in server mode with multiple REST and Hot Rod clients sending
-and receiving data in different formats. Those caches will have MediaType configured describing the storage.
-
-But it's possible to have both encoders and transcoders being used simultaneously for advanced use cases.
-
-Consider an example, a cache that stores marshalled objects (with jboss marshaller) content but for security reasons a transparent encryption layer should be added in order to avoid storing "plain" data to an external store.
-Clients should be able to read and write data in multiple formats.
-
-This can be achieved by configuring the cache with the the MediaType that describes the storage regardless of the encoding layer:
-
-[source,java]
-----
-include::code_examples/EncodeConfigMediaType.java[]
-----
-
-The transparent encryption can be added by decorating the cache with a special _Encoder_ that encrypts/decrypts with storing/retrieving, for example:
-
-[source,java]
-----
-include::code_examples/EncoderScrambler.java[]
-----
-
-To make sure all data written to the cache will be stored encrypted, it's necessary to decorate the cache with the Encoder above and perform all cache operations in this decorated cache:
-
-[source,java]
-----
-include::code_examples/EncoderScramblerDecorateCache.java[]
-----
-
-The capability of reading data in multiple formats can be added by decorating the cache with the desired MediaType:
-
-[source,java]
-----
-include::code_examples/EncoderMediaTypeDecorateCache.java[]
-----
-
-Internally, {brandname} will first apply the encoder _fromStorage_ operation to obtain the entries, that will be in "application/x-jboss-marshalling" format and then apply a successive conversion to "application/xml" by using the adequate Transcoder.
