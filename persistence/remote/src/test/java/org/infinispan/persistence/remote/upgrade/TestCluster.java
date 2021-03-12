@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -29,6 +30,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.Assert;
 
@@ -38,6 +40,7 @@ class TestCluster {
    private List<HotRodServer> hotRodServers;
    private List<EmbeddedCacheManager> embeddedCacheManagers;
    private RemoteCacheManager remoteCacheManager;
+   private EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
 
    private TestCluster(List<HotRodServer> hotRodServers, List<EmbeddedCacheManager> embeddedCacheManagers,
                        RemoteCacheManager remoteCacheManager) {
@@ -50,6 +53,14 @@ class TestCluster {
       return remoteCacheManager.getCache(cacheName);
    }
 
+   <K, V> RemoteCache<K, V> getRemoteCache(String cacheName, boolean transactional) {
+      if (!transactional) {
+         return getRemoteCache(cacheName);
+      } else {
+         return remoteCacheManager.getCache(cacheName, TransactionMode.NON_XA, transactionManager);
+      }
+   }
+
    void destroy() {
       embeddedCacheManagers.forEach(TestingUtil::killCacheManagers);
       embeddedCacheManagers.clear();
@@ -57,6 +68,7 @@ class TestCluster {
       hotRodServers.clear();
       HotRodClientTestingUtil.killRemoteCacheManagers(remoteCacheManager);
       remoteCacheManager = null;
+      EmbeddedTransactionManager.destroy();
    }
 
    <K, V> Cache<K, V> getEmbeddedCache(String name) {
