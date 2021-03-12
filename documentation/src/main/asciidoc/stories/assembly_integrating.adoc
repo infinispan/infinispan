@@ -2,10 +2,7 @@
 :context: integration
 
 include::assembly_wildfly_modules.adoc[leveloffset=+0]
-include::{topics}/integrations_apache_lucene.adoc[leveloffset=+0]
-include::{topics}/integrations_hibernate_search.adoc[leveloffset=+0]
 include::{topics}/integrations_hibernate_cache.adoc[leveloffset=+0]
-include::{topics}/integrations_hibernate_ogm.adoc[leveloffset=+0]
 include::{topics}/integrations_spring.adoc[leveloffset=+0]
 
 // Restore the parent context.
