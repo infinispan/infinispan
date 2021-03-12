@@ -1045,7 +1045,7 @@ class IndexNode {
             if (trace) {
                log.trace("Loaded from " + file + ":" + readOffset);
             }
-            return headerAndKey.loadMetadataAndValue(handle, readOffset);
+            return headerAndKey.loadMetadataAndValue(handle, readOffset, key != null);
          } finally {
             handle.close();
          }
