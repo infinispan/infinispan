@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
@@ -10,13 +11,17 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -31,6 +36,32 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
    protected static final String CACHE_NAME = "theCache";
 
    public static final int ENTRIES = 50;
+   private TransactionMode transactionMode;
+   private boolean autoCommit;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new HotRodUpgradePojoTest().autoCommit(false).transaction(TRANSACTIONAL),
+            new HotRodUpgradePojoTest().autoCommit(true).transaction(TRANSACTIONAL),
+            new HotRodUpgradePojoTest().transaction(TransactionMode.NON_TRANSACTIONAL),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + transactionMode + ", autoCommit=" + autoCommit + "]";
+   }
+
+   private HotRodUpgradePojoTest transaction(TransactionMode transactionMode) {
+      this.transactionMode = transactionMode;
+      return this;
+   }
+
+   private HotRodUpgradePojoTest autoCommit(boolean autoCommit) {
+      this.autoCommit = autoCommit;
+      return this;
+   }
 
    @BeforeMethod
    public void setup() throws Exception {
@@ -38,6 +69,12 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       config.clustering().cacheMode(CacheMode.DIST_SYNC);
       config.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       config.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
+
+      config.transaction().transactionMode(transactionMode);
+      if (transactionMode != TransactionMode.NON_TRANSACTIONAL) {
+         config.transaction().transactionMode(transactionMode).autoCommit(autoCommit)
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
+      }
 
       sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .marshaller(ProtoStreamMarshaller.class)
@@ -54,13 +91,14 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronization() throws Exception {
-      RemoteCache<Object, Object> sourceRemoteCache = sourceCluster.getRemoteCache(CACHE_NAME);
+      RemoteCache<Object, Object> sourceRemoteCache = sourceCluster.getRemoteCache(CACHE_NAME, transactionMode.equals(TRANSACTIONAL));
       RemoteCache<Object, Object> targetRemoteCache = targetCluster.getRemoteCache(CACHE_NAME);
 
-      // Populate source cluster
+      startTxIfNeeded(sourceRemoteCache);
       for (int i = 0; i < ENTRIES; i++) {
          sourceRemoteCache.put(i, new CustomObject("text", i), 20, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
       }
+      commitTxIfNeeded(sourceRemoteCache);
 
       assertEquals(ENTRIES, sourceRemoteCache.size());
 
@@ -91,10 +129,12 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       Cache<Object, Object> sourceCache = sourceCluster.getEmbeddedCache(CACHE_NAME);
       Cache<Object, Object> targetCache = targetCluster.getEmbeddedCache(CACHE_NAME);
 
+      startTxIfNeeded(sourceCache);
       // Populate source cluster
       for (int i = 0; i < ENTRIES; i++) {
          sourceCache.put(i, new CustomObject("text", i), 20, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
       }
+      commitTxIfNeeded(sourceCache);
 
       assertEquals(ENTRIES, sourceCache.size());
 
@@ -125,4 +165,33 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       targetCluster.destroy();
    }
 
+   private void startTxIfNeeded(Cache<Object, Object> cache) throws Exception {
+      Configuration config = cache.getCacheConfiguration();
+      if (config.transaction().transactionMode().isTransactional() && !config.transaction().autoCommit()) {
+         cache.getAdvancedCache().getTransactionManager().begin();
+      }
+   }
+
+   private void commitTxIfNeeded(Cache<Object, Object> cache) throws Exception {
+      Configuration config = cache.getCacheConfiguration();
+      if (config.transaction().transactionMode().isTransactional() && !config.transaction().autoCommit()) {
+         cache.getAdvancedCache().getTransactionManager().commit();
+      }
+   }
+
+   private void startTxIfNeeded(RemoteCache<Object, Object> remoteCache) throws Exception {
+      String name = remoteCache.getName();
+      Configuration config = sourceCluster.getEmbeddedCache(name).getCacheConfiguration();
+      if (config.transaction().transactionMode().isTransactional() && !config.transaction().autoCommit()) {
+         remoteCache.getTransactionManager().begin();
+      }
+   }
+
+   private void commitTxIfNeeded(RemoteCache<Object, Object> remoteCache) throws Exception {
+      String name = remoteCache.getName();
+      Configuration config = sourceCluster.getEmbeddedCache(name).getCacheConfiguration();
+      if (config.transaction().transactionMode().isTransactional() && !config.transaction().autoCommit()) {
+         remoteCache.getTransactionManager().commit();
+      }
+   }
 }

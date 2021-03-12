@@ -1202,7 +1202,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private <K, V> Flowable<MVCCEntry<K, V>> toMvccEntryFlowable(TxInvocationContext<AbstractCacheTransaction> ctx,
          BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
       return Flowable.fromIterable(ctx.getCacheTransaction().getAllModifications())
-            .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE))
+            .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE | FlagBitSets.ROLLING_UPGRADE))
             .concatMap(writeCommand -> entriesFromCommand(writeCommand, ctx, commandKeyPredicate));
    }
 

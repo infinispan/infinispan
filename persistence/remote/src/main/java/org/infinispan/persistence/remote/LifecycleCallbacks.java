@@ -24,6 +24,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.MIGRATION_TASK, new MigrationTask.Externalizer());
       externalizerMap.put(ExternalizerIds.REMOVED_FILTER, new RemovedFilter.Externalizer());
       externalizerMap.put(ExternalizerIds.DISCONNECT_REMOTE_STORE, new DisconnectRemoteStoreTask.Externalizer());
+      externalizerMap.put(ExternalizerIds.ENTRY_WRITER, new MigrationTask.EntryWriterExternalizer());
    }
 
 }

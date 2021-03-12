@@ -36,11 +36,12 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
     * @param ctx the invocation context
     * @param versionSeen what version has been seen for this entry
     * @param versionGenerator generator to generate a new version if needed
+    * @param rollingUpgrade
     * @return whether a write skew occurred for this entry
     */
    public CompletionStage<Boolean> performWriteSkewCheck(EntryLoader<K, V> entryLoader, int segment,
                                         TxInvocationContext<?> ctx, EntryVersion versionSeen,
-                                        VersionGenerator versionGenerator) {
+                                        VersionGenerator versionGenerator, boolean rollingUpgrade) {
       if (versionSeen == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", toStr(key));
@@ -50,7 +51,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
       }
       CompletionStage<IncrementableEntryVersion> entryStage;
       if (ctx.isOriginLocal()) {
-         entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator);
+         entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator, rollingUpgrade);
       } else {
          // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
          // so the version in context should be up-to-date
@@ -58,7 +59,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
          if (prevVersion == null) {
             // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
             // from cache loader - we have to force load
-            entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator);
+            entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator, rollingUpgrade);
          } else {
             return CompletableFutures.booleanStage(skewed(prevVersion, versionSeen, versionGenerator));
          }
@@ -83,7 +84,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
-   private CompletionStage<IncrementableEntryVersion> getCurrentEntryVersion(EntryLoader<K, V> entryLoader, int segment, TxInvocationContext<?> ctx, VersionGenerator versionGenerator) {
+   private CompletionStage<IncrementableEntryVersion> getCurrentEntryVersion(EntryLoader<K, V> entryLoader, int segment, TxInvocationContext ctx, VersionGenerator versionGenerator, boolean rollingUpgrade) {
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
       // on origin, the version seen is acquired without the lock, so we have to retrieve it again
       CompletionStage<InternalCacheEntry<K, V>> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
@@ -102,6 +103,9 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
          }
          IncrementableEntryVersion prevVersion = versionFromEntry(ice);
          if (prevVersion == null) {
+            if (rollingUpgrade) {
+               return versionGenerator.nonExistingVersion();
+            }
             throw new IllegalStateException("Entries cannot have null versions!");
          }
          return prevVersion;
