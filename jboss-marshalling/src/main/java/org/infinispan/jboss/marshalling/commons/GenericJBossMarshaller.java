@@ -28,6 +28,12 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
    public GenericJBossMarshaller(ClassLoader classLoader, ClassAllowList classAllowList) {
       super();
       if (classLoader == null) {
+         classLoader = classAllowList != null ? classAllowList.getClassLoader() : null;
+      }
+      if (classLoader == null) {
+         classLoader = Thread.currentThread().getContextClassLoader();
+      }
+      if (classLoader == null) {
          classLoader = getClass().getClassLoader();
       }
       baseCfg.setClassResolver(classAllowList == null ?
