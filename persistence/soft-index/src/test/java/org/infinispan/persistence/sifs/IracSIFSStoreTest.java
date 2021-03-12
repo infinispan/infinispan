@@ -22,7 +22,6 @@ public class IracSIFSStoreTest extends BaseIracPersistenceTest<String> {
    @Override
    protected void configure(ConfigurationBuilder builder) {
       builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .segmented(false)
             .dataLocation(tmpDirectory)
             .indexLocation(tmpDirectory);
    }

@@ -1,9 +1,7 @@
 package org.infinispan.util.concurrent;
 
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +23,6 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
 
    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    @Inject ScheduledExecutorService scheduler;
-   @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   @Inject Executor executor;
 
    @Override
    public AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay, TimeUnit unit) {
@@ -35,16 +31,6 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
          task.future = scheduler.schedule(task, initialDelay, unit);
       }
       return task;
-   }
-
-   @Override
-   public <T> void complete(CompletableFuture<? super T> future, T value) {
-      // This is just a best effort to eliminate context switch if there no dependents.
-      if (future.getNumberOfDependents() > 0) {
-         executor.execute(() -> future.complete(value));
-      } else {
-         future.complete(value);
-      }
    }
 
    private class ReschedulingTask implements AutoCloseable, Runnable {

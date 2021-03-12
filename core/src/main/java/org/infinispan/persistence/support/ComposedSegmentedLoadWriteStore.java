@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
@@ -24,6 +23,7 @@ import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
@@ -250,7 +250,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
          AdvancedLoadWriteStore<K, V> newStore = PersistenceUtil.createStoreInstance(storeConfiguration);
          newStore.init(new InitializationContextImpl(storeConfiguration, cache, keyPartitioner, ctx.getPersistenceMarshaller(), ctx.getTimeService(),
                ctx.getByteBufferFactory(), ctx.getMarshallableEntryFactory(), ctx.getNonBlockingExecutor(), ctx.getGlobalConfiguration(),
-               ctx.getBlockingManager(), ctx.getNonBlockingManager()));
+               ctx.getBlockingManager()));
          newStore.start();
          stores.set(segment, newStore);
       }

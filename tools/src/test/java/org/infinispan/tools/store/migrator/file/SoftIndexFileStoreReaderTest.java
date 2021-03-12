@@ -34,7 +34,9 @@ public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
    @Factory
    public Object[] factory() {
       return new Object[] {
+            new SoftIndexFileStoreReaderTest(),
             new SoftIndexFileStoreReaderTest().segmented(59),
+            new SoftIndexFileStoreReaderTest().majorVersion(9),
             new SoftIndexFileStoreReaderTest().majorVersion(9).segmented(59),
       };
    }

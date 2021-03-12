@@ -38,7 +38,6 @@ public class SoftIndexFileStoreRestartTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.LOCAL);
       builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .segmented(false)
             .indexLocation(tmpDirectory)
             .dataLocation(tmpDirectory)
             .purgeOnStartup(false); //avoid cleanup the store after restarting

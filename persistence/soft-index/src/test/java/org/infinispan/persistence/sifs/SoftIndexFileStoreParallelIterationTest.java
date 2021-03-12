@@ -16,7 +16,6 @@ public class SoftIndexFileStoreParallelIterationTest extends ParallelIterationTe
    protected void configurePersistence(ConfigurationBuilder cb) {
       location = CommonsTestingUtil.tmpDirectory(this.getClass());
       cb.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .segmented(false)
             .dataLocation(location + "/data")
             .indexLocation(location);
    }

@@ -11,7 +11,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -65,12 +64,6 @@ public interface InitializationContext {
     * @return a manager that should be used to execute blocking operations.
     */
    BlockingManager getBlockingManager();
-
-   /**
-    * Returns a manager that is designed to help with non blocking operations.
-    * @return a manager that can be used to help with offloading non blocking work.
-    */
-   NonBlockingManager getNonBlockingManager();
 
    /**
     * Should be used to build all {@link MarshallableEntry} objects.

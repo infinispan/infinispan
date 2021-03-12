@@ -279,26 +279,32 @@ class Index {
                      break;
                   case UPDATE:
                      recordChange = IndexNode.RecordChange.INCREASE;
-                     overwriteHook = (overwritten, prevFile, prevOffset) -> {
-                        request.setResult(overwritten);
-                        if (request.getOffset() >= 0 && prevOffset < 0) {
-                           size.incrementAndGet();
-                        } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                           size.decrementAndGet();
+                     overwriteHook = new IndexNode.OverwriteHook() {
+                        @Override
+                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                           request.setResult(overwritten);
+                           if (request.getOffset() >= 0 && prevOffset < 0) {
+                              size.incrementAndGet();
+                           } else if (request.getOffset() < 0 && prevOffset >= 0) {
+                              size.decrementAndGet();
+                           }
                         }
                      };
                      break;
                   case DROPPED:
                      recordChange = IndexNode.RecordChange.DECREASE;
-                     overwriteHook = (overwritten, prevFile, prevOffset) -> {
-                        if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                           size.decrementAndGet();
+                     overwriteHook = new IndexNode.OverwriteHook() {
+                        @Override
+                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                           if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+                              size.decrementAndGet();
+                           }
                         }
                      };
                      break;
                   case FOUND_OLD:
                      recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
-                     overwriteHook = IndexNode.NOOP_HOOK;
+                     overwriteHook = IndexNode.OverwriteHook.NOOP;
                      break;
                   default:
                      throw new IllegalArgumentException(request.toString());

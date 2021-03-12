@@ -73,7 +73,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
       Cache<?, ?> cache = mock(Cache.class);
       when(cache.getCacheConfiguration()).thenReturn(new ConfigurationBuilder().build());
 
-      ctx = new DummyInitializationContext(null, cache, new TestObjectStreamMarshaller(), null, null, null, null, null, null, null);
+      ctx = new DummyInitializationContext(null, cache, new TestObjectStreamMarshaller(), null, null, null, null, null, null);
       tableManager = TableManagerFactory.getManager(ctx, connectionFactory, storeBuilder.create(), "aName");
    }
 

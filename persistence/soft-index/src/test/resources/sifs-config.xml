@@ -8,7 +8,7 @@
 
       <local-cache name="testCache">
          <persistence>
-            <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:${infinispan.core.schema.version}" compaction-threshold="0.5" open-files-limit="1000" segmented="false">
+            <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:${infinispan.core.schema.version}" compaction-threshold="0.5" open-files-limit="1000">
                <index path="/tmp/sifs/testCache/index" segments="3" max-node-size="4096" max-queue-length="1000" min-node-size="4096"/>
                <data path="/tmp/sifs/testCache/data" max-file-size="1678" sync-writes="true"/>
             </soft-index-file-store>

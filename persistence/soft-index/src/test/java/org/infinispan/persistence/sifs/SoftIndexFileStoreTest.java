@@ -5,23 +5,19 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.CompletionStage;
-
 import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
-import org.infinispan.persistence.BaseNonBlockingStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,8 +29,9 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(groups = "unit", testName = "persistence.SoftIndexFileStoreTest")
-public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
+public class SoftIndexFileStoreTest extends BaseStoreTest {
 
+   SoftIndexFileStore store;
    String tmpDirectory;
    boolean startIndex = true;
    boolean keepIndex = false;
@@ -50,18 +47,8 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
-      return configurationBuilder.persistence()
-            .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-               .segmented(false)
-               .indexLocation(tmpDirectory).dataLocation(tmpDirectory)
-               .maxFileSize(1000)
-            .build();
-   }
-
-   @Override
-   protected NonBlockingStore createStore() {
-      return new NonBlockingSoftIndexFileStore() {
+   protected AdvancedLoadWriteStore createStore() {
+      store = new SoftIndexFileStore() {
          boolean firstTime = true;
 
          @Override
@@ -72,34 +59,37 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
          }
 
          @Override
-         public CompletionStage<Void> start(InitializationContext ctx) {
-            return super.start(ctx).whenComplete((ignore, t) -> {
-               if (!firstTime) {
-                  assertEquals(keepIndex, isIndexLoaded());
-               }
-               firstTime = false;
-            });
+         public void start() {
+            super.start();
+            if (!firstTime) {
+               assertEquals(keepIndex, isIndexLoaded());
+            }
+            firstTime = false;
          }
 
          @Override
-         public CompletionStage<Void> stop() {
-            return super.stop()
-                  .whenComplete((ignore, t) -> {
-                     if (!keepIndex) {
-                        Util.recursiveFileRemove(getIndexLocation().toFile());
-                     }
-                  });
+         public void stop() {
+            super.stop();
+            if (!keepIndex) {
+               Util.recursiveFileRemove(getIndexLocation().toFile());
+            }
          }
       };
+      ConfigurationBuilder builder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false);
+      builder.persistence()
+            .addStore(SoftIndexFileStoreConfigurationBuilder.class)
+            .indexLocation(tmpDirectory).dataLocation(tmpDirectory)
+            .maxFileSize(1000);
+
+      Configuration c = builder.build();
+      store.init(createContext(c));
+      return store;
    }
 
    @Override
    protected boolean storePurgesAllExpired() {
       return false;
-   }
-
-   public void testClear() {
-      CompletionStages.join(store.clear());
    }
 
    public void testLoadUnload() {
@@ -133,7 +123,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       store.write(entry1);
 
       store.stop();
-      store.start(initializationContext);
+      store.start();
 
       MarshallableEntry entry = store.loadEntry("k1");
       assertNotNull(entry);
@@ -141,7 +131,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       store.write(entry2);
 
       store.stop();
-      store.start(initializationContext);
+      store.start();
 
       entry = store.loadEntry("k1");
       assertNotNull(entry);
@@ -158,7 +148,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       store.delete(KEY);
 
       store.stop();
-      store.start(initializationContext);
+      store.start();
 
       assertNull(store.loadEntry(KEY));
       store.write(entry2);
@@ -167,11 +157,11 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       store.stop();
       startIndex = false;
-      store.start(initializationContext);
+      store.start();
 
       assertEquals(entry1.getValue(), store.loadEntry(KEY).getValue());
       startIndex = true;
-      ((NonBlockingSoftIndexFileStore) store.delegate()).startIndex();
+      store.startIndex();
    }
 
    // test for ISPN-5753
@@ -179,12 +169,12 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       // write immortal entry
       store.write(marshalledEntry(internalCacheEntry("key", "value1", -1)));
       writeGibberish(); // make sure that compaction happens - value1 is evacuated
-      log.debug("Size :" + store.size(IntSets.immutableEmptySet()));
+      log.debug("Size :" + store.size());
       store.write(marshalledEntry(internalCacheEntry("key", "value2", 1)));
       timeService.advance(2);
       writeGibberish(); // make sure that compaction happens - value2 expires
       store.stop();
-      store.start(initializationContext);
+      store.start();
       // value1 has been overwritten and value2 has expired
       MarshallableEntry entry = store.loadEntry("key");
       assertNull(entry != null ? entry.getKey() + "=" + entry.getValue() : null, entry);

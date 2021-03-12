@@ -12,18 +12,21 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
-import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.sifs.SoftIndexFileStore;
+import org.infinispan.persistence.spi.InitializationContext;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @BuiltBy(SoftIndexFileStoreConfigurationBuilder.class)
-@ConfigurationFor(NonBlockingSoftIndexFileStore.class)
+@ConfigurationFor(SoftIndexFileStore.class)
 @SerializedWith(SoftIndexFileStoreSerializer.class)
-public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
+public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SoftIndexFileStoreConfiguration> implements ConfigurationInfo {
 
    public static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder("openFilesLimit", 1000).immutable().build();
    public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
@@ -50,6 +53,30 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
       index = indexConfiguration;
       data = dataConfiguration;
       elements = Arrays.asList(index, data);
+   }
+
+   @Override
+   public SoftIndexFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
+      AttributeSet set = SoftIndexFileStoreConfiguration.attributeDefinitionSet();
+      set.read(attributes);
+
+      IndexConfigurationBuilder newIndex = new IndexConfigurationBuilder();
+      DataConfigurationBuilder newData = new DataConfigurationBuilder();
+
+      newIndex.read(index);
+      newData.read(data);
+
+      String cacheName = ctx.getCache().getName();
+
+      String indexLocation = newIndex.attributes().attribute(IndexConfiguration.INDEX_LOCATION).get();
+      indexLocation = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), indexLocation, cacheName, "data").toString();
+      newIndex.indexLocation(fileLocationTransform(indexLocation, segment));
+
+      String dataLocation = newData.attributes().attribute(DataConfiguration.DATA_LOCATION).get();
+      dataLocation = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), dataLocation, cacheName, "index").toString();
+      newData.dataLocation(fileLocationTransform(dataLocation, segment));
+
+      return new SoftIndexFileStoreConfiguration(set.protect(), async(), newIndex.create(), newData.create());
    }
 
    @Override

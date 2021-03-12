@@ -1,7 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.persistence.spi.MarshallableEntry;
 
@@ -9,16 +7,15 @@ import org.infinispan.persistence.spi.MarshallableEntry;
  * Request to persist entry in log file or request executed by the log appender thread.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
- * @author William Burns &lt;wburns@redhat.com&gt;
  */
-class LogRequest extends CompletableFuture<Void> {
+class LogRequest {
 
    enum Type {
       STORE,
       DELETE,
       CLEAR_ALL,
-      PAUSE,
-      RESUME
+      STOP,
+      PAUSE
    }
 
    private final Type type;
@@ -30,6 +27,7 @@ class LogRequest extends CompletableFuture<Void> {
    private final ByteBuffer serializedInternalMetadata;
    private final long created;
    private final long lastUsed;
+   private boolean canContinue = false;
    private volatile IndexRequest indexRequest;
 
    private LogRequest(Type type, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
@@ -62,12 +60,12 @@ class LogRequest extends CompletableFuture<Void> {
       return new LogRequest(Type.CLEAR_ALL);
    }
 
-   public static LogRequest pauseRequest() {
-      return new LogRequest(Type.PAUSE);
+   public static LogRequest stopRequest() {
+      return new LogRequest(Type.STOP);
    }
 
-   public static LogRequest resumeRequest() {
-      return new LogRequest(Type.RESUME);
+   public static LogRequest pauseRequest() {
+      return new LogRequest(Type.PAUSE);
    }
 
    public int length() {
@@ -113,12 +111,12 @@ class LogRequest extends CompletableFuture<Void> {
       return type == Type.CLEAR_ALL;
    }
 
-   public boolean isPause() {
-      return type == Type.PAUSE;
+   public boolean isStop() {
+      return type == Type.STOP;
    }
 
-   public boolean isResume() {
-      return type == Type.RESUME;
+   public boolean isPause() {
+      return type == Type.PAUSE;
    }
 
    public void setIndexRequest(IndexRequest indexRequest) {
@@ -127,5 +125,14 @@ class LogRequest extends CompletableFuture<Void> {
 
    public IndexRequest getIndexRequest() {
       return indexRequest;
+   }
+
+   public synchronized void pause() throws InterruptedException {
+      while (!canContinue) wait();
+   }
+
+   public synchronized void resume() {
+      canContinue = true;
+      notify();
    }
 }

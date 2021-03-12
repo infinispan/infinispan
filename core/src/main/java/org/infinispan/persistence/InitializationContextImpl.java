@@ -13,7 +13,6 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
@@ -32,14 +31,13 @@ public class InitializationContextImpl implements InitializationContext {
    private final Executor nonBlockingExecutor;
    private final GlobalConfiguration globalConfiguration;
    private final BlockingManager blockingManager;
-   private final NonBlockingManager nonBlockingManager;
 
 
    public InitializationContextImpl(StoreConfiguration configuration, Cache cache, KeyPartitioner keyPartitioner,
                                     PersistenceMarshaller marshaller, TimeService timeService,
                                     ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshallableEntryFactory,
                                     Executor nonBlockingExecutor, GlobalConfiguration globalConfiguration,
-                                    BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
+                                    BlockingManager blockingManager) {
       this.configuration = configuration;
       this.cache = cache;
       this.keyPartitioner = keyPartitioner;
@@ -50,7 +48,6 @@ public class InitializationContextImpl implements InitializationContext {
       this.nonBlockingExecutor = nonBlockingExecutor;
       this.globalConfiguration = globalConfiguration;
       this.blockingManager = blockingManager;
-      this.nonBlockingManager = nonBlockingManager;
    }
 
    @Override
@@ -98,11 +95,6 @@ public class InitializationContextImpl implements InitializationContext {
    @Override
    public BlockingManager getBlockingManager() {
       return blockingManager;
-   }
-
-   @Override
-   public NonBlockingManager getNonBlockingManager() {
-      return nonBlockingManager;
    }
 
    @Override
