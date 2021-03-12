@@ -50,13 +50,26 @@ public class EntryRecord {
       return meta == null ? -1 :meta.getLastUsed();
    }
 
-   public EntryRecord loadMetadataAndValue(FileProvider.Handle handle, int offset) throws IOException {
+   public EntryRecord loadMetadataAndValue(FileProvider.Handle handle, int offset, boolean saveValue) throws IOException {
       loadMetadata(handle, offset);
+      byte[] readValue = null;
       if (value == null) {
-         value = readValue(handle, header, offset);
+         readValue = readValue(handle, header, offset);
+         if (saveValue) {
+            value = readValue;
+         }
       }
       if (internalMetadata == null && header.internalMetadataLength() > 0) {
          internalMetadata = readInternalMetadata(handle, header, offset);
+      }
+      if (value == null) {
+         assert !saveValue;
+         assert readValue != null;
+         EntryRecord copyRecord = new EntryRecord(header, key);
+         copyRecord.meta = meta;
+         copyRecord.internalMetadata = internalMetadata;
+         copyRecord.value = readValue;
+         return copyRecord;
       }
       return this;
    }
