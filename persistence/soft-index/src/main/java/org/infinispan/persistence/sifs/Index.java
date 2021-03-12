@@ -536,6 +536,6 @@ class Index {
 
    <V> Flowable<EntryRecord> publish(IntSet cacheSegments, boolean loadValues) {
       return Flowable.fromArray(segments)
-            .flatMap(segment -> segment.root.publish(cacheSegments, loadValues));
+            .concatMap(segment -> segment.root.publish(cacheSegments, loadValues));
    }
 }
