@@ -4,15 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -113,8 +116,16 @@ public class Loader {
             return parent;
          }
          Map<String, URL> urls = new LinkedHashMap<>();
-         Files.find(path, Integer.MAX_VALUE, (p, a) -> p.toString().endsWith(".jar") || a.isDirectory(), FileVisitOption.FOLLOW_LINKS).forEach(p -> {
-            try {
+
+         Files.walkFileTree(path, Collections.singleton(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path p, BasicFileAttributes attrs) throws IOException {
+               urls.put(p.toString(), p.toUri().toURL());
+               return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
                if (p.toString().endsWith(".jar")) {
                   String artifact = extractArtifactName(p.getFileName().toString());
                   if (urls.containsKey(artifact)) {
@@ -122,11 +133,18 @@ public class Loader {
                   } else {
                      urls.put(artifact, p.toUri().toURL());
                   }
-               } else {
-                  // It's a directory
-                  urls.put(p.toString(), p.toUri().toURL());
                }
-            } catch (MalformedURLException e) {
+               return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path p, IOException exc) throws IOException {
+               return FileVisitResult.SKIP_SUBTREE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path p, IOException exc) throws IOException {
+               return FileVisitResult.CONTINUE;
             }
          });
          final URL[] array = urls.values().toArray(new URL[urls.size()]);
