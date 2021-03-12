@@ -23,8 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.CommandsFactory;
@@ -242,14 +240,6 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          assertEquals(metadata.lifespan(), -1);
          assertEquals(metadata.maxIdle(), Long.parseLong(key.substring(4)));
       }
-   }
-
-   private static void mockEntrySetStream(CacheStream mockStream, EncoderCache mockCache) {
-      CacheSet cacheSet = mock(CacheSet.class);
-      when(cacheSet.stream()).thenReturn(mockStream);
-      AdvancedCache mockEncodingCache = mock(AdvancedCache.class);
-      when(mockCache.withEncoding(any(Class.class), any(Class.class))).thenReturn(mockEncodingCache);
-      when(mockEncodingCache.cacheEntrySet()).thenReturn(cacheSet);
    }
 
    private void verifyEvents(boolean isClustered, StateListener<String, String> listener,

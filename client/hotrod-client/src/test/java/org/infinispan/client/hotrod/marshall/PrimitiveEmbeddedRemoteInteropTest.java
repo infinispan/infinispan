@@ -11,7 +11,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -41,7 +40,7 @@ public class PrimitiveEmbeddedRemoteInteropTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager(builder);
       cache = cacheManager.getCache();
 
-      embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
+      embeddedCache = cache.getAdvancedCache();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 

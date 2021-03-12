@@ -28,7 +28,7 @@ public class EmbeddedHotRodBulkTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<Integer, Integer>(CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<Integer, Integer>().withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterClass

@@ -18,8 +18,10 @@ public class ByteArrayKeyDistEmbeddedHotRodTest extends ByteArrayKeyReplEmbedded
    @Override
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<>(CacheMode.DIST_SYNC, 1, false).setup();
-      cacheFactory2 = new EndpointsCacheFactory<>(CacheMode.DIST_SYNC, 1, false).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.DIST_SYNC).withNumOwners(1)
+            .withL1(false).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.DIST_SYNC).withNumOwners(1)
+            .withL1(false).build();
    }
 
    @Override

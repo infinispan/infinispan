@@ -3,7 +3,6 @@ package org.infinispan.query.remote.impl;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
@@ -21,7 +20,7 @@ class ObjectRemoteQueryEngine extends QueryEngine<Descriptor> {
    private final EmbeddedQueryFactory queryFactory = new EmbeddedQueryFactory(this);
 
    ObjectRemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
-      super(cache.getAdvancedCache().withEncoding(IdentityEncoder.class), isIndexed, matcherImplClass);
+      super(cache.getAdvancedCache(), isIndexed, matcherImplClass);
    }
 
    BaseQuery<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {

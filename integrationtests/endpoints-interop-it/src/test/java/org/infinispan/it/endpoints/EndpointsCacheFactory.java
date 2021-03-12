@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
@@ -67,7 +66,7 @@ public class EndpointsCacheFactory<K, V> {
    private RestClient restClient;
    private RestCacheClient restCacheClient;
    private MemcachedClient memcachedClient;
-   private Transcoder transcoder;
+   private final Transcoder<Object> transcoder;
 
    private final String cacheName;
    private final Marshaller marshaller;
@@ -77,41 +76,8 @@ public class EndpointsCacheFactory<K, V> {
    private final boolean l1Enable;
    private final boolean memcachedWithDecoder;
 
-   EndpointsCacheFactory(CacheMode cacheMode) {
-      this(cacheMode, DEFAULT_NUM_OWNERS, false);
-   }
-
-   EndpointsCacheFactory(CacheMode cacheMode, SerializationContextInitializer contextInitializer) {
-      this("test", null, cacheMode, DEFAULT_NUM_OWNERS, false, null, null, contextInitializer);
-   }
-
-   EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable) {
-      this("test", null, cacheMode, numOwners, l1Enable, null, null, null);
-   }
-
-   EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable, Encoder encoder) {
-      this("test", null, cacheMode, numOwners, l1Enable, null, encoder, null);
-   }
-
-   EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
-      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, null);
-   }
-
-   EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, Encoder encoder) {
-      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, null, encoder, null);
-   }
-
-
-   EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, Encoder encoder) {
-      this(cacheName, marshaller, cacheMode, numOwners, false, null, encoder, null);
-   }
-
-   public EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, Transcoder transcoder) {
-      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, transcoder, null, null);
-   }
-
-   EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, boolean l1Enable,
-                         Transcoder transcoder, Encoder encoder, SerializationContextInitializer contextInitializer) {
+   private EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, boolean l1Enable,
+                                 Transcoder<Object> transcoder, SerializationContextInitializer contextInitializer) {
       this.cacheName = cacheName;
       this.marshaller = marshaller;
       this.cacheMode = cacheMode;
@@ -122,7 +88,7 @@ public class EndpointsCacheFactory<K, V> {
       this.contextInitializer = contextInitializer;
    }
 
-   public EndpointsCacheFactory<K, V> setup() throws Exception {
+   private EndpointsCacheFactory<K, V> setup() throws Exception {
       createEmbeddedCache();
       createHotRodCache();
       createRestMemcachedCaches();
@@ -300,6 +266,57 @@ public class EndpointsCacheFactory<K, V> {
 
    HotRodServer getHotrodServer() {
       return hotrod;
+   }
+
+   public static class Builder<K, V> {
+      private CacheMode cacheMode;
+      private int numOwners = DEFAULT_NUM_OWNERS;
+      private boolean l1Enable = false;
+      private SerializationContextInitializer contextInitializer = null;
+      private String cacheName = "test";
+      private Marshaller marshaller = null;
+      private Transcoder<Object> transcoder = null;
+
+      public Builder<K, V> withCacheMode(CacheMode cacheMode) {
+         this.cacheMode = cacheMode;
+         return this;
+      }
+
+      public Builder<K, V> withNumOwners(int numOwners) {
+         this.numOwners = numOwners;
+         return this;
+      }
+
+      public Builder<K, V> withL1(boolean l1Enable) {
+         this.l1Enable = l1Enable;
+         return this;
+      }
+
+      public Builder<K, V> withContextInitializer(SerializationContextInitializer contextInitializer) {
+         this.contextInitializer = contextInitializer;
+         return this;
+      }
+
+      public Builder<K, V> withCacheName(String cacheName) {
+         this.cacheName = cacheName;
+         return this;
+      }
+
+      public Builder<K, V> withMarshaller(Marshaller marshaller) {
+         this.marshaller = marshaller;
+         return this;
+      }
+
+      public Builder<K, V> withMemcachedTranscoder(Transcoder<Object> transcoder) {
+         this.transcoder = transcoder;
+         return this;
+      }
+
+      public EndpointsCacheFactory<K, V> build() throws Exception {
+         EndpointsCacheFactory<K, V> endpointsCacheFactory =
+               new EndpointsCacheFactory<>(cacheName, marshaller, cacheMode, numOwners, l1Enable, transcoder, contextInitializer);
+         return endpointsCacheFactory.setup();
+      }
    }
 
 }

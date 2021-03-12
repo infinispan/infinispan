@@ -26,7 +26,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, String>(CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, String>().withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterMethod

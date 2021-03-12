@@ -38,8 +38,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -65,7 +63,8 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, Object>(CacheMode.LOCAL, EndpointITSCI.INSTANCE).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, Object>().withCacheMode(CacheMode.LOCAL)
+            .withContextInitializer(EndpointITSCI.INSTANCE).build();
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       cacheFactory.addRegexAllowList("org.infinispan.*Person");
    }
@@ -216,7 +215,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals(p, remote.get(key));
 
       // 3. Get with Embedded
-      assertEquals(p, cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class, JavaSerializationEncoder.class).get(key));
+      assertEquals(p, cacheFactory.getEmbeddedCache().getAdvancedCache().get(key));
    }
 
    public void testHotRodEmbeddedPutRestHeadExpiry() throws Exception {

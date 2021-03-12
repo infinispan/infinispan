@@ -14,13 +14,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "it.interop.DistEmbeddedRestHotRodTest")
 public class DistEmbeddedRestHotRodTest extends ReplEmbeddedRestHotRodTest {
 
-   private final int numOwners = 1;
-
    @Override
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<>(CacheMode.DIST_SYNC, numOwners, false).setup();
-      cacheFactory2 = new EndpointsCacheFactory<>(CacheMode.DIST_SYNC, numOwners, false).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.DIST_SYNC)
+            .withNumOwners(1).withL1(false).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.DIST_SYNC)
+            .withNumOwners(1).withL1(false).build();
    }
 
    @Override

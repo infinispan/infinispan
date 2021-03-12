@@ -25,7 +25,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.Curren
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -75,7 +74,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager(globalBuilder, builder);
       cache = cacheManager.getCache();
 
-      embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
+      embeddedCache = cache.getAdvancedCache();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 

@@ -1,5 +1,8 @@
 [id='data_encoding']
 = Data Encoding
+
+WARNING: This section describes deprecated APIs that will be removed in a future release.
+
 Encoding is the data conversion operation done by {brandname} caches before storing data, and when reading back from storage.
 
 == Overview

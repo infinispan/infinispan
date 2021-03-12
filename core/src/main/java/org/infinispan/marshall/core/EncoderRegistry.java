@@ -13,8 +13,10 @@ import org.infinispan.encoding.DataConversion;
  */
 public interface EncoderRegistry {
 
+   @Deprecated
    Encoder getEncoder(Class<? extends Encoder> encoderClass, short encoderId);
 
+   @Deprecated
    boolean isRegistered(Class<? extends Encoder> encoderClass);
 
    /**
@@ -26,6 +28,7 @@ public interface EncoderRegistry {
    /**
     * @param encoder {@link Encoder to be registered}.
     */
+   @Deprecated
    void registerEncoder(Encoder encoder);
 
    /**

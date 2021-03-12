@@ -38,8 +38,8 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, Object>(
-            CACHE_NAME, new SpyMemcachedMarshaller(), CacheMode.LOCAL, new MemcachedEncoder()).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, Object>().withCacheName(CACHE_NAME)
+            .withMarshaller(new SpyMemcachedMarshaller()).withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterClass

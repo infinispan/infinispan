@@ -36,8 +36,8 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, String>(
-            CACHE_NAME, new UTF8StringMarshaller(), CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, String>().withCacheName(CACHE_NAME)
+            .withMarshaller(new UTF8StringMarshaller()).withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterClass

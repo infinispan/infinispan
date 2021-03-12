@@ -26,7 +26,7 @@ public class ByteArrayKeyReplEmbeddedHotRodTest extends AbstractInfinispanTest {
    EndpointsCacheFactory<Object, Object> cacheFactory1;
    EndpointsCacheFactory<Object, Object> cacheFactory2;
 
-   public void testHotRodPutEmbeddedGet() throws Exception {
+   public void testHotRodPutEmbeddedGet() {
       final byte[] key = "4".getBytes();
       final String value = "v1";
 
@@ -79,8 +79,8 @@ public class ByteArrayKeyReplEmbeddedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
-      cacheFactory2 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
    }
 
    @AfterClass

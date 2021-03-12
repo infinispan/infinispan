@@ -21,7 +21,8 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, Object>("testCache", new UTF8StringMarshaller(), CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory.Builder<String, Object>().withCacheName("testCache")
+            .withMarshaller(new UTF8StringMarshaller()).withCacheMode(CacheMode.LOCAL).build();
    }
 
    @AfterClass

@@ -79,8 +79,8 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
-      cacheFactory2 = new EndpointsCacheFactory<>(CacheMode.REPL_SYNC).setup();
+      cacheFactory1 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
+      cacheFactory2 = new EndpointsCacheFactory.Builder<>().withCacheMode(CacheMode.REPL_SYNC).build();
    }
 
    @AfterClass

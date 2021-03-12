@@ -13,7 +13,6 @@ import javax.management.MBeanException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ServiceFinder;
@@ -142,11 +141,10 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    /**
     * Get the protobuf schema cache (lazily).
     */
-   @SuppressWarnings("unchecked")
    public Cache<String, String> getCache() {
       if (protobufSchemaCache == null) {
-         protobufSchemaCache = (Cache<String, String>) SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME)
-               .getAdvancedCache().withEncoding(IdentityEncoder.class);
+         Cache<String, String> unwrappedCache = SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME);
+         protobufSchemaCache = unwrappedCache.getAdvancedCache();
       }
       return protobufSchemaCache;
    }

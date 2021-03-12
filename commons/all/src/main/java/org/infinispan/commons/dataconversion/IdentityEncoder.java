@@ -4,7 +4,9 @@ package org.infinispan.commons.dataconversion;
  * Encoder that does not change the content.
  *
  * @since 9.1
+ * @deprecated since 12.1. to be removed in a future version.
  */
+@Deprecated
 public class IdentityEncoder implements Encoder {
 
    public static final IdentityEncoder INSTANCE = new IdentityEncoder();
