@@ -46,7 +46,7 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
          return Collections.singleton(principal.getName());
       }
       RoleSet roleSet = roleMap.get(principal.getName());
-      if (!roleSet.roles.isEmpty()) {
+      if (roleSet != null && !roleSet.roles.isEmpty()) {
          return roleSet.roles;
       } else {
          return Collections.singleton(principal.getName());
