@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -29,6 +30,13 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getConfiguration();
       createHotRodServers(3, builder);
+   }
+
+   @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.serialization().addContextInitializer(new SCIImpl());
+      return gcb;
    }
 
    @Override
@@ -104,7 +112,8 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
 
    private ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash().numOwners(1);
+      builder.clustering().hash().numSegments(3).numOwners(1);
+      builder.clustering().hash().consistentHashFactory(new StableControlledConsistentHashFactory());
       return hotRodCacheConfiguration(builder);
    }
 }
