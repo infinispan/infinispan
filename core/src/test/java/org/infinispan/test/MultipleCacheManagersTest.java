@@ -194,7 +194,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
-      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, defaultGlobalConfigurationBuilder(),
                                                             null, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
@@ -230,7 +230,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(SerializationContextInitializer sci,
                                                                 ConfigurationBuilder defaultConfig, TransportFlags flags) {
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
       if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
       return addClusterEnabledCacheManager(globalBuilder, defaultConfig, flags);
    }
@@ -247,7 +247,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
-      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, defaultGlobalConfigurationBuilder(),
                                                             builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
@@ -270,6 +270,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       cacheManagers.add(cm);
       cm.start();
       return cm;
+   }
+
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      return GlobalConfigurationBuilder.defaultClusteredBuilder();
    }
 
    protected void createCluster(int count) {
@@ -399,7 +403,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                                                             SerializationContextInitializer sci,
                                                             ConfigurationBuilder configBuilder,
                                                             TransportFlags flags, String... cacheNames) {
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
       if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
       createClusteredCaches(numMembersInCluster, globalBuilder, configBuilder, false, flags, cacheNames);
    }
@@ -449,7 +453,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void createClusteredCaches(int numMembersInCluster,
                                                             ConfigurationBuilder defaultConfigBuilder,
                                                             boolean serverMode, String... cacheNames) {
-      createClusteredCaches(numMembersInCluster, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+      createClusteredCaches(numMembersInCluster, defaultGlobalConfigurationBuilder(),
                             defaultConfigBuilder, serverMode, cacheNames);
    }
 
