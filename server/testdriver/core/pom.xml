@@ -34,12 +34,6 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
          <groupId>org.testcontainers</groupId>
          <artifactId>testcontainers</artifactId>
       </dependency>
