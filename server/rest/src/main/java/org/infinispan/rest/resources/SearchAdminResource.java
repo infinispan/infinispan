@@ -74,7 +74,7 @@ public class SearchAdminResource implements ResourceHandler {
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return null;
       }
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
       if (!cacheConfiguration.statistics().enabled()) {
          responseBuilder.status(NOT_FOUND).build();
       }
@@ -206,7 +206,7 @@ public class SearchAdminResource implements ResourceHandler {
          builder.status(HttpResponseStatus.NOT_FOUND);
          return null;
       }
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
       if (!cacheConfiguration.indexing().enabled()) {
          builder.entity("cache is not indexed").status(BAD_REQUEST).build();
       }
@@ -216,7 +216,7 @@ public class SearchAdminResource implements ResourceHandler {
    private AdvancedCache<?, ?> lookupCacheWithStats(RestRequest request, NettyRestResponse.Builder builder) {
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, builder);
       if (cache != null) {
-         Configuration cacheConfiguration = cache.getCacheConfiguration();
+         Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
          if (!cacheConfiguration.statistics().enabled()) {
             builder.entity("statistics not enabled").status(BAD_REQUEST);
          }

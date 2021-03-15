@@ -108,7 +108,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
          Cache<?, ?> cache = cacheManager.getCache(name, false);
          if (cache != null) {
-            cache.stop();
+            SecurityActions.stopCache(cache);
          }
       }
       globalComponentRegistry.removeCache(name);

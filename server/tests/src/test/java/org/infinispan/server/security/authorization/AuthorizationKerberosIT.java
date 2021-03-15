@@ -5,6 +5,7 @@ import javax.security.auth.Subject;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerRule;
 import org.infinispan.server.test.core.category.Security;
@@ -53,25 +54,30 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
    }
 
    @Override
+   protected InfinispanServerRule getServers() {
+      return SERVERS;
+   }
+
+   @Override
    protected InfinispanServerTestMethodRule getServerTest() {
       return SERVER_TEST;
    }
 
    @Override
-   protected void addClientBuilders(String username, String password) {
+   protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
-      Subject subject = Common.createSubject(username, "INFINISPAN.ORG", password.toCharArray());
+      Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
       hotRodBuilder.security().authentication()
             .saslMechanism("GSSAPI")
             .serverName("datagrid")
             .realm("default")
             .callbackHandler(new VoidCallbackHandler())
             .clientSubject(subject);
-      hotRodBuilders.put(username, hotRodBuilder);
+      hotRodBuilders.put(user, hotRodBuilder);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
       restBuilder.security().authentication()
             .mechanism("SPNEGO")
             .clientSubject(subject);
-      restBuilders.put(username, restBuilder);
+      restBuilders.put(user, restBuilder);
    }
 }

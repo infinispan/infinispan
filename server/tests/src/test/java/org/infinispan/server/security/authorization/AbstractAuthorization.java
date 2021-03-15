@@ -1,34 +1,57 @@
 package org.infinispan.server.security.authorization;
 
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
+import static org.infinispan.client.rest.RestResponse.CREATED;
 import static org.infinispan.client.rest.RestResponse.FORBIDDEN;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.awaitStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestClusterClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.server.functional.HotRodCacheQueries;
+import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -38,61 +61,64 @@ import org.junit.Test;
  **/
 
 public abstract class AbstractAuthorization {
-   final Map<String, ConfigurationBuilder> hotRodBuilders;
-   final Map<String, RestClientConfigurationBuilder> restBuilders;
+   public static final String BANK_PROTO = "bank.proto";
+   final Map<TestUser, ConfigurationBuilder> hotRodBuilders;
+   final Map<TestUser, RestClientConfigurationBuilder> restBuilders;
    final Map<String, String> bulkData;
 
    protected AbstractAuthorization() {
       hotRodBuilders = new HashMap<>();
       restBuilders = new HashMap<>();
-      addClientBuilders("admin", "strongPassword");
-      addClientBuilders("writer", "somePassword");
-      addClientBuilders("reader", "password");
-      addClientBuilders("supervisor", "lessStrongPassword");
+      Stream.of(TestUser.values()).forEach(this::addClientBuilders);
       bulkData = new HashMap<>();
       for (int i = 0; i < 10; i++) {
          bulkData.put("k" + i, "v" + i);
       }
    }
 
+   protected abstract InfinispanServerRule getServers();
+
    protected abstract InfinispanServerTestMethodRule getServerTest();
 
-   protected void addClientBuilders(String username, String password) {
+   protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
       hotRodBuilder.security().authentication()
             .saslMechanism("SCRAM-SHA-1")
             .serverName("infinispan")
             .realm("default")
-            .username(username)
-            .password(password);
-      hotRodBuilders.put(username, hotRodBuilder);
+            .username(user.getUser())
+            .password(user.getPassword());
+      hotRodBuilders.put(user, hotRodBuilder);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
       restBuilder.security().authentication()
             .mechanism("AUTO")
-            .username(username)
-            .password(password);
-      restBuilders.put(username, restBuilder);
+            .username(user.getUser())
+            .password(user.getPassword());
+      restBuilders.put(user, restBuilder);
    }
 
    @Test
-   public void testHotRodAdminCanDoEverything() {
-      RemoteCache<String, String> adminCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create();
-      adminCache.put("k", "v");
-      assertEquals("v", adminCache.get("k"));
-      adminCache.putAll(bulkData);
-      assertEquals(11, adminCache.size());
+   public void testHotRodAdminAndDeployerCanDoEverything() {
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
+         RemoteCache<String, String> cache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create();
+         cache.put("k", "v");
+         assertEquals("v", cache.get("k"));
+         cache.putAll(bulkData);
+         assertEquals(11, cache.size());
+         cache.getRemoteCacheManager().administration().removeCache(cache.getName());
+      }
    }
 
    @Test
    public void testRestAdminCanDoEverything() {
-      RestCacheClient adminCache = getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create().cache(getServerTest().getMethodName());
+      RestCacheClient adminCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withCacheMode(CacheMode.DIST_SYNC).create().cache(getServerTest().getMethodName());
       sync(adminCache.put("k", "v"));
       assertEquals("v", sync(adminCache.get("k")).getBody());
    }
 
    @Test
    public void testHotRodNonAdminsMustNotCreateCache() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER)) {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
                () -> getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
@@ -101,7 +127,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testRestNonAdminsMustNotCreateCache() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER)) {
          Exceptions.expectException(SecurityException.class, "(?s).*403.*",
                () -> getServerTest().rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
@@ -110,43 +136,51 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testHotRodWriterCannotReadImplicit() {
-      testHotRodWriterCannotRead(false);
+      testHotRodWriterCannotRead();
    }
 
    @Test
    public void testHotRodWriterCannotReadExplicit() {
-      testHotRodWriterCannotRead(true);
+      testHotRodWriterCannotRead("admin", "observer", "deployer", "application", "writer", "reader");
    }
 
-   private void testHotRodWriterCannotRead(boolean explicitRoles) {
+   private void testHotRodWriterCannotRead(String... explicitRoles) {
       hotRodCreateAuthzCache(explicitRoles);
-      RemoteCache<String, String> writerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("writer")).get();
+      RemoteCache<String, String> writerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.WRITER)).get();
       writerCache.put("k1", "v1");
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> writerCache.get("k1")
       );
-      for (String user : Arrays.asList("reader", "supervisor")) {
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER))) {
          RemoteCache<String, String> userCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          assertEquals("v1", userCache.get("k1"));
       }
    }
 
    @Test
+   public void testAdminCanRemoveCacheWithoutRole() {
+      RemoteCache<String, String> adminCache = hotRodCreateAuthzCache("application");
+      RemoteCache<String, String> appCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.APPLICATION)).get();
+      appCache.put("k1", "v1");
+      adminCache.getRemoteCacheManager().administration().removeCache(adminCache.getName());
+   }
+
+   @Test
    public void testRestWriterCannotReadImplicit() {
-      testRestWriterCannotRead(false);
+      testRestWriterCannotRead();
    }
 
    @Test
    public void testRestWriterCannotReadExplicit() {
-      testRestWriterCannotRead(true);
+      testRestWriterCannotRead("admin", "observer", "deployer", "application", "writer", "reader");
    }
 
-   private void testRestWriterCannotRead(boolean explicitRoles) {
+   private void testRestWriterCannotRead(String... explicitRoles) {
       restCreateAuthzCache(explicitRoles);
-      RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("writer")).get().cache(getServerTest().getMethodName());
+      RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.WRITER)).get().cache(getServerTest().getMethodName());
       sync(writerCache.put("k1", "v1"));
       assertStatus(FORBIDDEN, writerCache.get("k1"));
-      for (String user : Arrays.asList("reader", "supervisor")) {
+      for (TestUser user : EnumSet.of(TestUser.OBSERVER, TestUser.DEPLOYER)) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          assertEquals("v1", sync(userCache.get("k1")).getBody());
       }
@@ -154,59 +188,59 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testHotRodReaderCannotWriteImplicit() {
-      testHotRodReaderCannotWrite(false);
+      testHotRodObserverCannotWrite();
    }
 
    @Test
    public void testHotRodReaderCannotWriteExplicit() {
-      testHotRodReaderCannotWrite(true);
+      testHotRodObserverCannotWrite();
    }
 
-   private void testHotRodReaderCannotWrite(boolean explicitRoles) {
+   private void testHotRodObserverCannotWrite(String... explicitRoles) {
       hotRodCreateAuthzCache(explicitRoles);
-      RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
+      RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.OBSERVER)).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.put("k1", "v1")
       );
-      for (String user : Arrays.asList("writer", "supervisor")) {
+      for (TestUser user : EnumSet.of(TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.WRITER)) {
          RemoteCache<String, String> userCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
-         userCache.put(user, user);
+         userCache.put(user.name(), user.name());
       }
    }
 
    @Test
    public void testRestReaderCannotWriteImplicit() {
-      testRestReaderCannotWrite(false);
+      testRestReaderCannotWrite();
    }
 
    @Test
    public void testRestReaderCannotWriteExplicit() {
-      testRestReaderCannotWrite(true);
+      testRestReaderCannotWrite("admin", "observer", "deployer", "application", "writer", "reader");
    }
 
-   private void testRestReaderCannotWrite(boolean explicitRoles) {
+   private void testRestReaderCannotWrite(String... explicitRoles) {
       restCreateAuthzCache(explicitRoles);
-      RestCacheClient readerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("reader")).get().cache(getServerTest().getMethodName());
+      RestCacheClient readerCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.OBSERVER)).get().cache(getServerTest().getMethodName());
       assertStatus(FORBIDDEN, readerCache.put("k1", "v1"));
-      for (String user : Arrays.asList("writer", "supervisor")) {
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.DEPLOYER)) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
-         userCache.put(user, user);
+         assertStatus(NO_CONTENT, userCache.put(user.name(), user.name()));
       }
    }
 
    @Test
    public void testHotRodBulkOperationsImplicit() {
-      testHotRodBulkOperations(false);
+      testHotRodBulkOperations();
    }
 
    @Test
    public void testHotRodBulkOperationsExplicit() {
-      testHotRodBulkOperations(true);
+      testHotRodBulkOperations("admin", "observer", "deployer", "application", "writer", "reader");
    }
 
-   private void testHotRodBulkOperations(boolean explicitRoles) {
+   private void testHotRodBulkOperations(String... explicitRoles) {
       hotRodCreateAuthzCache(explicitRoles).putAll(bulkData);
-      RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
+      RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.READER)).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.getAll(bulkData.keySet())
       );
@@ -221,12 +255,104 @@ public abstract class AbstractAuthorization {
             () -> new ArrayList<>(readerCache.entrySet())
       );
 
-      RemoteCache<String, String> supervisorCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("supervisor")).get();
+      RemoteCache<String, String> supervisorCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.DEPLOYER)).get();
       supervisorCache.getAll(bulkData.keySet());
       //make sure iterator() is invoked (ISPN-12716)
       assertFalse(new HashSet<>(supervisorCache.keySet()).isEmpty());
       assertFalse(new HashSet<>(supervisorCache.values()).isEmpty());
       assertFalse(new HashSet<>(supervisorCache.entrySet()).isEmpty());
+   }
+
+   @Test
+   public void testAdminAndDeployerCanManageSchema() {
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
+         RemoteCacheManager remoteCacheManager = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
+         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+         metadataCache.put(BANK_PROTO, schema);
+         metadataCache.remove(BANK_PROTO);
+      }
+   }
+
+   @Test
+   public void testNonCreatorsSchema() {
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
+         RemoteCacheManager remoteCacheManager = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
+         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*", () -> metadataCache.put(BANK_PROTO, schema));
+      }
+   }
+
+   @Test
+   public void testBulkReadUsersCanQuery() {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
+         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
+         User fromCache = userCache.get(1);
+         HotRodCacheQueries.assertUser1(fromCache);
+         QueryFactory qf = Search.getQueryFactory(userCache);
+         Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+         List<User> list = query.execute().list();
+         assertNotNull(list);
+         assertEquals(1, list.size());
+         assertEquals(User.class, list.get(0).getClass());
+         HotRodCacheQueries.assertUser1(list.get(0));
+      }
+
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
+         RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(OK, userCache.searchStats());
+         assertStatus(OK, userCache.indexStats());
+         assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   @Test
+   public void testNonBulkReadUsersCannotQuery() {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
+      // Hot Rod
+      for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
+         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
+         QueryFactory qf = Search.getQueryFactory(userCache);
+         Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*", () -> query.execute().list());
+      }
+      // REST
+      for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
+         RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(OK, userCache.searchStats());
+         assertStatus(OK, userCache.indexStats());
+         assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   private org.infinispan.configuration.cache.ConfigurationBuilder prepareIndexedCache() {
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      RemoteCacheManager remoteCacheManager = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).createRemoteCacheManager();
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put(BANK_PROTO, schema);
+
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder
+            .clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true)
+            .security().authorization().enable()
+            .indexing().enable().storage(LOCAL_HEAP).addIndexedEntity("sample_bank_account.User");
+
+      RemoteCache<Integer, User> adminCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      adminCache.put(1, HotRodCacheQueries.createUser1());
+      adminCache.put(2, HotRodCacheQueries.createUser2());
+      return builder;
+   }
+
+   private ConfigurationBuilder clientConfigurationWithProtostreamMarshaller(TestUser user) {
+      ConfigurationBuilder client = new ConfigurationBuilder().read(hotRodBuilders.get(user).build());
+      ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
+      client.marshaller(marshaller);
+      Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(marshaller.getSerializationContext()));
+      return client;
    }
 
    @Test
@@ -237,35 +363,37 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testRestNonAdminsMustNotShutdownServer() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotShutdownCluster() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyCacheIgnores() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().ignoreCache("default", "predefined"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().unIgnoreCache("default", "predefined"));
+      for (TestUser user : TestUser.NON_ADMINS) {
+         RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(FORBIDDEN, client.server().ignoreCache("default", "predefined"));
+         assertStatus(FORBIDDEN, client.server().unIgnoreCache("default", "predefined"));
       }
    }
 
    @Test
    public void testRestAdminsShouldBeAbleToModifyLoggers() {
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
+      RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
+      assertStatus(NO_CONTENT, client.server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
+      assertStatus(NO_CONTENT, client.server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyLoggers() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
          assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
       }
@@ -273,129 +401,144 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testRestAdminsShoudleBeAbleToAdminServer() {
-      RestClientConfigurationBuilder adminConfig = restBuilders.get("admin");
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorStop("endpoint-alternate-1"));
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorStart("endpoint-alternate-1"));
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorIpFilterSet("endpoint-alternate-1", Collections.emptyList()));
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(adminConfig).get().server().connectorIpFiltersClear("endpoint-alternate-1"));
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(adminConfig).get().server().memory());
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(adminConfig).get().server().env());
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(adminConfig).get().server().configuration());
+      RestClientConfigurationBuilder adminConfig = restBuilders.get(TestUser.ADMIN);
+      RestClient client = getServerTest().rest().withClientConfiguration(adminConfig).get();
+      assertStatus(NO_CONTENT, client.server().connectorStop("endpoint-alternate-1"));
+      assertStatus(NO_CONTENT, client.server().connectorStart("endpoint-alternate-1"));
+      assertStatus(NO_CONTENT, client.server().connectorIpFilterSet("endpoint-alternate-1", Collections.emptyList()));
+      assertStatus(NO_CONTENT, client.server().connectorIpFiltersClear("endpoint-alternate-1"));
+      assertStatus(OK, client.server().memory());
+      assertStatus(OK, client.server().env());
+      assertStatus(OK, client.server().configuration());
    }
 
    @Test
    public void testRestNonAdminsMustNotAdminServer() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          RestClientConfigurationBuilder userConfig = restBuilders.get(user);
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().report());
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorStop("endpoint-default"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorStart("endpoint-default"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorIpFilterSet("endpoint-default", Collections.emptyList()));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().connectorIpFiltersClear("endpoint-default"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().memory());
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().env());
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(userConfig).get().server().configuration());
+         RestClient client = getServerTest().rest().withClientConfiguration(userConfig).get();
+         assertStatus(FORBIDDEN, client.server().report());
+         assertStatus(FORBIDDEN, client.server().connectorStop("endpoint-default"));
+         assertStatus(FORBIDDEN, client.server().connectorStart("endpoint-default"));
+         assertStatus(FORBIDDEN, client.server().connectorIpFilterSet("endpoint-default", Collections.emptyList()));
+         assertStatus(FORBIDDEN, client.server().connectorIpFiltersClear("endpoint-default"));
+         assertStatus(FORBIDDEN, client.server().memory());
+         assertStatus(FORBIDDEN, client.server().env());
+         assertStatus(FORBIDDEN, client.server().configuration());
       }
    }
 
    @Test
    public void testAdminsAccessToPerformXSiteOps() {
-      assertXSiteOps("admin", OK, NO_CONTENT);
+      assertXSiteOps(TestUser.ADMIN, OK, NO_CONTENT);
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessPerformXSiteOps() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          assertXSiteOps(user, FORBIDDEN, FORBIDDEN);
       }
    }
 
-   private void assertXSiteOps(String user, int status, int noContentStatus) {
+   private void assertXSiteOps(TestUser user, int status, int noContentStatus) {
       RestClientConfigurationBuilder userConfig = restBuilders.get(user);
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").takeSiteOffline("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").bringSiteOnline("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").cancelPushState("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").cancelReceiveState("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").clearPushStateStatus());
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").pushSiteState("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").pushStateStatus());
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").xsiteBackups());
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").backupStatus("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").getXSiteTakeOfflineConfig("NYC"));
-      assertStatus(noContentStatus, getServerTest().rest().withClientConfiguration(userConfig).get().cache("xsite").updateXSiteTakeOfflineConfig("NYC", 10, 1000));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").bringBackupOnline("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").takeOffline("NYC"));
-      assertStatus(status, getServerTest().rest().withClientConfiguration(userConfig).get().cacheManager("default").backupStatuses());
+      RestClient client = getServerTest().rest().withClientConfiguration(userConfig).get();
+      RestCacheClient xsiteCache = client.cache("xsite");
+      assertStatus(status, xsiteCache.takeSiteOffline("NYC"));
+      assertStatus(status, xsiteCache.bringSiteOnline("NYC"));
+      assertStatus(status, xsiteCache.cancelPushState("NYC"));
+      assertStatus(status, xsiteCache.cancelReceiveState("NYC"));
+      assertStatus(status, xsiteCache.clearPushStateStatus());
+      assertStatus(status, xsiteCache.pushSiteState("NYC"));
+      assertStatus(status, xsiteCache.pushStateStatus());
+      assertStatus(status, xsiteCache.xsiteBackups());
+      assertStatus(status, xsiteCache.backupStatus("NYC"));
+      assertStatus(status, xsiteCache.getXSiteTakeOfflineConfig("NYC"));
+      assertStatus(noContentStatus, xsiteCache.updateXSiteTakeOfflineConfig("NYC", 10, 1000));
+      RestCacheManagerClient xsiteCacheManager = client.cacheManager("default");
+      assertStatus(status, xsiteCacheManager.bringBackupOnline("NYC"));
+      assertStatus(status, xsiteCacheManager.takeOffline("NYC"));
+      assertStatus(status, xsiteCacheManager.backupStatuses());
    }
 
    @Test
    public void testRestNonAdminsMustNotPerformSearchActions() {
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().schemas().put("bank.proto", schema));
+      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User").statistics().enable();
-      RestClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get("admin"))
+      RestClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
             .withServerConfiguration(builder).create();
       String indexedCache = getServerTest().getMethodName();
       RestCacheClient cache = restClient.cache(indexedCache);
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+      for (TestUser user : TestUser.NON_ADMINS) {
          searchActions(user, indexedCache, FORBIDDEN, FORBIDDEN);
       }
-      searchActions("admin", indexedCache, OK, NO_CONTENT);
+      searchActions(TestUser.ADMIN, indexedCache, OK, NO_CONTENT);
    }
 
-   private void searchActions(String user, String indexedCache, int status, int noContentStatus) {
-      assertStatus(status, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearSearchStats());
-      assertStatus(noContentStatus, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).reindex());
-      assertStatus(noContentStatus, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(indexedCache).clearIndex());
+   private void searchActions(TestUser user, String indexedCache, int status, int noContentStatus) {
+      RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get();
+      assertStatus(status, client.cache(indexedCache).clearSearchStats());
+      assertStatus(noContentStatus, client.cache(indexedCache).reindex());
+      assertStatus(noContentStatus, client.cache(indexedCache).clearIndex());
    }
 
    @Test
-   @Ignore
-   public void testRestAdminsMustAccessBackupsAndRestores() {
-      assertStatus(ACCEPTED, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().createBackup("backup"));
-      awaitStatus(() -> getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().getBackup("backup", true), ACCEPTED, OK);
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().getBackupNames());
-      assertStatus(NO_CONTENT, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().deleteBackup("backup"));
-      assertStatus(ACCEPTED, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().restore("restore", "somewhere"));
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().getRestoreNames());
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().getRestore("restore"));
-      assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).get().cluster().deleteRestore("restore"));
+   public void testRestAdminsMustAccessBackupsAndRestores() throws IOException {
+      String BACKUP_NAME = "backup";
+      RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
+      assertStatus(ACCEPTED, client.createBackup(BACKUP_NAME));
+      RestResponse response = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK);
+      String fileName = response.getHeader("Content-Disposition").split("=")[1];
+      File backupZip = new File(getServers().getServerDriver().getRootDir(), fileName);
+      try (InputStream is = response.getBodyAsStream()) {
+         Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      } finally {
+         response.close();
+      }
+      assertStatus(NO_CONTENT, client.deleteBackup(BACKUP_NAME));
+      assertStatus(OK, client.getBackupNames());
+      assertStatus(ACCEPTED, client.restore(BACKUP_NAME, backupZip));
+      assertStatus(OK, client.getRestoreNames());
+      awaitStatus(() -> client.getRestore(BACKUP_NAME), ACCEPTED, CREATED);
+      assertStatus(NO_CONTENT, client.deleteRestore(BACKUP_NAME));
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
-      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().createBackup("backup"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackup("backup", true));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getBackupNames());
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteBackup("backup"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().restore("restore", "somewhere"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestoreNames());
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().getRestore("restore"));
-         assertStatus(FORBIDDEN, getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster().deleteRestore("restore"));
+      for (TestUser user : TestUser.NON_ADMINS) {
+         RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
+         assertStatus(FORBIDDEN, client.createBackup("backup"));
+         assertStatus(FORBIDDEN, client.getBackup("backup", true));
+         assertStatus(FORBIDDEN, client.getBackupNames());
+         assertStatus(FORBIDDEN, client.deleteBackup("backup"));
+         assertStatus(FORBIDDEN, client.restore("restore", "somewhere"));
+         assertStatus(FORBIDDEN, client.getRestoreNames());
+         assertStatus(FORBIDDEN, client.getRestore("restore"));
+         assertStatus(FORBIDDEN, client.deleteRestore("restore"));
       }
    }
 
-   private void backupAndRestore(String user, int status, int noContentStatus, int acceptedStatus) {
-
-   }
-
-   private RemoteCache<Object, Object> hotRodCreateAuthzCache(boolean explicitRoles) {
+   private <K, V> RemoteCache<K, V> hotRodCreateAuthzCache(String... explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
-      if (explicitRoles) {
-         authorizationConfigurationBuilder.role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      if (explicitRoles != null) {
+         for (String role : explicitRoles) {
+            authorizationConfigurationBuilder.role(role);
+         }
       }
-      return getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("admin")).withServerConfiguration(builder).create();
+      return getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
    }
 
-   private RestClient restCreateAuthzCache(boolean explicitRoles) {
+   private RestClient restCreateAuthzCache(String... explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
-      if (explicitRoles) {
-         authorizationConfigurationBuilder.role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      if (explicitRoles != null) {
+         for (String role : explicitRoles) {
+            authorizationConfigurationBuilder.role(role);
+         }
       }
-      return getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
+      return getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
    }
 }

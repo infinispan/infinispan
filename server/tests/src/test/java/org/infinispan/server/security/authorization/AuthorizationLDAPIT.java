@@ -27,6 +27,10 @@ public class AuthorizationLDAPIT extends AbstractAuthorization {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
+   @Override
+   protected InfinispanServerRule getServers() {
+      return SERVERS;
+   }
 
    @Override
    protected InfinispanServerTestMethodRule getServerTest() {

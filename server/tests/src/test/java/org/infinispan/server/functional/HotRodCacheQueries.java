@@ -246,7 +246,7 @@ public class HotRodCacheQueries {
       query.execute();
    }
 
-   private User createUser1() {
+   public static User createUser1() {
       User user = new User();
       user.setId(1);
       user.setName("Tom");
@@ -260,7 +260,7 @@ public class HotRodCacheQueries {
       return user;
    }
 
-   private User createUser2() {
+   public static User createUser2() {
       User user = new User();
       user.setId(2);
       user.setName("Adrian");
@@ -273,7 +273,7 @@ public class HotRodCacheQueries {
       return user;
    }
 
-   private void assertUser1(User user) {
+   public static void assertUser1(User user) {
       assertNotNull(user);
       assertEquals(1, user.getId());
       assertEquals("Tom", user.getName());

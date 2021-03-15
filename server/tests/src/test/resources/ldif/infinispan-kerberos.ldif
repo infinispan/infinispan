@@ -42,43 +42,43 @@ userPassword: strongPassword
 krb5PrincipalName: admin@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
-dn: uid=supervisor,ou=People,dc=infinispan,dc=org
+dn: uid=deployer,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: krb5principal
 objectClass: krb5kdcentry
-cn: ISPN Supervisor
-sn: supervisor
-uid: supervisor
+cn: ISPN Deployer
+sn: deployer
+uid: deployer
 userPassword: lessStrongPassword
-krb5PrincipalName: supervisor@INFINISPAN.ORG
+krb5PrincipalName: deployer@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
-dn: uid=writer,ou=People,dc=infinispan,dc=org
+dn: uid=application,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: krb5principal
 objectClass: krb5kdcentry
-cn: ISPN Writer
-sn: writer
-uid: writer
+cn: ISPN Application
+sn: application
+uid: application
 userPassword: somePassword
-krb5PrincipalName: writer@INFINISPAN.ORG
+krb5PrincipalName: application@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
-dn: uid=reader,ou=People,dc=infinispan,dc=org
+dn: uid=observer,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
 objectClass: inetOrgPerson
 objectClass: krb5principal
 objectClass: krb5kdcentry
-cn: ISPN Reader
-sn: reader
-uid: reader
+cn: ISPN Observer
+sn: observer
+uid: observer
 userPassword: password
-krb5PrincipalName: reader@INFINISPAN.ORG
+krb5PrincipalName: observer@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
 dn: uid=executor,ou=People,dc=infinispan,dc=org
@@ -92,6 +92,32 @@ sn: executor
 uid: executor
 userPassword: executorPassword
 krb5PrincipalName: executor@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=reader,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Reader
+sn: reader
+uid: reader
+userPassword: readerPassword
+krb5PrincipalName: reader@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=writer,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Writer
+sn: writer
+uid: writer
+userPassword: writerPassword
+krb5PrincipalName: writer@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
 dn: uid=unprivileged,ou=People,dc=infinispan,dc=org
@@ -177,45 +203,59 @@ objectclass: top
 objectclass: organizationalUnit
 ou: Roles
 
-dn: cn=AdminRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=admin,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: AdminRole
+cn: admin
 description: the Infinispan admin group
 member: uid=admin,ou=People,dc=infinispan,dc=org
 
-dn: cn=SupervisorRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=deployer,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: SupervisorIspnRole
-description: the Infinispan supervisor group
-member: uid=supervisor,ou=People,dc=infinispan,dc=org
+cn: deployer
+description: the Infinispan deployer group
+member: uid=deployer,ou=People,dc=infinispan,dc=org
 
-dn: cn=ExecutorRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=executor,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: ExecutorRole
+cn: executor
 description: the Infinispan executor group
 member: uid=executor,ou=People,dc=infinispan,dc=org
 
-dn: cn=WriterRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=application,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: WriterRole
-description: the Infinispan writer group
-member: uid=writer,ou=People,dc=infinispan,dc=org
+cn: application
+description: the Infinispan application group
+member: uid=application,ou=People,dc=infinispan,dc=org
 
-dn: cn=ReaderRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=observer,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: ReaderRole
-description: the Infinispan reader group
+cn: observer
+description: the Infinispan observer group
+member: uid=observer,ou=People,dc=infinispan,dc=org
+
+dn: cn=reader,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: reader
+description: a reader role that cannot write
 member: uid=reader,ou=People,dc=infinispan,dc=org
 
-dn: cn=UnprivilegedRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=writer,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: UnprivilegedRole
+cn: writer
+description: a writer role that cannot read
+member: uid=writer,ou=People,dc=infinispan,dc=org
+
+dn: cn=unprivileged,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: unprivileged
 description: the Infinispan unprivileged group
 member: uid=unprivileged,ou=People,dc=infinispan,dc=org
 

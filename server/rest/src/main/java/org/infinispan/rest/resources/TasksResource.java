@@ -9,11 +9,8 @@ import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
-import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-
-import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -69,10 +66,7 @@ public class TasksResource implements ResourceHandler {
       byte[] bytes = contents.rawContent();
       MediaType sourceType = request.contentType() == null ? APPLICATION_JAVASCRIPT : request.contentType();
       String script = StandardConversions.convertTextToObject(bytes, sourceType);
-      Subject.doAs(request.getSubject(), (PrivilegedAction<Void>) () -> {
-         scriptingManager.addScript(taskName, script);
-         return null;
-      });
+      scriptingManager.addScript(taskName, script);
       return completedFuture(builder.build());
    }
 
@@ -87,8 +81,7 @@ public class TasksResource implements ResourceHandler {
          }
       });
 
-      CompletionStage<Object> runResult = Subject.doAs(request.getSubject(),
-            (PrivilegedAction<CompletionStage<Object>>) () -> taskManager.runTask(taskName, taskContext));
+      CompletionStage<Object> runResult = taskManager.runTask(taskName, taskContext);
 
       return runResult.thenApply(result -> {
          NettyRestResponse.Builder builder = new NettyRestResponse.Builder();

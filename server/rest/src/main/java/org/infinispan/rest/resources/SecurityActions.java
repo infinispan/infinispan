@@ -6,6 +6,7 @@ import java.security.PrivilegedAction;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,6 +15,7 @@ import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
@@ -63,6 +65,10 @@ final class SecurityActions {
 
    public static EncoderRegistry getEncoderRegistry(AdvancedCache<?, ?> cache) {
       return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
+   }
+
+   static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
+      return doPrivileged(new GetCacheComponentRegistryAction(cache));
    }
 
    static void checkPermission(InvocationHelper invocationHelper, RestRequest request, AuthorizationPermission permission) {

@@ -88,8 +88,15 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-      if (attributes.attribute(ENABLED).get() && !globalConfig.security().authorization().enabled())
+      if (attributes.attribute(ENABLED).get() && !globalConfig.security().authorization().enabled()) {
          throw CONFIG.globalSecurityAuthShouldBeEnabled();
+      }
+      Set<String> cacheRoles = attributes.attribute(ROLES).get();
+      Set<String> globalRoles = globalConfig.security().authorization().roles().keySet();
+      if (!globalRoles.containsAll(cacheRoles)) {
+         cacheRoles.removeAll(globalRoles);
+         throw CONFIG.noSuchGlobalRoles(cacheRoles);
+      }
    }
 
    @Override

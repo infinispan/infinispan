@@ -6,10 +6,14 @@
    <security>
       <authorization>
          <identity-role-mapper/>
-         <role name="AdminRole" permissions="ALL"/>
-         <role name="ReaderRole" permissions="READ"/>
-         <role name="WriterRole" permissions="WRITE"/>
-         <role name="SupervisorRole" permissions="READ WRITE EXEC BULK_READ"/>
+         <roles>
+            <role name="admin" permissions="ALL"/>
+            <role name="application" permissions="ALL_READ ALL_WRITE LISTEN EXEC"/>
+            <role name="deployer" permissions="ALL_READ ALL_WRITE LISTEN EXEC CREATE"/>
+            <role name="observer" permissions="ALL_READ"/>
+            <role name="writer" permissions="WRITE"/>
+            <role name="reader" permissions="READ"/>
+         </roles>
       </authorization>
    </security>
 

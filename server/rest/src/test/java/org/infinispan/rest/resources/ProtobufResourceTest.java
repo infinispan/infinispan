@@ -8,13 +8,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.security.PrivilegedAction;
 import java.util.concurrent.CompletionStage;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.security.Security;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,7 +32,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    @Override
    public void createBeforeMethod() {
       //Clear schema cache to avoid conflicts between methods
-      Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
          cacheManagers.get(0).getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME).clear();
          return null;
       });

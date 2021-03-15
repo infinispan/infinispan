@@ -1175,7 +1175,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public EmbeddedCacheManagerAdmin administration() {
-      authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       return cacheManagerAdmin;
    }
 

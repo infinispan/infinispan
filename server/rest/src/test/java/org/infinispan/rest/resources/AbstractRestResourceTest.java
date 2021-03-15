@@ -163,7 +163,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    @AfterClass
    public void afterClass() {
-      Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
          restServers.forEach(RestServerHelper::stop);
          return null;
       });
@@ -172,7 +172,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    public void afterMethod() {
-      Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
          restServers.forEach(RestServerHelper::clear);
          return null;
       });

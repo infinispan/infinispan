@@ -122,6 +122,7 @@ The following is a list of properties which affect the build:
 * `org.infinispan.server.test.database.<type>.port` port to use for a specific database type
 * `org.infinispan.test.server.container.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `FORKED` driver
 * `org.infinispan.test.server.home` Specifies a comma-separated list to server home path. Only for `FORKED` driver
+* `org.infinispan.test.server.http.timeout` Specifies a timeout in seconds for HTTP connections (defaults to 10)
 
 ## JMX
 

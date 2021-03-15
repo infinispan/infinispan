@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -2139,4 +2140,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid cache loader configuration for '%s'.  This implementation only supports being segmented!", id = 627)
    CacheConfigurationException storeRequiresBeingSegmented(String name);
+
+   @Message(value = "Invalid cache roles '%s'", id = 628)
+   CacheConfigurationException noSuchGlobalRoles(Set<String> cacheRoles);
 }

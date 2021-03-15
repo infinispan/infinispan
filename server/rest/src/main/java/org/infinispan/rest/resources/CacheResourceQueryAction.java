@@ -65,7 +65,7 @@ class CacheResourceQueryAction {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest);
       String queryString = query.getQuery();
 
-      RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
+      RemoteQueryManager remoteQueryManager = SecurityActions.getComponentRegistry(cache).getComponent(RemoteQueryManager.class);
       JsonQueryRequest finalQuery = query;
       return CompletableFuture.supplyAsync(() -> {
          try {

@@ -21,7 +21,7 @@ import org.infinispan.server.test.core.TestServer;
  * @since 10
  */
 public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDriver> {
-   public static final int TIMEOUT = 10;
+   public static final int TIMEOUT = Integer.getInteger("org.infinispan.test.server.http.timeout", 10);
 
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
    private TestServer testServer;
