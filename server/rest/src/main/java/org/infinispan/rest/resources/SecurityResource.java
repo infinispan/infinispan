@@ -139,21 +139,22 @@ public class SecurityResource implements ResourceHandler {
       if(subject == null) {
          acl.set("subject", Json.array());
       } else {
+         // If subject is null is not secured infinispan
          Json jsonSubjects = Json.array();
          subject.getPrincipals().forEach(principal -> {
             jsonSubjects.add(Json.object().set("name", principal.getName()).set("type", principal.getClass().getSimpleName()));
          });
          acl.set("subject", jsonSubjects);
-      }
-      Authorizer authorizer = rcm.getAuthorizer();
-      SubjectACL globalACL = authorizer.getACL(subject);
-      acl.set("global", aclToJson(globalACL));
-      Json caches = Json.object();
-      acl.set("caches", caches);
-      for (String cacheName : cacheNames) {
-         Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(rcm.getInstance(), cacheName);
-         SubjectACL cacheACL = authorizer.getACL(subject, cacheConfiguration.security().authorization());
-         caches.set(cacheName, aclToJson(cacheACL));
+         Authorizer authorizer = rcm.getAuthorizer();
+         SubjectACL globalACL = authorizer.getACL(subject);
+         acl.set("global", aclToJson(globalACL));
+         Json caches = Json.object();
+         acl.set("caches", caches);
+         for (String cacheName : cacheNames) {
+            Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(rcm.getInstance(), cacheName);
+            SubjectACL cacheACL = authorizer.getACL(subject, cacheConfiguration.security().authorization());
+            caches.set(cacheName, aclToJson(cacheACL));
+         }
       }
       return asJsonResponseFuture(acl);
    }
