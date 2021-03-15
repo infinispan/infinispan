@@ -16,12 +16,12 @@ import javax.management.MBeanServerConnection;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.StringPropertyReplacer;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.DefaultExitHandler;
 import org.infinispan.server.ExitStatus;
 import org.infinispan.server.Server;
-import org.infinispan.test.TestingUtil;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -67,9 +67,9 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          servers.add(server);
       }
       // Ensure that the cluster has formed if we start more than one server
-      List<DefaultCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
+      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
       if(cacheManagers.size() > 1) {
-         TestingUtil.blockUntilViewsReceived(TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS), cacheManagers.toArray(new CacheContainer[]{}));
+         blockUntilViewsReceived(cacheManagers);
       }
    }
 
@@ -157,5 +157,71 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       properties.setProperty("jgroups.cluster.mcast_port", Integer.toString(configuration.siteDiscoveryPort()));
       properties.setProperty("jgroups.tcp.port", Integer.toString(7800 + clusterPortOffset()));
 
+   }
+
+   private static void blockUntilViewsReceived(List<EmbeddedCacheManager> cacheManagers) {
+      long failTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS);
+
+      while (System.currentTimeMillis() < failTime) {
+         if (areCacheViewsComplete(cacheManagers, false)) {
+            return;
+         }
+         try {
+            //noinspection BusyWait
+            Thread.sleep(100);
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return;
+         }
+      }
+      //throws exception when "fail=true"
+      areCacheViewsComplete(cacheManagers, true);
+   }
+
+   public static boolean areCacheViewsComplete(List<EmbeddedCacheManager> cacheManagers, boolean fail) {
+      final int memberCount = cacheManagers.size();
+
+      for (EmbeddedCacheManager manager : cacheManagers) {
+         if (!isCacheViewComplete(manager.getMembers(), manager.getAddress(), memberCount, fail)) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   private static boolean isCacheViewComplete(List<Address> members, Address address, int memberCount, boolean fail) {
+      if (members == null || memberCount > members.size()) {
+         if (fail) {
+            if (members == null) {
+               throw new IllegalStateException("Member " + address + " is not connected yet!");
+            } else {
+               failMissingMembers(members, address, memberCount);
+            }
+         }
+         return false;
+      } else if (memberCount < members.size()) {
+         failMissingMembers(members, address, memberCount);
+      }
+      return true;
+   }
+
+   private static void failMissingMembers(List<Address> members, Address address, int memberCount) {
+      // This is an exceptional condition
+      StringBuilder sb = new StringBuilder("Cache at address ");
+      sb.append(address);
+      sb.append(" had ");
+      sb.append(members.size());
+      sb.append(" members; expecting ");
+      sb.append(memberCount);
+      sb.append(". Members were (");
+      for (int j = 0; j < members.size(); j++) {
+         if (j > 0) {
+            sb.append(", ");
+         }
+         sb.append(members.get(j));
+      }
+      sb.append(')');
+
+      throw new IllegalStateException(sb.toString());
    }
 }
