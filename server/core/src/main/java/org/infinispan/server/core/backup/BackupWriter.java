@@ -112,7 +112,7 @@ class BackupWriter {
       stages.dependsOn(
             // Write the global configuration xml
             blockingManager.runBlocking(() ->
-                  writeGlobalConfig(cm.getCacheManagerConfiguration(), containerRoot), "global-config")
+                  writeGlobalConfig(SecurityActions.getGlobalConfiguration(cm), containerRoot), "global-config")
       );
 
       return blockingManager.thenRunBlocking(

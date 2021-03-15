@@ -62,6 +62,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.stats.Stats;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
@@ -109,7 +110,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
 
             // Search
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search")
+               .permission(AuthorizationPermission.BULK_READ)
+               .handleWith(queryAction::search)
 
             // Misc
             .invocation().methods(POST).path("/v2/caches").withAction("toJSON").handleWith(this::convertToJson)
@@ -340,7 +343,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          stats = cache.getAdvancedCache().getStats();
          DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
          rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
-         queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
       } catch (SecurityException ex) {
          // Admin is needed
       }
@@ -355,6 +357,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
       IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
       indexingInProgress = indexStatistics.reindexing();
+      queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
 
       boolean statistics = configuration.statistics().enabled();
       boolean indexed = configuration.indexing().enabled();

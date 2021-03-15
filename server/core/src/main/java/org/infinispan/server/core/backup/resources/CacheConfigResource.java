@@ -45,7 +45,7 @@ class CacheConfigResource extends AbstractContainerResource {
    public void prepareAndValidateBackup() {
       Set<String> configs = wildcard ? cm.getCacheConfigurationNames() : resources;
       for (String configName : configs) {
-         Configuration config = cm.getCacheConfiguration(configName);//SecurityActions.getConfiguration(cm, configName);
+         Configuration config = SecurityActions.getCacheConfiguration(cm, configName);
 
          if (wildcard) {
             // For wildcard resources, we ignore internal caches, however explicitly requested internal caches are allowed
@@ -67,7 +67,7 @@ class CacheConfigResource extends AbstractContainerResource {
          mkdirs(root);
 
          for (String configName : resources) {
-            Configuration config = cm.getCacheConfiguration(configName);
+            Configuration config = SecurityActions.getCacheConfiguration(cm, configName);
             String fileName = configFile(configName);
             Path xmlPath = root.resolve(String.format("%s.xml", configName));
             try (OutputStream os = Files.newOutputStream(xmlPath)) {
@@ -94,7 +94,7 @@ class CacheConfigResource extends AbstractContainerResource {
 
                // Only define configurations that don't already exist so that we don't overwrite newer versions of the default
                // templates e.g. org.infinispan.DIST_SYNC when upgrading a cluster
-               cm.administration().getOrCreateTemplate(configName, cfg);
+               SecurityActions.getOrCreateTemplate(cm, configName, cfg);
                log.debugf("Restoring template %s: %s", configName, cfg.toXMLString(configName));
             } catch (IOException e) {
                throw new CacheException(e);

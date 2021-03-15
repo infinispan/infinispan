@@ -89,8 +89,8 @@ public class Common {
       int count = 0;
       RestResponse response;
       while ((response = await(request.get())).getStatus() == pendingStatus || count++ < 100) {
-         TestingUtil.sleepThread(10);
          response.close();
+         TestingUtil.sleepThread(10);
       }
       assertEquals(completeStatus, response.getStatus());
       return response;

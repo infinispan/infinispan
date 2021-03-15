@@ -3,6 +3,7 @@ package org.infinispan.globalstate.impl;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -44,5 +45,9 @@ final class SecurityActions {
 
    static Configuration getCacheConfiguration(EmbeddedCacheManager cacheManager, String name) {
       return doPrivileged(new GetCacheConfigurationFromManagerAction(cacheManager, name));
+   }
+
+   static void stopCache(Cache<?, ?> cache) {
+      doPrivileged(() -> {cache.stop(); return null;});
    }
 }

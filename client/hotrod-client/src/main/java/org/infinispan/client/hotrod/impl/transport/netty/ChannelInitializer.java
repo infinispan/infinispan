@@ -157,6 +157,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       Principal principal = sslHandler != null ? sslHandler.engine().getSession().getLocalPrincipal() : null;
       String authorizationId = principal != null ? principal.getName() : null;
       if (authentication.clientSubject() != null) {
+         // We must use Subject.doAs() instead of Security.doAs()
          saslClient = Subject.doAs(authentication.clientSubject(), (PrivilegedExceptionAction<SaslClient>) () ->
                scf.createSaslClient(new String[]{authentication.saslMechanism()}, authorizationId, "hotrod",
                      authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler())

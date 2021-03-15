@@ -93,6 +93,7 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
       return authenticateWithState(route, response.request(), parameters);
    }
 
+   @Override
    public Request authenticateWithState(Route route, Request request) throws IOException {
       Map<String, String> ref = parametersRef.get();
       Map<String, String> parameters = ref == null

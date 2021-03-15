@@ -75,11 +75,11 @@ public class CacheResource extends AbstractContainerResource {
 
    @Override
    public void prepareAndValidateBackup() {
-      InternalCacheRegistry icr = cm.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(InternalCacheRegistry.class);
 
       Set<String> caches = wildcard ? cm.getCacheConfigurationNames() : resources;
       for (String cache : caches) {
-         Configuration config = cm.getCacheConfiguration(cache);
+         Configuration config = SecurityActions.getCacheConfiguration(cm, cache);
 
          if (wildcard) {
             // For wildcard resources, we ignore internal caches, however explicitly requested internal caches are allowed
@@ -119,7 +119,7 @@ public class CacheResource extends AbstractContainerResource {
                log.debugf("Restoring Cache %s: %s", cacheName, cfg.toXMLString(cacheName));
                // GetOrCreate in the event that a default cache is defined. This also allows cache-configurations to be
                // modified prior to a restore if only the backed up data is required
-               cm.administration().getOrCreateCache(cacheName, cfg);
+               SecurityActions.getOrCreateCache(cm, cacheName, cfg);
             } catch (IOException e) {
                throw new CacheException(e);
             }
@@ -132,7 +132,7 @@ public class CacheResource extends AbstractContainerResource {
                return;
 
             AdvancedCache<Object, Object> cache = cm.getCache(cacheName).getAdvancedCache();
-            ComponentRegistry cr = cache.getComponentRegistry();
+            ComponentRegistry cr = SecurityActions.getComponentRegistry(cache);
             CommandsFactory commandsFactory = cr.getCommandsFactory();
             KeyPartitioner keyPartitioner = cr.getComponent(KeyPartitioner.class);
             InvocationHelper invocationHelper = cr.getComponent(InvocationHelper.class);
@@ -143,7 +143,7 @@ public class CacheResource extends AbstractContainerResource {
             boolean keyMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getValueStorageMediaType());
             boolean valueMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getValueStorageMediaType());
 
-            SerializationContextRegistry ctxRegistry = cm.getGlobalComponentRegistry().getComponent(SerializationContextRegistry.class);
+            SerializationContextRegistry ctxRegistry = SecurityActions.getGlobalComponentRegistry(cm).getComponent(SerializationContextRegistry.class);
             ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
 
             int entries = 0;
@@ -173,7 +173,7 @@ public class CacheResource extends AbstractContainerResource {
    private CompletionStage<Void> createCacheBackup(String cacheName) {
       return blockingManager.runBlocking(() -> {
          AdvancedCache<?, ?> cache = cm.getCache(cacheName).getAdvancedCache();
-         Configuration configuration = cm.getCacheConfiguration(cacheName);
+         Configuration configuration = SecurityActions.getCacheConfiguration(cm, cacheName);
 
          Path cacheRoot = root.resolve(cacheName);
          // Create the cache backup dir and parents
@@ -188,7 +188,7 @@ public class CacheResource extends AbstractContainerResource {
             throw new CacheException(String.format("Unable to create backup file '%s'", xmlFileName), e);
          }
 
-         ComponentRegistry cr = cache.getComponentRegistry();
+         ComponentRegistry cr = SecurityActions.getComponentRegistry(cache);
          ClusterPublisherManager<Object, Object> clusterPublisherManager = cr.getClusterPublisherManager().running();
          SerializationContextRegistry ctxRegistry = cr.getGlobalComponentRegistry().getComponent(SerializationContextRegistry.class);
          ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();

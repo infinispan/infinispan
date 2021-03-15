@@ -31,14 +31,16 @@ public final class Security {
 
    private static final ThreadLocal<Boolean> PRIVILEGED = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-   private static final ThreadLocal<Deque<Subject>> SUBJECT = new ThreadLocal<>();
-   /*new InheritableThreadLocal() {
+   /*
+    * We don't override initialValue because we don't want to allocate the ArrayDeque if we just want to check if a
+    * Subject has been set.
+    */
+   private static final ThreadLocal<Deque<Subject>> SUBJECT = new InheritableThreadLocal<Deque<Subject>>() {
       @Override
-      protected Object childValue(Object parentValue) {
-         System.out.println("Inheriting " + parentValue);
-         return parentValue;
+      protected Deque<Subject> childValue(Deque<Subject> parentValue) {
+         return parentValue == null ? null : new ArrayDeque<>(parentValue);
       }
-   };*/
+   };
 
    private static boolean isTrustedClass(Class<?> klass) {
       // TODO: implement a better way
@@ -82,7 +84,7 @@ public final class Security {
    private static Deque<Subject> pre(Subject subject) {
       Deque<Subject> stack = SUBJECT.get();
       if (stack == null) {
-         stack = new ArrayDeque<>();
+         stack = new ArrayDeque<>(3);
          SUBJECT.set(stack);
       }
       if (subject != null) {
@@ -177,8 +179,9 @@ public final class Security {
     * the {@link Subject} associated with the current {@link AccessControlContext}
     */
    public static Subject getSubject() {
-      if (SUBJECT.get() != null) {
-         return SUBJECT.get().peek();
+      Deque<Subject> subjects = SUBJECT.get();
+      if (subjects != null && !subjects.isEmpty()) {
+         return subjects.peek();
       } else {
          AccessControlContext acc = AccessController.getContext();
          if (System.getSecurityManager() == null) {
@@ -197,5 +200,29 @@ public final class Security {
          return s.getPrincipals().iterator().next();
       }
       return null;
+   }
+
+   /**
+    * A simplified version of Subject.toString() with the following advantages:
+    * <ul>
+    *    <li>only lists principals, ignoring credentials</li>
+    *    <li>uses a compact, single-line format</li>
+    *    <li>does not use synchronization</li>
+    *    <li>does not use i18n messages</li>
+    * </ul></uk>
+    * @param subject
+    * @return
+    */
+   public static String toString(Subject subject) {
+      StringBuilder sb = new StringBuilder("Subject: [");
+      boolean comma = false;
+      for(Principal p : subject.getPrincipals()) {
+         if (comma) {
+            sb.append(" ,");
+         }
+         sb.append(p.toString());
+         comma = true;
+      }
+      return sb.append(']').toString();
    }
 }

@@ -43,6 +43,6 @@ final class SecurityActions {
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
       Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
-      authorizer.checkPermission(cacheManager.getSubject(), permission);
+      authorizer.checkPermission(permission);
    }
 }

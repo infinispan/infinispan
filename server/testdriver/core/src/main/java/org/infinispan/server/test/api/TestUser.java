@@ -2,6 +2,7 @@ package org.infinispan.server.test.api;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -13,10 +14,14 @@ import java.util.List;
  * @since 11
  */
 public enum TestUser {
-   ADMIN("admin", "strongPassword", Arrays.asList("AdminRole", "___schema_manager", "___script_manager")),
-   READER("reader", "password", Collections.singletonList("ReaderRole")),
-   WRITER("writer", "somePassword", Collections.singletonList("WriterRole")),
-   SUPERVISOR("supervisor", "lessStrongPassword", Collections.singletonList("SupervisorRole"));
+   ADMIN("admin", "strongPassword", Arrays.asList("admin", "___schema_manager", "___script_manager")),
+   OBSERVER("observer", "password", Collections.singletonList("observer")),
+   APPLICATION("application", "somePassword", Collections.singletonList("application")),
+   DEPLOYER("deployer", "lessStrongPassword", Collections.singletonList("deployer")),
+   READER("reader", "readerPassword", Collections.singletonList("reader")),
+   WRITER("writer", "writerPassword", Collections.singletonList("writer"));
+
+   public static final EnumSet<TestUser> NON_ADMINS = EnumSet.complementOf(EnumSet.of(TestUser.ADMIN));
 
    private final String user;
    private final String password;

@@ -38,18 +38,20 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    }
 
    public GlobalAuthorizationConfigurationBuilder enable() {
-      attributes.attribute(ENABLED).set(true);
-      return this;
+      return this.enabled(true);
    }
 
    public GlobalAuthorizationConfigurationBuilder disable() {
-      attributes.attribute(ENABLED).set(false);
-      return this;
+      return this.enabled(false);
    }
 
    public GlobalAuthorizationConfigurationBuilder enabled(boolean enabled) {
       attributes.attribute(ENABLED).set(enabled);
       return this;
+   }
+
+   public boolean isEnabled() {
+      return attributes.attribute(ENABLED).get();
    }
 
    public GlobalAuthorizationConfigurationBuilder cacheSize(long cacheSize) {

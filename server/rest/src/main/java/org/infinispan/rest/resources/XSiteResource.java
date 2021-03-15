@@ -19,8 +19,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
@@ -156,7 +154,7 @@ public class XSiteResource implements ResourceHandler {
       if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
 
       return CompletableFuture.supplyAsync(() -> {
-         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) globalXSiteAdmin::globalStatus);
+         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) () -> globalXSiteAdmin.globalStatus());
          Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
             SiteStatus status = e.getValue();
             if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
@@ -208,7 +206,7 @@ public class XSiteResource implements ResourceHandler {
       String site = request.variables().get("site");
 
       XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
-      TakeOfflineConfiguration current = Security.doAs(request.getSubject(), (PrivilegedAction<TakeOfflineConfiguration>) () -> xsiteAdmin.getTakeOfflineConfiguration(site));
+      TakeOfflineConfiguration current = xsiteAdmin.getTakeOfflineConfiguration(site);
 
       if (current == null) {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
@@ -236,7 +234,7 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build());
       }
       return CompletableFuture.supplyAsync(() -> {
-         String status = Subject.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
+         String status = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(site);
          }
@@ -270,7 +268,7 @@ public class XSiteResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(
             () -> {
-               Map<Address, String> result = Subject.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> xsiteAdmin.nodeStatus(site));
+               Map<Address, String> result = Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> xsiteAdmin.nodeStatus(site));
                return addEntityAsJson(Json.make(result), responseBuilder).build();
             }
             , invocationHelper.getExecutor());

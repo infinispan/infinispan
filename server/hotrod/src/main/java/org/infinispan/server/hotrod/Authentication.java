@@ -142,6 +142,7 @@ public class Authentication extends BaseRequestProcessor {
       }
       if (authenticationConfig.serverSubject() != null) {
          try {
+            // We must use Subject.doAs() here instead of Security.doAs()
             return Subject.doAs(authenticationConfig.serverSubject(), (PrivilegedExceptionAction<SaslServer>) () ->
                   sap.createSaslServer(mech, principals, HOTROD_SASL_PROTOCOL, authenticationConfig.serverName(),
                         authenticationConfig.mechProperties()));

@@ -1,7 +1,7 @@
 package org.infinispan.server.core.backup;
 
 /**
- * SecurityActions for the org.infinispan.server.server package.
+ * SecurityActions for the org.infinispan.server.core.backup package.
  * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other {@link
  * java.security.CodeSource}s, thus granting privilege escalation to external code.
