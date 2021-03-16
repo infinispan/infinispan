@@ -23,6 +23,10 @@ such as named caches.
 |`stop`
 |Stops the Cache Manager.
 
+|CREATE
+|`createCache`, `removeCache`
+|Create/remove container resources (caches, counters, schemas, scripts)
+
 |ALL
 |-
 |Includes all Cache Manager permissions.

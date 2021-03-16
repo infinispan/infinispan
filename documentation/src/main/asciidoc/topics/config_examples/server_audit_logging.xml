@@ -1,0 +1,4 @@
+<!-- Set to INFO to enable audit logging -->
+<Logger name="org.infinispan.AUDIT" additivity="false" level="INFO">
+   <AppenderRef ref="AUDIT-FILE"/>
+</Logger>

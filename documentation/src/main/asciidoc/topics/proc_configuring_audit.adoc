@@ -1,0 +1,14 @@
+[id='dec_audit_config-{context}']
+= Enabling Audit Logging
+Enable the audit log in your `log4j2.xml` file.
+
+.Procedure
+
+. Enable the `org.infinispan.AUDIT` logger in the `log4j2.xml` file by changing the level to `INFO`.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_audit_logging.xml[]
+----
+
+The above configuration will create audit log files in the server log directory, using the predefined rolling policy.

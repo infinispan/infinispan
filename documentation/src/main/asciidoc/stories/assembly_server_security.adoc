@@ -11,6 +11,7 @@ include::assembly_server_endpoint_authentication.adoc[leveloffset=+1]
 include::{topics}/proc_disabling_server_authentication.adoc[leveloffset=+1]
 include::assembly_server_endpoint_ipfilter.adoc[leveloffset=+1]
 include::assembly_server_authorization.adoc[leveloffset=+1]
+include::assembly_server_audit.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

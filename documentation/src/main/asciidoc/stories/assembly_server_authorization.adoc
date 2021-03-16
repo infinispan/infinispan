@@ -8,6 +8,7 @@ include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
 include::{topics}/ref_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_role_mappers.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_authz_declarative.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_authz_custom.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

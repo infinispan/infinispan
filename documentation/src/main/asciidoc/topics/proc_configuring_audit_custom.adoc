@@ -1,0 +1,20 @@
+[id='dec_audit_config_custom-{context}']
+= Customizing Audit Logging
+Customize the audit log configuration in your `infinispan.xml` and `log4j2.xml` file.
+
+.Procedure
+
+. Provide an alternative audit logger.
+. Customize the logger used by the default audit logger.
+
+The following example shows how to provide a specific implementation of `org.infinispan.security.AuditLogger`.
+The implementation should be made available to the server by packaging it in a jar and deploying it to the `server/lib` directory.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_audit_custom.xml[]
+----
+
+The default audit logger, `org.infinispan.security.audit.LoggingAuditLogger`, generates logs using the `org.infinispan.AUDIT` category.
+You can customize how these logs are persisted by modifying the specific logger in the `log4j2.xml` file.
+For example, it is possible to send logs to a syslog daemon, to a JDBC database or a Kafka server.

@@ -4,21 +4,22 @@ Configure authorization in your `infinispan.xml` file.
 
 .Procedure
 
-. Configure the global authorization settings in the `cache-container` that specify a role mapper, and define a set of roles and permissions.
+. Enable the global authorization in the `cache-container` that automatically defines a set of default roles, permissions and a role mapper.
 . Configure authorization for caches to restrict access based on user roles.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/cache_authorization.xml[]
+include::config_examples/cache_authorization_implicit.xml[]
 ----
 
-In the following example, users who have the either the `reader` or `writer` role cannot access the "secured" cache.
-{brandname} denies any access requests from those users:
+The above configuration will enable the following authorization features:
 
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/cache_authorization_explicit_roles.xml[]
-----
+* ClusterRoleMapper
+* a set of predefined roles:
+** `admin`: a superuser role which has all the available permissions.
+** `application`: a role which can access and manipulate the contents of resources (caches, counters) but cannot create or remove them.
+** `deployer`: a role similar to `application` but which can also create and remove resources (caches, counters, schemas, scripts).
+** `observer`: a role which has read-only access to the system.
 
 .Reference
 

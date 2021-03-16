@@ -1,5 +1,20 @@
 = Upgrading from 12.0 to 12.1
 
+== Authorization
+
+A new `CREATE` permission has been introduced, with the following effects:
+* users now require the `CREATE` permission to be able to create/remove caches/counters/locks instead of the `ADMIN` permission
+* it supersedes the internal `___schema_manager` role, which has now been deprecated. It is required in order to add/remove schemas.
+* it supersedes the internal `___script_manager` role, which has now been deprecated. It is required in order to add/remove scripts.
+
+=== Server
+
+Authorization is now enabled out-of-the-box in the default server configuration.
+Authorization only applies to "global" operations (administrative and management), so normal cache usage is unaffected.
+You can revert to the previous behavior by removing the `<authorization>` element from the `<cache-container>` configuration.
+
+The default logging configuration now includes an audit logging which is disabled by default.
+
 == Server Trust Store
 
 The trust store configuration is now part of the server identity to allow client certificate validation
