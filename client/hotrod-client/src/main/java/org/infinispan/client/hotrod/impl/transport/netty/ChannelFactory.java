@@ -279,6 +279,11 @@ public class ChannelFactory {
       SocketAddress server;
       lock.writeLock().lock();
       try {
+         if (failedServers != null && failedServers.containsAll(getServers(cacheName))) {
+            log.debug("All the servers are marked as failed. Cluster might have completely shut down, try reverting to the initial server list.");
+            reset(cacheName);
+            failedServers.clear();
+         }
          FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
          server = balancer.nextServer(failedServers);
       } finally {
@@ -385,6 +390,15 @@ public class ChannelFactory {
       lock.readLock().lock();
       try {
          return topologyInfo.getServers();
+      } finally {
+         lock.readLock().unlock();
+      }
+   }
+
+   public Collection<InetSocketAddress> getServers(byte[] cacheName) {
+      lock.readLock().lock();
+      try {
+         return topologyInfo.getServers(new WrappedByteArray(cacheName));
       } finally {
          lock.readLock().unlock();
       }

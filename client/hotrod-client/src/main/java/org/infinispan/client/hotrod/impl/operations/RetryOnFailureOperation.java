@@ -208,17 +208,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
                case SWITCHED:
                   triedCompleteRestart = true;
                   retryCount = 0;
+                  failedServers.clear();
                   break;
                case NOT_SWITCHED:
-                  if (!triedCompleteRestart) {
-                     log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
-                     channelFactory.reset(cacheName);
-                     triedCompleteRestart = true;
-                     retryCount = 0;
-                  } else {
-                     HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
-                     completeExceptionally(e);
-                  }
+                  HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
+                  completeExceptionally(e);
                   break;
                case IN_PROGRESS:
                   log.trace("Cluster switch in progress, retry operation without increasing retry count");
