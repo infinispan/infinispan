@@ -78,6 +78,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
       clientBuilder.addServer()
          .host("localhost")
          .port(serverPort);
+      clientBuilder.maxRetries(2);
       return clientBuilder;
    }
 
