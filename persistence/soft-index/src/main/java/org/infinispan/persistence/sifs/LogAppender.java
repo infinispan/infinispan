@@ -1,10 +1,13 @@
 package org.infinispan.persistence.sifs;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.executors.LimitedExecutor;
@@ -15,7 +18,6 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.flowables.ConnectableFlowable;
 import io.reactivex.rxjava3.flowables.GroupedFlowable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
@@ -34,14 +36,20 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
    private final FileProvider fileProvider;
    private final boolean syncWrites;
    private final int maxFileSize;
+   // Used to keep track of how many log requests have been submitted. This way if the blocking thread has consumed
+   // the same number of log requests it can immediately flush.
+   private final AtomicInteger submittedCount = new AtomicInteger();
 
    // These variables are only ever read from the provided executor and rxjava guarantees visibility
-   // to it so it doesn't need to be volatile
+   // to it so they don't need to be volatile or synchronized
    private FlowableProcessor<Object> delay;
    private int currentOffset = 0;
    private long seqId = 0;
+   private int receivedCount = 0;
+   private final List<LogRequest> toSyncLogRequests;
    private FileProvider.Log logFile;
 
+   // This is volatile as it can be read from different threads when submitting
    private volatile FlowableProcessor<LogRequest> flowableProcessor;
 
    public LogAppender(NonBlockingManager nonBlockingManager, Index index,
@@ -54,6 +62,8 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
       this.fileProvider = fileProvider;
       this.syncWrites = syncWrites;
       this.maxFileSize = maxFileSize;
+
+      this.toSyncLogRequests = syncWrites ? new ArrayList<>() : null;
 
       this.delay = AsyncProcessor.create();
       delay.onComplete();
@@ -71,7 +81,15 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
       }
       Scheduler scheduler = Schedulers.from(executor);
 
-      Flowable<GroupedFlowable<Boolean, LogRequest>> groupedFlowable = flowableProcessor
+      Flowable<LogRequest> flowable = syncWrites ?
+            flowableProcessor.doOnNext(lr -> {
+               // Write requests must be synced - so keep track of count to compare later
+               if (lr.getKey() != null) {
+                  submittedCount.incrementAndGet();
+               }
+            }) : flowableProcessor;
+
+      Flowable<GroupedFlowable<Boolean, LogRequest>> groupedFlowable = flowable
             // Make sure everything is observed on the executor.
             // This way it can resume and suspend itself as needed.
             .observeOn(scheduler)
@@ -80,29 +98,8 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
          if (gf.getKey()) {
             gf.subscribe(this);
          } else {
-            Flowable<LogRequest> actualWrites = gf.delay(this);
-            if (syncWrites) {
-               // If we have sync writes we need to ensure they are flushed every so often. We do this
-               // two different ways, after a batch of entries has completed or a timeout occurs. This
-               // provides much better performance than a force per entry without also inflating the
-               // average latency.
-               // If a clear or pause is done then the flushed entries will not be notified of completed
-               // request until the time out concludes.
-               ConnectableFlowable<LogRequest> connectableFlowable =
-                     actualWrites.publish();
-               // This handles the actual values
-               connectableFlowable.subscribe(this);
-               // Since we have sync writes, we have to every so often force the writes and
-               // notify any requests
-               connectableFlowable.buffer(100, TimeUnit.MILLISECONDS, scheduler, 100)
-                     .filter(l -> !l.isEmpty())
-                     .doOnNext(l -> logFile.fileChannel.force(false))
-                     .flatMap(Flowable::fromIterable)
-                     .forEach(this::completeRequest);
-               connectableFlowable.connect();
-            } else {
-               actualWrites.subscribe(this);
-            }
+            gf.delay(this)
+               .subscribe(this);
          }
       });
    }
@@ -160,10 +157,11 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
       try {
          if (logFile == null) {
             logFile = fileProvider.getFileForLog();
-            log.debug("Appending records to " + logFile.fileId);
+            log.tracef("Appending records to %s", logFile.fileId);
          }
          if (request.isClear()) {
             logFile.close();
+            completePendingLogRequests();
             currentOffset = 0;
             logFile = null;
             delay = AsyncProcessor.create();
@@ -182,9 +180,10 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
             // switch to next file
             logFile.close();
             compactor.completeFile(logFile.fileId);
+            completePendingLogRequests();
             logFile = fileProvider.getFileForLog();
             currentOffset = 0;
-            log.debug("Appending records to " + logFile.fileId);
+            log.tracef("Appending records to %s", logFile.fileId);
          }
          long seqId = nextSeqId();
          EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(),
@@ -198,11 +197,28 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
          index.handleRequest(indexRequest);
          if (!syncWrites) {
             completeRequest(request);
+         } else {
+            // This cannot be null when sync writes is true
+            toSyncLogRequests.add(request);
+            if (submittedCount.get() == ++receivedCount || toSyncLogRequests.size() == 1000) {
+               logFile.fileChannel.force(false);
+               completePendingLogRequests();
+            }
          }
          currentOffset += request.length();
       } catch (Exception e) {
          log.debugf("Exception encountered while processing log request %s", request);
          request.completeExceptionally(e);
+      }
+   }
+
+   private void completePendingLogRequests() {
+      if (toSyncLogRequests != null) {
+         for (Iterator<LogRequest> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
+            LogRequest logRequest = iter.next();
+            iter.remove();
+            completeRequest(logRequest);
+         }
       }
    }
 
