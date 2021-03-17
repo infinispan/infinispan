@@ -159,7 +159,7 @@
       <version.javax.persistence>2.2</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.logging>3.4.1.Final</version.jboss.logging>
-      <version.jboss.marshalling>2.0.9.Final</version.jboss.marshalling>
+      <version.jboss.marshalling>2.0.11.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.9.8.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
