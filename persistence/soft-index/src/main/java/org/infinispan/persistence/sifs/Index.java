@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -22,6 +23,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -51,8 +53,9 @@ class Index {
    // 8 bytes number of elements
    private static final int INDEX_FILE_HEADER_SIZE = 34;
 
-   private final Path indexDir;
+   private final NonBlockingManager nonBlockingManager;
    private final FileProvider fileProvider;
+   private final Path indexDir;
    private final Compactor compactor;
    private final int minNodeSize;
    private final int maxNodeSize;
@@ -62,8 +65,10 @@ class Index {
 
    private final FlowableProcessor<IndexRequest>[] flowableProcessors;
 
-   public Index(FileProvider fileProvider, Path indexDir, int segments, int minNodeSize, int maxNodeSize,
-                TemporaryTable temporaryTable, Compactor compactor, TimeService timeService) throws IOException {
+   public Index(NonBlockingManager nonBlockingManager, FileProvider fileProvider, Path indexDir, int segments,
+                int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
+                TimeService timeService) throws IOException {
+      this.nonBlockingManager = nonBlockingManager;
       this.fileProvider = fileProvider;
       this.compactor = compactor;
       this.timeService = timeService;
@@ -152,6 +157,21 @@ class Index {
       int processor = (indexRequest.getKey().hashCode() & Integer.MAX_VALUE) % segments.length;
       flowableProcessors[processor].onNext(indexRequest);
       return indexRequest;
+   }
+
+   public void deleteFileAsync(int fileId) {
+      AtomicInteger count = new AtomicInteger(flowableProcessors.length);
+      for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
+         IndexRequest deleteFile = IndexRequest.syncRequest(() -> {
+            // After all indexes have ensured they have processed all requests - the last one will delete the file
+            // This guarantees that the index can't see an outdated value
+            if (count.decrementAndGet() == 0) {
+               fileProvider.deleteFile(fileId);
+               compactor.releaseStats(fileId);
+            }
+         });
+         flowableProcessor.onNext(deleteFile);
+      }
    }
 
    public CompletionStage<Void> stop() throws InterruptedException {
@@ -286,14 +306,12 @@ class Index {
                indexFileSize = INDEX_FILE_HEADER_SIZE;
                freeBlocks.clear();
                size.set(0);
-               request.complete(null);
+               nonBlockingManager.complete(request,null);
                return;
-            case DELETE_FILE:
-               // the last segment that processes the delete request actually deletes the file
-               if (request.countDown()) {
-                  fileProvider.deleteFile(request.getFile());
-                  compactor.releaseStats(request.getFile());
-               }
+            case SYNC_REQUEST:
+               Runnable runnable = (Runnable) request.getKey();
+               runnable.run();
+               nonBlockingManager.complete(request, null);
                return;
             case MOVED:
                recordChange = IndexNode.RecordChange.MOVE;
@@ -335,7 +353,7 @@ class Index {
                overwriteHook = IndexNode.NOOP_HOOK;
                break;
             case SIZE:
-               request.complete(size.get());
+               nonBlockingManager.complete(request, size.get());
                return;
             default:
                throw new IllegalArgumentException(request.toString());
@@ -347,7 +365,7 @@ class Index {
             request.completeExceptionally(e);
          }
          temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
-         request.complete(null);
+         nonBlockingManager.complete(request, null);
       }
 
       // This is ran when the flowable ends either via normal termination or error

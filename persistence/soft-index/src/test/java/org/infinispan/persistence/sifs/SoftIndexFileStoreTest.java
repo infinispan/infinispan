@@ -1,13 +1,17 @@
 package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -197,6 +201,49 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       } finally {
          keepIndex = false;
       }
+   }
+
+   private int countIterator(Iterator<?> iterator) {
+      int count = 0;
+      while (iterator.hasNext()) {
+         iterator.next();
+         count++;
+      }
+      return count;
+   }
+
+   public void testCompactorRemovesOldFile() throws IOException {
+      // Make sure no additional logs around
+      store.clear();
+      NonBlockingSoftIndexFileStore<Object, Object> actualStore = (NonBlockingSoftIndexFileStore<Object, Object>) store.delegate();
+
+      FileProvider fileProvider = actualStore.getFileProvider();
+
+      // we need to write an entry for it to create a file
+      int maxWritten = 1;
+      InternalCacheEntry ice = TestInternalCacheEntryFactory.create(key(maxWritten), "value" + maxWritten);
+      store.write(MarshalledEntryUtil.create(ice, getMarshaller()));
+
+      int onlyFileId;
+      try (CloseableIterator<Integer> iter = fileProvider.getFileIterator()) {
+         assertTrue(iter.hasNext());
+         onlyFileId = iter.next();
+         assertFalse(iter.hasNext());
+      }
+      // Keep writing until the current file fills up and we create a new one
+      while (countIterator(fileProvider.getFileIterator()) == 1) {
+         int i = ++maxWritten;
+         ice = TestInternalCacheEntryFactory.create(key(i), "value" + i);
+         store.write(MarshalledEntryUtil.create(ice, getMarshaller()));
+      }
+
+      // Now we write over all the previous values, which should force the compactor to eventually remove the file
+      for (int i = 0; i < maxWritten; ++i) {
+         ice = TestInternalCacheEntryFactory.create(key(i), "value" + i + "-second");
+         store.write(MarshalledEntryUtil.create(ice, getMarshaller()));
+      }
+
+      eventuallyEquals(Boolean.FALSE, () -> fileProvider.newFile(onlyFileId).exists());
    }
 
    private void writeGibberish() {

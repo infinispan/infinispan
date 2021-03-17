@@ -338,7 +338,6 @@ class Compactor implements Consumer<Object> {
                   log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, indexedOffset,
                         logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
                }
-               // TODO: need to wait on th index request once we change over the index queues
                // entryFile cannot be used as we have to report the file due to free space statistics
                IndexRequest moveRequest = IndexRequest.moved(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength,
                      scheduledFile, indexedOffset);
@@ -359,8 +358,7 @@ class Compactor implements Consumer<Object> {
       if (!terminateSignal && clearSignal.get() == 0) {
          // The deletion must be executed only after the index is fully updated.
          log.debugf("Finished compacting %d, scheduling delete", scheduledFile);
-         // TODO: why does index queue do this? This should be a single file, can the compactor not just delete it?
-//         index.handleRequest(IndexRequest.deleteFileRequest(scheduledFile));
+         index.deleteFileAsync(scheduledFile);
       }
    }
 
