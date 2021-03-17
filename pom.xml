@@ -415,7 +415,7 @@
       <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
-      <versionx.org.yaml.snakeyaml>1.18</versionx.org.yaml.snakeyaml>
+      <versionx.org.yaml.snakeyaml>1.28</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
 
