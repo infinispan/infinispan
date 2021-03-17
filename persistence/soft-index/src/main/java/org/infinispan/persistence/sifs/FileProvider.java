@@ -156,7 +156,8 @@ public class FileProvider {
       return prefix + fileId;
    }
 
-   private File newFile(int fileId) {
+   // Package private for tests
+   File newFile(int fileId) {
       return new File(dataDir, fileIdToString(fileId));
    }
 

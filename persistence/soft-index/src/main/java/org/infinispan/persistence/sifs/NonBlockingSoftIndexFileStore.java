@@ -192,7 +192,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       compactor = new Compactor(fileProvider, temporaryTable, marshaller, timeService, keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
             blockingManager.asExecutor("compactor"));
       try {
-         index = new Index(fileProvider, getIndexLocation(), configuration.indexSegments(),
+         index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), configuration.indexSegments(),
                configuration.minNodeSize(), configuration.maxNodeSize(),
                temporaryTable, compactor, timeService);
       } catch (IOException e) {
@@ -340,6 +340,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }).ignoreElements()
             .toCompletionStage(null);
       CompletionStages.join(stage);
+   }
+
+   // Package protected for tests only
+   FileProvider getFileProvider() {
+      return fileProvider;
    }
 
    private Path getDataLocation() {
