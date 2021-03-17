@@ -186,6 +186,7 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
             log.tracef("Appending records to %s", logFile.fileId);
          }
          long seqId = nextSeqId();
+         log.tracef("Apppending record to %s:%s", logFile.fileId, currentOffset);
          EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(),
                request.getSerializedInternalMetadata(),
                request.getSerializedValue(), seqId, request.getExpiration(), request.getCreated(), request.getLastUsed());

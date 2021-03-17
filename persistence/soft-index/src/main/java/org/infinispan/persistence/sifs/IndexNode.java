@@ -337,17 +337,40 @@ class IndexNode {
       return maxSeqId;
    }
 
-   public static void setPosition(IndexNode root, int segment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private void updateFileOffsetInFile(int leafOffset, int newFile, int newOffset) throws IOException {
+      // Root is -1, so that means the beginning of the file
+      long offset = this.offset >= 0 ? this.offset : 0;
+      offset += headerLength();
+      for (byte[] keyPart : this.keyParts) {
+         offset += 2 + keyPart.length;
+      }
+      offset += (long) leafOffset * LEAF_NODE_REFERENCE_SIZE;
+
+      ByteBuffer buffer = ByteBuffer.allocate(8);
+      buffer.putInt(newFile);
+      buffer.putInt(newOffset);
+
+      buffer.flip();
+
+      this.segment.getIndexFile().write(buffer, offset);
+   }
+
+   private static IndexNode findParentNode(IndexNode root, byte[] key, Deque<Path> stack) throws IOException {
       IndexNode node = root;
-      Deque<Path> stack = new ArrayDeque<>();
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
-         stack.push(new Path(node, insertionPoint));
+         if (stack != null) stack.push(new Path(node, insertionPoint));
          if (log.isTraceEnabled()) {
             log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
          }
          node = node.innerNodes[insertionPoint].getIndexNode(root.segment);
       }
+      return node;
+   }
+
+   public static void setPosition(IndexNode root, int segment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      Deque<Path> stack = new ArrayDeque<>();
+      IndexNode node = findParentNode(root, key, stack);
       IndexNode copy = node.copyWith(segment, key, file, offset, size, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
@@ -644,25 +667,33 @@ class IndexNode {
       if (keyComp == 0) {
          if (numRecords > 0) {
             if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
-               newPrefix = prefix;
-               newKeyParts = keyParts;
-               newLeafNodes = new LeafNode[leafNodes.length];
-               System.arraycopy(leafNodes, 0, newLeafNodes, 0, leafNodes.length);
-               // Do not update the file and offset for DROPPED IndexRequests
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
                            oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
                   }
-                  newLeafNodes[insertPart] = new LeafNode(file, offset, numRecords, cacheSegment);
+
+                  updateFileOffsetInFile(insertPart, file, offset);
+
                   segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
                } else {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Updating num records for %d:%d to %d", oldLeafNode.file, oldLeafNode.offset, numRecords));
                   }
-                  newLeafNodes[insertPart] = new LeafNode(oldLeafNode.file, oldLeafNode.offset, numRecords, cacheSegment);
+                  // We don't need to update the file as the file and position are the same, only the numRecords
+                  // has been updated for REMOVED
+                  file = oldLeafNode.file;
+                  offset = oldLeafNode.offset;
                }
+               lock.writeLock().lock();
+               try {
+                  leafNodes[insertPart] = new LeafNode(file, offset, numRecords, cacheSegment);
+               } finally {
+                  lock.writeLock().unlock();
+               }
+
                overwriteHook.setOverwritten(true, oldLeafNode.file, oldLeafNode.offset);
+               return this;
             } else {
                overwriteHook.setOverwritten(false, -1, -1);
                segment.getCompactor().free(file, size);

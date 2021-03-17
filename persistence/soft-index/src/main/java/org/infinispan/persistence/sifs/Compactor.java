@@ -304,9 +304,6 @@ class Compactor implements Consumer<Object> {
                   entryOffset = ~currentOffset;
                   writtenLength = header.getHeaderLength() + header.keyLength();
                }
-               if (logFile.fileId == 4 && entryOffset == 176) {
-                  System.currentTimeMillis();
-               }
                EntryRecord.writeEntry(logFile.fileChannel, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(segment, key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
                if (lockedEntry == null) {
@@ -351,7 +348,16 @@ class Compactor implements Consumer<Object> {
          // We delay the next operation until all prior moves are done. By moving it can trigger another
          // compaction before the index has been fully updated. Thus we block any other compaction events
          // until all entries have been moved for this file
-         paused = aggregateCompletionStage.freeze().toCompletableFuture();
+         CompletionStage<Void> aggregate = aggregateCompletionStage.freeze();
+         paused = new CompletableFuture<>();
+         // We resume after completed, Note that we must complete the {@code paused} variable inside the compactor
+         // execution pipeline otherwise we can invoke compactor operations in the wrong thread
+         aggregate.whenComplete((ignore, t) -> {
+            resumeAfterPause();
+            if (t != null) {
+               log.error("There was a problem moving indexes for compactor with file " + logFile.fileId, t);
+            }
+         });
       } finally {
          handle.close();
       }

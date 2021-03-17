@@ -167,6 +167,7 @@ class Index {
             // This guarantees that the index can't see an outdated value
             if (count.decrementAndGet() == 0) {
                fileProvider.deleteFile(fileId);
+               log.tracef("Deleted file %s", fileId);
                compactor.releaseStats(fileId);
             }
          });
