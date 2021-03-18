@@ -1,5 +1,6 @@
 package org.infinispan.spring.embedded.session;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -11,6 +12,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(testName = "spring.embedded.session.InfinispanEmbeddedSessionRepositoryTest", groups = "unit")
@@ -20,11 +22,18 @@ public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRe
    private EmbeddedCacheManager cacheManager2;
    private EmbeddedCacheManager cacheManager3;
 
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new InfinispanEmbeddedSessionRepositoryTest().mediaType(MediaType.APPLICATION_PROTOSTREAM),
+            new InfinispanEmbeddedSessionRepositoryTest().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT),
+            };
+   }
 
    @BeforeClass
    public void beforeClass() {
       ConfigurationBuilder defaultCacheBuilder = new ConfigurationBuilder();
-      defaultCacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      defaultCacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(mediaType.getTypeSubtype());
       embeddedCacheManager = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);
       cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);
       cacheManager3 = TestCacheManagerFactory.createClusteredCacheManager(defaultCacheBuilder);

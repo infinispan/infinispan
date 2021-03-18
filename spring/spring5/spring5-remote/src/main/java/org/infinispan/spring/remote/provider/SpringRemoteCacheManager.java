@@ -6,7 +6,19 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.MarshallerRegistry;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
+import org.infinispan.spring.common.session.MapSessionProtoAdapter;
+import org.springframework.session.MapSession;
 import org.springframework.util.Assert;
 
 /**
@@ -36,6 +48,8 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
       this.nativeCacheManager = nativeCacheManager;
       this.readTimeout = readTimeout;
       this.writeTimeout = writeTimeout;
+
+      configureMarshallers(nativeCacheManager);
    }
 
    public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager) {
@@ -110,5 +124,61 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    public void stop() {
       this.nativeCacheManager.stop();
       this.springCaches.clear();
+   }
+
+   private void configureMarshallers(RemoteCacheManager nativeCacheManager) {
+      MarshallerRegistry marshallerRegistry = nativeCacheManager.getMarshallerRegistry();
+
+      // Java serialization support
+      JavaSerializationMarshaller serializationMarshaller =
+            (JavaSerializationMarshaller) marshallerRegistry.getMarshaller(MediaType.APPLICATION_SERIALIZED_OBJECT);
+      if (serializationMarshaller == null) {
+         // Register a JavaSerializationMarshaller if it doesn't exist yet
+         // Because some session attributes are always marshalled with Java serialization
+         serializationMarshaller = new JavaSerializationMarshaller();
+         marshallerRegistry.registerMarshaller(serializationMarshaller);
+      }
+
+      // Extend deserialization allow list
+      ClassAllowList serializationAllowList = new ClassAllowList();
+      serializationAllowList.addClasses(NullValue.class);
+      serializationAllowList.addRegexps("java.util\\..*", "org.springframework\\..*");
+      serializationMarshaller.initialize(serializationAllowList);
+
+      // Protostream support
+      ProtoStreamMarshaller protoMarshaller =
+            (ProtoStreamMarshaller) marshallerRegistry.getMarshaller(MediaType.APPLICATION_PROTOSTREAM);
+      if (protoMarshaller != null) {
+         SerializationContext ctx = MarshallerUtil.getSerializationContext(nativeCacheManager);
+         addProviderContextInitializer(ctx);
+         addSessionContextInitializerAndMarshaller(ctx, serializationMarshaller);
+      }
+   }
+
+   private void addProviderContextInitializer(SerializationContext ctx) {
+      org.infinispan.spring.common.provider.PersistenceContextInitializerImpl providerSci =
+            new org.infinispan.spring.common.provider.PersistenceContextInitializerImpl();
+      providerSci.registerMarshallers(ctx);
+      providerSci.registerSchema(ctx);
+   }
+
+   private void addSessionContextInitializerAndMarshaller(SerializationContext ctx,
+                                                          JavaSerializationMarshaller serializationMarshaller) {
+      // Skip registering the marshallers if the MapSession class is not available
+      try {
+         new MapSession();
+      } catch (NoClassDefFoundError e) {
+         Log.CONFIG.debug("spring-session classes not found, skipping the session context initializer registration");
+         return;
+      }
+
+      org.infinispan.spring.common.session.PersistenceContextInitializerImpl sessionSci =
+            new org.infinispan.spring.common.session.PersistenceContextInitializerImpl();
+      sessionSci.registerMarshallers(ctx);
+      sessionSci.registerSchema(ctx);
+
+      BaseMarshaller sessionAttributeMarshaller =
+            new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);
+      ctx.registerMarshaller(sessionAttributeMarshaller);
    }
 }

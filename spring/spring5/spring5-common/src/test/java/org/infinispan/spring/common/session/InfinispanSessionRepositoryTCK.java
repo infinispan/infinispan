@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +28,17 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    protected SpringCache springCache;
 
    protected AbstractInfinispanSessionRepository sessionRepository;
+   protected MediaType mediaType;
 
+   protected InfinispanSessionRepositoryTCK mediaType(MediaType mediaType) {
+      this.mediaType = mediaType;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return mediaType.toString();
+   }
    protected abstract SpringCache createSpringCache();
 
    protected abstract AbstractInfinispanSessionRepository createRepository(SpringCache springCache) throws Exception;

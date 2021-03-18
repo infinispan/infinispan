@@ -1,23 +1,25 @@
 package org.infinispan.spring.remote.session;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_ALLOWLIST;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
 import org.infinispan.spring.common.session.InfinispanSessionRepositoryTCK;
+import org.infinispan.spring.remote.provider.SpringRemoteCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(testName = "spring.session.InfinispanRemoteSessionRepositoryTest", groups = "functional")
@@ -26,17 +28,30 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
    private EmbeddedCacheManager embeddedCacheManager;
    private HotRodServer hotrodServer;
    private RemoteCacheManager remoteCacheManager;
+   private SpringRemoteCacheManager springRemoteCacheManager;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new InfinispanRemoteSessionRepositoryTest().mediaType(MediaType.APPLICATION_PROTOSTREAM),
+            new InfinispanRemoteSessionRepositoryTest().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT),
+            };
+   }
 
    @BeforeClass
    public void beforeClass() {
-      org.infinispan.configuration.cache.ConfigurationBuilder cacheConfiguration = hotRodCacheConfiguration(APPLICATION_SERIALIZED_OBJECT);
+      org.infinispan.configuration.cache.ConfigurationBuilder cacheConfiguration = hotRodCacheConfiguration(mediaType);
       embeddedCacheManager = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       hotrodServer = HotRodTestingUtil.startHotRodServer(embeddedCacheManager, 19723);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.addServer().host("localhost").port(hotrodServer.getPort())
-            .marshaller(new JavaSerializationMarshaller())
-            .addJavaSerialAllowList(SPRING_JAVA_SERIAL_ALLOWLIST.split(","));
+      builder.addServer().host("localhost").port(hotrodServer.getPort());
+      if (mediaType.equals(MediaType.APPLICATION_SERIALIZED_OBJECT)) {
+         builder.marshaller(JavaSerializationMarshaller.class);
+      } else {
+         builder.marshaller(ProtoStreamMarshaller.class);
+      }
       remoteCacheManager = new RemoteCacheManager(builder.build());
+      springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
    }
 
    @AfterMethod
@@ -46,7 +61,7 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
 
    @AfterClass
    public void afterClass() {
-      remoteCacheManager.stop();
+      springRemoteCacheManager.stop();
       hotrodServer.stop();
       embeddedCacheManager.stop();
    }
@@ -58,7 +73,7 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
 
    @Override
    protected SpringCache createSpringCache() {
-      return new SpringCache(remoteCacheManager.getCache());
+      return springRemoteCacheManager.getCache("");
    }
 
    @Override
