@@ -53,9 +53,9 @@ public class SpringEmbeddedModule implements ModuleLifecycle {
          return;
       }
 
-      org.infinispan.spring.common.session.PersistenceContextInitializerImpl providerSci = new org.infinispan.spring.common.session.PersistenceContextInitializerImpl();
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, providerSci);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, providerSci);
+      org.infinispan.spring.common.session.PersistenceContextInitializerImpl sessionSci = new org.infinispan.spring.common.session.PersistenceContextInitializerImpl();
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, sessionSci);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, sessionSci);
 
       BaseMarshaller sessionAttributeMarshaller = new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);
       ctxRegistry.addMarshaller(PERSISTENCE, sessionAttributeMarshaller);

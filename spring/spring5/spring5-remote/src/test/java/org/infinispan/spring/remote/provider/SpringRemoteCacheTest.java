@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
+import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -90,5 +91,17 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       assertEquals("thread1", valueAfterGetterIsDone.get());
       assertEquals("thread1", valueObtainedByThread1);
       assertEquals("thread1", valueObtainedByThread2);
+   }
+
+   public void testNullValues() {
+      //given
+      final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
+      final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
+
+      // when
+      cache.put("key", null);
+
+      // then
+      assertEquals(NullValue.NULL, cache.get("key"));
    }
 }
