@@ -13,6 +13,12 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :numbered:
 :stem: asciimath
 
+//
+// Conditional statements
+//
+:embedded_mode:
+:server_mode:
+
 //Title
 = Security Guide for {brandname} {infinispanversion}
 

@@ -1,10 +1,10 @@
 [id='authz_permissions-{context}']
 = Permissions
-Permissions control access to Cache Managers and caches by restricting the
-actions that you can perform. Permissions can also apply to specific entities
-such as named caches.
+Authorization roles have different permissions with varying levels of access to {brandname}.
+Permissions let you restrict user access to both Cache Managers and caches.
 
-.Cache Manager Permissions
+== Cache Manager permissions
+
 [%header,cols=3*]
 |===
 |Permission
@@ -23,13 +23,17 @@ such as named caches.
 |`stop`
 |Stops the Cache Manager.
 
+|CREATE
+|`createCache`, `removeCache`
+|Create and remove container resources  such as caches, counters, schemas, and scripts.
+
 |ALL
 |-
 |Includes all Cache Manager permissions.
 |===
 
+== Cache permissions
 
-.Cache Permissions
 [%header,cols=3*]
 |===
 |Permission
@@ -80,16 +84,6 @@ such as named caches.
 |-
 |Combines the WRITE and BULK_WRITE permissions.
 |===
-
-.Combining permissions
-You might need to combine permissions so that they are useful. For example, to
-allow "supervisors" to run stream operations but restrict "standard" users to
-puts and gets only, you can define the following mappings:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/security_combined_permission.xml[]
-----
 
 .Reference
 

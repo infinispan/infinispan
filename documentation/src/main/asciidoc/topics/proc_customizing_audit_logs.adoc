@@ -1,0 +1,24 @@
+[id='customizing-audit-logs_{context}']
+= Using Custom Audit Logging Implementations
+You can create custom implementations of the `org.infinispan.security.AuditLogger` API if configuring Log4j appenders does not meet your needs.
+
+.Prerequisites
+
+* Implement `org.infinispan.security.AuditLogger` as required and package it in a JAR file.
+
+.Procedure
+
+. Add your JAR to the `server/lib` directory in your {brandname} Server installation.
+. Specify the fully qualified class name of your custom audit logger as the value for the `audit-logger` attribute on the `authorization` element in your cache container security configuration.
++
+For example, the following configuration defines `my.package.CustomAuditLogger` as the class for logging audit messages:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_audit_custom.xml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+
+* link:{javadocroot}/org/infinispan/security/AuditLogger.html[`org.infinispan.security.AuditLogger`]

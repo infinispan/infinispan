@@ -1,0 +1,21 @@
+[id='enabling-authz-{context}']
+= Restricting Access to Caches
+Control access to caches with {brandname} authorization (RBAC).
+
+This procedure shows you how to use the default {brandname} roles and permissions that are suitable for most use cases.
+
+.Procedure
+
+. Open your `infinispan.xml` configuration for editing.
+. If it is not already declared, add the `<authorization />` tag inside the `security` elements for the `cache-container`.
++
+This enables authorization for the Cache Manager and provides a global set of roles and permissions that caches can inherit.
++
+. Add the `<authorization />` tag to each cache for which {brandname} restricts access based on user roles.
+
+The following configuration example shows how to use implicit authorization configuration with default roles and permissions:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan_authz_default.xml[]
+----

@@ -1,15 +1,23 @@
 <infinispan>
-   <cache-container default-cache="secured" name="secured">
+   <cache-container default-cache="restricted" name="custom-authorization">
       <security>
          <authorization>
+            <!-- Declare a role mapper that associates a security principal to each role. -->
             <identity-role-mapper />
+            <!-- Specify user roles and corresponding permissions. -->
             <role name="admin" permissions="ALL" />
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
             <role name="supervisor" permissions="READ WRITE EXEC"/>
          </authorization>
       </security>
-      <local-cache name="secured">
+      <local-cache name="implicit-authorization">
+         <security>
+            <!-- Inherit roles and permissions from the cache-container. -->
+            <authorization/>
+         </security>
+      </local-cache>
+      <local-cache name="restricted">
          <security>
             <!-- Explicitly define which roles can access the cache. -->
             <authorization roles="admin supervisor"/>

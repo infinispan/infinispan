@@ -1,0 +1,16 @@
+[id='customizing-authorization_{context}']
+= Customizing Roles and Permissions
+You can customize authorization settings in your {brandname} configuration to use role mappers with different combinations of roles and permissions.
+
+.Procedure
+
+. Open your `infinispan.xml` configuration for editing.
+. Configure authorization for the `cache-container` by declaring a role mapper and a set of roles and permissions.
+. Configure authorization for caches to restrict access based on user roles.
+
+The following configuration example shows how to configure security authorization with roles and permissions:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan_authz_custom.xml[]
+----

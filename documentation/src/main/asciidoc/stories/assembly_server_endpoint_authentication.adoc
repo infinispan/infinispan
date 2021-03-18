@@ -20,6 +20,7 @@ include::{topics}/ref_endpoints_hotrod_sasl_policies.adoc[leveloffset=+2]
 include::{topics}/proc_server_endpoint_rest_auth.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_ref_auth_config.adoc[leveloffset=+2]
 include::{topics}/ref_endpoints_rest_authentication.adoc[leveloffset=+2]
+include::{topics}/proc_disabling_server_authentication.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

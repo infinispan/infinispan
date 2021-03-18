@@ -1,12 +1,10 @@
-[id='log_files-{context}']
-= {brandname} Log Files
-
-{brandname} writes log messages to the following directory: +
-`{server_home}/${infinispan.server.root}/log`
+[id='server-logs_{context}']
+= Server Logs
+{brandname} writes server logs to the following files in the `{server_home}/server/log` directory:
 
 `server.log`::
 Messages in human readable format, including boot logs that relate to the server startup. +
- {brandname} creates this file by default when you launch servers.
+ {brandname} creates this file when you start the server.
 
 `server.log.json`::
 Messages in JSON format that let you parse and analyze {brandname} logs. +

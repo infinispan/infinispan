@@ -1,0 +1,14 @@
+<infinispan>
+   <cache-container default-cache="rbac-cache" name="restricted">
+      <security>
+         <!-- Enable authorization with the default roles and permissions. -->
+         <authorization />
+      </security>
+      <local-cache name="rbac-cache">
+         <security>
+            <!-- Inherit authorization settings from the cache-container. -->
+            <authorization/>
+         </security>
+      </local-cache>
+   </cache-container>
+</infinispan>
