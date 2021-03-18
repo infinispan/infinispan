@@ -859,14 +859,16 @@ public class TestingUtil {
 
    public static void killCacheManagers(List<? extends EmbeddedCacheManager> cacheManagers) {
       // Stop the managers in reverse order to prevent each of them from becoming coordinator in turn
-      for (int i = cacheManagers.size() - 1; i >= 0; i--) {
-         EmbeddedCacheManager cm = cacheManagers.get(i);
-         try {
-            if (cm != null) {
-               SecurityActions.stopManager(cm);
+      if (cacheManagers != null) {
+         for (int i = cacheManagers.size() - 1; i >= 0; i--) {
+            EmbeddedCacheManager cm = cacheManagers.get(i);
+            try {
+               if (cm != null) {
+                  SecurityActions.stopManager(cm);
+               }
+            } catch (Throwable e) {
+               log.warn("Problems killing cache manager " + cm, e);
             }
-         } catch (Throwable e) {
-            log.warn("Problems killing cache manager " + cm, e);
          }
       }
    }
@@ -876,11 +878,13 @@ public class TestingUtil {
    }
 
    public static void clearContent(List<? extends EmbeddedCacheManager> cacheManagers) {
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         try {
-            clearContent(cm);
-         } catch (Throwable e) {
-            log.warn("Problems clearing cache manager " + cm, e);
+      if (cacheManagers != null) {
+         for (EmbeddedCacheManager cm : cacheManagers) {
+            try {
+               clearContent(cm);
+            } catch (Throwable e) {
+               log.warn("Problems clearing cache manager " + cm, e);
+            }
          }
       }
    }

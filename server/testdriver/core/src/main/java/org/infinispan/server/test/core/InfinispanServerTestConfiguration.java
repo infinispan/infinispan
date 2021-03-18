@@ -42,11 +42,13 @@ public class InfinispanServerTestConfiguration {
    private boolean defaultFile;
    private final String site;
    private final int portOffset;
+   private final String[] features;
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode,
                                             Properties properties, String[] mavenArtifacts, JavaArchive[] archives,
                                             boolean jmx, boolean parallelStartup, boolean defaultFile,
-                                            List<InfinispanServerListener> listeners, String site, int portOffset) {
+                                            List<InfinispanServerListener> listeners, String site, int portOffset,
+                                            String[] features) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
       this.runMode = runMode;
@@ -59,6 +61,7 @@ public class InfinispanServerTestConfiguration {
       this.listeners = Collections.unmodifiableList(listeners);
       this.site = site;
       this.portOffset = portOffset;
+      this.features = features;
    }
 
    public String configurationFile() {
@@ -115,5 +118,9 @@ public class InfinispanServerTestConfiguration {
 
    public int getPortOffset() {
       return portOffset;
+   }
+
+   public String[] getFeatures() {
+      return features;
    }
 }

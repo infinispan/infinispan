@@ -2,6 +2,10 @@ package org.infinispan.test;
 
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -67,9 +71,15 @@ import org.testng.internal.MethodInstance;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class})
+@Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class, FeaturesListener.class})
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public abstract class AbstractInfinispanTest {
+
+   @Retention(RetentionPolicy.RUNTIME)
+   @Target({ElementType.TYPE})
+   public @interface FeatureCondition {
+      String feature();
+   }
 
    protected interface Condition {
       boolean isSatisfied() throws Exception;

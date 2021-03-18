@@ -36,6 +36,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
@@ -46,6 +47,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
+import org.junit.Assume;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
@@ -107,6 +109,15 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     */
    @Override
    public void prepare(String name) {
+
+      if (configuration.getFeatures() != null) {
+         // if the feature isn't enabled, the test will be skipped
+         Features features = new Features(this.getClass().getClassLoader());
+         for (String feature : configuration.getFeatures()) {
+            Assume.assumeTrue(String.format("%s is disabled", feature), features.isAvailable(feature));
+         }
+      }
+
       String siteName = configuration.site() == null ? "" : configuration.site();
       String testDir = CommonsTestingUtil.tmpDirectory(siteName + name);
       Util.recursiveFileRemove(testDir);

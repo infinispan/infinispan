@@ -18,6 +18,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.infinispan.counter.exception.CounterConfigurationException;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "anchored.AnchoredConfigurationSerializerTest")
 @CleanupAfterMethod
+@AbstractInfinispanTest.FeatureCondition(feature = "anchored-keys")
 public class AnchoredConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
 
    @DataProvider
