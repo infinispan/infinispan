@@ -418,8 +418,6 @@
       <versionx.org.yaml.snakeyaml>1.28</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
-
-      <version.io.opentracing>0.31.0</version.io.opentracing>
    </properties>
 
    <dependencyManagement>
@@ -1770,17 +1768,6 @@
             <groupId>sun.jdk</groupId>
             <artifactId>jconsole</artifactId>
             <version>${versionx.sun.jdk.jconsole}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>io.opentracing</groupId>
-            <artifactId>opentracing-api</artifactId>
-            <version>${version.io.opentracing}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.opentracing</groupId>
-            <artifactId>opentracing-noop</artifactId>
-            <version>${version.io.opentracing}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
