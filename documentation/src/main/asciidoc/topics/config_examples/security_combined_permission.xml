@@ -1,2 +1,0 @@
-<role name="standard" permission="READ WRITE" />
-<role name="supervisors" permission="READ WRITE EXEC BULK"/>

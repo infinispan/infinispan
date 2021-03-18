@@ -1,7 +1,6 @@
-[id='server_access_logs-{context}']
+[id='access-logs_{context}']
 = Access Logs
+Access logs record all inbound client requests for Hot Rod and REST endpoints to files in the `{server_home}/server/log` directory.
 
-Hot Rod and REST endpoints can record all inbound client requests as log entries with the following categories:
-
-* `org.infinispan.HOTROD_ACCESS_LOG` logging category for the Hot Rod endpoint.
-* `org.infinispan.REST_ACCESS_LOG` logging category for the REST endpoint.
+`org.infinispan.HOTROD_ACCESS_LOG`:: Logging category that writes Hot Rod access messages to a `hotrod-access.log` file.
+`org.infinispan.REST_ACCESS_LOG`:: Logging category that writes REST access messages to a `rest-access.log` file.

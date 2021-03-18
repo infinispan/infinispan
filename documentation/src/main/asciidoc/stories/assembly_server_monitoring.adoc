@@ -2,7 +2,6 @@
 :context: server
 = Monitoring {brandname} Servers
 
-include::assembly_server_logging.adoc[leveloffset=+1]
 include::assembly_server_statistics.adoc[leveloffset=+1]
 include::assembly_server_health.adoc[leveloffset=+1]
 

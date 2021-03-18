@@ -1,0 +1,14 @@
+[id='enabling-audit-logs-{context}']
+= Enabling Audit Logging
+To record security audit messages, you need to enable the logging category in `log4j2.xml`.
+
+.Procedure
+
+. Open `{server_home}/server/conf/log4j2.xml` with any text editor.
+. Change the level for the `org.infinispan.AUDIT` logging category to `INFO`.
+. Save and close `log4j2.xml`.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_audit_logging.xml[]
+----

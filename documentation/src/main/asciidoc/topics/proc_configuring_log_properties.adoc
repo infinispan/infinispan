@@ -1,10 +1,15 @@
 [id='configuring_log_properties-{context}']
-= Configuring {brandname} Log Properties
-
-You configure {brandname} logs with `log4j2.xml`, which is described in the
-link:https://logging.apache.org/log4j/2.x/manual[Log4j 2 manual].
+= Configuring Server Logs
+{brandname} uses Apache Log4j technology to write server log messages.
+You can configure server logs in the `log4j2.xml` file.
 
 .Procedure
-. Open `{server_home}/${infinispan.server.root}/conf/log4j2.xml` with any text editor.
-. Change logging configuration as appropriate.
+
+. Open `{server_home}/server/conf/log4j2.xml` with any text editor.
+. Change server logging as appropriate.
 . Save and close `log4j2.xml`.
+
+[role="_additional-resources"]
+.Additional resources
+
+* link:https://logging.apache.org/log4j/2.x/manual[Apache Log4j manual]

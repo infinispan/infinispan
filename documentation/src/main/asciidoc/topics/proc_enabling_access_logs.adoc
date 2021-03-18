@@ -1,11 +1,13 @@
-[id='enabling_access_logs-{context}']
+[id='enabling-access-logs_{context}']
 = Enabling Access Logs
-Access logs for Hot Rod and REST endpoints are disabled by default.
+To record Hot Rod and REST endpoint access messages, you need to enable the logging categories in `log4j2.xml`.
 
 .Procedure
 
-* Set the level to `TRACE` in the {brandname} logging configuration.
-+
+. Open `{server_home}/server/conf/log4j2.xml` with any text editor.
+. Change the level for the `org.infinispan.HOTROD_ACCESS_LOG` and `org.infinispan.REST_ACCESS_LOG` logging categories to `TRACE`.
+. Save and close `log4j2.xml`.
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_endpoint_access_logs.xml[]
