@@ -27,6 +27,7 @@ public class AnchoredKeysIT {
          InfinispanServerRuleBuilder.config("configuration/AnchoredKeys.xml")
                .numServers(2)
                .runMode(ServerRunMode.EMBEDDED)
+               .featuresEnabled("anchored-keys")
                .build();
 
    @Rule

@@ -140,13 +140,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          TestingUtil.killCacheManagers(cacheManagers);
       }
 
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         String nodeName = SecurityActions.getCacheManagerConfiguration(cm).transport().nodeName();
-         assertTrue("Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName,
-                    nodeName != null && nodeName.contains(getCurrentTestShortName()));
+      if (cacheManagers != null) {
+         for (EmbeddedCacheManager cm : cacheManagers) {
+            String nodeName = SecurityActions.getCacheManagerConfiguration(cm).transport().nodeName();
+            assertTrue("Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName,
+                  nodeName != null && nodeName.contains(getCurrentTestShortName()));
+         }
+         cacheManagers.clear();
       }
 
-      cacheManagers.clear();
       listeners.clear();
    }
 

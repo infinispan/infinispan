@@ -33,6 +33,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.util.ControlledConsistentHashFactory;
@@ -41,6 +42,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "anchored.AnchoredKeysOperationsTest")
+@AbstractInfinispanTest.FeatureCondition(feature = "anchored-keys")
 public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
    public static final String CACHE_NAME = "testCache";
 

@@ -91,7 +91,7 @@ class AbstractMultiClusterIT {
    protected static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers, int portOffset) {
          super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
-               false, false, false, Collections.emptyList(), null, portOffset);
+               false, false, false, Collections.emptyList(), null, portOffset, new String[]{});
       }
    }
 

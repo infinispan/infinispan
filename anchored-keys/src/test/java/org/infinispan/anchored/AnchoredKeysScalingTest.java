@@ -7,12 +7,14 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "anchored.AnchoredKeysScalingTest")
 @CleanupAfterMethod
+@AbstractInfinispanTest.FeatureCondition(feature = "anchored-keys")
 public class AnchoredKeysScalingTest extends AbstractAnchoredKeysTest {
    public static final String CACHE_NAME = "testCache";
    public static final String KEY_1 = "key1";

@@ -21,6 +21,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private int numServers = 2;
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private JavaArchive[] archives;
+   private String[] features;
    private boolean jmx;
    private boolean parallelStartup = true;
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
@@ -42,7 +43,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset);
+                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset, features);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -57,6 +58,11 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public T runMode(ServerRunMode serverRunMode) {
       this.runMode = serverRunMode;
+      return (T) this;
+   }
+
+   public T featuresEnabled(String... features) {
+      this.features = features;
       return (T) this;
    }
 
