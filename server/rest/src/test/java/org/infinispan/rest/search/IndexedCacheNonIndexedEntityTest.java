@@ -3,6 +3,7 @@ package org.infinispan.rest.search;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.CompletionStage;
 
@@ -17,6 +18,8 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Indexer;
+import org.infinispan.query.Search;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -62,6 +65,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       ResponseAssertion.assertThat(response).isOk();
 
       ConfigurationBuilder configurationBuilder = getDefaultStandaloneCacheConfig(false);
+      configurationBuilder.statistics().enable();
       configurationBuilder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE).indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("NonIndexed");
@@ -76,6 +80,16 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       // Force initialization of the SearchMapping
       response = cacheClient.query("FROM NonIndexed");
       ResponseAssertion.assertThat(response).isBadRequest();
-      ResponseAssertion.assertThat(response).containsReturnedText("The configured indexed-entity type 'NonIndexed' must be indexed. Please annotate it with @Indexed");
+      String errorText = "The configured indexed-entity type 'NonIndexed' must be indexed. Please annotate it with @Indexed";
+
+      ResponseAssertion.assertThat(response).containsReturnedText(errorText);
+
+      // Call Indexer operations
+      response = cacheClient.clearIndex();
+      ResponseAssertion.assertThat(response).containsReturnedText(errorText);
+
+      // The Indexer should not have "running" status
+      Indexer indexer = Search.getIndexer(cacheManager.getCache(CACHE_NAME));
+      assertFalse(indexer.isRunning());
    }
 }
