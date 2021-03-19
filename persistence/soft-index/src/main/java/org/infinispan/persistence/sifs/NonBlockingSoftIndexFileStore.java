@@ -201,7 +201,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       compactor.setIndex(index);
       logAppender = new LogAppender(ctx.getNonBlockingManager(), index, temporaryTable, compactor, fileProvider,
             configuration.syncWrites(), configuration.maxFileSize());
-      logAppender.start(blockingManager.asExecutor("log-processor"));
+      logAppender.start(blockingManager.asExecutor("sifs-log-processor"));
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
 
@@ -318,7 +318,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    private void buildIndex(final AtomicLong maxSeqId) {
       Flowable<Integer> filePublisher = filePublisher();
-      CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
+      CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(file -> compactor.completeFile(file, -1)), false, false,
             (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
                long prevSeqId;
                while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
