@@ -199,6 +199,30 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-clean-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>clean-metainf-services</id>
+                  <phase>install</phase>
+                  <goals>
+                     <goal>clean</goal>
+                  </goals>
+                  <configuration>
+                     <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                     <filesets>
+                        <fileset>
+                           <directory>${project.build.outputDirectory}</directory>
+                           <includes>
+                              <include>META-INF/services/java.net.spi.URLStreamHandlerProvider</include>
+                           </includes>
+                        </fileset>
+                     </filesets>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
