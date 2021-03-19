@@ -170,19 +170,21 @@ public class EntryRecord {
       return read;
    }
 
-   public static void writeEntry(FileChannel fileChannel, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue,
+   public static void writeEntry(FileChannel fileChannel, ByteBuffer reusedBuffer, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue,
                                  byte[] serializedInternalMetadata, long seqId, long expiration) throws IOException {
-      ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
-      EntryHeader.writeHeader(header, (short) serializedKey.length, metadata == null ? 0 : (short) metadata.length(),
+      assert reusedBuffer.limit() == EntryHeader.HEADER_SIZE_11_0;
+      assert reusedBuffer.position() == 0;
+      EntryHeader.writeHeader(reusedBuffer, (short) serializedKey.length, metadata == null ? 0 : (short) metadata.length(),
             serializedValue == null ? 0 : serializedValue.length,
             serializedInternalMetadata == null ? 0 : (short) serializedInternalMetadata.length,
             seqId, expiration);
-      header.flip();
-      write(fileChannel, header);
+      reusedBuffer.flip();
+      write(fileChannel, reusedBuffer);
+      reusedBuffer.position(0);
       write(fileChannel, ByteBuffer.wrap(serializedKey));
       if (metadata != null) {
          write(fileChannel, ByteBuffer.wrap(metadata.getBytes()));
-         writeTimestamps(fileChannel, metadata.getCreated(), metadata.getLastUsed());
+         writeTimestamps(fileChannel, reusedBuffer, metadata.getCreated(), metadata.getLastUsed());
       }
       if (serializedValue != null) {
          write(fileChannel, ByteBuffer.wrap(serializedValue));
@@ -192,37 +194,45 @@ public class EntryRecord {
       }
    }
 
-   public static void writeEntry(FileChannel fileChannel, org.infinispan.commons.io.ByteBuffer serializedKey,
-                                 org.infinispan.commons.io.ByteBuffer serializedMetadata,
-                                 org.infinispan.commons.io.ByteBuffer serializedInternalMetadata,
-                                 org.infinispan.commons.io.ByteBuffer serializedValue,
+   static void writeEntry(FileChannel fileChannel, ByteBuffer reusedBuffer, ByteBuffer serializedKey,
+                                 ByteBuffer serializedMetadata,
+                                 ByteBuffer serializedInternalMetadata,
+                                 ByteBuffer serializedValue,
                                  long seqId, long expiration, long created, long lastUsed) throws IOException {
-      ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
-      EntryHeader.writeHeader(header, (short) serializedKey.getLength(), EntryMetadata.size(serializedMetadata),
-            serializedValue == null ? 0 : serializedValue.getLength(),
-            serializedInternalMetadata == null ? 0 : (short) serializedInternalMetadata.getLength(),
+      assert reusedBuffer.limit() == EntryHeader.HEADER_SIZE_11_0;
+      assert reusedBuffer.position() == 0;
+      EntryHeader.writeHeader(reusedBuffer, (short) serializedKey.remaining(), EntryMetadata.size(serializedMetadata),
+            serializedValue == null ? 0 : serializedValue.remaining(),
+            serializedInternalMetadata == null ? 0 : (short) serializedInternalMetadata.remaining(),
             seqId, expiration);
-      header.flip();
-      write(fileChannel, header);
-      write(fileChannel, ByteBuffer.wrap(serializedKey.getBuf(), serializedKey.getOffset(), serializedKey.getLength()));
+      reusedBuffer.flip();
+      write(fileChannel, reusedBuffer);
+      reusedBuffer.position(0);
+      write(fileChannel, serializedKey);
       if (serializedMetadata != null) {
-         write(fileChannel, ByteBuffer.wrap(serializedMetadata.getBuf(), serializedMetadata.getOffset(), serializedMetadata.getLength()));
-         writeTimestamps(fileChannel, created, lastUsed);
+         write(fileChannel, serializedMetadata);
+         writeTimestamps(fileChannel, reusedBuffer, created, lastUsed);
       }
       if (serializedValue != null) {
-         write(fileChannel, ByteBuffer.wrap(serializedValue.getBuf(), serializedValue.getOffset(), serializedValue.getLength()));
+         write(fileChannel, serializedValue);
       }
       if (serializedInternalMetadata != null) {
-         write(fileChannel, ByteBuffer.wrap(serializedInternalMetadata.getBuf(), serializedInternalMetadata.getOffset(), serializedInternalMetadata.getLength()));
+         write(fileChannel, serializedInternalMetadata);
       }
    }
 
-   private static void writeTimestamps(FileChannel fileChannel, long created, long lastUsed) throws IOException {
-      ByteBuffer buffer = ByteBuffer.allocate(EntryMetadata.TIMESTAMP_BYTES);
-      buffer.putLong(created);
-      buffer.putLong(lastUsed);
-      buffer.flip();
-      write(fileChannel, buffer);
+   private static void writeTimestamps(FileChannel fileChannel, ByteBuffer reusedBuffer, long created, long lastUsed) throws IOException {
+      assert reusedBuffer.position() == 0;
+      int previousLimit = reusedBuffer.limit();
+      assert previousLimit >= EntryMetadata.TIMESTAMP_BYTES;
+      reusedBuffer.putLong(created);
+      reusedBuffer.putLong(lastUsed);
+      reusedBuffer.flip();
+      write(fileChannel, reusedBuffer);
+
+      // Reset the buffer to what it was before
+      reusedBuffer.position(0);
+      reusedBuffer.limit(previousLimit);
    }
 
    private static void write(FileChannel fileChannel, ByteBuffer buffer) throws IOException {

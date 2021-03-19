@@ -41,4 +41,8 @@ public class EntryMetadata {
    static short size(ByteBuffer buffer) {
       return (short) (buffer == null ? 0 : buffer.getLength() + TIMESTAMP_BYTES);
    }
+
+   static short size(java.nio.ByteBuffer buffer) {
+      return (short) (buffer == null ? 0 : buffer.remaining() + TIMESTAMP_BYTES);
+   }
 }

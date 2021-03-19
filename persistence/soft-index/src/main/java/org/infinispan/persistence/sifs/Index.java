@@ -333,7 +333,7 @@ class Index {
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
                overwriteHook = (overwritten, prevFile, prevOffset) -> {
-                  request.setResult(overwritten);
+                  nonBlockingManager.complete(request, overwritten);
                   if (request.getOffset() >= 0 && prevOffset < 0) {
                      size.incrementAndGet();
                   } else if (request.getOffset() < 0 && prevOffset >= 0) {

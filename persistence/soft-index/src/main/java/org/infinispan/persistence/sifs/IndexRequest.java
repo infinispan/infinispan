@@ -106,30 +106,6 @@ class IndexRequest extends CompletableFuture<Object> {
       return serializedKey;
    }
 
-   public synchronized void setResult(Object result) {
-      if (this.result == null) {
-         this.result = result;
-      }
-      notifyAll();
-   }
-
-
-   public synchronized Object getResult() throws InterruptedException {
-      while (result == null) {
-         wait();
-      }
-      return result;
-   }
-
-   // TODO: delete this when replaced
-   public void setCountDown(int countDown) {
-      this.countDown = new AtomicInteger(countDown);
-   }
-
-   public boolean countDown() {
-      return countDown.decrementAndGet() == 0;
-   }
-
    public int getFile() {
       return file;
    }

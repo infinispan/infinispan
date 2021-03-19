@@ -52,6 +52,10 @@ class Compactor implements Consumer<Object> {
 
    private static final Object RESUME_PILL = new Object();
 
+   // This buffer is used by the compactor thread to avoid allocating buffers per entry written that are smaller
+   // than the header size
+   private final java.nio.ByteBuffer REUSED_BUFFER = java.nio.ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
+
    FileProvider.Log logFile = null;
    int currentOffset = 0;
 
@@ -90,21 +94,21 @@ class Compactor implements Consumer<Object> {
    public void free(int file, int size) {
       // entries expired from compacted file are reported with file = -1
       if (file < 0) return;
-      recordFreeSpace(getStats(file), file, size);
+      recordFreeSpace(getStats(file, -1), file, size);
    }
 
-   public void completeFile(int file) {
-      Stats stats = getStats(file);
+   public void completeFile(int file, int currentSize) {
+      Stats stats = getStats(file, currentSize);
       stats.setCompleted();
       if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
    }
 
-   private Stats getStats(int file) {
+   private Stats getStats(int file, int currentSize) {
       Stats stats = fileStats.get(file);
       if (stats == null) {
-         int fileSize = (int) fileProvider.getFileSize(file);
+         int fileSize = currentSize < 0 ? (int) fileProvider.getFileSize(file) : currentSize;
          stats = new Stats(fileSize, 0);
          Stats other = fileStats.putIfAbsent(file, stats);
          if (other != null) {
@@ -115,7 +119,7 @@ class Compactor implements Consumer<Object> {
          }
       }
       if (stats.getTotal() < 0) {
-         int fileSize = (int) fileProvider.getFileSize(file);
+         int fileSize = currentSize < 0 ? (int) fileProvider.getFileSize(file) : currentSize;
          if (fileSize >= 0) {
             stats.setTotal(fileSize);
          }
@@ -133,7 +137,7 @@ class Compactor implements Consumer<Object> {
       boolean shouldSchedule = false;
       synchronized (stats) {
          if (!stats.isScheduled()) {
-            log.debug(String.format("Scheduling file %d for compaction: %d/%d free", file, stats.free.get(), stats.total));
+            log.debugf("Scheduling file %d for compaction: %d/%d free", file, stats.free.get(), stats.total);
             stats.setScheduled();
             shouldSchedule = true;
          }
@@ -190,7 +194,7 @@ class Compactor implements Consumer<Object> {
 
             if (logFile != null) {
                logFile.close();
-               completeFile(logFile.fileId);
+               completeFile(logFile.fileId, currentOffset);
                logFile = null;
             }
          }
@@ -247,7 +251,7 @@ class Compactor implements Consumer<Object> {
                drop = false;
             } else {
                EntryInfo info = index.getInfo(key, serializedKey);
-               assert info != null : String.format("Index does not recognize entry on %d:%d");
+               assert info != null;
                assert info.numRecords > 0;
                if (info.file == scheduledFile && info.offset == scheduledOffset) {
                   assert header.valueLength() > 0;
@@ -278,7 +282,7 @@ class Compactor implements Consumer<Object> {
                if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
                   if (logFile != null) {
                      logFile.close();
-                     completeFile(logFile.fileId);
+                     completeFile(logFile.fileId, currentOffset);
                   }
                   currentOffset = 0;
                   logFile = fileProvider.getFileForLog();
@@ -304,7 +308,7 @@ class Compactor implements Consumer<Object> {
                   entryOffset = ~currentOffset;
                   writtenLength = header.getHeaderLength() + header.keyLength();
                }
-               EntryRecord.writeEntry(logFile.fileChannel, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
+               EntryRecord.writeEntry(logFile.fileChannel, REUSED_BUFFER, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(segment, key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
                if (lockedEntry == null) {
                   if (log.isTraceEnabled()) {

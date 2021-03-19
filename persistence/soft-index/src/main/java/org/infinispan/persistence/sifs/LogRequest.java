@@ -31,6 +31,8 @@ class LogRequest extends CompletableFuture<Void> {
    private final ByteBuffer serializedInternalMetadata;
    private final long created;
    private final long lastUsed;
+   private volatile int file;
+   private volatile int fileOffset;
    private volatile IndexRequest indexRequest;
 
    private LogRequest(Type type, int segment, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
@@ -129,6 +131,22 @@ class LogRequest extends CompletableFuture<Void> {
 
    public void setIndexRequest(IndexRequest indexRequest) {
       this.indexRequest = indexRequest;
+   }
+
+   public int getFile() {
+      return file;
+   }
+
+   public void setFile(int file) {
+      this.file = file;
+   }
+
+   public int getFileOffset() {
+      return fileOffset;
+   }
+
+   public void setFileOffset(int fileOffset) {
+      this.fileOffset = fileOffset;
    }
 
    public IndexRequest getIndexRequest() {

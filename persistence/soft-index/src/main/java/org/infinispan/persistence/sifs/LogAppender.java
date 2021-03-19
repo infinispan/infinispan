@@ -10,23 +10,16 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
-import org.reactivestreams.Publisher;
 
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.flowables.GroupedFlowable;
 import io.reactivex.rxjava3.functions.Consumer;
-import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, Publisher<Object>> {
+public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    private final NonBlockingManager nonBlockingManager;
@@ -39,18 +32,26 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
    // Used to keep track of how many log requests have been submitted. This way if the blocking thread has consumed
    // the same number of log requests it can immediately flush.
    private final AtomicInteger submittedCount = new AtomicInteger();
+   // This variable is null unless sync writes are enabled. When sync writes are enabled this list holds
+   // all the log requests that should be completed when the disk is ensured to be flushed
+   private final List<LogRequest> toSyncLogRequests;
+
+   // This buffer is used by the log appender thread to avoid allocating buffers per entry written that are smaller
+   // than the header size
+   private final java.nio.ByteBuffer REUSED_BUFFER = java.nio.ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
 
    // These variables are only ever read from the provided executor and rxjava guarantees visibility
    // to it so they don't need to be volatile or synchronized
-   private FlowableProcessor<Object> delay;
    private int currentOffset = 0;
    private long seqId = 0;
    private int receivedCount = 0;
-   private final List<LogRequest> toSyncLogRequests;
+   private List<LogRequest> delayedLogRequests;
    private FileProvider.Log logFile;
 
    // This is volatile as it can be read from different threads when submitting
-   private volatile FlowableProcessor<LogRequest> flowableProcessor;
+   private volatile FlowableProcessor<LogRequest> requestProcessor;
+   // This is only accessed by the requestProcessor thread
+   private FlowableProcessor<WriteOperation> writeProcessor;
 
    public LogAppender(NonBlockingManager nonBlockingManager, Index index,
                       TemporaryTable temporaryTable, Compactor compactor,
@@ -64,50 +65,60 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
       this.maxFileSize = maxFileSize;
 
       this.toSyncLogRequests = syncWrites ? new ArrayList<>() : null;
-
-      this.delay = AsyncProcessor.create();
-      delay.onComplete();
    }
 
    public synchronized void start(Executor executor) {
-      assert flowableProcessor == null;
+      assert requestProcessor == null;
+
+      writeProcessor = UnicastProcessor.create();
+      writeProcessor.observeOn(Schedulers.from(executor))
+            .subscribe(this, e -> log.warn("Exception encountered while performing write log request ", e));
+
       // Need to be serialized in case if we receive requests from concurrent threads
-      flowableProcessor = UnicastProcessor.<LogRequest>create().toSerialized();
-      if (syncWrites) {
-         // When using sync writes we may require doing a timeout flush. When this occurs it
-         // is done in a different invocation chain and thus we must prevent it from happening
-         // with a concurrent request
-         executor = new LimitedExecutor("sifs-log-appender", executor, 1);
-      }
-      Scheduler scheduler = Schedulers.from(executor);
-
-      Flowable<LogRequest> flowable = syncWrites ?
-            flowableProcessor.doOnNext(lr -> {
-               // Write requests must be synced - so keep track of count to compare later
-               if (lr.getKey() != null) {
-                  submittedCount.incrementAndGet();
-               }
-            }) : flowableProcessor;
-
-      Flowable<GroupedFlowable<Boolean, LogRequest>> groupedFlowable = flowable
-            // Make sure everything is observed on the executor.
-            // This way it can resume and suspend itself as needed.
-            .observeOn(scheduler)
-            .groupBy(lr -> lr.isResume() || lr.isPause());
-      groupedFlowable.subscribe(gf -> {
-         if (gf.getKey()) {
-            gf.subscribe(this);
-         } else {
-            gf.delay(this)
-               .subscribe(this);
-         }
-      });
+      requestProcessor = UnicastProcessor.<LogRequest>create().toSerialized();
+      requestProcessor.subscribe(this::callerAccept,
+            e -> log.warn("Exception encountered while handling log request for log appender", e), () -> {
+               writeProcessor.onComplete();
+               writeProcessor = null;
+            });
    }
 
    public synchronized void stop() {
-      assert flowableProcessor != null;
-      flowableProcessor.onComplete();
-      flowableProcessor = null;
+      assert requestProcessor != null;
+      requestProcessor.onComplete();
+      requestProcessor = null;
+   }
+
+   static class WriteOperation {
+      private final LogRequest logRequest;
+      private final java.nio.ByteBuffer serializedKey;
+      private final java.nio.ByteBuffer serializedMetadata;
+      private final java.nio.ByteBuffer serializedValue;
+      private final java.nio.ByteBuffer serializedInternalMetadata;
+
+      private WriteOperation(LogRequest logRequest, java.nio.ByteBuffer serializedKey,
+            java.nio.ByteBuffer serializedMetadata, java.nio.ByteBuffer serializedValue,
+            java.nio.ByteBuffer serializedInternalMetadata) {
+         this.logRequest = logRequest;
+         this.serializedKey = serializedKey;
+         this.serializedMetadata = serializedMetadata;
+         this.serializedValue = serializedValue;
+         this.serializedInternalMetadata = serializedInternalMetadata;
+      }
+
+      static WriteOperation fromLogRequest(LogRequest logRequest) {
+         return new WriteOperation(logRequest, fromISPNByteBuffer(logRequest.getSerializedKey()),
+               fromISPNByteBuffer(logRequest.getSerializedMetadata()),
+               fromISPNByteBuffer(logRequest.getSerializedValue()),
+               fromISPNByteBuffer(logRequest.getSerializedInternalMetadata()));
+      }
+
+      static java.nio.ByteBuffer fromISPNByteBuffer(ByteBuffer byteBuffer) {
+         if (byteBuffer == null) {
+            return null;
+         }
+         return java.nio.ByteBuffer.wrap(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength());
+      }
    }
 
    /**
@@ -118,68 +129,111 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
     */
    public CompletionStage<Void> clearAndPause() {
       LogRequest clearRequest = LogRequest.clearRequest();
-      flowableProcessor.onNext(clearRequest);
+      requestProcessor.onNext(clearRequest);
       return clearRequest;
    }
 
    public CompletionStage<Void> pause() {
       LogRequest pauseRequest = LogRequest.pauseRequest();
-      flowableProcessor.onNext(pauseRequest);
+      requestProcessor.onNext(pauseRequest);
       return pauseRequest;
    }
 
    public CompletionStage<Void> resume() {
       LogRequest resumeRequest = LogRequest.resumeRequest();
-      flowableProcessor.onNext(resumeRequest);
+      requestProcessor.onNext(resumeRequest);
       return resumeRequest;
    }
 
    public <K, V> CompletionStage<Void> storeRequest(int segment, MarshallableEntry<K, V> entry) {
       LogRequest storeRequest = LogRequest.storeRequest(segment, entry);
-      flowableProcessor.onNext(storeRequest);
-      return storeRequest;
+      requestProcessor.onNext(storeRequest);
+      return storeRequest.thenRun(() -> handleRequestCompletion(storeRequest));
+   }
+
+   private void handleRequestCompletion(LogRequest request) {
+      int offset = request.getSerializedValue() == null ? ~request.getFileOffset() : request.getFileOffset();
+      temporaryTable.set(request.getSement(), request.getKey(), request.getFile(), offset);
+      IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), raw(request.getSerializedKey()),
+            request.getFile(), offset, request.length());
+      request.setIndexRequest(indexRequest);
+      index.handleRequest(indexRequest);
    }
 
    public CompletionStage<Boolean> deleteRequest(int segment, Object key, ByteBuffer serializedKey) {
       LogRequest deleteRequest = LogRequest.deleteRequest(segment, key, serializedKey);
-      flowableProcessor.onNext(deleteRequest);
-      return deleteRequest.thenApply(v -> {
-         try {
-            return (Boolean) deleteRequest.getIndexRequest().getResult();
-         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-         }
+      requestProcessor.onNext(deleteRequest);
+      return deleteRequest.thenCompose(v -> {
+         handleRequestCompletion(deleteRequest);
+         return cast(deleteRequest.getIndexRequest());
       });
    }
 
+   private static <I> CompletionStage<I> cast(CompletionStage stage) {
+      return (CompletionStage<I>) stage;
+   }
+
+   /**
+    * This method is invoked for every request sent via {@link #storeRequest(int, MarshallableEntry)},
+    * {@link #deleteRequest(int, Object, ByteBuffer)} and {@link #clearAndPause()}. Note this method is only invoked
+    * by one thread at any time and has visibility guaranatees as provided by rxjava.
+    * @param request the log request
+    */
+   private void callerAccept(LogRequest request) {
+      if (request.isPause()) {
+         delayedLogRequests = new ArrayList<>();
+         // This request is created in the same thread - so there can be no dependents
+         request.complete(null);
+         return;
+      } else if (request.isResume()) {
+         delayedLogRequests.forEach(this::sendToWriteProcessor);
+         delayedLogRequests = null;
+         // This request is created in the same thread - so there can be no dependents
+         request.complete(null);
+         return;
+      } else if (request.isClear()) {
+         assert delayedLogRequests == null;
+         delayedLogRequests = new ArrayList<>();
+      } else if (delayedLogRequests != null) {
+         // We were paused - so enqueue the request for later
+         delayedLogRequests.add(request);
+         return;
+      }
+
+      sendToWriteProcessor(request);
+   }
+
+   private void sendToWriteProcessor(LogRequest request) {
+      // Write requests must be synced - so keep track of count to compare later
+      if (syncWrites && request.getKey() != null) {
+         submittedCount.incrementAndGet();
+      }
+
+      writeProcessor.onNext(WriteOperation.fromLogRequest(request));
+   }
+
    @Override
-   public void accept(LogRequest request) {
+   public void accept(WriteOperation writeOperation) {
+      LogRequest actualRequest = writeOperation.logRequest;
       try {
          if (logFile == null) {
             logFile = fileProvider.getFileForLog();
             log.tracef("Appending records to %s", logFile.fileId);
          }
-         if (request.isClear()) {
+
+         if (actualRequest.isClear()) {
             logFile.close();
             completePendingLogRequests();
             currentOffset = 0;
             logFile = null;
-            delay = AsyncProcessor.create();
-            completeRequest(request);
-            return;
-         } else if (request.isPause()) {
-            delay = AsyncProcessor.create();
-            completeRequest(request);
-            return;
-         } else if (request.isResume()) {
-            delay.onComplete();
-            completeRequest(request);
+            completeRequest(actualRequest);
             return;
          }
-         if (currentOffset != 0 && currentOffset + request.length() > maxFileSize) {
+         int actualLength = actualRequest.length();
+         if (currentOffset != 0 && currentOffset + actualLength > maxFileSize) {
             // switch to next file
             logFile.close();
-            compactor.completeFile(logFile.fileId);
+            compactor.completeFile(logFile.fileId, currentOffset);
             completePendingLogRequests();
             logFile = fileProvider.getFileForLog();
             currentOffset = 0;
@@ -187,32 +241,33 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
          }
          long seqId = nextSeqId();
          log.tracef("Apppending record to %s:%s", logFile.fileId, currentOffset);
-         EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(),
-               request.getSerializedInternalMetadata(),
-               request.getSerializedValue(), seqId, request.getExpiration(), request.getCreated(), request.getLastUsed());
-         int offset = request.getSerializedValue() == null ? ~currentOffset : currentOffset;
-         temporaryTable.set(request.getSement(), request.getKey(), logFile.fileId, offset);
-         IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), raw(request.getSerializedKey()),
-               logFile.fileId, offset, request.length());
-         request.setIndexRequest(indexRequest);
-         index.handleRequest(indexRequest);
+         EntryRecord.writeEntry(logFile.fileChannel, REUSED_BUFFER, writeOperation.serializedKey,
+               writeOperation.serializedMetadata, writeOperation.serializedInternalMetadata,
+               writeOperation.serializedValue, seqId, actualRequest.getExpiration(), actualRequest.getCreated(),
+               actualRequest.getLastUsed());
+         actualRequest.setFile(logFile.fileId);
+         actualRequest.setFileOffset(currentOffset);
+
          if (!syncWrites) {
-            completeRequest(request);
+            completeRequest(actualRequest);
          } else {
             // This cannot be null when sync writes is true
-            toSyncLogRequests.add(request);
+            toSyncLogRequests.add(actualRequest);
             if (submittedCount.get() == ++receivedCount || toSyncLogRequests.size() == 1000) {
                logFile.fileChannel.force(false);
                completePendingLogRequests();
             }
          }
-         currentOffset += request.length();
+         currentOffset += actualLength;
       } catch (Exception e) {
-         log.debugf("Exception encountered while processing log request %s", request);
-         request.completeExceptionally(e);
+         log.debugf("Exception encountered while processing log request %s", actualRequest);
+         actualRequest.completeExceptionally(e);
       }
    }
 
+   /**
+    * Must only be invoked by {@link #accept(WriteOperation)} method.
+    */
    private void completePendingLogRequests() {
       if (toSyncLogRequests != null) {
          for (Iterator<LogRequest> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
@@ -221,11 +276,6 @@ public class LogAppender implements Consumer<LogRequest>, Function<LogRequest, P
             completeRequest(logRequest);
          }
       }
-   }
-
-   @Override
-   public Publisher<Object> apply(LogRequest logRequest) throws Throwable {
-      return delay;
    }
 
    private byte[] raw(ByteBuffer buffer) {

@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
  */
 public class EntryHeader {
    private static final byte MAGIC = 0x01;
-   /*
+   /* 1 byte  - magic key
     * 2 bytes - key length
     * 2 bytes - metadata length
     * 4 bytes - value length
@@ -15,7 +15,7 @@ public class EntryHeader {
     * 8 bytes - expiration time
     */
    static final int HEADER_SIZE_10_1 = 24;
-   /*
+   /* 1 byte  - magic key
     * 2 bytes - key length
     * 2 bytes - metadata length
     * 4 bytes - value length
