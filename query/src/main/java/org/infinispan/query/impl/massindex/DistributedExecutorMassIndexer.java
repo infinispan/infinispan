@@ -121,21 +121,21 @@ public class DistributedExecutorMassIndexer implements Indexer {
          if (!acquired) {
             return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
          }
-         isRunning = true;
-         Collection<Class<?>> javaClasses = (entities.length == 0) ?
-               indexUpdater.allJavaClasses() : Arrays.asList(entities);
-         Deque<Class<?>> toFlush = new LinkedList<>(javaClasses);
-
-         BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
-            try {
-               indexUpdater.flush(toFlush);
-               indexUpdater.refresh(toFlush);
-            } finally {
-               CompletionStages.join(lock.unlock());
-               isRunning = false;
-            }
-         };
          try {
+            isRunning = true;
+            Collection<Class<?>> javaClasses = (entities.length == 0) ?
+                  indexUpdater.allJavaClasses() : Arrays.asList(entities);
+            Deque<Class<?>> toFlush = new LinkedList<>(javaClasses);
+
+            BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
+               try {
+                  indexUpdater.flush(toFlush);
+                  indexUpdater.refresh(toFlush);
+               } finally {
+                  CompletionStages.join(lock.unlock());
+                  isRunning = false;
+               }
+            };
             IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, null);
             CompletableFuture<Void> future = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
             return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this);
