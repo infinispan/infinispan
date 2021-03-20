@@ -1,6 +1,8 @@
 package org.infinispan.security;
 
-import org.infinispan.Cache;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -16,11 +18,12 @@ public interface GlobalSecurityManager {
    /**
     * Returns the global ACL cache
     */
-   Cache<?, ?> globalACLCache();
+   <K, V> Map<K, V> globalACLCache();
 
    /**
     * Flushes the ACL cache for this node
+    * @return
     */
-   void flushGlobalACLCache();
+   CompletionStage<Void> flushGlobalACLCache();
 
 }

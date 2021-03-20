@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 import javax.security.auth.Subject;
 
@@ -25,9 +24,6 @@ import org.infinispan.security.Security;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
 /**
  * Authorizer. Some utility methods for computing access masks and verifying them against permissions
  *
@@ -41,9 +37,9 @@ public class Authorizer {
    private final AuditLogger audit;
    private final AuditContext context;
    private final String name;
-   private final ConcurrentMap<CachePrincipalPair, SubjectACL> aclCache;
+   private Map<CachePrincipalPair, SubjectACL> aclCache;
 
-   public Authorizer(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, ConcurrentMap<CachePrincipalPair, SubjectACL> aclCache) {
+   public Authorizer(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, Map<CachePrincipalPair, SubjectACL> aclCache) {
       this.globalConfiguration = globalConfiguration;
       this.audit = globalConfiguration.authorization().auditLogger();
       this.context = context;
@@ -51,13 +47,8 @@ public class Authorizer {
       this.aclCache = aclCache;
    }
 
-   public Authorizer(GlobalSecurityConfiguration security, AuditContext context, String name) {
-      this(security, context, name, security.authorization().enabled() ? createAclCache(security.authorization().cacheSize()) : null);
-   }
-
-   private static <K, V> ConcurrentMap<K, V> createAclCache(long size) {
-      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(size).build();
-      return cache.asMap();
+   public void setAclCache(Map<CachePrincipalPair, SubjectACL> aclCache) {
+      this.aclCache = aclCache;
    }
 
    public void checkPermission(AuthorizationPermission perm) {

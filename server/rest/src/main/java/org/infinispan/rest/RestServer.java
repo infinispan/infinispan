@@ -143,7 +143,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (server != null) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
-         resourceManager.registerResource(restContext, new SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
+         resourceManager.registerResource(restContext, new  SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
          registerLoggingResource(resourceManager, restContext);
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());

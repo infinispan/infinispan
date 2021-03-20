@@ -1,5 +1,7 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
+
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -46,6 +48,13 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
          sb.append("&role=").append(role);
       }
       builder.url(sb.toString()).put(Util.EMPTY_REQUEST);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> flushCache() {
+      Request.Builder builder = new Request.Builder();
+      builder.post(EMPTY_BODY).url(baseSecurityURL + "cache?action=flush");
       return client.execute(builder);
    }
 }

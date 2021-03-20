@@ -54,6 +54,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
 
       assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());
+      assertEquals(globalConfigurationBefore.security().securityCacheSize(), globalConfigurationAfter.security().securityCacheSize());
       compareAttributeSets("Global", globalConfigurationBefore.globalState().attributes(), globalConfigurationAfter.globalState().attributes(), "localConfigurationStorage");
       compareAttributeSets("Global", globalConfigurationBefore.jmx().attributes(), globalConfigurationAfter.jmx().attributes(), "mbeanServerLookup");
       compareAttributeSets("Global", globalConfigurationBefore.security().authorization().attributes(), globalConfigurationAfter.security().authorization().attributes());

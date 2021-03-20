@@ -36,6 +36,7 @@ public enum Attribute {
     BIAS_LIFESPAN,
     BLOCKING_EXECUTOR,
     CACHE_SIZE,
+    CACHE_TIMEOUT,
     CALIBRATE_BY_DELETES,
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE,

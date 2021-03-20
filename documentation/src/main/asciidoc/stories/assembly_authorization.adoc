@@ -9,6 +9,7 @@ include::{topics}/ref_user_roles_permissions.adoc[leveloffset=+1]
 include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
 include::{topics}/ref_authz_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_authz_role_mappers.adoc[leveloffset=+2]
+include::{topics}/ref_acl_cache.adoc[leveloffset=+1]
 include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
 include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
 
