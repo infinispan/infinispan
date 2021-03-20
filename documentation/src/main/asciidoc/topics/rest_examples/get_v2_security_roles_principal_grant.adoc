@@ -1,0 +1,1 @@
+PUT /v2/security/roles/some_principal?action=grant&role=role1&role=role2

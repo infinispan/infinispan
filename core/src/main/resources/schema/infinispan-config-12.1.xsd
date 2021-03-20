@@ -534,16 +534,23 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="cache-size" type="xs:long">
-            <xs:annotation>
-              <xs:documentation>
-                The ACL cache size.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
+    <xs:attribute name="cache-size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The ACL cache size. The default is 1000 entries. A value of 0 disables the cache.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="cache-timeout" type="xs:long">
+      <xs:annotation>
+        <xs:documentation>
+          The ACL cache timeout in milliseconds. The default is 300000 (5 minutes). A value of 0 disables the cache.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="roles">

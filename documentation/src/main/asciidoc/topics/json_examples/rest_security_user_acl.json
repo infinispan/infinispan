@@ -1,0 +1,21 @@
+{
+  "subject": [
+    {
+      "name": "deployer",
+      "type": "NamePrincipal"
+    }
+  ],
+  "global": [
+    "READ", "WRITE", "EXEC", "LISTEN", "BULK_READ", "BULK_WRITE", "CREATE", "MONITOR", "ALL_READ", "ALL_WRITE"  ],
+  "caches": {
+    "___protobuf_metadata": [
+      "READ", "WRITE", "EXEC", "LISTEN", "BULK_READ", "BULK_WRITE", "CREATE", "MONITOR", "ALL_READ", "ALL_WRITE"
+    ],
+    "mycache": [
+      "LIFECYCLE", "READ", "WRITE", "EXEC", "LISTEN", "BULK_READ", "BULK_WRITE", "ADMIN", "CREATE", "MONITOR", "ALL_READ", "ALL_WRITE"
+    ],
+    "___script_cache": [
+      "READ", "WRITE", "EXEC", "LISTEN", "BULK_READ", "BULK_WRITE", "CREATE", "MONITOR", "ALL_READ", "ALL_WRITE"
+    ]
+  }
+}

@@ -49,7 +49,7 @@ public class RestDispatcherTest {
 
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
 
-      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test"));
+      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test", null));
 
       RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/").build();
       CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
@@ -127,7 +127,7 @@ public class RestDispatcherTest {
             .auditLogger(auditLogger).principalRoleMapper(new IdentityRoleMapper()).build();
 
 
-      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test"));
+      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test", null));
 
       // Anonymous
       RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/secure").build();

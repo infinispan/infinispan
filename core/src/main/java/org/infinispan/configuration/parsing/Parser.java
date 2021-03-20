@@ -34,6 +34,7 @@ import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -763,7 +764,25 @@ public class Parser extends CacheParser {
    }
 
    private void parseGlobalSecurity(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ParseUtils.requireNoAttributes(reader);
+      GlobalSecurityConfigurationBuilder security = holder.getGlobalConfigurationBuilder().security();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case CACHE_SIZE: {
+               security.securityCacheSize(Integer.parseInt(value));
+               break;
+            }
+            case CACHE_TIMEOUT: {
+               security.securityCacheTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -786,10 +805,6 @@ public class Parser extends CacheParser {
          switch (attribute) {
             case AUDIT_LOGGER: {
                builder.auditLogger(Util.getInstance(value, holder.getClassLoader()));
-               break;
-            }
-            case CACHE_SIZE: {
-               builder.cacheSize(Long.parseLong(value));
                break;
             }
             default: {

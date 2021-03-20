@@ -280,7 +280,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
-      this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName());
+      this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
       this.globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
 
       this.stats = new CacheContainerStatsImpl(this);
@@ -385,7 +385,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
-         authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName());
+         authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
          globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),

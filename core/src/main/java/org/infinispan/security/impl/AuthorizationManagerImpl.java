@@ -1,8 +1,9 @@
 package org.infinispan.security.impl;
 
+import java.util.Map;
+
 import javax.security.auth.Subject;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -11,7 +12,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -35,14 +35,10 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
    @Inject
    public void init(@ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
                     GlobalConfiguration globalConfiguration, Configuration configuration,
-                    GlobalSecurityManager globalSecurityManager, EmbeddedCacheManager cacheManager) {
+                    GlobalSecurityManager globalSecurityManager) {
       this.configuration = configuration.security().authorization();
-      Cache<CachePrincipalPair, SubjectACL> globalACLCache =
-            (Cache<CachePrincipalPair, SubjectACL>) globalSecurityManager.globalACLCache();
+      Map<CachePrincipalPair, SubjectACL> globalACLCache = globalSecurityManager.globalACLCache();
       this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHE, cacheName, globalACLCache);
-      if (globalACLCache != null) {
-         SecurityActions.addCacheDependency(cacheManager, cacheName, globalACLCache.getName());
-      }
       this.writePermission = configuration.module(CreatePermissionConfiguration.class) != null ?
             AuthorizationPermission.CREATE : AuthorizationPermission.WRITE;
    }

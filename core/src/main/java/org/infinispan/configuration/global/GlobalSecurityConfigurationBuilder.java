@@ -1,8 +1,12 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.GlobalSecurityConfiguration.CACHE_SIZE;
+import static org.infinispan.configuration.global.GlobalSecurityConfiguration.CACHE_TIMEOUT;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * GlobalSecurityConfigurationBuilder.
@@ -12,11 +16,12 @@ import org.infinispan.commons.configuration.Builder;
  */
 public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements GlobalSecurityConfigurationChildBuilder, Builder<GlobalSecurityConfiguration> {
    private final GlobalAuthorizationConfigurationBuilder authorizationBuilder;
-   private long securityCacheTimeout = 30000;
+   private final AttributeSet attributes;
 
    public GlobalSecurityConfigurationBuilder(GlobalConfigurationBuilder builder) {
       super(builder);
-      authorizationBuilder = new GlobalAuthorizationConfigurationBuilder(this);
+      this.authorizationBuilder = new GlobalAuthorizationConfigurationBuilder(this);
+      this.attributes = GlobalSecurityConfiguration.attributeDefinitionSet();
    }
 
    @Override
@@ -25,8 +30,14 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
+   public GlobalSecurityConfigurationBuilder securityCacheSize(int securityCacheSize) {
+      attributes.attribute(CACHE_SIZE).set(securityCacheSize);
+      return this;
+   }
+
+   @Override
    public GlobalSecurityConfigurationBuilder securityCacheTimeout(long securityCacheTimeout, TimeUnit unit) {
-      this.securityCacheTimeout = unit.toMillis(securityCacheTimeout);
+      attributes.attribute(CACHE_TIMEOUT).set(unit.toMillis(securityCacheTimeout));
       return this;
    }
 
@@ -37,14 +48,13 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
 
    @Override
    public GlobalSecurityConfiguration create() {
-      return new GlobalSecurityConfiguration(authorizationBuilder.create(), securityCacheTimeout);
+      return new GlobalSecurityConfiguration(authorizationBuilder.create(), attributes.protect());
    }
 
    @Override
    public GlobalSecurityConfigurationBuilder read(GlobalSecurityConfiguration template) {
       this.authorizationBuilder.read(template.authorization());
+      this.attributes.read(template.attributes());
       return this;
    }
-
-
 }

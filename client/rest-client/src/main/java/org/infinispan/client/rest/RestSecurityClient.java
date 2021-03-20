@@ -13,4 +13,6 @@ public interface RestSecurityClient {
    CompletionStage<RestResponse> grant(String principal, List<String> roles);
 
    CompletionStage<RestResponse> deny(String principal, List<String> roles);
+
+   CompletionStage<RestResponse> flushCache();
 }

@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -30,6 +31,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.MutablePrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.Authorizer;
@@ -59,28 +61,37 @@ public class SecurityResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/login").withAction("config")
-            .anonymous().handleWith(this::loginConfiguration)
+               .anonymous().handleWith(this::loginConfiguration)
             .invocation().methods(GET, POST).deprecated().path("/v2/login").withAction("login")
-            .permission(AuthorizationPermission.NONE).name("USER LOGIN").auditContext(AuditContext.SERVER)
+               .permission(AuthorizationPermission.NONE).name("USER LOGIN").auditContext(AuditContext.SERVER)
             .handleWith(this::login)
-            .invocation().methods(GET).deprecated().path("/v2/login")
+               .invocation().methods(GET).deprecated().path("/v2/login")
             .permission(AuthorizationPermission.NONE).name("USER LOGIN").auditContext(AuditContext.SERVER)
-            .handleWith(this::login)
+               .handleWith(this::login)
             .invocation().methods(GET).path("/v2/security/user/acl")
-            .handleWith(this::acl)
+               .handleWith(this::acl)
             .invocation().method(GET).path("/v2/security/roles")
-            .permission(AuthorizationPermission.ADMIN).name("ROLES").auditContext(AuditContext.SERVER)
-            .handleWith(this::listAllRoles)
+               .permission(AuthorizationPermission.ADMIN).name("ROLES").auditContext(AuditContext.SERVER)
+               .handleWith(this::listAllRoles)
             .invocation().method(GET).path("/v2/security/roles/{principal}")
-            .permission(AuthorizationPermission.ADMIN).name("ROLES PRINCIPAL").auditContext(AuditContext.SERVER)
-            .handleWith(this::listPrincipalRoles)
+               .permission(AuthorizationPermission.ADMIN).name("ROLES PRINCIPAL").auditContext(AuditContext.SERVER)
+               .handleWith(this::listPrincipalRoles)
             .invocation().methods(PUT).path("/v2/security/roles/{principal}").withAction("grant")
-            .permission(AuthorizationPermission.ADMIN).name("ROLES GRANT").auditContext(AuditContext.SERVER)
-            .handleWith(this::grant)
+               .permission(AuthorizationPermission.ADMIN).name("ROLES GRANT").auditContext(AuditContext.SERVER)
+               .handleWith(this::grant)
             .invocation().methods(PUT).path("/v2/security/roles/{principal}").withAction("deny")
-            .permission(AuthorizationPermission.ADMIN).name("ROLES DENY").auditContext(AuditContext.SERVER)
-            .handleWith(this::deny)
+               .permission(AuthorizationPermission.ADMIN).name("ROLES DENY").auditContext(AuditContext.SERVER)
+               .handleWith(this::deny)
+            .invocation().methods(POST).path("/v2/security/cache").withAction("flush")
+               .permission(AuthorizationPermission.ADMIN).name("ACL CACHE FLUSH").auditContext(AuditContext.SERVER)
+               .handleWith(this::aclCacheFlush)
             .create();
+   }
+
+   private CompletionStage<RestResponse> aclCacheFlush(RestRequest request) {
+      EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
+      return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalSecurityManager.class).flushGlobalACLCache()
+            .thenApply(v -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
    }
 
    private CompletionStage<RestResponse> deny(RestRequest request) {
@@ -94,7 +105,7 @@ public class SecurityResource implements ResourceHandler {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
       roles.forEach(r -> principalRoleMapper.deny(r, principal));
-      return completedFuture(builder.status(NO_CONTENT).build());
+      return aclCacheFlush(request);
    }
 
    private CompletionStage<RestResponse> grant(RestRequest request) {
@@ -108,7 +119,7 @@ public class SecurityResource implements ResourceHandler {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
       roles.forEach(r -> principalRoleMapper.grant(r, principal));
-      return completedFuture(builder.status(NO_CONTENT).build());
+      return aclCacheFlush(request);
    }
 
    private CompletionStage<RestResponse> listAllRoles(RestRequest request) {
@@ -136,7 +147,7 @@ public class SecurityResource implements ResourceHandler {
       RestCacheManager<Object> rcm = invocationHelper.getRestCacheManager();
       Collection<String> cacheNames = rcm.getCacheNames();
       Json acl = Json.object();
-      if(subject == null) {
+      if (subject == null) {
          acl.set("subject", Json.array());
       } else {
          Json jsonSubjects = Json.array();

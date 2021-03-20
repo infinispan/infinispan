@@ -34,7 +34,6 @@ import org.infinispan.security.impl.CacheRoleImpl;
 public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
    private static final Map<String, Role> DEFAULT_ROLES;
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder("cacheSize", 1_000l).immutable().build();
    public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger) new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).serializer(ClassAttributeSerializer.INSTANCE).immutable().build();
    public static final AttributeDefinition<Map<String, Role>> ROLES = AttributeDefinition.<Map<String, Role>>builder("roles", new HashMap<>())
          .serializer(new AttributeSerializer<Map<String, Role>, GlobalAuthorizationConfiguration, ConfigurationBuilderInfo>() {
@@ -50,10 +49,9 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
                return DEFAULT_ROLES;
             }
          }).build();
-   private final Attribute<Long> cacheSize;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, CACHE_SIZE, AUDIT_LOGGER, ROLES);
+      return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, ROLES);
    }
 
    static {
@@ -104,7 +102,6 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
    public GlobalAuthorizationConfiguration(AttributeSet attributes, PrincipalRoleMapperConfiguration roleMapperConfiguration) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
-      this.cacheSize = attributes.attribute(CACHE_SIZE);
       this.auditLogger = attributes.attribute(AUDIT_LOGGER);
       this.roles = attributes.attribute(ROLES);
       this.roleMapperConfiguration = roleMapperConfiguration;
@@ -125,9 +122,7 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
       return enabled.get();
    }
 
-   public long cacheSize() {
-      return cacheSize.get();
-   }
+
 
    public AuditLogger auditLogger() {
       return auditLogger.get();

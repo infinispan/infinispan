@@ -3,9 +3,12 @@ package org.infinispan.security.impl;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.AddCacheDependencyAction;
+import org.infinispan.security.actions.GetClusterExecutorAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
  * SecurityActions for the org.infinispan.security.impl package.
@@ -25,7 +28,13 @@ final class SecurityActions {
       }
    }
 
-   static void addCacheDependency(EmbeddedCacheManager cacheManager, String from, String to) {
-      doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
+   static ClusterExecutor getClusterExecutor(final EmbeddedCacheManager cm) {
+      GetClusterExecutorAction action = new GetClusterExecutorAction(cm);
+      return doPrivileged(action);
+   }
+
+   static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cm) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cm);
+      return doPrivileged(action);
    }
 }

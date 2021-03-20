@@ -89,6 +89,13 @@ Retrieve, execute, and upload {brandname} server tasks.
 include::{topics}/ref_rest_server_tasks.adoc[leveloffset=+2]
 
 
+[id='rest_v2_security']
+== Working with {brandname} Security
+View and modify security information.
+
+include::{topics}/ref_rest_server_security.adoc[leveloffset=+2]
+
+
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
 ifndef::parent-context[:!context:]

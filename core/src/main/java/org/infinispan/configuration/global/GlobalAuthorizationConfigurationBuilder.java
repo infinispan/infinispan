@@ -1,7 +1,6 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.AUDIT_LOGGER;
-import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.CACHE_SIZE;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ROLES;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -52,11 +51,6 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    public boolean isEnabled() {
       return attributes.attribute(ENABLED).get();
-   }
-
-   public GlobalAuthorizationConfigurationBuilder cacheSize(long cacheSize) {
-      attributes.attribute(CACHE_SIZE).set(cacheSize);
-      return this;
    }
 
    /**

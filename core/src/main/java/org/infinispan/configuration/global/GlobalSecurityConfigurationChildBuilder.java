@@ -15,6 +15,12 @@ public interface GlobalSecurityConfigurationChildBuilder extends GlobalConfigura
    GlobalAuthorizationConfigurationBuilder authorization();
 
    /**
+    * Defines the size for the access role cache. The default value is 1000.
+    * @param securityCacheSize the number of access roles to cache
+    */
+   GlobalSecurityConfigurationBuilder securityCacheSize(int securityCacheSize);
+
+   /**
     * Defines the timeout for which to cache user access roles. A value of -1 means the entries
     * never expire. A value of 0 will disable the cache.
     *
