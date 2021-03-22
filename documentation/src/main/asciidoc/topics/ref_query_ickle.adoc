@@ -2,7 +2,7 @@
 = Ickle queries
 
 To use the API, first obtain a QueryFactory to the cache and then call the `.create()` method, passing in the string to use in the query.
-Each `QueryFactory` instance is bound to the same `Cache` instance as the `Search`, but it is otherwise a stateless and thread-safe object that can be used for creating multiple queries in parallel.
+Each `QueryFactory` instance is bound to the same `AsyncCache` instance as the `Search`, but it is otherwise a stateless and thread-safe object that can be used for creating multiple queries in parallel.
 
 For instance:
 
@@ -25,7 +25,7 @@ QueryResult<Book> queryResult = q.execute();
 A query will always target a single entity type and is evaluated over the contents of a single cache. Running a query over multiple caches or creating queries that target several entity types (joins) is not supported.
 ====
 
-Executing the query and fetching the results is as simple as invoking the `execute()` method of the `Query` object. Once
+Executing the query and fetching the results is as simple as invoking the `execute()` method of the `AsyncQuery` object. Once
 executed, calling `execute()` on the same instance will re-execute the query.
 
 == Pagination
@@ -42,12 +42,12 @@ Query<Book> query = queryFactory.create("FROM org.infinispan.sample.Book WHERE t
 
 == Number of hits
 
-The `QueryResult` object has the `.hitCount()` method to return the total number of results of the query, regardless
+The `AsyncQueryResult` object has the `.hitCount()` method to return the total number of results of the query, regardless
 of any pagination parameter. The hit count is only available for indexed queries for performance reasons.
 
 == Iteration
 
-The `Query` object has the `.iterator()` method to obtain the results lazily. It returns an instance of `CloseableIterator` that must be closed after usage.
+The `AsyncQuery` object has the `.iterator()` method to obtain the results lazily. It returns an instance of `CloseableIterator` that must be closed after usage.
 
 [NOTE]
 ====
@@ -98,7 +98,7 @@ performance compared to a similar query using constant values instead of query p
 
 == Query execution
 
-The `Query` API provides two methods for executing Ickle queries on a cache:
+The `AsyncQuery` API provides two methods for executing Ickle queries on a cache:
 
 * `Query.execute()` runs a SELECT statement and returns a result.
 * `Query.executeStatement()` runs a DELETE statement and modifies data.

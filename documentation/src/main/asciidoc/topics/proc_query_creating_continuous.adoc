@@ -4,14 +4,14 @@ You can create continuous queries for remote and embedded caches.
 
 .Procedure
 
-. Create a `Query` object.
+. Create a `AsyncQuery` object.
 . Obtain the `ContinuousQuery` object of your cache by calling
 the appropriate method:
 +
 * Remote caches: `org.infinispan.client.hotrod.Search.getContinuousQuery(RemoteCache<K, V> cache)`
 * Embedded caches: `org.infinispan.query.Search.getContinuousQuery(Cache<K, V> cache)`
 +
-. Register the query and a `ContinuousQueryListener` object as follows:
+. Register the query and a `CacheContinuousQueryEvent` object as follows:
 +
 [source,java]
 ----

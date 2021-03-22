@@ -34,7 +34,7 @@ If no transaction manager can be found, it defaults on the `EmbeddedTransactionM
 WARN: `DummyTransactionManagerLookup` has been deprecated in 9.0 and it will be removed in the future.
 Use `EmbeddedTransactionManagerLookup` instead.
 
-Once initialized, the `TransactionManager` can also be obtained from the `Cache` itself:
+Once initialized, the `TransactionManager` can also be obtained from the `AsyncCache` itself:
 
 [source,java]
 ----
@@ -283,7 +283,7 @@ If one account is in a database and the other is {brandname}, then distributed t
 NOTE: You _do not_ have to have a transaction manager defined to use batching.
 
 === API
-Once you have configured your cache to use batching, you use it by calling `startBatch()` and `endBatch()` on `Cache`. E.g.,
+Once you have configured your cache to use batching, you use it by calling `startBatch()` and `endBatch()` on `AsyncCache`. E.g.,
 
 [source,java]
 ----

@@ -2398,7 +2398,7 @@ Only present if `Status==0x00`.
 
 |===
 
-NOTE: Since the `WeakCounter` doesn't have access to the new value, the `value` is zero.
+NOTE: Since the `AsyncWeakCounter` doesn't have access to the new value, the `value` is zero.
 
 Response Header `Status` possible values:
 

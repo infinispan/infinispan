@@ -1489,7 +1489,7 @@ link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Ca
 and
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
 classes respectively. What's important is that Hot Rod clients must now code
-against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
+against `BasicCache` and `BasicCacheContainer` rather than `AsyncCache` and `CacheContainer`.
 So previous code that was written like this will no longer compile.
 
 [source,java]
@@ -1620,7 +1620,7 @@ We are in the process of adding in support for this configuration style for modu
 
 == Flags and ClassLoaders
 
-The `Flags` and `ClassLoader` API has changed. In the past, the following would work:
+The `Flag` and `ClassLoader` API has changed. In the past, the following would work:
 
 [source,java]
 ----

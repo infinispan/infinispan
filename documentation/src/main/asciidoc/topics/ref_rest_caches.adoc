@@ -18,7 +18,7 @@ POST /rest/v2/caches/{cacheName}
 |Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
 {brandname} configuration payload; either `application/xml` or
 `application/json`.
-| `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+| `Flag` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
 include::ref_infinispan_caches.adoc[leveloffset=+1]

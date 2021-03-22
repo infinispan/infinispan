@@ -104,7 +104,7 @@ NOTE: The counter is re-created if it is accessed after a removal.
 
 == The Counter
 
-A counter can be strong (`StrongCounter`) or weakly consistent (``WeakCounter``) and both is identified by a name.
+A counter can be strong (`AsyncStrongCounter`) or weakly consistent (``AsyncWeakCounter``) and both is identified by a name.
 They have a specific interface but they share some logic, namely, both of them are asynchronous
 ( a `CompletableFuture` is returned by each operation), provide an update event and can be reset to its initial value.
 
@@ -136,7 +136,7 @@ All the updates are performed under the key lock to updates its values.
 On other hand, the reads don't acquire any locks and reads the current value.
 Also, with this scheme, it allows to bound the counter value and provide atomic operations like compare-and-set/swap.
 
-A `StrongCounter` can be retrieved from the `CounterManager` by using the `getStrongCounter()` method.
+A `AsyncStrongCounter` can be retrieved from the `CounterManager` by using the `getStrongCounter()` method.
 As an example:
 
 [source,java]
@@ -144,9 +144,9 @@ As an example:
 include::code_examples/CounterGetStrong.java[]
 ----
 
-WARNING: Since every operation will hit a single key, the `StrongCounter` has a higher contention rate.
+WARNING: Since every operation will hit a single key, the `AsyncStrongCounter` has a higher contention rate.
 
-The `StrongCounter` interface adds the following method:
+The `AsyncStrongCounter` interface adds the following method:
 
 [source,java]
 ----
@@ -222,17 +222,17 @@ NOTE: The `lifespan` parameter is an experimental capability and may be removed 
 
 === The `WeakCounter` interface: when speed is needed
 
-The `WeakCounter` stores the counter's value in multiple keys in {brandname} cache.
+The `AsyncWeakCounter` stores the counter's value in multiple keys in {brandname} cache.
 The number of keys created is configured by the `concurrency-level` attribute.
 Each key stores a partial state of the counter's value and it can be updated concurrently.
-It main advantage over the `StrongCounter` is the lower contention in the cache.
+It main advantage over the `AsyncStrongCounter` is the lower contention in the cache.
 On other hand, the read of its value is more expensive and bounds are not allowed.
 
 WARNING: The reset operation should be handled with caution.
 It is *not* atomic and it produces intermediates values.
 These value may be seen by a read operation and by any listener registered.
 
-A `WeakCounter` can be retrieved from the `CounterManager` by using the `getWeakCounter()` method.
+A `AsyncWeakCounter` can be retrieved from the `CounterManager` by using the `getWeakCounter()` method.
 As an example:
 
 [source,java]
@@ -242,7 +242,7 @@ include::code_examples/CounterGetWeak.java[]
 
 ==== Weak Counter Interface
 
-The `WeakCounter` adds the following methods:
+The `AsyncWeakCounter` adds the following methods:
 
 [source,java]
 ----

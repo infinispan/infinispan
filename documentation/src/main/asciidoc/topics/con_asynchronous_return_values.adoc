@@ -1,7 +1,7 @@
 [id='asynchronous-return-values_{context}']
 = Return values with asynchronous replication
 
-Because the `Cache` interface extends `java.util.Map`, write methods like
+Because the `AsyncCache` interface extends `java.util.Map`, write methods like
 `put(key, value)` and `remove(key)` return the previous value by default.
 
 In some cases, the return value may not be correct:

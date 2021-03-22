@@ -145,7 +145,7 @@ Map<Object, String> jbossValues = cache.entrySet().stream()
               .collect(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 ----
 
-If however you are not able to use the `Cache` and `CacheStream` interfaces you cannot utilize `Serializable`
+If however you are not able to use the `AsyncCache` and `CacheStream` interfaces you cannot utilize `Serializable`
 arguments and you must instead cast the lambdas to be `Serializable` manually by casting the lambda to multiple
 interfaces.  It is not a pretty sight but it gets the job done.
 
@@ -303,7 +303,7 @@ The link:{jdkdocroot}/java/util/stream/Stream.html[Stream]
 has a terminal operation called
 link:{jdkdocroot}/java/util/stream/Stream.html#forEach-java.util.function.Consumer-[forEach]
 which allows for running some sort of side effect operation on the data.  In this case it may be desirable to get a reference to
-the `Cache` that is backing this Stream.  If your `Consumer` implements the
+the `AsyncCache` that is backing this Stream.  If your `Consumer` implements the
 link:{javadocroot}/org/infinispan/stream/CacheAware.html[CacheAware]
 interface the `injectCache` method be invoked before the accept method from the `Consumer` interface.
 

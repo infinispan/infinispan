@@ -6,7 +6,7 @@
 Caches offer more capabilities than simple maps, including write-through and
 write-behind to persistent storage as well as management capabilities such as eviction and expiration.
 
-The {brandname} `Cache` API extends the `ConcurrentMap` API in Java, making it easy to migrate from a map to a {brandname} cache.
+The {brandname} `AsyncCache` API extends the `ConcurrentMap` API in Java, making it easy to migrate from a map to a {brandname} cache.
 
 [discrete]
 == Local cache configuration
