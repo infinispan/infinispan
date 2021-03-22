@@ -24,6 +24,6 @@ include::config_examples/serialization_marshaller.xml[]
 
 .Reference
 
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
+* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
 * link:https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html[Serializable]
 * link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller.html[org.infinispan.commons.marshall.JavaSerializationMarshaller]

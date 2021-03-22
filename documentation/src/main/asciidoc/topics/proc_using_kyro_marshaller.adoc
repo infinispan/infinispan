@@ -63,5 +63,5 @@ META-INF/services/org/infinispan/marshaller/kryo/SerializerRegistryService
 
 .Reference
 
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
+* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
 * link:https://github.com/EsotericSoftware/kryo[Kryo on GitHub]

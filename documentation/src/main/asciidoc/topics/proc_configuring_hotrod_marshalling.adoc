@@ -23,4 +23,4 @@ clientBuilder.marshaller("org.infinispan.example.marshall.CustomMarshaller")
 
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
 * link:{dev_docs}#custom_marshallers[Using Custom Marshallers]
-* link:{dev_docs}#deserialization_allowlist[Adding Java Classes to Deserialization Allow Lists]
+* link:{dev_docs}#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]

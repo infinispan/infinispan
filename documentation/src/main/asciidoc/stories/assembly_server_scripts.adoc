@@ -1,4 +1,4 @@
-[id='server_scripts']
+[id='server-scripts']
 :context: server
 = Creating Server Scripts
 Create custom scripts and add them to {brandname} servers.

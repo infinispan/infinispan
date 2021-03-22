@@ -1,0 +1,43 @@
+[id='user-roles-permissions_{context}']
+= User Roles and Permissions
+{brandname} includes a default set of roles that grant users with permissions to access data and interact with {brandname} resources.
+
+`ClusterRoleMapper` is the default mechanism that {brandname} uses to associate security principals to authorization roles.
+
+[IMPORTANT]
+====
+`ClusterRoleMapper` matches principal names to role names.
+A user named `admin` gets `admin` permissions automatically, a user named `deployer` gets `deployer` permissions, and so on.
+====
+
+
+[cols="1,1,1"]
+|===
+|Role |Permissions |Description
+
+|`admin`
+|ALL
+|Superuser with all permissions including control of the Cache Manager lifecycle. Users must have this role to access {brandname} Console.
+
+|`deployer`
+|ALL_READ, ALL_WRITE, LISTEN, EXEC, MONITOR, CREATE
+|Can create and delete {brandname} resources in addition to `application` permissions.
+
+|`application`
+|ALL_READ, ALL_WRITE, LISTEN, EXEC, MONITOR
+|Has read and write access to {brandname} resources in addition to `observer` permissions. Can also listen to events and execute server tasks and scripts.
+
+|`observer`
+|ALL_READ, MONITOR
+|Has read access to {brandname} resources in addition to `monitor` permissions.
+
+|`monitor`
+|MONITOR
+|Can view statistics via JMX and the `metrics` endpoint.
+
+|===
+
+.Reference
+
+* link:{javadocroot}[org.infinispan.security.AuthorizationPermission Enumeration]
+* link:{configdocroot}[{brandname} Configuration Schema Reference]

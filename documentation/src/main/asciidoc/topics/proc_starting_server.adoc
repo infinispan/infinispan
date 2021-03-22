@@ -1,15 +1,23 @@
-[id='starting_servers-{context}']
-= Starting {brandname} Server
-Run {brandname} Server on your local host.
+[id='starting-servers_{context}']
+= Starting {brandname} Servers
+
+//Community content
+ifdef::community[]
+Run {brandname} Server instances in a Java Virtual Machine (JVM).
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+Run {brandname} Server instances in a Java Virtual Machine (JVM) on any supported host.
+endif::downstream[]
 
 .Prerequisites
 
-* Create at least one {brandname} user.
+* Download and install the server distribution.
 
 .Procedure
 
 . Open a terminal in `{server_home}`.
-. Run {brandname} Server with the `server` script.
+. Start {brandname} Server instances with the `server` script.
 
 Linux::
 +
@@ -37,4 +45,4 @@ ISPN080001: {brandname} Server <version> started in <mm>ms
 .Verification
 
 . Open link:http://127.0.0.1:11222/console/[`127.0.0.1:11222/console/`] in any browser.
-. Enter your credentials at the prompt then continue to {brandname} Console.
+. Enter your credentials at the prompt and continue to {brandname} Console.

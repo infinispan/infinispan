@@ -31,4 +31,4 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 .Reference
 
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
+* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
