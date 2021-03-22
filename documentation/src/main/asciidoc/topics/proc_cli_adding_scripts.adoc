@@ -1,12 +1,12 @@
-[id='adding_scripts_cli-{context}']
+[id='adding-scripts_{context}']
 = Adding Scripts to {brandname} Servers
 Use the command line interface to add scripts to {brandname} servers.
 
 .Prerequisites
 
-{brandname} Server stores scripts in the `\___script_cache` cache. If you enable
-cache authorization, users require the `___script_manager` role to access
-`___script_cache`.
+{brandname} Server stores scripts in the `\___script_cache` cache. If you enable cache authorization, users must have `CREATE` permissions to add to `___script_cache`.
+
+Assign users the `deployer` role at minimum if you use default authorization settings.
 
 .Procedure
 

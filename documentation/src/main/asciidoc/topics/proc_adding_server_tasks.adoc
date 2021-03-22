@@ -1,4 +1,4 @@
-[id='server_tasks-{context}']
+[id='server-tasks_{context}']
 = Deploying Server Tasks to {brandname} Servers
 Add your custom server task classes to {brandname} servers.
 
@@ -24,14 +24,5 @@ configuration. Alternatively set the allow list using system properties.
 
 .Reference
 
-//Community
-ifdef::community[]
-* link:../developing/developing.html#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
+* link:{dev_docs}#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
 * link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
-endif::community[]
-
-//Downstream
-ifdef::downstream[]
-* link:{dev_docs}#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
-* link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
-endif::downstream[]

@@ -1,1 +1,0 @@
-$ bin/cli.sh user create myuser -p "qwer1234!" -g supervisor,reader,writer

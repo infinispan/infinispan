@@ -1,4 +1,4 @@
-[id='authz_role_mappers-{context}']
+[id='role-mappers_{context}']
 = Role Mappers
 {brandname} includes a `PrincipalRoleMapper` API that maps security Principals in a Subject to authorization roles that you can assign to users.
 

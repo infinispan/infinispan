@@ -1,4 +1,4 @@
-[id='deserialization_allowlist-{context}']
+[id='deserialization-allowlist_{context}']
 = Adding Java Classes to Deserialization Allow Lists
 {brandname} does not allow deserialization of arbritrary Java classes for
 security reasons, which applies to JSON, XML, and marshalled `byte[]` content.

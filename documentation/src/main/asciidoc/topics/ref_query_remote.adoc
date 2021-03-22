@@ -64,7 +64,8 @@ Registering a new schema is therefore as simple as performing a `put()` operatio
 
 [NOTE]
 ====
-If caches use authorization, users must belong to the `\___schema_manager` role to add entries in the `___protobuf_metadata` cache.
+If caches use authorization, users must have `CREATE` permissions to add entries in the `___protobuf_metadata` cache.
+Assign users the `deployer` role at minimum if you use default authorization settings.
 ====
 
 Alternatively you can use the [command]`schema` command with the {brandname} CLI, {brandname} Console, REST endpoint `/rest/v2/schemas`, or the `ProtobufMetadataManager` MBean via JMX.

@@ -36,5 +36,5 @@ include::config_examples/jboss_user_marshaller.xml[]
 
 .Reference
 
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
+* link:#deserialization-allowlist_marshallers[Adding Java Classes to Deserialization Allow Lists]
 * link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]

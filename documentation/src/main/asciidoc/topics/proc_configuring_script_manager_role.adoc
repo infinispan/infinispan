@@ -1,4 +1,0 @@
-[id='configuring_script_manager']
-= Configuring Script Manager Access
-
-If you enable security with access to `___script_cache` is restricted to users with the `___script_manager` role.

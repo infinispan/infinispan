@@ -1,0 +1,22 @@
+[id='disabling-authentication_{context}']
+= Disabling Authentication
+In local development environments or on isolated networks you can configure {brandname} to allow unauthenticated client requests.
+
+When you disable user authentication you should also disable authorization in your {brandname} security configuration.
+
+.Procedure
+
+. Open `infinispan.xml` for editing.
+. Remove any `security-realm` attributes from the `endpoints` configuration.
+. Ensure that the Hot Rod and REST connectors do not include any
+`authentication` configuration.
++
+For example, the following configuration allows unauthenticated access to
+{brandname}:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/endpoints_authentication_disabled.xml[]
+----
++
+. Remove any `authorization` elements from the `security` configuration for the `cache-container` and each cache configuration.

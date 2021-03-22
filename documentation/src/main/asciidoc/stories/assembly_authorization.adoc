@@ -1,18 +1,17 @@
 [id='authorization']
 :context: authz
-= Configuring Security Authorization
-Authorization restricts the ability to perform operations with {brandname} and
-access data.
-You assign users with roles that have different permission levels.
+= Configuring User Authorization
+Authorization is a security feature that requires users to have certain permissions before they can access caches or interact with {brandname} resources.
+You assign roles to users that provide different levels of permissions, from read-only access to full, super user privileges.
 
 include::{topics}/proc_enabling_default_authorization.adoc[leveloffset=+1]
-include::{topics}/ref_authz_default_roles.adoc[leveloffset=+1]
-
+include::{topics}/ref_user_roles_permissions.adoc[leveloffset=+1]
 include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
 include::{topics}/ref_authz_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_authz_role_mappers.adoc[leveloffset=+2]
-
 include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
+include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
+
 ifdef::embedded_mode[]
 include::{topics}/proc_configuring_authz_programmatic.adoc[leveloffset=+1]
 include::{topics}/ref_executing_secure_caches.adoc[leveloffset=+1]

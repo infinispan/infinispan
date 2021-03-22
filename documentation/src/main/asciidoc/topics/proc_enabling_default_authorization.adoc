@@ -1,8 +1,7 @@
 [id='enabling-authz-{context}']
-= Restricting Access to Caches
-Control access to caches with {brandname} authorization (RBAC).
-
-This procedure shows you how to use the default {brandname} roles and permissions that are suitable for most use cases.
+= Enabling Authorization in Cache Configuration
+Use authorization in your cache configuration to restrict user access.
+Before they can read or write cache entries, or create and delete caches, users must have a role with a sufficient level of permission.
 
 .Procedure
 
