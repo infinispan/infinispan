@@ -1,10 +1,10 @@
 package org.infinispan.remoting.inboundhandler;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.remoting.responses.Response;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
@@ -39,20 +39,20 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
    }
 
    @Override
-   protected CompletableFuture<Response> beforeInvoke() {
-      CompletableFuture<Void> future = null;
+   protected CompletionStage<CacheNotFoundResponse> beforeInvoke() {
+      CompletionStage<Void> stage = null;
       switch (topologyMode) {
          case WAIT_TOPOLOGY:
-            future = handler.getStateTransferLock().topologyFuture(waitTopology());
+            stage = handler.getStateTransferLock().topologyFuture(waitTopology());
             break;
          case WAIT_TX_DATA:
-            future = handler.getStateTransferLock().transactionDataFuture(waitTopology());
+            stage = handler.getStateTransferLock().transactionDataFuture(waitTopology());
             break;
          default:
             break;
       }
-      if (future != null) {
-         return future.thenApply(nil -> handler.isCommandSentBeforeFirstTopology(commandTopologyId) ?
+      if (stage != null) {
+         return stage.thenApply(nil -> handler.isCommandSentBeforeFirstTopology(commandTopologyId) ?
                CacheNotFoundResponse.INSTANCE :
                null);
       } else {

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -212,7 +213,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    }
 
    @Override
-   public CompletableFuture<Void> confirmRevokedSegments(int topologyId) {
+   public CompletionStage<Void> confirmRevokedSegments(int topologyId) {
       return stateTransferLock.topologyFuture(topologyId);
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -109,8 +110,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
          cmd.setTopologyId(newTopologyId);
-         CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-         return retryWhenDone(transactionDataFuture, newTopologyId, ctx, cmd, handleLocalGetKeysInGroupReturn);
+         CompletionStage<Void> transactionDataStage = stateTransferLock.transactionDataFuture(newTopologyId);
+         return retryWhenDone(transactionDataStage, newTopologyId, ctx, cmd, handleLocalGetKeysInGroupReturn);
       } else {
          return valueOrException(rv, throwable);
       }
@@ -140,10 +141,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   protected <T extends VisitableCommand> Object retryWhenDone(CompletableFuture<Void> future, int topologyId,
+   protected <T extends VisitableCommand> Object retryWhenDone(CompletionStage<Void> stage, int topologyId,
                                                                InvocationContext ctx, T command,
                                                                InvocationFinallyFunction<T> callback) {
-      if (future.isDone()) {
+      CompletableFuture<Void> future = stage.toCompletableFuture();
+      if (future.toCompletableFuture().isDone()) {
          getLog().tracef("Retrying command %s for topology %d", command, topologyId);
          return invokeNextAndHandle(ctx, command, callback);
       } else {

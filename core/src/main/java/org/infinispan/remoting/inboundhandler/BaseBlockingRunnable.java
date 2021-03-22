@@ -2,9 +2,10 @@ package org.infinispan.remoting.inboundhandler;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -44,9 +45,9 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
 
    private void runSync() {
       try {
-         CompletableFuture<Response> beforeFuture = beforeInvoke();
-         if (beforeFuture != null) {
-            response = beforeFuture.join();
+         CompletionStage<CacheNotFoundResponse> beforeStage = beforeInvoke();
+         if (beforeStage != null) {
+            response = CompletionStages.join(beforeStage);
             if (response != null) {
                afterInvoke();
                return;
@@ -67,11 +68,11 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    }
 
    private void runAsync() {
-      CompletableFuture<Response> beforeFuture = beforeInvoke();
-      if (beforeFuture == null) {
+      CompletionStage<CacheNotFoundResponse> beforeStage = beforeInvoke();
+      if (beforeStage == null) {
          invoke();
       } else {
-         beforeFuture.whenComplete((rsp, throwable) -> {
+         beforeStage.whenComplete((rsp, throwable) -> {
             if (rsp != null) {
                response = rsp;
                afterInvoke();
@@ -164,7 +165,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       //no-op by default
    }
 
-   protected CompletableFuture<Response> beforeInvoke() {
+   protected CompletionStage<CacheNotFoundResponse> beforeInvoke() {
       return null; //no-op by default
    }
 

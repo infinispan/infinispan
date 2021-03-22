@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -279,7 +279,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) {
+      public CompletionStage<Void> transactionDataFuture(int expectedTopologyId) {
          if (expectedTopologyId >= topologyId) {
             runnable.run();
          }

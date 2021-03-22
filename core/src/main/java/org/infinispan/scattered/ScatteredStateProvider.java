@@ -1,6 +1,6 @@
 package org.infinispan.scattered;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
@@ -20,8 +20,6 @@ public interface ScatteredStateProvider extends StateProvider {
     * Confirm that this node has received cache topology with given topologyId and that it has
     * moved all the segments it does not own according to consistent hash
     * to the {@link ScatteredVersionManager.SegmentState#NOT_OWNED} state.
-    *
-    * @param topologyId
     */
-   CompletableFuture<Void> confirmRevokedSegments(int topologyId);
+   CompletionStage<Void> confirmRevokedSegments(int topologyId);
 }

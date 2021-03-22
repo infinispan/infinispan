@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class DelegatingStateTransferLock implements StateTransferLock {
    private final StateTransferLock delegate;
@@ -35,7 +35,7 @@ public class DelegatingStateTransferLock implements StateTransferLock {
    }
 
    @Override
-   public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) {
+   public CompletionStage<Void> transactionDataFuture(int expectedTopologyId) {
       return delegate.transactionDataFuture(expectedTopologyId);
    }
 
@@ -45,7 +45,7 @@ public class DelegatingStateTransferLock implements StateTransferLock {
    }
 
    @Override
-   public CompletableFuture<Void> topologyFuture(int expectedTopologyId) {
+   public CompletionStage<Void> topologyFuture(int expectedTopologyId) {
       return delegate.topologyFuture(expectedTopologyId);
    }
 

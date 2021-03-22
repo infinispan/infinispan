@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -237,8 +237,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             if (txCommand instanceof PrepareCommand) {
                ((PrepareCommand) txCommand).setRetriedCommand(true);
             }
-            CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, txCommand, handleTxReturn);
+            CompletionStage<Void> transactionDataStage = stateTransferLock.transactionDataFuture(retryTopologyId);
+            return retryWhenDone(transactionDataStage, retryTopologyId, ctx, txCommand, handleTxReturn);
          }
       } else {
          if (currentTopology > txCommand.getTopologyId()) {
@@ -282,8 +282,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (retryTopologyId > 0) {
             // Only the originator can retry the command
             writeCommand.setTopologyId(retryTopologyId);
-            CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, rCtx, writeCommand, handleTxWriteReturn);
+            CompletionStage<Void> transactionDataStage = stateTransferLock.transactionDataFuture(retryTopologyId);
+            return retryWhenDone(transactionDataStage, retryTopologyId, rCtx, writeCommand, handleTxWriteReturn);
          }
       } else {
          if (currentTopologyId() > writeCommand.getTopologyId()) {
@@ -332,8 +332,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       writeCommand.setTopologyId(newTopologyId);
       writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology
-      CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-      return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand, handleNonTxWriteReturn);
+      CompletionStage<Void> transactionDataStage = stateTransferLock.transactionDataFuture(newTopologyId);
+      return retryWhenDone(transactionDataStage, newTopologyId, rCtx, writeCommand, handleNonTxWriteReturn);
    }
 
    private Object handleNonTxWriteReturn(InvocationContext rCtx, WriteCommand rCommand, Object rv, Throwable t)
