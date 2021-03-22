@@ -1,11 +1,13 @@
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.StateTransferConfiguration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -43,7 +45,13 @@ public interface StateTransferLock {
    // transaction data latch
    void notifyTransactionDataReceived(int topologyId);
 
-   CompletableFuture<Void> transactionDataFuture(int expectedTopologyId);
+   /**
+    * @return a stage that completes successfully when topology {@code expectedTopologyId}
+    *    has been installed and transaction data has been received,
+    *    or with a {@link org.infinispan.util.concurrent.TimeoutException}
+    *    after {@link ClusteringConfiguration#remoteTimeout()} expires.
+    */
+   CompletionStage<Void> transactionDataFuture(int expectedTopologyId);
 
    boolean transactionDataReceived(int expectedTopologyId);
 
@@ -51,13 +59,18 @@ public interface StateTransferLock {
    // TODO move this to Cluster/LocalTopologyManagerImpl and don't start requesting state until every node has the jgroups view with the local node
    void notifyTopologyInstalled(int topologyId);
 
-   CompletableFuture<Void> topologyFuture(int expectedTopologyId);
+   /**
+    * @return a stage that completes successfully when topology {@code expectedTopologyId}
+    *    has been installed, or with a {@link org.infinispan.util.concurrent.TimeoutException}
+    *    after {@link StateTransferConfiguration#timeout()} expires.
+    */
+   CompletionStage<Void> topologyFuture(int expectedTopologyId);
 
    @Deprecated
    default void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
       try {
-         CompletableFuture<Void> topologyFuture = topologyFuture(expectedTopologyId);
-         topologyFuture.get(timeout, unit);
+         CompletionStage<Void> topologyFuture = topologyFuture(expectedTopologyId);
+         topologyFuture.toCompletableFuture().get(timeout, unit);
       } catch (ExecutionException e) {
          throw new CacheException(e.getCause());
       }

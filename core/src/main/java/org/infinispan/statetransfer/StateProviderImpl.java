@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
@@ -211,11 +210,11 @@ public class StateProviderImpl implements StateProvider {
                        isReqForTransactions ? "Transactions" : "Segments", destination,
                        requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(requestTopologyId);
-         timeoutExecutor.schedule(
-            () -> topologyFuture.completeExceptionally(CLUSTER.failedWaitingForTopology(requestTopologyId)),
-            timeout, TimeUnit.MILLISECONDS);
-         return topologyFuture.thenApply(ignored -> distributionManager.getCacheTopology());
+         return stateTransferLock.topologyFuture(requestTopologyId)
+                                 .exceptionally(throwable -> {
+                                    throw CLUSTER.failedWaitingForTopology(requestTopologyId);
+                                 })
+                                 .thenApply(ignored -> distributionManager.getCacheTopology());
       }
       return CompletableFuture.completedFuture(cacheTopology);
    }

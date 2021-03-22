@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -855,10 +854,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          assertNotNull(stateTransferLock);
          log.tracef("Waiting for topology %d before executing %s", expectedTopologyId, command);
-         CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(expectedTopologyId);
-         if (topologyFuture != null) {
-            topologyFuture.get(10, TimeUnit.SECONDS);
-         }
+         stateTransferLock.topologyFuture(expectedTopologyId).toCompletableFuture().get(10, TimeUnit.SECONDS);
          assertEquals(expectedTopologyId, distributionManager.getCacheTopology().getTopologyId());
          return invokeNext(ctx, command);
       }

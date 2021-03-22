@@ -163,7 +163,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Wait for joiner to finish requesting segments, so that write commands are not blocked
       StateTransferLock stateTransferLock1 = TestingUtil.extractComponent(cache1, StateTransferLock.class);
-      stateTransferLock1.transactionDataFuture(rebalanceTopologyId).get(10, SECONDS);
+      stateTransferLock1.transactionDataFuture(rebalanceTopologyId).toCompletableFuture().get(10, SECONDS);
       assertEquals(2, cache1.getRpcManager().getMembers().size());
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1

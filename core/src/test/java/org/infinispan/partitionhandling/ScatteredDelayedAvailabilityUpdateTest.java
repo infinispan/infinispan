@@ -86,7 +86,10 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
          assertKeyNotAvailableForRead(cache(p0.node(1)), k0Existing);
          assertKeyNotAvailableForRead(cache(p0.node(1)), k0Missing);
       }
-      CompletableFuture<Void> topologyUpdateFuture = TestingUtil.extractComponent(cache(p0.node(1)), StateTransferLock.class).topologyFuture(currentTopologyP0N1 + 1);
+      CompletableFuture<Void> topologyUpdateFuture =
+            TestingUtil.extractComponent(cache(p0.node(1)), StateTransferLock.class)
+                       .topologyFuture(currentTopologyP0N1 + 1)
+                       .toCompletableFuture();
       ss.exit("main:check_before_topology_update_p0n1");
 
       topologyUpdateFuture.get(10, TimeUnit.SECONDS);

@@ -1,14 +1,22 @@
 package org.infinispan.statetransfer;
 
-import java.util.concurrent.CompletableFuture;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,14 +35,26 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
    private volatile int topologyId = -1;
-   // future to topology equal to topologyId + 1
-   private CompletableFuture<Void> topologyFuture = new CompletableFuture<>();
+   private ConditionFuture<StateTransferLockImpl> topologyFuture;
 
    private volatile int transactionDataTopologyId = -1;
-   private CompletableFuture<Void> transactionDataFuture = new CompletableFuture<>();
+   private ConditionFuture<StateTransferLockImpl> transactionDataFuture;
+
+   private long stateTransferTimeout;
+   private long remoteTimeout;
+
+   @Inject
+   void inject(@ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
+               Configuration configuration) {
+      topologyFuture = new ConditionFuture<>(timeoutExecutor);
+      transactionDataFuture = new ConditionFuture<>(timeoutExecutor);
+
+      stateTransferTimeout = configuration.clustering().stateTransfer().timeout();
+      remoteTimeout = configuration.clustering().remoteTimeout();
+   }
 
    @Stop
-   public void stop() {
+   void stop() {
       notifyTopologyInstalled(TOPOLOGY_ID_STOPPED);
       notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
    }
@@ -73,21 +93,11 @@ public class StateTransferLockImpl implements StateTransferLock {
       }
       transactionDataTopologyId = topologyId;
 
-      CompletableFuture<Void> oldFuture = null;
-      try {
-         synchronized (this) {
-            oldFuture = transactionDataFuture;
-            transactionDataFuture = new CompletableFuture<>();
-         }
-      } finally {
-         if (oldFuture != null) {
-            oldFuture.complete(null);
-         }
-      }
+      transactionDataFuture.update(this);
    }
 
    @Override
-   public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) {
+   public CompletionStage<Void> transactionDataFuture(int expectedTopologyId) {
       if (topologyId == TOPOLOGY_ID_STOPPED)
          return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
 
@@ -98,13 +108,9 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
                     transactionDataTopologyId);
       }
-      synchronized (this){
-         if (transactionDataTopologyId >= expectedTopologyId) {
-            return CompletableFutures.completedNull();
-         } else {
-            return transactionDataFuture.thenCompose(nil -> transactionDataFuture(expectedTopologyId));
-         }
-      }
+
+      return transactionDataFuture.newConditionStage(stli -> stli.transactionDataTopologyId >= expectedTopologyId,
+                                                     remoteTimeout, TimeUnit.MILLISECONDS);
    }
 
    @Override
@@ -125,21 +131,12 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling topology %d is installed", topologyId);
       }
       this.topologyId = topologyId;
-      CompletableFuture<Void> oldFuture = null;
-      try {
-         synchronized (this) {
-            oldFuture = topologyFuture;
-            topologyFuture = new CompletableFuture<>();
-         }
-      } finally {
-         if (oldFuture != null) {
-            oldFuture.complete(null);
-         }
-      }
+
+      topologyFuture.update(this);
    }
 
    @Override
-   public CompletableFuture<Void> topologyFuture(int expectedTopologyId) {
+   public CompletionStage<Void> topologyFuture(int expectedTopologyId) {
       if (topologyId == TOPOLOGY_ID_STOPPED)
          return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
 
@@ -149,13 +146,9 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (log.isTraceEnabled()) {
          log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
       }
-      synchronized (this) {
-         if (topologyId >= expectedTopologyId) {
-            return CompletableFutures.completedNull();
-         } else {
-            return topologyFuture.thenCompose(nil -> topologyFuture(expectedTopologyId));
-         }
-      }
+
+      return topologyFuture.newConditionStage(stli -> stli.topologyId >= expectedTopologyId,
+                                              stateTransferTimeout, TimeUnit.MILLISECONDS);
    }
 
    @Override
