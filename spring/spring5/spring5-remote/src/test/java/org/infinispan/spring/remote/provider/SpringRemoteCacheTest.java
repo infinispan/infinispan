@@ -9,6 +9,9 @@ import java.util.concurrent.Future;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -19,12 +22,14 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(testName = "spring.provider.SpringRemoteCacheTest", groups = "functional")
 public class SpringRemoteCacheTest extends SingleCacheManagerTest {
 
-   private static final String TEST_CACHE_NAME = "spring.remote.cache.Test";
+   private static final String TEST_CACHE_NAME = "SerializationCache";
+   private static final String TEST_CACHE_NAME_PROTO = "ProtoStreamCache";
 
    private RemoteCacheManager remoteCacheManager;
    private HotRodServer hotrodServer;
@@ -32,7 +37,10 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-      cacheManager.defineConfiguration(TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
+      cacheManager.defineConfiguration(TEST_CACHE_NAME,
+                                       hotRodCacheConfiguration(MediaType.APPLICATION_SERIALIZED_OBJECT).build());
+      cacheManager.defineConfiguration(TEST_CACHE_NAME_PROTO,
+                                       hotRodCacheConfiguration(MediaType.APPLICATION_PROTOSTREAM).build());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 
       return cacheManager;
@@ -43,6 +51,8 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 0);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort());
+      builder.remoteCache(TEST_CACHE_NAME).marshaller(JavaSerializationMarshaller.class);
+      builder.remoteCache(TEST_CACHE_NAME_PROTO).marshaller(ProtoStreamMarshaller.class);
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 
@@ -93,10 +103,19 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       assertEquals("thread1", valueObtainedByThread2);
    }
 
-   public void testNullValues() {
+   @DataProvider(name = "caches")
+   public Object[][] caches() {
+      return new Object[][] {
+            {TEST_CACHE_NAME},
+            {TEST_CACHE_NAME_PROTO},
+      };
+   }
+
+   @Test(dataProvider = "caches")
+   public void testNullValues(String cacheName) {
       //given
       final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
-      final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
+      final SpringCache cache = springRemoteCacheManager.getCache(cacheName);
 
       // when
       cache.put("key", null);

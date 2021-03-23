@@ -340,30 +340,35 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       log.debugf("Starting remote cache manager %x", System.identityHashCode(this));
       channelFactory = createChannelFactory();
 
-      if (marshaller == null) {
-         marshaller = configuration.marshaller();
-         if (marshaller == null) {
-            Class<? extends Marshaller> clazz = configuration.marshallerClass();
-            if (marshaller == null) {
-               marshaller = Util.getInstance(clazz);
-            }
-         }
-      }
-      if (!configuration.serialAllowList().isEmpty()) {
-         marshaller.initialize(configuration.getClassAllowList());
-      }
-      if (marshaller instanceof ProtoStreamMarshaller) {
-         SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
-         for (SerializationContextInitializer sci : configuration.getContextInitializers()) {
-            sci.registerSchema(ctx);
-            sci.registerMarshallers(ctx);
-         }
-      }
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
       marshallerRegistry.registerMarshaller(new JavaSerializationMarshaller(configuration.getClassAllowList()));
-      // Register this one last, so it will replace any that may support the same media type
-      marshallerRegistry.registerMarshaller(marshaller);
+      registerProtoStreamMarshaller();
+
+      boolean customMarshallerInstance = true;
+      marshaller = configuration.marshaller();
+      if (marshaller == null) {
+         Class<? extends Marshaller> clazz = configuration.marshallerClass();
+         marshaller = marshallerRegistry.getMarshaller(clazz);
+         if (marshaller == null) {
+            marshaller = Util.getInstance(clazz);
+         } else {
+            customMarshallerInstance = false;
+         }
+      }
+
+      if (customMarshallerInstance) {
+         if (!configuration.serialAllowList().isEmpty()) {
+            marshaller.initialize(configuration.getClassAllowList());
+         }
+
+         if (marshaller instanceof ProtoStreamMarshaller) {
+            initializeProtoStreamMarshaller((ProtoStreamMarshaller) marshaller);
+         }
+
+         // Replace any default marshaller with the same media type
+         marshallerRegistry.registerMarshaller(marshaller);
+      }
 
       codec = configuration.version().getCodec();
 
@@ -385,6 +390,25 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       HOTROD.version(Version.printVersion());
 
       started = true;
+   }
+
+   private void registerProtoStreamMarshaller() {
+      try {
+         ProtoStreamMarshaller protoMarshaller = new ProtoStreamMarshaller();
+         marshallerRegistry.registerMarshaller(protoMarshaller);
+
+         initializeProtoStreamMarshaller(protoMarshaller);
+      } catch (NoClassDefFoundError e) {
+         // Ignore the error, it the protostream dependency is missing
+      }
+   }
+
+   private void initializeProtoStreamMarshaller(ProtoStreamMarshaller protoMarshaller) {
+      SerializationContext ctx = protoMarshaller.getSerializationContext();
+      for (SerializationContextInitializer sci : configuration.getContextInitializers()) {
+         sci.registerSchema(ctx);
+         sci.registerMarshallers(ctx);
+      }
    }
 
    public ChannelFactory createChannelFactory() {
