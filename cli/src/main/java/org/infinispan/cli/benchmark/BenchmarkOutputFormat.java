@@ -1,12 +1,16 @@
 package org.infinispan.cli.benchmark;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.aesh.command.shell.Shell;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
@@ -25,9 +29,9 @@ import org.openjdk.jmh.util.Utils;
 public class BenchmarkOutputFormat implements OutputFormat {
 
    final VerboseMode verbose;
-   final PrintStream out;
+   final Shell out;
 
-   public BenchmarkOutputFormat(PrintStream out, VerboseMode verbose) {
+   public BenchmarkOutputFormat(Shell out, VerboseMode verbose) {
       this.out = out;
       this.verbose = verbose;
    }
@@ -35,7 +39,7 @@ public class BenchmarkOutputFormat implements OutputFormat {
    @Override
    public void print(String s) {
       if (verbose != VerboseMode.SILENT) {
-         out.print(s);
+         out.write(s);
       }
    }
 
@@ -43,30 +47,29 @@ public class BenchmarkOutputFormat implements OutputFormat {
    public void println(String s) {
       // Hack to filter out unwanted messages
       if (verbose != VerboseMode.SILENT && !s.contains("on-forked runs")) {
-         out.println(s);
+         out.writeln(s);
       }
    }
 
    @Override
    public void flush() {
-      out.flush();
    }
 
    @Override
    public void verbosePrintln(String s) {
       if (verbose == VerboseMode.EXTRA) {
-         out.println(s);
+         out.writeln(s);
       }
    }
 
    @Override
    public void write(int b) {
-      out.write(b);
+      out.write(new String(Character.toChars(b)));
    }
 
    @Override
    public void write(byte[] b) {
-      out.write(b, 0, b.length);
+      // Unused
    }
 
    @Override
@@ -80,28 +83,28 @@ public class BenchmarkOutputFormat implements OutputFormat {
       }
       IterationParams warmup = params.getWarmup();
       if (warmup.getCount() > 0) {
-         out.println("# Warmup: " + warmup.getCount() + " iterations, " +
+         out.writeln("# Warmup: " + warmup.getCount() + " iterations, " +
                warmup.getTime() + " each" +
                (warmup.getBatchSize() <= 1 ? "" : ", " + warmup.getBatchSize() + " calls per op"));
       } else {
-         out.println("# Warmup: <none>");
+         out.writeln("# Warmup: <none>");
       }
 
       IterationParams measurement = params.getMeasurement();
       if (measurement.getCount() > 0) {
-         out.println("# Measurement: " + measurement.getCount() + " iterations, " +
+         out.writeln("# Measurement: " + measurement.getCount() + " iterations, " +
                measurement.getTime() + " each" +
                (measurement.getBatchSize() <= 1 ? "" : ", " + measurement.getBatchSize() + " calls per op"));
       } else {
-         out.println("# Measurement: <none>");
+         out.writeln("# Measurement: <none>");
       }
 
       TimeValue timeout = params.getTimeout();
       boolean timeoutWarning = (timeout.convertTo(TimeUnit.NANOSECONDS) <= measurement.getTime().convertTo(TimeUnit.NANOSECONDS)) ||
             (timeout.convertTo(TimeUnit.NANOSECONDS) <= warmup.getTime().convertTo(TimeUnit.NANOSECONDS));
-      out.println("# Timeout: " + timeout + " per iteration" + (timeoutWarning ? ", ***WARNING: The timeout might be too low!***" : ""));
+      out.writeln("# Timeout: " + timeout + " per iteration" + (timeoutWarning ? ", ***WARNING: The timeout might be too low!***" : ""));
 
-      out.print("# Threads: " + params.getThreads() + " " + getThreadsString(params.getThreads()));
+      out.write("# Threads: " + params.getThreads() + " " + getThreadsString(params.getThreads()));
 
       if (!params.getThreadGroupLabels().isEmpty()) {
          int[] tg = params.getThreadGroups();
@@ -113,16 +116,16 @@ public class BenchmarkOutputFormat implements OutputFormat {
          }
 
          int groupCount = params.getThreads() / Utils.sum(tg);
-         out.print(" (" + groupCount + " " + getGroupsString(groupCount) + "; " + Utils.join(ss, ", ") + " in each group)");
+         out.write(" (" + groupCount + " " + getGroupsString(groupCount) + "; " + Utils.join(ss, ", ") + " in each group)");
       }
 
-      out.println(params.shouldSynchIterations() ?
+      out.writeln(params.shouldSynchIterations() ?
             ", will synchronize iterations" :
             (params.getMode() == Mode.SingleShotTime) ? "" : ", ***WARNING: Synchronize iterations are disabled!***");
 
 
-      out.println("# Benchmark mode: " + params.getMode().longLabel());
-      out.println("# Benchmark: " + params.getBenchmark());
+      out.writeln("# Benchmark mode: " + params.getMode().longLabel());
+      out.writeln("# Benchmark: " + params.getBenchmark());
       if (!params.getParamsKeys().isEmpty()) {
          StringBuilder sb = new StringBuilder();
          boolean isFirst = true;
@@ -134,7 +137,7 @@ public class BenchmarkOutputFormat implements OutputFormat {
             }
             sb.append(k).append(" = ").append(params.getParam(k));
          }
-         out.println("# Parameters: (" + sb.toString() + ")");
+         out.writeln("# Parameters: (" + sb.toString() + ")");
       }
    }
 
@@ -145,15 +148,15 @@ public class BenchmarkOutputFormat implements OutputFormat {
       }
       switch (params.getType()) {
          case WARMUP:
-            out.print(String.format("Warmup    %3d: ", iteration));
+            out.write(String.format("Warmup    %3d: ", iteration));
             break;
          case MEASUREMENT:
-            out.print(String.format("Iteration %3d: ", iteration));
+            out.write(String.format("Iteration %3d: ", iteration));
             break;
          default:
             throw new IllegalStateException("Unknown iteration type: " + params.getType());
       }
-      out.flush();
+      flush();
    }
 
    protected static String getThreadsString(int t) {
@@ -200,30 +203,30 @@ public class BenchmarkOutputFormat implements OutputFormat {
          }
       }
 
-      out.print(String.format("%s%n", sb.toString()));
-      out.flush();
+      out.write(String.format("%s%n", sb));
+      flush();
    }
 
    @Override
    public void endBenchmark(BenchmarkResult result) {
-      out.println();
+      out.writeln("");
       if (result != null) {
          {
             Result r = result.getPrimaryResult();
             String s = r.extendedInfo();
             if (!s.trim().isEmpty()) {
-               out.println("Result \"" + result.getParams().getBenchmark() + "\":");
-               out.println(s);
+               out.writeln("Result \"" + result.getParams().getBenchmark() + "\":");
+               out.writeln(s);
             }
          }
          for (Result r : result.getSecondaryResults().values()) {
             String s = r.extendedInfo();
             if (!s.trim().isEmpty()) {
-               out.println("Secondary result \"" + result.getParams().getBenchmark() + ":" + r.getLabel() + "\":");
-               out.println(s);
+               out.writeln("Secondary result \"" + result.getParams().getBenchmark() + ":" + r.getLabel() + "\":");
+               out.writeln(s);
             }
          }
-         out.println();
+         out.writeln("");
       }
    }
 
@@ -234,7 +237,14 @@ public class BenchmarkOutputFormat implements OutputFormat {
 
    @Override
    public void endRun(Collection<RunResult> runResults) {
-      ResultFormatFactory.getInstance(ResultFormatType.TEXT, out).writeOut(runResults);
+      try {
+         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         PrintStream printStream = new PrintStream(baos, true, StandardCharsets.UTF_8.name());
+         ResultFormatFactory.getInstance(ResultFormatType.TEXT, printStream).writeOut(runResults);
+         println(baos.toString());
+      } catch (UnsupportedEncodingException e) {
+         // Not going to happen
+      }
    }
 
 }

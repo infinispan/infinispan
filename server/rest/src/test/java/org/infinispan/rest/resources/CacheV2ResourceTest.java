@@ -50,6 +50,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
@@ -243,6 +244,15 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String cache2Cfg = join(response).getBody();
 
       assertEquals(cache1Cfg, cache2Cfg);
+
+      response = client.cache("cache1").configuration("application/xml");
+      assertThat(response).isOk();
+      String cache1Xml = join(response).getBody();
+
+      ParserRegistry registry = new ParserRegistry();
+      Configuration xmlConfig = registry.parse(cache1Xml).getCurrentConfigurationBuilder().build();
+      assertEquals(1200000, xmlConfig.clustering().l1().lifespan());
+      assertEquals(60500, xmlConfig.clustering().stateTransfer().timeout());
    }
 
    @Test
@@ -621,9 +631,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCacheExists() {
       assertEquals(404, checkCache("nonexistent"));
-      assertEquals(200, checkCache("invalid"));
-      assertEquals(200, checkCache("default"));
-      assertEquals(200, checkCache("indexedCache"));
+      assertEquals(204, checkCache("invalid"));
+      assertEquals(204, checkCache("default"));
+      assertEquals(204, checkCache("indexedCache"));
    }
 
    @Test

@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -260,6 +261,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND);
+      } else {
+         responseBuilder.status(NO_CONTENT);
       }
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
@@ -402,8 +405,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             break;
          default:
             ByteArrayOutputStream entity = new ByteArrayOutputStream();
-            ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).build();
-            registry.serialize(writer, null, Collections.singletonMap(cacheName, cacheConfiguration));
+            try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).build()) {
+               registry.serialize(writer, null, Collections.singletonMap(cacheName, cacheConfiguration));
+            } catch (Exception e) {
+               return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).build());
+            }
             responseBuilder.entity(entity);
       }
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
