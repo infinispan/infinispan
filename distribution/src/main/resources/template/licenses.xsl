@@ -209,6 +209,9 @@
             <xsl:when test="contains($filename, 'bsd zero clause license')">
                 <xsl:text>bsd-0-clause.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="$filename = 'indiana university extreme! lab software license - license.txt'">
+                <xsl:text>indiana university extreme! lab software license, version 1.1.1 - license.txt</xsl:text>
+            </xsl:when>
             <xsl:otherwise>
                 <xsl:value-of select="$filename"/>
             </xsl:otherwise>
