@@ -81,6 +81,19 @@ userPassword: password
 krb5PrincipalName: observer@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
+dn: uid=monitor,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Monitor
+sn: monitor
+uid: monitor
+userPassword: weakPassword
+krb5PrincipalName: monitor@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
 dn: uid=executor,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
@@ -237,6 +250,13 @@ objectClass: groupOfNames
 cn: observer
 description: the Infinispan observer group
 member: uid=observer,ou=People,dc=infinispan,dc=org
+
+dn: cn=monitor,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: monitor
+description: the Infinispan monitor group
+member: uid=monitor,ou=People,dc=infinispan,dc=org
 
 dn: cn=reader,ou=Roles,dc=infinispan,dc=org
 objectClass: top

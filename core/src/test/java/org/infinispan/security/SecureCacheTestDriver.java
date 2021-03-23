@@ -364,7 +364,7 @@ public class SecureCacheTestDriver {
       cache.getBatchContainer();
    }
 
-   @TestCachePermission(AuthorizationPermission.ADMIN)
+   @TestCachePermission(AuthorizationPermission.MONITOR)
    public void testGetStats(SecureCache<String, String> cache) {
       cache.getStats();
    }

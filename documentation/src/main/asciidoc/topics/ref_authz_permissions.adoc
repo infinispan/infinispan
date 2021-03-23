@@ -27,6 +27,10 @@ Permissions let you restrict user access to both Cache Managers and caches.
 |`createCache`, `removeCache`
 |Create and remove container resources  such as caches, counters, schemas, and scripts.
 
+| MONITOR
+|`getStats`
+|Allows access to statistics
+
 |ALL
 |-
 |Includes all Cache Manager permissions.
@@ -68,9 +72,13 @@ Permissions let you restrict user access to both Cache Managers and caches.
 |`start`, `stop`
 |Starts and stops a cache.
 
-| ADMIN
-| `getVersion`, `addInterceptor*`, `removeInterceptor`, `getInterceptorChain`, `getEvictionManager`, `getComponentRegistry`, `getDistributionManager`, `getAuthorizationManager`, `evict`, `getRpcManager`, `getCacheConfiguration`, `getCacheManager`, `getInvocationContextContainer`, `setAvailability`, `getDataContainer`, `getStats`, `getXAResource`
+|ADMIN
+|`getVersion`, `addInterceptor*`, `removeInterceptor`, `getInterceptorChain`, `getEvictionManager`, `getComponentRegistry`, `getDistributionManager`, `getAuthorizationManager`, `evict`, `getRpcManager`, `getCacheConfiguration`, `getCacheManager`, `getInvocationContextContainer`, `setAvailability`, `getDataContainer`, `getXAResource`
 |Allows access to underlying components and internal structures.
+
+|MONITOR
+|`getStats`
+|Allows access to statistics
 
 |ALL
 |-

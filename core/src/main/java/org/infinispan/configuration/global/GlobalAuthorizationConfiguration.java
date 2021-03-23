@@ -63,17 +63,23 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
             AuthorizationPermission.ALL_READ,
             AuthorizationPermission.ALL_WRITE,
             AuthorizationPermission.LISTEN,
-            AuthorizationPermission.EXEC
+            AuthorizationPermission.EXEC,
+            AuthorizationPermission.MONITOR
       ));
       roles.put("deployer", new CacheRoleImpl("deployer", true,
             AuthorizationPermission.ALL_READ,
             AuthorizationPermission.ALL_WRITE,
             AuthorizationPermission.LISTEN,
             AuthorizationPermission.EXEC,
-            AuthorizationPermission.CREATE
+            AuthorizationPermission.CREATE,
+            AuthorizationPermission.MONITOR
       ));
       roles.put("observer", new CacheRoleImpl("observer", true,
-            AuthorizationPermission.ALL_READ
+            AuthorizationPermission.ALL_READ,
+            AuthorizationPermission.MONITOR
+      ));
+      roles.put("monitor", new CacheRoleImpl("monitor", true,
+            AuthorizationPermission.MONITOR
       ));
       // Deprecated roles. Will be removed in Infinispan 16.0
       roles.put("___schema_manager", new CacheRoleImpl("___schema_manager", false,

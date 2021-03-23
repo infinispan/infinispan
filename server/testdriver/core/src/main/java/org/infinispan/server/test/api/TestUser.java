@@ -18,6 +18,7 @@ public enum TestUser {
    OBSERVER("observer", "password", Collections.singletonList("observer")),
    APPLICATION("application", "somePassword", Collections.singletonList("application")),
    DEPLOYER("deployer", "lessStrongPassword", Collections.singletonList("deployer")),
+   MONITOR("monitor", "weakPassword", Collections.singletonList("monitor")),
    READER("reader", "readerPassword", Collections.singletonList("reader")),
    WRITER("writer", "writerPassword", Collections.singletonList("writer"));
 

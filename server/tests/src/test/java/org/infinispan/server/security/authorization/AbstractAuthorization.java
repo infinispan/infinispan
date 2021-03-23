@@ -118,7 +118,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testHotRodNonAdminsMustNotCreateCache() {
-      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER)) {
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
                () -> getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
@@ -127,7 +127,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testRestNonAdminsMustNotCreateCache() {
-      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER)) {
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
          Exceptions.expectException(SecurityException.class, "(?s).*403.*",
                () -> getServerTest().rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
@@ -141,7 +141,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testHotRodWriterCannotReadExplicit() {
-      testHotRodWriterCannotRead("admin", "observer", "deployer", "application", "writer", "reader");
+      testHotRodWriterCannotRead("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
    }
 
    private void testHotRodWriterCannotRead(String... explicitRoles) {
@@ -151,7 +151,7 @@ public abstract class AbstractAuthorization {
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> writerCache.get("k1")
       );
-      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER))) {
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER, TestUser.MONITOR))) {
          RemoteCache<String, String> userCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          assertEquals("v1", userCache.get("k1"));
       }
@@ -320,7 +320,7 @@ public abstract class AbstractAuthorization {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*", () -> query.execute().list());
       }
       // REST
-      for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
+      for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER, TestUser.MONITOR)) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          assertStatus(FORBIDDEN, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
          assertStatus(OK, userCache.searchStats());

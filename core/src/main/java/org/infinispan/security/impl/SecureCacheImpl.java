@@ -883,7 +883,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public Stats getStats() {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
+      authzManager.checkPermission(subject, AuthorizationPermission.MONITOR);
       return delegate.getStats();
    }
 
