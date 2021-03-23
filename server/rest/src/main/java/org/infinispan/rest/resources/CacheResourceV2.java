@@ -408,7 +408,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).build()) {
                registry.serialize(writer, null, Collections.singletonMap(cacheName, cacheConfiguration));
             } catch (Exception e) {
-               return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).build());
+               return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).entity(Util.getRootCause(e)).build());
             }
             responseBuilder.entity(entity);
       }
