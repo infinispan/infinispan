@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;
@@ -15,6 +14,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.MapSessionProtoAdapter;
@@ -148,8 +148,24 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
       // Protostream support
       ProtoStreamMarshaller protoMarshaller =
             (ProtoStreamMarshaller) marshallerRegistry.getMarshaller(MediaType.APPLICATION_PROTOSTREAM);
+      if (protoMarshaller == null) {
+         try {
+            protoMarshaller = new ProtoStreamMarshaller();
+            marshallerRegistry.registerMarshaller(protoMarshaller);
+
+            // Apply the serialization context initializers in the configuration first
+            SerializationContext ctx = protoMarshaller.getSerializationContext();
+            for (SerializationContextInitializer sci : nativeCacheManager.getConfiguration().getContextInitializers()) {
+               sci.registerSchema(ctx);
+               sci.registerMarshallers(ctx);
+            }
+         } catch (NoClassDefFoundError e) {
+            // Ignore the error, the protostream dependency is missing
+         }
+      }
       if (protoMarshaller != null) {
-         SerializationContext ctx = MarshallerUtil.getSerializationContext(nativeCacheManager);
+         // Apply our own serialization context initializers
+         SerializationContext ctx = protoMarshaller.getSerializationContext();
          addProviderContextInitializer(ctx);
          addSessionContextInitializerAndMarshaller(ctx, serializationMarshaller);
       }
