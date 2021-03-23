@@ -201,6 +201,17 @@ public class CliIT {
    }
 
    @Test
+   public void testCliHttpBenchmark() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+
+         // no cache
+         terminal.readln("benchmark http://" + hostAddress() + ":11222");
+         terminal.assertContains("java.lang.IllegalArgumentException: Could not find cache");
+      }
+   }
+
+   @Test
    public void testCliConfigPersistence() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);

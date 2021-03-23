@@ -118,7 +118,7 @@ public class Benchmark extends CliCommand {
             .warmupTime(TimeValue.fromString(warmupTime))
             .timeUnit(TimeUnit.valueOf(timeUnit));
       try {
-         new Runner(opt.build(), new BenchmarkOutputFormat(invocation.getShellOutput(), VerboseMode.valueOf(verbosity))).run();
+         new Runner(opt.build(), new BenchmarkOutputFormat(invocation.getShell(), VerboseMode.valueOf(verbosity))).run();
          return CommandResult.SUCCESS;
       } catch (RunnerException e) {
          throw new CommandException(e);

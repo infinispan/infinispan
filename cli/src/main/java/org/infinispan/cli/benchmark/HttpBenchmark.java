@@ -64,8 +64,18 @@ public class HttpBenchmark {
       RestClientConfigurationBuilder builder = uri.toConfigurationBuilder();
       client = RestClient.forConfiguration(builder.build());
       cache = client.cache(cacheName);
-      if (uncheckedAwait(cache.exists()).getStatus() == 404) {
-         throw new IllegalArgumentException("Could not find cache " + cacheName);
+      try (RestResponse response = uncheckedAwait(cache.exists())) {
+         switch (response.getStatus()) {
+            case RestResponse.OK:
+            case RestResponse.NO_CONTENT:
+               break;
+            case RestResponse.NOT_FOUND:
+               throw new IllegalArgumentException("Could not find cache '" + cacheName+"'");
+            case RestResponse.UNAUTHORIZED:
+               throw new SecurityException(response.getBody());
+            default:
+               throw new RuntimeException(response.getBody());
+         }
       }
       value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, new byte[valueSize]);
       keySet = new ArrayList<>(keySetSize);
