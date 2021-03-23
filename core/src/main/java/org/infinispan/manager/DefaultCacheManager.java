@@ -1119,6 +1119,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public CacheContainerStats getStats() {
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.MONITOR);
       return stats;
    }
 

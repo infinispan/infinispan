@@ -27,6 +27,9 @@ Run [command]`help user` for command usage examples.
 |`observer`
 |Read-only access to the system.
 
+|`monitor`
+|Access to statistics
+
 |===
 
 .Reference

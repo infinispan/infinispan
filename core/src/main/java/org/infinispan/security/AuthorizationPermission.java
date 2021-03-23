@@ -47,6 +47,10 @@ public enum  AuthorizationPermission {
     */
    CREATE(1 << 8),
    /**
+    * Allows retrieval of stats
+    */
+   MONITOR(1 << 9),
+   /**
     * Aggregate permission which implies all of the others
     */
    ALL(Integer.MAX_VALUE),

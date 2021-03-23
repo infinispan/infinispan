@@ -39,6 +39,15 @@ cn: ISPN Reader
 sn: observer
 userPassword: password
 
+dn: uid=monitor,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: monitor
+cn: ISPN Monitor
+sn: monitor
+userPassword: weakPassword
+
 dn: uid=unprivileged,ou=People,dc=infinispan,dc=org
 objectclass: top
 objectclass: uidObject
@@ -93,6 +102,20 @@ objectClass: groupOfNames
 cn: deployer
 description: the Infinispan deployer group
 member: uid=deployer,ou=People,dc=infinispan,dc=org
+
+dn: cn=observer,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: observer
+description: the Infinispan observer group
+member: uid=observer,ou=People,dc=infinispan,dc=org
+
+dn: cn=monitor,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: monitor
+description: the Infinispan monitor group
+member: uid=monitor,ou=People,dc=infinispan,dc=org
 
 dn: cn=executor,ou=Roles,dc=infinispan,dc=org
 objectClass: top
