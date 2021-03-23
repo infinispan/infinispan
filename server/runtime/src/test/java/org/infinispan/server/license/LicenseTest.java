@@ -28,7 +28,7 @@ import org.junit.Test;
 public class LicenseTest {
 
    private static final Pattern TR_REGEX = Pattern.compile("<tr>(.+?)</tr>", Pattern.DOTALL);
-   private static final Pattern TD_VALUE_REGEX = Pattern.compile("<td>(.+?)</td>", Pattern.DOTALL);
+   private static final Pattern TD_VALUE_REGEX = Pattern.compile("<td>(.*?)</td>", Pattern.DOTALL);
    private static final String SERVER_OUTPUT_PATH = System.getProperty("server.output.dir");
 
    @Test
@@ -48,11 +48,19 @@ public class LicenseTest {
          String trValue = trMatcher.group(1);
          Matcher tdMatcher = TD_VALUE_REGEX.matcher(trValue);
          if (tdMatcher.find()) {
-            // it is comment because in the future you can use the group information and who will remember how to get it?
-            //String group = tdMatcher.group(1);
-
-            tdMatcher.find();
-            String artifact = tdMatcher.group(1);
+            String group = tdMatcher.group(1);
+            String artifact;
+            if (group.contains("@patternfly")) {
+               // patternfly includes the artifact in the group with a slash
+               String[] splitGroup = group.split("/");
+               group = splitGroup[0];
+               artifact = splitGroup[1];
+               // Ignore the next match as it is empty
+               tdMatcher.find();
+            } else {
+               tdMatcher.find();
+               artifact = tdMatcher.group(1);
+            }
 
             tdMatcher.find();
             String version = tdMatcher.group(1);
