@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -876,6 +877,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       public void start() {
          Flowable<R> valuesFlowable = Flowable.just(distributionManager)
                .flatMap(dm -> {
+                  if (!componentRegistry.getStatus().allowInvocations()) {
+                     return Flowable.error(new IllegalLifecycleStateException());
+                  }
                   LocalizedCacheTopology topology = dm.getCacheTopology();
                   int previousTopology = currentTopology;
                   // Store the current topology in case if we have to retry
@@ -888,7 +892,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                               nextTopology, requestId);
                      }
                      // When this is complete - the retry below will kick in again and we will have a new topology
-                     return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology));
+                     return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
                   }
                   Address localAddress = rpcManager.getAddress();
                   Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);

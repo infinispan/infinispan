@@ -23,8 +23,9 @@ import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
-import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
@@ -129,8 +130,9 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    private <R> SegmentCompletionPublisher<R> registerPublisher(SegmentCompletionPublisher<R> original) {
       return (subscriber, segmentsComplete) -> {
          // Processor has to be serialized due to possibly invoking onError from a different thread
-         FlowableProcessor<R> earlyTerminatingProcessor = UnicastProcessor.<R>create().toSerialized();
+         FlowableProcessor<R> earlyTerminatingProcessor = AsyncProcessor.<R>create().toSerialized();
          pendingProcessors.add(earlyTerminatingProcessor);
+
          // Have to check after registering in case if we got a partition between when the publisher was created and
          // subscribed to
          if (isPartitionDegraded()) {
@@ -138,10 +140,12 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
             earlyTerminatingProcessor.onError(CLUSTER.partitionDegraded());
             original.subscribe(earlyTerminatingProcessor);
          } else {
-            earlyTerminatingProcessor
-                  .doOnTerminate(() -> pendingProcessors.remove(earlyTerminatingProcessor))
+            Flowable<R> actualPublisher = Flowable.<R>fromPublisher(s -> original.subscribe(s, segmentsComplete))
+                  .doFinally(earlyTerminatingProcessor::onComplete);
+            Publisher<R> flowableAsPublisher = earlyTerminatingProcessor
+                  .doFinally(() -> pendingProcessors.remove(earlyTerminatingProcessor));
+            Flowable.merge(flowableAsPublisher, actualPublisher)
                   .subscribe(subscriber);
-            original.subscribe(earlyTerminatingProcessor, segmentsComplete);
          }
       };
    }
