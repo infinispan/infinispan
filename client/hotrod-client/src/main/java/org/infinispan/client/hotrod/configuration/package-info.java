@@ -98,6 +98,12 @@
  *          <td>The Hot Rod {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#version(org.infinispan.client.hotrod.ProtocolVersion) version}.</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.transport_factory</b></td>
+ *          <td>String</td>
+ *          <td>{@link org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory}</td>
+ *          <td>Specifies the transport factory to use.</td>
+ *       </tr>
+ *       <tr>
  *          <th colspan="4">Connection pool properties</th>
  *       </tr>
  *       <tr>

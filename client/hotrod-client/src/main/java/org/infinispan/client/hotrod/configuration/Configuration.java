@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.BuiltBy;
@@ -111,6 +112,7 @@ public class Configuration {
    private final Features features;
    private final List<SerializationContextInitializer> contextInitializers;
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
+   private final TransportFactory transportFactory;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
@@ -120,7 +122,8 @@ public class Configuration {
                         List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize,
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
-                        Map<String, RemoteCacheConfiguration> remoteCaches) {
+                        Map<String, RemoteCacheConfiguration> remoteCaches,
+                        TransportFactory transportFactory) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -150,6 +153,7 @@ public class Configuration {
       this.features = features;
       this.contextInitializers = contextInitializers;
       this.remoteCaches = remoteCaches;
+      this.transportFactory = transportFactory;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -339,6 +343,10 @@ public class Configuration {
 
    public List<SerializationContextInitializer> getContextInitializers() {
       return contextInitializers;
+   }
+
+   public TransportFactory transportFactory() {
+      return transportFactory;
    }
 
    @Override

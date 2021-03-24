@@ -5,6 +5,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
@@ -51,6 +52,7 @@ public class ConfigurationProperties {
    public static final String SO_TIMEOUT = ICH + "socket_timeout";
    public static final String CONNECT_TIMEOUT = ICH + "connect_timeout";
    public static final String PROTOCOL_VERSION = ICH + "protocol_version";
+   public static final String TRANSPORT_FACTORY = ICH + "transport_factory";
    // Encryption properties
    public static final String USE_SSL = ICH + "use_ssl";
    public static final String KEY_STORE_FILE_NAME = ICH + "key_store_file_name";
@@ -214,6 +216,18 @@ public class ConfigurationProperties {
 
    public void setDefaultExecutorFactoryThreadNameSuffix(String threadNameSuffix) {
       props.setProperty(DEFAULT_EXECUTOR_FACTORY_THREADNAME_SUFFIX, threadNameSuffix);
+   }
+
+   public void setTransportFactory(String transportFactoryClass) {
+      props.setProperty(TRANSPORT_FACTORY, transportFactoryClass);
+   }
+
+   public void setTransportFactory(Class<TransportFactory> transportFactory) {
+      setTransportFactory(transportFactory.getName());
+   }
+
+   public String getTransportFactory() {
+      return props.getProperty(TRANSPORT_FACTORY, TransportFactory.DEFAULT.getClass().getName());
    }
 
    public boolean getTcpNoDelay() {

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -89,6 +90,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private Features features;
    private final List<SerializationContextInitializer> contextInitializers = new ArrayList<>();
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
+   private TransportFactory transportFactory = TransportFactory.DEFAULT;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -269,7 +271,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    /**
-    * @deprecated since 11.0. To be removed in 14.0. Use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} and {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
+    * @deprecated since 11.0. To be removed in 14.0. Use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)}
+    * and {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
     */
    @Deprecated
    public NearCacheConfigurationBuilder nearCache() {
@@ -386,6 +389,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder transportFactory(TransportFactory transportFactory) {
+      this.transportFactory = transportFactory;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -493,19 +502,23 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       });
 
       Set<String> cachesNames = typed.keySet().stream()
-            .map(k -> (String)k)
+            .map(k -> (String) k)
             .filter(k -> k.startsWith(ConfigurationProperties.CACHE_PREFIX))
             .map(k ->
-                  k.charAt(CACHE_PREFIX_LENGTH) =='[' ?
+                  k.charAt(CACHE_PREFIX_LENGTH) == '[' ?
                         k.substring(CACHE_PREFIX_LENGTH + 1, k.indexOf(']', CACHE_PREFIX_LENGTH)) :
-                        k.substring(CACHE_PREFIX_LENGTH, k.indexOf('.', CACHE_PREFIX_LENGTH + 1 ))
+                        k.substring(CACHE_PREFIX_LENGTH, k.indexOf('.', CACHE_PREFIX_LENGTH + 1))
             ).collect(Collectors.toSet());
 
-      for(String cacheName : cachesNames) {
+      for (String cacheName : cachesNames) {
          this.remoteCache(cacheName).withProperties(typed);
       }
 
       statistics.withProperties(properties);
+
+      if (typed.containsKey(ConfigurationProperties.TRANSPORT_FACTORY)) {
+         this.transportFactory = Util.getInstance(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY), classLoader.get());
+      }
       return this;
    }
 
@@ -559,9 +572,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(
             Map.Entry::getKey, e -> e.getValue().create()));
 
-      return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
-                               consistentHashImpl, forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-                               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
+      return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(),
+            clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl, forceReturnValues,
+            keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
+            security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
+            serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
+            contextInitializers, remoteCaches, transportFactory);
    }
 
    // Method that handles default marshaller - needed as a placeholder
@@ -607,6 +623,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
+      this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
       this.nearCache.read(template.nearCache());

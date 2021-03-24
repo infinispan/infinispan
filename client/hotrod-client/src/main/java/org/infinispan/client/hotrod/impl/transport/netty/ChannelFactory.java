@@ -115,7 +115,7 @@ public class ChannelFactory {
          int eventLoopThreads = SecurityActions.getIntProperty("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
-         this.eventLoopGroup = TransportHelper.createEventLoopGroup(maxExecutors, executorService);
+         this.eventLoopGroup = configuration.transportFactory().createEventLoopGroup(maxExecutors, executorService);
 
          Collection<InetSocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
@@ -170,7 +170,7 @@ public class ChannelFactory {
       log.debugf("Creating new channel pool for %s", address);
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)
-            .channel(TransportHelper.socketChannel())
+            .channel(configuration.transportFactory().socketChannelClass())
             .remoteAddress(address)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, configuration.connectionTimeout())
             .option(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive())

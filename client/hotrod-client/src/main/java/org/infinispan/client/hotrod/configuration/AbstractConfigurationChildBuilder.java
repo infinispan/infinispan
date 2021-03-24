@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -215,6 +216,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit) {
       return builder.transactionTimeout(timeout, timeUnit);
+   }
+
+   @Override
+   public ConfigurationBuilder transportFactory(TransportFactory transportFactory) {
+      return builder.transportFactory(transportFactory);
    }
 
    @Override
