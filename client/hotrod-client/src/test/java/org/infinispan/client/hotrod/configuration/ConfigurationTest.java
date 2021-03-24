@@ -640,6 +640,44 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(TYPES.get(expected.getClass()).apply(expected), cfg.properties().get(propertyName));
    }
 
+   public void testMixOfConfiguration1() {
+      ConfigurationBuilder cb = HotRodURI.create("hotrod://host1?client_intelligence=BASIC").toConfigurationBuilder();
+      Properties properties = new Properties();
+      properties.setProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, "1");
+      cb.asyncExecutorFactory().withExecutorProperties(properties);
+      Configuration configuration = cb.build();
+      assertEquals(ClientIntelligence.BASIC, configuration.clientIntelligence());
+   }
+
+   public void testMixOfConfiguration2() {
+      ConfigurationBuilder configurationBuilder = HotRodURI.create("hotrod://host1?client_intelligence=BASIC").toConfigurationBuilder();
+      configurationBuilder.maxRetries(1);
+      Configuration configuration = configurationBuilder.build();
+      assertEquals(ClientIntelligence.BASIC, configuration.clientIntelligence());
+      assertEquals(1, configuration.maxRetries());
+
+      configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.maxRetries(1);
+      configurationBuilder.socketTimeout(123);
+      configurationBuilder = configurationBuilder.uri("hotrod://host?client_intelligence=BASIC&socket_timeout=456");
+      configurationBuilder.batchSize(1000);
+      configuration = configurationBuilder.build();
+
+      assertEquals(1, configuration.maxRetries());
+      assertEquals(ClientIntelligence.BASIC, configuration.clientIntelligence());
+      assertEquals(1000, configuration.batchSize());
+      assertEquals(456, configuration.socketTimeout());
+   }
+
+   public void testMixOfConfiguration3() {
+      Properties properties = new Properties();
+      properties.setProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, "1");
+      properties.setProperty(ConfigurationProperties.URI, "hotrod://host1?client_intelligence=BASIC");
+      ConfigurationBuilder cb = new ConfigurationBuilder().withProperties(properties);
+      Configuration configuration = cb.build();
+      assertEquals(ClientIntelligence.BASIC, configuration.clientIntelligence());
+   }
+
    public void testConfigurationViaURI() {
       Configuration configuration = HotRodURI.create("hotrod://host1").toConfigurationBuilder().build();
       assertEquals(1, configuration.servers().size());

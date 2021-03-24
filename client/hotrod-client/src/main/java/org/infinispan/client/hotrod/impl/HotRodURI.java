@@ -95,7 +95,10 @@ public class HotRodURI {
    }
 
    public ConfigurationBuilder toConfigurationBuilder() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      return toConfigurationBuilder(new ConfigurationBuilder());
+   }
+
+   public ConfigurationBuilder toConfigurationBuilder(ConfigurationBuilder builder) {
       for(InetSocketAddress address : addresses) {
          builder.addServer().host(address.getHostString()).port(address.getPort());
       }

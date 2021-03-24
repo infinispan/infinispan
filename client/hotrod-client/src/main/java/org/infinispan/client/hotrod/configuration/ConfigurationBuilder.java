@@ -324,14 +324,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder uri(URI uri) {
-      this.read(HotRodURI.create(uri).toConfigurationBuilder().build(false));
-      return this;
+      // it returns this
+      return HotRodURI.create(uri).toConfigurationBuilder(this);
    }
 
    @Override
    public ConfigurationBuilder uri(String uri) {
-      this.read(HotRodURI.create(uri).toConfigurationBuilder().build(false));
-      return this;
+      return uri(URI.create(uri));
    }
 
    /**
@@ -410,9 +409,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (balancingStrategyClass != null) {
          this.balancingStrategy(balancingStrategyClass);
       }
-      this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault(), true));
+      if (typed.containsKey(ConfigurationProperties.CLIENT_INTELLIGENCE)) {
+         this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault(), true));
+      }
       this.connectionPool.withPoolProperties(typed);
-      this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+      if (typed.containsKey(ConfigurationProperties.CONNECT_TIMEOUT)) {
+         this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+      }
       if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
          log.warn("Hash function version 1 is no longer supported");
       }
@@ -426,8 +429,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             }
          }
       }
-      this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues, true));
-      this.keySizeEstimate(typed.getIntProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate, true));
+      if (typed.containsKey(ConfigurationProperties.FORCE_RETURN_VALUES)) {
+         this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.KEY_SIZE_ESTIMATE)) {
+         this.keySizeEstimate(typed.getIntProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate, true));
+      }
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
@@ -436,17 +443,29 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          for (String sci : initializers.split(","))
             this.addContextInitializer(sci);
       }
-      this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
+      if (typed.containsKey(ConfigurationProperties.PROTOCOL_VERSION)) {
+         this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
+      }
       String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
       if (serverList != null) {
          this.servers.clear();
          this.addServers(serverList);
       }
-      this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
-      this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
-      this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));
-      this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate, true));
-      this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
+      if (typed.containsKey(ConfigurationProperties.SO_TIMEOUT)) {
+         this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.TCP_NO_DELAY)) {
+         this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.TCP_KEEP_ALIVE)) {
+         this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.VALUE_SIZE_ESTIMATE)) {
+         this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.MAX_RETRIES)) {
+         this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
+      }
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
 
@@ -462,8 +481,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          String[] classes = serialAllowList.split(",");
          Collections.addAll(this.allowListRegExs, classes);
       }
-
-      this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
+      if (typed.containsKey(ConfigurationProperties.BATCH_SIZE)) {
+         this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
+      }
       //TODO read TRANSACTION_TIMEOUT property after TransactionConfigurationBuilder is removed.
       transaction.withTransactionProperties(typed);
       nearCache.withProperties(properties);
@@ -602,7 +622,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.statistics.read(template.statistics());
       this.contextInitializers.clear();
       this.contextInitializers.addAll(template.getContextInitializers());
-
+      this.clientIntelligence = template.clientIntelligence();
       return this;
    }
 }
