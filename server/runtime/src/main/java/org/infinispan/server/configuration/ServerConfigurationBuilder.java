@@ -26,8 +26,10 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder();
    private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
    private final List<SSLContextSupplier> suppliers = new ArrayList<>();
+   private final GlobalConfigurationBuilder builder;
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
+      this.builder = builder;
    }
 
    public ServerConfigurationBuilder properties(Properties properties) {
@@ -78,7 +80,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
             bindingsConfiguration,
             securityConfiguration,
             dataSources.create(),
-            endpoints.create(bindingsConfiguration, securityConfiguration)
+            endpoints.create(builder, bindingsConfiguration, securityConfiguration)
       );
    }
 

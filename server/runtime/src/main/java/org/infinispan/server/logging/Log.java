@@ -257,4 +257,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Alias '%s' not in keystore '%s'", id = 80069)
    CacheConfigurationException aliasNotInKeystore(String alias, String keystore);
+
+   @Message(value = "The cache container requires authorization, but none of the connectors enable authentication", id = 80070)
+   CacheConfigurationException authorizationWithoutAuthentication();
 }
