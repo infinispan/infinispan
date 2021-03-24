@@ -5,6 +5,7 @@ import java.net.SocketAddress;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.Security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -132,6 +133,12 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
             }
             if (ssl.protocol() != null) {
                builder.protocols(ssl.protocol());
+            }
+            if (ssl.ciphers() != null) {
+               builder.ciphers(ssl.ciphers());
+            }
+            if (ssl.provider() != null) {
+               builder.sslContextProvider(Security.getProvider(ssl.provider()));
             }
             sslContext = builder.build();
          } catch (Exception e) {

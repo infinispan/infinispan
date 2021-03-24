@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.util.Collection;
+
 import javax.net.ssl.SSLContext;
 
 /**
@@ -22,10 +24,12 @@ public class SslConfiguration {
    private final char[] trustStorePassword;
    private final String sniHostName;
    private final String protocol;
+   private final Collection<String> ciphers;
+   private final String provider;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
                     SSLContext sslContext,
-                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol) {
+                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String provider, String protocol, Collection<String> ciphers) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
@@ -38,7 +42,9 @@ public class SslConfiguration {
       this.trustStoreType = trustStoreType;
       this.trustStorePassword = trustStorePassword;
       this.sniHostName = sniHostName;
+      this.provider = provider;
       this.protocol = protocol;
+      this.ciphers = ciphers;
    }
 
    public boolean enabled() {
@@ -93,6 +99,14 @@ public class SslConfiguration {
       return protocol;
    }
 
+   public Collection<String> ciphers() {
+      return ciphers;
+   }
+
+   public String provider() {
+      return provider;
+   }
+
    @Override
    public String toString() {
       return "SslConfiguration{" +
@@ -104,7 +118,9 @@ public class SslConfiguration {
             ", trustStoreFileName='" + trustStoreFileName + '\'' +
             ", trustStoreType='" + trustStoreType + '\'' +
             ", sniHostName='" + sniHostName + '\'' +
+            ", provider='" + provider +'\'' +
             ", protocol='" + protocol + '\'' +
+            ", ciphers='" + ciphers  + '\'' +
             '}';
    }
 }

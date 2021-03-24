@@ -272,10 +272,25 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#sniHostName(String) SNI&nbsp;hostname} to connect to.</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.ssl_ciphers</b></td>
+ *          <td>String</td>
+ *          <td>N/A</td>
+ *          <td>A list of ciphers, separated with spaces and in order of preference, that are used during the SSL handshake to negotiate
+ *          a cryptographic algorithm for key encrytion. By default, the SSL protocol (e.g. TLSv1.2) determines which ciphers to use.
+ *          You should customize the cipher list with caution to avoid vulnerabilities from weak algorithms.
+ *          For details about cipher lists and possible values, refer to OpenSSL documentation at <a href="https://www.openssl.org/docs/man1.1.1/man1/ciphers">https://www.openssl.org/docs/man1.1.1/man1/ciphers</a></td>
+ *       </tr>
+ *       <tr>
  *          <td><b>infinispan.client.hotrod.ssl_protocol</b></td>
  *          <td>String</td>
  *          <td>N/A</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#protocol(String) SSL&nbsp;protocol} to use (e.g. TLSv1.2)</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#protocol(String) SSL&nbsp;protocol} to use (e.g. TLSv1.2).</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.ssl_provider</b></td>
+ *          <td>String</td>
+ *          <td>N/A</td>
+ *          <td>The security provider to use when creating the SSL engine. If left unspecified, it will attempt to use the <tt>openssl</tt> for the high-performance native implementation, otherwise the internal JDK will be used.</td>
  *       </tr>
  *       <tr>
  *          <th colspan="4">Authentication properties</th>
