@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import org.infinispan.commons.util.SslContextFactory;
 
@@ -31,8 +32,9 @@ public enum SslUtils {
     public SslContext toNettySslContext(Optional<SSLContext> context) {
         try {
             SSLContext jdkContext = context.orElse(SSLContext.getDefault());
-            String[] ciphers = SslContextFactory.getEngine(jdkContext, false, false).getSupportedCipherSuites();
-            return new JdkSslContext(jdkContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null, ClientAuth.OPTIONAL);
+            SSLEngine engine = SslContextFactory.getEngine(jdkContext, false, false);
+            String[] ciphers = engine.getEnabledCipherSuites();
+            return new JdkSslContext(jdkContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null, ClientAuth.OPTIONAL, null, false);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
