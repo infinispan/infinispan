@@ -10,6 +10,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.commons.marshall.Marshaller;
@@ -256,6 +257,12 @@ public interface ConfigurationChildBuilder {
     * It defaults to 1 minute.
     */
    ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit);
+
+   /**
+    * Set the TransportFactory. It defaults to {@link org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory}
+    * @param transportFactory an instance of {@link TransportFactory}
+    */
+   ConfigurationBuilder transportFactory(TransportFactory transportFactory);
 
    /**
     * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.
