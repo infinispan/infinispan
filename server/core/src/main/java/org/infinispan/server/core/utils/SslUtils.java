@@ -3,6 +3,7 @@ package org.infinispan.server.core.utils;
 import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -43,10 +44,8 @@ public class SslUtils {
    }
 
    private static JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth, ApplicationProtocolConfig alpnConfig) {
-      //Unfortunately we need to grab a list of available ciphers from the engine.
-      //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
-      //Of course, we don't need to any specific engine configuration here... just a list of ciphers
-      String[] ciphers = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE).getSupportedCipherSuites();
+      SSLEngine engine = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE);
+      String[] ciphers = engine.getEnabledCipherSuites();
       return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth, null, false);
    }
 

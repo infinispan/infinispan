@@ -2,8 +2,12 @@ package org.infinispan.server.security;
 
 import static org.junit.Assert.assertEquals;
 
+import java.nio.channels.ClosedChannelException;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -38,5 +42,13 @@ public class TLSWithoutAuthenticationIT {
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
+   }
+
+   @Test
+   public void testDisabledProtocol() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      builder.security().ssl().protocol("TLSv1.1");
+      Exceptions.expectException(TransportException.class, ClosedChannelException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
    }
 }
