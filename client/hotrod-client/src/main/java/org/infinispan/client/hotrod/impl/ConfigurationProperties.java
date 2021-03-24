@@ -63,7 +63,9 @@ public class ConfigurationProperties {
    public static final String TRUST_STORE_PATH = ICH + "trust_store_path";
    public static final String TRUST_STORE_TYPE = ICH + "trust_store_type";
    public static final String TRUST_STORE_PASSWORD = ICH + "trust_store_password";
+   public static final String SSL_PROVIDER = ICH + "ssl_provider";
    public static final String SSL_PROTOCOL = ICH + "ssl_protocol";
+   public static final String SSL_CIPHERS = ICH + "ssl_ciphers";
    public static final String SSL_CONTEXT = ICH + "ssl_context";
    public static final String MAX_RETRIES = ICH + "max_retries";
    // Authentication properties

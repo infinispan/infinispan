@@ -10,7 +10,6 @@ import java.util.List;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -42,8 +41,7 @@ public class RestLoggingResource {
       RestResponse response = sync(client.server().logging().listAppenders());
       String body = response.getBody();
       Json appenders = Json.read(body);
-      int expected = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? 5 : 6;
-      assertEquals(body, expected, appenders.asMap().size());
+      assertEquals(body, 5, appenders.asMap().size());
    }
 
    @Test

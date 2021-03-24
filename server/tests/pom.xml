@@ -21,7 +21,8 @@
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
-      <log4j.configurationFile>${project.basedir}/../runtime/src/main/server/server/conf/log4j2.xml</log4j.configurationFile>
+      <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
+      <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
    </properties>
 
    <dependencies>
@@ -137,6 +138,8 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
                   <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <infinispan.server.log.path>${infinispan.server.log.path}</infinispan.server.log.path>
+
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>

@@ -268,7 +268,7 @@ public class ChannelFactory {
    public <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress server, T operation) {
       ChannelPool pool = channelPoolMap.computeIfAbsent(server, newPool);
       pool.acquire(operation);
-         return operation;
+      return operation;
    }
 
    private SocketAddress getNextServer(Set<SocketAddress> failedServers, byte[] cacheName) {
@@ -282,6 +282,7 @@ public class ChannelFactory {
          if (failedServers != null && failedServers.containsAll(getServers(cacheName))) {
             log.debug("All the servers are marked as failed. Cluster might have completely shut down, try reverting to the initial server list.");
             reset(cacheName);
+            closeChannelPools(failedServers);
             failedServers.clear();
          }
          FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
@@ -293,6 +294,16 @@ public class ChannelFactory {
          log.tracef("[%s] Using the balancer for determining the server: %s", new String(cacheName), server);
 
       return server;
+   }
+
+   private void closeChannelPools(Set<SocketAddress> failedServers) {
+      for (SocketAddress failedServer : failedServers) {
+         HOTROD.removingServer(failedServer);
+         ChannelPool pool = channelPoolMap.remove(failedServer);
+         if (pool != null) {
+            pool.close();
+         }
+      }
    }
 
    @GuardedBy("lock")
@@ -366,13 +377,7 @@ public class ChannelFactory {
       }
 
       //2. Remove failed servers
-      for (SocketAddress server : failedServers) {
-         HOTROD.removingServer(server);
-         ChannelPool pool = channelPoolMap.remove(server);
-         if (pool != null) {
-            pool.close();
-         }
-      }
+      closeChannelPools(failedServers);
 
       servers = Collections.unmodifiableList(new ArrayList<>(newServers));
       topologyInfo.updateServers(cacheName, servers);

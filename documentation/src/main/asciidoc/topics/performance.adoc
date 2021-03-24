@@ -131,6 +131,14 @@ threads to the number of concurrent client requests:
 include::config_examples/hotrod_worker_threads.xml[]
 ----
 
+= SSL provider
+
+{brandname} server will automatically use the native implementation of the OpenSSL libraries on supported platforms to
+achieve much higher performance than what is possible with the JDK implementation of SSL.
+OpenSSL is loaded dynamically, and its location can be specified by the `org.wildfly.openssl.path` system property.
+If this property is not present, the standard system library search path will be used instead.
+Because the library is loaded dynamically, it should be possible to use different versions of OpenSSL without the need to recompile.
+
 = Cache Store performance
 
 In order to achieve the best performance, please follow the recommendations below when using Cache Stores:

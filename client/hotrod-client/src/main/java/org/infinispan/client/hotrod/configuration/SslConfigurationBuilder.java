@@ -2,6 +2,9 @@ package org.infinispan.client.hotrod.configuration;
 
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,6 +35,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private SSLContext sslContext;
    private String sniHostName;
    private String protocol;
+   private Collection<String> ciphers;
+   private String provider;
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -176,6 +181,18 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
+    * Configures the SSL provider.
+    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    *
+    * @see javax.net.ssl.SSLContext#getInstance(String)
+    * @param provider The name of the provider to use when obtaining an SSLContext.
+    */
+   public SslConfigurationBuilder provider(String provider) {
+      this.provider = provider;
+      return enable();
+   }
+
+   /**
     * Configures the secure socket protocol.
     * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
     *
@@ -184,6 +201,18 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     */
    public SslConfigurationBuilder protocol(String protocol) {
       this.protocol = protocol;
+      return enable();
+   }
+
+   /**
+    * Configures the ciphers
+    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    *
+    * @see javax.net.ssl.SSLContext#getInstance(String)
+    * @param ciphers one or more cipher names
+    */
+   public SslConfigurationBuilder ciphers(String... ciphers) {
+      this.ciphers = Arrays.asList(ciphers);
       return enable();
    }
 
@@ -217,7 +246,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias,
             sslContext,
             trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
-            sniHostName, protocol);
+            sniHostName, provider, protocol, ciphers);
    }
 
    @Override
@@ -234,7 +263,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.trustStoreType = template.trustStoreType();
       this.trustStorePassword = template.trustStorePassword();
       this.sniHostName = template.sniHostName();
+      this.provider = template.provider();
       this.protocol = template.protocol();
+      this.ciphers = template.ciphers() != null ? new ArrayList<>(template.ciphers()) : null;
       return this;
    }
 
@@ -272,6 +303,12 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if(typed.containsKey(ConfigurationProperties.SSL_PROTOCOL))
          this.protocol(typed.getProperty(ConfigurationProperties.SSL_PROTOCOL, null, true));
+
+      if(typed.containsKey(ConfigurationProperties.SSL_PROVIDER))
+         this.provider(typed.getProperty(ConfigurationProperties.SSL_PROVIDER, null, true));
+
+      if(typed.containsKey(ConfigurationProperties.SSL_CIPHERS))
+         this.ciphers(typed.getProperty(ConfigurationProperties.SSL_CIPHERS, null, true).split(" "));
 
       if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
          this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME, null, true));

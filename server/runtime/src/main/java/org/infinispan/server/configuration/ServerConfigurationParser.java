@@ -81,7 +81,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
       return Element.forName(reader.getLocalName());
    }
 
-
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ParserScope.GLOBAL)) {

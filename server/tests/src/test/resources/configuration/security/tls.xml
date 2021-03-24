@@ -7,7 +7,7 @@
             <ssl>
                <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
                          alias="server"/>
-               <engine enabled-protocols="TLSv1.2"/>
+               <engine enabled-protocols="TLSv1.2" enabled-ciphersuites="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"/>
             </ssl>
          </server-identities>
       </security-realm>

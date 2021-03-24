@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.nio.channels.ClosedChannelException;
 
+import javax.net.ssl.SSLHandshakeException;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -37,7 +39,6 @@ public class TLSWithoutAuthenticationIT {
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca");
-
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
@@ -49,6 +50,14 @@ public class TLSWithoutAuthenticationIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca");
       builder.security().ssl().protocol("TLSv1.1");
+      Exceptions.expectException(TransportException.class, SSLHandshakeException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
+   }
+
+   @Test
+   public void testDisabledCipherSuite() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
       Exceptions.expectException(TransportException.class, ClosedChannelException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
    }
 }
