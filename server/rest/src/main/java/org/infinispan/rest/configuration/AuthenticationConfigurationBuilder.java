@@ -42,6 +42,10 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
       return this;
    }
 
+   public boolean enabled() {
+      return enabled;
+   }
+
    public AuthenticationConfigurationBuilder securityRealm(String realm) {
       attributes.attribute(SECURITY_REALM).set(realm);
       return this;
