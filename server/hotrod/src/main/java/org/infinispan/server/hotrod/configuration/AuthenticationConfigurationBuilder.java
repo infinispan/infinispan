@@ -45,6 +45,10 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       return this;
    }
 
+   public boolean enabled() {
+      return enabled;
+   }
+
    public AuthenticationConfigurationBuilder serverAuthenticationProvider(ServerAuthenticationProvider serverAuthenticationProvider) {
       this.serverAuthenticationProvider = serverAuthenticationProvider;
       return this;

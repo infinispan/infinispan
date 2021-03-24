@@ -95,7 +95,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
    @Override
    public void validate() {
       Map<String, List<ProtocolServerConfigurationBuilder<?, ?>>> buildersPerClass = connectorBuilders.stream()
-            .collect(Collectors.groupingBy(s -> s.getClass().getSimpleName() + "/" + s.host() + ":" + s.port()));
+            .collect(Collectors.groupingBy(s -> s.getClass().getSimpleName() + "/" + s.socketBinding()));
       buildersPerClass.values().stream().filter(c -> c.size() > 1).findFirst().ifPresent(c -> {
          String names = c.stream().map(ProtocolServerConfigurationBuilder::name).collect(Collectors.joining(","));
          throw Server.log.multipleEndpointsSameTypeFound(names);

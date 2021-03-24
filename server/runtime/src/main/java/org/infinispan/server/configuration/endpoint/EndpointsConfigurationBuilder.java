@@ -7,10 +7,14 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.SocketBindingsConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 
 public class EndpointsConfigurationBuilder implements Builder<EndpointsConfiguration> {
 
@@ -48,9 +52,31 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
       throw new UnsupportedOperationException();
    }
 
-   public EndpointsConfiguration create(SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
+   public EndpointsConfiguration create(GlobalConfigurationBuilder builder, SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
       List<EndpointConfiguration> list = endpoints.values().stream()
             .map(e -> e.create(bindingsConfiguration, securityConfiguration)).collect(Collectors.toList());
+      // When authz is enabled, ensure that at least one endpoint has authn, otherwise the server will be useless.
+      // This can only be done after implicit settings have been applied
+      boolean withAuthn = false;
+      if (builder.security().authorization().isEnabled()) {
+         for (EndpointConfiguration endpoint : list) {
+            for (ProtocolServerConfiguration<?> connector : endpoint.connectors()) {
+               if (connector instanceof HotRodServerConfiguration) {
+                  if (((HotRodServerConfiguration) connector).authentication().enabled()) {
+                     withAuthn = true;
+                  }
+               }
+               if (connector instanceof RestServerConfiguration) {
+                  if (((RestServerConfiguration) connector).authentication().enabled()) {
+                     withAuthn = true;
+                  }
+               }
+            }
+         }
+         if (!withAuthn) {
+            throw Server.log.authorizationWithoutAuthentication();
+         }
+      }
       return new EndpointsConfiguration(attributes.protect(), list);
    }
 
@@ -59,5 +85,12 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
       this.attributes.read(template.attributes());
       endpoints.clear();
       return this;
+   }
+
+   @Override
+   public void validate() {
+      for (EndpointConfigurationBuilder endpoint : endpoints.values()) {
+         endpoint.validate();
+      }
    }
 }
