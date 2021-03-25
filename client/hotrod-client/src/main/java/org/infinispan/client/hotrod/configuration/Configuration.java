@@ -478,8 +478,14 @@ public class Configuration {
          }
          properties.setProperty(prefix + CACHE_NEAR_CACHE_MODE_SUFFIX, remoteCache.nearCacheMode().name());
          properties.setProperty(prefix + CACHE_NEAR_CACHE_MODE_SUFFIX, remoteCache.nearCacheMaxEntries());
-         if (remoteCache.marshaller() != null) {
+         Marshaller marshaller = remoteCache.marshaller();
+         if (marshaller != null) {
             properties.setProperty(prefix + CACHE_MARSHALLER, remoteCache.marshaller().getClass().getName());
+         } else {
+            Class<? extends Marshaller> marshallerClass = remoteCache.marshallerClass();
+            if(marshallerClass != null) {
+               properties.setProperty(prefix + CACHE_MARSHALLER, marshallerClass.getName());
+            }
          }
       }
 

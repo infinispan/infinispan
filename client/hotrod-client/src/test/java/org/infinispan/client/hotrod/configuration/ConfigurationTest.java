@@ -661,7 +661,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(1, configuration.servers().size());
       assertFalse(configuration.security().ssl().enabled());
       assertTrue(configuration.security().authentication().enabled());
-      BasicCallbackHandler callbackHandler = (BasicCallbackHandler)configuration.security().authentication().callbackHandler();
+      BasicCallbackHandler callbackHandler = (BasicCallbackHandler) configuration.security().authentication().callbackHandler();
       assertEquals("user", callbackHandler.getUsername());
       assertArrayEquals("password".toCharArray(), callbackHandler.getPassword());
       configuration = HotRodURI.create("hotrod://host1:11222,host2:11322,host3").toConfigurationBuilder().build();
@@ -681,7 +681,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(11322, configuration.servers().get(1).port());
       assertTrue(configuration.security().ssl().enabled());
       assertTrue(configuration.security().authentication().enabled());
-      callbackHandler = (BasicCallbackHandler)configuration.security().authentication().callbackHandler();
+      callbackHandler = (BasicCallbackHandler) configuration.security().authentication().callbackHandler();
       assertEquals("user", callbackHandler.getUsername());
       assertArrayEquals("password".toCharArray(), callbackHandler.getPassword());
       expectException(IllegalArgumentException.class, "ISPN004095:.*", () -> HotRodURI.create("http://host1"));
@@ -690,7 +690,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
    public void testCacheNames() throws IOException {
       Properties properties = new Properties();
-      try(InputStream is = this.getClass().getResourceAsStream("/hotrod-client-percache.properties")) {
+      try (InputStream is = this.getClass().getResourceAsStream("/hotrod-client-percache.properties")) {
          properties.load(is);
       }
       Configuration configuration = new ConfigurationBuilder().withProperties(properties).build();
@@ -717,8 +717,8 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       }
       Configuration configuration = new ConfigurationBuilder().withProperties(properties).build();
 
-      assertTrue(configuration.remoteCaches().get("mycache").marshaller() instanceof JavaSerializationMarshaller);
-      assertTrue(configuration.remoteCaches().get("org.infinispan.yourcache").marshaller() instanceof UTF8StringMarshaller);
+      assertEquals(JavaSerializationMarshaller.class, configuration.remoteCaches().get("mycache").marshallerClass());
+      assertEquals(UTF8StringMarshaller.class, configuration.remoteCaches().get("org.infinispan.yourcache").marshallerClass());
 
       Properties props = configuration.properties();
       assertEquals(JavaSerializationMarshaller.class.getName(), props.getProperty("infinispan.client.hotrod.cache.mycache.marshaller"));

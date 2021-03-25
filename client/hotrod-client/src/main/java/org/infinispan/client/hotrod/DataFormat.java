@@ -13,6 +13,7 @@ import org.infinispan.commons.marshall.AdaptiveBufferSizePredictor;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 
 /**
  * Defines data format for keys and values during Hot Rod client requests.
@@ -82,6 +83,12 @@ public final class DataFormat {
          Marshaller cacheMarshaller = remoteCacheConfiguration.marshaller();
          if (cacheMarshaller != null) {
             defaultMarshaller = cacheMarshaller;
+         } else {
+            Class<? extends Marshaller> marshallerClass = remoteCacheConfiguration.marshallerClass();
+            if (marshallerClass != null) {
+               Marshaller registryMarshaller = marshallerRegistry.getMarshaller(marshallerClass);
+               defaultMarshaller = registryMarshaller != null ? registryMarshaller : Util.getInstance(marshallerClass);
+            }
          }
       }
    }

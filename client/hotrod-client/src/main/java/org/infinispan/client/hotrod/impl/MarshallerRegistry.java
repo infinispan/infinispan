@@ -27,4 +27,9 @@ public final class MarshallerRegistry {
       return marshallerByMediaType.get(mediaType);
    }
 
+   public Marshaller getMarshaller(Class<? extends Marshaller> marshallerClass) {
+      return marshallerByMediaType.values().stream()
+            .filter(m -> m.getClass().equals(marshallerClass)).findFirst().orElse(null);
+   }
+
 }
