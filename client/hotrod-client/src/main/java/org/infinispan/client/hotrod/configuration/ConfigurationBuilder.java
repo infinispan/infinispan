@@ -155,13 +155,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
-   @Deprecated
-   @Override
-   public ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy) {
-      this.balancingStrategyFactory = () -> balancingStrategy;
-      return this;
-   }
-
    @Override
    public ConfigurationBuilder balancingStrategy(Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory) {
       this.balancingStrategyFactory = balancingStrategyFactory;

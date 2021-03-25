@@ -53,15 +53,6 @@ public interface ConfigurationChildBuilder {
    /**
     * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
     * servers according to this strategy.
-    *
-    * @deprecated since 9.3. To be removed in 12.0. Use {@link #balancingStrategy(Supplier)} instead.
-    */
-   @Deprecated
-   ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy);
-
-   /**
-    * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
-    * servers according to this strategy.
     */
    ConfigurationBuilder balancingStrategy(Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory);
 
