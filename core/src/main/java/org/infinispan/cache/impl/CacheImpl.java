@@ -83,6 +83,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.expiration.impl.TouchCommand;
@@ -905,7 +906,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final void evict(K key, long explicitFlags) {
       assertKeyNotNull(key);
-      if (!config.memory().isEvictionEnabled()) {
+      if (!config.memory().isEvictionEnabled() && config.memory().whenFull() != EvictionStrategy.MANUAL) {
          log.evictionDisabled(name);
       }
       InvocationContext ctx = createSingleKeyNonTxInvocationContext();

@@ -169,7 +169,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * Returns whether remove eviction is in use
     */
    public boolean isEvictionEnabled() {
-      return (isSizeBounded() || isCountBounded()) && evictionStrategy().isRemovalBased();
+      return (isSizeBounded() || isCountBounded()) && whenFull().isRemovalBased();
    }
 
    private boolean isSizeBounded() {
