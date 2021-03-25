@@ -232,11 +232,11 @@ public class CLI extends CliCommand {
       runtimeBuilder.shell(shell);
 
       CliRuntimeRunner cliRunner = new CliRuntimeRunner("batch", runtimeBuilder.build());
-      cliRunner
+      int exitCode = cliRunner
             .args(new String[]{"run", inputFile})
             .execute();
       context.disconnect();
-      return CommandResult.SUCCESS;
+      return CommandResult.valueOf(exitCode);
    }
 
    private CommandResult interactive(Shell shell) {
