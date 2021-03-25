@@ -175,7 +175,7 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
    @Override
    public String getElementText() {
       try {
-         return replaceProperties(state.parser.nextText());
+         return replaceProperties(state.parser.nextText().trim());
       } catch (IOException e) {
          throw new ConfigurationReaderException("Expected text", getLocation());
       }

@@ -169,6 +169,9 @@
          <indexing>
             <indexed-entities>
                <indexed-entity>TheEntity</indexed-entity>
+               <indexed-entity>
+                  AnotherEntity
+               </indexed-entity>
             </indexed-entities>
          </indexing>
       </distributed-cache>
