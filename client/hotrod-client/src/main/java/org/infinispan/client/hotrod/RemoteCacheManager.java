@@ -68,6 +68,7 @@ import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManager
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
@@ -360,6 +361,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
+      marshallerRegistry.registerMarshaller(new JavaSerializationMarshaller(configuration.getClassAllowList()));
       // Register this one last, so it will replace any that may support the same media type
       marshallerRegistry.registerMarshaller(marshaller);
 

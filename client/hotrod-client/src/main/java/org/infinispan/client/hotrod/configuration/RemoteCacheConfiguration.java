@@ -24,14 +24,16 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", GenericTransactionManagerLookup.getInstance(), TransactionManagerLookup.class).build();
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).build();
+   public static final AttributeDefinition<Class> MARSHALLER_CLASS = AttributeDefinition.builder("marshallerClass", null, Class.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, MARSHALLER, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
+      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, MARSHALLER, MARSHALLER_CLASS, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
    }
 
    private final Attribute<String> configuration;
    private final Attribute<Boolean> forceReturnValues;
    private final Attribute<Marshaller> marshaller;
+   private final Attribute<Class> marshallerClass;
    private final Attribute<String> name;
    private final Attribute<NearCacheMode> nearCacheMode;
    private final Attribute<Integer> nearCacheMaxEntries;
@@ -47,6 +49,7 @@ public class RemoteCacheConfiguration {
       forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);
       name = attributes.attribute(NAME);
       marshaller = attributes.attribute(MARSHALLER);
+      marshallerClass = attributes.attribute(MARSHALLER_CLASS);
       nearCacheMode = attributes.attribute(NEAR_CACHE_MODE);
       nearCacheMaxEntries = attributes.attribute(NEAR_CACHE_MAX_ENTRIES);
       nearCacheBloomFilter = attributes.attribute(NEAR_CACHE_BLOOM_FILTER);
@@ -69,6 +72,10 @@ public class RemoteCacheConfiguration {
 
    public Marshaller marshaller() {
       return marshaller.get();
+   }
+
+   public Class<? extends Marshaller> marshallerClass() {
+      return marshallerClass.get();
    }
 
    public NearCacheMode nearCacheMode() {

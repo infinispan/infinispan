@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER_CLASS;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
@@ -168,7 +169,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @param className Fully qualifies class name of the marshaller implementation.
     */
    public RemoteCacheConfigurationBuilder marshaller(String className) {
-      return marshaller(loadClass(className, Thread.currentThread().getContextClassLoader()));
+      marshaller(loadClass(className, Thread.currentThread().getContextClassLoader()));
+      return this;
    }
 
    /**
@@ -177,13 +179,14 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @param marshallerClass the marshaller class.
     */
    public RemoteCacheConfigurationBuilder marshaller(Class<? extends Marshaller> marshallerClass) {
-      return marshaller(getInstance(marshallerClass));
+      attributes.attribute(MARSHALLER_CLASS).set(marshallerClass);
+      return this;
    }
 
    /**
-    * Specifies a custom {@link Marshaller} implementation to serialize and deserialize user objects. If not configured,
-    * the marshaller from the {@link org.infinispan.client.hotrod.RemoteCacheManager} will be used for the cache
-    * operations.
+    * Specifies a custom {@link Marshaller} implementation to serialize and deserialize user objects. Has precedence over
+    * {@link #marshaller(Class)} and {@link #marshaller(String)}. If not configured, the marshaller from the
+    * {@link org.infinispan.client.hotrod.RemoteCacheManager} will be used for the cache operations.
     *
     * @param marshaller the marshaller instance
     */
