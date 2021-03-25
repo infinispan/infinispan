@@ -55,11 +55,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy) {
-      return builder.balancingStrategy(balancingStrategy);
-   }
-
-   @Override
    public ConfigurationBuilder balancingStrategy(Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory) {
       return builder.balancingStrategy(balancingStrategyFactory);
    }
