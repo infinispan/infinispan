@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -33,6 +34,7 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfiguration;
+import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -149,9 +151,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(121, blockingPool.queueLength());
             assertEquals(9859, blockingPool.keepAlive());
 
-            Configuration indexed = getConfiguration(holder, "indexed");
-            assertFalse(indexed.indexing().autoConfig());
-            assertTrue(indexed.indexing().enabled());
+            IndexingConfiguration indexed = getConfiguration(holder, "indexed").indexing();
+            assertFalse(indexed.autoConfig());
+            assertTrue(indexed.enabled());
+            Set<String> entityTypes = indexed.indexedEntityTypes();
+            assertEquals(2, entityTypes.size());
+            assertTrue(entityTypes.contains("TheEntity"));
+            assertTrue(entityTypes.contains("AnotherEntity"));
 
             Configuration minimalOffHeap = getConfiguration(holder, "minimal-offheap");
             assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storageType());
