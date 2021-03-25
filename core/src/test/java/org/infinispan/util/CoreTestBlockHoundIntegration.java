@@ -13,6 +13,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
+import org.infinispan.functional.FunctionalTestUtils;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.ReplListener;
@@ -93,6 +94,8 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, NotifierLatch.class);
 
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, TestBlocking.class);
+
+      builder.allowBlockingCallsInside(FunctionalTestUtils.class.getName(), "await");
 
       builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepThread");
 

@@ -154,21 +154,21 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
       CompletableFuture<Void> lockRes0 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock.unlock();
+            await(lock.unlock());
          }
       });
 
       CompletableFuture<Void> lockRes1 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock.unlock();
+            await(lock.unlock());
          }
       });
 
       CompletableFuture<Void> lockRes2 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock.unlock();
+            await(lock.unlock());
          }
       });
 
@@ -190,21 +190,21 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
       CompletableFuture<Void> lockRes0 = lock0.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock0.unlock();
+            await(lock0.unlock());
          }
       });
 
       CompletableFuture<Void> lockRes1 = lock1.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock1.unlock();
+            await(lock1.unlock());
          }
       });
 
       CompletableFuture<Void> lockRes2 = lock2.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
          if (r) {
             counter.incrementAndGet();
-            lock2.unlock();
+            await(lock2.unlock());
          }
       });
 
@@ -230,9 +230,9 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
       try {
          assertEquals(1, successTryLocks);
       } finally {
-         lock0.unlock();
-         lock1.unlock();
-         lock2.unlock();
+         await(lock0.unlock());
+         await(lock1.unlock());
+         await(lock2.unlock());
       }
    }
 
