@@ -6,10 +6,10 @@ import java.security.PrivilegedAction;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.actions.GetClusterExecutorAction;
 
 /**
  * SecurityActions for the org.infinispan.notifications.cachelistener.cluster package.
@@ -29,12 +29,11 @@ final class SecurityActions {
       }
    }
 
-   static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
-      GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
-      return doPrivileged(action);
-   }
-
    static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));
+   }
+
+   static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
+      return (Cache<K, V>) doPrivileged(new GetCacheAction(cacheManager, cacheName));
    }
 }

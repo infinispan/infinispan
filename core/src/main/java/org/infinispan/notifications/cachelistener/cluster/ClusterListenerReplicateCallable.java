@@ -72,9 +72,8 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
 
    @Override
    public Void apply(EmbeddedCacheManager cacheManager) {
-      Cache<K, V> cache = cacheManager.getCache(cacheName);
+      Cache<K, V> cache = SecurityActions.getCache(cacheManager, cacheName);
       accept(cacheManager, cache);
-
       return null;
    }
 
