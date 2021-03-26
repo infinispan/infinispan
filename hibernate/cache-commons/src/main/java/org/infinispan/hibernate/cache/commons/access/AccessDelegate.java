@@ -87,6 +87,20 @@ public interface AccessDelegate {
 	void remove(Object session, Object key) throws CacheException;
 
 	/**
+	 * Called just before the delegate will have all entries removed. Any work to prevent concurrent modifications
+	 * while this occurs should happen here
+	 * @throws CacheException if locking had an issue
+	 */
+	void lockAll() throws CacheException;
+
+	/**
+	 * Called just after the delegate had all entries removed via {@link #removeAll()}. Any work required to allow
+	 * for new modifications to happen should be done here
+	 * @throws CacheException if unlocking had an issue
+	 */
+	void unlockAll() throws CacheException;
+
+	/**
 	 * Called to evict data from the entire region
 	 *
 	 * @throws CacheException if eviction the region fails
