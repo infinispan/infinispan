@@ -1,7 +1,6 @@
 package org.infinispan.server.core.transport;
 
 import java.net.InetSocketAddress;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +39,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * A Netty based transport.
@@ -69,7 +69,8 @@ public class NettyTransport implements Transport {
 
    private final NettyTransportConnectionStats connectionStats;
 
-   private Optional<Integer> nettyPort = Optional.empty();
+   //-1 if not set
+   private int nettyPort = -1;
 
    // This method is here to be replaced by Quarkus
    private static boolean isIsLog4jAvailable() {
@@ -108,7 +109,7 @@ public class NettyTransport implements Transport {
    )
    @Override
    public synchronized void start() {
-      if (isRunning()) {
+      if (running) {
          return;
       }
       // Make netty use log4j, otherwise it goes to JDK logging.
@@ -134,9 +135,13 @@ public class NettyTransport implements Transport {
       Channel ch;
       try {
          ch = bootstrap.bind(address).sync().channel();
-         nettyPort = Optional.of(((InetSocketAddress) ch.localAddress()).getPort());
+         nettyPort =((InetSocketAddress) ch.localAddress()).getPort();
       } catch (InterruptedException e) {
+         stopInternal();
          throw new CacheException(e);
+      } catch (Throwable t) {
+         stopInternal();
+         throw t;
       }
       serverChannels.add(ch);
       running = true;
@@ -149,9 +154,13 @@ public class NettyTransport implements Transport {
    )
    @Override
    public synchronized void stop() {
-      if (!isRunning()) {
-         return;
+      if (running) {
+         stopInternal();
       }
+   }
+
+   @GuardedBy("this")
+   private void stopInternal() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
       Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
 
@@ -172,7 +181,7 @@ public class NettyTransport implements Transport {
             }
          });
       }
-      nettyPort = Optional.empty();
+      nettyPort = -1;
       running = false;
    }
 
@@ -224,7 +233,7 @@ public class NettyTransport implements Transport {
    )
    @Override
    public int getPort() {
-      return nettyPort.orElse(address.getPort());
+      return nettyPort == -1 ? address.getPort() : nettyPort;
    }
 
    @ManagedAttribute(
