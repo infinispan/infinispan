@@ -128,16 +128,20 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	}
 
 	@Override
+	public void lockAll() throws CacheException {
+		if (!putValidator.beginInvalidatingRegion()) {
+			log.failedInvalidateRegion(region.getName());
+		}
+	}
+
+	@Override
+	public void unlockAll() throws CacheException {
+		putValidator.endInvalidatingRegion();
+	}
+
+	@Override
 	public void removeAll() throws CacheException {
-		try {
-			if (!putValidator.beginInvalidatingRegion()) {
-				log.failedInvalidateRegion(region.getName());
-			}
-			Caches.removeAll(cache);
-		}
-		finally {
-			putValidator.endInvalidatingRegion();
-		}
+		Caches.removeAll(cache);
 	}
 
 	@Override

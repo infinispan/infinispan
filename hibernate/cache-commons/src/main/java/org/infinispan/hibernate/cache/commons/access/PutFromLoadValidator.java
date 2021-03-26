@@ -450,6 +450,7 @@ public class PutFromLoadValidator {
 			// removed from the cache and now the DB is about to be updated).
 			for (Iterator<PendingPutMap> it = pendingPuts.values().iterator(); it.hasNext(); ) {
 				PendingPutMap entry = it.next();
+				it.remove();
 				if (entry.acquireLock(60, TimeUnit.SECONDS)) {
 					try {
 						entry.invalidate(now);
