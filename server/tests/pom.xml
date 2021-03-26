@@ -21,6 +21,7 @@
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
+      <log4j.configurationFile>${project.basedir}/../runtime/src/main/server/server/conf/log4j2.xml</log4j.configurationFile>
    </properties>
 
    <dependencies>
