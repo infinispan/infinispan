@@ -119,15 +119,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 
 	@Override
 	public void removeAll() throws CacheException {
-		try {
-			if (!putValidator.beginInvalidatingRegion()) {
-				log.failedInvalidateRegion(region.getName());
-			}
-			cache.clear();
-		}
-		finally {
-			putValidator.endInvalidatingRegion();
-		}
+		cache.clear();
 	}
 
 	protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
