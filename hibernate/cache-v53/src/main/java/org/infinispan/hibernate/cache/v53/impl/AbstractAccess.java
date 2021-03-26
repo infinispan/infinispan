@@ -44,10 +44,12 @@ abstract class AbstractAccess {
    }
 
    public SoftLock lockRegion() throws CacheException {
+      delegate.lockAll();
       return null;
    }
 
    public void unlockRegion(SoftLock lock) throws CacheException {
+      delegate.unlockAll();
    }
 
    public AccessType getAccessType() {
