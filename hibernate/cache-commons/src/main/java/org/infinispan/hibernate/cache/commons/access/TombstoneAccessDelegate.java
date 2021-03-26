@@ -134,14 +134,18 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	}
 
 	@Override
-	public void removeAll() throws CacheException {
+	public void lockAll() throws CacheException {
 		region.beginInvalidation();
-		try {
-			Caches.broadcastEvictAll(cache);
-		}
-		finally {
-			region.endInvalidation();
-		}
+	}
+
+	@Override
+	public void unlockAll() throws CacheException {
+		region.endInvalidation();
+	}
+
+	@Override
+	public void removeAll() throws CacheException {
+		Caches.broadcastEvictAll(cache);
 	}
 
 	@Override
