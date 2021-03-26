@@ -23,7 +23,7 @@ public class CertWithoutAuthenticationIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/TLSWithoutAuthenticationTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/CertWithoutAuthenticationTest.xml")
                .build();
 
    @Rule
