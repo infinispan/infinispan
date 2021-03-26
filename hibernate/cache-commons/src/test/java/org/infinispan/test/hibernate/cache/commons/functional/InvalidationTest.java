@@ -36,7 +36,7 @@ import org.junit.Test;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class InvalidationTest extends SingleNodeTest {
-   static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(ReadOnlyTest.class);
+   static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationTest.class);
 
    @Override
    public List<Object[]> getParameters() {
@@ -149,7 +149,12 @@ public class InvalidationTest extends SingleNodeTest {
       });
    }
 
-   protected AdvancedCache getPendingPutsCache(Class<Item> entityClazz) {
+   protected AdvancedCache getSecondLevelCache(Class<?> entityClazz) {
+      InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), entityClazz.getName());
+      return region.getCache();
+   }
+
+   protected AdvancedCache getPendingPutsCache(Class<?> entityClazz) {
       InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), entityClazz.getName());
       AdvancedCache entityCache = region.getCache();
       return entityCache.getCacheManager().getCache(
