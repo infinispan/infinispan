@@ -1,5 +1,5 @@
 <distributed-cache name="my-cache">
-   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-     ...
-   </indexing>
+  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
+    <!-- Indexing configuration goes here. -->
+  </indexing>
 </distributed-cache>

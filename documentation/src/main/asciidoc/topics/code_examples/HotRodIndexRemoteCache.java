@@ -8,4 +8,4 @@ ConfigurationBuilder builder = new ConfigurationBuilder();
                .realm("default")
                .saslMechanism("DIGEST-MD5");
       builder.remoteCache("my-cache")
-               .configuration("<infinispan><cache-container><distributed-cache name=\"my-cache\"><encoding media-type=\"application/x-protostream\"/><indexing><indexed-entities><indexed-entity>book_sample.Book</indexed-entity></indexed-entities></indexing></distributed-cache></cache-container></infinispan>");
+               .configuration("<distributed-cache name=\"my-cache\"><encoding media-type=\"application/x-protostream\"/><indexing><indexed-entities><indexed-entity>book_sample.Book</indexed-entity></indexed-entities></indexing></distributed-cache>");

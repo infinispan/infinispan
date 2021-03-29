@@ -1,0 +1,6 @@
+<distributed-cache name="pcache">
+   <encoding>
+      <key media-type="application/x-protostream"/>
+      <value media-type="application/x-protostream"/>
+   </encoding>
+</distributed-cache>

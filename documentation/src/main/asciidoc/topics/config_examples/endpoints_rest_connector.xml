@@ -1,11 +1,11 @@
 <rest-connector name="rest">
   <authentication>
-    ...
+    <!-- REST endpoint authentication configuration. -->
   </authentication>
   <cors-rules>
-    ...
+    <!-- Cross-Origin Resource Sharing (CORS) rules. -->
   </cors-rules>
   <encryption>
-    ...
+    <!-- REST endpoint SSL/TLS encryption configuration. -->
   </encryption>
 </rest-connector>

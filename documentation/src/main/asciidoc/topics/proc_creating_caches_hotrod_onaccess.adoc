@@ -20,7 +20,7 @@ ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.remoteCache("my-cache") <1>
     .templateName(DefaultTemplate.DIST_SYNC)
 builder.remoteCache("another-cache") <2>
-    .configuration("<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan>");
+    .configuration("<distributed-cache name=\"another-cache\"/>");
 builder.remoteCache("my-other-cache") <3>
     .configurationURI(URI.create("file:/path/to/configuration.xml"));
 ----
@@ -37,7 +37,7 @@ builder.remoteCache("my-other-cache") <3>
 [source,options="nowrap"]
 ----
 infinispan.client.hotrod.cache.my-cache.template_name=org.infinispan.DIST_SYNC <1>
-infinispan.client.hotrod.cache.another-cache.configuration=<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan> <2>
+infinispan.client.hotrod.cache.another-cache.configuration=<distributed-cache name=\"another-cache\"/> <2>
 infinispan.client.hotrod.cache.my-other-cache.configuration_uri=file:/path/to/configuration.xml <3>
 ----
 

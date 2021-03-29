@@ -1,7 +1,0 @@
-<infinispan>
-  <cache-container default-cache="default">
-    <replicated-cache name="books">
-      <encoding media-type="application/x-protostream"/>
-    </replicated-cache>
-  </cache-container>
-</infinispan>

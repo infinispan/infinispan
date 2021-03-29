@@ -8,14 +8,12 @@ Indexing and querying are both done on top of Java objects.
 [id='embedded_query_example']
 == Embedded Query Example
 
-We're going to store `Book` instances in an {brandname} cache called "books". `Book` instances will be indexed, so we enable indexing for the cache:
-
-{brandname} configuration:
+We're going to store `Book` instances in an {brandname} cache called "books". `Book` instances will be indexed, so we enable indexing for the cache configuration:
 
 .infinispan.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_distributed_cache_books.xml[]
+include::config_examples/indexing_dist_cache_books.xml[]
 ----
 
 Obtaining the cache:

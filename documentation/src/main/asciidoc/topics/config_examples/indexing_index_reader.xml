@@ -2,5 +2,6 @@
   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
     <!-- Sets an interval of one second for the index reader. -->
     <index-reader refresh-interval="1000"/>
-     ...
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
 </distributed-cache>

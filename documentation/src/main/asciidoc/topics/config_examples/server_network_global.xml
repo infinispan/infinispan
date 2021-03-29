@@ -1,5 +1,5 @@
 <interfaces>
-    <interface name="public">
-        <global/>
-    </interface>
+  <interface name="public">
+    <global/>
+  </interface>
 </interfaces>

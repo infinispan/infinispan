@@ -1,5 +1,5 @@
 <interfaces>
-    <interface name="public">
-        <match-host value="my_host_name"/>
-    </interface>
+  <interface name="public">
+    <match-host value="my_host_name"/>
+  </interface>
 </interfaces>

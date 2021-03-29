@@ -1,5 +1,5 @@
 <interfaces>
-    <interface name="public">
-        <inet-address value="10.1.2.3"/>
-    </interface>
+  <interface name="public">
+    <inet-address value="10.1.2.3"/>
+  </interface>
 </interfaces>

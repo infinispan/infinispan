@@ -1,7 +1,7 @@
 <interfaces>
-    <interface name="public">
-        <match-host value="my_host_name"/>
-        <match-address value="132\..*"/>
-        <any-address/>
-    </interface>
+  <interface name="public">
+    <match-host value="my_host_name"/>
+    <match-address value="132\..*"/>
+    <any-address/>
+  </interface>
 </interfaces>

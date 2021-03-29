@@ -1,5 +1,5 @@
 <interfaces>
-    <interface name="public">
-        <link-local/>
-    </interface>
+  <interface name="public">
+    <link-local/>
+  </interface>
 </interfaces>

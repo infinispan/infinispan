@@ -3,5 +3,5 @@
   <TCPGOSSIP timeout="3000"
              initial_hosts="${GossipRouterAddress}"
              num_initial_members="3" />
-  ...
+  <!-- JGroups stack configuration. -->
 </config>
