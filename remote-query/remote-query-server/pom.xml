@@ -43,6 +43,16 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-types</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
       </dependency>

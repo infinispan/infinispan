@@ -3,6 +3,8 @@ package org.infinispan.server.extensions;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,8 +38,10 @@ public class ServerTasks {
    @Test
    public void testServerTaskWithParameters() {
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
-      String hello = cache.execute("hello", Collections.singletonMap("greetee", "my friend"));
-      assertEquals("Hello my friend", hello);
+      ArrayList<String> messages = cache.execute("hello", Collections.singletonMap("greetee", new ArrayList<>(Arrays.asList("nurse", "kitty"))));
+      assertEquals(2, messages.size());
+      assertEquals("Hello nurse", messages.get(0));
+      assertEquals("Hello kitty", messages.get(1));
    }
 
    @Test

@@ -39,6 +39,8 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.types.java.CommonContainerTypesSchema;
+import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
@@ -86,6 +88,13 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       } catch (DescriptorParserException e) {
          throw new CacheException("Failed to initialise the Protobuf serialization context", e);
       }
+      register(new CommonTypesSchema());
+      register(new CommonContainerTypesSchema());
+   }
+
+   void register(SerializationContextInitializer initializer) {
+      initializer.registerSchema(getSerializationContext());
+      initializer.registerMarshallers(getSerializationContext());
    }
 
    @Start

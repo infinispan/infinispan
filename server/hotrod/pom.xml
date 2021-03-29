@@ -54,6 +54,10 @@
          <artifactId>protostream</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-types</artifactId>
+      </dependency>
+      <dependency>
          <groupId>io.projectreactor.tools</groupId>
          <artifactId>blockhound</artifactId>
          <optional>true</optional>

@@ -405,7 +405,30 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private void initializeProtoStreamMarshaller(ProtoStreamMarshaller protoMarshaller) {
       SerializationContext ctx = protoMarshaller.getSerializationContext();
+
+      // First things first! Register some useful builtin schemas, which the user can override later.
+      registerDefaultSchemas(ctx,
+                             "org.infinispan.protostream.types.java.CommonContainerTypesSchema",
+                             "org.infinispan.protostream.types.java.CommonTypesSchema");
+
+      // Register the configured schemas.
       for (SerializationContextInitializer sci : configuration.getContextInitializers()) {
+         sci.registerSchema(ctx);
+         sci.registerMarshallers(ctx);
+      }
+   }
+
+   private static void registerDefaultSchemas(SerializationContext ctx, String... classNames) {
+      for (String className : classNames) {
+         SerializationContextInitializer sci;
+         try {
+            Class<?> clazz = Class.forName(className);
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+            sci = (SerializationContextInitializer) instance;
+         } catch (Exception e) {
+            log.failedToCreatePredefinedSerializationContextInitializer(className, e);
+            continue;
+         }
          sci.registerSchema(ctx);
          sci.registerMarshallers(ctx);
       }
