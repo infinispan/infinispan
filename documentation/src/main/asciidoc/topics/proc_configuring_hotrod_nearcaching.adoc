@@ -1,75 +1,28 @@
-[id='hotrod_near_cache']
-= Configuring Near Caching
-Hot Rod Java clients can keep local caches that store recently used data, which
-significantly increases performance of `get()` and `getVersioned()` operations
-because the data is local to the client.
-
-When you enable near caching with Hot Rod Java clients, calls to `get()` or
-`getVersioned()` calls populate the near cache when entries are retrieved from
-servers. When entries are updated or removed on the server-side, entries in the
-near cache are invalidated. If keys are requested after they are invalidated,
-clients must fetch the keys from the server again.
-
-You can also configure the number of entries that near caches can contain.
-When the maximum is reached, near-cached entries are evicted.
-
-.Near cache considerations
-
-[IMPORTANT]
-====
-Do not use maximum idle expiration with near caches because near-cache reads do
-not propagate the last access time for entries.
-====
-
-* Near caches are cleared when clients failover to different servers when using clustered cache modes.
-
-* You should always configure the maximum number of entries that can reside in
-the near cache. Unbounded near caches require you to keep the size of the near
-cache within the boundaries of the client JVM.
-
-* Near cache invalidation messages can degrade performance of write operations. The near cache
-can be configured with a bloom filter to significantly reduce this degredation. However bloom
-filter can only be enabled with a bounded near cache.
-
-[NOTE]
-====
-Bloom filter near cache requires the pool configuration to also have a maximum of 1 active
-connection per server and utilize the WAIT exhausted action. This is required so the server
-can keep the bloom filter updated on the server side to which listener was registered.
-====
+[id='configuring-near-caching-{context}']
+= Configuring Near Caches
+Configure Hot Rod Java clients with near caches to store recently used data locally in the client JVM.
 
 .Procedure
 
-. Set the near cache mode to `INVALIDATED` in the client configuration for the caches you want
-. Define the size of the near cache by specifying the maximum number of entries.
+. Open your Hot Rod Java client configuration.
+. Configure each cache to perform near caching with the `nearCacheMode(NearCacheMode.INVALIDATED)` method.
++
+[NOTE]
+====
+{brandname} provides global near cache configuration properties.
+However, those properties are deprecated and you should not use them but configure near caching on a per-cache basis instead.
+====
++
+. Specify the maximum number of entries that the near cache can hold before eviction occurs with the `nearCacheMaxEntries()` method.
+. Enable bloom filters for near caches with the `nearCacheUseBloomFilter()` method.
 
 [source,java]
 ----
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
-...
-
-// Configure different near cache settings for specific caches
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder
-  .remoteCache("bounded")
-    .nearCacheMode(NearCacheMode.INVALIDATED)
-    .nearCacheMaxEntries(100)
-    .bloomFilter(false);
-  .remoteCache("unbounded").nearCache()
-    .nearCacheMode(NearCacheMode.INVALIDATED)
-    .nearCacheMaxEntries(-1);
-
-// Following required for bloom filter near cache
-// builder
-//    .connectionPool()
-//       .maxActive(1)
-//       .exhaustedAction(ExhaustedAction.WAIT);
+include::code_examples/HotRodNearCaching.java[]
 ----
 
-[NOTE]
-====
-You should always configure near caching on a per-cache basis. Even though
-{brandname} provides global near cache configuration properties, you should not
-use them.
-====
+[role="_additional-resources"]
+.Additional resources
+
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/NearCacheConfiguration.html[org.infinispan.client.hotrod.configuration.NearCacheConfiguration]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ExhaustedAction.html[org.infinispan.client.hotrod.configuration.ExhaustedAction]

@@ -1,0 +1,33 @@
+[id='near-caches-{context}']
+= Near Caches
+Near caches are local to Hot Rod clients and store recently used data so that every read operation does not need to traverse the network, which significantly increases performance.
+
+Near caches:
+
+* Are populated on calls to `get()` or `getVersioned()`.
+* Register a client listener to invalidate entries when they are updated or removed in remote caches on {brandname} Server. +
+If entries are requested after they are invalidated, clients must retrieve them from the remote caches again.
+* Are cleared when clients fail over to different servers.
+
+.Bounded near caches
+
+You should always use bounded near caches by specifying the maximum number of entries they can contain.
+When near caches reach the maximum number of entries, eviction automatically takes place to remove older entries.
+This means you do not need to manually keep the cache size within the boundaries of the client JVM.
+
+[IMPORTANT]
+====
+Do not use maximum idle expiration with near caches because near-cache reads do not propagate the last access time for entries.
+====
+
+.Bloom filters
+
+Bloom filters optimize performance for write operations by reducing the total number of invalidation messages.
+
+Bloom filters:
+
+* Reside on {brandname} Server and keep track of the entries that the client has requested.
+* Require a connection pool configuration that has a maximum of one active connection per server and uses the `WAIT` exhausted action.
+* Cannot be used with unbounded near caches.
+
+//-
