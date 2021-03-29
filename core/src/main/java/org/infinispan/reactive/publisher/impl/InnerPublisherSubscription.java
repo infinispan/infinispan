@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.reactive.RxJavaInterop;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.transport.Address;
@@ -234,9 +234,12 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
 
    // If this method is invoked the current thread must not continuing trying to do any additional processing
    private void handleThrowableInResponse(Throwable t, Address address, IntSet segments) {
-      if (parent.handleThrowable(t, address, segments)) {
+      if (cancelled) {
+         // If we were cancelled just log the exception - it may not be an actual problem
+         log.tracef("Encountered exception after subscription was cancelled, this can most likely ignored, message is %s", t.getMessage());
+      } else if (parent.handleThrowable(t, address, segments)) {
          // We were told to continue processing - so ignore those segments and try the next target if possible
-         // Since we never invoked parent.compleSegment they may get retried
+         // Since we never invoked parent.completeSegment they may get retried
          currentTarget = null;
          // Try to retrieve entries from the next node if possible
          accept(0);
