@@ -367,4 +367,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Near cache with bloom filter requires pool max active to be 1, was %s, and exhausted action to be WAIT, was %s", id = 4103)
    CacheConfigurationException bloomFilterRequiresMaxActiveOneAndWait(int maxActive, ExhaustedAction action);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to load and create an optional ProtoStream serialization context initializer: %s", id = 4104)
+   void failedToCreatePredefinedSerializationContextInitializer(String className, @Cause Throwable throwable);
 }

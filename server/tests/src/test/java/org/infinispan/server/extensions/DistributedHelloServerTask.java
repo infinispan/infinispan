@@ -1,6 +1,9 @@
 package org.infinispan.server.extensions;
 
-import org.infinispan.manager.EmbeddedCacheManager;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
@@ -10,6 +13,7 @@ import org.infinispan.tasks.TaskExecutionMode;
  * @since 11.0
  **/
 public class DistributedHelloServerTask implements ServerTask {
+
    private TaskContext taskContext;
 
    @Override
@@ -19,9 +23,22 @@ public class DistributedHelloServerTask implements ServerTask {
 
    @Override
    public Object call() {
-      EmbeddedCacheManager cacheManager = taskContext.getCacheManager();
+      Address address = taskContext.getCacheManager().getAddress();
       Object greetee = taskContext.getParameters().get().get("greetee");
-      return String.format("Hello %s from %s", greetee == null ? "world" : greetee, cacheManager.getAddress());
+
+      // if we're dealing with a Collections of greetees we'll greet them individually
+      if (greetee instanceof Collection) {
+         ArrayList<String> messages = new ArrayList<>();
+         for (Object o : (Collection<?>) greetee) {
+            messages.add(greet(o, address));
+         }
+         return messages;
+      }
+      return greet(greetee, address);
+   }
+
+   private String greet(Object greetee, Address address) {
+      return String.format("Hello %s from %s", greetee == null ? "world" : greetee, address);
    }
 
    @Override
