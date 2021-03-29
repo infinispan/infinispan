@@ -1,4 +1,5 @@
 <distributed-cache name="my-cache">
   <indexing storage="local-heap">
-   ...
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
 </distributed-cache>

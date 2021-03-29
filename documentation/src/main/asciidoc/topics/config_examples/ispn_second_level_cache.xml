@@ -1,6 +1,5 @@
 <!-- Use Infinispan second level cache provider -->
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
-
 <!--
    Force using local configuration when only using a single node.
    Otherwise a clustered configuration is loaded.

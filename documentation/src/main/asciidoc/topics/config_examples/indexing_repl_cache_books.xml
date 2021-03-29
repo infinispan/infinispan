@@ -1,0 +1,7 @@
+<replicated-cache name="books">
+  <indexing>
+    <indexed-entities>
+      <indexed-entity>book_sample.Book</indexed-entity>
+    </indexed-entities>
+  </indexing>
+</replicated-cache>

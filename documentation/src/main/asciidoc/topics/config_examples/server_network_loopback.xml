@@ -1,5 +1,5 @@
 <interfaces>
-    <interface name="public">
-        <loopback/>
-    </interface>
+  <interface name="public">
+    <loopback/>
+  </interface>
 </interfaces>

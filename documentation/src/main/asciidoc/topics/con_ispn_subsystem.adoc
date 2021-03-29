@@ -1,9 +1,0 @@
-= {brandname} subsystem
-The {brandname} subsystem configures the cache containers and caches.
-
-The subsystem declaration is enclosed in the following XML element:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/ispn_subsystem.xml[]
-----

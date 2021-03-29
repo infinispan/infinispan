@@ -1,4 +1,4 @@
 <!-- Operations to replicate data to NYC are recorded as failures if they do not complete after 10 seconds. -->
 <backup site="NYC" strategy="ASYNC" timeout="10000">
-	...
+	<!-- Configuration for backup locations goes here. -->
 </backup>

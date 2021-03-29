@@ -8,5 +8,5 @@
     <transport stack="prod-tcp" />
     <replicated-cache name="replicatedCache"/>
   </cache-container>
-  ...
+  <!-- Cache configuration goes here. -->
 </infinispan>

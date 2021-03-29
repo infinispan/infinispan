@@ -1,6 +1,6 @@
 <distributed-cache name="passivation">
   <persistence passivation="true">
-   ...
+   <!-- Persistence configuration goes here. -->
   </persistence>
   <memory max-count="100"/>
 </distributed-cache>

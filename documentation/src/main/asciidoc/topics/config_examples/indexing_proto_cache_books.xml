@@ -1,0 +1,3 @@
+<replicated-cache name="books">
+  <encoding media-type="application/x-protostream"/>
+</replicated-cache>

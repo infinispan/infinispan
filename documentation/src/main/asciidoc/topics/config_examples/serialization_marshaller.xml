@@ -1,6 +1,6 @@
 <serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
-    <allow-list>
-        <class>org.infinispan.concrete.SomeClass</class>
-        <regex>org.infinispan.example.*</regex>
-    </allow-list>
+  <allow-list>
+    <class>org.infinispan.concrete.SomeClass</class>
+    <regex>org.infinispan.example.*</regex>
+  </allow-list>
 </serialization>

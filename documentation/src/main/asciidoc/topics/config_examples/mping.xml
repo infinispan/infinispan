@@ -3,5 +3,5 @@
          mcast_port="${jgroups.mcast_port:46655}"
          num_discovery_runs="3"
          ip_ttl="${jgroups.udp.ip_ttl:2}"/>
-  ...
+  <!-- JGroups stack configuration. -->
 </config>

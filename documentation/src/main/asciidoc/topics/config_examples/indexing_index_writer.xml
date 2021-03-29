@@ -13,5 +13,6 @@
                    min-size="10"
                    max-size="20"/>
     </index-writer>
-      ...
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
 </distributed-cache>

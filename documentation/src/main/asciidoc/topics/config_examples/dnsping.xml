@@ -1,4 +1,4 @@
 <config>
   <dns.DNS_PING dns_query="myservice.myproject.svc.cluster.local" />
-  ...
+  <!-- JGroups stack configuration. -->
 </config>

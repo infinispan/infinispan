@@ -3,5 +3,5 @@
              connection_username="user"
              connection_password="password"
              connection_driver="com.mysql.jdbc.Driver"/>
-  ...
+  <!-- JGroups stack configuration. -->
 </config>

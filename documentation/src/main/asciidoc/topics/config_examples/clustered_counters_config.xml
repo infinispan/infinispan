@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan>
     <cache-container ...>
-        <!-- if needed to persist counter, global state needs to be configured -->
+        <!-- To persist counters, you need to configure the global state. -->
         <global-state>
-            ...
+        <!-- Global state configuration goes here. -->
         </global-state>
-        <!-- your caches configuration goes here -->
+        <!-- Cache configuration goes here. -->
          <counters xmlns="urn:infinispan:config:counters:{schemaversion}" num-owners="3" reliability="CONSISTENT">
              <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
              <strong-counter name="c2" initial-value="2" storage="VOLATILE">

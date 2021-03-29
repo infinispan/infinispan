@@ -1,3 +1,4 @@
+[id='cli-configuring-media-types_{context}']
 = Configuring Media Types
 Encode cache entries with different media types to store data in a format that best suits your requirements.
 
@@ -9,19 +10,10 @@ For example, the following procedure shows you how to configure the `application
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container>
-      <distributed-cache name="qcache">
-         <encoding>
-            <key media-type="application/x-protostream"/>
-            <value media-type="application/x-protostream"/>
-         </encoding>
-      </distributed-cache>
-   </cache-container>
-</infinispan>
+include::config_examples/indexing_person_cache.xml[]
 ----
 +
-. Create `qcache` from `pcache.xml` with the [command]`--file=` option.
+. Create `pcache` from `pcache.xml` with the [command]`--file=` option.
 +
 [source,options="nowrap",subs=attributes+]
 ----

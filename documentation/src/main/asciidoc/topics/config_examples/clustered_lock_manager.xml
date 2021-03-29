@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:{schemaversion} https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd"
         xmlns="urn:infinispan:config:{schemaversion}">
-    ...
+
     <cache-container default-cache="default">
         <transport/>
         <local-cache name="default">
             <locking concurrency-level="100" acquire-timeout="1000"/>
         </local-cache>
-
         <clustered-locks xmlns="urn:infinispan:config:clustered-locks:{schemaversion}"
                          num-owners = "3"
                          reliability="AVAILABLE">
@@ -15,5 +16,5 @@
             <clustered-lock name="lock2" />
         </clustered-locks>
     </cache-container>
-    ...
+    <!-- Cache configuration goes here. -->
 </infinispan>

@@ -1,7 +1,7 @@
 <distributed-cache name="my-cache">
-   <indexing>
-     <indexed-entities>
-       <indexed-entity>...</indexed-entity>
-     </indexed-entities>
-   </indexing>
+  <indexing>
+    <indexed-entities>
+      <indexed-entity>...</indexed-entity>
+    </indexed-entities>
+  </indexing>
 </distributed-cache>
