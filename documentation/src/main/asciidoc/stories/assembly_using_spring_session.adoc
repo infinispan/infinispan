@@ -1,5 +1,5 @@
-[id='sb_starter_session']
-:context: spring_session
+[id='using-spring-session']
+:context: session
 = Using Spring Session
 
 include::{topics}/proc_enabling_spring_session.adoc[leveloffset=+1]

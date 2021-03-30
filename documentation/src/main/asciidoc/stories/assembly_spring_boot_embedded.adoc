@@ -1,8 +1,7 @@
-[id='sb_starter_embedded']
-:context: starter_embedded
+[id='starter-embedded-caches']
+:context: embedded
 = Running in Embedded Mode
-
-Embed the {brandname} library in your project for in-memory data storage.
+Embed {brandname} caches directly in your project for in-memory data storage.
 
 include::{topics}/proc_adding_embeddedcm_bean.adoc[leveloffset=+1]
 include::{topics}/ref_embedded_custom_beans.adoc[leveloffset=+1]

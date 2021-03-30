@@ -1,16 +1,34 @@
+[id='spring-boot-serialization_{context}']
 = Configuring Marshalling
-Configure {brandname} servers to use Java serialization to marshall objects.
+Configure {brandname} to marshall Java objects into binary format so they can be transferred over the wire or stored to disk.
 
-By default {brandname} server uses a ProtoStream serialization library as the
-default marshaller. However, the ProtoStream marshaller is not supported for
-Spring integration. For this reason you should use the Java Serialization Marshaller.
+By default {brandname} uses a Java Serialization marshaller, which requires you to add your classes to an allow list.
+As an alternative you can use ProtoStream.
 
-* Specify the following properties in your `application.properties`:
+.Procedure
+
+. Open `hotrod-client.properties` or `application.properties` for editing.
+. Do one of the following:
++
+* Use ProtoStream as the marshaller.
 +
 ----
-infinispan.remote.marshaller=org.infinispan.commons.marshall.JavaSerializationMarshaller <1>
-infinispan.remote.java-serial-whitelist=your_marshalled_beans_package.* <2>
+infinispan.client.hotrod.marshaller=org.infinispan.commons.marshall.ProtoStreamMarshaller
 ----
-
-<1> Use the Java Serialization Marshaller.
-<2> Adds your classes to the serialization whitelist so {brandname} marshalls your objects. You can specify a comma-separated list of fully qualified class names or a regular expression to match classes.
++
+----
+infinispan.remote.marshaller=org.infinispan.commons.marshall.ProtoStreamMarshaller
+----
++
+* Add your classes to the serialization allow list if you use Java Serialization.
+You can specify a comma-separated list of fully qualified class names or a regular expression to match classes.
++
+----
+infinispan.client.hotrod.java_serial_allowlist=your_marshalled_beans_package.*
+----
++
+----
+infinispan.remote.java-serial-allowlist=your_marshalled_beans_package.*
+----
++
+. Save and close your properties file.

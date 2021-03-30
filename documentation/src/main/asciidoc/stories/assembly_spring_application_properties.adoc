@@ -1,4 +1,4 @@
-[id='sb_starter_properties']
+[id='spring-application-properties']
 :context: starter_properties
 = Application Properties
 
