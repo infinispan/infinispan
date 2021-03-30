@@ -1,8 +1,13 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
@@ -13,13 +18,14 @@ import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.Util;
@@ -41,8 +47,6 @@ import org.infinispan.xsite.status.AbstractMixedSiteStatus;
 import org.infinispan.xsite.status.OfflineSiteStatus;
 import org.infinispan.xsite.status.OnlineSiteStatus;
 import org.infinispan.xsite.status.SiteStatus;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Handles REST calls for cache and cache manager level X-Site operations
@@ -113,6 +117,12 @@ public class XSiteResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state")
                .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL RECEIVE STATE").auditContext(AuditContext.CACHE)
                .handleWith(this::cancelReceiveState)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE GET STATE TRANSFER MODE").auditContext(AuditContext.CACHE)
+               .handleWith(this::getStateTransferMode)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode").withAction("set")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE SET STATE TRANSFER MODE").auditContext(AuditContext.CACHE)
+               .handleWith(this::setStateTransferMode)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/")
                .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL STATUS").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::globalStatus)
@@ -151,10 +161,10 @@ public class XSiteResource implements ResourceHandler {
       GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+      if (globalXSiteAdmin == null) return completedFuture(responseBuilder.status(NOT_FOUND).build());
 
-      return CompletableFuture.supplyAsync(() -> {
-         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) () -> globalXSiteAdmin.globalStatus());
+      return supplyAsync(() -> {
+         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) globalXSiteAdmin::globalStatus);
          Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
             SiteStatus status = e.getValue();
             if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
@@ -205,15 +215,17 @@ public class XSiteResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       String site = request.variables().get("site");
 
-      XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
-      TakeOfflineConfiguration current = xsiteAdmin.getTakeOfflineConfiguration(site);
-
-      if (current == null) {
-         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+      if (!xsiteAdminOpt.isPresent()) {
+         return completedFuture(responseBuilder.build());
       }
+
+      XSiteAdminOperations xsiteAdmin = xsiteAdminOpt.get();
+      TakeOfflineConfiguration current = xsiteAdmin.getTakeOfflineConfiguration(site);
+      assert current != null;
       String content = request.contents().asString();
       if (content == null || content.isEmpty()) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
+         return completedFuture(responseBuilder.status(BAD_REQUEST).build());
       }
 
       int afterFailures, minWait;
@@ -222,21 +234,21 @@ public class XSiteResource implements ResourceHandler {
          Json minWaitValue = json.at(MIN_WAIT_FIELD);
          Json afterFailuresValue = json.at(AFTER_FAILURES_FIELD);
          if (minWaitValue == null || afterFailuresValue == null) {
-            return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
+            return completedFuture(responseBuilder.status(BAD_REQUEST).build());
          }
          minWait = minWaitValue.asInteger();
          afterFailures = afterFailuresValue.asInteger();
       } catch (Exception e) {
          Throwable rootCause = Util.getRootCause(e);
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(rootCause.getMessage()).build());
+         return completedFuture(responseBuilder.status(BAD_REQUEST).entity(rootCause.getMessage()).build());
       }
       if (afterFailures == current.afterFailures() && minWait == current.minTimeToWait()) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build());
+         return completedFuture(responseBuilder.status(NOT_MODIFIED).build());
       }
-      return CompletableFuture.supplyAsync(() -> {
+      return supplyAsync(() -> {
          String status = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(site);
+            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(site);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -246,50 +258,93 @@ public class XSiteResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String site = request.variables().get("site");
 
-      XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
-      TakeOfflineConfiguration config = xsiteAdmin.getTakeOfflineConfiguration(site);
-      if (config == null) {
-         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
-      }
-
-      return completedFuture(addEntityAsJson(new TakeOffline(config), responseBuilder).build()
-      );
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+      xsiteAdminOpt.ifPresent(ops -> {
+         TakeOfflineConfiguration config = ops.getTakeOfflineConfiguration(site);
+         assert config != null;
+         addEntityAsJson(new TakeOffline(config), responseBuilder);
+      });
+      return completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> siteStatus(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String site = request.variables().get("site");
 
-      XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+      return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
+            () -> addEntityAsJson(Json.make(Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> ops.nodeStatus(site))), responseBuilder).build(),
+            invocationHelper.getExecutor()))
+            .orElseGet(() -> completedFuture(responseBuilder.build()));
 
-      if (!xsiteAdmin.checkSite(site)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
-      }
-
-      return CompletableFuture.supplyAsync(
-            () -> {
-               Map<Address, String> result = Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> xsiteAdmin.nodeStatus(site));
-               return addEntityAsJson(Json.make(result), responseBuilder).build();
-            }
-            , invocationHelper.getExecutor());
    }
 
    private <T> CompletionStage<RestResponse> statusOperation(RestRequest request, Function<XSiteAdminOperations, T> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
-
-      return CompletableFuture.supplyAsync(
+      Optional<XSiteAdminOperations> xsiteAdmin = getXSiteAdmin(request, responseBuilder);
+      return xsiteAdmin.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
             () -> {
-               T result = Security.doAs(request.getSubject(), op, xsiteAdmin);
+               T result = Security.doAs(request.getSubject(), (PrivilegedAction<T>) () -> op.apply(ops));
                return addEntityAsJson(Json.make(result), responseBuilder).build();
             },
-            invocationHelper.getExecutor());
+            invocationHelper.getExecutor()))
+            .orElseGet(() -> completedFuture(responseBuilder.build()));
    }
 
-   private XSiteAdminOperations getXSiteAdmin(RestRequest request) {
+   private CompletionStage<RestResponse> getStateTransferMode(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      //check if site exists
+      final String site = request.variables().get("site");
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+
+      return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops ->
+             ops.asyncGetStateTransferMode(site).thenApply(s -> addEntityAsJson(Json.make(s), responseBuilder).build()))
+            .orElseGet(() -> completedFuture(responseBuilder.build()));
+   }
+
+   private CompletionStage<RestResponse> setStateTransferMode(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      //parse content
+      String mode = request.getParameter("mode");
+      if (mode == null) {
+         return completedFuture(responseBuilder.status(BAD_REQUEST).build());
+      }
+      //check if site exists
+      final String site = request.variables().get("site");
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+      return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops ->
+            ops.asyncSetStateTransferMode(site, mode)
+                  .thenApply(ok -> responseBuilder.status(ok ? OK : NOT_MODIFIED).build()))
+            .orElseGet(() -> completedFuture(responseBuilder.build()));
+
+   }
+
+   private Optional<XSiteAdminOperations> getXSiteAdmin(RestRequest request, NettyRestResponse.Builder responseBuilder) {
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+      XSiteAdminOperations ops = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+      if (ops == null) {
+         noBackupsForCache(responseBuilder, cacheName);
+         return Optional.empty();
+      }
+      return Optional.of(ops);
+   }
+
+   private Optional<XSiteAdminOperations> getXSiteAdminAndCheckSite(RestRequest request, NettyRestResponse.Builder responseBuilder) {
+      String cacheName = request.variables().get("cacheName");
+      String site = request.variables().get("site");
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      XSiteAdminOperations ops = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+      if (ops == null) {
+         noBackupsForCache(responseBuilder, cacheName);
+         return Optional.empty();
+      }
+      if (!ops.checkSite(site)) {
+         siteNotFound(responseBuilder, cacheName, site);
+         return Optional.empty();
+      }
+      return Optional.of(ops);
    }
 
    private GlobalXSiteAdminOperations getGlobalXSiteAdmin(RestRequest request) {
@@ -308,9 +363,9 @@ public class XSiteResource implements ResourceHandler {
 
       String site = request.variables().get("site");
 
-      if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+      if (globalXSiteAdmin == null) return completedFuture(responseBuilder.status(NOT_FOUND).build());
 
-      return CompletableFuture.supplyAsync(
+      return supplyAsync(
             () -> {
                Map<String, String> result = Security.doAs(request.getSubject(), operation, globalXSiteAdmin, site);
                return addEntityAsJson(Json.make(result), responseBuilder).build();
@@ -323,19 +378,25 @@ public class XSiteResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String site = request.variables().get("site");
 
-      XSiteAdminOperations xsiteAdmin = getXSiteAdmin(request);
+      Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
+      return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops ->
+            supplyAsync(() -> {
+               String result = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteOp.apply(ops, site));
+               if (!result.equals(XSiteAdminOperations.SUCCESS)) {
+                  responseBuilder.status(INTERNAL_SERVER_ERROR).entity(result);
+               }
+               return responseBuilder.build();
+            }, invocationHelper.getExecutor()))
+            .orElseGet(() -> completedFuture(responseBuilder.build()));
 
-      if (xsiteAdmin == null || !xsiteAdmin.checkSite(site)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
-      }
+   }
 
-      return CompletableFuture.supplyAsync(() -> {
-         String result = Security.doAs(request.getSubject(), xsiteOp, xsiteAdmin, site);
-         if (!result.equals(XSiteAdminOperations.SUCCESS)) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(result);
-         }
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+   private static void noBackupsForCache(NettyRestResponse.Builder builder, String cacheName) {
+      builder.status(NOT_FOUND).contentType(MediaType.TEXT_PLAIN).entity(String.format("Cache '%s' does not have backup sites.", cacheName));
+   }
+
+   private static void siteNotFound(NettyRestResponse.Builder builder, String cacheName, String site) {
+      builder.status(NOT_FOUND).contentType(MediaType.TEXT_PLAIN).entity(String.format("Cache '%s' does not backup to site '%s'", cacheName, site));
    }
 
    private static class GlobalStatus implements JsonSerialization {

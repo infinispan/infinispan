@@ -54,7 +54,7 @@ public interface Messages {
    @Message("Trusts all certificates in SSL/TLS connections.")
    String cliHelpTrustAll();
 
-   @Message("Not Found %s")
+   @Message("Not Found: %s")
    IOException notFound(String s);
 
    @Message("The supplied credentials are invalid %s")

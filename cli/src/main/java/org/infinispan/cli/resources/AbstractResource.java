@@ -2,6 +2,7 @@ package org.infinispan.cli.resources;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.logging.Messages;
@@ -56,12 +57,17 @@ public abstract class AbstractResource implements Resource {
 
    @Override
    public <T extends Resource> T findAncestor(Class<T> resourceClass) {
+      return optionalFindAncestor(resourceClass).orElseThrow(Messages.MSG::illegalContext);
+   }
+
+   @Override
+   public <T extends Resource> Optional<T> optionalFindAncestor(Class<T> resourceClass) {
       if (resourceClass.isAssignableFrom(this.getClass())) {
-         return (T) this;
+         return Optional.of(resourceClass.cast(this));
       } else if (parent != null) {
-         return parent.findAncestor(resourceClass);
+         return parent.optionalFindAncestor(resourceClass);
       } else {
-         throw Messages.MSG.illegalContext();
+         return Optional.empty();
       }
    }
 

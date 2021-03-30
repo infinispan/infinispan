@@ -18,6 +18,9 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -26,17 +29,24 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.response.AutoStateTransferResponse;
+import org.infinispan.xsite.response.AutoStateTransferResponseCollector;
+import org.infinispan.xsite.status.SiteState;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * {@link org.infinispan.xsite.statetransfer.XSiteStateTransferManager} implementation.
@@ -57,6 +67,9 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject CommandsFactory commandsFactory;
    @Inject XSiteStateConsumer consumer;
    @Inject XSiteStateProvider provider;
+   @Inject TakeOfflineManager takeOfflineManager;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject String cacheName;
 
    private final ConcurrentMap<String, RemoteSiteStatus> sites;
    private volatile int currentTopologyId = -1;
@@ -98,34 +111,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public final void startPushState(String siteName) {
-      RemoteSiteStatus status = validateSite(siteName);
-      if (!status.startStateTransfer(rpcManager.getMembers())) {
-         throw log.xsiteStateTransferAlreadyInProgress(siteName);
-      }
-
-      try {
-         //prepare remote site to receive state
-         if (status.isSync()) {
-            //with async cross-site, the remote site doesn't have the concept of state transfer.
-            //the remote site receives normal updates and apply conflict resolution if required.
-            XSiteReplicateCommand<?> remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand();
-            rpcManager.blocking(rpcManager.invokeXSite(status.getBackup(), remoteSiteCommand));
-         }
-         if (!isStateTransferInProgress) {
-            //only if we are in balanced cluster, we start to send the data!
-            XSiteStateTransferStartSendCommand cmd = commandsFactory.buildXSiteStateTransferStartSendCommand(siteName, currentTopologyId);
-            CompletionStage<Void> rsp = sendToLocalSite(cmd);
-            cmd.setOrigin(rpcManager.getAddress());
-            cmd.invokeLocal(provider);
-            rpcManager.blocking(rsp);
-         } else if (log.isDebugEnabled()) {
-            log.debugf("Not starting state transfer to site '%s' while rebalance in progress. Waiting until it is finished!",
-                  siteName);
-         }
-      } catch (Throwable throwable) {
-         handleFailure(status);
-         throw throwable;
-      }
+      rpcManager.blocking(asyncStartPushState(validateSite(siteName)));
    }
 
    @Override
@@ -230,6 +216,72 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    @Override
+   public void startAutomaticStateTransfer(Collection<String> sites) {
+      for (String site : sites) {
+         doAutomaticStateTransfer(site);
+      }
+   }
+
+   @Override
+   public XSiteStateTransferMode stateTransferMode(String site) {
+      RemoteSiteStatus status = sites.get(site);
+      return status == null ? XSiteStateTransferMode.MANUAL : status.stateTransferMode();
+   }
+
+   @Override
+   public boolean setAutomaticStateTransfer(String site, XSiteStateTransferMode mode) {
+      RemoteSiteStatus status = sites.get(site);
+      return status != null && status.setStateTransferMode(mode);
+   }
+
+   private void doAutomaticStateTransfer(String site) {
+      RemoteSiteStatus status = sites.get(site);
+      if (skipAutomaticStateTransferEnabled(site, status)) {
+         return;
+      }
+      isStateTransferRequired(status).whenComplete((proceed, throwable) -> {
+         if (throwable != null) {
+            Log.XSITE.unableToStartXSiteAutStateTransfer(cacheName, site, throwable);
+         } else if (proceed) {
+            bringSiteOnline(site).thenRun(() -> asyncStartPushState(status));
+         } else {
+            Log.XSITE.debugf("[%s] Cross-Site state transfer not required for site '%s'", cacheName, site);
+         }
+      });
+   }
+
+   private boolean skipAutomaticStateTransferEnabled(String site, RemoteSiteStatus status) {
+      if (status == null) {
+         Log.XSITE.debugf("[%s] Cross-Site automatic state transfer not started for site '%s'. It is not a backup location for this cache", cacheName, site);
+         return true;
+      }
+      if (status.isSync()) {
+         Log.XSITE.debugf("[%s] Cross-Site automatic state transfer not started for site '%s'. The backup strategy is set to SYNC", cacheName, site);
+         return true;
+      }
+      if (status.stateTransferMode() == XSiteStateTransferMode.MANUAL) {
+         Log.XSITE.debugf("[%s] Cross-Site automatic state transfer not started for site '%s'. Automatic state transfer is disabled", cacheName, site);
+         return true;
+      }
+      return false;
+   }
+
+   private CompletionStage<Boolean> isStateTransferRequired(RemoteSiteStatus status) {
+      final String site = status.getSiteName();
+      AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(takeOfflineManager.getSiteState(site) == SiteState.OFFLINE, status.stateTransferMode());
+      XSiteAutoTransferStatusCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
+      return rpcManager.invokeCommandOnAll(cmd, collector, rpcManager.getSyncRpcOptions())
+            .thenApply(AutoStateTransferResponse::canDoAutomaticStateTransfer);
+   }
+
+   private CompletionStage<Void> bringSiteOnline(String site) {
+      CacheRpcCommand cmd = commandsFactory.buildXSiteBringOnlineCommand(site);
+      CompletionStage<Void> rsp = rpcManager.invokeCommandOnAll(cmd, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+      takeOfflineManager.bringSiteOnline(site);
+      return rsp;
+   }
+
+   @Override
    public void onTopologyUpdated(CacheTopology cacheTopology, boolean stateTransferInProgress) {
       int topologyId = cacheTopology.getTopologyId();
       if (log.isDebugEnabled()) {
@@ -267,6 +319,48 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
             }
          }
       }
+   }
+
+   private CompletionStage<Void> asyncStartPushState(RemoteSiteStatus status) {
+      String siteName = status.getSiteName();
+      if (!status.startStateTransfer(rpcManager.getMembers())) {
+         CompletableFutures.completedExceptionFuture(log.xsiteStateTransferAlreadyInProgress(siteName));
+      }
+
+      CompletionStage<Void> rsp = null;
+      if (status.isSync()) {
+         //with async cross-site, the remote site doesn't have the concept of state transfer.
+         //the remote site receives normal updates and apply conflict resolution if required.
+         XSiteReplicateCommand<Void> remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand();
+         rsp = rpcManager.invokeXSite(status.getBackup(), remoteSiteCommand);
+      }
+
+      if (isStateTransferInProgress) {
+         if (log.isDebugEnabled()) {
+            log.debugf("Not starting state transfer to site '%s' while rebalance in progress. Waiting until it is finished!",
+                  siteName);
+         }
+         return rsp == null ? CompletableFutures.completedNull() : rsp;
+      }
+
+
+      if (rsp == null) {
+         return asyncStartLocalSend(status);
+      } else {
+         return rsp.thenCompose(o -> asyncStartLocalSend(status));
+      }
+   }
+
+   private CompletionStage<Void> asyncStartLocalSend(RemoteSiteStatus status) {
+      XSiteStateTransferStartSendCommand cmd = commandsFactory.buildXSiteStateTransferStartSendCommand(status.getSiteName(), currentTopologyId);
+      CompletionStage<Void> rsp = sendToLocalSite(cmd);
+      cmd.setOrigin(rpcManager.getAddress());
+      cmd.invokeLocal(provider);
+      rsp.exceptionally(throwable -> {
+         handleFailure(status, throwable);
+         return null;
+      });
+      return rsp;
    }
 
    private String getLocalSite() {
@@ -325,10 +419,10 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       }
    }
 
-   private void handleFailure(RemoteSiteStatus siteStatus) {
+   private void handleFailure(RemoteSiteStatus siteStatus, Throwable throwable) {
       final String siteName = siteStatus.getSiteName();
       if (log.isDebugEnabled()) {
-         log.debugf("Handle start state transfer failure to %s", siteName);
+         log.debugf(throwable, "Handle start state transfer failure to %s", siteName);
       }
       siteStatus.failStateTransfer();
       CompletionStage<Void> rsp = cancelStateTransferSending(siteName);

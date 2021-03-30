@@ -94,6 +94,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
@@ -121,8 +122,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -718,5 +721,15 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public IracUpdateVersionCommand buildIracUpdateVersionCommand(Map<Integer, IracEntryVersion> segmentsVersion) {
       return actual.buildIracUpdateVersionCommand(segmentsVersion);
+   }
+
+   @Override
+   public XSiteAutoTransferStatusCommand buildXSiteAutoTransferStatusCommand(String site) {
+      return actual.buildXSiteAutoTransferStatusCommand(site);
+   }
+
+   @Override
+   public XSiteSetStateTransferModeCommand buildXSiteSetStateTransferModeCommand(String site, XSiteStateTransferMode mode) {
+      return actual.buildXSiteSetStateTransferModeCommand(site, mode);
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.CHUNK_SIZE;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MODE;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -43,10 +44,17 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       if (attributes.attribute(WAIT_TIME).get() <= 0) {
          throw CONFIG.invalidXSiteStateTransferWaitTime();
       }
+      XSiteStateTransferMode mode = attributes.attribute(MODE).get();
+      if (mode == null) {
+         throw CONFIG.invalidXSiteStateTransferMode();
+      }
+      if (mode == XSiteStateTransferMode.AUTO && backupConfigurationBuilder.strategy() == BackupConfiguration.BackupStrategy.SYNC) {
+         throw CONFIG.autoXSiteStateTransferModeNotAvailableInSync();
+      }
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<XSiteStateTransferConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
 
@@ -78,8 +86,8 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    /**
-    * The maximum number of retries when a push state command fails. A value &le; 0 (zero) mean that the command will not
-    * retry. Default value is 30.
+    * The maximum number of retries when a push state command fails. A value &le; 0 (zero) means that the command does
+    * not retry. Default value is 30.
     */
    public final XSiteStateTransferConfigurationBuilder maxRetries(int maxRetries) {
       attributes.attribute(MAX_RETRIES).set(maxRetries);
@@ -87,10 +95,22 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    /**
-    * The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default value is 2 seconds.
+    * The wait time, in milliseconds, between each retry. The value should be &gt; 0 (zero). Default value is 2
+    * seconds.
     */
    public final XSiteStateTransferConfigurationBuilder waitTime(long waitingTimeBetweenRetries) {
       attributes.attribute(WAIT_TIME).set(waitingTimeBetweenRetries);
+      return this;
+   }
+
+   /**
+    * The cross-site state transfer mode.
+    * <p>
+    * If set to {@link XSiteStateTransferMode#AUTO}, Infinispan automatically starts state transfer when it detects
+    * a new view for a backup location that was previously offline.
+    */
+   public final XSiteStateTransferConfigurationBuilder mode(XSiteStateTransferMode mode) {
+      attributes.attribute(MODE).set(mode);
       return this;
    }
 
@@ -109,9 +129,8 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       return this;
    }
 
-   @Override
    public String toString() {
-      return this.getClass().getSimpleName() + attributes;
+      return "XSiteStateTransferConfigurationBuilder [attributes=" + attributes + "]";
    }
 
 }

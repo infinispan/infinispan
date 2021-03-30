@@ -1,6 +1,7 @@
 package org.infinispan.cli.commands.rest;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
@@ -10,13 +11,19 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
+import org.infinispan.cli.commands.CacheAwareCommand;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
+import org.infinispan.cli.completers.SiteCompleter;
+import org.infinispan.cli.completers.XSiteStateTransferModeCompleter;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.logging.Messages;
+import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -37,6 +44,7 @@ import org.kohsuke.MetaInfServices;
             Site.ClearPushStateStatus.class,
             Site.View.class,
             Site.Name.class,
+            Site.StateTransferMode.class
       }
 )
 public class Site extends CliCommand {
@@ -61,7 +69,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option
+      @Option(completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -83,7 +91,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option(required = true)
+      @Option(required = true, completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -105,7 +113,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option(required = true)
+      @Option(required = true, completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -127,7 +135,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option(required = true)
+      @Option(required = true, completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -149,7 +157,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option(required = true)
+      @Option(required = true, completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -171,7 +179,7 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
-      @Option(required = true)
+      @Option(required = true, completer = SiteCompleter.class)
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -272,6 +280,91 @@ public class Site extends CliCommand {
          } catch (IOException e) {
             throw new CommandException(e);
          }
+      }
+   }
+
+   @GroupCommandDefinition(name = "state-transfer-mode", description = "Controls the cross-site state transfer mode.",
+         activator = ConnectionActivator.class,
+         groupCommands = {
+               GetStateTransferMode.class,
+               SetStateTransferMode.class
+         })
+   public static class StateTransferMode extends CliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         // This command serves only to wrap the sub-commands
+         invocation.println(invocation.getHelpInfo());
+         return CommandResult.FAILURE;
+      }
+   }
+
+   @CommandDefinition(name = "get", description = "Retrieves the cross-site state transfer mode.", activator = ConnectionActivator.class)
+   public static class GetStateTransferMode extends RestCliCommand implements CacheAwareCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
+      String cache;
+
+      @Option(shortName = 's', required = true, completer = SiteCompleter.class, description = "The remote backup name.")
+      String site;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         String cacheName = getCacheName(resource).orElseThrow(Messages.MSG::illegalContext);
+         return client.cache(cacheName).xSiteStateTransferMode(site);
+      }
+   }
+
+   @CommandDefinition(name = "set", description = "Sets the cross-site state transfer mode.", activator = ConnectionActivator.class)
+   public static class SetStateTransferMode extends RestCliCommand implements CacheAwareCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
+      String cache;
+
+      @Option(shortName = 's', required = true, completer = SiteCompleter.class, description = "The remote backup name.")
+      String site;
+
+      @Option(shortName = 'm', required = true, completer = XSiteStateTransferModeCompleter.class, description = "The state transfer mode to set.")
+      protected String mode;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         String cacheName = getCacheName(resource).orElseThrow(Messages.MSG::illegalContext);
+         return client.cache(cacheName).xSiteStateTransferMode(site, XSiteStateTransferMode.valueOf(mode.toUpperCase()));
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 }

@@ -101,8 +101,10 @@ import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -113,6 +115,7 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 
 /**
@@ -268,6 +271,9 @@ public class RemoteCommandsFactory {
                break;
             case TouchCommand.COMMAND_ID:
                command = new TouchCommand();
+               break;
+            case XSiteViewNotificationCommand.COMMAND_ID:
+               command = new XSiteViewNotificationCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
@@ -470,6 +476,12 @@ public class RemoteCommandsFactory {
                break;
             case IracUpdateVersionCommand.COMMAND_ID:
                command = new IracUpdateVersionCommand(cacheName);
+               break;
+            case XSiteAutoTransferStatusCommand.COMMAND_ID:
+               command = new XSiteAutoTransferStatusCommand(cacheName);
+               break;
+            case XSiteSetStateTransferModeCommand.COMMAND_ID:
+               command = new XSiteSetStateTransferModeCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

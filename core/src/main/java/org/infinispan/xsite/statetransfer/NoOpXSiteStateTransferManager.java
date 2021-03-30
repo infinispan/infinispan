@@ -1,9 +1,11 @@
 package org.infinispan.xsite.statetransfer;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -95,6 +97,21 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    public XSiteStateConsumer getStateConsumer() {
       //although xsite is disabled, this class is still able to receive state from a remote site.
       return consumer;
+   }
+
+   @Override
+   public void startAutomaticStateTransfer(Collection<String> sites) {
+      //no-op
+   }
+
+   @Override
+   public XSiteStateTransferMode stateTransferMode(String site) {
+      return XSiteStateTransferMode.MANUAL;
+   }
+
+   @Override
+   public boolean setAutomaticStateTransfer(String site, XSiteStateTransferMode mode) {
+      return false;
    }
 
    @Override

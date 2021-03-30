@@ -222,6 +222,8 @@ public interface Ids {
    int PUBLISHER_TRANSFORMERS = 151;
    int PREPARE_RESPONSE = 152;
 
+   int XSITE_AUTO_TRANSFER_RESPONSE = 153;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

@@ -48,6 +48,24 @@ Bring backup locations online with the `?action=bring-online` parameter.
 POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
 ----
 
+[id='rest_v2_cache_manager_get_state_transfer_mode']
+= Retrieving the State Transfer Mode
+Check the state transfer mode with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode
+----
+
+[id='rest_v2_cache_manager_get_state_transfer_mode']
+= Setting the State Transfer Mode
+Configure the state transfer mode with the `?action=set` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode?action=set&mode={mode}
+----
+
 [id='rest_v2_cache_manager_start_push']
 = Starting State Transfer
 Push state of all caches to remote sites with the `?action=start-push-state` parameter.

@@ -89,8 +89,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 import org.jgroups.Event;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
@@ -157,6 +159,7 @@ public class JGroupsTransport implements Transport {
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    protected ExecutorService nonBlockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
+   @Inject protected GlobalXSiteAdminOperations globalXSiteAdminOperations;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
@@ -197,12 +200,6 @@ public class JGroupsTransport implements Transport {
 
    public JGroupsTransport() {
       probeHandler = new ThreadPoolProbeHandler();
-   }
-
-   private static List<org.jgroups.Address> toJGroupsAddressList(Collection<Address> addresses) {
-      if (addresses == null)
-         return null;
-      return addresses.stream().map(JGroupsTransport::toJGroupsAddress).collect(Collectors.toList());
    }
 
    @Override
@@ -1229,6 +1226,16 @@ public class JGroupsTransport implements Transport {
       } finally {
          viewUpdateLock.unlock();
       }
+      if (sitesUp.isEmpty()) {
+         return;
+      }
+      if (isCoordinator()) {
+         globalXSiteAdminOperations.onSitesUp(sitesUp);
+      } else {
+         //for the case where the coordinator isn't the site master.
+         //TODO improve this by checking if the coordinator is a site master or not.
+         sendTo(getCoordinator(), new XSiteViewNotificationCommand(sitesUp), DeliverOrder.NONE);
+      }
    }
 
    private void siteUnreachable(String site) {
@@ -1377,8 +1384,9 @@ public class JGroupsTransport implements Transport {
          }
          if (src instanceof SiteAddress) {
             String originSite = ((SiteAddress) src).getSite();
-            ((XSiteReplicateCommand) command).setOriginSite(originSite);
-            invocationHandler.handleFromRemoteSite(originSite, (XSiteReplicateCommand) command, reply, deliverOrder);
+            XSiteReplicateCommand<?> xsiteCommand = (XSiteReplicateCommand<?>) command;
+            xsiteCommand.setOriginSite(originSite);
+            invocationHandler.handleFromRemoteSite(originSite, xsiteCommand, reply, deliverOrder);
          } else {
             invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
          }

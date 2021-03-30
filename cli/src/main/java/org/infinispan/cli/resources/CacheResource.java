@@ -1,6 +1,7 @@
 package org.infinispan.cli.resources;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -37,5 +38,9 @@ public class CacheResource extends AbstractResource {
 
    public static String cacheName(Resource resource) {
       return resource.findAncestor(CacheResource.class).getName();
+   }
+
+   public static Optional<String> findCacheName(Resource resource) {
+      return resource.optionalFindAncestor(CacheResource.class).map(AbstractResource::getName);
    }
 }

@@ -8,6 +8,10 @@ import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.TestServer;
@@ -74,6 +78,74 @@ public class XSiteCliOperations {
          terminal.readln("site view");
          terminal.assertContains(XSiteIT.LON);
          terminal.assertContains(XSiteIT.NYC);
+         terminal.clear();
+      });
+   }
+
+   @Test
+   public void testStateTransferModeCli() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.clustering().sites().addBackup()
+            .site(XSiteIT.NYC)
+            .strategy(BackupConfiguration.BackupStrategy.ASYNC)
+            .stateTransfer().mode(XSiteStateTransferMode.AUTO);
+
+      SERVER_TEST.hotrod(XSiteIT.LON).createRemoteCacheManager()
+            .administration()
+            .createCache("st-mode", builder.build());
+
+      doWithTerminal(terminal -> {
+         connect(terminal, XSiteIT.LON);
+
+         terminal.readln("site state-transfer-mode");
+         terminal.assertContains("Usage: site state-transfer-mode [<options>]");
+         terminal.clear();
+
+         //make sure --site is required
+         terminal.readln("site state-transfer-mode get");
+         terminal.assertContains("Option: --site is required for this command.");
+         terminal.clear();
+
+         //check command invoked in the wrong context
+         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.assertContains("Command invoked from the wrong context");
+         terminal.clear();
+
+         //check non xsite cache
+         terminal.readln("cd caches/___script_cache");
+         terminal.clear();
+         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.assertContains("Not Found: Cache '___script_cache' does not have backup sites.");
+         terminal.clear();
+
+         //check if --cache overrides the context
+         terminal.readln("site state-transfer-mode get --cache=st-mode --site=" + XSiteIT.NYC);
+         terminal.assertContains("AUTO");
+         terminal.clear();
+
+         //check if --cache is not required
+         terminal.readln("cd ../st-mode");
+         terminal.clear();
+         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.assertContains("AUTO");
+         terminal.clear();
+
+         //check invalid site
+         terminal.readln("site state-transfer-mode get --site=NOT_A_SITE");
+         terminal.assertContains("Not Found: Cache 'st-mode' does not backup to site 'NOT_A_SITE'");
+         terminal.clear();
+
+         //check set!
+         terminal.readln("site state-transfer-mode set --mode=MANUAL --site=" + XSiteIT.NYC);
+         terminal.clear();
+         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.assertContains("MANUAL");
+         terminal.clear();
+
+         //check invalid mode
+         terminal.readln("site state-transfer-mode set --mode=ABC --site=" + XSiteIT.NYC);
+         terminal.assertContains("No enum constant org.infinispan.configuration.cache.XSiteStateTransferMode.ABC");
          terminal.clear();
       });
    }

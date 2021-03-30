@@ -8,7 +8,7 @@ Transfer cache state to remote backup locations.
 . Use the [command]`site` command to push state transfer, as in the following example:
 +
 ----
-//containers/default]> site push-site-state --cache=cacheName --site=NYC
+[//containers/default]> site push-site-state --cache=cacheName --site=NYC
 ----
 
 For more information and examples, run the [command]`help site` command.

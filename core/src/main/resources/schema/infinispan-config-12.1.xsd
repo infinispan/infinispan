@@ -2165,6 +2165,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="mode" type="tns:xsite-state-transfer-mode" default="${XSiteStateTransfer.mode}">
+            <xs:annotation>
+              <xs:documentation>
+                Controls whether cross-site state transfer happens manually on user action, which is the default, or automatically when backup locations come online.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
@@ -2902,4 +2909,26 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="xsite-state-transfer-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="MANUAL">
+        <xs:annotation>
+          <xs:documentation>
+            Users must bring backup locations online and initiate state
+            transfer between remote sites.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="AUTO">
+        <xs:annotation>
+          <xs:documentation>
+            Backup locations that use the asynchronous backup strategy can
+            automatically come back online. State transfer operations begin
+            when the remote site connections are stable.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
 </xs:schema>

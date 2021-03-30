@@ -40,6 +40,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -138,6 +139,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .timeout(1)
             .maxRetries(2)
             .waitTime(12)
+            .mode(XSiteStateTransferMode.AUTO)
 
             .security().authorization().role("ROLE").role("ROLA")
             .persistence().passivation(false)

@@ -11,14 +11,18 @@ import org.infinispan.cli.Context;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public abstract class ListCompleter implements OptionCompleter {
+public abstract class ListCompleter implements OptionCompleter<ContextAwareCompleterInvocation> {
 
    abstract Collection<String> getAvailableItems(Context context) throws IOException;
 
+   protected Collection<String> getAvailableItems(ContextAwareCompleterInvocation invocation) throws IOException {
+      return getAvailableItems(invocation.context);
+   }
+
    @Override
-   public void complete(CompleterInvocation invocation) {
+   public void complete(ContextAwareCompleterInvocation invocation) {
       try {
-         Collection<String> all = getAvailableItems(((ContextAwareCompleterInvocation) invocation).context);
+         Collection<String> all = getAvailableItems(invocation);
          completeFromList(invocation, all);
       } catch (IOException e) {
          e.printStackTrace();

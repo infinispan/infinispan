@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -21,6 +22,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.ContainerSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteStatus;
 
@@ -38,9 +40,10 @@ public class GlobalXSiteAdminOperations {
 
    public static final String CACHE_DELIMITER = ",";
 
-   @Inject EmbeddedCacheManager cacheManager;
+   @Inject
+   EmbeddedCacheManager cacheManager;
 
-   private static void addCacheAdmin(Cache cache, List<CacheXSiteAdminOperation> list) {
+   private static void addCacheAdmin(Cache<?, ?> cache, List<CacheXSiteAdminOperation> list) {
       if (cache != null) {
          ComponentRegistry cacheRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
          XSiteAdminOperations operation = cacheRegistry.getComponent(XSiteAdminOperations.class);
@@ -64,12 +67,6 @@ public class GlobalXSiteAdminOperations {
 
    public Map<String, String> cancelPushStateAllCaches(String site) {
       return performMultiCacheOperation(operations -> operations.cancelPushState(site));
-   }
-
-   private String toJMXResponse(Map<String, String> results) {
-      return results.entrySet().stream()
-            .map(e -> e.getKey() + ": " + e.getValue())
-            .collect(Collectors.joining(CACHE_DELIMITER));
    }
 
    @ManagedOperation(
@@ -103,7 +100,8 @@ public class GlobalXSiteAdminOperations {
          description = "Cancels the push state on all the caches to remote site.",
          name = "CancelPushState"
    )
-   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName") final String site) {
+   public final String cancelPushState(
+         @Parameter(description = "The destination site name", name = "SiteName") final String site) {
       return toJMXResponse(performMultiCacheOperation(operations -> operations.cancelPushState(site)));
    }
 
@@ -132,9 +130,33 @@ public class GlobalXSiteAdminOperations {
    }
 
    /**
+    * Invoked when a remote site is connected.
+    * <p>
+    * This method is used to trigger the cross-site replication state transfer if it is enabled. It checks all the
+    * caches.
+    *
+    * @param sitesUp The {@link Collection} of remote sites online.
+    */
+   public void onSitesUp(Collection<String> sitesUp) {
+      for (ComponentRegistry registry : SecurityActions.getGlobalComponentRegistry(cacheManager).getNamedComponentRegistries()) {
+         ComponentRef<XSiteStateTransferManager> st = registry.getXSiteStateTransferManager();
+         if (st != null) { //XSiteStateTransferManager not cached yet, meaning this node is starting up.
+            st.running().startAutomaticStateTransfer(sitesUp);
+         }
+      }
+   }
+
+   private String toJMXResponse(Map<String, String> results) {
+      return results.entrySet().stream()
+                    .map(e -> e.getKey() + ": " + e.getValue())
+                    .collect(Collectors.joining(CACHE_DELIMITER));
+   }
+
+   /**
     * Execute an operation for all caches in the site
-    * @return A Map keyed by the cache name and with the outcome in the value. Possible values are 'ok' or the
-    * error message.
+    *
+    * @return A Map keyed by the cache name and with the outcome in the value. Possible values are 'ok' or the error
+    * message.
     */
    private Map<String, String> performMultiCacheOperation(Operation operation) {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);

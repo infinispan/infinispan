@@ -1,0 +1,26 @@
+[id='cli_xsite_push-{context}']
+= Configuring Cross-Site State Transfer Modes
+You can configure cross-site state transfer operations to happen automatically when {brandname} detects that backup locations come online.
+Alternatively you can use the default mode, which is to manually perform state transfer through the CLI or via JMX or REST.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Use the [command]`site` command to configure state transfer modes, as in the following examples:
+
+* Retrieve the current state transfer mode.
++
+----
+[//containers/default]> site state-transfer-mode get --cache=cacheName --site=NYC
+"MANUAL"
+----
+
+* Configure automatic state transfer operations for a cache and backup location.
+----
+[//containers/default]> site state-transfer-mode set --cache=cacheName --site=NYC --mode=AUTO
+----
+
+[TIP]
+====
+Run the [command]`help site` command for more information and examples.
+====

@@ -57,6 +57,7 @@ import org.infinispan.manager.impl.ReplicableRunnableCommand;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
+import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 
 /**
  * ReplicableCommandExternalizer.
@@ -130,7 +131,6 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
-      //noinspection unchecked
       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
             GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class,
@@ -152,10 +152,11 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             RebalanceStartCommand.class, RebalanceStatusRequestCommand.class,
             CacheShutdownCommand.class, CacheShutdownRequestCommand.class, TopologyUpdateStableCommand.class,
             CacheJoinCommand.class, CacheLeaveCommand.class, CacheAvailabilityUpdateCommand.class,
-            IracPutKeyValueCommand.class, TouchCommand.class);
+            IracPutKeyValueCommand.class, TouchCommand.class,
+            XSiteViewNotificationCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
-      if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
+      if (!moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;
    }
 

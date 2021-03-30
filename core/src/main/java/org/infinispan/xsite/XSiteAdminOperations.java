@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -12,9 +13,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -29,8 +32,12 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.response.AutoStateTransferResponse;
+import org.infinispan.xsite.response.AutoStateTransferResponseCollector;
 import org.infinispan.xsite.statetransfer.StateTransferStatus;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.BringSiteOnlineResponse;
@@ -316,6 +323,48 @@ public class XSiteAdminOperations {
    public final String getSendingSiteName() {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return stateTransferManager.getSendingSiteName();
+   }
+
+   public final CompletionStage<String> asyncGetStateTransferMode(String site) {
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
+      //check local first
+      if (stateTransferManager.stateTransferMode(site) == XSiteStateTransferMode.MANUAL) {
+         return CompletableFuture.completedFuture(XSiteStateTransferMode.MANUAL.toString());
+      }
+      ReplicableCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
+      AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(true, XSiteStateTransferMode.AUTO);
+      return rpcManager.invokeCommandOnAll(cmd, collector, rpcManager.getSyncRpcOptions())
+            .thenApply(AutoStateTransferResponse::stateTransferMode)
+            .thenApply(Enum::toString);
+   }
+
+   @ManagedOperation(displayName = "State Transfer Mode",
+         description = "Returns the cross-site replication state transfer mode.",
+         name = "GetStateTransferMode")
+   public final String getStateTransferMode(String site) {
+      return CompletionStages.join(asyncGetStateTransferMode(site));
+   }
+
+   public CompletionStage<Boolean> asyncSetStateTransferMode(String site, String mode) {
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
+      XSiteStateTransferMode stateTransferMode = XSiteStateTransferMode.valueOf(mode);
+
+      //update locally first
+      if (!stateTransferManager.setAutomaticStateTransfer(site, stateTransferMode)) {
+         //failed
+         return CompletableFutures.completedFalse();
+      }
+
+      ReplicableCommand cmd = commandsFactory.buildXSiteSetStateTransferModeCommand(site, stateTransferMode);
+      return rpcManager.invokeCommandOnAll(cmd, org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions())
+            .thenApply(o -> Boolean.TRUE);
+   }
+
+   @ManagedOperation(displayName = "Sets State Transfer Mode",
+         description = "Sets the cross-site state transfer mode.",
+         name = "SetStateTransferMode")
+   public final boolean setStateTransferMode(String site, String mode) {
+      return CompletionStages.join(asyncSetStateTransferMode(site, mode));
    }
 
    private static String performOperation(String operationName, String siteName, Operation operation) {

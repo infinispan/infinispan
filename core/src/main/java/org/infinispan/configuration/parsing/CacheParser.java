@@ -43,6 +43,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
@@ -369,6 +370,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             case WAIT_TIME:
                backup.stateTransfer().waitTime(Long.parseLong(value));
+               break;
+            case MODE:
+               backup.stateTransfer().mode(XSiteStateTransferMode.valueOf(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

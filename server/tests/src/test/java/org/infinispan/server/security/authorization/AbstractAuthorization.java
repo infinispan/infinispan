@@ -51,6 +51,7 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.functional.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.Test;
 
@@ -455,6 +456,8 @@ public abstract class AbstractAuthorization {
       assertStatus(status, xsiteCache.backupStatus("NYC"));
       assertStatus(status, xsiteCache.getXSiteTakeOfflineConfig("NYC"));
       assertStatus(noContentStatus, xsiteCache.updateXSiteTakeOfflineConfig("NYC", 10, 1000));
+      assertStatus(status, xsiteCache.xSiteStateTransferMode("NYC"));
+      assertStatus(status, xsiteCache.xSiteStateTransferMode("NYC", XSiteStateTransferMode.MANUAL));
       RestCacheManagerClient xsiteCacheManager = client.cacheManager("default");
       assertStatus(status, xsiteCacheManager.bringBackupOnline("NYC"));
       assertStatus(status, xsiteCacheManager.takeOffline("NYC"));

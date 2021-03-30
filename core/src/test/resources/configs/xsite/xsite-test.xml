@@ -49,6 +49,13 @@
             <backup site="NYC2" strategy="ASYNC"/>
          </backups>
       </distributed-cache>
+      <distributed-cache name="autoStateTransfer" configuration="base">
+         <backups>
+            <backup site="NYC2" strategy="ASYNC">
+               <state-transfer mode="AUTO"/>
+            </backup>
+         </backups>
+      </distributed-cache>
    </cache-container>
 
 </infinispan>
