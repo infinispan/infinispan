@@ -240,6 +240,18 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       Object key = createKey(primaryOwner, backupOwner);
       primaryOwner.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
 
+      // Scattered can pick backup at random - so make sure we know it
+      if (cacheMode == CacheMode.SCATTERED_SYNC) {
+         for (Cache cache : caches()) {
+            if (cache == primaryOwner) {
+               continue;
+            }
+            if (cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(key)) {
+               backupOwner = cache.getAdvancedCache();
+            }
+         }
+      }
+
       assertEquals(key.toString(), primaryOwner.get(key));
       assertEquals(key.toString(), backupOwner.get(key));
 

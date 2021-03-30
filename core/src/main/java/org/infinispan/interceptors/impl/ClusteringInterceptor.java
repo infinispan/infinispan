@@ -81,7 +81,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
       @Override
       protected final Boolean addValidResponse(Address sender, ValidResponse response) {
-         return (Boolean) response.getResponseValue();
+         return addBooleanResponse(sender, (Boolean) response.getResponseValue());
       }
 
       abstract Boolean addBooleanResponse(Address sender, Boolean response);
@@ -146,11 +146,11 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
                rpcManager.getSyncRpcOptions());
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rValue) -> {
             Boolean touchedLocally = (Boolean) rValue;
-            Boolean collectedResponse = collector.addBooleanResponse(null, touchedLocally);
-            if (collectedResponse != null) {
-               return asyncValue(remoteInvocation.thenApply(ignore -> touchedLocally));
+            if (touchedLocally) {
+               return asyncValue(remoteInvocation);
             }
-            return asyncValue(remoteInvocation);
+            // If primary can't touch - it doesn't matter about others
+            return Boolean.FALSE;
          });
       } else if (ctx.isOriginLocal()) {
          // Send to the primary owner
