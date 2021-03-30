@@ -6,8 +6,8 @@
 
     <defaultProtocol type="Servlet 3.0" />
 
-    <group qualifier="Grid" default="true">
-        <container qualifier="container.active-1" default="true">
+    <group qualifier="wildfly" default="true">
+        <container qualifier="server-1" default="true">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node1</property>
                 <property name="javaHome">${server.jvm}</property>
@@ -24,7 +24,7 @@
                 <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
-        <container qualifier="container.active-2">
+        <container qualifier="server-2">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node2</property>
                 <property name="javaHome">${server.jvm}</property>
