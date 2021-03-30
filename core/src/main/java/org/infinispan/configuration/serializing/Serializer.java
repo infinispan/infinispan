@@ -49,9 +49,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StatisticsConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
-import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.configuration.global.AllowListConfiguration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -785,17 +783,13 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             AttributeSet stateTransfer = backup.stateTransfer().attributes();
             if (stateTransfer.isModified()) {
                writer.writeStartElement(Element.STATE_TRANSFER);
-               stateTransfer.write(writer, XSiteStateTransferConfiguration.CHUNK_SIZE, Attribute.CHUNK_SIZE);
-               stateTransfer.write(writer, XSiteStateTransferConfiguration.MAX_RETRIES, Attribute.MAX_RETRIES);
-               stateTransfer.write(writer, XSiteStateTransferConfiguration.TIMEOUT, Attribute.TIMEOUT);
-               stateTransfer.write(writer, XSiteStateTransferConfiguration.WAIT_TIME, Attribute.WAIT_TIME);
+               stateTransfer.write(writer);
                writer.writeEndElement();
             }
             AttributeSet takeOffline = backup.takeOffline().attributes();
             if (takeOffline.isModified()) {
                writer.writeStartElement(Element.TAKE_OFFLINE);
-               takeOffline.write(writer, TakeOfflineConfiguration.AFTER_FAILURES, Attribute.TAKE_BACKUP_OFFLINE_AFTER_FAILURES);
-               takeOffline.write(writer, TakeOfflineConfiguration.MIN_TIME_TO_WAIT, Attribute.TAKE_BACKUP_OFFLINE_MIN_WAIT);
+               takeOffline.write(writer);
                writer.writeEndElement();
             }
             writer.writeEndElement();

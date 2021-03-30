@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.BackupForConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -103,6 +104,13 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
       XSiteEntryMergePolicy<? ,?> resolver = cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteEntryMergePolicy.class);
       assertEquals(CustomXSiteEntryMergePolicy.class, resolver.getClass());
    }
+
+   public void testAutoStateTransfer() {
+      Configuration dcc = cacheManager.getCacheConfiguration("autoStateTransfer");
+      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(dcc.sites().allBackups().get(0).stateTransfer().mode(), XSiteStateTransferMode.AUTO);
+   }
+
 
    private void testDefault(Configuration dcc) {
       assertEquals(dcc.sites().allBackups().size(), 2);

@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -217,6 +218,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
          log.tracef("Not registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
       }
+   }
+
+   public final Collection<ComponentRegistry> getNamedComponentRegistries() {
+      return new ArrayList<>(namedComponents.values());
    }
 
    public final ComponentRegistry getNamedComponentRegistry(String name) {

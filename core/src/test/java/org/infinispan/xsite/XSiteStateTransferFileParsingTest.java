@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -36,7 +35,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
          + "                   rack=\"r1\" site=\"LON\"/>\n" + "  <replicated-cache name=\"default\">\n"
          + "     <backups>\n"
          + "        <backup site=\"NYC\" strategy=\"SYNC\" failure-policy=\"WARN\" timeout=\"12003\">\n"
-         + "           <state-transfer chunk-size=\"10\" timeout=\"%s\" max-retries=\"30\" wait-time=\"%s\" />\n"
+         + "           <state-transfer chunk-size=\"10\" timeout=\"%s\" max-retries=\"30\" wait-time=\"%s\" mode=\"%s\"/>\n"
          + "        </backup>\n" + "     </backups>\n"
          + "     <backup-for remote-cache=\"someCache\" remote-site=\"SFO\"/>\n" + "  </replicated-cache>\n"
          + "</cache-container>\n</infinispan>";
@@ -70,23 +69,28 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
-   public void testNegativeTimeout() throws IOException {
-      testInvalidConfiguration(String.format(XML_FORMAT, -1, DEFAULT_WAIT_TIME));
+   public void testNegativeTimeout() {
+      testInvalidConfiguration(String.format(XML_FORMAT, -1, DEFAULT_WAIT_TIME, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
-   public void testZeroTimeout() throws IOException {
-      testInvalidConfiguration(String.format(XML_FORMAT, 0, DEFAULT_WAIT_TIME));
+   public void testZeroTimeout() {
+      testInvalidConfiguration(String.format(XML_FORMAT, 0, DEFAULT_WAIT_TIME, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
-   public void testNegativeWaitTime() throws IOException {
-      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, -1));
+   public void testNegativeWaitTime() {
+      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, -1, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
-   public void testZeroWaitTime() throws IOException {
-      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0));
+   public void testZeroWaitTime() {
+      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0, "MANUAL"));
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000634:.*")
+   public void testAutoStateTransferModeWithSync() {
+      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, DEFAULT_WAIT_TIME, "AUTO"));
    }
 
    @Override
@@ -94,7 +98,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.fromXml(FILE_NAME,false, true, TransportFlags.minimalXsiteFlags());
    }
 
-   private void testInvalidConfiguration(String xmlConfiguration) throws IOException {
+   private void testInvalidConfiguration(String xmlConfiguration) {
       EmbeddedCacheManager invalidCacheManager = null;
       try {
          log.infof("Creating cache manager with %s", xmlConfiguration);

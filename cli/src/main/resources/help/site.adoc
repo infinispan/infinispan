@@ -24,6 +24,8 @@ SYNOPSIS
 
 *site push-site-status* ['OPTIONS']
 
+*site state-transfer-mode get|set* ['OPTIONS']
+
 *site name*
 
 *site view*
@@ -36,6 +38,13 @@ Specifies a cache.
 
 *--site*='SITE_NAME'::
 Specifies a backup location.
+
+
+STATE TRANSFER MODE OPTIONS
+---------------------------
+
+*--mode*='MODE'::
+Sets the state transfer mode. Values are `MANUAL` (default) or `AUTO`.
 
 
 EXAMPLES
@@ -66,6 +75,12 @@ Cancels the operation to receive state from `NYC`.
 
 `site clear-push-state-status --cache=myCache` +
 Clears the status of the push state operation for `mycache`.
+
+`site state-transfer-mode get --cache=myCache --site=NYC` +
+Retrieves the state transfer mode for `mycache` to `NYC`.
+
+`site state-transfer-mode set --cache=myCache --site=NYC --mode=AUTO` +
+Configures automatic state transfer for `mycache` to `NYC`.
 
 `site name` +
 Returns the name of the local site. If cross-site replication is not configured, the name of the local site is always "local".

@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -401,6 +402,20 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       builder.url(url);
       builder.method("PUT", RequestBody.create(MediaType.parse("application/json"), body));
       return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> xSiteStateTransferMode(String site) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s/state-transfer-mode", cacheUrl, site));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> xSiteStateTransferMode(String site, XSiteStateTransferMode mode) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s/state-transfer-mode?action=set&mode=%s", cacheUrl, site, mode.toString()));
+      return client.execute(builder.post(EMPTY_BODY));
    }
 
    private CompletionStage<RestResponse> executeXSiteOperation(String site, String action) {

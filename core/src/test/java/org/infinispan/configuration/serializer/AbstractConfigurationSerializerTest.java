@@ -23,6 +23,7 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
@@ -89,6 +90,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
       compareAttributeSets(name, configurationBefore.statistics().attributes(), configurationAfter.statistics().attributes());
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
+      compareSites(name, configurationBefore.sites().allBackups(), configurationAfter.sites().allBackups());
       compareAttributeSets(name, configurationBefore.invocationBatching().attributes(), configurationAfter.invocationBatching().attributes());
       compareAttributeSets(name, configurationBefore.customInterceptors().attributes(), configurationAfter.customInterceptors().attributes());
       compareAttributeSets(name, configurationBefore.unsafe().attributes(), configurationAfter.unsafe().attributes());
@@ -163,6 +165,18 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
                assertEquals("Configuration " + name, attribute, after.attribute(attribute.name()));
             }
          }
+      }
+   }
+
+   private void compareSites(String name, List<BackupConfiguration> sitesBefore, List<BackupConfiguration> sitesAfter) {
+      assertEquals("Configuration " + name + " sites count mismatch", sitesBefore.size(), sitesAfter.size());
+      for (int i = 0; i < sitesBefore.size(); i++) {
+         BackupConfiguration before = sitesBefore.get(i);
+         BackupConfiguration after = sitesAfter.get(i);
+         assertEquals("Configuration " + name + " stores class mismatch", before.getClass(), after.getClass());
+         compareAttributeSets(name, before.attributes(), after.attributes());
+         compareAttributeSets(name, before.takeOffline().attributes(), after.takeOffline().attributes());
+         compareAttributeSets(name, before.stateTransfer().attributes(), after.stateTransfer().attributes());
       }
    }
 }

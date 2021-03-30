@@ -88,6 +88,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
@@ -116,8 +117,10 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -652,4 +655,8 @@ public interface CommandsFactory {
    IracTouchKeyCommand buildIracTouchCommand(Object key);
 
    IracUpdateVersionCommand buildIracUpdateVersionCommand(Map<Integer, IracEntryVersion> segmentsVersion);
+
+   XSiteAutoTransferStatusCommand buildXSiteAutoTransferStatusCommand(String site);
+
+   XSiteSetStateTransferModeCommand buildXSiteSetStateTransferModeCommand(String site, XSiteStateTransferMode mode);
 }

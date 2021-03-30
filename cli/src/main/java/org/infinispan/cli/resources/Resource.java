@@ -1,6 +1,7 @@
 package org.infinispan.cli.resources;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.infinispan.cli.connection.Connection;
 
@@ -41,6 +42,11 @@ public interface Resource {
     * Finds the resource of the specified type within the ancestors of this resource
     */
    <T extends Resource> T findAncestor(Class<T> resourceClass);
+
+   /**
+    * Finds the resource of the specified type within the ancestors of this resource
+    */
+   <T extends Resource> Optional<T> optionalFindAncestor(Class<T> resourceClass);
 
    /**
     * Returns whether this resource is a leaf resource (i.e. it has no children, or the children are not navigable)

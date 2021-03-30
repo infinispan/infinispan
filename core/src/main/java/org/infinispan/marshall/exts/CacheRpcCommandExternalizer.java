@@ -58,8 +58,10 @@ import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublis
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -123,7 +125,9 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracPutKeyCommand.class, IracRemoveKeyCommand.class, IracClearKeysCommand.class,
             IracCleanupKeyCommand.class, IracMetadataRequestCommand.class,
             IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class,
-            IracUpdateVersionCommand.class);
+            IracUpdateVersionCommand.class,
+            XSiteAutoTransferStatusCommand.class,
+            XSiteSetStateTransferModeCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

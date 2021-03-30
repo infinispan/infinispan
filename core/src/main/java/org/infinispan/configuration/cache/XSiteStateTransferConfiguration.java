@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.parsing.Element.STATE_TRANSFER;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -28,15 +29,16 @@ public class XSiteStateTransferConfiguration implements Matchable<XSiteStateTran
    public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", DEFAULT_TIMEOUT).build();
    public static final AttributeDefinition<Integer> MAX_RETRIES = AttributeDefinition.builder("maxRetries", DEFAULT_MAX_RETRIES).build();
    public static final AttributeDefinition<Long> WAIT_TIME = AttributeDefinition.builder("waitTime", DEFAULT_WAIT_TIME).build();
+   public static final AttributeDefinition<XSiteStateTransferMode> MODE = AttributeDefinition.builder("mode", XSiteStateTransferMode.MANUAL).build();
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STATE_TRANSFER.getLocalName());
+   static final ElementDefinition<XSiteStateTransferConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(STATE_TRANSFER.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(XSiteStateTransferConfiguration.class, CHUNK_SIZE, TIMEOUT, MAX_RETRIES, WAIT_TIME);
+      return new AttributeSet(XSiteStateTransferConfiguration.class, CHUNK_SIZE, TIMEOUT, MAX_RETRIES, WAIT_TIME, MODE);
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<XSiteStateTransferConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
 
@@ -70,29 +72,21 @@ public class XSiteStateTransferConfiguration implements Matchable<XSiteStateTran
       return waitTime.get();
    }
 
+   public XSiteStateTransferMode mode() {
+      return attributes.attribute(MODE).get();
+   }
+
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      XSiteStateTransferConfiguration other = (XSiteStateTransferConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      XSiteStateTransferConfiguration that = (XSiteStateTransferConfiguration) o;
+      return attributes.equals(that.attributes);
    }
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
+      return Objects.hash(attributes);
    }
 
    @Override

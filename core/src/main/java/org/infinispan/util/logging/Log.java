@@ -2151,4 +2151,14 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Another partition or topology changed for while completing partial completed transaction %s. Retrying later.", id = 630)
    void topologyChangedPartitionHandlingTxCompletion(GlobalTransaction globalTransaction);
+
+   @Message(value = "Cross-Site state transfer mode cannot be null.", id = 633)
+   CacheConfigurationException invalidXSiteStateTransferMode();
+
+   @Message(value = "Cross-Site automatic state transfer is not compatible with SYNC backup strategy.", id = 634)
+   CacheConfigurationException autoXSiteStateTransferModeNotAvailableInSync();
+
+   @LogMessage(level = WARN)
+   @Message(value = "[%s] Failed to receive a response from any nodes. Automatic cross-site state transfer to site '%s' is not started.", id = 635)
+   void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
 }

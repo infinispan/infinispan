@@ -172,6 +172,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return sites.get(index);
    }
 
+   protected EmbeddedCacheManager manager(int siteIndex, int managerIndex) {
+      return sites.get(siteIndex).cacheManagers().get(managerIndex);
+   }
+
    protected TestSite site(String name) {
       return sites.get(siteName2index.get(name));
    }
@@ -292,6 +296,24 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          return siteName;
       }
 
+      public EmbeddedCacheManager addCacheManager(String cacheName, GlobalConfigurationBuilder globalTemplate, ConfigurationBuilder cacheTemplate, boolean waitForCluster) {
+         final int i = cacheManagers.size();
+         final TransportFlags flags = transportFlags();
+         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+         gcb.read(globalTemplate.build());
+         decorateGlobalConfiguration(gcb, siteIndex, i);
+
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.read(cacheTemplate.build());
+         decorateCacheConfiguration(builder, siteIndex, i);
+
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
+         if (waitForCluster) {
+            waitForClusterToForm(cacheName);
+         }
+         return cm;
+      }
+
       private TransportFlags transportFlags() {
          return new TransportFlags().withPortRange(siteIndex).withSiteName(siteName).withFD(true);
       }
@@ -308,23 +330,11 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
          final TransportFlags flags = transportFlags();
          for (int i = 0; i < numMembersInCluster; i++) {
-            GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-            gcb.read(globalTemplate.build());
-            decorateGlobalConfiguration(gcb, siteIndex, i);
-
-            ConfigurationBuilder builder = new ConfigurationBuilder();
-            builder.read(cacheTemplate.build());
-            decorateCacheConfiguration(builder, siteIndex, i);
-
-            EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
+            EmbeddedCacheManager cm = addCacheManager(cacheName, globalTemplate, cacheTemplate, waitBetweenCacheManager);
             if (cacheName != null) {
-               cm.defineConfiguration(cacheName, builder.build());
                caches.add(cm.getCache(cacheName));
             } else {
                caches.add(cm.getCache());
-            }
-            if (waitBetweenCacheManager) {
-               waitForClusterToForm(cacheName);
             }
          }
          waitForClusterToForm(cacheName);

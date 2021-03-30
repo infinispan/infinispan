@@ -19,14 +19,15 @@ For example, "k2" exists on **LON** and **NYC**. "k2" is removed from **NYC**
 while **LON** is offline. When you bring **LON** back online, "k2" still exists
 at that location. If you push state from **NYC** to **LON**, the transfer does
 not affect "k2" on **LON**.
-+
+
 [TIP]
 ====
 To ensure contents of the cache are identical after state transfer, remove all
-data from the cache on the receiving site before pushing state. Use the
-`clear()` method.
+data from the cache on the receiving site before pushing state.
+
+Use the `clear()` method or the [command]`clearcache` command from the CLI.
 ====
-+
+
 * State transfer does not overwrite updates to data that occur after you
 initiate the push.
 +
@@ -37,14 +38,17 @@ Before state transfer completes, a client puts "k1,v2" on **LON**.
 In this case the state transfer from **NYC** does not overwrite "k1,v2" because
 that modification happened after you initiated the push.
 
+== Automatic State Transfer
+
+By default you must manually perform cross-site state transfer operations with the CLI or via JMX or REST.
+
+However, when using the asynchronous backup strategy, {brandname} can automatically perform cross-site state transfer operations.
+When it detects that a backup location has come back online, and the network connection is stable, {brandname} initiates bi-directional state transfer between backup locations.
+For example, {brandname} simultaneously transfers state from **LON** to **NYC** and **NYC** to **LON**.
+
 .Reference
 
 * link:{javadocroot}/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]
 * link:{cli_docs}#deleting_cache_entries[Clearing Caches with the CLI]
-+
-[TIP]
-====
-Run `help clearcache` from the CLI for command details and examples.
-====
-
 * link:{rest_docs}#rest_v2_clear_cache[Clearing Caches with the REST API]
+* link:#configure_state_transfer-{context}[Configure Cross-Site State Transfer]

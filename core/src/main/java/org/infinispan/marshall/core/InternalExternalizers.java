@@ -49,7 +49,6 @@ import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CompositeKeyValueFilter;
@@ -75,7 +74,6 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.ThrowableExternalizer;
 import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -117,6 +115,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfo;
 import org.infinispan.util.IntSetExternalizer;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.xsite.response.AutoStateTransferResponse;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 final class InternalExternalizers {
@@ -125,7 +124,6 @@ final class InternalExternalizers {
    }
 
    static ClassToExternalizerMap load(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
-      final PersistenceMarshaller persistenceMarshaller = gcr.getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
       // TODO Add initial value and load factor
       ClassToExternalizerMap exts = new ClassToExternalizerMap(512, 0.6f);
 
@@ -251,6 +249,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new CacheBiConsumers.Externalizer(), exts);
       addInternalExternalizer(PrepareResponse.EXTERNALIZER, exts);
       addInternalExternalizer(new InternalMetadataImpl.Externalizer(), exts);
+      addInternalExternalizer(AutoStateTransferResponse.EXTERNALIZER, exts);
 
       return exts;
    }

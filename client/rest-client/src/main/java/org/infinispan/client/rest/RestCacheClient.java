@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -317,6 +318,20 @@ public interface RestCacheClient {
     * Clear the status of a state push in a site
     */
    CompletionStage<RestResponse> clearPushStateStatus();
+
+   /**
+    * Returns the cross-site replication state transfer mode.
+    *
+    * @see XSiteStateTransferMode
+    */
+   CompletionStage<RestResponse> xSiteStateTransferMode(String site);
+
+   /**
+    * Sets the cross-site replication state transfer mode.
+    *
+    * @see XSiteStateTransferMode
+    */
+   CompletionStage<RestResponse> xSiteStateTransferMode(String site, XSiteStateTransferMode mode);
 
    /**
     * Check if the cache exists

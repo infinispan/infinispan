@@ -1,14 +1,21 @@
 package org.infinispan.xsite;
 
 import static java.lang.String.format;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.Test;
 
@@ -18,6 +25,13 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "xsite", testName = "xsite.XSiteAdminOperationsTest")
 public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
+
+   public XSiteAdminOperationsTest() {
+      //async LON=>NYC, sync NYC=>LON
+      //the above doesn't make sense, and probably won't work, but we don't put any data
+      //we are just testing XSiteAdminOperations class.
+      this.lonBackupStrategy = BackupConfiguration.BackupStrategy.ASYNC;
+   }
 
    @Override
    protected ConfigurationBuilder getNycActiveConfig() {
@@ -77,17 +91,46 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
       assertEquals(XSiteAdminOperations.SUCCESS, admin(LON, 1).bringSiteOnline(NYC));
       assertEquals(admin(LON, 0).status(), format("%s[ONLINE]", NYC));
       assertEquals(admin(LON, 1).status(), format("%s[ONLINE]", NYC));
+   }
 
+   public void testStateTransferMode() {
+      for (int i = 0; i < initialClusterSize; ++i) {
+         //by default, it is manual
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(LON, i).getStateTransferMode(NYC));
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
+      }
+
+      assertTrue(admin(LON, 0).setStateTransferMode(NYC, XSiteStateTransferMode.AUTO.toString()));
+
+      for (int i = 0; i < initialClusterSize; ++i) {
+         assertEquals(XSiteStateTransferMode.AUTO.toString(), admin(LON, i).getStateTransferMode(NYC));
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
+      }
+
+      //sync mode doesn't allow automatic state transfer mode
+      assertFalse(admin(NYC, 0).setStateTransferMode(LON, XSiteStateTransferMode.AUTO.toString()));
+
+      for (int i = 0; i < initialClusterSize; ++i) {
+         assertEquals(XSiteStateTransferMode.AUTO.toString(), admin(LON, i).getStateTransferMode(NYC));
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
+      }
+
+      assertTrue(admin(LON, 0).setStateTransferMode(NYC, XSiteStateTransferMode.MANUAL.toString()));
+
+      for (int i = 0; i < initialClusterSize; ++i) {
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(LON, i).getStateTransferMode(NYC));
+         assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
+      }
    }
 
    public void testSitesView() {
       assertEquals(new HashSet<>(Arrays.asList(LON, NYC)),
-            site(LON).cacheManagers().get(0).getTransport().getSitesView());
+            extractGlobalComponent(site(LON).cacheManagers().get(0), Transport.class).getSitesView());
       assertEquals(new HashSet<>(Arrays.asList(LON, NYC)),
-            site(NYC).cacheManagers().get(0).getTransport().getSitesView());
+            extractGlobalComponent(site(LON).cacheManagers().get(0), Transport.class).getSitesView());
    }
 
    private XSiteAdminOperations admin(String site, int cache) {
-      return cache(site, cache).getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+      return extractComponent(cache(site, cache), XSiteAdminOperations.class);
    }
 }
