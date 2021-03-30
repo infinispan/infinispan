@@ -1,8 +1,10 @@
 package org.infinispan.test.integration.thirdparty.cdi;
 
+import org.infinispan.test.integration.GenericDeploymentHelper;
 import org.infinispan.test.integration.cdi.AbstractGreetingCacheManagerIT;
 import org.infinispan.test.integration.thirdparty.DeploymentHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -15,14 +17,15 @@ import org.junit.runner.RunWith;
 public class GreetingCacheManagerIT extends AbstractGreetingCacheManagerIT {
 
    @Deployment
+   @TargetsContainer("server-1")
    public static Archive<?> deployment() {
       WebArchive war = DeploymentHelper.createDeployment();
       war.addPackage(AbstractGreetingCacheManagerIT.class.getPackage());
       war.addAsWebInfResource("beans.xml");
-      DeploymentHelper.addLibrary(war, "org.infinispan:infinispan-cdi-embedded");
-      DeploymentHelper.addLibrary(war, "org.infinispan:infinispan-jcache");
+      GenericDeploymentHelper.addLibrary(war, "org.infinispan:infinispan-cdi-embedded");
+      GenericDeploymentHelper.addLibrary(war, "org.infinispan:infinispan-jcache");
       // The JCache dependency is in the provided scope, so it's not added automatically
-      DeploymentHelper.addLibrary(war, "javax.cache:cache-api");
+      GenericDeploymentHelper.addLibrary(war, "javax.cache:cache-api");
       return war;
    }
 }

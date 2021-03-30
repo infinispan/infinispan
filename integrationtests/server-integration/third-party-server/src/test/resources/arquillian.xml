@@ -3,33 +3,77 @@
             xmlns="http://jboss.org/schema/arquillian"
             xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
-    <container qualifier="tomcat">
-        <configuration>
-            <property name="catalinaHome">${catalinaHome}</property>
-            <property name="user">admin</property>
-            <property name="pass">admin-pwd</property>
-            <!--
-            <property name="javaVmArguments">
-                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
-            </property>
-            -->
-            <property name="javaVmArguments">
-                -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
-            </property>
-        </configuration>
-    </container>
-    <container qualifier="wildfly">
-        <configuration>
-            <property name="jbossHome">${jbossHome}</property>
-            <property name="javaHome">${server.jvm}</property>
-            <!--
-            <property name="javaVmArguments">
-                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
-            </property>
-            -->
-            <property name="javaVmArguments">
-                -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
-            </property>
-        </configuration>
-    </container>
+    <group qualifier="tomcat">
+        <!-- if you need find what are the supported properties, debug TomcatManagedContainer -->
+        <container qualifier="server-1">
+            <configuration>
+                <property name="catalinaHome">${catalinaHome1}</property>
+                <property name="user">admin</property>
+                <property name="pass">admin-pwd</property>
+                <property name="bindHttpPort">${catalinaBindHttpPort1}</property>
+                <property name="jmxPort">${catalinaJmxPort1}</property>
+                <!--
+                <property name="javaVmArguments">
+                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                </property>
+                -->
+                <property name="javaVmArguments">
+                    -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
+                    -Djava.net.preferIPv4Stack=true
+                </property>
+            </configuration>
+        </container>
+        <container qualifier="server-2">
+            <configuration>
+                <property name="catalinaHome">${catalinaHome2}</property>
+                <property name="user">admin</property>
+                <property name="pass">admin-pwd</property>
+                <property name="bindHttpPort">${catalinaBindHttpPort2}</property>
+                <property name="jmxPort">${catalinaJmxPort2}</property>
+                <!--
+                <property name="javaVmArguments">
+                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                </property>
+                -->
+                <property name="javaVmArguments">
+                    -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
+                    -Djava.net.preferIPv4Stack=true
+                </property>
+            </configuration>
+        </container>
+    </group>
+    <group qualifier="wildfly">
+        <container qualifier="server-1">
+            <configuration>
+                <property name="jbossHome">${jbossHome1}</property>
+                <property name="javaHome">${server.jvm}</property>
+                <!--
+                <property name="javaVmArguments">
+                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                </property>
+                -->
+                <property name="javaVmArguments">
+                    -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
+                    -Djava.net.preferIPv4Stack=true
+                </property>
+            </configuration>
+        </container>
+        <container qualifier="server-2">
+            <configuration>
+                <property name="jbossHome">${jbossHome2}</property>
+                <property name="javaHome">${server.jvm}</property>
+                <!--
+                <property name="javaVmArguments">
+                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                </property>
+                -->
+                <property name="javaVmArguments">
+                    -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
+                    -Djava.net.preferIPv4Stack=true
+                    -Djboss.socket.binding.port-offset=100
+                </property>
+                <property name="managementPort">10090</property>
+            </configuration>
+        </container>
+    </group>
 </arquillian>
