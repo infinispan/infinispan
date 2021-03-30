@@ -1,9 +1,10 @@
+[id='enabling-spring-cache_{context}']
 = Enabling Spring Cache Support
-With both embedded and remote {brandname} provides an implementation of Spring Cache that you can enable.
+With both embedded and remote caches, {brandname} provides an implementation of Spring Cache that you can enable.
 
 .Procedure
 
-Add the `@EnableCaching` annotation to your application.
+* Add the `@EnableCaching` annotation to your application.
 
 If the {brandname} starter detects the:
 

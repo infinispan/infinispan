@@ -1,3 +1,4 @@
+[id='remote-custom-beans_{context}']
 = Cache Manager Configuration Beans
 
 Customize the cache manager with the following configuration beans:
@@ -5,25 +6,28 @@ Customize the cache manager with the following configuration beans:
 * `InfinispanRemoteConfigurer`
 * `Configuration`
 * `InfinispanRemoteCacheCustomizer`
-+
+
 [NOTE]
 ====
 You can create one `InfinispanRemoteConfigurer` bean only. However you can create multiple configurations with the other beans.
 ====
 
 .InfinispanRemoteConfigurer Bean
+
 [source,java,options="nowrap"]
 ----
 include::code_examples/InfinispanRemoteConfigurer.java[]
 ----
 
 .Configuration Bean
+
 [source,java,options="nowrap"]
 ----
 include::code_examples/HotRodConfigurationBean.java[]
 ----
 
 .InfinispanRemoteCacheCustomizer Bean
+
 [source,java,options="nowrap"]
 ----
 include::code_examples/InfinispanRemoteCacheCustomizer.java[]

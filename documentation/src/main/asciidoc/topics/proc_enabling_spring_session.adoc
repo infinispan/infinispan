@@ -1,8 +1,8 @@
+[id='enabling-spring-session_{context}']
 = Enabling Spring Session Support
-Complete this procedure to use Spring Session in your project.
-
 {brandname} Spring Session support is built on `SpringRemoteCacheManager` and
-`SpringEmbeddedCacheManager`. This starter produces those beans by default.
+`SpringEmbeddedCacheManager`.
+The {brandname} starter produces those beans by default.
 
 .Procedure
 
@@ -15,6 +15,6 @@ Complete this procedure to use Spring Session in your project.
 
 [NOTE]
 ====
-{brandname} does not provide a default cache. To use Spring Session, you must
-add a {brandname} cache configuration. See link:{server_docs}#create_remote_cache[Remotely Creating {brandname} Caches].
+{brandname} does not provide a default cache.
+To use Spring Session, you must first create a {brandname} cache.
 ====

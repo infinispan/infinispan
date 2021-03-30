@@ -1,9 +1,8 @@
-[id='sb_starter_server']
-:context: starter_server
-= Running in Server Mode
+[id='starter-remote-caches']
+:context: remote
+= Running in Client/Server Mode
 
-Store and retrieve data from remote {brandname} clusters using Hot Rod, a
-custom TCP binary wire protocol.
+Store and retrieve data from remote {brandname} clusters using Hot Rod, a custom TCP binary wire protocol.
 
 include::{topics}/proc_configuring_remotecm_bean.adoc[leveloffset=+1]
 include::{topics}/proc_spring_boot_serialization.adoc[leveloffset=+1]

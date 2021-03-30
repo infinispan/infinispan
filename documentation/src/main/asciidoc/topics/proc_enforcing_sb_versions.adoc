@@ -1,15 +1,22 @@
+[id='enforcing-versions_{context}']
 = Enforcing {brandname} Versions
 
-This starter uses a high-level API to ensure compatibility between major versions of {brandname}. However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
+This starter uses a high-level API to ensure compatibility between major versions of {brandname}.
+However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
 
-Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as follows:
+.Procedure
 
+* Add `infinispan-bom` to your `pom.xml` file before the starter dependencies.
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/sb_bom.xml[]
 ----
 
+//Downstream content
+ifdef::downstream[]
 [IMPORTANT]
 ====
 The {brandname} Spring Boot starter uses different Spring Boot versions to other projects such as Red Hat OpenShift Application Runtimes. If you want to use a specific Spring Boot version for compatibility with other projects, you must add the correct dependency to your project.
 ====
+endif::downstream[]
