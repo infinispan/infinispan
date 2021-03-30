@@ -22,4 +22,3 @@ To export shrinkwrap archive to a file use the following
 ```java
 war.as(ZipExporter.class).exportTo(new File("/path/to/my.war"), true);
 ```
-
