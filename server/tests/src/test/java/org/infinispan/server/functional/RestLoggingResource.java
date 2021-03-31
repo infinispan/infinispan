@@ -42,7 +42,7 @@ public class RestLoggingResource {
       RestResponse response = sync(client.server().logging().listAppenders());
       String body = response.getBody();
       Json appenders = Json.read(body);
-      int expected = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? 5 : 2;
+      int expected = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? 5 : 6;
       assertEquals(body, expected, appenders.asMap().size());
    }
 
