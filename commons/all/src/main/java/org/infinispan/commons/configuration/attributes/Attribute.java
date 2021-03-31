@@ -65,6 +65,16 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       this.fireValueChanged(oldValue);
    }
 
+   public void setImplied(T value) {
+      if (protect) {
+         throw new IllegalStateException();
+      }
+      T oldValue = this.value;
+      this.value = value;
+      this.modified = false;
+      this.fireValueChanged(oldValue);
+   }
+
    public T computeIfAbsent(Supplier<T> supplier) {
       if (value == null)
          set(supplier.get());

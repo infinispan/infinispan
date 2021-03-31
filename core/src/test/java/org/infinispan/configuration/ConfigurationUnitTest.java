@@ -29,6 +29,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -366,6 +367,14 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       Configuration configuration = builder.build();
       assertFalse(configuration.transaction().attributes().isModified());
+   }
+
+   public void testMemoryConfigurationUnmodified() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.memory().maxCount(1000);
+      Configuration configuration = builder.build();
+      assertFalse(configuration.memory().attributes().attribute(MemoryConfiguration.STORAGE).isModified());
+      assertFalse(configuration.memory().attributes().attribute(MemoryConfiguration.WHEN_FULL).isModified());
    }
 
    public void testMultipleValidationErrors() {

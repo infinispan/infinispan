@@ -370,15 +370,15 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       Configuration configuration = configBuilder.build();
       Configuration afterRead = new ConfigurationBuilder().read(configuration).build();
 
-      assertEquals(afterRead.memory().storage(), OFF_HEAP);
-      assertEquals(afterRead.memory().whenFull(), REMOVE);
-      assertEquals(afterRead.memory().maxCount(), 1_000);
-      assertEquals(afterRead.memory().maxSizeBytes(), -1);
-      assertEquals(afterRead.memory().storageType(), OFF_HEAP);
-      assertEquals(afterRead.memory().evictionStrategy(), REMOVE);
-      assertEquals(afterRead.memory().size(), 1_000);
-      assertEquals(afterRead.memory().evictionType(), COUNT);
-      assertEquals(afterRead.memory().heapConfiguration().evictionStrategy(), REMOVE);
+      assertEquals(OFF_HEAP, afterRead.memory().storage());
+      assertEquals(REMOVE, afterRead.memory().whenFull());
+      assertEquals(1_000, afterRead.memory().maxCount());
+      assertEquals(-1, afterRead.memory().maxSizeBytes());
+      assertEquals(OFF_HEAP, afterRead.memory().storageType());
+      assertEquals(REMOVE, afterRead.memory().evictionStrategy());
+      assertEquals(1_000, afterRead.memory().size());
+      assertEquals(COUNT, afterRead.memory().evictionType());
+      assertEquals(REMOVE, afterRead.memory().heapConfiguration().evictionStrategy());
    }
 
    @Test
