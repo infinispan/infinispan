@@ -327,15 +327,14 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public MemoryConfiguration create() {
-      EvictionStrategy strategy = evictionStrategy();
-      if (!strategy.isEnabled()) {
+      Attribute<EvictionStrategy> whenFull = attributes.attribute(MemoryConfiguration.WHEN_FULL);
+      if (!whenFull.get().isEnabled()) {
          if (isSizeBounded() || isCountBounded()) {
-            EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
-            whenFull(newStrategy);
+            whenFull.setImplied(EvictionStrategy.REMOVE);
             if (isCountBounded()) {
-               CONFIG.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", maxCount(), newStrategy);
+               CONFIG.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", maxCount(), whenFull.get());
             } else {
-               CONFIG.debugf("Max size configured (%s) without eviction strategy. Eviction strategy overridden to %s", maxSize(), newStrategy);
+               CONFIG.debugf("Max size configured (%s) without eviction strategy. Eviction strategy overridden to %s", maxSize(), whenFull.get());
             }
          }
       }
