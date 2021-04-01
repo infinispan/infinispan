@@ -105,6 +105,10 @@
          <artifactId>infinispan-anchored-keys</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cloudevents-integration</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron</artifactId>
          <exclusions>

@@ -415,6 +415,11 @@
                 <!-- compile-only dependency -->
                 <scope>provided</scope>
             </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-cloudevents-integration</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
         </dependencies>
     </dependencyManagement>
 </project>
