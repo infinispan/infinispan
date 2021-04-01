@@ -12,6 +12,7 @@ import org.infinispan.cloudevents.configuration.CloudEventsGlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 
 /**
@@ -32,12 +33,17 @@ public class KafkaEventSenderImpl implements KafkaEventSender {
       CloudEventsGlobalConfiguration cloudEventsGlobalConfiguration =
             globalConfiguration.module(CloudEventsGlobalConfiguration.class);
 
-      kafkaProperties.put("bootstrap.servers", cloudEventsGlobalConfiguration.bootstrapServers());
-      kafkaProperties.put("acks", String.valueOf(cloudEventsGlobalConfiguration.acks()));
-      kafkaProperties.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-      kafkaProperties.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
+      kafkaProperties.setProperty("bootstrap.servers", cloudEventsGlobalConfiguration.bootstrapServers());
+      kafkaProperties.setProperty("acks", String.valueOf(cloudEventsGlobalConfiguration.acks()));
+      kafkaProperties.setProperty("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
+      kafkaProperties.setProperty("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
       producer = new KafkaProducer<>(kafkaProperties);
       connect(cloudEventsGlobalConfiguration);
+   }
+
+   @Stop
+   void stop() {
+      producer.close();
    }
 
    private void connect(CloudEventsGlobalConfiguration cloudEventsGlobalConfiguration) {

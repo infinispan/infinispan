@@ -39,8 +39,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -56,14 +54,12 @@ public class EntryEventListener {
    @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
    @Inject PersistenceMarshaller persistenceMarshaller;
    @Inject CacheNotifier<?, ?> cacheNotifier;
-   @Inject Transport transport;
    @Inject KafkaEventSender kafkaEventSender;
 
    private Transcoder keyJsonTranscoder;
    private Transcoder valueJsonTranscoder;
    private String clusterName;
    private String cacheEntriesTopic;
-   private Address localAddress;
 
    @Inject
    void inject(EncoderRegistry encoderRegistry, GlobalConfiguration globalConfiguration) {
@@ -88,7 +84,6 @@ public class EntryEventListener {
 
    @Start
    void start() {
-      localAddress = localAddress;
       cacheNotifier.addListener(this);
    }
 
