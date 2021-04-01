@@ -21,6 +21,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to send cloudevents message for %s %s %s event", id = 30501)
    void sendError(Event.Type eventType, Object key, Object source);
 
-   @Message(value = "Attribute 'bootstrap-servers' is required when a topic is enabled")
+   @Message(value = "Attribute 'bootstrap-servers' is required when a topic is enabled", id = 30502)
    CacheConfigurationException bootstrapServersRequired();
 }
