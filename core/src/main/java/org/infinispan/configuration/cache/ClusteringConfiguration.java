@@ -101,7 +101,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     * the call is aborted and an exception is thrown.
     */
    public long remoteTimeout() {
-      return attributes.attribute(REMOTE_TIMEOUT).get();
+      return remoteTimeout.get();
    }
 
    /**
@@ -109,7 +109,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     * the call is aborted and an exception is thrown.
     */
    public void remoteTimeout(long timeoutMillis) {
-      attributes.attribute(REMOTE_TIMEOUT).set(timeoutMillis);
+      remoteTimeout.set(timeoutMillis);
    }
 
    /**

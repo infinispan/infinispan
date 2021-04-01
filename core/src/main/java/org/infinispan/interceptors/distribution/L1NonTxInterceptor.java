@@ -38,6 +38,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -106,6 +107,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    public void start() {
       l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
       replicationTimeout = cacheConfiguration.clustering().remoteTimeout();
+      cacheConfiguration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      replicationTimeout = a.get();
+                   });
    }
 
    @Override

@@ -18,9 +18,11 @@ import java.util.function.Supplier;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -41,7 +43,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.BiasManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -72,6 +73,10 @@ public class BiasManagerImpl implements BiasManager {
       executor.scheduleAtFixedRate(this::removeOldBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       executor.scheduleAtFixedRate(this::renewLocalBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       renewLeasePeriod = configuration.clustering().biasLifespan() - configuration.clustering().remoteTimeout();
+      configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      renewLeasePeriod = configuration.clustering().biasLifespan() - a.get();
+                   });
       cacheNotifier.addListener(this);
    }
 

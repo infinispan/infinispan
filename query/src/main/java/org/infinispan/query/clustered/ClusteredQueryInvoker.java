@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.search.TimeLimitingCollector.TimeExceededException;
@@ -19,9 +18,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 
@@ -38,7 +35,6 @@ final class ClusteredQueryInvoker {
    private final LocalQueryStatistics queryStatistics;
    private final AdvancedCache<?, ?> cache;
    private final Address myAddress;
-   private final RpcOptions rpcOptions;
    private final QueryPartitioner partitioner;
 
    ClusteredQueryInvoker(AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
@@ -46,8 +42,6 @@ final class ClusteredQueryInvoker {
       this.rpcManager = cache.getRpcManager();
       this.queryStatistics = queryStatistics;
       this.myAddress = rpcManager.getAddress();
-      long timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
-      this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
       this.partitioner = new QueryPartitioner(cache);
    }
 
@@ -72,7 +66,8 @@ final class ClusteredQueryInvoker {
                Address address = e.getKey();
                BitSet segments = e.getValue();
                SegmentsClusteredQueryCommand cmd = new SegmentsClusteredQueryCommand(cache.getName(), operation, segments);
-               return rpcManager.invokeCommand(address, cmd, SingleResponseCollector.validOnly(), rpcOptions).toCompletableFuture();
+               return rpcManager.invokeCommand(address, cmd, SingleResponseCollector.validOnly(),
+                                               rpcManager.getSyncRpcOptions()).toCompletableFuture();
             }).map(a -> a.thenApply(r -> (QueryResponse) r.getResponseValue())).collect(Collectors.toList());
 
       List<QueryResponse> results = new ArrayList<>();

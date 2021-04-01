@@ -22,6 +22,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -74,6 +75,11 @@ public class CommandAckCollector {
    @Start
    public void start() {
       this.timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
+      configuration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(a.get());
+                   });
    }
 
    /**
