@@ -15,6 +15,7 @@ import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.DynamicModuleMetadataProvider;
 import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.registry.InternalCacheRegistry;
 
 /**
  * Install the required components for CloudEvents integration
@@ -30,6 +31,7 @@ public final class CloudEventsModule implements ModuleLifecycle, DynamicModuleMe
 
    private GlobalConfiguration globalConfiguration;
    private CloudEventsGlobalConfiguration cloudEventsGlobalConfiguration;
+   private InternalCacheRegistry internalCacheRegistry;
 
    @Override
    public void registerDynamicMetadata(ModuleMetadataBuilder.ModuleBuilder moduleBuilder, GlobalConfiguration globalConfiguration) {
@@ -39,7 +41,9 @@ public final class CloudEventsModule implements ModuleLifecycle, DynamicModuleMe
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
 
+      internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
       cloudEventsGlobalConfiguration = globalConfiguration.module(CloudEventsGlobalConfiguration.class);
+
       if (cloudEventsGlobalConfiguration == null)
          return;
 
@@ -55,7 +59,10 @@ public final class CloudEventsModule implements ModuleLifecycle, DynamicModuleMe
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
-      if (!cloudEventsGlobalConfiguration.cacheEntryEventsEnabled())
+      if (cloudEventsGlobalConfiguration == null || !cloudEventsGlobalConfiguration.cacheEntryEventsEnabled())
+         return;
+
+      if (internalCacheRegistry.isInternalCache(cr.getCacheName()))
          return;
 
       CloudEventsConfiguration cloudEventsConfiguration = configuration.module(CloudEventsConfiguration.class);
