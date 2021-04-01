@@ -1,5 +1,6 @@
 package org.infinispan.cloudevents;
 
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -15,7 +16,6 @@ import java.nio.file.Paths;
 import org.infinispan.cloudevents.configuration.CloudEventsConfiguration;
 import org.infinispan.cloudevents.configuration.CloudEventsGlobalConfiguration;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -67,9 +67,10 @@ public class CloudEventsConfigurationSerializerTest extends AbstractConfiguratio
    }
 
    public void testInvalid() throws IOException {
-      Exceptions.expectException(CacheConfigurationException.class, () -> {
-         new ParserRegistry().parseFile("config/cloudevents-missing-bootstrap-servers.xml");
-      });
+      ConfigurationBuilderHolder holder =
+            new ParserRegistry().parseFile("config/cloudevents-missing-bootstrap-servers.xml");
+      expectException(CacheConfigurationException.class, "ISPN030502: .*",
+                      () -> holder.getGlobalConfigurationBuilder().build());
    }
 
    @Test(dataProvider = "configurationFiles")
