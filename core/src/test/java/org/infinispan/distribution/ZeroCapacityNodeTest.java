@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -184,11 +184,11 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
             });
       TestingUtil.replaceComponent(node1, ClusterTopologyManager.class, trackingCTM, true);
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(100)
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
         .hash().numSegments(NUM_SEGMENTS);
 
       ConfigurationBuilder cbZero = new ConfigurationBuilder();
-      cbZero.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(100)
+      cbZero.clustering().cacheMode(CacheMode.DIST_SYNC)
             .hash().numSegments(NUM_SEGMENTS).capacityFactor(0f);
 
       Future<Cache<Object, Object>> zeroCapacityNodeFuture =
@@ -226,7 +226,9 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       node2.stop();
 
       // There is no new cache topology, so any operation will time out
-      expectException(TimeoutException.class, () -> cache(0, cacheName).get("key"));
+      // Lower the remote timeout just for this operation
+      cache(0, cacheName).getCacheConfiguration().clustering().remoteTimeout(10);
+      expectCompletionException(TimeoutException.class, cache(0, cacheName).getAsync("key"));
    }
 
    private ConsistentHash consistentHash(int managerIndex, String cacheName) {

@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -51,6 +52,11 @@ public class StateTransferLockImpl implements StateTransferLock {
 
       stateTransferTimeout = configuration.clustering().stateTransfer().timeout();
       remoteTimeout = configuration.clustering().remoteTimeout();
+      configuration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      remoteTimeout = a.get();
+                   });
    }
 
    @Stop

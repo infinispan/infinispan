@@ -19,6 +19,7 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -67,8 +68,12 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Start
    public void start() {
-      transactionDataTimeout = configuration.clustering().remoteTimeout();
       isScattered = configuration.clustering().cacheMode().isScattered();
+      transactionDataTimeout = configuration.clustering().remoteTimeout();
+      configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      transactionDataTimeout = a.get();
+                   });
    }
 
    @Override

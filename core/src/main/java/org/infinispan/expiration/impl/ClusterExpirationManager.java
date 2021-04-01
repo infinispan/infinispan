@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -73,6 +74,11 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       super.start();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = configuration.clustering().remoteTimeout();
+      configuration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      timeout = a.get();
+                   });
    }
 
    @Override

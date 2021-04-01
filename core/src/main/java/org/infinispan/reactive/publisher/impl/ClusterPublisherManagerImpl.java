@@ -32,6 +32,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -126,6 +127,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // increased payloads)
       rpcOptions = new RpcOptions(DeliverOrder.NONE, cacheConfiguration.clustering().remoteTimeout() * 3,
             TimeUnit.MILLISECONDS);
+      cacheConfiguration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get() * 3, TimeUnit.MILLISECONDS);
+                   });
    }
 
    @Override

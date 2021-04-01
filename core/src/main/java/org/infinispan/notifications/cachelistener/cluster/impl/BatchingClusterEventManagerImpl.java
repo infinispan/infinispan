@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -49,6 +50,10 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    @Start
    public void start() {
       timeout = configuration.clustering().remoteTimeout();
+      configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener((a, ignored) -> {
+                      timeout = a.get();
+                   });
    }
 
    @Override
