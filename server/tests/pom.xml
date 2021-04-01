@@ -112,6 +112,13 @@
          <groupId>io.jaegertracing</groupId>
          <artifactId>jaeger-testcontainers</artifactId>
       </dependency>
+
+      <!-- Kafka for CloudEvents testing -->
+      <dependency>
+         <groupId>org.testcontainers</groupId>
+         <artifactId>kafka</artifactId>
+         <version>${versionx.org.testcontainers.testcontainers}</version>
+      </dependency>
    </dependencies>
 
    <build>
@@ -200,4 +207,3 @@
       </profile>
    </profiles>
 </project>
-
