@@ -1,0 +1,23 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
+                            urn:infinispan:server:12.1 https://infinispan.org/schemas/infinispan-server-12.1.xsd"
+        xmlns="urn:infinispan:config:12.1"
+        xmlns:server="urn:infinispan:server:12.1">
+
+    <xi:include href="jgroups/stacks.xml"/>
+
+    <xi:include href="cache-container/clustered-cloudevents.xml"/>
+
+    <server xmlns="urn:infinispan:server:12.1">
+
+        <xi:include href="interfaces/default.xml"/>
+
+        <xi:include href="socket-bindings/default.xml"/>
+
+        <xi:include href="security/none.xml"/>
+
+        <xi:include href="endpoints/default.xml"/>
+    </server>
+</infinispan>
