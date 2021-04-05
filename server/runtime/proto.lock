@@ -67,6 +67,53 @@
       }
     },
     {
+      "protopath": "generated:/:persistence.server_state.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "IgnoredCaches",
+            "fields": [
+              {
+                "id": 1,
+                "name": "caches",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "IpFilterRules",
+            "fields": [
+              {
+                "id": 1,
+                "name": "rules",
+                "type": "IpFilterRule",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "IpFilterRule",
+            "fields": [
+              {
+                "id": 1,
+                "name": "cidr",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "type",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.server_state"
+        }
+      }
+    },
+    {
       "protopath": "generated:/:persistence.servertasks.proto",
       "def": {
         "messages": [

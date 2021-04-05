@@ -454,6 +454,17 @@
             ]
           },
           {
+            "name": "RoleSet",
+            "fields": [
+              {
+                "id": 1,
+                "name": "roles",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "MarshallableUserObject",
             "fields": [
               {

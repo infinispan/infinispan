@@ -1,0 +1,95 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.server.core.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "CounterBackupEntry",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "configuration",
+                "type": "org.infinispan.persistence.commons.CounterConfiguration"
+              },
+              {
+                "id": 3,
+                "name": "value",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CacheBackupEntry",
+            "fields": [
+              {
+                "id": 1,
+                "name": "key",
+                "type": "bytes"
+              },
+              {
+                "id": 2,
+                "name": "value",
+                "type": "bytes"
+              },
+              {
+                "id": 3,
+                "name": "metadata",
+                "type": "bytes"
+              },
+              {
+                "id": 4,
+                "name": "internalMetadata",
+                "type": "org.infinispan.persistence.core.PrivateMetadata"
+              },
+              {
+                "id": 5,
+                "name": "created",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "lastUsed",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "persistence.commons.proto"
+          },
+          {
+            "path": "persistence.core.proto"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.server.core"
+        }
+      }
+    }
+  ]
+}
