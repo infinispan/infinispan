@@ -2182,6 +2182,7 @@
                </executions>
                <configuration>
                   <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                  <failOnError>false</failOnError>
                   <suppressionFile>${infinispan.root}/etc/dependency-check-suppressions.xml</suppressionFile>
                </configuration>
             </plugin>
