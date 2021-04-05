@@ -25,6 +25,7 @@
       <artifact name="${org.infinispan:infinispan-query-dsl}"/>
       <artifact name="${org.infinispan:infinispan-remote-query-client}"/>
       <artifact name="${org.infinispan.protostream:protostream}"/>
+      <artifact name="${org.infinispan.protostream:protostream-types}"/>
       <artifact name="${org.infinispan:infinispan-jboss-marshalling}"/>
 
       <artifact name="${org.jgroups:jgroups}"/>
@@ -93,7 +94,7 @@
       <module name="org.jboss.weld.spi" />
       <module name="org.wildfly.security.elytron" services="import"/>
       <module name="org.hibernate"/>
-      
+
       <module name="com.microsoft.azure:azure-storage" optional="true"/>
       <module name="com.amazonaws.aws-java-sdk" slot="@infinispan.module.slot@" optional="true"/>
    </dependencies>
