@@ -50,6 +50,7 @@ public final class Deployments {
                   new File("target/test-libs/jboss-threads.jar"),
                   new File("target/test-libs/jgroups.jar"),
                   new File("target/test-libs/protostream.jar"),
+                  new File("target/test-libs/protostream-types.jar"),
                   new File("target/test-libs/wildfly-controller-client.jar"))
             .addPackage(Deployments.class.getPackage())
             .addPackage(AbstractAuthentication.class.getPackage());
