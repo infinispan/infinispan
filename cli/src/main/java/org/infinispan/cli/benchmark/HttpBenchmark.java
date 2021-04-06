@@ -70,10 +70,13 @@ public class HttpBenchmark {
             case RestResponse.NO_CONTENT:
                break;
             case RestResponse.NOT_FOUND:
+               Util.close(client);
                throw new IllegalArgumentException("Could not find cache '" + cacheName+"'");
             case RestResponse.UNAUTHORIZED:
+               Util.close(client);
                throw new SecurityException(response.getBody());
             default:
+               Util.close(client);
                throw new RuntimeException(response.getBody());
          }
       }
