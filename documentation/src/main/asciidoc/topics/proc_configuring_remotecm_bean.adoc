@@ -1,36 +1,11 @@
 [id='configuring-remotecm-bean_{context}']
 = Setting Up the RemoteCacheManager
+Configure your application to use remote caches on {brandname} clusters.
 
-. Provide the location for the {brandname} server so the starter can create the `RemoteCacheManager` bean.
+. Provide the addresses where {brandname} Server listens for client connections so the starter can create the `RemoteCacheManager` bean.
 . Use the Spring `@Autowired` annotation to include your own custom cache manager class in your application:
 +
 [source,java,options="nowrap"]
 ----
 include::code_examples/AutowiredRemoteCacheManager.java[]
 ----
-
-== Properties files
-
-You can specify properties in either `hotrod-client.properties` or `application.properties`.
-The starter first tries to find the server location in `hotrod-client.properties` and then from `application.properties`.
-
-.Hot Rod client properties
-
-Specify client configuration in `hotrod-client.properties` on your classpath,
-for example:
-
-[source,text,options=nowrap,subs=attributes+]
-----
-# List {brandname} servers by IP address or hostname at port 11222.
-infinispan.client.hotrod.server_list=127.0.0.1:6667
-----
-
-These properties take the format of `infinispan.client.*`.
-
-For more information, see link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[org.infinispan.client.hotrod.configuration].
-
-.Application properties
-
-Configure your project with `application.properties` files that contain properties in the format of `infinispan.remote.*`.
-
-See link:#spring-application-properties[Application Properties] for more information.
