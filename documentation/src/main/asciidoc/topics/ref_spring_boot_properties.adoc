@@ -1,0 +1,34 @@
+[id='spring-boot-properties_{context}']
+= Properties Files
+
+You can specify properties in either `hotrod-client.properties` or `application.properties`.
+
+Properties can be in both properties files but the starter applies the configuration in `hotrod-client.properties` first, which means that file takes priority over `application.properties`.
+
+[discrete]
+== `hotrod-client.properties`
+
+Properties in this file take the format of `infinispan.client.hotrod.*`, for example:
+
+[source,text,options=nowrap,subs=attributes+]
+----
+# List {brandname} servers by IP address or hostname at port 11222.
+infinispan.client.hotrod.server_list=127.0.0.1:6667
+----
+
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration API]
+
+[discrete]
+== `application.properties`
+
+Properties in this file take the format of `infinispan.remote.*`, for example:
+
+[source,text,options=nowrap,subs=attributes+]
+----
+# List {brandname} servers by IP address or hostname at port 11222.
+infinispan.remote.server-list=127.0.0.1:6667
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:#spring-application-properties[Application Properties]

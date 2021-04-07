@@ -1,10 +1,10 @@
 [id='starter-remote-caches']
 :context: remote
-= Running in Client/Server Mode
-
+= Using Remote Caches
 Store and retrieve data from remote {brandname} clusters using Hot Rod, a custom TCP binary wire protocol.
 
 include::{topics}/proc_configuring_remotecm_bean.adoc[leveloffset=+1]
+include::{topics}/ref_spring_boot_properties.adoc[leveloffset=+2]
 include::{topics}/proc_spring_boot_serialization.adoc[leveloffset=+1]
 include::{topics}/ref_remote_custom_beans.adoc[leveloffset=+1]
 include::{topics}/proc_enabling_spring_cache.adoc[leveloffset=+1]

@@ -1,7 +1,6 @@
 [id='adding-embeddedcm-bean_{context}']
 = Adding the EmbeddedCacheManager Bean
-The {brandname} starter operates in Remote Client/Server mode with `infinispan-spring-boot-starter-remote` on the classpath by default.
-To use embedded caches, you need to add the `EmbeddedCacheManager` bean.
+Configure your application to use embedded caches.
 
 .Procedure
 
@@ -13,7 +12,7 @@ To use embedded caches, you need to add the `EmbeddedCacheManager` bean.
 include::code_examples/AutowiredEmbeddedCacheManager.java[]
 ----
 
-You are now ready to use {brandname} in Embedded Mode, as in the following example:
+You are now ready to use {brandname} caches directly within your application, as in the following example:
 
 [source,java,options="nowrap"]
 ----

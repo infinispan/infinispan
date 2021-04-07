@@ -1,6 +1,6 @@
 [id='starter-embedded-caches']
 :context: embedded
-= Running in Embedded Mode
+= Using Embedded Caches
 Embed {brandname} caches directly in your project for in-memory data storage.
 
 include::{topics}/proc_adding_embeddedcm_bean.adoc[leveloffset=+1]
