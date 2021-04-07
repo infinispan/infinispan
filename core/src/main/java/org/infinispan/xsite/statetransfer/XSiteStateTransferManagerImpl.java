@@ -77,7 +77,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    ExecutorService blockingExecutor;
    @Inject StateTransferManager stateTransferManager;
    @Inject DistributionManager distributionManager;
-   @Inject CacheNotifier cacheNotifier;
+   @Inject CacheNotifier<?, ?> cacheNotifier;
    @Inject XSiteStateConsumer consumer;
    @Inject XSiteStateProvider provider;
 
@@ -196,7 +196,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       for (Response response : invokeRemotelyInLocalSite(command).values()) {
          if (response instanceof SuccessfulResponse) {
             //noinspection unchecked
-            result.putAll((Map<String, String>) ((SuccessfulResponse) response).getResponseValue());
+            result.putAll((Map<String, String>) ((SuccessfulResponse<?>) response).getResponseValue());
          }
       }
       return result;
@@ -236,12 +236,11 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          //it is balanced
          log.debugf("Restarting x-site state transfer for site %s", siteName);
          try {
-            CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(null, currentTopologyId());
+            CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(siteName, currentTopologyId());
             controlStateTransferOnLocalSite(command);
          } catch (Exception e) {
             log.failedToRestartXSiteStateTransfer(siteName, e);
          }
-
       }
    }
 
@@ -296,7 +295,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
                entry.setValue(new XSiteStateTransferCollector(newMembers));
                log.debugf("Topology change detected! Restarting x-site state transfer for site %s", entry.getKey());
                try {
-                  CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(null, currentTopologyId());
+                  CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(entry.getKey(), currentTopologyId());
                   controlStateTransferOnLocalSite(command);
                } catch (Exception e) {
                   log.failedToRestartXSiteStateTransfer(entry.getKey(), e);
