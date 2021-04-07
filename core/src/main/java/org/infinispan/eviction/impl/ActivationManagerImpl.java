@@ -78,11 +78,6 @@ public class ActivationManagerImpl implements ActivationManager {
       });
    }
 
-   @ManagedAttribute(
-         description = "Number of activation events",
-         displayName = "Number of cache entries activated",
-         measurementType = MeasurementType.TRENDSUP
-   )
    @Override
    public long getActivationCount() {
       return activations.sum();
@@ -97,7 +92,7 @@ public class ActivationManagerImpl implements ActivationManager {
       if (!statisticsEnabled)
          return "N/A";
 
-      return String.valueOf(getActivationCount());
+      return String.valueOf(activations.sum());
    }
 
    @ManagedOperation(
