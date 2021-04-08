@@ -1,7 +1,7 @@
 [id='xsite_operations_jmx']
 :context: jmx-ops
 = Performing Cross-Site Operations with JMX
-{brandname} provides JMX tooling to perfrom cross-site operations such as
+{brandname} provides JMX tooling to perform cross-site operations such as
 pushing state transfer and bringing sites online.
 
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]

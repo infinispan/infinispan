@@ -1,4 +1,4 @@
-[id='rest_v2_security_user_acl']
+[id='rest_v2_get_user_acl']
 = Retrieving the ACL of a user
 View information about the user's principals and access-control list.
 
@@ -15,7 +15,7 @@ The list includes the principals of the user, and a list of resources and the pe
 include::json_examples/rest_security_user_acl.json[]
 ----
 
-[id='rest_v2_security_user_acl']
+[id='rest_v2_flush_acl_cache']
 = Flushing the ACL cache
 Flush the access-control list cache across the cluster.
 
@@ -24,7 +24,7 @@ Flush the access-control list cache across the cluster.
 include::rest_examples/get_v2_security_cache_flush.adoc[]
 ----
 
-[id='rest_v2_security_user_acl']
+[id='rest_v2_get_roles']
 = Retrieving the available roles
 View all the available roles defined in the server.
 
@@ -41,7 +41,7 @@ If authorization is enabled, only a user with the `ADMIN` permission can call th
 include::json_examples/rest_security_roles.json[]
 ----
 
-[id='rest_v2_security_roles_principal']
+[id='rest_v2_get_principal_roles']
 = Retrieving the roles for a principal
 View all the roles which map to a principal.
 
@@ -57,9 +57,8 @@ The principal need not exist in the realm in use.
 ----
 include::json_examples/rest_security_roles_principal.json[]
 ----
-/v2/security/roles/{principal}
 
-[id='rest_v2_security_roles_principal_grant']
+[id='rest_v2_grant_principal_roles']
 = Granting roles to a principal
 Grant one or more new roles to a principal.
 
@@ -78,7 +77,7 @@ include::rest_examples/get_v2_security_roles_principal_grant.adoc[]
 |The name of a role
 |===
 
-[id='rest_v2_security_roles_principal_deny']
+[id='rest_v2_deny_principal_roles']
 = Denying roles to a principal
 Remove one or more roles that were previously granted to a principal.
 

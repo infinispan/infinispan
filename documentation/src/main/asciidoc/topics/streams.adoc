@@ -310,7 +310,7 @@ interface the `injectCache` method be invoked before the accept method from the 
 
 == Distributed Stream execution
 
-Distributed streams execution works in a fashion very similiar to map reduce.  Except in this case we are sending zero to many intermediate operations
+Distributed streams execution works in a fashion very similar to map reduce.  Except in this case we are sending zero to many intermediate operations
 (map, filter etc.) and a single terminal operation to the various nodes.  The operation basically comes down to the following:
 
 . The desired segments are grouped by which node is the primary owner of the given segment

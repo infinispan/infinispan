@@ -1,4 +1,4 @@
-[id='cli_xsite_push-{context}']
+[id='pushing-xsite-state-transfer_{context}']
 = Pushing State to Backup Locations
 Transfer cache state to remote backup locations.
 

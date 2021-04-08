@@ -270,7 +270,7 @@ There are 3 main configuration settings (modes of usage) that affect the behavio
 |===============
 | Config / Mode of usage | Description
 | _API_ | Usage of Asynchronous API, i.e. methods of the Cache interface like e.g. putAsync(key, val)
-| _Replication_ | Configuring a clustered cache to replicate data asychronously. In {brandname} XML configuration this is done by using <sync> or <async> sub-elements under link:http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html[&lt;clustering&gt;] element.
+| _Replication_ | Configuring a clustered cache to replicate data asynchronously. In {brandname} XML configuration this is done by using <sync> or <async> sub-elements under link:http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html[&lt;clustering&gt;] element.
 |===============
 
 Switching to asynchronous mode in each of these areas causes loss of some consistency guarantees. The known problems are summarised here:

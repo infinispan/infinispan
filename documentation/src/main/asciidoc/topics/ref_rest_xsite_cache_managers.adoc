@@ -57,7 +57,7 @@ Check the state transfer mode with `GET` requests.
 GET /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode
 ----
 
-[id='rest_v2_cache_manager_get_state_transfer_mode']
+[id='rest_v2_cache_manager_set_state_transfer_mode']
 = Setting the State Transfer Mode
 Configure the state transfer mode with the `?action=set` parameter.
 

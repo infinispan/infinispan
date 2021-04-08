@@ -285,7 +285,7 @@ that Hot Rod client can use to access it.
 Port that Hot Rod clients can use to communicat with this cluster member.
 | m1: Hashcode                                 | 4 bytes                  |
 32 bit integer representing the hashcode of a cluster member that a Hot Rod
-client can use indentify in which cluster member a key is located having
+client can use identify in which cluster member a key is located having
 applied the CSA to it.
 | m2: Host/IP length                           | vInt                     |
 | m2: Host/IP address                          | string                   |
@@ -691,7 +691,7 @@ Response (0x30):
 | Value 2 Length      | vInt       |
 | Value 2             | byte array |
 |... continues until entry count is reached ||
-+0x00+ = success, if the get returned sucessfully +
++0x00+ = success, if the get returned successfully +
 |==============================================================================
 
 
@@ -908,7 +908,7 @@ that Hot Rod client can use to access it.
 Port that Hot Rod clients can use to communicat with this cluster member.
 | m1: Hashcode                                 | 4 bytes                  |
 32 bit integer representing the hashcode of a cluster member that a Hot Rod
-client can use indentify in which cluster member a key is located having
+client can use identify in which cluster member a key is located having
 applied the CSA to it.
 | m2: Host/IP length                           | vInt                     |
 | m2: Host/IP address                          | string                   |
@@ -2279,7 +2279,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x01`: Operation failed. Counter is already defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter get configuration operation
 
@@ -2321,7 +2321,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter doesn't exist.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter is defined operation
 
@@ -2357,7 +2357,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Counter is defined.
 * `0x01`: Counter isn't defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter add-and-get operation
 
@@ -2405,7 +2405,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter reset operation
 
@@ -2441,7 +2441,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter isn't defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter get operation
 
@@ -2482,7 +2482,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter isn't defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter compare-and-swap operation
 
@@ -2532,7 +2532,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter add and remove listener
 
@@ -2575,7 +2575,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful and the connection used in the request will be used to send event (add) or the connection can be removed (remove).
 * `0x01`: Operation successful and the current connection is still in use.
 * `0x02`: The counter isn't defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter Event (0x66)
 
@@ -2654,7 +2654,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
-* See the link:#hot_rod_response_header[Reponse Header] for error codes.
+* See the link:#hot_rod_response_header[Response Header] for error codes.
 
 == Hot Rod Protocol 2.8
 

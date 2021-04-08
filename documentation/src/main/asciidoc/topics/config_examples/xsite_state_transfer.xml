@@ -1,7 +1,11 @@
 <distributed-cache name="eu-customers">
    <backups>
       <backup site="LON" strategy="ASYNC">
-         <state-transfer chunk-size="64" timeout="30000" max-retries="30" wait-time="2000" mode="AUTO"/>
+         <state-transfer chunk-size="64"
+                         timeout="30000"
+                         max-retries="30"
+                         wait-time="2000"
+                         mode="AUTO"/>
       </backup>
    </backups>
 </distributed-cache>

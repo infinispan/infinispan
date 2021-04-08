@@ -1,4 +1,4 @@
-[id='cli_xsite_push-{context}']
+[id='configuring-xsite-state-transfer-modes_{context}']
 = Configuring Cross-Site State Transfer Modes
 You can configure cross-site state transfer operations to happen automatically when {brandname} detects that backup locations come online.
 Alternatively you can use the default mode, which is to manually perform state transfer through the CLI or via JMX or REST.

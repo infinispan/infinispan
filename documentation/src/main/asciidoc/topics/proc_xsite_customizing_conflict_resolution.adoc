@@ -1,0 +1,29 @@
+[id='customizing-conflict-resolution_{context}']
+= Customizing Conflict Resolution
+
+{brandname} provides different algorithms for resolving conflicts with concurrent writes
+They can found in {XSiteMergePolicyClass} enum.
+
+* `DEFAULT`: Uses the algorithm described above.
+* `PREFER_NON_NULL`: If there is a write/remove conflict it keeps the write operation and discards the remove operation.
+For all other combinations, it uses the `DEFAULT`.
+* `PREFER_NULL`: Similar to `PREFER_NON_NULL` but, instead, it discards the write operation.
+* `ALWAYS_REMOVE`: In case of any conflict, it removes the `key` from both sites.
+
+In addition, {XSiteEntryMergePolicyClass} interface can be implemented to add your own conflict resolution algorithm:
+
+.{XSiteEntryMergePolicyClass} class
+[source,java,options="nowrap"]
+----
+include::code_examples/XSiteEntryMergePolicy.java[]
+----
+
+The {SiteEntryClass} contains the `value` and `Metadata` associates with a specific site.
+
+.Reference
+
+* link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[XSiteEntryMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[XSiteMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/SiteEntry.html[SiteEntry]
+* link:#configure_conflict_resolver-{context}[Configure Cross-Site Conflict Resolution]
