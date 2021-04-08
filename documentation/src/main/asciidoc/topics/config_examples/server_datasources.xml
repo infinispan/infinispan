@@ -1,5 +1,5 @@
 <data-sources>
-   <!-- Defines a unique name for the datasource, JNDI name, and enables statisitics. -->
+   <!-- Defines a unique name for the datasource, JNDI name, and enables statistics. -->
    <data-source name="ds" jndi-name="jdbc/datasource" statistics="true">
       <!-- Specifies the JDBC driver that creates connections. -->
       <connection-factory driver="org.database.Driver"

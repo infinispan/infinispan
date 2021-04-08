@@ -1,4 +1,4 @@
-[id='configure_state_transfer-{context}']
+[id='configuring-state-transfer_{context}']
 = Configuring Cross-Site State Transfer
 Change cross-site state transfer settings to optimize performance and specify whether operations happen manually or automatically.
 
@@ -12,9 +12,3 @@ For example, the following configuration automatically performs cross-site state
 ----
 include::config_examples/xsite_state_transfer.xml[]
 ----
-
-.Reference
-* link:{configdocroot}[{brandname} Configuration Schema]
-* link:#cli_xsite_push-{context}[Pushing State to Backup Locations (CLI)]
-* link:#rest_v2_cache_manager_start_push[Pushing State to Backup Locations (REST)]
-* link:#performing_jmx_operations-{context}[Pushing State to Backup Locations (JMX)]

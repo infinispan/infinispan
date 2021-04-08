@@ -21,7 +21,7 @@ include::dependencies_maven/clustered_counters.xml[]
 The counters can be configured {brandname} configuration file or on-demand via the `CounterManager` interface detailed
 later in this document.
 A counters configured in {brandname} configuration file is created at boot time when the `EmbeddedCacheManager` is starting.
-Theses counters are started eagerly and they are available in all the cluster's nodes.
+These counters are started eagerly and they are available in all the cluster's nodes.
 
 .configuration.xml
 [source,xml,options="nowrap",subs=attributes+]

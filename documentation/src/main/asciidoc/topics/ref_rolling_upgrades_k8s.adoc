@@ -14,7 +14,7 @@ ifdef::downstream[]
 endif::downstream[]
 
 .Key differences when upgrading using the library mode:
-* Client application needs to expose JMX. It usually depends on application and environment type but the easiest way to do it is to add the following switches into the Java boostrap script `-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<PORT>`.
+* Client application needs to expose JMX. It usually depends on application and environment type but the easiest way to do it is to add the following switches into the Java bootstrap script `-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<PORT>`.
 * Connecting to the JMX can be done by forwarding ports. With OpenShift this might be achieved by using `oc port-forward` command whereas in Kubernetes by `kubectl port-forward`.
 
 The last step in the Rolling Upgrade (removing a Remote Cache Store) needs to be performed differently. We need to use link:http://kubernetes.io/docs/user-guide/rolling-updates/[Kubernetes/OpenShift Rolling update] command and replace Pods configuration with the one which does not contain Remote Cache Store.

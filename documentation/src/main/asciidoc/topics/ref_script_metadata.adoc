@@ -21,7 +21,7 @@ first lines of scripts, such as the following example:
 |Property |Description
 
 |`mode`
-|Defines the exection mode and has the following values:
+|Defines the execution mode and has the following values:
 
 `local` only the node that handles the request executes the script. Although
 scripts can still invoke clustered operations.

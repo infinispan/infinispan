@@ -1104,7 +1104,7 @@ the new memory configuration.
 == DataContainer collection methods are deprecated
 The keySet, entrySet and values methods on DataContainer have been deprecated. These behavior of these methods
 are very inconsistent and will be removed later. It is recommended to update references to use iterator or
-iteratorIncludingExpired methods intead.
+iteratorIncludingExpired methods instead.
 
 = Upgrading from 8.1 to 8.2
 == Entry Retriever is deprecated

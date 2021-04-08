@@ -79,7 +79,7 @@ POST /rest/v2/caches?action=toJSON
 
 [id='rest_v2_cache_detail']
 = Retrieving All Cache Details
-Invoke a `GET` request to retreive all details for {brandname} caches.
+Invoke a `GET` request to retrieve all details for {brandname} caches.
 
 [source,options="nowrap",subs=attributes+]
 ----

@@ -1,6 +1,6 @@
 [id='deserialization-allowlist_{context}']
 = Adding Java Classes to Deserialization Allow Lists
-{brandname} does not allow deserialization of arbritrary Java classes for
+{brandname} does not allow deserialization of arbitrary Java classes for
 security reasons, which applies to JSON, XML, and marshalled `byte[]` content.
 
 You must add Java classes to a deserialization allow list, either using system

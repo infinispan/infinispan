@@ -16,6 +16,7 @@ include::{topics}/con_xsite_auto_offline.adoc[leveloffset=+1]
 include::{topics}/con_xsite_state_transfer.adoc[leveloffset=+1]
 include::{topics}/con_xsite_active_passive.adoc[leveloffset=+1]
 include::{topics}/con_xsite_concurrent_writes.adoc[leveloffset=+2]
+
 include::{topics}/con_xsite_expiration.adoc[leveloffset=+1]
 
 // Restore the parent context.

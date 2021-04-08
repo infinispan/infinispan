@@ -17,7 +17,7 @@ A user named `admin` gets `admin` permissions automatically, a user named `deplo
 
 |`admin`
 |ALL
-|Superuser with all permissions including control of the Cache Manager lifecycle. Users must have this role to access {brandname} Console.
+|Superuser with all permissions including control of the Cache Manager lifecycle.
 
 |`deployer`
 |ALL_READ, ALL_WRITE, LISTEN, EXEC, MONITOR, CREATE

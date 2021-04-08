@@ -63,7 +63,7 @@ GET /rest/v2/counters/{counterName}
 
 [id='rest_server_counters_reset']
 = Resetting Counters
-Restore the intial value of counters without `POST` requests and the
+Restore the initial value of counters without `POST` requests and the
 `?action=reset` parameter.
 
 [source,options="nowrap",subs=attributes+]

@@ -25,7 +25,7 @@ upon the data in a cache and is used instead as a way to help users to execute c
 in the cluster.
 
 This manager was built specifically using Java 8 and such has functional APIs in mind, thus all methods take a functional
-inteface as an argument. Also since these arguments will be sent to other nodes they need to be serializable.  We even
+interface as an argument. Also since these arguments will be sent to other nodes they need to be serializable.  We even
 used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.

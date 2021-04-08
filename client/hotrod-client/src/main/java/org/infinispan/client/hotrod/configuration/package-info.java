@@ -447,19 +447,19 @@
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration</b></td>
  *           <td>XML</td>
  *           <td>N/A</td>
- *           <td>Provides a cache definition, in XML format, to use when clients request caches that do not exist.</td>
+ *           <td>Provides a cache configuration, in XML format, to use when clients request caches that do not exist.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration_uri</b></td>
  *           <td>XML</td>
  *           <td>N/A</td>
- *           <td>Provides a URI pointing to a cache definition, in XML format, to use when clients request caches that do not exist.</td>
+ *           <td>Provides a URI to a cache configuration, in XML format, to use when clients request caches that do not exist.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.template_name</b></td>
  *           <td>String</td>
  *           <td>N/A</td>
- *           <td>Names a cache configuration template to use when clients request caches that do not exist. The cache template must be available on the server.</td>
+ *           <td>Names a cache template to use when clients request caches that do not exist. The cache template must be available on the server.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.near_cache.mode</b></td>
@@ -490,6 +490,12 @@
  *          <td>String (class name)</td>
  *          <td>{@link org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup GenericTransactionManagerLookup}</td>
  *          <td>The {@link org.infinispan.commons.tx.lookup.TransactionManagerLookup} for the specified cache.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.marshaller</b></td>
+ *          <td>String (class name)</td>
+ *          <td>{@link org.infinispan.commons.marshall.ProtoStreamMarshaller} unless another marshaller is used.</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#marshaller(String) marshaller} that serializes keys and values for the specified cache.</td>
  *       </tr>
  *    </tbody>
  * </table>

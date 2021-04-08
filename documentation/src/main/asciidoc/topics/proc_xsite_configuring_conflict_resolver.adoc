@@ -1,27 +1,43 @@
-:XSiteEntryMergePolicyClass: link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[XSiteEntryMergePolicy]
-:XSiteMergePolicyClass: link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[XSiteMergePolicy]
-
-[id='configure_conflict_resolver-{context}']
-= Configuring Cross-Site Conflict Resolution
-
-Specify the algorithm name of the implementation to use when conflict happens.
+[id='customizing-conflict-resolution_{context}']
+= Customizing the Conflict Resolution Algorithm
+Configure {brandname} to use a different algorithm to resolve conflicting entries between backup locations.
 
 .Procedure
-* Use `merge-policy` to configure the conflict resolution algorithm.
 
-.Using {brandname} algorithm
+. Open your {brandname} configuration for editing.
+. Specify one of the {brandname} algorithms or a custom implementation with the `merge-policy` attribute for the `backups` element.
+
+.Using {brandname} algorithms
+
+Find all {brandname} algorithms and their descriptions in the `org.infinispan.xsite.spi.XSiteMergePolicy` enum.
+
+The following example configuration uses the `ALWAYS_REMOVE` algorithm that deletes conflicting entries from both sites:
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/xsite_resolver_provided.xml[]
 ----
 
-.Using a custom implementation
+.Using custom implementations
+
+. Create a custom `XSiteEntryMergePolicy` implementation.
++
+[source,java,options="nowrap"]
+----
+include::code_examples/XSiteEntryMergePolicy.java[]
+----
++
+. Specify the fully qualified class name as the value of the `merge-policy` attribute, as in the following example:
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/xsite_resolver_custom.xml[]
 ----
 
-.Reference
-* {XSiteEntryMergePolicyClass}
-* {XSiteMergePolicyClass}
+[role="_additional-resources"]
+.Additional resources
+
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/SiteEntry.html[org.infinispan.xsite.spi.SiteEntry]
 * link:{configdocroot}[{brandname} Configuration Schema]
