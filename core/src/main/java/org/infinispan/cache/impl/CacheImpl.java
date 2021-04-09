@@ -549,7 +549,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyNotNull(key);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
-      return invoker.invokeAsync(ctx, command).thenApply(CacheEntry.class::cast);
+      return (CompletableFuture) invoker.invokeAsync(ctx, command);
    }
 
    @Override
@@ -1596,7 +1596,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final CompletableFuture<Void> clearAsync(final long explicitFlags) {
       InvocationContext context = invocationContextFactory.createClearNonTxInvocationContext();
       ClearCommand command = commandsFactory.buildClearCommand(explicitFlags);
-      return invoker.invokeAsync(context, command).thenApply(nil -> null);
+      return (CompletableFuture) invoker.invokeAsync(context, command);
    }
 
    @Override
