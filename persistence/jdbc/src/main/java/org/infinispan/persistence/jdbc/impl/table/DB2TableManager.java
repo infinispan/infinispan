@@ -1,13 +1,20 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
 import java.io.ByteArrayInputStream;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Objects;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -69,5 +76,43 @@ class DB2TableManager extends AbstractTableManager {
    @Override
    protected String getDropTimestampSql(String indexName) {
       return String.format("DROP INDEX %s", getIndexName(true, indexName));
+   }
+
+   @Override
+   public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
+      Objects.requireNonNull(tableName, "table name is mandatory");
+      ResultSet rs = null;
+      try {
+         // we need to make sure, that (even if the user has extended permissions) only the tables in current schema are checked
+         // explicit set of the schema to the current user one to make sure only tables of the current users are requested
+         DatabaseMetaData metaData = connection.getMetaData();
+         String schemaPattern = tableName.getSchema();
+         if (schemaPattern == null) {
+            schemaPattern = getCurrentSchema(connection);
+         }
+         rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[]{"TABLE"});
+         return rs.next();
+      } catch (SQLException e) {
+         if (log.isTraceEnabled())
+            log.tracef(e, "SQLException occurs while checking the table %s", tableName);
+         return false;
+      } finally {
+         JdbcUtil.safeClose(rs);
+      }
+   }
+
+   private String getCurrentSchema(Connection connection) {
+      try (Statement statement = connection.createStatement()) {
+         try (ResultSet rs = statement.executeQuery("VALUES CURRENT SCHEMA")) {
+            if (rs.next()) {
+               return rs.getString(1);
+            } else {
+               return null;
+            }
+         }
+      } catch (SQLException e) {
+         log.debug("Couldn't obtain the current schema, no schema will be specified during table existence check.", e);
+         return null;
+      }
    }
 }
