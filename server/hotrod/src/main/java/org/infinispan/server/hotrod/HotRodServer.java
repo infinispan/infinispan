@@ -16,6 +16,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
@@ -117,8 +118,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       super("HotRod");
    }
 
-   private static Map<String, CacheInfo> expirationMap(long time, TimeUnit unit) {
-      com.github.benmanes.caffeine.cache.Cache<String, CacheInfo> cache = Caffeine.newBuilder()
+   private static Map<DecoratedCacheKey, CacheInfo> expirationMap(long time, TimeUnit unit) {
+      com.github.benmanes.caffeine.cache.Cache<DecoratedCacheKey, CacheInfo> cache = Caffeine.newBuilder()
             .expireAfterWrite(time, unit).build();
       return cache.asMap();
    }
@@ -126,11 +127,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
-   private Map<String, AdvancedCache> knownCaches = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private Map<DecoratedCacheKey, AdvancedCache> knownCaches = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, Configuration> knownCacheConfigurations = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, ComponentRegistry> knownCacheRegistries = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    // This needs to be an expiration map so we can update knowledge about if sync listeners are registered
-   private final Map<String, CacheInfo> cacheInfo = expirationMap(10, TimeUnit.SECONDS);
+   private final Map<DecoratedCacheKey, CacheInfo> cacheInfo = expirationMap(10, TimeUnit.SECONDS);
    private QueryFacade queryFacade;
    private Map<String, SaslServerFactory> saslMechFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
@@ -403,7 +404,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    public void cacheStopped(String cacheName) {
-      cacheInfo.keySet().stream().filter(k -> k.startsWith(cacheName)).forEach(cacheInfo::remove);
+      cacheInfo.keySet().removeIf(k -> Objects.equals(k.getCacheName(), cacheName));
    }
 
    boolean hasSyncListener(CacheNotifierImpl<?, ?> cacheNotifier) {
@@ -420,7 +421,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public CacheInfo getCacheInfo(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
       // Fetching persistence manager would require security action, and would be too expensive
-      CacheInfo info = cacheInfo.get(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype());
+      CacheInfo info = cacheInfo.get(new DecoratedCacheKey(cache.getName(), header.getKeyMediaType().getTypeSubtype(), header.getValueMediaType().getTypeSubtype()));
       if (info == null) {
          AdvancedCache<byte[], byte[]> localNonBlocking = SecurityActions.anonymizeSecureCache(cache)
                .noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
@@ -436,14 +437,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          // Ignore SingleFileStore
          boolean persistence = pm.isEnabled() && !pm.getStores(CacheLoader.class).stream().allMatch(l -> (l instanceof SingleFileStore));
          info = new CacheInfo(localNonBlocking, persistence, hasIndexing, hasSyncListener(cacheNotifier));
-         cacheInfo.put(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype(), info);
+         cacheInfo.put(new DecoratedCacheKey(cache.getName(), header.getKeyMediaType().getTypeSubtype(), header.getValueMediaType().getTypeSubtype()), info);
       }
       return info;
    }
 
    AdvancedCache getCacheInstance(KeyValuePair<String, String> requestTypes, HotRodHeader header, String cacheName, EmbeddedCacheManager cacheManager, Boolean skipCacheCheck, Boolean addToKnownCaches) {
       AdvancedCache cache = null;
-      String scopedCacheKey = getDecoratedCacheKey(cacheName, requestTypes);
+      DecoratedCacheKey scopedCacheKey = getDecoratedCacheKey(cacheName, requestTypes);
       if (!skipCacheCheck) cache = knownCaches.get(scopedCacheKey);
 
       if (cache == null) {
@@ -535,8 +536,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return iterationManager;
    }
 
-   static String getDecoratedCacheKey(String cacheName, KeyValuePair<String, String> mediaTypes) {
-      return cacheName + "|" + mediaTypes.getKey() + "|" + mediaTypes.getValue();
+   static DecoratedCacheKey getDecoratedCacheKey(String cacheName, KeyValuePair<String, String> mediaTypes) {
+      return new DecoratedCacheKey(cacheName, mediaTypes.getKey(), mediaTypes.getValue());
    }
 
    private static KeyValuePair<String, String> getRequestMediaTypes(HotRodHeader header, Configuration configuration) {
@@ -715,7 +716,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    class RemoveCacheListener {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
-         knownCaches.keySet().stream().filter(k -> k.startsWith(event.getCacheName() + "|")).forEach(knownCaches::remove);
+         knownCaches.keySet().removeIf(k -> Objects.equals(k.getCacheName(), event.getCacheName()));
          knownCacheConfigurations.remove(event.getCacheName());
          knownCacheRegistries.remove(event.getCacheName());
       }
@@ -740,5 +741,43 @@ class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean>, Seria
       // If the cache isn't started just play like this node has the address in the cache - it will be added as it
       // joins, so no worries
       return true;
+   }
+}
+
+class DecoratedCacheKey {
+   private final String cacheName;
+   private final String keyMediaType;
+   private final String valueMediaType;
+
+   public DecoratedCacheKey(String cacheName, String keyMediaType, String valueMediaType) {
+      this.cacheName = cacheName;
+      this.keyMediaType = keyMediaType;
+      this.valueMediaType = valueMediaType;
+   }
+
+   public String getCacheName() {
+      return cacheName;
+   }
+
+   public String getKeyMediaType() {
+      return keyMediaType;
+   }
+
+   public String getValueMediaType() {
+      return valueMediaType;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DecoratedCacheKey that = (DecoratedCacheKey) o;
+      return Objects.equals(cacheName, that.cacheName) && Objects.equals(keyMediaType, that.keyMediaType) &&
+             Objects.equals(valueMediaType, that.valueMediaType);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(cacheName, keyMediaType, valueMediaType);
    }
 }
