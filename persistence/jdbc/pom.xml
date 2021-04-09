@@ -18,12 +18,6 @@
          <artifactId>protostream-processor</artifactId>
       </dependency>
 
-      <!--Workaround for ISPN-12913 -->
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-types</artifactId>
-       </dependency>
-
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
