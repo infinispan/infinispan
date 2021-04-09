@@ -13,7 +13,9 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,7 +31,7 @@ import org.infinispan.server.tool.Main;
  **/
 public class Bootstrap extends Main {
    private final ExitHandler exitHandler;
-   private Path configurationFile;
+   private final List<Path> configurationFiles = new ArrayList<>(3);
    private Path loggingFile;
 
    static {
@@ -54,7 +56,7 @@ public class Bootstrap extends Main {
             parameter = args.next();
             // Fall through
          case "--server-config":
-            configurationFile = Paths.get(parameter);
+            configurationFiles.add(Paths.get(parameter));
             break;
          case "-l":
             parameter = args.next();
@@ -132,8 +134,8 @@ public class Bootstrap extends Main {
       }
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
       Path confDir = Paths.get(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
-      if (configurationFile == null) {
-         configurationFile = Paths.get(Server.DEFAULT_CONFIGURATION_FILE);
+      if (configurationFiles.isEmpty()) {
+         configurationFiles.add(Paths.get(Server.DEFAULT_CONFIGURATION_FILE));
       }
       properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, Server.DEFAULT_SERVER_LOG).getAbsolutePath());
       if (loggingFile == null) {
@@ -153,9 +155,11 @@ public class Bootstrap extends Main {
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
       Server.log.serverStarting(Version.getBrandName());
-      Server.log.serverConfiguration(configurationFile.toString());
+      for (Path configurationFile : configurationFiles) {
+         Server.log.serverConfiguration(configurationFile.toString());
+      }
       Server.log.loggingConfiguration(loggingFile.toString());
-      try (Server server = new Server(serverRoot, configurationFile.toFile(), properties)) {
+      try (Server server = new Server(serverRoot, configurationFiles, properties)) {
          server.setExitHandler(exitHandler);
          server.run().get();
       } catch (Exception e) {
