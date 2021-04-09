@@ -51,7 +51,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
    @Override
    @SuppressWarnings("rawtypes")
    public long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry cr = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
       String cacheName = cache.getName();
@@ -60,7 +60,8 @@ public class HotRodTargetMigrator implements TargetMigrator {
       }
       RemoteStore store = stores.iterator().next();
       final RemoteCache remoteSourceCache = store.getRemoteCache();
-      ClusterExecutor clusterExecutor = cache.getCacheManager().executor()
+      ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(cache.getCacheManager());
+      clusterExecutor
             .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
             .singleNodeSubmission();
       CacheTopologyInfo sourceCacheTopologyInfo = remoteSourceCache.getCacheTopologyInfo();

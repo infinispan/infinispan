@@ -12,6 +12,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
+import org.infinispan.util.KeyValuePair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +26,10 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
 
    public RollingUpgradeIT() {
       super("configuration/ClusteredServerTest.xml");
+   }
+
+   protected RollingUpgradeIT(String config) {
+      super(config);
    }
 
    @Before
@@ -41,8 +46,8 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
 
    @After
    public void after() throws Exception {
-      source.stop("source");
-      target.stop("target");
+      stopTargetCluster();
+      stopSourceCluster();
    }
 
    @Test
@@ -67,6 +72,9 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
       assertEquals("name-20", getPersonName("20", restClientTarget));
 
       // Do a rolling upgrade from the target
+      doRollingUpgrade(restClientTarget);
+
+      // Do a second rolling upgrade, should be harmless and simply override the data
       doRollingUpgrade(restClientTarget);
 
       // Disconnect source from the remote store
@@ -116,8 +124,9 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
 
    private void createTargetClusterCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence()
-            .addStore(RemoteStoreConfigurationBuilder.class)
+      final RemoteStoreConfigurationBuilder storeConfigurationBuilder = builder.clustering()
+            .cacheMode(CacheMode.DIST_SYNC).persistence().addStore(RemoteStoreConfigurationBuilder.class);
+      storeConfigurationBuilder
             .remoteCacheName(CACHE_NAME)
             .hotRodWrapping(true)
             .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_25)
@@ -125,7 +134,14 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
             .addServer()
             .host(source.driver.getServerAddress(0).getHostAddress())
             .port(11222);
-
+      final KeyValuePair<String, String> credentials = getCredentials();
+      if (getCredentials() != null) {
+         storeConfigurationBuilder.remoteSecurity()
+               .authentication().enable().saslMechanism("PLAIN")
+               .username(credentials.getKey())
+               .password(credentials.getValue())
+               .realm("default");
+      }
       createCache(CACHE_NAME, builder, target.getClient());
    }
 
