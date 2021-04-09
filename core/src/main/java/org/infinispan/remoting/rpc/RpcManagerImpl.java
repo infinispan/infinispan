@@ -364,7 +364,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       checkTopologyId(command);
       return command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
-            cf.wired().buildSingleRpcCommand(command);
+            cf.running().buildSingleRpcCommand(command);
    }
 
    @Override

@@ -15,7 +15,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -51,7 +50,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected ComponentRef<CommandsFactory> cf;
    @Inject protected ComponentRef<AsyncInterceptorChain> invokerRef;
-   @Inject protected ComponentRef<InvocationContextFactory> cfRef;
    @Inject protected ComponentRegistry componentRegistry;
 
    protected boolean enabled;
@@ -280,7 +278,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     */
    protected CompletionStage<Boolean> touchEntryAndReturnIfExpired(InternalCacheEntry entry, int segment) {
       TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
-      touchCommand.init(componentRegistry, false);
+      touchCommand.init(dataContainer.running(), timeService, configuration, null);
       CompletableFuture<Boolean> future = (CompletableFuture) touchCommand.invokeAsync();
       if (CompletionStages.isCompletedSuccessfully(future)) {
          return future.join() ? CompletableFutures.completedFalse() : CompletableFutures.completedTrue();

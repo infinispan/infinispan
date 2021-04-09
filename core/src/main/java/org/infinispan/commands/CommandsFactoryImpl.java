@@ -578,7 +578,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ((RenewBiasCommand) c).init(biasManager.running());
             break;
          case TouchCommand.COMMAND_ID:
-            ((TouchCommand) c).init(componentRegistry, true);
+            ((TouchCommand) c).init(dataContainer, timeService, configuration, distributionManager);
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());

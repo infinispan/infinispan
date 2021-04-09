@@ -9,11 +9,11 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -31,7 +31,7 @@ public class TouchCommand extends BaseRpcCommand implements TopologyAffectedComm
    private int segment;
    private int topologyId = -1;
 
-   private InternalDataContainer internalDataContainer;
+   private InternalDataContainer<?, ?> internalDataContainer;
    private TimeService timeService;
    private DistributionManager distributionManager;
 
@@ -70,12 +70,13 @@ public class TouchCommand extends BaseRpcCommand implements TopologyAffectedComm
       segment = UnsignedNumeric.readUnsignedInt(input);
    }
 
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      internalDataContainer = componentRegistry.getComponent(InternalDataContainer.class);
-      timeService = componentRegistry.getTimeService();
+   public void init(InternalDataContainer<?, ?> internalDataContainer, TimeService timeService,
+                    Configuration configuration, DistributionManager distributionManager) {
+      this.internalDataContainer = internalDataContainer;
+      this.timeService = timeService;
       // Invalidation cache doesn't set topology id - so we don't want to throw OTE in invokeAsync
-      if (!componentRegistry.getConfiguration().clustering().cacheMode().isInvalidation()) {
-         distributionManager = componentRegistry.getDistributionManager();
+      if (!configuration.clustering().cacheMode().isInvalidation()) {
+         this.distributionManager = distributionManager;
       }
    }
 

@@ -449,7 +449,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       if (touchMode == TouchMode.ASYNC) {
          // Send to all the owners
          rpcManager.sendToMany(owners, touchCommand, DeliverOrder.NONE);
-         touchCommand.init(componentRegistry, false);
+         touchCommand.init(dataContainer.running(), timeService, configuration, distributionManager);
          return touchCommand.invokeAsync().thenApply(b -> b == Boolean.TRUE ? Boolean.FALSE : Boolean.TRUE);
       }
 
@@ -459,7 +459,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                                      new TouchResponseCollector(),
                                      rpcManager.getSyncRpcOptions());
 
-      touchCommand.init(componentRegistry, false);
+      touchCommand.init(dataContainer.running(), timeService, configuration, distributionManager);
       CompletableFuture<Object> localStage = touchCommand.invokeAsync();
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
