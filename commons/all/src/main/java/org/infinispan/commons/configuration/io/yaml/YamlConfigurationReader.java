@@ -44,21 +44,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
       namespaces.put("", ""); // Default namespace
       loadTree();
-      printTree(lines);
    }
-
-   private void printTree(Node node) {
-      if (node != null) {
-         for (int i = 0; i < node.parsed.indent; i++) {
-            System.out.print(' ');
-         }
-         System.out.println(node.parsed);
-         if (node.children != null) {
-            node.children.forEach(c -> printTree(c));
-         }
-      }
-   }
-
 
    private static class Node {
       final Parsed parsed;

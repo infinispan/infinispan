@@ -28,7 +28,7 @@ public interface Messages {
    @Message(value = "Displays usage information and exits.")
    String toolHelpHelp();
 
-   @Message("Specifies a server configuration file. Defaults to `%s`.")
+   @Message("Specifies a server configuration file. Defaults to `%s`. Can be repeated, in which case the configurations are layered.")
    String serverHelpServerConfig(String defaultConfiguration);
 
    @Message("Specifies a logging configuration file. Defaults to `%s`.")
