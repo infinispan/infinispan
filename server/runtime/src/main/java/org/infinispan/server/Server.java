@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivilegedActionException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.time.DefaultTimeService;
@@ -204,19 +206,16 @@ public class Server implements ServerManagement, AutoCloseable {
     * Initializes a server with the supplied server root, configuration file and properties
     *
     * @param serverRoot
-    * @param configuration
+    * @param configurationFiles
     * @param properties
     */
-   public Server(File serverRoot, File configuration, Properties properties) {
+   public Server(File serverRoot, List<Path> configurationFiles, Properties properties) {
       this(serverRoot, properties);
-      if (!configuration.isAbsolute()) {
-         configuration = new File(serverConf, configuration.getPath());
-      }
-      try {
-         parseConfiguration(configuration.toURI().toURL());
-      } catch (IOException e) {
-         throw new CacheConfigurationException(e);
-      }
+      parseConfiguration(configurationFiles);
+   }
+
+   public Server(File serverRoot, File configuration, Properties properties) {
+      this(serverRoot, Collections.singletonList(configuration.toPath()), properties);
    }
 
    private Server(File serverRoot, Properties properties) {
@@ -267,7 +266,7 @@ public class Server implements ServerManagement, AutoCloseable {
       SecurityActions.addSecurityProvider(WildFlyElytronSaslGs2Provider.getInstance());
    }
 
-   private void parseConfiguration(URL config) {
+   private void parseConfiguration(List<Path> configurationFiles) {
       ParserRegistry parser = new ParserRegistry(classLoader, false, properties);
       try {
          // load the defaults first
@@ -288,9 +287,21 @@ public class Server implements ServerManagement, AutoCloseable {
             configurationBuilderHolder.newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
          }
 
-         // then load the user configuration
-         parser.parse(config, configurationBuilderHolder);
-         log.tracef("Parsed cache configurations: %s", configurationBuilderHolder.getNamedConfigurationBuilders().keySet());
+         // then load the user configurations
+         for (Path configurationFile : configurationFiles) {
+            if (!configurationFile.isAbsolute()) {
+               configurationFile = serverConf.toPath().resolve(configurationFile);
+            }
+            parser.parse(configurationFile.toUri().toURL(), configurationBuilderHolder);
+         }
+         if (log.isDebugEnabled()) {
+            StringBuilderWriter sw = new StringBuilderWriter();
+            try (ConfigurationWriter w = ConfigurationWriter.to(sw).build()) {
+               Map<String, Configuration> configs = configurationBuilderHolder.getNamedConfigurationBuilders().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
+               parser.serialize(w, configurationBuilderHolder.getGlobalConfigurationBuilder().build(), configs);
+            }
+            log.debugf("Actual configuration: %s", sw);
+         }
 
          // Set the operation handler on all endpoints
          ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
@@ -451,7 +462,7 @@ public class Server implements ServerManagement, AutoCloseable {
          loginConfiguration.put("clientId", realmConfiguration.clientId());
       } else {
          loginConfiguration.put("mode", "HTTP");
-         for (String mechanism: rest.authentication().mechanisms()) {
+         for (String mechanism : rest.authentication().mechanisms()) {
             loginConfiguration.put(mechanism, "true");
          }
       }

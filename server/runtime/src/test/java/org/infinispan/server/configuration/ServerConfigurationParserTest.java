@@ -101,8 +101,6 @@ public class ServerConfigurationParserTest {
          try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(t).build()) {
             new ServerConfigurationSerializer().serialize(w, serverConfiguration);
          }
-         System.out.println("==================== " + t);
-         System.out.println(sw);
       }
    }
 

@@ -1,0 +1,34 @@
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                            urn:infinispan:server:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-server-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+      xmlns:server="urn:infinispan:server:${infinispan.core.schema.version}">
+   <cache-container/>
+   <server xmlns="urn:infinispan:server:${infinispan.core.schema.version}">
+      <interfaces>
+         <interface name="default">
+            <loopback/>
+         </interface>
+      </interfaces>
+
+      <socket-bindings default-interface="default" port-offset="${infinispan.socket.binding.port-offset:0}">
+         <socket-binding name="default" port="11222"/>
+      </socket-bindings>
+
+      <security>
+         <security-realms>
+            <security-realm name="default">
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="ServerConfigurationParserTest-user.properties" digest-realm-name="digest"
+                                   relative-to="infinispan.server.config.path" plain-text="true"/>
+                  <group-properties path="ServerConfigurationParserTest-group.properties"
+                                    relative-to="infinispan.server.config.path"/>
+               </properties-realm>
+            </security-realm>
+         </security-realms>
+      </security>
+
+      <endpoints socket-binding="default"/>
+   </server>
+</infinispan>
