@@ -16,6 +16,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -25,6 +26,7 @@ import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
+import org.infinispan.util.KeyValuePair;
 import org.junit.After;
 
 /**
@@ -49,7 +51,7 @@ class AbstractMultiClusterIT {
    }
 
    protected void startSourceCluster() {
-      source = new Cluster(new ClusterConfiguration(config, 2, 0));
+      source = new Cluster(new ClusterConfiguration(config, 2, 0), getCredentials());
       source.start("source");
    }
 
@@ -59,7 +61,7 @@ class AbstractMultiClusterIT {
    }
 
    protected void startTargetCluster() {
-      target = new Cluster(new ClusterConfiguration(config, 2, 1000));
+      target = new Cluster(new ClusterConfiguration(config, 2, 1000), getCredentials());
       target.start("target");
    }
 
@@ -88,6 +90,10 @@ class AbstractMultiClusterIT {
       assertEquals(response.getBody(), 200, response.getStatus());
    }
 
+   protected KeyValuePair<String, String> getCredentials() {
+      return null;
+   }
+
    protected static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers, int portOffset) {
          super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
@@ -101,12 +107,18 @@ class AbstractMultiClusterIT {
    static class Cluster {
       final AbstractInfinispanServerDriver driver;
       final Map<Integer, RestClient> serverClients = new HashMap<>();
+      private final KeyValuePair<String, String> credentials;
 
       Cluster(ClusterConfiguration simpleConfiguration) {
+         this(simpleConfiguration, null);
+      }
+
+      Cluster(ClusterConfiguration simpleConfiguration, KeyValuePair<String, String> credentials) {
+         this.credentials = credentials;
          Properties sysProps = System.getProperties();
          for (String prop : sysProps.stringPropertyNames()) {
             if (prop.startsWith(TestSystemPropertyNames.PREFIX)) {
-               simpleConfiguration.properties().put(prop,  sysProps.getProperty(prop));
+               simpleConfiguration.properties().put(prop, sysProps.getProperty(prop));
             }
          }
          this.driver = ServerRunMode.DEFAULT.newDriver(simpleConfiguration);
@@ -139,10 +151,14 @@ class AbstractMultiClusterIT {
       RestClient getClient(int server) {
          return serverClients.computeIfAbsent(server, k -> {
             InetSocketAddress serverSocket = driver.getServerSocket(server, 11222);
-            return RestClient.forConfiguration(
-                  new RestClientConfigurationBuilder().addServer()
-                        .host(serverSocket.getHostName()).port(serverSocket.getPort()).build()
-            );
+            final ServerConfigurationBuilder configurationBuilder = new RestClientConfigurationBuilder().addServer()
+                  .host(serverSocket.getHostName()).port(serverSocket.getPort());
+            if (credentials != null) {
+               String user = credentials.getKey();
+               String pass = credentials.getValue();
+               configurationBuilder.security().authentication().enable().mechanism("BASIC").username(user).password(pass);
+            }
+            return RestClient.forConfiguration(configurationBuilder.build());
          });
       }
    }
