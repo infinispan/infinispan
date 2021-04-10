@@ -60,7 +60,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
     */
    void prepareTransaction(HotRodHeader header, Subject subject, XidImpl xid, boolean onePhaseCommit,
                            List<TransactionWrite> writes, boolean recoverable, long timeout) {
-      HotRodServer.ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       validateConfiguration(cache);
       executor.execute(() -> prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,

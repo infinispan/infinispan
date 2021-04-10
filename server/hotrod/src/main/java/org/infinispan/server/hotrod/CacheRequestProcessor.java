@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
@@ -24,7 +22,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.core.RequestTracer;
-import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
@@ -36,8 +33,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
 
    private final ClientListenerRegistry listenerRegistry;
-
-   private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
@@ -60,7 +55,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
 
       getInternal(header, cache, key);
@@ -68,14 +63,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void updateBloomFilter(HotRodHeader header, Subject subject, byte[] bloomArray) {
       try {
-         BloomFilter<byte[]> filter = bloomFilters.get(header.cacheName);
-         if (filter != null) {
+         BloomFilter<byte[]> bloomFilter = server.getCacheInfo(header).getBloomFilter();
+         if (bloomFilter != null) {
             if (log.isTraceEnabled()) {
-               log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
+               log.tracef("Updating bloom filter %s found for cache %s", bloomFilter, header.cacheName);
             }
-            filter.setBits(IntSets.from(bloomArray));
+            bloomFilter.setBits(IntSets.from(bloomArray));
             if (log.isTraceEnabled()) {
-               log.tracef("Updated bloom filter %s for cache %s", filter, header.cacheName);
+               log.tracef("Updated bloom filter %s for cache %s", bloomFilter, header.cacheName);
             }
             writeSuccess(header);
          } else {
@@ -98,8 +93,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void addToFilter(String cacheName, byte[] key) {
-      BloomFilter<byte[]> bloomFilter = bloomFilters.get(cacheName);
+   void addToFilter(byte[] key, BloomFilter<byte[]> bloomFilter) {
       // TODO: Need to think harder about this because we could have a concurrent write as we are doing our get
       // and we could have just have had an invalidation come through that didn't pass the bloom filter
       // I believe this has to go at the beginning of the get command before we get a value or exception
@@ -143,21 +137,25 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      getWithMetadataInternal(header, cache, key, offset);
+      BloomFilter<byte[]> bloomFilter = cacheInfo.getBloomFilter();
+      getWithMetadataInternal(header, cache, key, offset, bloomFilter);
    }
 
-   private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
+   private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
+                                        int offset, BloomFilter<byte[]> bloomFilter) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
-         handleGetWithMetadata(header, offset, key, get.join(), null);
+         handleGetWithMetadata(header, offset, key, get.join(), null, bloomFilter);
       } else {
-         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, key, ce, throwable));
+         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, key, ce, throwable,
+                                                                   bloomFilter));
       }
    }
 
-   private void handleGetWithMetadata(HotRodHeader header, int offset, byte[] key, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, int offset, byte[] key, CacheEntry<byte[], byte[]> entry,
+                                      Throwable throwable, BloomFilter<byte[]> bloomFilter) {
       if (throwable != null) {
          writeException(header, throwable);
          return;
@@ -166,7 +164,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          writeNotExist(header);
       } else if (header.op == HotRodOperation.GET_WITH_METADATA) {
          assert offset == 0;
-         addToFilter(header.cacheName, key);
+         addToFilter(key, bloomFilter);
          writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel, entry));
       } else {
          if (entry == null) {
@@ -177,7 +175,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       containsKeyInternal(header, cache, key);
    }
@@ -203,7 +201,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       Object span = RequestTracer.requestStart(HotRodOperation.PUT.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       putInternal(header, cache, key, value, metadata.build(), span);
@@ -226,7 +224,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
       Object span = RequestTracer.requestStart(HotRodOperation.REPLACE_IF_UNMODIFIED.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
@@ -273,7 +271,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       Object span = RequestTracer.requestStart(HotRodOperation.REPLACE.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       replaceInternal(header, cache, key, value, metadata.build(), span);
@@ -317,7 +315,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       Object span = RequestTracer.requestStart(HotRodOperation.PUT_IF_ABSENT.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
@@ -359,7 +357,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
       Object span = RequestTracer.requestStart(HotRodOperation.REMOVE.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeInternal(header, cache, key, span);
    }
@@ -382,7 +380,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
       Object span = RequestTracer.requestStart(HotRodOperation.REMOVE_IF_UNMODIFIED.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeIfUnmodifiedInternal(header, cache, key, version, span);
    }
@@ -427,7 +425,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void clear(HotRodHeader header, Subject subject) {
       Object span = RequestTracer.requestStart(HotRodOperation.CLEAR.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       clearInternal(header, cache, span);
    }
@@ -445,7 +443,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
       Object span = RequestTracer.requestStart(HotRodOperation.PUT_ALL.name());
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       putAllInternal(header, cache, entries, metadata.build(), span);
    }
@@ -465,7 +463,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
-      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       getAllInternal(header, cache, keys);
    }
@@ -553,12 +551,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                           String filterFactory, List<byte[]> filterParams, String converterFactory,
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
       Object span = RequestTracer.requestStart(HotRodOperation.ADD_CLIENT_LISTENER.name());
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       BloomFilter<byte[]> bloomFilter = null;
       if (bloomBits > 0) {
          bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
-         BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-         assert priorFilter == null;
+         boolean filterAdded = cacheInfo.setBloomFilter(bloomFilter);
+         assert filterAdded;
       }
       CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
             includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,

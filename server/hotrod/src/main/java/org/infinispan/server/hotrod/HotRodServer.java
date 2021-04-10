@@ -40,12 +40,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -69,7 +65,6 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
-import org.infinispan.server.core.CacheInfo;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
@@ -109,7 +104,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
-   private final Map<String, ExtendedCacheInfo> knownCaches = new ConcurrentHashMap<>();
+   private final Map<String, HotRodCacheInfo> knownCaches = new ConcurrentHashMap<>();
    private QueryFacade queryFacade;
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
@@ -358,7 +353,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return builder;
    }
 
-   public AdvancedCache<byte[], byte[]> cache(ExtendedCacheInfo cacheInfo, HotRodHeader header, Subject subject) {
+   public AdvancedCache<byte[], byte[]> cache(HotRodCacheInfo cacheInfo, HotRodHeader header, Subject subject) {
       KeyValuePair<MediaType, MediaType> requestMediaTypes = getRequestMediaTypes(header, cacheInfo.configuration);
       AdvancedCache<byte[], byte[]> cache =
          cacheInfo.getCache(requestMediaTypes, subject);
@@ -371,21 +366,21 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return new EmbeddedMultimapCache(cache);
    }
 
-   public ExtendedCacheInfo getCacheInfo(HotRodHeader header) {
-      return getCacheInfo(header.cacheName, header.version, header.messageId, true);
+   public HotRodCacheInfo getCacheInfo(HotRodHeader header) {
+      return getCacheInfo(header.cacheName, header.version, header.messageId);
    }
 
-   public ExtendedCacheInfo getCacheInfo(String cacheName, byte hotRodVersion, long messageId, boolean checkIgnored) {
-      if (checkIgnored && isCacheIgnored(cacheName)) {
+   public HotRodCacheInfo getCacheInfo(String cacheName, byte hotRodVersion, long messageId) {
+      if (isCacheIgnored(cacheName)) {
          throw new CacheUnavailableException();
       }
-      ExtendedCacheInfo info = knownCaches.get(cacheName);
+      HotRodCacheInfo info = knownCaches.get(cacheName);
       if (info == null) {
          boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
 
          AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName);
          Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
-         info = new ExtendedCacheInfo(cache, cacheCfg);
+         info = new HotRodCacheInfo(cache, cacheCfg);
          updateCacheInfo(info);
          if (keep) {
             knownCaches.put(cacheName, info);
@@ -418,7 +413,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return keep;
    }
 
-   public void updateCacheInfo(ExtendedCacheInfo info) {
+   public void updateCacheInfo(HotRodCacheInfo info) {
       if (info.getCache().getStatus() != ComponentStatus.RUNNING)
          return;
 
@@ -598,33 +593,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             ']';
    }
 
-   public static class ExtendedCacheInfo extends CacheInfo<byte[], byte[]> {
-      final DistributionManager distributionManager;
-      final VersionGenerator versionGenerator;
-      final Configuration configuration;
-      final boolean transactional;
-      final boolean clustered;
-      volatile boolean indexing;
-
-      ExtendedCacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
-         super(SecurityActions.anonymizeSecureCache(cache));
-         this.distributionManager = SecurityActions.getDistributionManager(cache);
-         ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
-         //Note: HotRod cannot use the same version generator as Optimistic Transaction.
-         this.versionGenerator = componentRegistry.getComponent(VersionGenerator.class, KnownComponentNames.HOT_ROD_VERSION_GENERATOR);
-         this.configuration = configuration;
-         this.transactional = configuration.transaction().transactionMode().isTransactional();
-         this.clustered = configuration.clustering().cacheMode().isClustered();
-
-         // Start conservative and assume we have all the stuff that can cause operations to block
-         this.indexing = true;
-      }
-
-      public void update(boolean indexing) {
-         this.indexing = indexing;
-      }
-   }
-
    @Listener(sync = false, observation = Listener.Observation.POST)
    class ReAddMyAddressListener {
       private final Cache<Address, ServerAddress> addressCache;
@@ -671,7 +639,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private class CacheInfoUpdateTask implements Runnable {
       @Override
       public void run() {
-         for (ExtendedCacheInfo cacheInfo : knownCaches.values()) {
+         for (HotRodCacheInfo cacheInfo : knownCaches.values()) {
             updateCacheInfo(cacheInfo);
          }
       }

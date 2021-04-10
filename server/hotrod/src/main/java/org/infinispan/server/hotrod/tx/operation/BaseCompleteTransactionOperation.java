@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.hotrod.HotRodCacheInfo;
 import org.infinispan.server.hotrod.HotRodHeader;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;
@@ -175,8 +176,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     */
    private CompletionStage<Void> completeCache(ByteString cacheName) throws Throwable {
       TxState state = globalTxTable.getState(new CacheXid(cacheName, xid));
-      HotRodServer.ExtendedCacheInfo cacheInfo =
-            server.getCacheInfo(cacheName.toString(), header.getVersion(), header.getMessageId(), true);
+      HotRodCacheInfo cacheInfo = server.getCacheInfo(cacheName.toString(), header.getVersion(), header.getMessageId());
       AdvancedCache<?, ?> cache = server.cache(cacheInfo, header, subject);
       RpcManager rpcManager = cache.getRpcManager();
       if (rpcManager == null || rpcManager.getAddress().equals(state.getOriginator())) {
