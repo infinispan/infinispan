@@ -22,8 +22,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -120,7 +119,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private File file;
    private float fragmentationFactor = .75f;
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
-   private final ReadWriteLock resizeLock = new ReentrantReadWriteLock();
+   private final StampedLock resizeLock = new StampedLock();
    private TimeService timeService;
    private MarshallableEntryFactory<K, V> entryFactory;
 
@@ -535,7 +534,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          int len = KEY_POS_LATEST + key.getLength() + data.getLength() + metadataLength + internalMetadataLength;
          FileEntry newEntry;
          FileEntry oldEntry = null;
-         resizeLock.readLock().lock();
+         long stamp = resizeLock.readLock();
          try {
             newEntry = allocate(len);
             newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), data.getLength(), metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
@@ -571,7 +570,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             try {
                free(oldEntry);
             } finally {
-               resizeLock.readLock().unlock();
+               resizeLock.unlockRead(stamp);
             }
          }
       } catch (Exception e) {
@@ -600,7 +599,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void clear() {
-      resizeLock.writeLock().lock();
+      long stamp = resizeLock.writeLock();
       try {
          synchronized (entries) {
             synchronized (freeList) {
@@ -624,13 +623,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         resizeLock.writeLock().unlock();
+         resizeLock.unlockWrite(stamp);
       }
    }
 
    @Override
    public boolean delete(Object key) {
-      resizeLock.readLock().lock();
+      long stamp = resizeLock.readLock();
       try {
          FileEntry fe = entries.remove(key);
          free(fe);
@@ -638,7 +637,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         resizeLock.readLock().unlock();
+         resizeLock.unlockRead(stamp);
       }
    }
 
@@ -649,7 +648,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    private MarshallableEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
-      resizeLock.readLock().lock();
+      long stamp = resizeLock.readLock();
       try {
          synchronized (entries) {
             // lookup FileEntry of the key
@@ -666,7 +665,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
          }
       } finally {
-         resizeLock.readLock().unlock();
+         resizeLock.unlockRead(stamp);
       }
 
       org.infinispan.commons.io.ByteBuffer valueBb = null;
@@ -899,7 +898,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
 
-      resizeLock.readLock().lock();
+      long stamp = resizeLock.readLock();
       try {
          for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
             KeyValuePair<Object, FileEntry> next = it.next();
@@ -920,7 +919,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
            processFreeEntries();
          }
       } finally {
-         resizeLock.readLock().unlock();
+         resizeLock.unlockRead(stamp);
       }
    }
 

@@ -6,8 +6,8 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -35,7 +35,9 @@ public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
    private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
-   private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
+   private final StampedLock ownershipLock = new StampedLock();
+   private final Lock writeLock = ownershipLock.asWriteLock();
+   private final Lock readLock = ownershipLock.asReadLock();
 
    private volatile int topologyId = -1;
    private ConditionFuture<StateTransferLockImpl> topologyFuture;
@@ -70,23 +72,23 @@ public class StateTransferLockImpl implements StateTransferLock {
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireExclusiveTopologyLock() {
-      ownershipLock.writeLock().lock();
+      writeLock.lock();
    }
 
    @Override
    public void releaseExclusiveTopologyLock() {
-      ownershipLock.writeLock().unlock();
+      writeLock.unlock();
    }
 
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireSharedTopologyLock() {
-      ownershipLock.readLock().lock();
+      readLock.lock();
    }
 
    @Override
    public void releaseSharedTopologyLock() {
-      ownershipLock.readLock().unlock();
+      readLock.unlock();
    }
 
    @Override
