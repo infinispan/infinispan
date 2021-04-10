@@ -11,8 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
@@ -64,7 +63,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    /**
     * Guards and make sure the following invariant stands:  maxNumberOfKeys ==  address2key.keys().size() * bufferSize
     */
-   private final ReadWriteLock maxNumberInvariant = new ReentrantReadWriteLock();
+   private final StampedLock maxNumberInvariant = new StampedLock();
 
    /**
     * Used for coordinating between the KeyGeneratorWorker and consumers.
@@ -112,7 +111,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
          while (result == null && !keyGenWorker.isStopped()) {
             // obtain the read lock inside the loop, otherwise a topology change will never be able
             // to obtain the write lock
-            maxNumberInvariant.readLock().lock();
+            long stamp = maxNumberInvariant.readLock();
             try {
                queue = address2key.get(address);
                if (queue == null)
@@ -128,7 +127,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
                      throw new IllegalStateException("Address " + address + " is no longer in the cluster");
                }
             } finally {
-               maxNumberInvariant.readLock().unlock();
+               maxNumberInvariant.unlockRead(stamp);
             }
 
             if (result == null) {
@@ -159,12 +158,12 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
          return;
       }
       List<Address> existingNodes = getExistingNodes();
-      maxNumberInvariant.writeLock().lock();
+      long stamp = maxNumberInvariant.writeLock();
       try {
          addQueuesForAddresses(existingNodes);
          resetNumberOfKeys();
       } finally {
-         maxNumberInvariant.writeLock().unlock();
+         maxNumberInvariant.unlockWrite(stamp);
       }
       keyGenWorker = new KeyGeneratorWorker();
       executor.execute(keyGenWorker);
@@ -197,14 +196,14 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    public void handleViewChange(TopologyChangedEvent<?, ?> vce) {
       log.tracef("TopologyChangedEvent received: %s", vce);
-      maxNumberInvariant.writeLock().lock();
+      long stamp = maxNumberInvariant.writeLock();
       try {
          address2key.clear(); //we need to drop everything as key-mapping data is stale due to view change
          addQueuesForAddresses(vce.getConsistentHashAtEnd().getMembers());
          resetNumberOfKeys();
          keyProducerStartLatch.open();
       } finally {
-         maxNumberInvariant.writeLock().unlock();
+         maxNumberInvariant.unlockWrite(stamp);
       }
    }
 
@@ -252,7 +251,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       }
 
       private void generateKeys() {
-         maxNumberInvariant.readLock().lock();
+         long stamp = maxNumberInvariant.readLock();
          try {
             // if there's a topology change, some queues will stop receiving keys
             // so we want to establish an upper bound on how many extra keys to generate
@@ -274,7 +273,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
                keyProducerStartLatch.close();
             }
          } finally {
-            maxNumberInvariant.readLock().unlock();
+            maxNumberInvariant.unlockRead(stamp);
          }
       }
 

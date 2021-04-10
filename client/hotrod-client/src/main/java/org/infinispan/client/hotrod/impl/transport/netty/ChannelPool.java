@@ -10,8 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.logging.Log;
@@ -49,7 +48,7 @@ class ChannelPool {
    private final int maxPendingRequests;
    private final AtomicInteger created = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
-   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+   private final StampedLock lock = new StampedLock();
    private volatile boolean terminated = false;
 
    ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker, ExhaustedAction exhaustedAction, long maxWait, int maxConnections, int maxPendingRequests) {
@@ -120,7 +119,7 @@ class ChannelPool {
       }
       // To prevent adding channel and callback concurrently we'll synchronize all additions
       // TODO: completely lock-free algorithm would be better
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          for (;;) {
             // at this point we won't be picky and use non-writable channel anyway
@@ -133,7 +132,7 @@ class ChannelPool {
             }
          }
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
       activateChannel(channel, callback, false);
    }
@@ -192,7 +191,7 @@ class ChannelPool {
       ChannelOperation callback;
       // We're protecting against concurrent acquires, concurrent releases are fine
       // hopefully the acquire will usually get the channel through the fast (non-locking) path
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          callback = callbacks.pollFirst();
          if (callback == null) {
@@ -200,7 +199,7 @@ class ChannelPool {
             return;
          }
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
       activateChannel(channel, callback, true);
    }
@@ -269,7 +268,7 @@ class ChannelPool {
 
    public void close() {
       terminated = true;
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          RejectedExecutionException cause = new RejectedExecutionException("Pool was terminated");
          callbacks.forEach(callback -> callback.cancel(address, cause));
@@ -279,7 +278,7 @@ class ChannelPool {
             channel.pipeline().fireUserEventTriggered(ChannelPoolCloseEvent.INSTANCE);
          });
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
    }
 
