@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -21,7 +21,9 @@ public class StateTransferLockImpl implements StateTransferLock {
    private static final boolean trace = log.isTraceEnabled();
    private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
-   private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
+   private final StampedLock ownershipLock = new StampedLock();
+   private final Lock writeLock = ownershipLock.asWriteLock();
+   private final Lock readLock = ownershipLock.asReadLock();
 
    private volatile int topologyId = -1;
    // future to topology equal to topologyId + 1
@@ -39,23 +41,23 @@ public class StateTransferLockImpl implements StateTransferLock {
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireExclusiveTopologyLock() {
-      ownershipLock.writeLock().lock();
+      writeLock.lock();
    }
 
    @Override
    public void releaseExclusiveTopologyLock() {
-      ownershipLock.writeLock().unlock();
+      writeLock.unlock();
    }
 
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireSharedTopologyLock() {
-      ownershipLock.readLock().lock();
+      readLock.lock();
    }
 
    @Override
    public void releaseSharedTopologyLock() {
-      ownershipLock.readLock().unlock();
+      readLock.unlock();
    }
 
    @Override
