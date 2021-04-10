@@ -144,7 +144,7 @@ class RunningTestsRegistry {
                                                       safeTestName, now, pid));
                System.err.printf("Dumping threads of process %s to %s%n", pid, dumpFile.getAbsolutePath());
                Process jstack = new ProcessBuilder()
-                                   .command(jstackFile.getAbsolutePath(), pid)
+                                   .command(jstackFile.getAbsolutePath(), "-l", pid)
                                    .redirectOutput(dumpFile)
                                    .start();
                jstack.waitFor(10, SECONDS);
