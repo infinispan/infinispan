@@ -17,7 +17,7 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder build = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      build.clustering().stateTransfer().timeout(10000);
+      build.clustering().stateTransfer().timeout(30000);
       createClusteredCaches(2, "replication", build);
    }
 

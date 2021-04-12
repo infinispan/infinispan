@@ -2062,7 +2062,8 @@
     </xs:attribute>
     <xs:attribute name="timeout" type="xs:long" default="${StateTransfer.timeout}">
       <xs:annotation>
-        <xs:documentation>The maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup.</xs:documentation>
+        <xs:documentation>The maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup.
+        Must be greater than or equal to 'remote-timeout' in the clustering configuration.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="chunk-size" type="xs:integer" default="${StateTransfer.chunkSize}">

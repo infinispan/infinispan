@@ -59,7 +59,7 @@ public class GlobalStateBackwardsCompatibilityTest extends MultipleCacheManagers
       global.globalState().enable().persistentLocation(stateDirectory);
 
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.clustering().cacheMode(CacheMode.REPL_SYNC).stateTransfer().timeout(1, TimeUnit.SECONDS)
+      config.clustering().cacheMode(CacheMode.REPL_SYNC).stateTransfer().timeout(30, TimeUnit.SECONDS)
             .persistence().addSingleFileStore().location(stateDirectory);
       EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
       manager.defineConfiguration(CACHE_NAME, config.build());

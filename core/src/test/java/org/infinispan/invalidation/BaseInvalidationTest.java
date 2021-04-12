@@ -57,13 +57,13 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);
-      c.clustering().stateTransfer().timeout(10000)
+      c.clustering().stateTransfer().timeout(30000)
        .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "invalidation", c);
 
       if (isSync) {
          c = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true);
-         c.clustering().stateTransfer().timeout(10000)
+         c.clustering().stateTransfer().timeout(30000)
           .transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
           .transaction().lockingMode(LockingMode.OPTIMISTIC)
           .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());

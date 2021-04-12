@@ -65,7 +65,7 @@ public class PessimisticTxPartitionHandlingReleaseLockTest extends MultipleCache
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC).useSynchronization(true);
       builder.clustering().partitionHandling().mergePolicy(MergePolicy.NONE).whenSplit(PartitionHandling.DENY_READ_WRITES);
-      builder.clustering().remoteTimeout(Integer.MAX_VALUE); // we don't want timeouts
+      builder.clustering().remoteTimeout(4, TimeUnit.MINUTES); // we don't want timeouts
       createClusteredCaches(5, TestDataSCI.INSTANCE, builder, new TransportFlags().withFD(true).withMerge(true));
    }
 

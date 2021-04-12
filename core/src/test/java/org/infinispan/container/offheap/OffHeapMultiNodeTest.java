@@ -37,7 +37,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       dcc.memory().storageType(StorageType.OFF_HEAP);
-      dcc.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
+      dcc.clustering().stateTransfer().timeout(30, TimeUnit.SECONDS);
       createCluster(dcc, 4);
       waitForClusterToForm();
    }

@@ -106,7 +106,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().invocationBatching().enable()
             .clustering().cacheMode(CacheMode.DIST_SYNC)
-            .clustering().stateTransfer().timeout(10000)
+            .clustering().stateTransfer().timeout(30000)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
 
