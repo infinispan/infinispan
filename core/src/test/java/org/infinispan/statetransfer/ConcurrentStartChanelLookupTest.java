@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -19,7 +20,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.testng.annotations.DataProvider;
@@ -106,7 +106,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder replCfg = new ConfigurationBuilder();
       replCfg.clustering().cacheMode(CacheMode.REPL_SYNC);
-      replCfg.clustering().stateTransfer().timeout(10, SECONDS);
+      replCfg.clustering().stateTransfer().timeout(30, SECONDS);
 
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.newDefaultCacheManager(false, gcb1, replCfg);
       registerCacheManager(cm1);

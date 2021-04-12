@@ -78,6 +78,8 @@ public class StateTransferConfigurationBuilder extends
    /**
     * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
     * caches, before throwing an exception and aborting startup.
+    *
+    * Must be greater than or equal to 'remote-timeout' in the clustering configuration.
     */
    public StateTransferConfigurationBuilder timeout(long l) {
       attributes.attribute(TIMEOUT).set(l);
@@ -87,6 +89,8 @@ public class StateTransferConfigurationBuilder extends
    /**
     * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
     * caches, before throwing an exception and aborting startup.
+    *
+    * Must be greater than or equal to 'remote-timeout' in the clustering configuration.
     */
    public StateTransferConfigurationBuilder timeout(long l, TimeUnit unit) {
       return timeout(unit.toMillis(l));
@@ -110,6 +114,12 @@ public class StateTransferConfigurationBuilder extends
       if (awaitInitialTransfer.isModified() && awaitInitialTransfer.get()
             && !getClusteringBuilder().cacheMode().needsStateTransfer())
          throw CONFIG.awaitInitialTransferOnlyForDistOrRepl();
+
+      Attribute<Long> timeoutAttribute = attributes.attribute(TIMEOUT);
+      Attribute<Long> remoteTimeoutAttribute = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+      if (timeoutAttribute.get() < remoteTimeoutAttribute.get()) {
+         throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get(), remoteTimeoutAttribute.get());
+      }
    }
 
    @Override

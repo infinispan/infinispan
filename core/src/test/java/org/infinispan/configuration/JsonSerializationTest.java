@@ -96,7 +96,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(30, TimeUnit.MILLISECONDS).useLockStriping(true).concurrencyLevel(12)
             .clustering()
             .cacheMode(CacheMode.DIST_SYNC)
-            .remoteTimeout(12, TimeUnit.DAYS)
+            .remoteTimeout(12, TimeUnit.SECONDS)
 
             .hash()
             .capacityFactor(23.4f)
@@ -111,7 +111,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
             .l1().enable().lifespan(49).cleanupTaskFrequency(1201).invalidationThreshold(2)
 
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).timeout(13).chunkSize(12)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).timeout(13, TimeUnit.SECONDS).chunkSize(12)
 
             .partitionHandling().mergePolicy(MergePolicy.PREFERRED_ALWAYS).whenSplit(PartitionHandling.DENY_READ_WRITES)
             .statistics().enable()

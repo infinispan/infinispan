@@ -21,6 +21,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.SmallIntSet;
@@ -42,7 +43,6 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
@@ -106,7 +106,7 @@ public class StateProviderTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().invocationBatching().enable()
             .clustering().cacheMode(CacheMode.DIST_SYNC)
-            .clustering().stateTransfer().timeout(10000)
+            .clustering().stateTransfer().timeout(30000)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       configuration = cb.build();

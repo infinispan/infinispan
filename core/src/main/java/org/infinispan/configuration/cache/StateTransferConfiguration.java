@@ -67,7 +67,10 @@ public class StateTransferConfiguration implements Matchable<StateTransferConfig
    /**
     * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
     * caches, before throwing an exception and aborting startup.
+    *
+    * @deprecated Since 12.1, the attribute was never writable
     */
+   @Deprecated
    public StateTransferConfiguration timeout(long l) {
       timeout.set(l);
       return this;

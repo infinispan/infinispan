@@ -25,7 +25,7 @@ public abstract class BaseScatteredTest extends MultipleCacheManagersTest {
          cfg.clustering().biasAcquisition(biasAcquisition);
       }
       cfg.clustering().hash().numSegments(16);
-      cfg.clustering().remoteTimeout(1, TimeUnit.DAYS); // for debugging
+      cfg.clustering().remoteTimeout(4, TimeUnit.MINUTES); // for debugging
       createCluster(TestDataSCI.INSTANCE, cfg, 3);
       cm1 = manager(0);
       cm2 = manager(1);
