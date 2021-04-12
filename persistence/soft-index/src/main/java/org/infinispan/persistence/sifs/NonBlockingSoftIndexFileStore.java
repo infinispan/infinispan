@@ -3,7 +3,6 @@ package org.infinispan.persistence.sifs;
 import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
@@ -420,8 +419,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Boolean> isAvailable() {
       // TODO: does this block?
-      return CompletableFuture.completedFuture(new File(configuration.dataLocation()).exists() &&
-            new File(configuration.dataLocation()).exists());
+      return CompletableFuture.completedFuture(getDataLocation().toFile().exists() &&
+            getIndexLocation().toFile().exists());
    }
 
    @Override
