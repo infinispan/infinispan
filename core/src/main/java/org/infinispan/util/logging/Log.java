@@ -2065,7 +2065,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
-   void xsiteInvalidConfigurationRemoteSite(String siteName);
+   void xsiteInvalidConfigurationRemoteSite(String siteName, @Cause CacheConfigurationException exception);
 
    @Message(value = "The XSiteEntryMergePolicy is missing! Must be non-null.", id = 607)
    CacheConfigurationException missingXSiteEntryMergePolicy();

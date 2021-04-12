@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -72,12 +73,14 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
             error instanceof SuspectException;
    }
 
-   private static boolean isConfigurationError(Throwable throwable) {
+   private static Optional<CacheConfigurationException> findConfigurationError(Throwable throwable) {
       Throwable error = throwable;
       if (throwable instanceof ExecutionException || throwable instanceof RemoteException) {
          error = throwable.getCause();
       }
-      return error instanceof CacheConfigurationException; //incorrect cache configuration in remote site.
+      return error instanceof CacheConfigurationException ? //incorrect cache configuration in remote site?
+             Optional.of((CacheConfigurationException) error) :
+             Optional.empty();
    }
 
    @Start
@@ -154,9 +157,10 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       OfflineStatus status = offlineStatus.get(backup.getSiteName());
       assert status != null;
 
-      if (isConfigurationError(throwable)) {
+      Optional<CacheConfigurationException> e = findConfigurationError(throwable);
+      if (e.isPresent()) {
          //we have an invalid configuration. change site to offline
-         log.xsiteInvalidConfigurationRemoteSite(backup.getSiteName());
+         log.xsiteInvalidConfigurationRemoteSite(backup.getSiteName(), e.get());
          status.forceOffline();
          return;
       }
