@@ -72,6 +72,7 @@
          <fileset dir="${licenses.data.dir}">
             <include name="apache license 2.0.txt"/>
             <include name="bsd-0-clause.txt"/>
+            <include name="bsd-2-clause.txt"/>
             <include name="bsd-3-clause.txt"/>
             <include name="cc0-1.0.txt"/>
             <include name="cddl-1.1-gpl-1-1.txt"/>
