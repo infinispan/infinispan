@@ -1,3 +1,4 @@
+[id='cli-batching-interactive_{context}']
 = Performing Batch Operations Interactively
 Use the standard input stream, *stdin*, to perform batch operations interactively.
 
@@ -9,14 +10,9 @@ Use the standard input stream, *stdin*, to perform batch operations interactivel
 $ bin/cli.sh -c localhost:11222 -f -
 ----
 +
-[NOTE]
+[TIP]
 ====
-If you do not use the [command]`-c` flag, you must run the [command]`connect` command.
-
-----
-$ bin/cli.sh -f -
-connect
-----
+You can configure the CLI connection with the `autoconnect-url` property instead of using the [command]`-c` argument.
 ====
 +
 . Run batch operations, for example:

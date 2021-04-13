@@ -1,4 +1,4 @@
-[id='cli_configuring_startup_properties-{context}']
+[id='configuring-cli-startup_{context}']
 = Setting {brandname} CLI Properties and Persistent Storage
 Configure {brandname} CLI startup operations and customize the location for persistent storage.
 
@@ -26,6 +26,22 @@ $ bin/cli.sh ...
 ----
 +
 . Set values for configuration properties with the [command]`config set` command.
++
+For example, set the `autoconnect-url` property so that the CLI automatically connects to that URL.
++
+[NOTE]
+====
+For remote connections, specify the URL and provide credentials:
+
+* `http[s]://<username>:<password>@<hostname>:<port>` for basic authentication.
+* `http[s]://<token>@<hostname>:<port>` for OAuth authentication.
+====
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh config set autoconnect-url http://<username>:<password>@<hostname>:11222
+----
++
 . Verify configuration properties with the [command]`config get` command.
 +
 [TIP]

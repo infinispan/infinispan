@@ -1,3 +1,4 @@
+[id='cli-batching-files_{context}']
 = Performing Batch Operations with Files
 Create files that contain a set of operations and then pass them to the {brandname} CLI.
 
@@ -9,33 +10,24 @@ For example, create a file named `batch` that creates a cache named `mybatch`, a
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ cat > batch<<EOF
+connect --username=<username> --password=<password> <hostname>:11222
 create cache --template=org.infinispan.DIST_SYNC mybatch
 put --cache=mybatch hello world
 put --cache=mybatch hola mundo
+ls caches/mybatch
 disconnect
-EOF
 ----
++
+[TIP]
+====
+Configure the CLI with the `autoconnect-url` property instead of using the `connect` command directly in your batch files.
+====
 +
 . Run the CLI and specify the file as input.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh -c localhost:11222 -f batch
-----
-+
-. Create a new {brandname} CLI connection and verify `mybatch`.
-+
-[source,options="nowrap",subs=attributes+]
-----
-[//containers/default]> ls caches
-___protobuf_metadata
-mybatch
-[//containers/default]> ls caches/mybatch
-hola
-hello
-[//containers/default]> disconnect
-[disconnected]>
+$ bin/cli.sh -f batch
 ----
 
 [NOTE]
