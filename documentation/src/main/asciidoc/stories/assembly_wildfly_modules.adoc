@@ -8,9 +8,16 @@ To use {brandname} inside applications deployed to {wildflybrandname}, you shoul
 
 [IMPORTANT]
 ====
-{brandname} modules are deprecated and planned for removal. These modules
-provide a temporary solution until {wildflybrandname} directly manages the
-`infinispan` subsystem.
+//Community content
+ifdef::community[]
+{brandname} modules are deprecated and planned for removal.
+These modules provide a temporary solution until {wildflybrandname} directly manages the `infinispan` subsystem.
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+In Red Hat JBoss EAP (EAP) 7.4 applications can directly handle the `infinispan` subsystem without the need to separately install {ProductName} modules.
+After EAP 7.4 GA is released, {ProductName} will no longer provide EAP modules for download.
+endif::downstream[]
 ====
 
 include::{topics}/proc_installing_wildfly_modules.adoc[leveloffset=+1]

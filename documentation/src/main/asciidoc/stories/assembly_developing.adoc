@@ -1,7 +1,6 @@
 [id='developing']
 :context: developing
 
-include::assembly_configuring_maven_repository.adoc[leveloffset=+0]
 include::{topics}/cache_manager.adoc[leveloffset=+0]
 include::{topics}/cache_api.adoc[leveloffset=+0]
 include::assembly_configuring_data_encoding.adoc[leveloffset=+0]
