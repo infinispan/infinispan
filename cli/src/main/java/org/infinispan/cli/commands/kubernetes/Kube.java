@@ -17,7 +17,6 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.Version;
 import org.infinispan.cli.logging.Messages;
-import org.kohsuke.MetaInfServices;
 import org.yaml.snakeyaml.Yaml;
 
 import io.fabric8.kubernetes.api.model.Secret;
@@ -29,7 +28,6 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@MetaInfServices(Command.class)
 @GroupCommandDefinition(
       name = "kube",
       description = "Kubernetes commands",
@@ -73,6 +71,7 @@ public class Kube implements Command {
 
    @Override
    public CommandResult execute(CommandInvocation invocation) {
+      invocation.getShell().write(invocation.getHelpInfo());
       return CommandResult.FAILURE;
    }
 
