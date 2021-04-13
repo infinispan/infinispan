@@ -325,7 +325,7 @@ public class CLI extends CliCommand {
       try {
          SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
          runtime = initialCommandRuntimeBuilder(shell, properties).build();
-         int exitCode = new CliRuntimeRunner("cli", runtime).args(args).execute();
+         int exitCode = new CliRuntimeRunner(isKubernetesMode() ? "kube" : "cli", runtime).args(args).execute();
          return exitCode;
       } catch (Exception e) {
          throw new RuntimeException(e);
