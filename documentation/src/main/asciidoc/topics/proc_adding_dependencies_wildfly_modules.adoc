@@ -22,3 +22,13 @@ that you can add as an entry to your application's manifest as follows:
 Manifest-Version: 1.0
 Dependencies: org.infinispan:{infinispanslot} services
 ----
+
+.AWS dependencies
+
+If you require AWS dependencies, such as S3_PING, add the following module to your application's manifest:
+
+[source,subs=attributes+]
+----
+Manifest-Version: 1.0
+Dependencies: com.amazonaws.aws-java-sdk:{infinispanslot} services
+----
