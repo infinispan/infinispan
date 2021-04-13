@@ -33,7 +33,9 @@ import org.testcontainers.utility.DockerImageName;
 public class CloudEventsIntegrationIT {
    public static final String CACHE_ENTRIES_TOPIC = "cache-entries";
 
-   public static KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"));
+   public static KafkaContainer KAFKA =
+         new KafkaContainer(DockerImageName.parse("quay.io/cloudservices/cp-kafka:5.4.3")
+                                           .asCompatibleSubstituteFor("confluentinc/cp-kafka"));
 
    @ClassRule
    public static final InfinispanServerRule SERVERS =
