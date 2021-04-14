@@ -6,8 +6,6 @@ import static org.infinispan.persistence.remote.configuration.AuthenticationConf
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.SASL_PROPERTIES;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.SERVER_NAME;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -15,9 +13,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * AuthenticationConfigurationBuilder.
@@ -25,7 +21,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration>, ConfigurationBuilderInfo {
+public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
    private MechanismConfigurationBuilder mechanismConfigurationBuilder;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
@@ -33,27 +29,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       this.mechanismConfigurationBuilder = new MechanismConfigurationBuilder(builder);
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return AuthenticationConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Collections.singletonList(mechanismConfigurationBuilder);
-   }
-
-   @Override
-   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
-      if (name.equals("digest") || name.equals("plain") | name.equals("external")) {
-         return mechanismConfigurationBuilder.saslMechanism(name);
-      }
-      return ConfigurationBuilderInfo.super.getBuilderInfo(name, qualifier);
    }
 
    /**

@@ -1,20 +1,15 @@
 package org.infinispan.server.configuration;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.network.NetworkAddress;
 
 /**
  * @since 10.0
  */
-public class InterfaceConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+public class InterfaceConfiguration extends ConfigurationElement<InterfaceConfiguration> {
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
 
    private final AddressConfiguration addressConfiguration;
    private final NetworkAddress networkAddress;
@@ -23,12 +18,8 @@ public class InterfaceConfiguration implements ConfigurationInfo {
       return new AttributeSet(InterfaceConfiguration.class, NAME);
    }
 
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.INTERFACE.toString());
-
-   private final AttributeSet attributes;
-
    InterfaceConfiguration(AttributeSet attributes, AddressConfiguration addressConfiguration, NetworkAddress networkAddress) {
-      this.attributes = attributes.checkProtection();
+      super(Element.INTERFACE, attributes);
       this.addressConfiguration = addressConfiguration;
       this.networkAddress = networkAddress;
    }
@@ -37,23 +28,8 @@ public class InterfaceConfiguration implements ConfigurationInfo {
       return addressConfiguration;
    }
 
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return Collections.singletonList(addressConfiguration);
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
    public String name() {
       return attributes.attribute(NAME).get();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    NetworkAddress getNetworkAddress() {

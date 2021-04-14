@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 
@@ -28,7 +29,7 @@ public class TypedProperties extends Properties {
     *
     * @param p properties instance to from.  If null, then it is treated as an empty Properties instance.
     */
-   public TypedProperties(Properties p) {
+   public TypedProperties(Map<?, ?> p) {
       if (p != null && !p.isEmpty()) super.putAll(p);
    }
 
@@ -40,12 +41,12 @@ public class TypedProperties extends Properties {
    }
 
    /**
-    * Factory method that converts a JDK {@link Properties} instance to an instance of TypedProperties, if needed.
+    * Factory method that converts a JDK {@link Map} (including {@link Properties} instance to an instance of TypedProperties, if needed.
     *
     * @param p properties to convert.
     * @return A TypedProperties object.  Returns an empty TypedProperties instance if p is null.
     */
-   public static TypedProperties toTypedProperties(Properties p) {
+   public static TypedProperties toTypedProperties(Map<?, ?> p) {
       if (p instanceof TypedProperties) return (TypedProperties) p;
       return new TypedProperties(p);
    }

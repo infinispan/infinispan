@@ -1,32 +1,24 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.PERSISTENCE;
-
-import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configuration for stores.
  *
  */
-public class PersistenceConfiguration implements Matchable<PersistenceConfiguration>, ConfigurationInfo {
-   public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder("passivation", false).immutable().build();
-   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder("availabilityInterval", 1000).immutable().build();
-   public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder("connectionAttempts", 10).immutable().build();
-   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder("connectionInterval", 50).immutable().build();
+public class PersistenceConfiguration implements Matchable<PersistenceConfiguration> {
+   public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PASSIVATION, false).immutable().build();
+   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 1000).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_INTERVAL, 50).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PersistenceConfiguration.class, PASSIVATION, AVAILABILITY_INTERVAL, CONNECTION_ATTEMPTS, CONNECTION_INTERVAL);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(PERSISTENCE.getLocalName());
 
    private final Attribute<Boolean> passivation;
    private final Attribute<Integer> availabilityInterval;
@@ -34,7 +26,6 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
    private final Attribute<Integer> connectionInterval;
    private final AttributeSet attributes;
    private final List<StoreConfiguration> stores;
-   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
 
    PersistenceConfiguration(AttributeSet attributes, List<StoreConfiguration> stores) {
@@ -44,12 +35,6 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
       this.connectionAttempts = attributes.attribute(CONNECTION_ATTEMPTS);
       this.connectionInterval = attributes.attribute(CONNECTION_INTERVAL);
       this.stores = stores;
-      this.subElements.addAll(stores);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    /**
@@ -134,11 +119,6 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
    }
 
    @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
-   }
-
-   @Override
    public String toString() {
       return "PersistenceConfiguration [attributes=" + attributes + ", stores=" + stores + "]";
    }
@@ -158,10 +138,10 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
       } else if (!attributes.equals(other.attributes))
          return false;
       if (stores == null) {
-         if (other.stores != null)
-            return false;
-      } else if (!stores.equals(other.stores))
+         return other.stores == null;
+      } else if (!stores.equals(other.stores)) {
          return false;
+      }
       return true;
    }
 

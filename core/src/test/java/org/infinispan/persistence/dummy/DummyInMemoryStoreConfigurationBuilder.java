@@ -4,21 +4,14 @@ import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.S
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.START_FAILURES;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.STORE_NAME;
 
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
 public class DummyInMemoryStoreConfigurationBuilder extends
-      AbstractStoreConfigurationBuilder<DummyInMemoryStoreConfiguration, DummyInMemoryStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
+      AbstractStoreConfigurationBuilder<DummyInMemoryStoreConfiguration, DummyInMemoryStoreConfigurationBuilder> {
 
    public DummyInMemoryStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, DummyInMemoryStoreConfiguration.attributeDefinitionSet());
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return DummyInMemoryStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

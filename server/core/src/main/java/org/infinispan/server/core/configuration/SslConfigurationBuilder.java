@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  *
@@ -19,13 +20,14 @@ import org.infinispan.commons.configuration.Builder;
 public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
       extends AbstractProtocolServerConfigurationChildBuilder<T, S>
       implements Builder<SslConfiguration> {
-   private boolean enabled = false;
-   private boolean requireClientAuth = false;
+
+   private final AttributeSet attributes;
    private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
    private Map<String, SslEngineConfigurationBuilder> sniDomains;
 
    public SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
       super(builder);
+      attributes = SslConfiguration.attributeDefinitionSet();
       sniDomains = new HashMap<>();
       defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
       sniDomains.put(SslConfiguration.DEFAULT_SNI_DOMAIN, defaultDomainConfigurationBuilder);
@@ -35,35 +37,33 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
     * Disables the SSL support
     */
    public SslConfigurationBuilder disable() {
-      this.enabled = false;
-      return this;
+      return enabled(false);
    }
 
    /**
     * Enables the SSL support
     */
    public SslConfigurationBuilder enable() {
-      this.enabled = true;
-      return this;
+      return enabled(true);
    }
 
    /**
     * Enables or disables the SSL support
     */
    public SslConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(SslConfiguration.ENABLED).set(enabled);
       return this;
    }
 
    public boolean isEnabled() {
-      return enabled;
+      return attributes.attribute(SslConfiguration.ENABLED).get();
    }
 
    /**
     * Enables client certificate authentication
     */
    public SslConfigurationBuilder requireClientAuth(boolean requireClientAuth) {
-      this.requireClientAuth = requireClientAuth;
+      attributes.attribute(SslConfiguration.REQUIRE_CLIENT_AUTH).set(requireClientAuth);
       return this;
    }
 
@@ -174,7 +174,7 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
 
    @Override
    public void validate() {
-      if (enabled) {
+      if (isEnabled()) {
          sniDomains.forEach((domainName, config) -> config.validate());
       }
    }
@@ -185,13 +185,12 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
               .stream()
               .collect(Collectors.toMap(Map.Entry::getKey,
                       e -> e.getValue().create()));
-      return new SslConfiguration(enabled, requireClientAuth, producedSniConfigurations);
+      return new SslConfiguration(attributes.protect(), producedSniConfigurations);
    }
 
    @Override
    public SslConfigurationBuilder read(SslConfiguration template) {
-      this.enabled = template.enabled();
-      this.requireClientAuth = template.requireClientAuth();
+      this.attributes.read(template.attributes());
 
       this.sniDomains = new HashMap<>();
       template.sniDomainsConfiguration().entrySet()

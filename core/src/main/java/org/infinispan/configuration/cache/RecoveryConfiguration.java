@@ -1,14 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.RECOVERY;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Defines recovery configuration for the cache.
@@ -16,24 +12,19 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @author pmuir
  *
  */
-public class RecoveryConfiguration implements Matchable<RecoveryConfiguration>, ConfigurationInfo {
+public class RecoveryConfiguration extends ConfigurationElement<RecoveryConfiguration> {
    public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("").autoPersist(false).immutable().build();
-   public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder("recoveryInfoCacheName", DEFAULT_RECOVERY_INFO_CACHE)
-         .xmlName("recovery-cache").immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).autoPersist(false).immutable().build();
+   public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.RECOVERY_INFO_CACHE_NAME, DEFAULT_RECOVERY_INFO_CACHE).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RecoveryConfiguration.class, ENABLED, RECOVERY_INFO_CACHE_NAME);
    }
 
-
-   static ElementDefinition<RecoveryConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(RECOVERY.getLocalName(), false);
-
    private final Attribute<Boolean> enabled;
    private final Attribute<String> recoveryInfoCacheName;
-   private final AttributeSet attributes;
 
    RecoveryConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.RECOVERY, attributes);
       enabled = attributes.attribute(ENABLED);
       recoveryInfoCacheName = attributes.attribute(RECOVERY_INFO_CACHE_NAME);
    }
@@ -45,11 +36,6 @@ public class RecoveryConfiguration implements Matchable<RecoveryConfiguration>, 
       return enabled.get();
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
    /**
     * Sets the name of the cache where recovery related information is held. If not specified
     * defaults to a cache named {@link RecoveryConfiguration#DEFAULT_RECOVERY_INFO_CACHE}
@@ -57,39 +43,4 @@ public class RecoveryConfiguration implements Matchable<RecoveryConfiguration>, 
    public String recoveryInfoCacheName() {
       return recoveryInfoCacheName.get();
    }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return "RecoveryConfiguration [attributes=" + attributes + "]";
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      RecoveryConfiguration other = (RecoveryConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
-   }
-
 }

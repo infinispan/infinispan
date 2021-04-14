@@ -16,6 +16,7 @@
          <xs:field xpath="@name"/>
       </xs:unique>
    </xs:element>
+   <xs:element name="endpoint" type="tns:endpoint"/>
 
    <xs:complexType name="server">
       <xs:sequence>
@@ -31,9 +32,9 @@
                <xs:field xpath="@name"/>
             </xs:unique>
          </xs:element>
-         <xs:element type="tns:security" name="security"/>
+         <xs:element type="tns:security" name="security" minOccurs="0"/>
          <xs:element type="tns:data-sources" name="data-sources" minOccurs="0"/>
-         <xs:element type="tns:endpoints" name="endpoints" maxOccurs="unbounded"/>
+         <xs:element type="tns:endpoints" name="endpoints"/>
       </xs:sequence>
    </xs:complexType>
 
@@ -309,6 +310,22 @@
    </xs:complexType>
 
    <xs:complexType name="endpoints">
+      <xs:sequence>
+         <xs:element name="endpoint" type="tns:endpoint" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="socket-binding" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>Specifies the socket the endpoint connector binds to.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="security-realm" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="endpoint">
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
@@ -504,16 +521,16 @@
             <![CDATA[
                 The configuration of the SASL authentication layer for this server.
 
-                The optional nested "include-mechanisms" element contains a list of allowed SASL mechanism names.
+                The optional "include-mechanisms" attribute contains a list of allowed SASL mechanism names.
                 No mechanisms will be allowed which are not present in this list.
 
-                The optional nested "qop" element contains a list of quality-of-protection values, in decreasing order
+                The optional "qop" attribute contains a list of quality-of-protection values, in decreasing order
                 of preference.
 
-                The optional nested "strength" element contains a list of cipher strength values, in decreasing order
+                The optional "strength" attribute contains a list of cipher strength values, in decreasing order
                 of preference.
 
-                The optional nested "policy" boolean element specifies a policy to use to narrow down the available set
+                The optional "policy" attribute contains a list of policies to use to narrow down the available set
                 of mechanisms.
 
                 The optional nested "property" elements specify additional properties required by the specified mechanisms
@@ -521,7 +538,6 @@
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
-         <xs:element name="policy" type="tns:policy" minOccurs="0"/>
          <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="server-principal" type="xs:string">
@@ -540,44 +556,44 @@
       <xs:attribute name="mechanisms" type="tns:name-list"/>
       <xs:attribute name="qop" type="tns:qop-list"/>
       <xs:attribute name="strength" type="tns:strength"/>
+      <xs:attribute name="policy" type="tns:policy-list"/>
    </xs:complexType>
 
-   <xs:complexType name="policy">
+   <xs:simpleType name="policy-list">
       <xs:annotation>
          <xs:documentation>
             <![CDATA[
                 Policy criteria items to use in order to choose a SASL mechanism.
 
-                The optional nested "forward-secrecy" element contains a boolean value which specifies whether mechanisms
+                "forward-secrecy" specifies whether mechanisms
                 that implement forward secrecy between sessions are required. Forward secrecy means that breaking into
                 one session will not automatically provide information for breaking into future sessions.
 
-                The optional nested "no-active" element contains a boolean value which specifies whether mechanisms
-                susceptible to active (non-dictionary) attacks are not permitted.  "false" to permit, "true" to deny.
+                "no-active" forbids mechanisms susceptible to active (non-dictionary) attacks.
 
-                The optional nested "no-anonymous" element contains a boolean value which specifies whether mechanisms
-                that accept anonymous login are permitted.  "false" to permit, "true" to deny.
+                "no-anonymous" forbids mechanisms that accept anonymous login.
 
-                The optional nested "no-dictionary" element contains a boolean value which specifies whether mechanisms
-                susceptible to passive dictionary attacks are permitted.  "false" to permit, "true" to deny.
+                "no-dictionary" forbids mechanisms susceptible to passive dictionary attacks.
 
-                The optional nested "no-plain-text" element contains a boolean value which specifies whether mechanisms
-                susceptible to simple plain passive attacks (e.g., "PLAIN") are not permitted.    "false" to permit, "true" to deny.
+                "no-plain-text" forbids mechanisms susceptible to simple plain passive attacks (e.g., "PLAIN") are not permitted.
 
-                The optional nested "pass-credentials" element contains a boolean value which specifies whether
-                mechanisms that pass client credentials are required.
+                "pass-credentials" allows mechanisms that pass client credentials.
             ]]>
          </xs:documentation>
       </xs:annotation>
-      <xs:all>
-         <xs:element name="forward-secrecy" type="tns:boolean-element" minOccurs="0"/>
-         <xs:element name="no-active" type="tns:boolean-element" minOccurs="0"/>
-         <xs:element name="no-anonymous" type="tns:boolean-element" minOccurs="0"/>
-         <xs:element name="no-dictionary" type="tns:boolean-element" minOccurs="0"/>
-         <xs:element name="no-plain-text" type="tns:boolean-element" minOccurs="0"/>
-         <xs:element name="pass-credentials" type="tns:boolean-element" minOccurs="0"/>
-      </xs:all>
-   </xs:complexType>
+      <xs:list>
+         <xs:simpleType>
+            <xs:restriction base="xs:token">
+               <xs:enumeration value="forward-secrecy"/>
+               <xs:enumeration value="no-active"/>
+               <xs:enumeration value="no-anonymous"/>
+               <xs:enumeration value="no-dictionary"/>
+               <xs:enumeration value="no-plain-text"/>
+               <xs:enumeration value="pass-credentials"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:list>
+   </xs:simpleType>
 
    <xs:complexType name="property">
       <xs:simpleContent>
@@ -795,44 +811,6 @@
            Defines a CORS rule for one or more origins.
          </xs:documentation>
       </xs:annotation>
-      <xs:all>
-         <xs:element name="allowed-origins" type="xs:string">
-            <xs:annotation>
-               <xs:documentation>
-                 Specifies a comma-separated list that sets the CORS
-                 'Access-Control-Allow-Origin' header that controls which
-                 origins can access resources.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:element>
-         <xs:element name="allowed-methods" type="xs:string">
-            <xs:annotation>
-               <xs:documentation>
-                 Specifies a comma-separated list that sets the CORS
-                 'Access-Control-Allow-Methods' header in the preflight
-                 response. Controls the methods that origins can access.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:element>
-         <xs:element name="allowed-headers" type="xs:string" minOccurs="0">
-            <xs:annotation>
-               <xs:documentation>
-                 Specifies a comma-separated list that sets the CORS
-                 'Access-Control-Allow-Headers' header in the preflight
-                 response. Controls the headers that origins can access.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:element>
-         <xs:element name="expose-headers" type="xs:string" minOccurs="0">
-            <xs:annotation>
-               <xs:documentation>
-                 Specifies a comma-separated list that sets the CORS
-                 'Access-Control-Expose-Headers' header in the preflight
-                 response. Controls the headers that are exposed to origins.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:element>
-      </xs:all>
       <xs:attribute name="name" type="xs:string">
          <xs:annotation>
             <xs:documentation>
@@ -853,6 +831,38 @@
             <xs:documentation>
               Configures how long CORS preflight request headers can be caches
               and sets the CORS 'Access-Control-Max-Age' response header.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="allowed-origins" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the CORS 'Access-Control-Allow-Origin' header that controls which
+               origins can access resources.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="allowed-methods" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the CORS 'Access-Control-Allow-Methods' header in the preflight response.
+               Controls the methods that origins can access.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="allowed-headers" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the CORS 'Access-Control-Allow-Headers' header in the preflight response.
+               Controls the headers that origins can access.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="expose-headers" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the CORS 'Access-Control-Expose-Headers' header in the preflight response.
+               Controls the headers that are exposed to origins.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1206,12 +1216,10 @@
             Specifies the base type for all PrincipalTransformer definitions.
          </xs:documentation>
       </xs:annotation>
-      <xs:attribute name="name" type="xs:string" use="required">
+      <xs:attribute name="name" type="xs:string">
          <xs:annotation>
             <xs:documentation>
-               Specifies the unique name for the PrincipalTransformer.
-               PrincipalTransformer names must be unique across the entire
-               context.
+               Deprecated. Will be ignored.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

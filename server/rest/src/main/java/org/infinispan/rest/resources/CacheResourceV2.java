@@ -27,7 +27,6 @@ import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +39,9 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -206,9 +205,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents);
-      ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().values().iterator().next();
-      Configuration configuration = builder.build();
-      responseBuilder.contentType(APPLICATION_JSON).entity(invocationHelper.getJsonWriter().toJSON(configuration));
+      Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
+      Configuration configuration = entry.getValue().build();
+
+      StringBuilderWriter out = new StringBuilderWriter();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(APPLICATION_JSON).build()) {
+         parserRegistry.serialize(writer, entry.getKey(), configuration);
+      }
+      responseBuilder.contentType(APPLICATION_JSON).entity(out.toString());
       return completedFuture(responseBuilder.build());
    }
 
@@ -359,24 +363,20 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             return responseBuilder.build();
          }, invocationHelper.getExecutor());
       }
-      ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
 
+      ConfigurationBuilder cfgBuilder;
       MediaType sourceType = request.contentType() == null ? APPLICATION_JSON : request.contentType();
-
-      if (sourceType.match(APPLICATION_JSON)) {
-         invocationHelper.getJsonReader().readJson(cfgBuilder, StandardConversions.convertTextToObject(bytes, sourceType));
-      } else if (sourceType.match(APPLICATION_XML)) {
-         ConfigurationBuilderHolder builderHolder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8));
-         cfgBuilder = builderHolder.getCurrentConfigurationBuilder();
+      if (sourceType.match(APPLICATION_JSON) || sourceType.match(APPLICATION_XML) || sourceType.match(APPLICATION_YAML)) {
+         ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
+         cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
       } else {
          responseBuilder.status(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
-      ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
          try {
-            administration.createCache(cacheName, finalCfgBuilder.build());
+            administration.createCache(cacheName, cfgBuilder.build());
             responseBuilder.status(OK);
          } catch (Throwable t) {
             responseBuilder.status(BAD_REQUEST).entity(t.getMessage());
@@ -432,7 +432,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       CacheFullDetail fullDetail = new CacheFullDetail();
       fullDetail.stats = stats;
-      fullDetail.configuration = invocationHelper.getJsonWriter().toJSON(configuration);
+      StringBuilderWriter sw = new StringBuilderWriter();
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+         invocationHelper.getParserRegistry().serialize(w, cache.getName(), configuration);
+      }
+      fullDetail.configuration = sw.toString();
       fullDetail.size = size;
       fullDetail.rehashInProgress = rehashInProgress;
       fullDetail.indexingInProgress = indexingInProgress;
@@ -464,19 +468,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       ParserRegistry registry = new ParserRegistry();
 
-      switch (accept.getTypeSubtype()) {
-         case APPLICATION_JSON_TYPE:
-            responseBuilder.entity(invocationHelper.getJsonWriter().toJSON(cacheConfiguration));
-            break;
-         default:
-            ByteArrayOutputStream entity = new ByteArrayOutputStream();
-            try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).build()) {
-               registry.serialize(writer, null, Collections.singletonMap(cacheName, cacheConfiguration));
-            } catch (Exception e) {
-               return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).entity(Util.getRootCause(e)).build());
-            }
-            responseBuilder.entity(entity);
+      ByteArrayOutputStream entity = new ByteArrayOutputStream();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(false).build()) {
+         registry.serialize(writer, cacheName, cacheConfiguration);
+      } catch (Exception e) {
+         return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).entity(Util.getRootCause(e)).build());
       }
+      responseBuilder.entity(entity);
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
    }
 

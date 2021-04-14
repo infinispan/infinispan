@@ -144,13 +144,13 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseCorsRules(ConfigurationReader reader, RestServerConfigurationBuilder builder)
-         {
+   private void parseCorsRules(ConfigurationReader reader, RestServerConfigurationBuilder builder) {
       ParseUtils.requireNoAttributes(reader);
       CorsConfigurationBuilder cors = builder.cors();
       while (reader.inTag()) {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case CORS_RULES:
             case CORS_RULE: {
                parseCorsRule(reader, cors.addNewRule());
                break;
@@ -180,34 +180,53 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                corsRule.maxAge(Long.parseLong(value));
                break;
             }
+            case ALLOWED_HEADERS: {
+               corsRule.allowHeaders(reader.getListAttributeValue(i));
+               break;
+            }
+            case ALLOWED_ORIGINS: {
+               corsRule.allowOrigins(reader.getListAttributeValue(i));
+               break;
+            }
+            case ALLOWED_METHODS: {
+               corsRule.allowMethods(reader.getListAttributeValue(i));
+               break;
+            }
+            case EXPOSE_HEADERS: {
+               corsRule.exposeHeaders(reader.getListAttributeValue(i));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
       }
-      while (reader.inTag()) {
-         final Element element = Element.forName(reader.getLocalName());
-         String[] values = reader.getElementText().split(",");
-         switch (element) {
-
-            case ALLOWED_HEADERS: {
-               corsRule.allowHeaders(values);
-               break;
-            }
-            case ALLOWED_ORIGINS: {
-               corsRule.allowOrigins(values);
-               break;
-            }
-            case ALLOWED_METHODS: {
-               corsRule.allowMethods(values);
-               break;
-            }
-            case EXPOSE_HEADERS: {
-               corsRule.exposeHeaders(values);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
+      if (reader.getSchema().since(13,0)) {
+         ParseUtils.requireNoContent(reader);
+      } else {
+         while (reader.inTag()) {
+            final Element element = Element.forName(reader.getLocalName());
+            String[] values = reader.getElementText().split(",");
+            switch (element) {
+               case ALLOWED_HEADERS: {
+                  corsRule.allowHeaders(values);
+                  break;
+               }
+               case ALLOWED_ORIGINS: {
+                  corsRule.allowOrigins(values);
+                  break;
+               }
+               case ALLOWED_METHODS: {
+                  corsRule.allowMethods(values);
+                  break;
+               }
+               case EXPOSE_HEADERS: {
+                  corsRule.exposeHeaders(values);
+                  break;
+               }
+               default: {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
             }
          }
       }
@@ -276,14 +295,13 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
       }
 
-      //Since nextTag() moves the pointer, we need to make sure we won't move too far
-      boolean skipTagCheckAtTheEnd = reader.hasNext();
-
-      while (reader.inTag()) {
-         final Element element = Element.forName(reader.getLocalName());
+      while (reader.inTag(Element.ENCRYPTION)) {
+         Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               parseSni(reader, serverBuilder, encryption.addSni());
+               if (reader.getAttributeCount() > 0) {
+                  parseSni(reader, serverBuilder, encryption.addSni());
+               }
                break;
             }
             default: {
@@ -291,9 +309,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-
-      if (!skipTagCheckAtTheEnd)
-         ParseUtils.requireNoContent(reader);
    }
 
    private void parseSni(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) {

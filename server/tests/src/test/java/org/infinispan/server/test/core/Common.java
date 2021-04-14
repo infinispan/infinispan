@@ -1,6 +1,7 @@
 package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.junit.Assert.assertEquals;
 
@@ -18,10 +19,13 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 
+import org.apache.logging.log4j.core.util.StringBuilderWriter;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.test.TestingUtil;
 import org.wildfly.security.http.HttpConstants;
@@ -157,4 +161,13 @@ public class Common {
 
       };
    }
+
+   public static String cacheConfigToJson(String name, org.infinispan.configuration.cache.Configuration configuration) {
+      StringBuilderWriter sw = new StringBuilderWriter();
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(false).build()) {
+         new ParserRegistry().serialize(w, name, configuration);
+      }
+      return sw.toString();
+   }
+
 }

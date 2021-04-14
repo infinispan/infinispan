@@ -12,7 +12,6 @@ import java.lang.reflect.Constructor;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -21,7 +20,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 
 public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJdbcStoreConfiguration, S extends AbstractJdbcStoreConfigurationBuilder<T, S>> extends
-      AbstractStoreConfigurationBuilder<T, S> implements JdbcStoreConfigurationChildBuilder<S>, ConfigurationBuilderInfo {
+      AbstractStoreConfigurationBuilder<T, S> implements JdbcStoreConfigurationChildBuilder<S> {
    protected ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> connectionFactory;
 
    public AbstractJdbcStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {

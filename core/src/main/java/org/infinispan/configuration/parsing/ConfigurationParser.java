@@ -1,6 +1,5 @@
 package org.infinispan.configuration.parsing;
 
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 
 /**
@@ -22,13 +21,6 @@ public interface ConfigurationParser {
    void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder);
 
    Namespace[] getNamespaces();
-
-   /**
-    * @return The {@link ConfigurationBuilderInfo} used to build the root element of the parser.
-    */
-   default Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
-      return null;
-   }
 
    default void readAttribute(ConfigurationReader reader, String name, String attributeName, String attributeValue, ConfigurationBuilderHolder holder) {
       throw new UnsupportedOperationException("This parser cannot handle namespaced attributes");

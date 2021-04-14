@@ -1,15 +1,13 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.MEMORY;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.ByteQuantity;
+import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
@@ -18,13 +16,12 @@ import org.infinispan.eviction.EvictionType;
  *
  * @author William Burns
  */
-public class MemoryConfiguration implements Matchable<MemoryConfiguration>, ConfigurationInfo {
-   public static final ElementDefinition<?> ELEMENT_DEFINITION = new DefaultElementDefinition<>(MEMORY.getLocalName());
+public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguration> {
 
-   public static final AttributeDefinition<StorageType> STORAGE = AttributeDefinition.builder("storage", StorageType.HEAP).immutable().build();
-   public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder("maxSize", null, String.class).build();
-   public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder("maxCount", -1L).build();
-   public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder("whenFull", EvictionStrategy.NONE).immutable().build();
+   public static final AttributeDefinition<StorageType> STORAGE = AttributeDefinition.builder(Attribute.STORAGE, StorageType.HEAP).immutable().build();
+   public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).build();
+   public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder(Attribute.MAX_COUNT, -1L).build();
+   public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder(Attribute.WHEN_FULL, EvictionStrategy.NONE).immutable().build();
 
    private final MemoryStorageConfiguration memoryStorageConfiguration;
 
@@ -32,27 +29,14 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
       return new AttributeSet(MemoryConfiguration.class, STORAGE, MAX_SIZE, MAX_COUNT, WHEN_FULL);
    }
 
-   private final AttributeSet attributes;
-
    MemoryConfiguration(AttributeSet attributes, MemoryStorageConfiguration memoryStorageConfiguration) {
+      super(Element.MEMORY, attributes);
       this.memoryStorageConfiguration = memoryStorageConfiguration;
-      this.attributes = attributes.checkProtection();
-
       // Add a listener to keep new attributes in sync with legacy size without complicating MemoryStorageConfiguration
       // Size is the only legacy attribute that can modify at runtime
       // Unlike the builder, updates to the new attributes are handled directly in the setters
       memoryStorageConfiguration.attributes().attribute(MemoryStorageConfiguration.SIZE)
                                 .addListener((a, oldValue) -> updateSize(a.get()));
-   }
-
-   @Override
-   public ElementDefinition<?> getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**

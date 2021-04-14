@@ -99,6 +99,7 @@ public final class Util {
       BASIC_TYPES.add(Long.class);
       BASIC_TYPES.add(Short.class);
       BASIC_TYPES.add(String.class);
+      BASIC_TYPES.add(char[].class);
 
       for (char b = 0; b < 256; b++) {
          if (0x20 <= b && b <= 0x7e) {
@@ -137,7 +138,7 @@ public final class Util {
       try {
          return loadClassStrict(classname, cl);
       } catch (ClassNotFoundException e) {
-         throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
+         throw new CacheConfigurationException("Unable to instantiate '" + classname + "'", e);
       }
    }
 
@@ -241,7 +242,7 @@ public final class Util {
          }
 
       } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName() + " with constructor " +
+         throw new CacheConfigurationException("Unable to instantiate class '" + clazz.getName() + "' with constructor " +
                "taking parameters " + Arrays.toString(arguments), e);
       }
       return null;
@@ -260,7 +261,7 @@ public final class Util {
       try {
          return getInstanceStrict(clazz);
       } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException iae) {
-         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
+         throw new CacheConfigurationException("Unable to instantiate class '" + clazz.getName() + "'", iae);
       }
    }
 

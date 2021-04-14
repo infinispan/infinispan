@@ -5,12 +5,10 @@ import static org.infinispan.persistence.jdbc.configuration.SegmentColumnConfigu
 import static org.infinispan.persistence.jdbc.configuration.SegmentColumnConfiguration.SEGMENT_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 
-public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnConfiguration>, ConfigurationBuilderInfo {
+public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnConfiguration> {
 
    private final AttributeSet attributes;
    private final AbstractJdbcStoreConfigurationBuilder abstractJdbcStoreConfigurationBuilder;
@@ -18,16 +16,6 @@ public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnC
    SegmentColumnConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder abstractJdbcStoreConfigurationBuilder) {
       this.abstractJdbcStoreConfigurationBuilder = abstractJdbcStoreConfigurationBuilder;
       attributes = SegmentColumnConfiguration.attributeSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return SegmentColumnConfiguration.ELEMENT_DEFINITION;
    }
 
    public SegmentColumnConfigurationBuilder columnName(String columnName) {

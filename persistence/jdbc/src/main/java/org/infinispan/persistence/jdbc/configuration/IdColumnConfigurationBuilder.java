@@ -5,26 +5,14 @@ import static org.infinispan.persistence.jdbc.configuration.IdColumnConfiguratio
 import static org.infinispan.persistence.jdbc.configuration.IdColumnConfiguration.ID_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class IdColumnConfigurationBuilder implements Builder<IdColumnConfiguration>, ConfigurationBuilderInfo {
+public class IdColumnConfigurationBuilder implements Builder<IdColumnConfiguration> {
 
    private final AttributeSet attributes;
 
    IdColumnConfigurationBuilder() {
       attributes = IdColumnConfiguration.attributeSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return IdColumnConfiguration.ELEMENT_DEFINITION;
    }
 
    public IdColumnConfigurationBuilder idColumnName(String idColumnName) {

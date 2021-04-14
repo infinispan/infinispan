@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-
 /**
  * Determines whether cache statistics are gathered.
  *
@@ -10,7 +8,7 @@ import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
  * version.
  */
 @Deprecated
-public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements ConfigurationBuilderInfo {
+public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder {
 
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

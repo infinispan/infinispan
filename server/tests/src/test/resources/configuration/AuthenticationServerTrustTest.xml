@@ -18,6 +18,8 @@
 
       <xi:include href="security/trustrealm.xml"/>
 
-      <xi:include href="endpoints/auth-tls-external.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/auth-tls-external.xml"/>
+      </endpoints>
    </server>
 </infinispan>

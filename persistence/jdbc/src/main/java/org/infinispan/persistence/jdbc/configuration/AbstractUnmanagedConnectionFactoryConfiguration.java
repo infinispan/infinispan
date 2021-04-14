@@ -6,10 +6,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public abstract class AbstractUnmanagedConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
 
-   public static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder("username", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> DRIVER_CLASS = AttributeDefinition.builder("driverClass", null, String.class).xmlName("driver").immutable().build();
-   public static final AttributeDefinition<String> CONNECTION_URL = AttributeDefinition.builder("connectionUrl", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.USERNAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.PASSWORD, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DRIVER_CLASS = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DRIVER_CLASS, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> CONNECTION_URL = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.CONNECTION_URL, null, String.class).immutable().build();
 
    private final Attribute<String> connectionUrl;
    private final Attribute<String> driverClass;

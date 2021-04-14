@@ -1,8 +1,7 @@
-<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-           xmlns="urn:infinispan:server:13.0"
-           socket-binding="default">
-   <hotrod-connector name="hotrod"/>
-   <rest-connector name="rest"/>
-   <memcached-connector socket-binding="memcached"/>
-</endpoints>
+           xmlns="urn:infinispan:server:13.0" socket-binding="default">
+      <hotrod-connector name="hotrod"/>
+      <rest-connector name="rest"/>
+      <memcached-connector socket-binding="memcached"/>
+</endpoint>

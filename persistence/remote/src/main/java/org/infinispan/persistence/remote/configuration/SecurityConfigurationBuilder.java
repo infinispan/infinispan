@@ -1,12 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * SecurityConfigurationBuilder.
@@ -15,7 +10,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @since 9.1
  */
 public class SecurityConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder implements
-      Builder<SecurityConfiguration>, ConfigurationBuilderInfo {
+      Builder<SecurityConfiguration> {
 
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
    private final SslConfigurationBuilder ssl = new SslConfigurationBuilder(this);
@@ -44,19 +39,8 @@ public class SecurityConfigurationBuilder extends AbstractRemoteStoreConfigurati
       return this;
    }
 
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Arrays.asList(authentication, ssl);
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return SecurityConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

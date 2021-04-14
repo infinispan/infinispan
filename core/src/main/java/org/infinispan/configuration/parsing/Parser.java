@@ -110,7 +110,7 @@ public class Parser extends CacheParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
          switch (attribute) {
-            case MARSHALLER_CLASS: {
+            case MARSHALLER: {
                builder.serialization().marshaller(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
@@ -121,12 +121,17 @@ public class Parser extends CacheParser {
                ignoreAttribute(reader, i);
                break;
             }
+            case CONTEXT_INITIALIZERS: {
+               for (String klass : reader.getListAttributeValue(i)) {
+                  builder.serialization().addContextInitializer(Util.getInstance(klass, holder.getClassLoader()));
+               }
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
       }
-
 
 
       while (reader.hasNext()) {
@@ -138,8 +143,12 @@ public class Parser extends CacheParser {
                return;
             }
             case ADVANCED_EXTERNALIZERS:
-            case SERIALIZATION_CONTEXT_INITIALIZERS: {
                // Empty elements for YAML/JSON
+               break;
+            case SERIALIZATION_CONTEXT_INITIALIZERS: {
+               if (reader.getAttributeCount() > 0) {
+                  parseSerializationContextInitializer(reader, holder.getClassLoader(), builder.serialization());
+               }
                break;
             }
             case ADVANCED_EXTERNALIZER: {
@@ -254,43 +263,59 @@ public class Parser extends CacheParser {
                reader.require(ConfigurationReader.ElementType.END_ELEMENT);
                return;
             }
-            case THREAD_FACTORIES:
+            case THREAD_FACTORIES: {
+               while (reader.inTag(Element.THREAD_FACTORIES)) {
+                  parseThreadFactory(reader, holder);
+               }
+               break;
+            }
             case THREAD_POOLS: {
-               // Wrapper elements for YAML/JSON parsers
+               while (reader.inTag(Element.THREAD_POOLS)) {
+                  parseThreadPools(reader, holder);
+               }
                break;
             }
             case THREAD_FACTORY: {
                parseThreadFactory(reader, holder);
                break;
             }
-            case CACHED_THREAD_POOL: {
-               parseCachedThreadPool(reader, holder);
-               break;
-            }
-            case SCHEDULED_THREAD_POOL: {
-               parseScheduledThreadPool(reader, holder);
-               break;
-            }
-            case BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
-               parseBoundedQueueThreadPool(reader, holder, false);
-               break;
-            }
-            case NON_BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
-               parseBoundedQueueThreadPool(reader, holder, true);
-               break;
-            }
             default: {
-               throw ParseUtils.unexpectedElement(reader);
+               parseThreadPools(reader, holder);
             }
          }
       }
    }
 
-   private void parseBoundedQueueThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder,
-         boolean isNonBlocking) {
-      ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
+   private void parseThreadPools(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      Map.Entry<String, String> threadPool = reader.getMapItem(Attribute.NAME);
+      Element element = Element.forName(threadPool.getValue());
+      switch (element) {
+         case CACHED_THREAD_POOL: {
+            parseCachedThreadPool(reader, holder, threadPool.getKey());
+            break;
+         }
+         case SCHEDULED_THREAD_POOL: {
+            parseScheduledThreadPool(reader, holder, threadPool.getKey());
+            break;
+         }
+         case BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
+            parseBoundedQueueThreadPool(reader, holder, threadPool.getKey(), false);
+            break;
+         }
+         case NON_BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
+            parseBoundedQueueThreadPool(reader, holder, threadPool.getKey(), true);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+      reader.endMapItem();
+   }
 
-      String name = null;
+   public void parseBoundedQueueThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder,
+                                           String name, boolean isNonBlocking) {
+      ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
       String threadFactoryName = null;
       int maxThreads = 0;
       int coreThreads = 0;
@@ -304,7 +329,7 @@ public class Parser extends CacheParser {
 
          switch (attribute) {
             case NAME: {
-               name = value;
+               // Already seen
                break;
             }
             case THREAD_FACTORY: {
@@ -338,18 +363,16 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseScheduledThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+   private void parseScheduledThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name) {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
-      String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-
          switch (attribute) {
             case NAME: {
-               name = value;
+               // Already seen
                break;
             }
             case THREAD_FACTORY: {
@@ -367,9 +390,8 @@ public class Parser extends CacheParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCachedThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+   private void parseCachedThreadPool(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name) {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
-      String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -378,7 +400,7 @@ public class Parser extends CacheParser {
 
          switch (attribute) {
             case NAME: {
-               name = value;
+               // Ignore
                break;
             }
             case THREAD_FACTORY: {
@@ -397,7 +419,7 @@ public class Parser extends CacheParser {
    }
 
    private void parseThreadFactory(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      String name = null;
+      Map.Entry<String, String> threadFactory = reader.getMapItem(Attribute.NAME);
       String threadGroupName = null;
       String threadNamePattern = null;
       int priority = 1; // minimum priority
@@ -409,7 +431,7 @@ public class Parser extends CacheParser {
 
          switch (attribute) {
             case NAME: {
-               name = value;
+               // Already seen
                break;
             }
             case GROUP_NAME: {
@@ -430,14 +452,15 @@ public class Parser extends CacheParser {
          }
       }
 
-      holder.getGlobalConfigurationBuilder().threads().addThreadFactory(name).groupName(threadGroupName).priority(priority).threadNamePattern(threadNamePattern);
+      holder.getGlobalConfigurationBuilder().threads().addThreadFactory(threadFactory.getKey()).groupName(threadGroupName).priority(priority).threadNamePattern(threadNamePattern);
       ParseUtils.requireNoContent(reader);
+      reader.endMapItem();
    }
 
    private void parseJGroups(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       Transport transport = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-            if (!ParseUtils.isNoNamespaceAttribute(reader, i))
+         if (!ParseUtils.isNoNamespaceAttribute(reader, i))
             continue;
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -669,6 +692,7 @@ public class Parser extends CacheParser {
          switch (element) {
             case CACHES: {
                // Wrapper element for YAML/JSON
+               parseCaches(reader, holder);
                break;
             }
             case TRANSPORT: {
@@ -676,40 +700,40 @@ public class Parser extends CacheParser {
                break;
             }
             case LOCAL_CACHE: {
-               parseLocalCache(reader, holder, false);
+               parseLocalCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
                break;
             }
             case LOCAL_CACHE_CONFIGURATION: {
-               parseLocalCache(reader, holder, true);
+               parseLocalCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                break;
             }
             case INVALIDATION_CACHE: {
-               parseInvalidationCache(reader, holder, false);
+               parseInvalidationCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
                break;
             }
             case INVALIDATION_CACHE_CONFIGURATION: {
-               parseInvalidationCache(reader, holder, true);
+               parseInvalidationCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                break;
             }
             case REPLICATED_CACHE: {
-               parseReplicatedCache(reader, holder, false);
+               parseReplicatedCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
                break;
             }
             case REPLICATED_CACHE_CONFIGURATION: {
-               parseReplicatedCache(reader, holder, true);
+               parseReplicatedCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                break;
             }
             case DISTRIBUTED_CACHE: {
-               parseDistributedCache(reader, holder, false);
+               parseDistributedCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
                break;
             }
             case DISTRIBUTED_CACHE_CONFIGURATION: {
-               parseDistributedCache(reader, holder, true);
+               parseDistributedCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                break;
             }
             case SCATTERED_CACHE: {
                if (reader.getSchema().since(9, 1)) {
-                  parseScatteredCache(reader, holder, false);
+                  parseScatteredCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
                } else {
                   throw ParseUtils.unexpectedElement(reader);
                }
@@ -717,7 +741,7 @@ public class Parser extends CacheParser {
             }
             case SCATTERED_CACHE_CONFIGURATION: {
                if (reader.getSchema().since(9, 1)) {
-                  parseScatteredCache(reader, holder, true);
+                  parseScatteredCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                } else {
                   throw ParseUtils.unexpectedElement(reader);
                }
@@ -761,6 +785,49 @@ public class Parser extends CacheParser {
          }
       }
       holder.popScope();
+   }
+
+   private void parseCaches(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      while (reader.inTag(Element.CACHES)) {
+         Map.Entry<String, String> mapElement = reader.getMapItem(Attribute.NAME);
+         String name = mapElement.getKey();
+         Element type = Element.forName(mapElement.getValue());
+         switch (type) {
+            case LOCAL_CACHE:
+               parseLocalCache(reader, holder, name, false);
+               break;
+            case LOCAL_CACHE_CONFIGURATION:
+               parseLocalCache(reader, holder, name, true);
+               break;
+            case INVALIDATION_CACHE:
+               parseInvalidationCache(reader, holder, name, false);
+               break;
+            case INVALIDATION_CACHE_CONFIGURATION:
+               parseInvalidationCache(reader, holder, name, true);
+               break;
+            case REPLICATED_CACHE:
+               parseReplicatedCache(reader, holder, name, false);
+               break;
+            case REPLICATED_CACHE_CONFIGURATION:
+               parseReplicatedCache(reader, holder, name, true);
+               break;
+            case DISTRIBUTED_CACHE:
+               parseDistributedCache(reader, holder, name, false);
+               break;
+            case DISTRIBUTED_CACHE_CONFIGURATION:
+               parseDistributedCache(reader, holder, name, true);
+               break;
+            case SCATTERED_CACHE:
+               parseScatteredCache(reader, holder, name, false);
+               break;
+            case SCATTERED_CACHE_CONFIGURATION:
+               parseScatteredCache(reader, holder, name, true);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader, type);
+         }
+         reader.endMapItem();
+      }
    }
 
    private void parseGlobalSecurity(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -855,11 +922,15 @@ public class Parser extends CacheParser {
                roleMapper = parseCustomMapper(reader, holder);
                break;
             case ROLES: {
-               // Wrapper element for YAML/JSON
+               while (reader.inTag()) {
+                  Map.Entry<String, String> item = reader.getMapItem(Attribute.NAME);
+                  parseGlobalRole(reader, builder, item.getKey());
+                  reader.endMapItem();
+               }
                break;
             }
             case ROLE: {
-               parseGlobalRole(reader, builder);
+               parseGlobalRole(reader, builder, null);
                break;
             }
             default: {
@@ -875,10 +946,13 @@ public class Parser extends CacheParser {
       return Util.getInstance(mapperClass, holder.getClassLoader());
    }
 
-   private void parseGlobalRole(ConfigurationReader reader, GlobalAuthorizationConfigurationBuilder builder) {
-      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.PERMISSIONS.getLocalName());
-      GlobalRoleConfigurationBuilder role = builder.role(attributes[0]);
-      for(String permission : attributes[1].split("\\s+")) {
+   private void parseGlobalRole(ConfigurationReader reader, GlobalAuthorizationConfigurationBuilder builder, String name) {
+      String permissions = ParseUtils.requireAttributes(reader, Attribute.PERMISSIONS.getLocalName())[0];
+      if (name == null) {
+         name = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName())[0];
+      }
+      GlobalRoleConfigurationBuilder role = builder.role(name);
+      for (String permission : permissions.split("\\s+")) {
          role.permission(permission);
       }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -967,8 +1041,7 @@ public class Parser extends CacheParser {
       builder.jmx().withProperties(properties);
    }
 
-   private void parseModules(ConfigurationReader reader, ConfigurationBuilderHolder holder)
-         {
+   private void parseModules(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       while (reader.inTag()) {
          reader.handleAny(holder);
       }
@@ -1074,7 +1147,7 @@ public class Parser extends CacheParser {
       }
       Properties properties = parseProperties(reader, Element.TRANSPORT);
       for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
-        transport.addProperty((String) propertyEntry.getKey(), (String) propertyEntry.getValue());
+         transport.addProperty((String) propertyEntry.getKey(), (String) propertyEntry.getValue());
       }
    }
 

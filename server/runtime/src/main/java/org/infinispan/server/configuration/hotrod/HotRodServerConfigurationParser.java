@@ -15,9 +15,10 @@ import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
+import org.infinispan.server.hotrod.configuration.Attribute;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
+import org.infinispan.server.hotrod.configuration.Element;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.configuration.PolicyConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.kohsuke.MetaInfServices;
@@ -38,8 +39,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    private static org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
-   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder)
-         {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ServerConfigurationParser.ENDPOINTS_SCOPE)) {
          throw coreLog.invalidScope(ServerConfigurationParser.ENDPOINTS_SCOPE, holder.getScope());
       }
@@ -65,8 +65,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseHotRodConnector(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
-         {
+   private void parseHotRodConnector(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder) {
       boolean dedicatedSocketBinding = false;
       ServerSecurityRealm securityRealm = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -94,7 +93,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-                securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealm = serverBuilder.getSecurityRealm(value);
             }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
@@ -157,11 +156,13 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          String name = securityRealm.getName();
          encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
       }
-      while (reader.inTag()) {
+      while (reader.inTag(Element.ENCRYPTION)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               parseSni(reader, serverBuilder, encryption.addSni());
+               if (reader.getAttributeCount() > 0) {
+                  parseSni(reader, serverBuilder, encryption.addSni());
+               }
                break;
             }
             default: {
@@ -268,6 +269,12 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                }
                break;
             }
+            case POLICY: {
+               for (String p : reader.getListAttributeValue(i)) {
+                  sasl.addPolicy(p);
+               }
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
@@ -278,12 +285,20 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case POLICY: {
-               if (visited.contains(element)) {
+               if (reader.getSchema().since(13, 0) || visited.contains(element)) {
                   throw ParseUtils.unexpectedElement(reader);
                } else {
                   visited.add(element);
                }
                parsePolicy(reader, builder);
+               break;
+            }
+            case PROPERTIES: {
+               // JSON/YAML map properties to attributes
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  sasl.addProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
+               }
+               ParseUtils.requireNoContent(reader);
                break;
             }
             case PROPERTY: {
@@ -302,7 +317,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       if (reader.getAttributeCount() > 0) {
          throw ParseUtils.unexpectedAttribute(reader, 0);
       }
-      PolicyConfigurationBuilder policy = builder.sasl().policy();
+      SaslConfigurationBuilder sasl = builder.sasl();
       // Handle nested elements.
       final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
       while (reader.inTag()) {
@@ -313,28 +328,15 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          visited.add(element);
          String value = ParseUtils.readStringAttributeElement(reader, Attribute.VALUE.toString());
          switch (element) {
-            case FORWARD_SECRECY: {
-               policy.forwardSecrecy().value(Boolean.parseBoolean(value));
-               break;
-            }
-            case NO_ACTIVE: {
-               policy.noActive().value(Boolean.parseBoolean(value));
-               break;
-            }
-            case NO_ANONYMOUS: {
-               policy.noAnonymous().value(Boolean.parseBoolean(value));
-               break;
-            }
-            case NO_DICTIONARY: {
-               policy.noDictionary().value(Boolean.parseBoolean(value));
-               break;
-            }
-            case NO_PLAIN_TEXT: {
-               policy.noPlainText().value(Boolean.parseBoolean(value));
-               break;
-            }
+            case FORWARD_SECRECY:
+            case NO_ACTIVE:
+            case NO_ANONYMOUS:
+            case NO_DICTIONARY:
+            case NO_PLAIN_TEXT:
             case PASS_CREDENTIALS: {
-               policy.passCredentials().value(Boolean.parseBoolean(value));
+               if ("true".equals(value)) {
+                  sasl.addPolicy(element.toString());
+               }
                break;
             }
             default: {

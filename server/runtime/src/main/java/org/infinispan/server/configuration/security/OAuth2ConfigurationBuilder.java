@@ -34,9 +34,9 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
       return this;
    }
 
-   public OAuth2ConfigurationBuilder clientSecret(String clientSecret) {
+   public OAuth2ConfigurationBuilder clientSecret(char[] clientSecret) {
       attributes.attribute(OAuth2Configuration.CLIENT_SECRET).set(clientSecret);
-      validatorBuilder.clientSecret(clientSecret);
+      validatorBuilder.clientSecret(new String(clientSecret));
       return this;
    }
 

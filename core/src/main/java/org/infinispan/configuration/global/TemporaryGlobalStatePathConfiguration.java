@@ -1,16 +1,12 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import java.nio.file.Paths;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 
-import java.nio.file.Paths;
-
-public class TemporaryGlobalStatePathConfiguration implements ConfigurationInfo {
+public class TemporaryGlobalStatePathConfiguration {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
          .initializer(() -> Paths.get(SecurityActions.getSystemProperty("java.io.tmpdir")).toAbsolutePath().toString())
@@ -26,8 +22,6 @@ public class TemporaryGlobalStatePathConfiguration implements ConfigurationInfo 
       return new AttributeSet(GlobalStateConfiguration.class, PATH, RELATIVE_TO);
    }
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TEMPORARY_LOCATION.getLocalName());
-
    private final AttributeSet attributes;
 
    public TemporaryGlobalStatePathConfiguration(AttributeSet attributes, String location) {
@@ -37,12 +31,6 @@ public class TemporaryGlobalStatePathConfiguration implements ConfigurationInfo 
       this.location = location;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

@@ -1,13 +1,11 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -15,7 +13,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 /**
  * Describes a custom interceptor
  */
-public class InterceptorConfiguration extends AbstractTypedPropertiesConfiguration implements ConfigurationInfo {
+public class InterceptorConfiguration extends AbstractTypedPropertiesConfiguration {
    /**
     * Positional placing of a new custom interceptor
     */
@@ -35,18 +33,19 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
       OTHER_THAN_FIRST_OR_LAST
    }
 
-   public static final AttributeDefinition<Position> POSITION = AttributeDefinition.builder("position", Position.OTHER_THAN_FIRST_OR_LAST).immutable().build();
-   public static final AttributeDefinition<Class> AFTER = AttributeDefinition.builder("after", null, Class.class).immutable().build();
-   public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder("before", null, Class.class).immutable().build();
-   public static final AttributeDefinition<AsyncInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, AsyncInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder("interceptorClass", null, Class.class).xmlName("class").immutable().build();
-   public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder("index", -1).immutable().build();
+   public static final AttributeDefinition<Position> POSITION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.POSITION, Position.OTHER_THAN_FIRST_OR_LAST).immutable().build();
+   public static final AttributeDefinition<Class> AFTER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AFTER, null, Class.class)
+         .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
+   public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BEFORE, null, Class.class)
+         .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
+   public static final AttributeDefinition<AsyncInterceptor> INTERCEPTOR = AttributeDefinition.builder(Element.INTERCEPTOR, null, AsyncInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CLASS, null, Class.class)
+         .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
+   public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, -1).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(InterceptorConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), POSITION, AFTER, BEFORE, INTERCEPTOR, INTERCEPTOR_CLASS, INDEX);
    }
-
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.INTERCEPTOR.getLocalName());
 
    private final Attribute<Position> position;
    private final Attribute<Class> after;
@@ -105,11 +104,6 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
 
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    @Override

@@ -1,10 +1,10 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:xi="http://www.w3.org/2001/XInclude"
-        xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
                             urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-        xmlns="urn:infinispan:config:13.0"
-        xmlns:server="urn:infinispan:server:13.0">
+      xmlns="urn:infinispan:config:13.0"
+      xmlns:server="urn:infinispan:server:13.0">
 
    <xi:include href="jgroups/stacks.xml"/>
 
@@ -18,19 +18,21 @@
 
       <xi:include href="security/properties-alternate.xml"/>
 
-      <!-- Port 11222 has explicit authentication and admin -->
-      <xi:include href="endpoints/auth-explicit.xml"/>
+      <endpoints>
+         <!-- Port 11222 has explicit authentication and admin -->
+         <xi:include href="endpoints/auth-explicit.xml"/>
 
-      <!-- Port 11223 has no auth and admin is disabled -->
-      <xi:include href="endpoints/alternate.xml"/>
+         <!-- Port 11223 has no auth and admin is disabled -->
+         <xi:include href="endpoints/alternate.xml"/>
 
-      <!-- Port 11224 has plain auth with an alternate realm and admin is disabled -->
-      <xi:include href="endpoints/alternate-auth.xml"/>
+         <!-- Port 11224 has plain auth with an alternate realm and admin is disabled -->
+         <xi:include href="endpoints/alternate-auth.xml"/>
 
-      <!-- Port 11225 has Hot Rod with implicit security on the alternate realm the default REST-->
-      <xi:include href="endpoints/alternate-hotrod.xml"/>
+         <!-- Port 11225 has Hot Rod with implicit security on the alternate realm the default REST-->
+         <xi:include href="endpoints/alternate-hotrod.xml"/>
 
-      <!-- Port 11226 has an empty endpoint declaration with the default realm -->
-      <xi:include href="endpoints/alternate-empty.xml"/>
+         <!-- Port 11226 has an empty endpoint declaration with the default realm -->
+         <xi:include href="endpoints/alternate-empty.xml"/>
+      </endpoints>
    </server>
 </infinispan>

@@ -2,7 +2,6 @@ package org.infinispan.counter.configuration;
 
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.counter.api.Storage;
@@ -13,14 +12,12 @@ import org.infinispan.counter.api.Storage;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public abstract class AbstractCounterConfiguration implements ConfigurationInfo {
+public abstract class AbstractCounterConfiguration {
 
-   static final AttributeDefinition<Long> INITIAL_VALUE = AttributeDefinition.builder("initialValue", 0L)
-         .xmlName("initial-value")
+   static final AttributeDefinition<Long> INITIAL_VALUE = AttributeDefinition.builder(Attribute.INITIAL_VALUE, 0L)
          .immutable()
          .build();
-   static final AttributeDefinition<Storage> STORAGE = AttributeDefinition.builder("storage", Storage.VOLATILE)
-         .xmlName("storage")
+   static final AttributeDefinition<Storage> STORAGE = AttributeDefinition.builder(Attribute.STORAGE, Storage.VOLATILE)
          .validator(value -> {
             if (value == null) {
                throw CONTAINER.invalidStorageMode();
@@ -28,13 +25,12 @@ public abstract class AbstractCounterConfiguration implements ConfigurationInfo 
          })
          .immutable()
          .build();
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class)
-         .xmlName("name")
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class)
          .validator(value -> {
             if (value == null) {
                throw CONTAINER.missingCounterName();
             }
-         })
+         }).autoPersist(false)
          .immutable()
          .build();
    final AttributeSet attributes;

@@ -41,7 +41,7 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
 
    private void enableTransactions() {
       Attribute<TransactionMode> transactionModeAttribute =
-            getBuilder().transaction().attributes().attribute(TRANSACTION_MODE);
+            getBuilder().transaction().attributes.attribute(TRANSACTION_MODE);
       if (!transactionModeAttribute.isModified()) {
          getBuilder().transaction().transactionMode(TRANSACTIONAL);
       }

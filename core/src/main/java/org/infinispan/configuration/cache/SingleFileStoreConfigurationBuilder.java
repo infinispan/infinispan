@@ -6,10 +6,8 @@ import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LO
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.file.SingleFileStore;
@@ -22,7 +20,7 @@ import org.infinispan.util.logging.Log;
  * @since 6.0
  */
 public class SingleFileStoreConfigurationBuilder
-      extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
+      extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> {
 
    private static boolean NOTIFIED_SEGMENTED;
 
@@ -32,11 +30,6 @@ public class SingleFileStoreConfigurationBuilder
 
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributeSet) {
       super(builder, attributeSet);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return SingleFileStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

@@ -18,11 +18,11 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
@@ -34,8 +34,6 @@ import org.junit.After;
  * @since 12.0
  */
 class AbstractMultiClusterIT {
-
-   static final JsonWriter JSON_WRITER = new JsonWriter();
 
    protected final String config;
    protected Cluster source, target;
@@ -84,7 +82,7 @@ class AbstractMultiClusterIT {
    }
 
    protected void createCache(String cacheName, ConfigurationBuilder builder, RestClient client) {
-      String cacheConfig = JSON_WRITER.toJSON(builder.build());
+      String cacheConfig = Common.cacheConfigToJson(cacheName, builder.build());
       StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig);
       RestResponse response = join(client.cache(cacheName).createWithConfiguration(body));
       assertEquals(response.getBody(), 200, response.getStatus());

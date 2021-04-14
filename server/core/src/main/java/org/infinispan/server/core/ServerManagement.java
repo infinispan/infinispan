@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.sql.DataSource;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.tasks.TaskManager;
 
@@ -16,8 +16,7 @@ import org.infinispan.tasks.TaskManager;
  * @since 10.0
  */
 public interface ServerManagement {
-
-   ConfigurationInfo getConfiguration();
+   void serializeConfiguration(ConfigurationWriter writer);
 
    void serverStop(List<String> servers);
 

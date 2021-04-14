@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 
 /**
@@ -9,6 +8,6 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface ConnectionFactoryConfiguration extends ConfigurationInfo {
+public interface ConnectionFactoryConfiguration {
    Class<? extends ConnectionFactory> connectionFactoryClass();
 }

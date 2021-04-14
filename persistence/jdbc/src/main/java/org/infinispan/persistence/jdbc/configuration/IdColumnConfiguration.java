@@ -1,24 +1,18 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.persistence.jdbc.configuration.Element.ID_COLUMN;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class IdColumnConfiguration implements ConfigurationInfo {
+public class IdColumnConfiguration {
 
-   public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).xmlName("name").immutable().build();
-   public static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder("idColumnType", null, String.class).immutable().xmlName("type").build();
+   public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.NAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.TYPE, null, String.class).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(IdColumnConfiguration.class, ID_COLUMN_NAME, ID_COLUMN_TYPE);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ID_COLUMN.getLocalName());
 
    private final Attribute<String> idColumnName;
    private final Attribute<String> idColumnType;
@@ -28,11 +22,6 @@ public class IdColumnConfiguration implements ConfigurationInfo {
       this.attributes = attributes.checkProtection();
       idColumnName = attributes.attribute(ID_COLUMN_NAME);
       idColumnType = attributes.attribute(ID_COLUMN_TYPE);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public String idColumnName() {

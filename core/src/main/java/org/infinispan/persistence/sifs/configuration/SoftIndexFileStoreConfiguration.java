@@ -1,18 +1,12 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import static org.infinispan.configuration.parsing.Element.FILE_STORE;
-
-import java.util.Arrays;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
 
 /**
@@ -20,22 +14,15 @@ import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
  */
 @BuiltBy(SoftIndexFileStoreConfigurationBuilder.class)
 @ConfigurationFor(NonBlockingSoftIndexFileStore.class)
-public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
+public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration {
 
-   public static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder("openFilesLimit", 1000).immutable().build();
-   public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
+   public static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder(Attribute.OPEN_FILES_LIMIT, 1000).immutable().build();
+   public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder(Attribute.COMPACTION_THRESHOLD, 0.5d).immutable().build();
    private final IndexConfiguration index;
    private final DataConfiguration data;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SoftIndexFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), OPEN_FILES_LIMIT, COMPACTION_THRESHOLD);
-   }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(FILE_STORE.getLocalName(), true, false);
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public SoftIndexFileStoreConfiguration(AttributeSet attributes,
@@ -45,7 +32,6 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
       super(attributes, async);
       index = indexConfiguration;
       data = dataConfiguration;
-      subElements.addAll(Arrays.asList(index, data));
    }
 
    public String dataLocation() {

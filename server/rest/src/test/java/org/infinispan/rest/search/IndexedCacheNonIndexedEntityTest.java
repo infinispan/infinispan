@@ -3,6 +3,7 @@ package org.infinispan.rest.search;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.infinispan.rest.resources.AbstractRestResourceTest.cacheConfigToJson;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.CompletionStage;
@@ -12,7 +13,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -69,7 +69,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       configurationBuilder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE).indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("NonIndexed");
-      String config = new JsonWriter().toJSON(configurationBuilder.build());
+      String config = cacheConfigToJson(CACHE_NAME, configurationBuilder.build());
       RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_JSON, config);
 
       RestCacheClient cacheClient = client.cache(CACHE_NAME);

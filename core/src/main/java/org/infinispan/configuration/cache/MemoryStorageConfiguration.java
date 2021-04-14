@@ -1,9 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
@@ -12,12 +12,12 @@ import org.infinispan.eviction.EvictionType;
  * eviction and sizing.
  */
 @Deprecated
-public class MemoryStorageConfiguration implements ConfigurationInfo {
+public class MemoryStorageConfiguration {
 
-   public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).build();
-   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).immutable().build();
-   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
-   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition.builder("storage-type", StorageType.HEAP).immutable().build();
+   public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder(Attribute.SIZE, -1L).build();
+   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder(Element.EVICTION, EvictionType.COUNT).immutable().build();
+   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder(Attribute.STRATEGY, EvictionStrategy.NONE).immutable().build();
+   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition.builder(Attribute.TYPE, StorageType.HEAP).immutable().build();
 
    private final AttributeSet attributes;
 
@@ -29,14 +29,8 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
       this.attributes = attributes;
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition<MemoryStorageConfiguration> getElementDefinition() {
-      throw new UnsupportedOperationException();
    }
 
    public StorageType storageType() {

@@ -15,7 +15,7 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.server.core.DummServerManagement;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
@@ -70,7 +70,7 @@ public class RestServerHelper {
 
    public RestServerHelper start(String name) {
       restServerConfigurationBuilder.name(name);
-      restServer.setServerManagement(new DummServerManagement());
+      restServer.setServerManagement(new DummyServerManagement());
       restServer.start(restServerConfigurationBuilder.build(), cacheManager);
       return this;
    }

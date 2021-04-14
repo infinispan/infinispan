@@ -1,25 +1,29 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:xi="http://www.w3.org/2001/XInclude"
-        xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
                             urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-        xmlns="urn:infinispan:config:13.0"
-        xmlns:server="urn:infinispan:server:13.0">
+      xmlns="urn:infinispan:config:13.0"
+      xmlns:server="urn:infinispan:server:13.0">
 
-    <xi:include href="jgroups/authz-stacks.xml"/>
+   <xi:include href="jgroups/authz-stacks.xml"/>
 
-    <xi:include href="cache-container/clustered-authz-common-name.xml"/>
+   <xi:include href="cache-container/clustered-authz-common-name.xml"/>
 
-    <server xmlns="urn:infinispan:server:13.0">
+   <server xmlns="urn:infinispan:server:13.0">
 
-        <xi:include href="interfaces/default.xml"/>
+      <xi:include href="interfaces/default.xml"/>
 
-        <xi:include href="socket-bindings/default.xml"/>
+      <xi:include href="socket-bindings/default.xml"/>
 
-        <xi:include href="security/trustrealm.xml"/>
+      <xi:include href="security/trustrealm.xml"/>
 
-        <xi:include href="endpoints/cert-implicit.xml"/>
+      <endpoints>
 
-        <xi:include href="endpoints/alternate.xml"/>
-    </server>
+         <xi:include href="endpoints/cert-implicit.xml"/>
+
+         <xi:include href="endpoints/alternate.xml"/>
+
+      </endpoints>
+   </server>
 </infinispan>

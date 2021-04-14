@@ -3,10 +3,11 @@ package org.infinispan.counter.configuration;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.configuration.serializing.SerializedWith;
 
 /**
@@ -18,7 +19,7 @@ import org.infinispan.configuration.serializing.SerializedWith;
  * @since 9.0
  */
 @SerializedWith(CounterConfigurationSerializer.class)
-public class CounterManagerConfiguration {
+public class CounterManagerConfiguration extends ConfigurationElement<CounterManagerConfiguration> {
    static final AttributeDefinition<Reliability> RELIABILITY = AttributeDefinition
          .builder("reliability", Reliability.AVAILABLE)
          .validator(value -> {
@@ -27,18 +28,17 @@ public class CounterManagerConfiguration {
             }
          })
          .immutable().build();
-   static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners", 2)
+   static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder(Attribute.NUM_OWNERS, 2)
          .validator(value -> {
             if (value < 1) {
                throw CONTAINER.invalidNumOwners(value);
             }
          })
          .immutable().build();
-   private final AttributeSet attributes;
-   private final List<? extends AbstractCounterConfiguration> counters;
+   private final Map<String, AbstractCounterConfiguration> counters;
 
-   CounterManagerConfiguration(AttributeSet attributes, List<? extends AbstractCounterConfiguration> counters) {
-      this.attributes = attributes;
+   CounterManagerConfiguration(AttributeSet attributes, Map<String, AbstractCounterConfiguration> counters) {
+      super(Element.COUNTERS, attributes);
       this.counters = counters;
    }
 
@@ -54,11 +54,7 @@ public class CounterManagerConfiguration {
       return attributes.attribute(RELIABILITY).get();
    }
 
-   AttributeSet attributes() {
-      return attributes;
-   }
-
-   public List<AbstractCounterConfiguration> counters() {
-      return Collections.unmodifiableList(counters);
+   public Map<String, AbstractCounterConfiguration> counters() {
+      return Collections.unmodifiableMap(counters);
    }
 }

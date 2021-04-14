@@ -14,6 +14,8 @@ public enum Attribute {
    AUDIENCE,
    AUTH_SERVER_URL,
    CACHE_CONTAINER,
+   CACHE_LIFESPAN,
+   CACHE_MAX_SIZE,
    CLIENT_ID,
    CLIENT_SECRET,
    CLIENT_SSL_CONTEXT,
@@ -108,7 +110,8 @@ public enum Attribute {
    METRICS_AUTH,
    CLEAR_TEXT,
    STORE,
-   TYPE;
+   TYPE,
+   ;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

@@ -4,8 +4,6 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Determines whether cache statistics are gathered.
@@ -14,14 +12,12 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class StatisticsConfiguration extends JMXStatisticsConfiguration implements Matchable<StatisticsConfiguration> {
 
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("statistics").build();
-   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).xmlName("statistics-available").build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STATISTICS, false).build();
+   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STATISTICS_AVAILABLE, true).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StatisticsConfiguration.class, ENABLED, AVAILABLE);
    }
-
-   static final ElementDefinition<StatisticsConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>("", false);
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Boolean> available;
@@ -38,11 +34,6 @@ public class StatisticsConfiguration extends JMXStatisticsConfiguration implemen
       available = attributes.attribute(AVAILABLE);
    }
 
-   @Override
-   public ElementDefinition<StatisticsConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
    public boolean enabled() {
       return enabled.get();
    }
@@ -57,7 +48,6 @@ public class StatisticsConfiguration extends JMXStatisticsConfiguration implemen
       return available.get();
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

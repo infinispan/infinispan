@@ -1,39 +1,24 @@
 package org.infinispan.server.configuration;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 
 /**
  * @since 10.0
  */
-class AddressConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> VALUE = AttributeDefinition.builder("value", null, String.class).build();
+class AddressConfiguration extends ConfigurationElement<AddressConfiguration> {
+   static final AttributeDefinition<String> VALUE = AttributeDefinition.builder(Attribute.VALUE, null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AddressConfiguration.class, VALUE);
    }
 
-   private final ElementDefinition<ConfigurationInfo> elementDefinition;
-   private final AttributeSet attributes;
    private final AddressType addressType;
 
    AddressConfiguration(AttributeSet attributes, AddressType addressType) {
-      this.attributes = attributes.checkProtection();
+      super(addressType, attributes);
       this.addressType = addressType;
-      this.elementDefinition = new DefaultElementDefinition<>(addressType.displayName(), true, false);
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return elementDefinition;
    }
 
    AddressType addressType() {

@@ -5,32 +5,27 @@ import static org.infinispan.persistence.remote.configuration.Element.AUTH_EXTER
 import static org.infinispan.persistence.remote.configuration.Element.AUTH_PLAIN;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 
-public class MechanismConfiguration implements ConfigurationInfo {
+public class MechanismConfiguration {
 
    static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder("username", null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> REALM = AttributeDefinition.builder("realm", null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> SASL_MECHANISM = AttributeDefinition.builder("sasl-mechanism", null, String.class)
          .immutable().autoPersist(false).build();
+   private final AttributeSet attributes;
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MechanismConfiguration.class, USERNAME, PASSWORD, REALM, SASL_MECHANISM);
    }
 
-   private final ElementDefinition elementDefinition;
 
-   private final AttributeSet attributes;
 
    public MechanismConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
-      this.elementDefinition = new DefaultElementDefinition<>(serializeMechanism(attributes.attribute(SASL_MECHANISM).get()));
    }
 
    public String username() {
@@ -49,14 +44,8 @@ public class MechanismConfiguration implements ConfigurationInfo {
       return attributes.attribute(SASL_MECHANISM).get();
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return elementDefinition;
    }
 
    static String serializeMechanism(String mechanism) {

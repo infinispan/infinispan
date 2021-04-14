@@ -23,7 +23,7 @@ public class SocketBindingConfigurationBuilder implements Builder<SocketBindingC
       if (!server.interfaces().exists(interfaceName)) {
          throw Server.log.unknownInterface(interfaceName);
       }
-      attributes.attribute(SocketBindingConfiguration.INTERFACE).set(name);
+      attributes.attribute(SocketBindingConfiguration.INTERFACE).set(interfaceName);
       NetworkAddress networkAddress = server.interfaces().getNetworkAddress(interfaceName);
       int offset = server.socketBindings().offset();
       this.socketBinding = new SocketBinding(name, networkAddress, port + offset);

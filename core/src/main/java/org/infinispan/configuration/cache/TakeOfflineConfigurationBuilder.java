@@ -4,9 +4,7 @@ import static org.infinispan.configuration.cache.TakeOfflineConfiguration.AFTER_
 import static org.infinispan.configuration.cache.TakeOfflineConfiguration.MIN_TIME_TO_WAIT;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -14,7 +12,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @see <a href="https://infinispan.org/docs/stable/titles/xsite/xsite.html#taking_a_site_offline">Infinispan Cross-Site documentation</a>
  * @since 5.2
  */
-public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration>, ConfigurationBuilderInfo {
+public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration> {
 
 
    private final AttributeSet attributes;
@@ -44,16 +42,6 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    public TakeOfflineConfigurationBuilder minTimeToWait(long minTimeToWait) {
       attributes.attribute(MIN_TIME_TO_WAIT).set(minTimeToWait);
       return this;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return TakeOfflineConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**

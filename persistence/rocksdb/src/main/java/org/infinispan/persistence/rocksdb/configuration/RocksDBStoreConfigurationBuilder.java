@@ -8,39 +8,27 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfi
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.PersistenceUtil;
 
 /**
- *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- *
  */
-public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder>
-      implements ConfigurationBuilderInfo {
+public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder> {
 
    protected RocksDBExpirationConfigurationBuilder expiration = new RocksDBExpirationConfigurationBuilder();
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       this(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
-      subElements.add(expiration);
    }
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributeSet) {
       super(builder, attributeSet);
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return RocksDBStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

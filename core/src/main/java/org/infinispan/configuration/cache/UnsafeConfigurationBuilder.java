@@ -5,9 +5,7 @@ import static org.infinispan.configuration.cache.UnsafeConfiguration.UNRELIABLE_
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -17,24 +15,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
  * <p />
  */
-public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<UnsafeConfiguration>, ConfigurationBuilderInfo {
+public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<UnsafeConfiguration> {
 
    private final AttributeSet attributes;
-
 
    protected UnsafeConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = UnsafeConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return UnsafeConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

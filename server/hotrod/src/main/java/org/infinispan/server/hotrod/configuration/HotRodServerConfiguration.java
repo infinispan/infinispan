@@ -1,16 +1,9 @@
 package org.infinispan.server.hotrod.configuration;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.core.configuration.EncryptionConfiguration;
 import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -22,13 +15,10 @@ import org.infinispan.server.hotrod.HotRodServer;
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public static final String TOPOLOGY_CACHE_NAME_PREFIX = "___hotRodTopologyCache";
 
-   public static final AttributeDefinition<String> PROXY_HOST = AttributeDefinition.builder("externalHost", null, String.class).immutable().build();
-   public static final AttributeDefinition<Integer> PROXY_PORT = AttributeDefinition.builder("externalPort", -1).immutable().build();
+   public static final AttributeDefinition<String> PROXY_HOST = AttributeDefinition.builder(Attribute.EXTERNAL_HOST, null, String.class).immutable().build();
+   public static final AttributeDefinition<Integer> PROXY_PORT = AttributeDefinition.builder(Attribute.EXTERNAL_PORT, -1).immutable().build();
    // The Hot Rod server has a different default
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 160).immutable().build();
-
-   private final Attribute<String> proxyHost;
-   private final Attribute<Integer> proxyPort;
 
    private final TopologyCacheConfiguration topologyCache;
    private final AuthenticationConfiguration authentication;
@@ -39,44 +29,30 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
             WORKER_THREADS, PROXY_HOST, PROXY_PORT);
    }
 
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return Arrays.asList(topologyCache, authentication, encryption);
-   }
-
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("hotrod-connector");
-
    HotRodServerConfiguration(AttributeSet attributes,
                              TopologyCacheConfiguration topologyCache,
                              SslConfiguration ssl, AuthenticationConfiguration authentication,
                              EncryptionConfiguration encryption, IpFilterConfiguration ipRules) {
-      super(attributes, ssl, ipRules);
+      super(Element.HOTROD_CONNECTOR, attributes, ssl, ipRules);
       this.topologyCache = topologyCache;
       this.authentication = authentication;
       this.encryption = encryption;
-      proxyHost = attributes.attribute(PROXY_HOST);
-      proxyPort = attributes.attribute(PROXY_PORT);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public String proxyHost() {
-      return proxyHost.get();
+      return attributes.attribute(PROXY_HOST).get();
    }
 
    public String publicHost() {
-      return proxyHost.isNull() ? host() : proxyHost.get();
+      return attributes.attribute(PROXY_HOST).orElse(host());
    }
 
    public int proxyPort() {
-      return proxyPort.get();
+      return attributes.attribute(PROXY_PORT).get();
    }
 
    public int publicPort() {
-      return proxyPort.isModified() ? proxyPort.get() : port();
+      return attributes.attribute(PROXY_PORT).orElse(port());
    }
 
    public String topologyCacheName() {
@@ -115,16 +91,4 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public EncryptionConfiguration encryption() {
       return encryption;
    }
-
-   @Override
-   public String toString() {
-      return "HotRodServerConfiguration{" +
-            "proxyHost=" + proxyHost +
-            ", proxyPort=" + proxyPort +
-            ", topologyCache=" + topologyCache +
-            ", authentication=" + authentication +
-            ", encryption=" + encryption +
-            '}';
-   }
-
 }

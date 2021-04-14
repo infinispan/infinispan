@@ -1,17 +1,13 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
-class ThreadFactoryConfiguration implements ConfigurationInfo {
+class ThreadFactoryConfiguration {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<String> GROUP = AttributeDefinition.builder("groupName", null, String.class).build();
    static final AttributeDefinition<String> THREAD_NAME_PATTERN = AttributeDefinition.builder("threadNamePattern", null, String.class).build();
@@ -24,8 +20,6 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
    private final Attribute<Integer> priority;
    private String nodeName;
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.THREAD_FACTORY.getLocalName());
-
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ThreadFactoryConfiguration.class, NAME, GROUP, THREAD_NAME_PATTERN, PRIORITY);
    }
@@ -37,12 +31,6 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
       this.threadNamePattern = attributes.attribute(THREAD_NAME_PATTERN);
       this.priority = attributes.attribute(PRIORITY);
       this.nodeName = nodeName;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-
    }
 
    public DefaultThreadFactory getThreadFactory(boolean isNonBlocking) {

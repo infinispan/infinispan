@@ -5,11 +5,9 @@ import static org.infinispan.persistence.sifs.configuration.DataConfiguration.MA
 import static org.infinispan.persistence.sifs.configuration.DataConfiguration.SYNC_WRITES;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class DataConfigurationBuilder implements ConfigurationBuilderInfo, Builder<DataConfiguration> {
+public class DataConfigurationBuilder implements Builder<DataConfiguration> {
 
    private final AttributeSet attributes;
 
@@ -17,12 +15,6 @@ public class DataConfigurationBuilder implements ConfigurationBuilderInfo, Build
       this.attributes = DataConfiguration.attributeDefinitionSet();
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return DataConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

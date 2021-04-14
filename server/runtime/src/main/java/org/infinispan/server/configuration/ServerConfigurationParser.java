@@ -2,6 +2,7 @@ package org.infinispan.server.configuration;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -66,7 +67,7 @@ import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 })
 public class ServerConfigurationParser implements ConfigurationParser {
    private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
-
+   static final String NAMESPACE = "urn:infinispan:server:";
    public static String ENDPOINTS_SCOPE = "ENDPOINTS";
 
    @Override
@@ -101,8 +102,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseServerElements(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder)
-         {
+   private void parseServerElements(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) {
       Element element = nextElement(reader);
       if (element == Element.INTERFACES) {
          parseInterfaces(reader, builder);
@@ -120,9 +120,17 @@ public class ServerConfigurationParser implements ConfigurationParser {
          parseDataSources(reader, builder);
          element = nextElement(reader);
       }
-      while (element == Element.ENDPOINTS) {
-         parseEndpoints(reader, holder, builder);
+      if (element == Element.ENDPOINTS) {
+         holder.pushScope(ENDPOINTS_SCOPE);
+         if (reader.getSchema().since(13, 0)) {
+            parseEndpoints(reader, holder, builder);
+         } else {
+            while (element == Element.ENDPOINTS) {
+               parseEndpoint(reader, holder, builder, Element.ENDPOINTS, null);
+            }
+         }
          element = nextElement(reader);
+         holder.popScope();
       }
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
@@ -139,8 +147,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
-               socketBindings.defaultInterface(attributes[0]).offset(Integer.parseInt(attributes[1]));
-               parseSocketBinding(reader, socketBindings);
+               if (reader.getAttributeCount() > 0) {
+                  socketBindings.defaultInterface(attributes[0]).offset(Integer.parseInt(attributes[1]));
+                  parseSocketBinding(reader, socketBindings);
+               }
                break;
             }
             default:
@@ -178,6 +188,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case INTERFACES: // JSON/YAML array
             case INTERFACE:
                parseInterface(reader, builder);
                break;
@@ -301,6 +312,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CREDENTIAL_STORE:
+            case CREDENTIAL_STORES:
                parseCredentialStore(reader, builder, credentialStores);
                break;
             default:
@@ -312,7 +324,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseCredentialStore(ConfigurationReader reader, ServerConfigurationBuilder builder, CredentialStoresConfigurationBuilder credentialStores) {
       String name = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH)[0];
       CredentialStoreConfigurationBuilder credentialStoreBuilder = credentialStores.addCredentialStore(name);
-      credentialStoreBuilder.relativeTo((String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -346,7 +357,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private String parseCredentialReference(ConfigurationReader reader, ServerConfigurationBuilder builder) {
-      switch(Element.forName(reader.getLocalName())) {
+      switch (Element.forName(reader.getLocalName())) {
          case CREDENTIAL_REFERENCE: {
             String store = null;
             String alias = null;
@@ -366,7 +377,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                }
             }
             ParseUtils.requireNoContent(reader);
-            PasswordCredential credential = builder.security().credentialStores().getCredential(store, alias, PasswordCredential.class);
+            PasswordCredential credential = builder.security().credentialStores().getCredential(store, alias, PasswordCredential.class, reader.getProperties());
             return new String(credential.getPassword(ClearPassword.class).getPassword());
          }
          case CLEAR_TEXT_CREDENTIAL: {
@@ -385,6 +396,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SECURITY_REALM:
+            case SECURITY_REALMS:
                parseSecurityRealm(reader, builder, realms);
                break;
             default:
@@ -396,6 +408,24 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseSecurityRealm(ConfigurationReader reader, ServerConfigurationBuilder builder, RealmsConfigurationBuilder realms) {
       String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
       RealmConfigurationBuilder securityRealmBuilder = realms.addSecurityRealm(name);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case NAME:
+               // Already seen.
+               break;
+            case CACHE_LIFESPAN:
+               securityRealmBuilder.cacheLifespan(Long.valueOf(value));
+               break;
+            case CACHE_MAX_SIZE:
+               securityRealmBuilder.cacheMaxSize(Integer.valueOf(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
       Element element = nextElement(reader);
       if (element == Element.SERVER_IDENTITIES) {
          parseServerIdentities(reader, builder, securityRealmBuilder);
@@ -552,7 +582,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // Already seen
                break;
             case CLIENT_SECRET:
-               oauthBuilder.clientSecret(value);
+               oauthBuilder.clientSecret(value.toCharArray());
                credentialSet = true;
                break;
             case CLIENT_SSL_CONTEXT:
@@ -571,7 +601,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
             throw Server.log.cannotOverrideCredential(Element.OAUTH2_INTROSPECTION.toString(), Attribute.CLIENT_SECRET.toString());
          }
          String credential = parseCredentialReference(reader, serverBuilder);
-         oauthBuilder.clientSecret(credential);
+         oauthBuilder.clientSecret(credential.toCharArray());
          credentialSet = true;
          element = nextElement(reader);
       }
@@ -601,7 +631,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ldapRealmConfigBuilder.principal(value);
                break;
             case CREDENTIAL:
-               ldapRealmConfigBuilder.credential(value);
+               ldapRealmConfigBuilder.credential(value.toCharArray());
                credentialSet = true;
                break;
             case DIRECT_VERIFICATION:
@@ -638,7 +668,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
             throw Server.log.cannotOverrideCredential(Element.LDAP_REALM.toString(), Attribute.CREDENTIAL.toString());
          }
          String credential = parseCredentialReference(reader, builder);
-         ldapRealmConfigBuilder.credential(credential);
+         ldapRealmConfigBuilder.credential(credential.toCharArray());
          credentialSet = true;
          element = nextElement(reader);
       }
@@ -660,7 +690,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       Element element = nextElement(reader);
       switch (element) {
          case REGEX_PRINCIPAL_TRANSFORMER: {
-            String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATTERN, Attribute.REPLACEMENT);
+            String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATTERN, Attribute.REPLACEMENT);
             boolean replaceAll = false;
             for (int i = 0; i < reader.getAttributeCount(); i++) {
                ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -679,7 +709,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                      throw ParseUtils.unexpectedAttribute(reader, i);
                }
             }
-            builder.nameRewriter(new RegexNameRewriter(Pattern.compile(attributes[1]), attributes[2], replaceAll));
+            builder.nameRewriter(new RegexNameRewriter(Pattern.compile(attributes[0]), attributes[1], replaceAll));
             ParseUtils.requireNoContent(reader);
             break;
          }
@@ -764,6 +794,20 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case ATTRIBUTE_REFERENCE:
                parseLdapAttributeReference(reader, attributeMapperBuilder.addAttribute());
+               break;
+            case ATTRIBUTE_MAPPING:
+               // JSON mode, determine the type from the attribute
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                  switch (attribute) {
+                     case FILTER:
+                        parseLdapAttributeFilter(reader, attributeMapperBuilder.addAttribute());
+                        break;
+                     case REFERENCE:
+                        parseLdapAttributeReference(reader, attributeMapperBuilder.addAttribute());
+                        break;
+                  }
+               }
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -962,8 +1006,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseKeyStore(ConfigurationReader reader, ServerConfigurationBuilder builder, KeyStoreConfigurationBuilder keyStoreBuilder) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
       keyStoreBuilder.path(attributes[0]);
-      String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
-      keyStoreBuilder.relativeTo(relativeTo);
       boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -977,8 +1019,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                keyStoreBuilder.provider(value);
                break;
             case RELATIVE_TO:
-               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
-               keyStoreBuilder.relativeTo(relativeTo);
+               keyStoreBuilder.relativeTo(value);
                break;
             case PASSWORD:
             case KEYSTORE_PASSWORD:
@@ -1014,14 +1055,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
       }
-      keyStoreBuilder.build();
+      keyStoreBuilder.build(reader.getProperties());
    }
 
    private void parseTrustStore(ConfigurationReader reader, ServerConfigurationBuilder builder, TrustStoreConfigurationBuilder trustStoreBuilder) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
       trustStoreBuilder.path(attributes[0]);
-      String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
-      trustStoreBuilder.relativeTo(relativeTo);
       boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -1035,8 +1074,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                trustStoreBuilder.provider(value);
                break;
             case RELATIVE_TO:
-               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
-               trustStoreBuilder.relativeTo(relativeTo);
+               trustStoreBuilder.relativeTo(value);
                break;
             case PASSWORD:
                trustStoreBuilder.password(value.toCharArray());
@@ -1062,7 +1100,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
       }
-      trustStoreBuilder.build();
+      trustStoreBuilder.build(reader.getProperties());
    }
 
    private void parseTrustStoreRealm(ConfigurationReader reader, TrustStoreRealmConfigurationBuilder trustStoreBuilder) {
@@ -1080,8 +1118,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
-      trustStoreBuilder.name(name);
-      trustStoreBuilder.build();
+      trustStoreBuilder.name(name).build(reader.getProperties());
    }
 
    private void parseLegacyTrustStoreRealm(ConfigurationReader reader, ServerConfigurationBuilder builder, TrustStoreRealmConfigurationBuilder trustStoreBuilder, ServerIdentitiesConfigurationBuilder serverIdentitiesConfigurationBuilder) {
@@ -1135,13 +1172,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
       serverIdentitiesConfigurationBuilder.sslConfiguration().trustStore().path(path).relativeTo(relativeTo).password(keyStorePassword).provider(keyStoreProvider);
       trustStoreBuilder.name(name);
-      trustStoreBuilder.build();
+      trustStoreBuilder.build(reader.getProperties());
    }
 
    private void parseKerberos(ConfigurationReader reader, ServerIdentitiesConfigurationBuilder identitiesBuilder) {
       KerberosSecurityFactoryConfigurationBuilder builder = identitiesBuilder.addKerberosConfiguration();
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.KEYTAB_PATH, Attribute.PRINCIPAL);
-      builder.keyTabPath(attributes[0]).relativeTo((String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH));
+      builder.keyTabPath(attributes[0]);
       builder.principal(attributes[1]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -1153,7 +1190,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // Already seen, ignore
                break;
             case RELATIVE_TO:
-               builder.relativeTo(ParseUtils.requireAttributeProperty(reader, i));
+               builder.relativeTo(value);
                break;
             case DEBUG:
                builder.debug(Boolean.parseBoolean(value));
@@ -1206,6 +1243,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+      builder.build(reader.getProperties());
    }
 
    private void parseDataSources(ConfigurationReader reader, ServerConfigurationBuilder builder) {
@@ -1213,8 +1251,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case DATA_SOURCES: {
+               parseDataSource(reader, element, builder, dataSources);
+               reader.require(ConfigurationReader.ElementType.END_ELEMENT, null, Element.DATA_SOURCES);
+               break;
+            }
             case DATA_SOURCE: {
-               parseDataSource(reader, builder, dataSources);
+               parseDataSource(reader, element, builder, dataSources);
                break;
             }
             default:
@@ -1223,7 +1266,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseDataSource(ConfigurationReader reader, ServerConfigurationBuilder builder, DataSourcesConfigurationBuilder dataSourcesBuilder) {
+   private void parseDataSource(ConfigurationReader reader, Element wrapper, ServerConfigurationBuilder builder, DataSourcesConfigurationBuilder dataSourcesBuilder) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.JNDI_NAME);
       String name = attributes[0];
       String jndiName = attributes[1];
@@ -1254,9 +1297,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
          throw ParseUtils.unexpectedElement(reader, element);
       }
       parseDataSourceConnectionPool(reader, dataSourceBuilder);
-      while (reader.inTag(Element.DATA_SOURCE)) {
-         // Consume
-      }
+      nextElement(reader);
+      reader.require(ConfigurationReader.ElementType.END_ELEMENT, null, wrapper);
    }
 
    private void parseDataSourceConnectionFactory(ConfigurationReader reader, ServerConfigurationBuilder builder, DataSourceConfigurationBuilder dataSourceBuilder) {
@@ -1275,7 +1317,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                dataSourceBuilder.username(value);
                break;
             case PASSWORD:
-               dataSourceBuilder.password(value);
+               dataSourceBuilder.password(value.toCharArray());
                credentialSet = true;
                break;
             case URL:
@@ -1297,33 +1339,32 @@ public class ServerConfigurationParser implements ConfigurationParser {
             throw Server.log.cannotOverrideCredential(Element.CONNECTION_FACTORY.toString(), Attribute.PASSWORD.toString());
          }
          String credential = parseCredentialReference(reader, builder);
-         dataSourceBuilder.password(credential);
+         dataSourceBuilder.password(credential.toCharArray());
          credentialSet = true;
          element = nextElement(reader);
       }
       if (!credentialSet) {
          throw Server.log.missingCredential(Element.CONNECTION_FACTORY.toString(), Attribute.PASSWORD.toString());
       }
-      boolean wrapped = false;
       if (element == Element.CONNECTION_PROPERTIES) {
-         element = nextElement(reader);
-         wrapped = true;
-      }
-      while (element == Element.CONNECTION_PROPERTY) {
-         String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
-         String value;
-         if (reader.getAttributeCount() == 1) {
-            value = reader.getElementText();
-         } else {
-            value = ParseUtils.requireAttributes(reader, Attribute.VALUE)[0];
-            ParseUtils.requireNoContent(reader);
+         for(int i = 0; i < reader.getAttributeCount(); i++) {
+            dataSourceBuilder.addProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
          }
-         dataSourceBuilder.addProperty(name, value);
-         element = nextElement(reader);
-      }
-      if (wrapped) {
-         reader.require(ConfigurationReader.ElementType.END_ELEMENT, null, Element.CONNECTION_PROPERTIES.toString());
+         ParseUtils.requireNoContent(reader);
          nextElement(reader);
+      } else {
+         while (element == Element.CONNECTION_PROPERTY) {
+            String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+            String value;
+            if (reader.getAttributeCount() == 1) {
+               value = reader.getElementText();
+            } else {
+               value = ParseUtils.requireAttributes(reader, Attribute.VALUE)[0];
+               ParseUtils.requireNoContent(reader);
+            }
+            dataSourceBuilder.addProperty(name, value);
+            element = nextElement(reader);
+         }
       }
    }
 
@@ -1367,10 +1408,47 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEndpoints(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) {
-      holder.pushScope(ENDPOINTS_SCOPE);
-      String socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
-      EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
+      String socketBinding = null;
+      String securityRealm = null;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         String value = reader.getAttributeValue(i);
+         switch (attribute) {
+            case SOCKET_BINDING:
+               socketBinding = value;
+               break;
+            case SECURITY_REALM:
+               securityRealm = value;
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         if (element == Element.ENDPOINT || element == Element.ENDPOINTS) {
+            parseEndpoint(reader, holder, builder, element, socketBinding);
+         } else {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+      if (builder.endpoints().endpoints().isEmpty()) {
+         if (socketBinding == null) {
+            throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.SOCKET_BINDING));
+         }
+         EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
+         if (securityRealm != null) {
+            endpoint.securityRealm(securityRealm).implicitConnectorSecurity(true);
+         }
+         configureDefaultEndpoint(reader, socketBinding, endpoint);
+      }
+   }
 
+   private void parseEndpoint(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder, Element endpointElement, String socketBinding) {
+      if (socketBinding == null) {
+         socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
+      }
+      EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          String value = reader.getAttributeValue(i);
@@ -1392,7 +1470,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
          }
       }
-      while (reader.inTag(Element.ENDPOINTS)) {
+      while (reader.inTag(endpointElement)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case IP_FILTER: {
@@ -1401,18 +1479,30 @@ public class ServerConfigurationParser implements ConfigurationParser {
             }
             case CONNECTORS:
                // Wrapping element for YAML/JSON
+               parseConnectors(reader, holder);
                break;
             default:
                reader.handleAny(holder);
                break;
          }
       }
+      configureDefaultEndpoint(reader, socketBinding, endpoint);
+   }
+
+   private void parseConnectors(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      while (reader.inTag(Element.CONNECTORS)) {
+         reader.getMapItem(Attribute.NAME);
+         reader.handleAny(holder);
+         reader.endMapItem();
+      }
+   }
+
+   private void configureDefaultEndpoint(ConfigurationReader reader, String socketBinding, EndpointConfigurationBuilder endpoint) {
       if (endpoint.connectors().isEmpty()) {
          endpoint.addConnector(HotRodServerConfigurationBuilder.class).socketBinding(socketBinding);
          RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).socketBinding(socketBinding);
          configureEndpoint(reader.getProperties(), endpoint, rest);
       }
-      holder.popScope();
    }
 
    public static void configureEndpoint(Properties properties, EndpointConfigurationBuilder endpoint, RestServerConfigurationBuilder builder) {

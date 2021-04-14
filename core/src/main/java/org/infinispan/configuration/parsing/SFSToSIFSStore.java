@@ -79,7 +79,7 @@ public class SFSToSIFSStore<K, V> extends DelegatingNonBlockingStore<K, V> {
       AttributeSet sfsAttributes = SingleFileStoreConfiguration.attributeDefinitionSet();
       sfsAttributes.attribute(SingleFileStoreConfiguration.LOCATION).set(location);
       sfsAttributes.attribute(AbstractStoreConfiguration.SEGMENTED).set(segmented);
-      sfsAttributes.attribute(AbstractStoreConfiguration.IGNORE_MODIFICATIONS).set(Boolean.TRUE);
+      sfsAttributes.attribute(AbstractStoreConfiguration.READ_ONLY).set(Boolean.TRUE);
 
       return createAndStartStore(ctx, new SingleFileStoreConfiguration(sfsAttributes.protect(),
             new AsyncStoreConfiguration(AsyncStoreConfiguration.attributeDefinitionSet().protect())));

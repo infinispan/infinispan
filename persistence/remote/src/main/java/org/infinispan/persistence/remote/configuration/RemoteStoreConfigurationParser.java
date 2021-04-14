@@ -4,7 +4,6 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,7 +48,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    }
 
    private void parseRemoteStore(final ConfigurationReader reader, PersistenceConfigurationBuilder persistenceBuilder,
-         ClassLoader classLoader) {
+                                 ClassLoader classLoader) {
       RemoteStoreConfigurationBuilder builder = new RemoteStoreConfigurationBuilder(persistenceBuilder);
       parseRemoteStoreAttributes(reader, builder);
 
@@ -64,8 +63,14 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                parseConnectionPool(reader, builder.connectionPool());
                break;
             }
-            case SERVER: {
-               parseServer(reader, builder.addServer());
+            case REMOTE_SERVER: {
+               if (reader.getAttributeCount() > 0) {
+                  parseServer(reader, builder.addServer());
+               } else {
+                  while (reader.inTag(Element.REMOTE_SERVER)) {
+                     parseServer(reader, builder.addServer());
+                  }
+               }
                break;
             }
             case SECURITY: {
@@ -269,7 +274,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    }
 
    private void parseAsyncTransportExecutor(final ConfigurationReader reader,
-         final ExecutorFactoryConfigurationBuilder builder, ClassLoader classLoader) {
+                                            final ExecutorFactoryConfigurationBuilder builder, ClassLoader classLoader) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -441,11 +446,5 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    @Override
    public Namespace[] getNamespaces() {
       return ParseUtils.getNamespaceAnnotations(getClass());
-   }
-
-   @Override
-   public Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
-      return RemoteStoreConfigurationBuilder.class;
-
    }
 }

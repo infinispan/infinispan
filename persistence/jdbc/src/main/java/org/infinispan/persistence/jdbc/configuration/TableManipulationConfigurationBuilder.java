@@ -7,16 +7,10 @@ import static org.infinispan.persistence.jdbc.configuration.TableManipulationCon
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
 import static org.infinispan.persistence.jdbc.logging.Log.CONFIG;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -27,34 +21,17 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>>
       extends AbstractJdbcStoreConfigurationChildBuilder<B>
-      implements Builder<TableManipulationConfiguration>, Self<S>, ConfigurationBuilderInfo {
-   private final AttributeSet attributes;
+      implements Builder<TableManipulationConfiguration>, Self<S> {
+   final AttributeSet attributes;
    private final DataColumnConfigurationBuilder dataColumn = new DataColumnConfigurationBuilder();
    private final IdColumnConfigurationBuilder idColumn = new IdColumnConfigurationBuilder();
    private final TimestampColumnConfigurationBuilder timeStampColumn = new TimestampColumnConfigurationBuilder();
    private final SegmentColumnConfigurationBuilder segmentColumn;
-   private List<ConfigurationBuilderInfo> subElements;
 
    TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
       attributes = TableManipulationConfiguration.attributeSet();
       segmentColumn = new SegmentColumnConfigurationBuilder(builder);
-      subElements = Arrays.asList(idColumn, dataColumn, timeStampColumn, segmentColumn);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return TableManipulationConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**
@@ -69,7 +46,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
 
    /**
     * For DB queries the fetch size is on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
-    * parameter, if not specified will be defaulted to {@link TableManager#DEFAULT_FETCH_SIZE}.
+    * parameter, if not specified will be defaulted to {@link org.infinispan.persistence.jdbc.impl.table.TableManager#DEFAULT_FETCH_SIZE}.
     */
    public S fetchSize(int fetchSize) {
       attributes.attribute(FETCH_SIZE).set(fetchSize);
@@ -180,7 +157,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
 
    static void validateIfSet(AttributeSet attributes, AttributeDefinition<?>... definitions) {
       for(AttributeDefinition<?> definition : definitions) {
-         String value = attributes.attribute(definition).asObject();
+         String value = (String) attributes.attribute(definition).get();
          if(value == null || value.isEmpty()) {
             throw CONFIG.tableManipulationAttributeNotSet(definition.name());
          }

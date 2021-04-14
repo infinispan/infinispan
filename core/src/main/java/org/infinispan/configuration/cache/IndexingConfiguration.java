@@ -1,63 +1,47 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.INDEXING;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
+public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration> {
    /**
     * @deprecated since 11.0
     */
    @Deprecated
-   public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, null, Index.class).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    /**
     * @deprecated since 11.0
     */
    @Deprecated
-   public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
-   public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
+   public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_CONFIG, false).immutable().build();
+   public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder(Element.KEY_TRANSFORMERS, null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashMap::new).immutable().build();
-   public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<String>>) (Class<?>) Set.class)
+   public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder(Element.INDEXED_ENTITIES, null, (Class<Set<String>>) (Class<?>) Set.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashSet::new).immutable().build();
-   public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder("storage", IndexStorage.FILESYSTEM)
-         .serializer(new AttributeSerializer<IndexStorage, ConfigurationInfo, ConfigurationBuilderInfo>() {
-            @Override
-            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, ConfigurationBuilderInfo builderInfo) {
-               return IndexStorage.valueOf(attrValue.toString().replace("-","_").toUpperCase());
-            }
-         })
+   public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.FILESYSTEM)
          .immutable().build();
-   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, PATH);
    }
-
-   static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
 
    /**
     * @deprecated since 11.0
@@ -79,7 +63,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Attribute<String> path;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
-   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    IndexingConfiguration(AttributeSet attributes, Set<Class<?>> resolvedIndexedClasses,
                          IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration) {
@@ -94,18 +77,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       enabled = attributes.attribute(ENABLED);
       storage = attributes.attribute(STORAGE);
       path = attributes.attribute(PATH);
-      subElements.add(readerConfiguration);
-      subElements.add(writerConfiguration);
-   }
-
-   @Override
-   public ElementDefinition<IndexingConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
    }
 
    /**
@@ -191,7 +162,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return indexedEntities.get();
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

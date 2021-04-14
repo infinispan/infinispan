@@ -13,6 +13,11 @@
    <name>Infinispan Commons JDK 11</name>
    <description>Infinispan Commons JDK 11</description>
 
+   <properties>
+      <maven.compiler.source>11</maven.compiler.source>
+      <maven.compiler.target>11</maven.compiler.target>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
@@ -30,6 +35,7 @@
                <fork combine.children="append">true</fork>
                <release>11</release>
                <!-- Workaround for https://youtrack.jetbrains.com/issue/IDEA-199818 -->
+               <source>11</source>
                <target>11</target>
             </configuration>
          </plugin>

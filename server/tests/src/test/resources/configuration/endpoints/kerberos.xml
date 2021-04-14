@@ -1,7 +1,6 @@
-<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-           xmlns="urn:infinispan:server:13.0"
-           socket-binding="default" security-realm="default">
+<endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+          xmlns="urn:infinispan:server:13.0" socket-binding="default" security-realm="default">
    <hotrod-connector name="hotrod">
       <authentication>
          <sasl mechanisms="GSSAPI GS2-KRB5" server-name="datagrid" server-principal="hotrod/datagrid@INFINISPAN.ORG"/>
@@ -10,4 +9,4 @@
    <rest-connector name="rest">
       <authentication mechanisms="SPNEGO" server-principal="HTTP/localhost@INFINISPAN.ORG"/>
    </rest-connector>
-</endpoints>
+</endpoint>

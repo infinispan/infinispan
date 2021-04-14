@@ -64,7 +64,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testXmlConfig() throws IOException {
-      URL config = ConfigurationTest.class.getResource("/config/rocksdb-config.xml");
+      URL config = ConfigurationTest.class.getResource("/configs/all/rocksdb-config.xml");
       ConfigurationBuilderHolder configHolder = new ParserRegistry().parse(config);
 
       // check persistence attributes

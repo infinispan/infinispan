@@ -1,3 +1,4 @@
+
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.commons.util.Util.renameTempFile;

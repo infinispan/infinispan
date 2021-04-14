@@ -1,16 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.UNSAFE;
-
 import java.util.Map;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  *
@@ -23,24 +19,16 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  *
  * @see UnsafeConfigurationBuilder
  */
-public class UnsafeConfiguration implements Matchable<UnsafeConfiguration>, ConfigurationInfo {
-   public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder("unreliable-return-values", false).immutable().build();
+public class UnsafeConfiguration extends ConfigurationElement<UnsafeConfiguration> {
+   public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.UNRELIABLE_RETURN_VALUES, false).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(UnsafeConfiguration.class, UNRELIABLE_RETURN_VALUES);
    }
    private final Attribute<Boolean> unreliableReturnValues;
-   private final AttributeSet attributes;
-
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(UNSAFE.getLocalName(), false);
 
    UnsafeConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.UNSAFE, attributes);
       unreliableReturnValues = attributes.attribute(UNRELIABLE_RETURN_VALUES);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    /**
@@ -50,29 +38,5 @@ public class UnsafeConfiguration implements Matchable<UnsafeConfiguration>, Conf
     */
    public boolean unreliableReturnValues() {
       return unreliableReturnValues.get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return attributes.toString();
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      UnsafeConfiguration that = (UnsafeConfiguration) o;
-
-      return attributes.equals(that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes.hashCode();
    }
 }

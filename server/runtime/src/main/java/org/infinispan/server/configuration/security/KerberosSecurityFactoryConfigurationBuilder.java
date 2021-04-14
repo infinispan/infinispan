@@ -1,6 +1,5 @@
 package org.infinispan.server.configuration.security;
 
-import static org.infinispan.server.configuration.security.FileSystemRealmConfiguration.RELATIVE_TO;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.DEBUG;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.FAIL_CACHE;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.KEYTAB_PATH;
@@ -10,6 +9,7 @@ import static org.infinispan.server.configuration.security.KerberosSecurityFacto
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.OBTAIN_KERBEROS_TICKET;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.OPTIONS;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.PRINCIPAL;
+import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.RELATIVE_TO;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.REQUEST_LIFETIME;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.REQUIRED;
 import static org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration.SERVER;
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Properties;
 
 import org.ietf.jgss.Oid;
 import org.infinispan.commons.CacheConfigurationException;
@@ -126,7 +127,7 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
 
    @Override
    public KerberosSecurityFactoryConfiguration create() {
-      return new KerberosSecurityFactoryConfiguration(attributes.protect(), build());
+      return new KerberosSecurityFactoryConfiguration(attributes.protect(), credentialSource);
    }
 
    @Override
@@ -135,10 +136,10 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
       return this;
    }
 
-   public CredentialSource build() {
+   public CredentialSource build(Properties properties) {
       if (credentialSource == null) {
          String path = attributes.attribute(KEYTAB_PATH).get();
-         String relativeTo = attributes.attribute(RELATIVE_TO).get();
+         String relativeTo = properties.getProperty(attributes.attribute(RELATIVE_TO).get());
          File keyTab = new File(ParseUtils.resolvePath(path, relativeTo));
          GSSCredentialSecurityFactory.Builder builder = GSSCredentialSecurityFactory.builder();
          builder

@@ -9,47 +9,24 @@ import static org.infinispan.configuration.cache.BackupConfiguration.STRATEGY;
 import static org.infinispan.configuration.cache.BackupConfiguration.USE_TWO_PHASE_COMMIT;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration>, ConfigurationBuilderInfo {
+public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration> {
    private final AttributeSet attributes;
    private XSiteStateTransferConfigurationBuilder stateTransferBuilder;
    private TakeOfflineConfigurationBuilder takeOfflineBuilder;
-   private List<ConfigurationBuilderInfo> subElements;
 
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = BackupConfiguration.attributeDefinitionSet();
       takeOfflineBuilder = new TakeOfflineConfigurationBuilder(builder, this);
       stateTransferBuilder = new XSiteStateTransferConfigurationBuilder(builder, this);
-      subElements = Arrays.asList(takeOfflineBuilder, stateTransferBuilder);
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return BackupConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    /**

@@ -1,17 +1,12 @@
 package org.infinispan.server.hotrod.configuration;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 
 /**
@@ -20,8 +15,8 @@ import org.infinispan.server.core.security.ServerAuthenticationProvider;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class AuthenticationConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
+public class AuthenticationConfiguration {
+   static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder(Attribute.SECURITY_REALM, null, String.class).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AuthenticationConfiguration.class, SECURITY_REALM);
@@ -33,8 +28,6 @@ public class AuthenticationConfiguration implements ConfigurationInfo {
    private final ServerAuthenticationProvider serverAuthenticationProvider;
    private final Subject serverSubject;
 
-   private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("authentication");
-
    AuthenticationConfiguration(AttributeSet attributes, SaslConfiguration saslConfiguration, boolean enabled, ServerAuthenticationProvider serverAuthenticationProvider, Subject serverSubject) {
       this.attributes = attributes.checkProtection();
       this.saslConfiguration = saslConfiguration;
@@ -43,19 +36,8 @@ public class AuthenticationConfiguration implements ConfigurationInfo {
       this.serverSubject = serverSubject;
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return Collections.singletonList(saslConfiguration);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {

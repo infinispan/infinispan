@@ -15,7 +15,6 @@ public class NamingStrategyTest {
       assertEquals("l1-lifespan", NamingStrategy.KEBAB_CASE.convert("l1Lifespan"));
       assertEquals("thisIsAnIdentifier", NamingStrategy.CAMEL_CASE.convert("this-is-an-identifier"));
       assertEquals("yet-another-identifier", NamingStrategy.KEBAB_CASE.convert("yetAnotherIdentifier"));
-      assertEquals("FD_ALL3", NamingStrategy.KEBAB_CASE.convert("FD_ALL3"));
       assertEquals("sock_conn_timeout", NamingStrategy.SNAKE_CASE.convert("sockConnTimeout"));
    }
 }

@@ -6,7 +6,6 @@ import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -48,7 +47,7 @@ public class CounterConfigurationManager {
    public static final String COUNTER_SCOPE = "counter";
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);
    private final EmbeddedCacheManager cacheManager;
-   private final List<AbstractCounterConfiguration> configuredCounters;
+   private final Map<String, AbstractCounterConfiguration> configuredCounters;
    private final CounterConfigurationStorage storage;
 
 
@@ -61,7 +60,7 @@ public class CounterConfigurationManager {
       GlobalConfiguration globalConfig = SecurityActions.getCacheManagerConfiguration(cacheManager);
       CounterManagerConfiguration counterManagerConfig = globalConfig.module(CounterManagerConfiguration.class);
       this.configuredCounters = counterManagerConfig == null ?
-            Collections.emptyList() :
+            Collections.emptyMap() :
             counterManagerConfig.counters();
    }
 
@@ -159,7 +158,7 @@ public class CounterConfigurationManager {
             .filter(new ScopeFilter(COUNTER_SCOPE))
             .map(ScopedState::getName)
             .collect(CacheCollectors.serializableCollector(Collectors::toSet));
-      configuredCounters.stream().map(AbstractCounterConfiguration::name).forEach(countersName::add);
+      configuredCounters.keySet().stream().forEach(countersName::add);
       return Collections.unmodifiableCollection(countersName);
    }
 
@@ -186,7 +185,7 @@ public class CounterConfigurationManager {
     * @return {@code null} if the counter isn't defined yet. {@link CounterConfiguration} if it is defined.
     */
    private CompletableFuture<CounterConfiguration> checkGlobalConfiguration(String name) {
-      for (AbstractCounterConfiguration config : configuredCounters) {
+      for (AbstractCounterConfiguration config : configuredCounters.values()) {
          if (config.name().equals(name)) {
             CounterConfiguration cConfig = parsedConfigToConfig(config);
             return stateCache.putIfAbsentAsync(stateKey(name), cConfig)

@@ -8,6 +8,7 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.Properties;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -55,10 +56,10 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
       return this;
    }
 
-   public void build() {
+   public void build(Properties properties) {
       if (trustManagerFactory == null) {
          String fileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(),
-               attributes.attribute(RELATIVE_TO).get());
+               properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
          String provider = attributes.attribute(PROVIDER).get();
          char[] password = attributes.attribute(PASSWORD).get();
          try (FileInputStream is = new FileInputStream(fileName)) {
@@ -78,8 +79,8 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
       }
    }
 
-   public KeyStore trustStore() {
-      build();
+   public KeyStore trustStore(Properties properties) {
+      build(properties);
       return trustStore;
    }
 

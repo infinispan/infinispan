@@ -3,12 +3,7 @@ package org.infinispan.configuration.global;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
-
-public class ThreadsConfiguration implements ConfigurationInfo {
+public class ThreadsConfiguration {
 
    private final List<ThreadFactoryConfiguration> threadFactories = new ArrayList<>();
    private final List<BoundedThreadPoolConfiguration> boundedThreadPools = new ArrayList<>();
@@ -23,9 +18,6 @@ public class ThreadsConfiguration implements ConfigurationInfo {
    private final ThreadPoolConfiguration transportThreadPool;
    private final ThreadPoolConfiguration nonBlockingThreadPool;
    private final ThreadPoolConfiguration blockingThreadPool;
-
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.THREADS.getLocalName());
-   private final List<ConfigurationInfo> children = new ArrayList<>();
 
    ThreadsConfiguration(List<ThreadFactoryConfiguration> threadFactories,
                         List<BoundedThreadPoolConfiguration> boundedThreadPools,
@@ -53,20 +45,6 @@ public class ThreadsConfiguration implements ConfigurationInfo {
       this.boundedThreadPools.addAll(boundedThreadPools);
       this.cachedThreadPools.addAll(cachedThreadPools);
       this.scheduledThreadPools.addAll(scheduledThreadPools);
-      children.addAll(threadFactories);
-      children.addAll(boundedThreadPools);
-      children.addAll(cachedThreadPools);
-      children.addAll(scheduledThreadPools);
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return children;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public ThreadPoolConfiguration asyncThreadPool() {

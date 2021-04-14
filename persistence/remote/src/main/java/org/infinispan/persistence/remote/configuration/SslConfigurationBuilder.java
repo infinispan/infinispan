@@ -5,8 +5,6 @@ import static org.infinispan.persistence.remote.configuration.SslConfiguration.P
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SNI_HOSTNAME;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SSL_CONTEXT;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import javax.net.ssl.SSLContext;
@@ -14,9 +12,7 @@ import javax.net.ssl.SSLContext;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  *
@@ -25,33 +21,20 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration>, ConfigurationBuilderInfo {
+public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
    private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
 
    private KeyStoreConfigurationBuilder keyStoreConfigurationBuilder;
    private TrustStoreConfigurationBuilder trustStoreConfigurationBuilder;
-   private List<ConfigurationBuilderInfo> subElements;
 
    SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, SslConfiguration.attributeDefinitionSet());
       this.keyStoreConfigurationBuilder = new KeyStoreConfigurationBuilder(builder);
       this.trustStoreConfigurationBuilder = new TrustStoreConfigurationBuilder(builder);
-      this.subElements = Arrays.asList(keyStoreConfigurationBuilder, trustStoreConfigurationBuilder);
    }
 
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return SslConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

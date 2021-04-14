@@ -121,8 +121,8 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
             .collect(Collectors.toList());
    }
 
-   private void convertToMap(List<AbstractCounterConfiguration> configs) {
-      configs.forEach(c -> storage.put(c.name(), parsedConfigToConfig(c)));
+   private void convertToMap(Map<String, AbstractCounterConfiguration> configs) {
+      configs.forEach((n, c) -> storage.put(n, parsedConfigToConfig(c)));
    }
 
    private File getSharedDirectory() {

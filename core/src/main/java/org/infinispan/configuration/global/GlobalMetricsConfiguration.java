@@ -1,17 +1,15 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configuration for microprofile metrics. See {@link GlobalMetricsConfigurationBuilder}.
  */
-public class GlobalMetricsConfiguration implements ConfigurationInfo {
+public class GlobalMetricsConfiguration {
 
    public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder("gauges", true).immutable().build();
    public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder("histograms", false).immutable().build();
@@ -21,8 +19,6 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS);
    }
-
-   private static final ElementDefinition<GlobalMetricsConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.METRICS.getLocalName());
 
    private final AttributeSet attributes;
 
@@ -42,12 +38,6 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
       this.namesAsTags = attributes.attribute(NAMES_AS_TAGS);
    }
 
-   @Override
-   public ElementDefinition<GlobalMetricsConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }
@@ -92,7 +82,7 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       GlobalMetricsConfiguration that = (GlobalMetricsConfiguration) o;
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override

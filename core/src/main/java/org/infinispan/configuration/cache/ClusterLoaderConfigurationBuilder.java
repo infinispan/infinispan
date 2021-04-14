@@ -6,8 +6,6 @@ import static org.infinispan.configuration.cache.ClusterLoaderConfiguration.REMO
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 
@@ -15,7 +13,7 @@ import org.infinispan.configuration.parsing.XmlConfigHelper;
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
 @Deprecated
-public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfigurationBuilder<ClusterLoaderConfiguration, ClusterLoaderConfigurationBuilder> implements ConfigurationBuilderInfo {
+public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfigurationBuilder<ClusterLoaderConfiguration, ClusterLoaderConfigurationBuilder> {
 
    public ClusterLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, ClusterLoaderConfiguration.attributeDefinitionSet());
@@ -29,11 +27,6 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout) {
       attributes.attribute(REMOTE_CALL_TIMEOUT).set(remoteCallTimeout);
       return this;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ClusterLoaderConfiguration.ELEMENT_DEFINITION;
    }
 
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout, TimeUnit unit) {

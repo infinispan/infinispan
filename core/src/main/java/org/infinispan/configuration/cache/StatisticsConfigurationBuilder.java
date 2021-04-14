@@ -1,14 +1,12 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.StatisticsConfiguration.AVAILABLE;
-import static org.infinispan.configuration.cache.StatisticsConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.StatisticsConfiguration.ENABLED;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -23,16 +21,6 @@ public class StatisticsConfigurationBuilder extends JMXStatisticsConfigurationBu
    StatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.attributes = StatisticsConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition<StatisticsConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    /**

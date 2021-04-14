@@ -299,7 +299,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    }
 
    private void assertUnboundedStrongCounter(CounterManagerConfiguration config) {
-      for (AbstractCounterConfiguration counterConfig : config.counters()) {
+      for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("unbounded-strong-1")) {
             AssertJUnit.assertTrue(counterConfig instanceof StrongCounterConfiguration);
             AssertJUnit.assertEquals(1, counterConfig.initialValue());
@@ -311,7 +311,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    }
 
    private void assertWeakCounter(CounterManagerConfiguration config) {
-      for (AbstractCounterConfiguration counterConfig : config.counters()) {
+      for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("weak-5")) {
             AssertJUnit.assertTrue(counterConfig instanceof WeakCounterConfiguration);
             AssertJUnit.assertEquals(5, counterConfig.initialValue());
@@ -325,7 +325,7 @@ public class ConfigurationTest extends AbstractCacheTest {
 
    private void assertBoundedStrongCounter(CounterManagerConfiguration config, String name, long initialValue, long min,
          long max, Storage storage) {
-      for (AbstractCounterConfiguration counterConfig : config.counters()) {
+      for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals(name)) {
             AssertJUnit.assertTrue(counterConfig instanceof StrongCounterConfiguration);
             AssertJUnit.assertEquals(initialValue, counterConfig.initialValue());
