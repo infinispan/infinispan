@@ -3,8 +3,6 @@ package org.infinispan.counter.configuration;
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * {@link org.infinispan.counter.api.StrongCounter} configuration builder.
@@ -17,16 +15,6 @@ public class StrongCounterConfigurationBuilder extends
 
    public StrongCounterConfigurationBuilder(CounterManagerConfigurationBuilder builder) {
       super(builder, StrongCounterConfiguration.attributeDefinitionSet());
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return StrongCounterConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

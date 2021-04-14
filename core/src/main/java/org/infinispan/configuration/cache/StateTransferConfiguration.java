@@ -1,16 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.STATE_TRANSFER;
-
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures how state is retrieved when a new cache joins the cluster.
@@ -18,13 +14,11 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  *
  * @since 5.1
  */
-public class StateTransferConfiguration implements Matchable<StateTransferConfiguration>, ConfigurationInfo {
-   public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder("awaitInitialTransfer", true).immutable().build();
-   public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder("fetchInMemoryState", true).xmlName("enabled").immutable().build();
-   public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", TimeUnit.MINUTES.toMillis(4)).immutable().build();
-   public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder("chunkSize", 512).immutable().build();
-
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STATE_TRANSFER.getLocalName());
+public class StateTransferConfiguration extends ConfigurationElement<StateTransferConfiguration> {
+   public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AWAIT_INITIAL_TRANSFER, true).immutable().build();
+   public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true).immutable().build();
+   public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeUnit.MINUTES.toMillis(4)).immutable().build();
+   public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CHUNK_SIZE, 512).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER);
@@ -34,10 +28,9 @@ public class StateTransferConfiguration implements Matchable<StateTransferConfig
    private final Attribute<Boolean> fetchInMemoryState;
    private final Attribute<Long> timeout;
    private final Attribute<Integer> chunkSize;
-   private final AttributeSet attributes;
 
    StateTransferConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.STATE_TRANSFER, attributes);
       awaitInitialTransfer = attributes.attribute(AWAIT_INITIAL_TRANSFER);
       fetchInMemoryState = attributes.attribute(FETCH_IN_MEMORY_STATE);
       timeout = attributes.attribute(TIMEOUT);
@@ -102,44 +95,4 @@ public class StateTransferConfiguration implements Matchable<StateTransferConfig
    private boolean originalAwaitInitialTransfer() {
       return !awaitInitialTransfer.isModified();
    }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public String toString() {
-      return this.getClass().getSimpleName() + attributes;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      StateTransferConfiguration other = (StateTransferConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
-   }
-
 }

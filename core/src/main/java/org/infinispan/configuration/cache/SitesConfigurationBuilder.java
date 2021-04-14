@@ -1,30 +1,26 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.SitesConfiguration.MERGE_POLICY;
 import static org.infinispan.configuration.cache.SitesConfiguration.DISABLE_BACKUPS;
 import static org.infinispan.configuration.cache.SitesConfiguration.IN_USE_BACKUP_SITES;
+import static org.infinispan.configuration.cache.SitesConfiguration.MERGE_POLICY;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.Element;
-import org.infinispan.xsite.spi.XSiteMergePolicy;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
+import org.infinispan.xsite.spi.XSiteMergePolicy;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<SitesConfiguration>, ConfigurationBuilderInfo {
+public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<SitesConfiguration> {
    private final AttributeSet attributes;
    private final List<BackupConfigurationBuilder> backups = new ArrayList<>(2);
    private final BackupForBuilder backupForBuilder;
@@ -40,29 +36,6 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       BackupConfigurationBuilder bcb = new BackupConfigurationBuilder(getBuilder());
       backups.add(bcb);
       return bcb;
-   }
-
-   @Override
-   public ConfigurationBuilderInfo getNewBuilderInfo(String name) {
-      if (name.equals(Element.BACKUP.getLocalName())) {
-         return addBackup();
-      }
-      return null;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return new ArrayList<>(backups);
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition<?> getElementDefinition() {
-      return SitesConfiguration.ELEMENT_DEFINITION;
    }
 
    public List<BackupConfigurationBuilder> backups() {

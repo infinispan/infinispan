@@ -15,15 +15,16 @@ public class SerializeUtils {
    }
 
    public static void writeTypedProperties(ConfigurationWriter writer, TypedProperties properties) {
+      writeTypedProperties(writer, properties, Element.PROPERTIES, Element.PROPERTY, true);
+   }
+
+   public static void writeTypedProperties(ConfigurationWriter writer, TypedProperties properties, Enum<?> collectionElement, Enum<?> itemElement, boolean explicit) {
       if (!properties.isEmpty()) {
-         writer.writeStartListElement(Element.PROPERTIES, false);
+         writer.writeStartMap(collectionElement);
          for (String property : properties.stringPropertyNames()) {
-            writer.writeStartElement(Element.PROPERTY);
-            writer.writeAttribute(Attribute.NAME, property);
-            writer.writeCharacters(properties.getProperty(property));
-            writer.writeEndElement();
+            writer.writeMapItem(itemElement, Attribute.NAME, property, properties.getProperty(property));
          }
-         writer.writeEndListElement();
+         writer.writeEndMap();
       }
    }
 }

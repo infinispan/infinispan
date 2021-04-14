@@ -1,17 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.CLUSTER_LOADER;
-
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.cluster.ClusterLoader;
 
 /**
@@ -24,26 +19,19 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 @BuiltBy(ClusterLoaderConfigurationBuilder.class)
 @ConfigurationFor(ClusterLoader.class)
 @Deprecated
-public class ClusterLoaderConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
+public class ClusterLoaderConfiguration extends AbstractStoreConfiguration {
 
-   static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder("remoteCallTimeout", TimeUnit.SECONDS.toMillis(15)).immutable().xmlName("remote-timeout").build();
+   static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeUnit.SECONDS.toMillis(15)).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ClusterLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), REMOTE_CALL_TIMEOUT);
    }
-
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTER_LOADER.getLocalName(), true, false);
 
    private final Attribute<Long> remoteCallTimeout;
 
    ClusterLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
       super(attributes, async);
       remoteCallTimeout = attributes.attribute(REMOTE_CALL_TIMEOUT);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    @Override

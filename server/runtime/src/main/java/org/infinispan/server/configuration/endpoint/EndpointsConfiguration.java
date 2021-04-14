@@ -1,25 +1,17 @@
 package org.infinispan.server.configuration.endpoint;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.server.configuration.Element;
 
 /**
  * Holds configuration related to endpoints
  * @author Tristan Tarrant
  * @since 12.0
  */
-public class EndpointsConfiguration implements ConfigurationInfo {
-
-   private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.ENDPOINTS.toString());
+public class EndpointsConfiguration {
 
    private final List<EndpointConfiguration> endpoints;
-   private final List<ConfigurationInfo> configs = new ArrayList<>();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(EndpointsConfiguration.class);
@@ -30,26 +22,14 @@ public class EndpointsConfiguration implements ConfigurationInfo {
    EndpointsConfiguration(AttributeSet attributes, List<EndpointConfiguration> endpoints) {
       this.attributes = attributes.checkProtection();
       this.endpoints = endpoints;
-      this.configs.addAll(endpoints);
    }
 
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return configs;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }
 
    public List<EndpointConfiguration> endpoints() {
       return endpoints;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    @Override

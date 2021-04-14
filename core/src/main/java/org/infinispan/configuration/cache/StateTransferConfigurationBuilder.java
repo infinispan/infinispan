@@ -9,10 +9,8 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -22,22 +20,12 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.1
  */
 public class StateTransferConfigurationBuilder extends
-      AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration>, ConfigurationBuilderInfo {
+      AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration> {
    private final AttributeSet attributes;
 
    StateTransferConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
       attributes = StateTransferConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return StateTransferConfiguration.ELEMENT_DEFINITION;
    }
 
    /**
@@ -116,7 +104,7 @@ public class StateTransferConfigurationBuilder extends
          throw CONFIG.awaitInitialTransferOnlyForDistOrRepl();
 
       Attribute<Long> timeoutAttribute = attributes.attribute(TIMEOUT);
-      Attribute<Long> remoteTimeoutAttribute = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+      Attribute<Long> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
       if (timeoutAttribute.get() < remoteTimeoutAttribute.get()) {
          throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get(), remoteTimeoutAttribute.get());
       }
@@ -140,5 +128,9 @@ public class StateTransferConfigurationBuilder extends
    @Override
    public String toString() {
       return "StateTransferConfigurationBuilder [attributes=" + attributes + "]";
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 }

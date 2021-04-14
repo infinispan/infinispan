@@ -18,6 +18,8 @@
 
       <xi:include href="security/none.xml"/>
 
-      <xi:include href="endpoints/default.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/default.xml"/>
+      </endpoints>
    </server>
 </infinispan>

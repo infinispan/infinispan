@@ -16,7 +16,7 @@ public class ConfigurationTest {
 
    public void testRemoteCacheStoreConfigurationAdaptor() {
       Properties p = new Properties();
-      p.setProperty("protocolVersion", "2.7");
+      p.setProperty("protocolVersion", "PROTOCOL_VERSION_27");
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
          .remoteCacheName("RemoteCache")

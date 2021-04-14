@@ -1,10 +1,10 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:xi="http://www.w3.org/2001/XInclude"
-        xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
                             urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
-        xmlns="urn:infinispan:config:13.0"
-        xmlns:server="urn:infinispan:server:13.0">
+      xmlns="urn:infinispan:config:13.0"
+      xmlns:server="urn:infinispan:server:13.0">
 
    <xi:include href="jgroups/stacks.xml"/>
 
@@ -18,6 +18,8 @@
 
       <xi:include href="security/properties.xml"/>
 
-      <xi:include href="endpoints/auth-explicit.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/auth-explicit.xml"/>
+      </endpoints>
    </server>
 </infinispan>

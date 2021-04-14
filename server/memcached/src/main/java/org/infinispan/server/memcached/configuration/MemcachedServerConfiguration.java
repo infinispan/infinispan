@@ -7,8 +7,6 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -25,7 +23,7 @@ import org.infinispan.server.memcached.MemcachedServer;
 @Deprecated
 @BuiltBy(MemcachedServerConfigurationBuilder.class)
 @ConfigurationFor(MemcachedServer.class)
-public class MemcachedServerConfiguration extends ProtocolServerConfiguration {
+public class MemcachedServerConfiguration extends ProtocolServerConfiguration<MemcachedServerConfiguration> {
 
    public static final int DEFAULT_MEMCACHED_PORT = 11211;
    public static final String DEFAULT_MEMCACHED_CACHE = "memcachedCache";
@@ -37,16 +35,9 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration {
       return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS, CLIENT_ENCODING);
    }
 
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("memcached-connector");
-
    MemcachedServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
-      super(attributes, ssl, ipRules);
+      super("memcached-connector", attributes, ssl, ipRules);
       clientEncoding = attributes.attribute(CLIENT_ENCODING);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public MediaType clientEncoding() {

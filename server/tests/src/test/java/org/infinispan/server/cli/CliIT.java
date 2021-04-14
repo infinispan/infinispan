@@ -109,7 +109,7 @@ public class CliIT {
          terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
          terminal.readln("cd /containers/default/counters/cnt1");
          terminal.readln("describe");
-         terminal.assertContains("\"upper-bound\" : 100");
+         terminal.assertContains("\"upper-bound\" : \"100\"");
          terminal.clear();
          terminal.readln("add");
          terminal.assertContains("1");

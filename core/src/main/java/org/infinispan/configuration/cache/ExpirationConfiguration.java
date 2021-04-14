@@ -1,37 +1,26 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.EXPIRATION;
-
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.expiration.TouchMode;
 
 /**
  * Controls the default expiration settings for entries in the cache.
  */
-public class ExpirationConfiguration implements Matchable<ExpirationConfiguration>, ConfigurationInfo {
-   public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder("lifespan", -1l).build();
-   public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder("maxIdle", -1l).build();
+public class ExpirationConfiguration extends ConfigurationElement<ExpirationConfiguration> {
+   public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LIFESPAN, -1L).build();
+   public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_IDLE, -1L).build();
    public static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder("wakeUpInterval", TimeUnit.MINUTES.toMillis(1)).xmlName("interval").build();
-   public static final AttributeDefinition<TouchMode> TOUCH = AttributeDefinition.builder("touch", TouchMode.SYNC).immutable().build();
-
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(EXPIRATION.getLocalName());
+   public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INTERVAL, TimeUnit.MINUTES.toMillis(1)).build();
+   public static final AttributeDefinition<TouchMode> TOUCH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TOUCH, TouchMode.SYNC).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL, TOUCH);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    private final Attribute<Long> lifespan;
@@ -39,10 +28,9 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
    private final Attribute<Boolean> reaperEnabled;
    private final Attribute<Long> wakeUpInterval;
    private final Attribute<TouchMode> touch;
-   private final AttributeSet attributes;
 
    ExpirationConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.EXPIRATION, attributes);
       lifespan = attributes.attribute(LIFESPAN);
       maxIdle = attributes.attribute(MAX_IDLE);
       reaperEnabled = attributes.attribute(REAPER_ENABLED);
@@ -97,39 +85,4 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
    public TouchMode touch() {
       return touch.get();
    }
-
-   @Override
-   public String toString() {
-      return "ExpirationConfiguration [attributes=" + attributes + "]";
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      ExpirationConfiguration other = (ExpirationConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
 }

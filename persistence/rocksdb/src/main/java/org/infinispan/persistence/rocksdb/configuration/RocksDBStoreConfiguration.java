@@ -1,15 +1,10 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
-import static org.infinispan.persistence.rocksdb.configuration.Element.ROCKSDB_STORE;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
@@ -23,20 +18,18 @@ import org.infinispan.persistence.rocksdb.RocksDBStore;
 @ConfigurationFor(RocksDBStore.class)
 @BuiltBy(RocksDBStoreConfigurationBuilder.class)
 @SerializedWith(RocksDBStoreConfigurationSerializer.class)
-public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
+public class RocksDBStoreConfiguration extends AbstractStoreConfiguration {
 
-   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", null, String.class).immutable().xmlName("path").build();
-   public final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().autoPersist(false).build();
-   final static AttributeDefinition<Integer> BLOCK_SIZE = AttributeDefinition.builder("blockSize", 0).immutable().build();
-   final static AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder("cacheSize", 0l).immutable().build();
-   final static AttributeDefinition<Integer> CLEAR_THRESHOLD = AttributeDefinition.builder("clearThreshold", 10000).immutable().build();
+   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().build();
+   public final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.COMPRESSION_TYPE, CompressionType.NONE).immutable().autoPersist(false).build();
+   final static AttributeDefinition<Integer> BLOCK_SIZE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.BLOCK_SIZE, 0).immutable().build();
+   final static AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.CACHE_SIZE, 0l).immutable().build();
+   final static AttributeDefinition<Integer> CLEAR_THRESHOLD = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.CLEAR_THRESHOLD, 10000).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RocksDBStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, COMPRESSION_TYPE,
             BLOCK_SIZE, CACHE_SIZE, CLEAR_THRESHOLD);
    }
-
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ROCKSDB_STORE.getLocalName(), true, false);
 
    private final Attribute<String> location;
    private final Attribute<CompressionType> compressionType;
@@ -53,19 +46,12 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
       cacheSize = attributes.attribute(CACHE_SIZE);
       clearThreshold = attributes.attribute(CLEAR_THRESHOLD);
       this.expiration = expiration;
-      subElements.add(expiration);
    }
 
    public RocksDBExpirationConfiguration expiration() {
       return expiration;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

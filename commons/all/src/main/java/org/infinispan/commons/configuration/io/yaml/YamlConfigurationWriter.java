@@ -2,8 +2,10 @@ package org.infinispan.commons.configuration.io.yaml;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Iterator;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationWriter;
+import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 
@@ -26,24 +28,21 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeStartElement(String name) {
-      writeStartElement0(name, false, true);
+      writeStartElement0(new Tag(name, false, true, true), naming);
    }
 
-   private void writeStartElement0(String name, boolean repeated, boolean explicit) {
+   private void writeStartElement0(Tag tag, NamingStrategy naming) {
       try {
          if (openTag) {
             nl();
          }
          Tag parent = tagStack.peek();
-         tagStack.push(new Tag(name, repeated, explicit));
-         writeIndent();
+         tagStack.push(tag);
+         tab();
          if (parent != null && parent.isRepeating()) {
             writer.write("- ");
-            if (!parent.getName().equals(name)) {
-               writeName(name);
-            }
          } else {
-            writeName(name);
+            writeName(tag.getName(), naming);
          }
          openTag = true;
          attributes = false;
@@ -53,7 +52,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       }
    }
 
-   private void writeName(String name) throws IOException {
+   private void writeName(String name, NamingStrategy naming) throws IOException {
       writer.write(naming.convert(name));
       writer.write(": ");
    }
@@ -74,32 +73,22 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    @Override
+   public void writeStartArrayElement(String name) {
+      writeStartElement0(new Tag(name, true, true, false), naming);
+   }
+
+   @Override
+   public void writeEndArrayElement() {
+      writeEndElement();   }
+
+   @Override
    public void writeStartListElement(String name, boolean explicit) {
-      writeStartRepeatedElement(name, explicit);
+      writeStartElement0(new Tag(name, true, explicit, true), naming);
    }
 
    @Override
    public void writeStartListElement(String prefix, String namespace, String name, boolean explicit) {
       writeStartListElement(prefixName(prefix, namespace, name), explicit);
-   }
-
-   @Override
-   public void writeStartMapElement(String name) {
-      writeStartRepeatedElement(name, false);
-   }
-
-   @Override
-   public void writeEndMapElement() {
-      writeEndElement();
-   }
-
-   @Override
-   public void writeStartMapEntry(String name, String key, String value) {
-      writeStartElement(value);
-   }
-
-   private void writeStartRepeatedElement(String name, boolean explicit) {
-      writeStartElement0(name, true, explicit);
    }
 
    public void writeNamespace(String prefix, String namespace) {
@@ -128,6 +117,11 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       if (!tagStack.isEmpty()) {
          throw new ConfigurationWriterException("Tag stack not empty: " + tagStack);
       }
+      try {
+         writer.flush();
+      } catch (IOException e) {
+         throw new ConfigurationWriterException(e);
+      }
    }
 
    @Override
@@ -138,12 +132,60 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
             nl();
             attributes = true;
          }
-         writeIndent();
+         tab();
          writer.write(naming.convert(name));
          writer.write(": \"");
          writer.write(value);
          writer.write('"');
          nl();
+      } catch (IOException e) {
+         throw new ConfigurationWriterException(e);
+      }
+   }
+
+   @Override
+   public void writeAttribute(String name, String[] values) {
+      try {
+         openTag = false;
+         if (!attributes) {
+            nl();
+            attributes = true;
+         }
+         tab();
+         writer.write(naming.convert(name));
+         writer.write(":");
+         nl();
+         indent();
+         for(String value : values) {
+            tab();
+            writer.write("- \"");
+            writer.write(value);
+            writer.write('"');
+            nl();
+         }
+         outdent();
+         nl();
+      } catch (IOException e) {
+         throw new ConfigurationWriterException(e);
+      }
+   }
+
+   @Override
+   public void writeArrayElement(String outer, String inner, String attribute, Iterable<String> values) {
+      try {
+         Iterator<String> it = values.iterator();
+         if (it.hasNext()) {
+            writeStartElement(outer);
+            nl();
+            while (it.hasNext()) {
+               tab();
+               writer.write("- \"");
+               writer.write(it.next());
+               writer.write('"');
+               nl();
+            }
+            writeEndElement();
+         }
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
@@ -186,5 +228,37 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
+   }
+
+   @Override
+   public void writeStartMap(String name) {
+      writeStartElement(name);
+   }
+
+   @Override
+   public void writeMapItem(String element, String name, String key, String value) {
+      writeAttribute(key, value);
+   }
+
+   @Override
+   public void writeMapItem(String element, String name, String key) {
+      writeStartElement0(new Tag(key, false, true, true), NamingStrategy.IDENTITY);
+      writeStartElement(element);
+   }
+
+   @Override
+   public void writeEndMapItem() {
+      writeEndElement();
+      writeEndElement();
+   }
+
+   @Override
+   public void writeEndMap() {
+      writeEndElement();
+   }
+
+   @Override
+   public boolean hasFeature(ConfigurationFormatFeature feature) {
+      return false;
    }
 }

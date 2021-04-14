@@ -71,7 +71,7 @@ public class JpaConfigurationTest {
    }
 
    public void testXmlConfig() throws IOException {
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/jpa-config.xml");
+      EmbeddedCacheManager cacheManager = new DefaultCacheManager("configs/all/jpa-config.xml");
 
       Cache<VehicleId, Vehicle> vehicleCache = cacheManager.getCache("vehicleCache");
       validateConfig(vehicleCache);

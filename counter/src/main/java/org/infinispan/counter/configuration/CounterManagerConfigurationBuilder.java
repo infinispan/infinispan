@@ -3,8 +3,10 @@ package org.infinispan.counter.configuration;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
@@ -26,7 +28,7 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
    private static final CounterManagerConfiguration DEFAULT = new CounterManagerConfigurationBuilder(null).create();
 
    private final AttributeSet attributes = CounterManagerConfiguration.attributeDefinitionSet();
-   private final List<AbstractCounterConfigurationBuilder> defaultCounters;
+   private final List<CounterConfigurationBuilder<?, ?>> defaultCounters;
    private final GlobalConfigurationBuilder builder;
 
    @SuppressWarnings("WeakerAccess")
@@ -90,9 +92,9 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
    @Override
    public void validate() {
       attributes.attributes().forEach(Attribute::validate);
-      defaultCounters.forEach(AbstractCounterConfigurationBuilder::validate);
+      defaultCounters.forEach(CounterConfigurationBuilder::validate);
       Set<String> counterNames = new HashSet<>();
-      for (AbstractCounterConfigurationBuilder builder : defaultCounters) {
+      for (CounterConfigurationBuilder builder : defaultCounters) {
          if (!counterNames.add(builder.name())) {
             throw CONTAINER.duplicatedCounterName(builder.name());
          }
@@ -101,9 +103,9 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
 
    @Override
    public CounterManagerConfiguration create() {
-      List<AbstractCounterConfiguration> counters = new ArrayList<>(defaultCounters.size());
-      for (AbstractCounterConfigurationBuilder<?, ?> builder : defaultCounters) {
-         counters.add(builder.create());
+      Map<String, AbstractCounterConfiguration> counters = new HashMap<>(defaultCounters.size());
+      for (CounterConfigurationBuilder<?, ?> builder : defaultCounters) {
+         counters.put(builder.name(), builder.create());
       }
       return new CounterManagerConfiguration(attributes.protect(), counters);
    }
@@ -126,5 +128,9 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
     */
    boolean isGlobalStateEnabled() {
       return builder.globalState().enabled();
+   }
+
+   public List<CounterConfigurationBuilder<?,?>> counters() {
+      return defaultCounters;
    }
 }

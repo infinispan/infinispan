@@ -1,43 +1,41 @@
 package org.infinispan.server.configuration;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration.TransactionIsolation;
 
-public class DataSourceConfiguration implements ConfigurationInfo {
+public class DataSourceConfiguration extends ConfigurationElement<DataSourceConfiguration> {
 
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<String> JNDI_NAME = AttributeDefinition.builder("jndiName", null, String.class).build();
-   static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder("statistics", false, Boolean.class).build();
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
+   static final AttributeDefinition<String> JNDI_NAME = AttributeDefinition.builder(Attribute.JNDI_NAME, null, String.class).build();
+   static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder(Attribute.STATISTICS, false, Boolean.class).build();
 
-   static final AttributeDefinition<String> DRIVER = AttributeDefinition.builder("driver", null, String.class).build();
-   static final AttributeDefinition<String> URL = AttributeDefinition.builder("url", null, String.class).build();
-   static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder("username", null, String.class).build();
-   static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).serializer(PasswordSerializer.INSTANCE).build();
-   static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder("initialSql", null, String.class).build();
-   static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder("transactionIsolation", TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
+   static final AttributeDefinition<String> DRIVER = AttributeDefinition.builder(Attribute.DRIVER, null, String.class).build();
+   static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).build();
+   static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(Attribute.USERNAME, null, String.class).build();
+   static final AttributeDefinition<char[]> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, char[].class).serializer(SECRET).build();
+   static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder(Attribute.NEW_CONNECTION_SQL, null, String.class).build();
+   static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder(Attribute.TRANSACTION_ISOLATION, TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
 
-   static final AttributeDefinition<Integer> MAX_SIZE = AttributeDefinition.builder("maxSize", null, Integer.class).build();
-   static final AttributeDefinition<Integer> MIN_SIZE = AttributeDefinition.builder("minSize", 0, Integer.class).build();
-   static final AttributeDefinition<Integer> INITIAL_SIZE = AttributeDefinition.builder("initialSize", 0, Integer.class).build();
+   static final AttributeDefinition<Integer> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, Integer.class).build();
+   static final AttributeDefinition<Integer> MIN_SIZE = AttributeDefinition.builder(Attribute.MIN_SIZE, 0, Integer.class).build();
+   static final AttributeDefinition<Integer> INITIAL_SIZE = AttributeDefinition.builder(Attribute.INITIAL_SIZE, 0, Integer.class).build();
 
-   static final AttributeDefinition<Long> BLOCKING_TIMEOUT = AttributeDefinition.builder("blockingTimeout", 0L, Long.class).build();
-   static final AttributeDefinition<Long> BACKGROUND_VALIDATION = AttributeDefinition.builder("backgroundValidation", 0L, Long.class).build();
-   static final AttributeDefinition<Long> VALIDATE_ON_ACQUISITION = AttributeDefinition.builder("validateOnAcquisition", 0L, Long.class).build();
-   static final AttributeDefinition<Long> LEAK_DETECTION = AttributeDefinition.builder("leakDetection", 0L, Long.class).build();
-   static final AttributeDefinition<Integer> IDLE_REMOVAL = AttributeDefinition.builder("idleRemoval", 0, Integer.class).build();
+   static final AttributeDefinition<Long> BLOCKING_TIMEOUT = AttributeDefinition.builder(Attribute.BLOCKING_TIMEOUT, 0L, Long.class).build();
+   static final AttributeDefinition<Long> BACKGROUND_VALIDATION = AttributeDefinition.builder(Attribute.BACKGROUND_VALIDATION, 0L, Long.class).build();
+   static final AttributeDefinition<Long> VALIDATE_ON_ACQUISITION = AttributeDefinition.builder(Attribute.VALIDATE_ON_ACQUISITION, 0L, Long.class).build();
+   static final AttributeDefinition<Long> LEAK_DETECTION = AttributeDefinition.builder(Attribute.LEAK_DETECTION, 0L, Long.class).build();
+   static final AttributeDefinition<Integer> IDLE_REMOVAL = AttributeDefinition.builder(Attribute.IDLE_REMOVAL, 0, Integer.class).build();
 
-   static final AttributeDefinition<Map<String, String>> CONNECTION_PROPERTIES = AttributeDefinition.builder("connectionProperty", null, (Class<Map<String, String>>) (Class<?>) Map.class).initializer(LinkedHashMap::new).autoPersist(false).immutable().build();
-
-   private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.DATA_SOURCE.toString());
+   static final AttributeDefinition<Map<String, String>> CONNECTION_PROPERTIES = AttributeDefinition.builder(Element.CONNECTION_PROPERTY, null, (Class<Map<String, String>>) (Class<?>) Map.class).initializer(LinkedHashMap::new).autoPersist(false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DataSourceConfiguration.class, NAME, JNDI_NAME, STATISTICS, DRIVER, URL,
@@ -46,15 +44,8 @@ public class DataSourceConfiguration implements ConfigurationInfo {
             CONNECTION_PROPERTIES);
    }
 
-   private final AttributeSet attributes;
-
    DataSourceConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
+      super(Element.DATA_SOURCE, attributes);
    }
 
    public String name() {
@@ -77,7 +68,7 @@ public class DataSourceConfiguration implements ConfigurationInfo {
       return attributes.attribute(USERNAME).get();
    }
 
-   public String password() {
+   public char[] password() {
       return attributes.attribute(PASSWORD).get();
    }
 
@@ -127,11 +118,6 @@ public class DataSourceConfiguration implements ConfigurationInfo {
 
    public Map<String, String> connectionProperties() {
       return attributes.attribute(CONNECTION_PROPERTIES).get();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    @Override

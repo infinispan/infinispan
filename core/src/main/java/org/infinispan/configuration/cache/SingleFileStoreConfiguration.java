@@ -1,15 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.SINGLE_FILE_STORE;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.InitializationContext;
 
@@ -21,16 +16,14 @@ import org.infinispan.persistence.spi.InitializationContext;
  */
 @BuiltBy(SingleFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SingleFileStore.class)
-public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SingleFileStoreConfiguration> implements ConfigurationInfo {
-   public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", null, String.class).immutable().xmlName("path").global(false).build();
-   public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder("maxEntries", -1).immutable().build();
-   public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder("fragmentationFactor", 0.75f).immutable().build();
+public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SingleFileStoreConfiguration> {
+   public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().global(false).build();
+   public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_ENTRIES, -1).immutable().build();
+   public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FRAGMENTATION_FACTOR, 0.75f).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SingleFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, MAX_ENTRIES, FRAGMENTATION_FACTOR);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SINGLE_FILE_STORE.getLocalName(), true, false);
 
    private final Attribute<String> location;
    private final Attribute<Integer> maxEntries;
@@ -43,13 +36,6 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
       fragmentationFactor = attributes.attribute(FRAGMENTATION_FACTOR);
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-
-   @Override
    public SingleFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
       AttributeSet set = SingleFileStoreConfiguration.attributeDefinitionSet();
       set.read(attributes);

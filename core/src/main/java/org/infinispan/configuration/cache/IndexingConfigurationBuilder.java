@@ -12,21 +12,16 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.STORAGE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -34,7 +29,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements IndexingConfigurationChildBuilder, Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
+public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements IndexingConfigurationChildBuilder, Builder<IndexingConfiguration> {
 
    private static final String BACKEND_PREFIX = "hibernate.search.backend.";
 
@@ -63,7 +58,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private final Set<Class<?>> resolvedIndexedClasses = new HashSet<>();
 
-   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
    private final IndexReaderConfigurationBuilder readerConfigurationBuilder;
    private final IndexWriterConfigurationBuilder writerConfigurationBuilder;
 
@@ -72,13 +66,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes = IndexingConfiguration.attributeDefinitionSet();
       readerConfigurationBuilder = new IndexReaderConfigurationBuilder(this);
       writerConfigurationBuilder = new IndexWriterConfigurationBuilder(this);
-      this.subElements.add(readerConfigurationBuilder);
-      this.subElements.add(writerConfigurationBuilder);
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    public IndexingConfigurationBuilder enabled(boolean enabled) {
@@ -435,11 +422,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   public ElementDefinition<IndexingConfiguration> getElementDefinition() {
-      return IndexingConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
    public String toString() {
       return "IndexingConfigurationBuilder{" +
             "attributes=" + attributes +
@@ -448,8 +430,4 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             '}';
    }
 
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
 }

@@ -6,27 +6,18 @@ import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 @Deprecated
 @BuiltBy(WhiteListConfigurationBuilder.class)
-public class WhiteListConfiguration implements ConfigurationInfo {
+public class WhiteListConfiguration {
 
    AllowListConfiguration delegate;
-
 
    WhiteListConfiguration(AllowListConfiguration delegate) {
       this.delegate = delegate;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return AllowListConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return delegate.attributes();
    }

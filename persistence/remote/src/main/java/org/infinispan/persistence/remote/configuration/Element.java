@@ -27,7 +27,7 @@ public enum Element {
    REMOTE_STORE("remote-store"),
    SECURITY("security"),
    SERVERS("servers"),
-   SERVER("remote-server"),
+   REMOTE_SERVER("remote-server"),
    TRUSTSTORE("truststore"),
    ;
 

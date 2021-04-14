@@ -67,9 +67,9 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
       return this;
    }
 
-   public LdapRealmConfigurationBuilder credential(String credential) {
+   public LdapRealmConfigurationBuilder credential(char[] credential) {
       attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(credential);
-      dirContextBuilder.setSecurityCredential(credential);
+      dirContextBuilder.setSecurityCredential(new String(credential));
       return this;
    }
 

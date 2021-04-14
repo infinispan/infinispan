@@ -17,7 +17,7 @@
         <version.wildfly>${appserver.version}</version.wildfly>
         <version.arquillian-tomcat-managed>1.1.0.Final</version.arquillian-tomcat-managed>
         <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
-        <ispn.config.file>${basedir}/../server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
+        <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
     </properties>
 
     <dependencies>

@@ -1,15 +1,14 @@
 package org.infinispan.configuration.global;
 
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.parsing.Element;
 
 /**
  * @since 10.1.3
@@ -17,14 +16,13 @@ import org.infinispan.configuration.parsing.Element;
 public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder("domain", "org.infinispan").immutable().build();
-   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanServerLookup", null, MBeanServerLookup.class).copier(IdentityAttributeCopier.INSTANCE).serializer(ClassAttributeSerializer.INSTANCE).immutable().build();
+   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanServerLookup", null, MBeanServerLookup.class)
+         .copier(IdentityAttributeCopier.INSTANCE).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(TypedProperties::new).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalJmxConfiguration.class, ENABLED, DOMAIN, MBEAN_SERVER_LOOKUP, PROPERTIES);
    }
-
-   private static final ElementDefinition<GlobalJmxConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.JMX.getLocalName());
 
    private final Attribute<Boolean> enabled;
    private final Attribute<String> domain;
@@ -41,11 +39,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
       this.mBeanServerLookup = attributes.attribute(MBEAN_SERVER_LOOKUP);
       this.properties = attributes.attribute(PROPERTIES);
       this.cacheManagerName = cacheManagerName;
-   }
-
-   @Override
-   public ElementDefinition<GlobalJmxConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    /**
@@ -76,7 +69,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
       return mBeanServerLookup.get();
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }
@@ -87,9 +79,9 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
       if (o == null || getClass() != o.getClass()) return false;
 
       GlobalJmxConfiguration that = (GlobalJmxConfiguration) o;
-      if (cacheManagerName != null ? !cacheManagerName.equals(that.cacheManagerName) : that.cacheManagerName != null)
+      if (!Objects.equals(cacheManagerName, that.cacheManagerName))
          return false;
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override

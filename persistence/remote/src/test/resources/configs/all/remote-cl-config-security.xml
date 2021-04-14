@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                          urn:infinispan:config:store:remote:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-cachestore-remote-config-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+      xmlns:remote="urn:infinispan:config:store:remote:${infinispan.core.schema.version}" >
+
+   <!-- Default cache named to preserve old default cache name -->
+   <cache-container default-cache="___defaultcache">
+      <local-cache name="___defaultcache">
+         <persistence passivation="false">
+            <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
+                          cache="___defaultcache" fetch-state="false" preload="false" purge="false" shared="true" read-only="false"
+                          hotrod-wrapping="false" raw-values="true" socket-timeout="60000" protocol-version="2.8"
+                          tcp-no-delay="true" balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
+                          transport-factory="org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory"
+                          key-size-estimate="62" value-size-estimate="512" force-return-values="false">
+               <remote-server host="127.0.0.1" port="19711" outbound-socket-binding="hotrod-server-1" />
+               <remote-server host="127.0.0.2" port="19712" outbound-socket-binding="hotrod-server-2" />
+               <connection-pool max-active="99" max-pending-requests="97" min-idle="98"/>
+               <async-executor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
+                  <property name="pool_size">1</property>
+                  <property name="queue_size">10000</property>
+               </async-executor>
+               <security>
+                  <authentication server-name="servername">
+                     <digest username="username" password="password" realm="realm" />
+                  </authentication>
+                  <encryption protocol="TLSv1.2" sni-hostname="snihostname">
+                     <keystore filename="${project.build.testOutputDirectory}/keystore_client.jks" password="secret" certificate-password="secret" key-alias="hotrod" type="JKS"/>
+                     <truststore filename="${project.build.testOutputDirectory}/ca.jks" password="secret" type="JKS"/>
+                  </encryption>
+               </security>
+            </remote-store>
+         </persistence>
+      </local-cache>
+   </cache-container>
+
+</infinispan>

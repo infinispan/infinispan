@@ -56,12 +56,14 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
    }
 
    private void writeServers(ConfigurationWriter writer, List<RemoteServerConfiguration> servers) {
+      writer.writeStartListElement(Element.REMOTE_SERVER, false);
       for(RemoteServerConfiguration server : servers) {
-         writer.writeStartElement(Element.SERVER);
+         writer.writeStartElement(Element.REMOTE_SERVER);
          writer.writeAttribute(Attribute.HOST, server.host());
          writer.writeAttribute(Attribute.PORT, Integer.toString(server.port()));
          writer.writeEndElement();
       }
+      writer.writeEndListElement();
    }
 
    private void writeSecurity(ConfigurationWriter writer, SecurityConfiguration security) {

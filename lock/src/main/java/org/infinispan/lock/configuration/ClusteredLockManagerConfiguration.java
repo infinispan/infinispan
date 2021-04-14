@@ -18,7 +18,7 @@ public class ClusteredLockManagerConfiguration {
 
    private static final Log log = LogFactory.getLog(ClusteredLockManagerConfiguration.class, Log.class);
    static final AttributeDefinition<Reliability> RELIABILITY = AttributeDefinition
-         .builder("reliability", Reliability.CONSISTENT)
+         .builder(Attribute.RELIABILITY, Reliability.CONSISTENT)
          .validator(value -> {
             if (value == null) {
                throw log.invalidReliabilityMode();
@@ -26,7 +26,7 @@ public class ClusteredLockManagerConfiguration {
          })
          .immutable().build();
 
-   static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners", -1)
+   static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder(Attribute.NUM_OWNERS, -1)
          .validator(value -> {
             if (value <= 0 && value != -1) {
                throw log.invalidNumOwners(value);

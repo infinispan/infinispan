@@ -180,7 +180,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       if (schemaFile == null) {
          throw new NullPointerException("Failed to find a schema file " + schemaFilename);
       }
-      Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/unified/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
+      Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/all/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
       try {
          SchemaFactory factory = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
          factory.setResourceResolver(new TestResolver());

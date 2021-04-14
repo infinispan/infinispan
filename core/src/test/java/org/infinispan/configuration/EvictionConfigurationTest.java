@@ -17,7 +17,6 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,7 +36,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "configuration.EvictionConfigurationTest")
 public class EvictionConfigurationTest extends AbstractInfinispanTest {
    private static final ParserRegistry REGISTRY = new ParserRegistry();
-   private static final JsonReader JSON_READER = new JsonReader();
 
    @Test
    public void testReuseLegacyBuilder() {
@@ -335,10 +333,8 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
    @Test
    public void testParseJSON() {
-      String newJSON = "{\"local-cache\":{ \"memory\":{\"storage\":\"HEAP\",\"when-full\":\"REMOVE\",\"max-count\":5000}}}}";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      JSON_READER.readJson(builder, newJSON);
-      Configuration fromJson = builder.build();
+      ConfigurationBuilderHolder holder = new ParserRegistry().parse("{\"local-cache\":{ \"memory\":{\"storage\":\"HEAP\",\"when-full\":\"REMOVE\",\"max-count\":5000}}}}", MediaType.APPLICATION_JSON);
+      Configuration fromJson = holder.getCurrentConfigurationBuilder().build();
       assertEquals(fromJson.memory().maxSizeBytes(), -1);
       assertEquals(fromJson.memory().maxCount(), 5000);
       assertEquals(fromJson.memory().storageType(), HEAP);
@@ -350,10 +346,8 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
    @Test
    public void testParseLegacyJSON() {
-      String legacyJSON = "{\"local-cache\":{ \"memory\":{\"object\":{\"strategy\":\"REMOVE\",\"size\":5000}}}}";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      JSON_READER.readJson(builder, legacyJSON);
-      Configuration fromJson = builder.build();
+      ConfigurationBuilderHolder holder = new ParserRegistry().parse("{\"local-cache\":{ \"memory\":{\"object\":{\"strategy\":\"REMOVE\",\"size\":5000}}}}", MediaType.APPLICATION_JSON);
+      Configuration fromJson = holder.getCurrentConfigurationBuilder().build();
       assertEquals(fromJson.memory().maxSizeBytes(), -1);
       assertEquals(fromJson.memory().maxCount(), 5000);
       assertEquals(fromJson.memory().storageType(), OBJECT);
@@ -483,8 +477,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = ".*\\[size, type] have been deprecated and cannot be used in conjunction " +
-                                           "with the new configuration.*")
+         expectedExceptionsMessageRegExp = "ISPN000584.*")
    public void testErrorForAmbiguousXML() {
       String xmlNew = "<infinispan>\n" +
             "   <cache-container>\n" +

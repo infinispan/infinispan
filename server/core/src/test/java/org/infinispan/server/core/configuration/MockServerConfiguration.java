@@ -9,6 +9,6 @@ public class MockServerConfiguration extends ProtocolServerConfiguration {
    }
 
    protected MockServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
-      super(attributes, ssl, ipRules);
+      super("mock-connector", attributes, ssl, ipRules);
    }
 }

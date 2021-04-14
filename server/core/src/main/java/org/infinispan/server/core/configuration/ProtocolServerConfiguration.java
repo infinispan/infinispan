@@ -3,11 +3,10 @@ package org.infinispan.server.core.configuration;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.NullAttributeSerializer;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 
@@ -17,24 +16,23 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
+public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfiguration> extends ConfigurationElement<T> {
    public static final AttributeDefinition<String> DEFAULT_CACHE_NAME = AttributeDefinition.builder("cache", null, String.class).immutable().build();
    public static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "").immutable().build();
-   public static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", "127.0.0.1").serializer(NullAttributeSerializer.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", -1).serializer(NullAttributeSerializer.INSTANCE).immutable().build();
+   public static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", "127.0.0.1").immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", -1).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> IDLE_TIMEOUT = AttributeDefinition.builder("idle-timeout", -1).immutable().build();
    public static final AttributeDefinition<Set<String>> IGNORED_CACHES = AttributeDefinition.builder("ignored-caches", Collections.emptySet(), (Class<Set<String>>) (Class<?>) Set.class).immutable().build();
    public static final AttributeDefinition<Integer> RECV_BUF_SIZE = AttributeDefinition.builder("receive-buffer-size", 0).immutable().build();
    public static final AttributeDefinition<Integer> SEND_BUF_SIZE = AttributeDefinition.builder("send-buffer-size", 0).immutable().build();
-   public static final AttributeDefinition<Boolean> START_TRANSPORT = AttributeDefinition.builder("start-transport", true).serializer(NullAttributeSerializer.INSTANCE).immutable().build();
+   public static final AttributeDefinition<Boolean> START_TRANSPORT = AttributeDefinition.builder("start-transport", true).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> TCP_NODELAY = AttributeDefinition.builder("tcp-nodelay", true).immutable().build();
    public static final AttributeDefinition<Boolean> TCP_KEEPALIVE = AttributeDefinition.builder("tcp-keepalive", false).immutable().build();
    public static final AttributeDefinition<Integer> IO_THREADS = AttributeDefinition.builder("io-threads", 2 * ProcessorInfo.availableProcessors()).immutable().build();
    public static final AttributeDefinition<AdminOperationsHandler> ADMIN_OPERATION_HANDLER = AttributeDefinition.builder("admin-operation-handler", null, AdminOperationsHandler.class)
-         .serializer(NullAttributeSerializer.INSTANCE)
-         .immutable().build();
+         .immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zero-capacity-node", false).immutable().build();
-   public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socketBinding", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).immutable().build();
 
    // The default value can be overridden so it is the responsibility of each protocol to add it to the set
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 1).immutable().build();
@@ -61,13 +59,15 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
    private final Attribute<Boolean> zeroCapacityNode;
    private final Attribute<String> socketBinding;
 
-   protected final AttributeSet attributes;
-
    protected final SslConfiguration ssl;
    protected final IpFilterConfiguration ipFilter;
 
-   protected ProtocolServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
-      this.attributes = attributes.checkProtection();
+   protected ProtocolServerConfiguration(Enum<?> element, AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
+      this(element.toString(), attributes, ssl, ipFilter);
+   }
+
+   protected ProtocolServerConfiguration(String element, AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
+      super(element, attributes, ssl);
       this.ssl = ssl;
       this.ipFilter = ipFilter;
 
@@ -86,10 +86,6 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
       workerThreads = attributes.attribute(WORKER_THREADS);
       adminOperationsHandler = attributes.attribute(ADMIN_OPERATION_HANDLER);
       socketBinding = attributes.attribute(SOCKET_BINDING);
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    public String defaultCacheName() {
@@ -158,11 +154,6 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
 
    public boolean zeroCapacityNode() {
       return zeroCapacityNode.get();
-   }
-
-   @Override
-   public String toString() {
-      return "ProtocolServerConfiguration[" + attributes + "]";
    }
 
    public void disable() {

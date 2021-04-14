@@ -43,10 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
-//import java.util.function.Function;
 
 /**
  *
@@ -261,11 +258,12 @@ import org.infinispan.commons.dataconversion.MediaType;
  * Infinispan changes on top of 1.4.2:
  * </h2>
  * <p><ul>
- * <li>Added support for pretty printing {@link Json#toPrettyString()}
- * <li>Added support for {@link RawJson} as a specialized {@link StringJson}
- * <li>Usage of {@link LinkedHashMap} internally for {@link ObjectJson} for predictable iteration
- * <li>Support for {@link Class}, {@link Properties}, {@link Enum} for {@link DefaultFactory#make(Object)}
- * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}, {@link ConfigurationInfo}
+ * <li>Added support for pretty printing {@link Json#toPrettyString()}</li>
+ * <li>Added support for {@link RawJson} as a specialized {@link StringJson}</li>
+ * <li>Usage of {@link LinkedHashMap} internally for {@link ObjectJson} for predictable iteration</li>
+ * <li>Support for {@link Class}, {@link Properties}, {@link Enum} for {@link DefaultFactory#make(Object)}</li>
+ * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}, {@link ConfigurationInfo}</li>
+ * <li>Support for replacing objects</li>
  *  </ul></p>
  * @author Borislav Iordanov
  * @version 1.4.2
@@ -1142,8 +1140,6 @@ public class Json implements java.io.Serializable {
 
    public static class DefaultFactory implements Factory {
 
-      static final JsonWriter configurationWriter = new JsonWriter();
-
       public Json nil() {
          return new NullJson();
       }
@@ -1206,8 +1202,6 @@ public class Json implements java.io.Serializable {
             return factory().number((Number) anything);
          else if (anything instanceof Enum) {
             return factory().string(anything.toString());
-         } else if (anything instanceof ConfigurationInfo) {
-            return configurationWriter.toJsonObject((ConfigurationInfo) anything);
          }  else if (anything instanceof MediaType) {
             return factory().string(anything.toString());
          }
@@ -1777,6 +1771,20 @@ public class Json implements java.io.Serializable {
       for (int i = 0; i < jopts.length; i++)
          jopts[i] = make(options[i]);
       return with(object, jopts);
+   }
+
+   public Json replace(Json oldJson, Json newJson) {
+      if (this.isObject()) {
+         for(Map.Entry<String, Json> entry : this.asJsonMap().entrySet()) {
+            if (entry.getValue()== oldJson) {
+               entry.setValue(newJson);
+               return newJson;
+            }
+         }
+         throw new IllegalArgumentException();
+      } else {
+         throw new UnsupportedOperationException();
+      }
    }
 
    /**

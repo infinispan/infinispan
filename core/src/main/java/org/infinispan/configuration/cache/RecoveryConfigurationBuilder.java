@@ -5,9 +5,7 @@ import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.TransactionMode;
 
@@ -17,22 +15,12 @@ import org.infinispan.transaction.TransactionMode;
  * @author pmuir
  *
  */
-public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration>, ConfigurationBuilderInfo {
+public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
    private final AttributeSet attributes;
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
       super(builder);
       attributes = RecoveryConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return RecoveryConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

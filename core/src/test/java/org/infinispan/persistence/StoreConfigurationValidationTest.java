@@ -58,7 +58,7 @@ public class StoreConfigurationValidationTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = ".* Cannot enable 'fetchPersistentState' in invalidation caches!")
+         expectedExceptionsMessageRegExp = ".* Cannot enable 'fetch-state' in invalidation caches!")
    public void testFetchPersistentStateInInvalidationMode() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.clustering()

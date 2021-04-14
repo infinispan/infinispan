@@ -1,0 +1,21 @@
+{
+  "_namespace": "urn:infinispan:config:${infinispan.core.schema.version}",
+  "item1": {
+    "item2": {
+      "a": 1,
+      "b": 2,
+      "c": 3,
+      "camelItem3": {
+        "camelAttribute": "${opinion}",
+        "anotherCamelAttribute": "${fact}"
+      },
+      "d": 4
+    },
+    "item5": "v5",
+    "item6": "v6",
+    "item7": [
+      "v7",
+      "v8"
+    ]
+  }
+}

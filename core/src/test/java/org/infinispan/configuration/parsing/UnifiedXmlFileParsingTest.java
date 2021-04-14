@@ -80,7 +80,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() throws Exception {
-      URL configDir = Thread.currentThread().getContextClassLoader().getResource("configs/unified");
+      URL configDir = Thread.currentThread().getContextClassLoader().getResource("configs/all");
       List<Path> paths = Files.list(Paths.get(configDir.toURI())).collect(Collectors.toList());
       Object[][] configurationFiles = new Object[paths.size()][];
       boolean hasCurrentSchema = false;

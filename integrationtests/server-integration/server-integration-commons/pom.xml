@@ -10,10 +10,12 @@
     </parent>
 
     <artifactId>infinispan-server-integrationtests-commons</artifactId>
+    <name>Infinispan Integration Tests Server Commons</name>
+    <description>Infinispan Integration Tests Server Commons</description>
 
     <properties>
         <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
-        <ispn.config.file>${basedir}/../server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
+        <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
     </properties>
 
     <dependencies>

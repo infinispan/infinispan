@@ -8,22 +8,16 @@ import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_RAM_BUFFER_SIZE;
 import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_THREAD_POOL_SIZE;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 12.0
  */
 public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurationChildBuilder
-      implements Builder<IndexWriterConfiguration>, ConfigurationBuilderInfo {
+      implements Builder<IndexWriterConfiguration> {
 
    private final AttributeSet attributes;
    private final IndexMergeConfigurationBuilder indexMergeConfigurationBuilder;
@@ -34,7 +28,6 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
    private final Attribute<Integer> ramBufferSize;
    private final Attribute<Integer> maxBufferedEntries;
    private final Attribute<Boolean> lowLevelTrace;
-   private final List<ConfigurationBuilderInfo> subElements;
 
    IndexWriterConfigurationBuilder(IndexingConfigurationBuilder builder) {
       super(builder);
@@ -47,12 +40,6 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       this.maxBufferedEntries = attributes.attribute(INDEX_MAX_BUFFERED_ENTRIES);
       this.lowLevelTrace = attributes.attribute(INDEX_LOW_LEVEL_TRACE);
       this.indexMergeConfigurationBuilder = new IndexMergeConfigurationBuilder(builder);
-      this.subElements = Collections.singletonList(indexMergeConfigurationBuilder);
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    public IndexMergeConfigurationBuilder merge() {
@@ -92,16 +79,6 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
    public IndexWriterConfigurationBuilder setLowLevelTrace(boolean value) {
       lowLevelTrace.set(value);
       return this;
-   }
-
-   @Override
-   public ElementDefinition<IndexWriterConfiguration> getElementDefinition() {
-      return IndexWriterConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override

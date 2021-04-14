@@ -9,28 +9,20 @@ import static org.infinispan.persistence.remote.configuration.KeyStoreConfigurat
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @since 10.0
  */
-public class KeyStoreConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<KeyStoreConfiguration>, ConfigurationBuilderInfo {
+public class KeyStoreConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<KeyStoreConfiguration> {
    private static final Log log = LogFactory.getLog(KeyStoreConfigurationBuilder.class);
 
    protected KeyStoreConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, KeyStoreConfiguration.attributeDefinitionSet());
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return KeyStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    public KeyStoreConfigurationBuilder keyStoreFileName(String keyStoreFileName) {

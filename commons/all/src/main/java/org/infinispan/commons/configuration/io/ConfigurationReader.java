@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.json.JsonConfigurationReader;
@@ -87,7 +89,7 @@ public interface ConfigurationReader extends AutoCloseable {
                   break;
             }
          }
-         switch (type.toString()) {
+         switch (type.getTypeSubtype()) {
             case MediaType.APPLICATION_XML_TYPE:
                return new XmlConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
             case MediaType.APPLICATION_YAML_TYPE:
@@ -108,10 +110,19 @@ public interface ConfigurationReader extends AutoCloseable {
       return new Builder(reader);
    }
 
+   static Builder from(String s) {
+      return new Builder(new StringReader(s));
+   }
+
    /**
     * @return the resource resolver used by this ConfigurationReader to find external references (e.g. includes)
     */
    ConfigurationResourceResolver getResourceResolver();
+
+   /**
+    * @return the naming strategy used by this ConfigurationReader
+    */
+   NamingStrategy getNamingStrategy();
 
    /**
     * @param schema the ConfigurationSchema in use
@@ -123,6 +134,9 @@ public interface ConfigurationReader extends AutoCloseable {
     */
    ConfigurationSchemaVersion getSchema();
 
+   /**
+    * @return the next element
+    */
    ElementType nextElement();
 
    default boolean inTag() {
@@ -150,6 +164,8 @@ public interface ConfigurationReader extends AutoCloseable {
    String getAttributeNamespace(int index);
 
    String getAttributeValue(String localName);
+
+   String getAttributeValue(String localName, NamingStrategy strategy);
 
    String getAttributeValue(int index);
 
@@ -179,10 +195,29 @@ public interface ConfigurationReader extends AutoCloseable {
    void handleAttribute(ConfigurationReaderContext context, int i);
 
    default void require(ElementType type) {
-      require(type, null, null);
+      require(type, null, (String) null);
    }
 
    void require(ElementType type, String namespace, String name);
+
+   default void require(ElementType type, String namespace, Enum<?> name) {
+      require(type, namespace, name.toString());
+   }
+
+   Map.Entry<String, String> getMapItem(String nameAttribute);
+
+   Map.Entry<String, String> getMapItem(Enum<?> nameAttribute);
+
+   void endMapItem();
+
+   String[] readArray(Enum<?> outer, Enum<?> inner);
+
+   String[] readArray(String outer, String inner);
+
+   boolean hasFeature(ConfigurationFormatFeature feature);
+
+   @Override
+   void close();
 
    enum ElementType {
       START_DOCUMENT,

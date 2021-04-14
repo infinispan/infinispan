@@ -2,8 +2,6 @@ package org.infinispan.rest;
 
 import java.util.concurrent.Executor;
 
-import org.infinispan.commons.configuration.JsonReader;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -16,8 +14,6 @@ import org.infinispan.server.core.ServerManagement;
  */
 public class InvocationHelper {
    private final ParserRegistry parserRegistry = new ParserRegistry();
-   private final JsonReader jsonReader = new JsonReader();
-   private final JsonWriter jsonWriter = new JsonWriter();
    private final RestCacheManager<Object> restCacheManager;
    private final EmbeddedCounterManager counterManager;
    private final RestServerConfiguration configuration;
@@ -41,20 +37,12 @@ public class InvocationHelper {
       return parserRegistry;
    }
 
-   public JsonReader getJsonReader() {
-      return jsonReader;
-   }
-
    public RestCacheManager<Object> getRestCacheManager() {
       return restCacheManager;
    }
 
    public RestServerConfiguration getConfiguration() {
       return configuration;
-   }
-
-   public JsonWriter getJsonWriter() {
-      return jsonWriter;
    }
 
    public Executor getExecutor() {

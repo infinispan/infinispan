@@ -3,31 +3,21 @@ package org.infinispan.persistence.remote.configuration;
 import static org.infinispan.persistence.remote.configuration.MechanismConfiguration.PASSWORD;
 import static org.infinispan.persistence.remote.configuration.MechanismConfiguration.SASL_MECHANISM;
 import static org.infinispan.persistence.remote.configuration.MechanismConfiguration.USERNAME;
-import static org.infinispan.persistence.remote.configuration.MechanismConfiguration.serializeMechanism;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @since 10.0
  */
-public class MechanismConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<MechanismConfiguration>, ConfigurationBuilderInfo {
+public class MechanismConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<MechanismConfiguration> {
 
    MechanismConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, MechanismConfiguration.attributeDefinitionSet());
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return new DefaultElementDefinition<>(serializeMechanism(attributes.attribute(SASL_MECHANISM).get()));
    }
 
    public MechanismConfigurationBuilder saslMechanism(String mechanism) {

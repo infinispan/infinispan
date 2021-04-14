@@ -1,15 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.CUSTOM_INTERCEPTORS;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configures custom interceptors to be added to the cache.
@@ -18,16 +13,12 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
 @Deprecated
-public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration>, ConfigurationInfo {
+public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration> {
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CUSTOM_INTERCEPTORS.getLocalName());
    private List<InterceptorConfiguration> interceptors;
-   private List<ConfigurationInfo> subElement;
 
    CustomInterceptorsConfiguration(List<InterceptorConfiguration> interceptors) {
       this.interceptors = interceptors;
-      subElement = new ArrayList<>(interceptors.size());
-      subElement.addAll(interceptors);
    }
 
    CustomInterceptorsConfiguration() {
@@ -71,13 +62,7 @@ public class CustomInterceptorsConfiguration implements Matchable<CustomIntercep
       return interceptors != null ? interceptors.hashCode() : 0;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElement;
+   public AttributeSet attributes() {
+      return null;
    }
 }

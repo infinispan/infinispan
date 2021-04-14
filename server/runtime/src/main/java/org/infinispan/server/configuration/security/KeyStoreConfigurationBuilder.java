@@ -12,6 +12,7 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.Properties;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -75,11 +76,11 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
       return this;
    }
 
-   public void build() {
+   public void build(Properties properties) {
       if (keyManagerFactory == null) {
          try {
             String keyStoreFileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(),
-                  attributes.attribute(RELATIVE_TO).get());
+                  properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
             String generateSelfSignedHost = attributes.attribute(GENERATE_SELF_SIGNED_CERTIFICATE_HOST).get();
             String keyStoreProvider = attributes.attribute(PROVIDER).get();
             char[] keyStorePassword = attributes.attribute(KEYSTORE_PASSWORD).get();

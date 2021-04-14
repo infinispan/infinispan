@@ -2,24 +2,12 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.nio.file.Paths;
-
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(testName = "persistence.jdbc.configuration.ConfigurationSerializerTest", groups = "functional")
 public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
-
-   @DataProvider(name = "configurationFiles")
-   public Object[][] configurationFiles() {
-      return new Object[][]{
-            {Paths.get("configs/string-based.xml")},
-            {Paths.get("configs/string-based-jndi.xml")}
-      };
-   }
-
    @Override
    protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore) {
       if (beforeStore instanceof AbstractJdbcStoreConfiguration) {

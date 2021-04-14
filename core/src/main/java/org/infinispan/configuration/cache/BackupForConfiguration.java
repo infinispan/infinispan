@@ -1,13 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.BACKUP_FOR;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Defines the remote caches for which this cache acts as a backup.
@@ -15,20 +12,18 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @author Mircea Markus
  * @since 5.2
  */
-public class BackupForConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<String> REMOTE_CACHE = AttributeDefinition.<String>builder("remoteCache", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> REMOTE_SITE = AttributeDefinition.<String>builder("remoteSite", null, String.class).immutable().build();
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUP_FOR.getLocalName());
+public class BackupForConfiguration extends ConfigurationElement<BackupForConfiguration> {
+   public static final AttributeDefinition<String> REMOTE_CACHE = AttributeDefinition.<String>builder(org.infinispan.configuration.parsing.Attribute.REMOTE_CACHE, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> REMOTE_SITE = AttributeDefinition.<String>builder(org.infinispan.configuration.parsing.Attribute.REMOTE_SITE, null, String.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(BackupForConfiguration.class, REMOTE_CACHE, REMOTE_SITE);
    }
 
    private final Attribute<String> remoteCache;
    private final Attribute<String> remoteSite;
-   private final AttributeSet attributes;
 
    public BackupForConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.BACKUP_FOR, attributes);
       this.remoteCache = attributes.attribute(REMOTE_CACHE);
       this.remoteSite = attributes.attribute(REMOTE_SITE);
    }
@@ -47,49 +42,9 @@ public class BackupForConfiguration implements ConfigurationInfo {
       return remoteSite.get();
    }
 
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      BackupForConfiguration other = (BackupForConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
-   }
-
    public boolean isBackupFor(String remoteSite, String remoteCache) {
       boolean remoteSiteMatches = remoteSite() != null && remoteSite().equals(remoteSite);
       boolean remoteCacheMatches = remoteCache() != null && this.remoteCache().equals(remoteCache);
       return remoteSiteMatches && remoteCacheMatches;
    }
-
-   @Override
-   public String toString() {
-      return "BackupForConfiguration [attributes=" + attributes + "]";
-   }
-
 }

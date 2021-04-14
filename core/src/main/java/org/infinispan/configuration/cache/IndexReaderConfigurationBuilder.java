@@ -3,17 +3,15 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.IndexReaderConfiguration.REFRESH_INTERVAL;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 12.0
  */
 public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurationChildBuilder
-      implements Builder<IndexReaderConfiguration>, ConfigurationBuilderInfo {
+      implements Builder<IndexReaderConfiguration> {
 
    private final AttributeSet attributes;
    private final Attribute<Long> refreshInterval;
@@ -27,16 +25,6 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
    public IndexReaderConfigurationBuilder refreshInterval(long valueMillis) {
       refreshInterval.set(valueMillis);
       return this;
-   }
-
-   @Override
-   public ElementDefinition<IndexReaderConfiguration> getElementDefinition() {
-      return IndexReaderConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override
@@ -64,6 +52,4 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
    @Override
    public void validate(GlobalConfiguration globalConfig) {
    }
-
-
 }

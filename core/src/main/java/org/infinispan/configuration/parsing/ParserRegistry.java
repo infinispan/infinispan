@@ -40,7 +40,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.serializing.ConfigurationHolder;
-import org.infinispan.configuration.serializing.Serializer;
+import org.infinispan.configuration.serializing.CoreConfigurationSerializer;
 
 /**
  * ParserRegistry is a namespace-mapping-aware meta-parser which provides a way to delegate the
@@ -179,11 +179,13 @@ public class ParserRegistry implements NamespaceMappingParser {
       try {
          holder.setNamespaceMappingParser(this);
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
-         reader.nextElement();
-         reader.require(ConfigurationReader.ElementType.START_ELEMENT);
-         parseElement(reader, holder);
-         while (reader.nextElement() != ConfigurationReader.ElementType.END_DOCUMENT) {
+         ConfigurationReader.ElementType elementType = reader.nextElement();
+         if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
+            parseElement(reader, holder);
+         }
+         while (elementType != ConfigurationReader.ElementType.END_DOCUMENT) {
             // consume remaining parsing events
+            elementType = reader.nextElement();
          }
          return holder;
       } finally {
@@ -266,11 +268,8 @@ public class ParserRegistry implements NamespaceMappingParser {
     */
    public void serialize(ConfigurationWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
       writer.writeStartDocument();
-      writer.writeStartElement("infinispan");
-      writer.writeDefaultNamespace(Parser.NAMESPACE + Version.getMajorMinor());
-      Serializer serializer = new Serializer();
+      CoreConfigurationSerializer serializer = new CoreConfigurationSerializer();
       serializer.serialize(writer, new ConfigurationHolder(globalConfiguration, configurations));
-      writer.writeEndElement();
       writer.writeEndDocument();
    }
 
@@ -298,6 +297,24 @@ public class ParserRegistry implements NamespaceMappingParser {
       } catch (Exception e) {
          throw new CacheConfigurationException(e);
       }
+   }
+
+   @Override
+   public String toString() {
+      return "ParserRegistry{}";
+   }
+
+   /**
+    * Serializes a single cache configuration
+    * @param writer
+    * @param name
+    * @param configuration
+    */
+   public void serialize(ConfigurationWriter writer, String name, Configuration configuration) {
+      writer.writeStartDocument();
+      CoreConfigurationSerializer serializer = new CoreConfigurationSerializer();
+      serializer.writeCache(writer, name, configuration, true);
+      writer.writeEndDocument();
    }
 
    public static class NamespaceParserPair {

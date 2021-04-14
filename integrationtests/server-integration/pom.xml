@@ -14,7 +14,7 @@
         <ispnserver.project.dir>${basedir}/../../server/runtime</ispnserver.project.dir>
         <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
         <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
-        <ispn.config.file>${basedir}/server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
+        <ispn.config.file>${basedir}/server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
     </properties>
 
     <modelVersion>4.0.0</modelVersion>
@@ -22,7 +22,7 @@
 
     <artifactId>infinispan-server-integration</artifactId>
     <name>Server Integration</name>
-    <description>Server Integration description</description>
+    <description>Server Integration</description>
 
    <dependencies>
       <dependency>

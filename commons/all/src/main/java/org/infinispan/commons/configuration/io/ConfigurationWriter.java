@@ -71,6 +71,36 @@ public interface ConfigurationWriter extends AutoCloseable {
 
    void writeStartElement(String prefix, String namespace, Enum<?> name);
 
+   /**
+    * Writes an array element. This will be treated as follows by the various implementations:
+    * <ul>
+    *    <li><strong>XML</strong> &lt;outer&gt;&lt;/outer&gt;</li>
+    *    <li><strong>YAML</strong> <pre>
+    *       name:<br>
+    *       - item1
+    *       - item2
+    *    </pre>
+    *    </li>
+    *    <li><strong>JSON</strong> name: [ item1, item2 ]</li>
+    * </ul>
+    *
+    * @param name
+    */
+   void writeStartArrayElement(String name);
+
+   void writeStartArrayElement(Enum<?> name);
+
+   void writeEndArrayElement();
+
+   void writeArrayElement(String outer, String inner, String attribute, Iterable<String> values);
+
+   void writeArrayElement(Enum<?> outer, Enum<?> inner, Enum<?> attribute, Iterable<String> values);
+
+   /**
+    * Starts a list element.
+    * @param name
+    * @param explicit
+    */
    void writeStartListElement(String name, boolean explicit);
 
    void writeStartListElement(Enum<?> name, boolean explicit);
@@ -81,15 +111,47 @@ public interface ConfigurationWriter extends AutoCloseable {
 
    void writeEndListElement();
 
-   void writeStartMapElement(String name);
+   void writeStartMap(String name);
 
-   void writeStartMapElement(Enum<?> name);
+   void writeStartMap(Enum<?> name);
 
-   void writeEndMapElement();
+   /**
+    * Writes a simple map entry.
+    * <ul>
+    *    <li><strong>XML</strong>: <tt>&lt;element name="key"&gt;value&lt;element&gt;</tt></li>
+    *    <li><strong>JSON</strong>: <tt>{ key: value }</tt></li>
+    *    <li><strong>YAML</strong>: <tt>key: value</tt></li>
+    * </ul>
+    * @param element Used only by XML
+    * @param name Used only by XML
+    * @param key
+    * @param value
+    */
+   void writeMapItem(String element, String name, String key, String value);
 
-   void writeStartMapEntry(String name, String key, String value);
+   /**
+    * @see #writeMapItem(String, String, String, String)
+    */
+   void writeMapItem(Enum<?> element, Enum<?> name, String key, String value);
 
-   void writeStartMapEntry(Enum<?> name, Enum<?> key, String value);
+   /**
+    * Writes a complex map entry.
+    * <ul>
+    *    <li><strong>XML</strong>: <tt>&lt;element name="key"&gt;...&lt;element&gt;</tt></li>
+    *    <li><strong>JSON</strong>: <tt>{ key: { ... } }</tt></li>
+    *    <li><strong>YAML</strong>: <tt>key:</tt></li>
+    * </ul>
+    * @param element Used only by XML
+    * @param name Used only by XML
+    * @param key
+    */
+   void writeMapItem(String element, String name, String key);
+
+   void writeMapItem(Enum<?> element, Enum<?> name, String key);
+
+   void writeEndMapItem();
+
+   void writeEndMap();
 
    void writeDefaultNamespace(String namespace);
 
@@ -101,6 +163,14 @@ public interface ConfigurationWriter extends AutoCloseable {
 
    void writeAttribute(String name, String value);
 
+   void writeAttribute(Enum<?> name, boolean value);
+
+   void writeAttribute(String name, boolean value);
+
+   void writeAttribute(Enum<?> name, String[] values);
+
+   void writeAttribute(String name, String[] values);
+
    void writeCharacters(String chars);
 
    void writeEmptyElement(String name);
@@ -110,4 +180,9 @@ public interface ConfigurationWriter extends AutoCloseable {
    void writeComment(String comment);
 
    void writeNamespace(String prefix, String namespace);
+
+   boolean hasFeature(ConfigurationFormatFeature feature);
+
+   @Override
+   void close();
 }

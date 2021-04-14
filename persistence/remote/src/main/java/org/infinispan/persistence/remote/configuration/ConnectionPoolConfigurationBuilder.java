@@ -8,9 +8,7 @@ import static org.infinispan.persistence.remote.configuration.ConnectionPoolConf
 import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MIN_IDLE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -20,20 +18,14 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.2
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
-      Builder<ConnectionPoolConfiguration>, ConfigurationBuilderInfo {
+      Builder<ConnectionPoolConfiguration> {
 
    ConnectionPoolConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder, ConnectionPoolConfiguration.attributeDefinitionSet());
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ConnectionPoolConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

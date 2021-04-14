@@ -987,7 +987,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.autoConfig}">
+          <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.auto-config}">
             <xs:annotation>
               <xs:documentation>Deprecated since 11.0, with no replacement. Whether or not to apply automatic index configuration based on cache type</xs:documentation>
             </xs:annotation>
@@ -1017,12 +1017,12 @@
         <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics" type="xs:boolean" default="${Statistics.enabled}">
+    <xs:attribute name="statistics" type="xs:boolean" default="${Statistics.statistics}">
       <xs:annotation>
         <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics-available" type="xs:boolean" default="${Statistics.available}">
+    <xs:attribute name="statistics-available" type="xs:boolean" default="${Statistics.statistics-available}">
       <xs:annotation>
         <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
@@ -1039,7 +1039,7 @@
   <xs:complexType name="local-cache">
     <xs:complexContent>
       <xs:extension base="tns:cache">
-        <xs:attribute name="simple-cache" default="${Configuration.simpleCache}">
+        <xs:attribute name="simple-cache" default="${Configuration.simple-cache}">
           <xs:annotation>
             <xs:documentation>
                 This cache will be using optimized (faster) implementation that does not support transactions/invocation
@@ -1053,7 +1053,7 @@
   </xs:complexType>
 
   <xs:complexType name="locking">
-    <xs:attribute name="isolation" type="tns:isolation" default="${Locking.isolationLevel}">
+    <xs:attribute name="isolation" type="tns:isolation" default="${Locking.isolation}">
       <xs:annotation>
         <xs:documentation>Sets the cache locking isolation level. Infinispan only supports READ_COMMITTED or REPEATABLE_READ isolation level.</xs:documentation>
       </xs:annotation>
@@ -1063,12 +1063,12 @@
         <xs:documentation>If true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="acquire-timeout" type="xs:long" default="${Locking.lockAcquisitionTimeout}">
+    <xs:attribute name="acquire-timeout" type="xs:long" default="${Locking.acquire-timeout}">
       <xs:annotation>
         <xs:documentation>Maximum time to attempt a particular lock acquisition.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="concurrency-level" type="xs:int" default="${Locking.concurrencyLevel}">
+    <xs:attribute name="concurrency-level" type="xs:int" default="${Locking.concurrency-level}">
       <xs:annotation>
         <xs:documentation>Concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan.</xs:documentation>
       </xs:annotation>
@@ -1105,7 +1105,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="reaper-interval" type="xs:long" default="${Transaction.reaper-wake-up-interval}">
+    <xs:attribute name="reaper-interval" type="xs:long" default="${Transaction.reaper-interval}">
       <xs:annotation>
         <xs:documentation>
           The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
@@ -1119,7 +1119,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="recovery-cache" type="xs:string" default="${Recovery.recoveryInfoCacheName}">
+    <xs:attribute name="recovery-cache" type="xs:string" default="${Recovery.recovery-cache}">
       <xs:annotation>
         <xs:documentation>
           Sets the name of the cache where recovery related information is held. The cache's default name is "__recoveryInfoCacheName__"
@@ -1177,7 +1177,7 @@
   </xs:complexType>
 
   <xs:complexType name="expiration">
-    <xs:attribute name="max-idle" type="xs:long" default="${Expiration.maxIdle}">
+    <xs:attribute name="max-idle" type="xs:long" default="${Expiration.max-idle}">
       <xs:annotation>
         <xs:documentation>
           Specifies the maximum amount of time, in milliseconds, that cache
@@ -1195,7 +1195,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="interval" type="xs:long" default="${Expiration.wakeUpInterval}">
+    <xs:attribute name="interval" type="xs:long" default="${Expiration.interval}">
       <xs:annotation>
         <xs:documentation>
           Specifies the interval, in milliseconds, between expiration runs. A
@@ -1276,7 +1276,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="connection-attempts" type="xs:int" default="${Persistence.connectionAttempts}">
+    <xs:attribute name="connection-attempts" type="xs:int" default="${Persistence.connection-attempts}">
       <xs:annotation>
         <xs:documentation>
           Sets the maximum number of attempts to start each configured
@@ -1286,7 +1286,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="connection-interval" type="xs:int" default="${Persistence.connectionInterval}">
+    <xs:attribute name="connection-interval" type="xs:int" default="${Persistence.connection-interval}">
       <xs:annotation>
         <xs:documentation>
           Specifies the time, in milliseconds, to wait between connection
@@ -1295,7 +1295,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="availability-interval" type="xs:int" default="${Persistence.availabilityInterval}">
+    <xs:attribute name="availability-interval" type="xs:int" default="${Persistence.availability-interval}">
       <xs:annotation>
         <xs:documentation>
           Specifies the time, in milliseconds, between availability checks to
@@ -1581,12 +1581,12 @@
                       </xs:documentation>
                    </xs:annotation>
                 </xs:attribute>
-               <xs:attribute name="when-split" type="tns:partition-handling-type" default="${PartitionHandling.whenSplit}">
+               <xs:attribute name="when-split" type="tns:partition-handling-type" default="${PartitionHandling.when-split}">
                  <xs:annotation>
                    <xs:documentation>The type of actions that are possible when a split brain scenario is encountered.</xs:documentation>
                  </xs:annotation>
                </xs:attribute>
-               <xs:attribute name="merge-policy" type="tns:merge-policy" default="${PartitionHandling.mergePolicy}">
+               <xs:attribute name="merge-policy" type="tns:merge-policy" default="${PartitionHandling.merge-policy}">
                  <xs:annotation>
                    <xs:documentation>The entry merge policy which should be applied on partition merges.</xs:documentation>
                  </xs:annotation>
@@ -1599,7 +1599,7 @@
             <xs:documentation>Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="remote-timeout" type="xs:long" default="${Clustering.remoteTimeout}">
+        <xs:attribute name="remote-timeout" type="xs:long" default="${Clustering.remote-timeout}">
           <xs:annotation>
             <xs:documentation>In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.</xs:documentation>
           </xs:annotation>
@@ -1625,7 +1625,7 @@
             </xs:annotation>
           </xs:element>
         </xs:sequence>
-        <xs:attribute name="segments" type="xs:int" default="${Hash.numSegments}">
+        <xs:attribute name="segments" type="xs:int" default="${Hash.segments}">
           <xs:annotation>
             <xs:documentation>
               Sets the number of hash space segments per cluster. The default
@@ -1675,17 +1675,17 @@
             </xs:annotation>
           </xs:element>
         </xs:sequence>
-        <xs:attribute name="owners" type="xs:int" default="${Hash.numOwners}">
+        <xs:attribute name="owners" type="xs:int" default="${Hash.owners}">
           <xs:annotation>
             <xs:documentation>Number of cluster-wide replicas for each cache entry.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="segments" type="xs:int" default="${Hash.numSegments}">
+        <xs:attribute name="segments" type="xs:int" default="${Hash.segments}">
           <xs:annotation>
             <xs:documentation>Sets the number of hash space segments per cluster. The default value is 256. The value should be at least 20 * the cluster size.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="capacity-factor" type="xs:double" default="${Hash.capacityFactor}">
+        <xs:attribute name="capacity-factor" type="xs:double" default="${Hash.capacity}">
           <xs:annotation>
             <xs:documentation>Controls the proportion of entries that will reside on the local node,
               compared to the other nodes in the cluster. Value must be positive. The default is 1</xs:documentation>
@@ -1698,14 +1698,14 @@
                If the attribute is not present, L1 is disabled.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="l1-cleanup-interval" type="xs:long" default="${L1.cleanupTaskFrequency}">
+        <xs:attribute name="l1-cleanup-interval" type="xs:long" default="${L1.l1-cleanup-interval}">
           <xs:annotation>
             <xs:documentation>
               Controls how often a cleanup task to prune L1 tracking data is run. Defaults to 10 minutes.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="capacity" type="xs:float" default="${Hash.capacityFactor}">
+        <xs:attribute name="capacity" type="xs:float" default="${Hash.capacity}">
           <xs:annotation>
             <xs:documentation>
               Controls the proportion of entries that will reside on the local node, compared to the other nodes
@@ -1791,7 +1791,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="invalidation-batch-size" type="xs:integer" default="${Clustering.invalidationBatchSize}">
+        <xs:attribute name="invalidation-batch-size" type="xs:integer" default="${Clustering.invalidation-batch-size}">
           <xs:annotation>
             <xs:documentation>
               Threshold for sending batch invalidations. Once a node registers more updated keys,
@@ -1800,7 +1800,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="bias-acquisition" type="tns:bias-acquisition" default="${Clustering.biasAcquisition}">
+        <xs:attribute name="bias-acquisition" type="tns:bias-acquisition" default="${Clustering.bias-acquisition}">
           <xs:annotation>
             <xs:documentation>
               Specifies when is a node allowed to acquire a bias on an entry, serving further reads
@@ -1809,7 +1809,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="bias-lifespan" type="xs:long" default="${Clustering.biasLifespan}">
+        <xs:attribute name="bias-lifespan" type="xs:long" default="${Clustering.bias-lifespan}">
           <xs:annotation>
             <xs:documentation>
               Specifies the duration (in Milliseconds) that acquired bias can be held; while the reads will never be stale,
@@ -1867,7 +1867,7 @@
   <xs:complexType name="cluster-loader">
     <xs:complexContent>
       <xs:extension base="tns:loader">
-        <xs:attribute name="remote-timeout" type="xs:long" default="${ClusterLoader.remoteCallTimeout}">
+        <xs:attribute name="remote-timeout" type="xs:long" default="${ClusterLoader.remote-timeout}">
           <xs:annotation>
             <xs:documentation>The timeout when performing remote calls.</xs:documentation>
           </xs:annotation>
@@ -1908,7 +1908,7 @@
         <xs:documentation>If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Likewise in some cases you cannot pre-load data in caches stores, such as when using shared remote stores.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="fetch-state" type="xs:boolean" default="${AbstractStore.fetchPersistentState}">
+    <xs:attribute name="fetch-state" type="xs:boolean" default="${AbstractStore.fetch-state}">
       <xs:annotation>
         <xs:documentation>Fetches the persistent state of a cache when joining
           a cluster. Values are true / false (default). The purpose of this
@@ -1918,7 +1918,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="purge" type="xs:boolean" default="${AbstractStore.purgeOnStartup}">
+    <xs:attribute name="purge" type="xs:boolean" default="${AbstractStore.purge}">
       <xs:annotation>
         <xs:documentation>
           Empties the specified cache loader at startup. Values are true /
@@ -1927,7 +1927,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="read-only" type="xs:boolean" default="${AbstractStore.ignoreModifications}">
+    <xs:attribute name="read-only" type="xs:boolean" default="${AbstractStore.read-only}">
       <xs:annotation>
         <xs:documentation>
           Prevents data from being persisted to cache stores. Values are true /
@@ -1936,7 +1936,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="write-only" type="xs:boolean" default="${AbstractStore.writeOnly}">
+    <xs:attribute name="write-only" type="xs:boolean" default="${AbstractStore.write-only}">
       <xs:annotation>
         <xs:documentation>
           Prevents data from being loaded from cache stores. Values are true /
@@ -1945,7 +1945,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-batch-size" type="xs:int" default="${AbstractStore.maxBatchSize}">
+    <xs:attribute name="max-batch-size" type="xs:int" default="${AbstractStore.max-batch-size}">
       <xs:annotation>
         <xs:documentation>
           Sets the maximum size of a batch to insert or delete from the cache
@@ -1965,7 +1965,7 @@
   </xs:complexType>
 
   <xs:complexType name="write-behind">
-    <xs:attribute name="modification-queue-size" type="xs:int" default="${AsyncStore.modificationQueueSize}">
+    <xs:attribute name="modification-queue-size" type="xs:int" default="${AsyncStore.modification-queue-size}">
       <xs:annotation>
         <xs:documentation>
           Specifies the maximum number of entries in the asynchronous
@@ -1974,7 +1974,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="thread-pool-size" type="xs:int" default="${AsyncStore.threadPoolSize}">
+    <xs:attribute name="thread-pool-size" type="xs:int" default="${AsyncStore.thread-pool-size}">
       <xs:annotation>
         <xs:documentation>
           Specifies the number of threads to apply modifications to the cache
@@ -1982,7 +1982,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.failSilently}">
+    <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.fail-silently}">
       <xs:annotation>
         <xs:documentation>
           Controls how asynchronous write operations take place when cache
@@ -2087,14 +2087,14 @@
           </xs:annotation>
         </xs:attribute>
 
-        <xs:attribute name="open-files-limit" type="xs:int" default="${SoftIndexFileStore.openFilesLimit}">
+        <xs:attribute name="open-files-limit" type="xs:int" default="${SoftIndexFileStore.open-files-limit}">
           <xs:annotation>
             <xs:documentation>
               Max number of data files opened for reading (current log file, compaction output and index segments are not included here).
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="compaction-threshold" type="xs:double" default="${SoftIndexFileStore.compactionThreshold}">
+        <xs:attribute name="compaction-threshold" type="xs:double" default="${SoftIndexFileStore.compaction-threshold}">
           <xs:annotation>
             <xs:documentation>
               If amount of unused space in some data file gets above this threshold, the file is compacted - entries from that file are copied to a new file and the old file is deleted.
@@ -2118,14 +2118,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-file-size" type="xs:int" default="${Data.maxFileSize}">
+    <xs:attribute name="max-file-size" type="xs:int" default="${Data.max-file-size}">
       <xs:annotation>
         <xs:documentation>
           Max size of single file with entries, in bytes.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="sync-writes" type="xs:boolean" default="${Data.syncWrites}">
+    <xs:attribute name="sync-writes" type="xs:boolean" default="${Data.sync-writes}">
       <xs:annotation>
         <xs:documentation>
           If true, the write is confirmed only after the entry is fsynced on disk.
@@ -2147,28 +2147,28 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="segments" type="xs:int" default="${Index.indexSegments}">
+    <xs:attribute name="segments" type="xs:int" default="${Index.segments}">
       <xs:annotation>
         <xs:documentation>
           Number of index segment files. Increasing this value improves throughput but requires more threads to be spawned.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-queue-length" type="xs:int" default="${Index.indexQueueLength}">
+    <xs:attribute name="max-queue-length" type="xs:int" default="${Index.max-queue-length}">
       <xs:annotation>
         <xs:documentation>
           Max number of entry writes that are waiting to be written to the index, per index segment.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-node-size" type="xs:int" default="${Index.maxNodeSize}">
+    <xs:attribute name="max-node-size" type="xs:int" default="${Index.max-node-size}">
       <xs:annotation>
         <xs:documentation>
           Max size of node (continuous block on filesystem used in index implementation), in bytes.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="min-node-size" type="xs:int" default="${Index.minNodeSize}">
+    <xs:attribute name="min-node-size" type="xs:int" default="${Index.min-node-size}">
       <xs:annotation>
         <xs:documentation>
           If the size of node (continuous block on filesystem used in index implementation) drops below this threshold, the node will try to balance its size with some neighbour node, possibly causing join of multiple nodes.
@@ -2210,12 +2210,12 @@
         Must be greater than or equal to 'remote-timeout' in the clustering configuration.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="chunk-size" type="xs:integer" default="${StateTransfer.chunkSize}">
+    <xs:attribute name="chunk-size" type="xs:integer" default="${StateTransfer.chunk-size}">
       <xs:annotation>
         <xs:documentation>The number of cache entries to batch in each transfer.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="await-initial-transfer" type="xs:boolean" default="${StateTransfer.awaitInitialTransfer}">
+    <xs:attribute name="await-initial-transfer" type="xs:boolean" default="${StateTransfer.await-initial-transfer}">
       <xs:annotation>
         <xs:documentation>If enabled, this will cause the cache to wait for initial state transfer to complete before responding to requests.</xs:documentation>
       </xs:annotation>
@@ -2281,7 +2281,7 @@
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
-          <xs:attribute name="chunk-size" type="xs:int" default="${XSiteStateTransfer.chunkSize}">
+          <xs:attribute name="chunk-size" type="xs:int" default="${XSiteStateTransfer.chunk-size}">
             <xs:annotation>
                <xs:documentation>
                  Specifies how many cache entries are batched in each transfer request.
@@ -2296,14 +2296,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="max-retries" type="xs:int" default="${XSiteStateTransfer.maxRetries}">
+          <xs:attribute name="max-retries" type="xs:int" default="${XSiteStateTransfer.max-retries}">
             <xs:annotation>
               <xs:documentation>
                 Sets the maximum number of retry attempts for push state failures. Specify a value of 0 (zero) to disable retry attempts. The default value is 30.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="wait-time" type="xs:long" default="${XSiteStateTransfer.waitTime}">
+          <xs:attribute name="wait-time" type="xs:long" default="${XSiteStateTransfer.wait-time}">
             <xs:annotation>
               <xs:documentation>
                 Sets the amount of time, in milliseconds, to wait between retry attempts for push state failures. You must specify a value of 1 or more. The default value is 2000.
@@ -2334,14 +2334,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="${Backup.backupFailurePolicy}">
+    <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="${Backup.failure-policy}">
       <xs:annotation>
         <xs:documentation>
           Controls how local writes to caches are handled if synchronous backup operations fail.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="timeout" type="xs:long" default="${Backup.replicationTimeout}">
+    <xs:attribute name="timeout" type="xs:long" default="${Backup.timeout}">
       <xs:annotation>
         <xs:documentation>
           Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
@@ -2355,7 +2355,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="two-phase-commit" use="optional" type="xs:boolean" default="${Backup.useTwoPhaseCommit}">
+    <xs:attribute name="two-phase-commit" use="optional" type="xs:boolean" default="${Backup.two-phase-commit}">
       <xs:annotation>
         <xs:documentation>
           Enables two-phase commits for optimistic transactional caches with

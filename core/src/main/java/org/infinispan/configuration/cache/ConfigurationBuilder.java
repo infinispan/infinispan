@@ -6,22 +6,17 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
-public class ConfigurationBuilder implements ConfigurationChildBuilder, ConfigurationBuilderInfo {
+public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final EncodingConfigurationBuilder encoding;
@@ -41,13 +36,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
 
    private boolean template = false;
 
-   @Override
-   public ElementDefinition<? extends ConfigurationInfo> getElementDefinition() {
-      return Configuration.ELEMENT_DEFINITION;
-   }
-
-   private List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
-
    public ConfigurationBuilder() {
       this.attributes = Configuration.attributeDefinitionSet();
       this.clustering = new ClusteringConfigurationBuilder(this);
@@ -64,20 +52,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.memory = new MemoryConfigurationBuilder(this);
-
-      subElements.addAll(Arrays.asList(clustering, persistence, unsafe, statistics, locking, indexing, expiration,
-                                       encoding, memory, transaction, sites, customInterceptors, security, sites.backupFor()));
-   }
-
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    @Override

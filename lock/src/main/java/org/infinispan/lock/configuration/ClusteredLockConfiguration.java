@@ -14,8 +14,7 @@ import org.infinispan.lock.logging.Log;
 public class ClusteredLockConfiguration {
 
    private static final Log log = LogFactory.getLog(ClusteredLockConfiguration.class, Log.class);
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class)
-         .xmlName("name")
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class)
          .validator(value -> {
             if (value == null) {
                throw log.missingName();

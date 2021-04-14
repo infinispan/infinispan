@@ -1,11 +1,10 @@
 package org.infinispan.commons.configuration.attributes;
 
+import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.util.Util;
 
 /**
  *
@@ -28,24 +27,22 @@ import org.infinispan.commons.util.Util;
  */
 public final class AttributeDefinition<T> {
    private final String name;
-   private final String xmlName;
    private final T defaultValue;
    private final boolean immutable;
    private final boolean autoPersist;
    private final boolean global;
-   private final AttributeCopier copier;
+   private final AttributeCopier<T> copier;
    private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
-   private final AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializerConfig;
+   private final AttributeSerializer<? super T> serializer;
    private final Class<T> type;
 
-   AttributeDefinition(String name, String xmlName, T initialValue, Class<T> type,
+   AttributeDefinition(String name, T initialValue, Class<T> type,
                        boolean immutable, boolean autoPersist, boolean global,
-                       AttributeCopier copier, AttributeValidator<? super T> validator,
+                       AttributeCopier<T> copier, AttributeValidator<? super T> validator,
                        AttributeInitializer<? extends T> initializer,
-                       AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializerConfig) {
+                       AttributeSerializer<? super T> serializer) {
       this.name = name;
-      this.xmlName = xmlName;
       this.defaultValue = initialValue;
       this.immutable = immutable;
       this.autoPersist = autoPersist;
@@ -53,25 +50,16 @@ public final class AttributeDefinition<T> {
       this.copier = copier;
       this.initializer = initializer;
       this.validator = validator;
+      this.serializer = serializer;
       this.type = type;
-      this.serializerConfig = serializerConfig;
-
    }
 
    public String name() {
       return name;
    }
 
-   public String xmlName() {
-      return xmlName;
-   }
-
    public Class<T> getType() {
       return type;
-   }
-
-   public AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> getSerializerConfig() {
-      return serializerConfig;
    }
 
    public T getDefaultValue() {
@@ -84,6 +72,10 @@ public final class AttributeDefinition<T> {
 
    public boolean isAutoPersist() {
       return autoPersist;
+   }
+
+   public boolean isRepeated() {
+      return type.isArray() || Collection.class.isAssignableFrom(type);
    }
 
    public boolean isGlobal() {
@@ -102,6 +94,10 @@ public final class AttributeDefinition<T> {
       return validator;
    }
 
+   public AttributeSerializer<? super T> serializer() {
+      return serializer;
+   }
+
    public Attribute<T> toAttribute() {
       return new Attribute<T>(this);
    }
@@ -112,12 +108,20 @@ public final class AttributeDefinition<T> {
       }
    }
 
+   public static <T> Builder<T> builder(Enum<?> name, T defaultValue) {
+      return builder(name.toString(), defaultValue);
+   }
+
    public static <T> Builder<T> builder(String name, T defaultValue) {
       if (defaultValue != null) {
          return new Builder<T>(name, defaultValue, (Class<T>) defaultValue.getClass());
       } else {
          throw new CacheConfigurationException("Must specify type when passing null for AttributeDefinition " + name);
       }
+   }
+
+   public static <T> Builder<T> builder(Enum<?> name, T defaultValue, Class<T> klass) {
+      return new Builder<>(name.toString(), defaultValue, klass);
    }
 
    public static <T> Builder<T> builder(String name, T defaultValue, Class<T> klass) {
@@ -142,19 +146,18 @@ public final class AttributeDefinition<T> {
       if (immutable != that.immutable) return false;
       if (autoPersist != that.autoPersist) return false;
       if (global != that.global) return false;
-      if (name != null ? !name.equals(that.name) : that.name != null) return false;
-      if (xmlName != null ? !xmlName.equals(that.xmlName) : that.xmlName != null) return false;
-      if (defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null) return false;
-      if (copier != null ? !copier.equals(that.copier) : that.copier != null) return false;
-      if (initializer != null ? !initializer.equals(that.initializer) : that.initializer != null) return false;
-      if (validator != null ? !validator.equals(that.validator) : that.validator != null) return false;
-      return type != null ? type.equals(that.type) : that.type == null;
+      if (!Objects.equals(name, that.name)) return false;
+      if (!Objects.equals(defaultValue, that.defaultValue)) return false;
+      if (!Objects.equals(copier, that.copier)) return false;
+      if (!Objects.equals(initializer, that.initializer)) return false;
+      if (!Objects.equals(validator, that.validator)) return false;
+      if (!Objects.equals(serializer, that.serializer)) return false;
+      return Objects.equals(type, that.type);
    }
 
    @Override
    public int hashCode() {
       int result = name != null ? name.hashCode() : 0;
-      result = 31 * result + (xmlName != null ? xmlName.hashCode() : 0);
       result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
       result = 31 * result + (immutable ? 1 : 0);
       result = 31 * result + (autoPersist ? 1 : 0);
@@ -162,6 +165,7 @@ public final class AttributeDefinition<T> {
       result = 31 * result + (copier != null ? copier.hashCode() : 0);
       result = 31 * result + (initializer != null ? initializer.hashCode() : 0);
       result = 31 * result + (validator != null ? validator.hashCode() : 0);
+      result = 31 * result + (serializer != null ? serializer.hashCode() : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
       return result;
    }
@@ -174,12 +178,10 @@ public final class AttributeDefinition<T> {
       private boolean immutable = false;
       private boolean autoPersist = true;
       private boolean global = true;
-      private String xmlName;
       private AttributeCopier copier = null;
       private AttributeInitializer<? extends T> initializer;
       private AttributeValidator<? super T> validator;
-      private AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializer;
-
+      private AttributeSerializer<? super T> serializer = AttributeSerializer.DEFAULT;
 
       private Builder(String name, T defaultValue, Class<T> type) {
          this.name = name;
@@ -202,11 +204,6 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
-      public Builder<T> serializer(AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializer) {
-         this.serializer = serializer;
-         return this;
-      }
-
       public Builder<T> autoPersist(boolean autoPersist) {
          this.autoPersist = autoPersist;
          return this;
@@ -222,14 +219,13 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
-      public Builder<T> xmlName(String xmlName) {
-         this.xmlName = xmlName;
+      public Builder<T> serializer(AttributeSerializer<? super T> serializer) {
+         this.serializer = serializer;
          return this;
       }
 
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition<>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer == null ? new DefaultSerializer<>(xmlName == null ? Util.xmlify(name) : xmlName) : serializer);
+         return new AttributeDefinition<>(name, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer);
       }
    }
-
 }

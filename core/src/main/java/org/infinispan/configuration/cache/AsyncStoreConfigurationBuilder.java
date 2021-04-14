@@ -6,9 +6,7 @@ import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFIC
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -18,7 +16,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @author pmuir
  *
  */
-public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<AsyncStoreConfiguration>, ConfigurationBuilderInfo {
+public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<AsyncStoreConfiguration> {
    private final AttributeSet attributes;
 
    AsyncStoreConfigurationBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
@@ -47,16 +45,6 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    public AsyncStoreConfigurationBuilder<S> enabled(boolean enabled) {
       attributes.attribute(ENABLED).set(enabled);
       return this;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return AsyncStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**

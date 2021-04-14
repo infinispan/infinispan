@@ -21,8 +21,6 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.JsonWriter;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
@@ -216,15 +214,13 @@ public class MultiResourceTest extends AbstractRestResourceTest {
             .initialValue(0).build();
       for (String counterName : names) {
          AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(counterName, configuration);
-         String cfg = new JsonWriter().toJSON(config);
-         RestResponse response = join(client.counter(counterName).create(RestEntity.create(APPLICATION_JSON, cfg)));
+         RestResponse response = join(client.counter(counterName).create(RestEntity.create(APPLICATION_JSON, counterConfigToJson(config))));
          ResponseAssertion.assertThat(response).isOk();
       }
    }
 
    private void createCaches(String... names) {
-      String json = new JsonWriter().toJSON(new ConfigurationBuilder().build());
-      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
+      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, "{}");
 
       for (String cacheName : names) {
          CompletionStage<RestResponse> response = client.cache(cacheName).createWithConfiguration(jsonEntity, CacheContainerAdmin.AdminFlag.VOLATILE);

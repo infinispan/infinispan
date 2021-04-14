@@ -13,8 +13,6 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Synchronization;
@@ -22,10 +20,8 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
@@ -38,29 +34,14 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  * @author pmuir
  * @author Pedro Ruivo
  */
-public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration>, ConfigurationBuilderInfo {
-   private final AttributeSet attributes;
+public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
+   final AttributeSet attributes;
    private final RecoveryConfigurationBuilder recovery;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = TransactionConfiguration.attributeDefinitionSet();
       this.recovery = new RecoveryConfigurationBuilder(this);
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return TransactionConfiguration.ELEMENT_DEFINTION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Collections.singleton(recovery);
    }
 
    /**

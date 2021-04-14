@@ -1,33 +1,29 @@
 package org.infinispan.configuration.cache;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Element;
 
-public class AbstractStoreConfiguration implements StoreConfiguration, ConfigurationInfo {
-   public static final AttributeDefinition<Boolean> FETCH_PERSISTENT_STATE = AttributeDefinition.builder("fetchPersistentState", false).xmlName("fetch-state").immutable().build();
-   public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder("purgeOnStartup", false).immutable().xmlName("purge").build();
-   public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().xmlName("read-only").build();
-   public static final AttributeDefinition<Boolean> WRITE_ONLY = AttributeDefinition.builder("writeOnly", false).immutable().xmlName("write-only").build();
-   public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder("preload", false).immutable().build();
-   public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
-   public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
-   public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder("maxBatchSize", 100).immutable().build();
-   public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", true).immutable().build();
-   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
+public class AbstractStoreConfiguration implements StoreConfiguration {
+   public static final AttributeDefinition<Boolean> FETCH_STATE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FETCH_STATE, false).immutable().build();
+   public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PURGE, false).immutable().build();
+   public static final AttributeDefinition<Boolean> READ_ONLY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.READ_ONLY, false).immutable().build();
+   public static final AttributeDefinition<Boolean> WRITE_ONLY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.WRITE_ONLY, false).immutable().build();
+   public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PRELOAD, false).immutable().build();
+   public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SHARED, false).immutable().build();
+   public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TRANSACTIONAL, false).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_BATCH_SIZE, 100).immutable().build();
+   public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTED, true).immutable().build();
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder(Element.PROPERTIES, null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
-   protected final List<ConfigurationInfo> subElements = new ArrayList<>();
-
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
-            IGNORE_MODIFICATIONS, WRITE_ONLY, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
+      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_STATE, PURGE_ON_STARTUP,
+            READ_ONLY, WRITE_ONLY, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
@@ -44,17 +40,12 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    protected final AttributeSet attributes;
    private final AsyncStoreConfiguration async;
 
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
-   }
-
    public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
       this.attributes = attributes.checkProtection();
       this.async = async;
-      this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
+      this.fetchPersistentState = attributes.attribute(FETCH_STATE);
       this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
-      this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
+      this.ignoreModifications = attributes.attribute(READ_ONLY);
       this.writeOnly = attributes.attribute(WRITE_ONLY);
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
@@ -62,7 +53,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
-      this.subElements.add(async);
    }
 
    /**
@@ -176,10 +166,10 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       } else if (!async.equals(other.async))
          return false;
       if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
+         return other.attributes == null;
+      } else if (!attributes.equals(other.attributes)) {
          return false;
+      }
       return true;
    }
 }

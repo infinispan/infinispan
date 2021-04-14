@@ -4,32 +4,39 @@ import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+
 /**
  * SslConfiguration.
  *
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class SslConfiguration {
+public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
 
    public static final String DEFAULT_SNI_DOMAIN = "*";
 
-   private final boolean enabled;
-   private final boolean requireClientAuth;
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder("require-client-auth", false).immutable().build();
    private final Map<String, SslEngineConfiguration> sniDomainsConfiguration;
 
-   SslConfiguration(boolean enabled, boolean requireClientAuth, Map<String, SslEngineConfiguration> sniDomainsConfiguration) {
-      this.enabled = enabled;
-      this.requireClientAuth = requireClientAuth;
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(SslConfiguration.class, ENABLED, REQUIRE_CLIENT_AUTH);
+   }
+
+   SslConfiguration(AttributeSet attributes, Map<String, SslEngineConfiguration> sniDomainsConfiguration) {
+      super("ssl", attributes);
       this.sniDomainsConfiguration = sniDomainsConfiguration;
    }
 
    public boolean enabled() {
-      return enabled;
+      return attributes.attribute(ENABLED).get();
    }
 
    public boolean requireClientAuth() {
-      return requireClientAuth;
+      return attributes.attribute(REQUIRE_CLIENT_AUTH).get();
    }
 
    public String keyStoreFileName() {
@@ -58,14 +65,5 @@ public class SslConfiguration {
 
    public Map<String, SslEngineConfiguration> sniDomainsConfiguration() {
       return sniDomainsConfiguration;
-   }
-
-   @Override
-   public String toString() {
-      return "SslConfiguration [" +
-              "enabled=" + enabled +
-              ", requireClientAuth=" + requireClientAuth +
-              ", sniDomainsConfiguration=" + sniDomainsConfiguration +
-              ']';
    }
 }

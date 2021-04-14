@@ -27,7 +27,6 @@ import org.junit.Test;
 public class YamlConfigurationReaderTest {
 
    public static final String DEFAULT_NAMESPACE = "urn:infinispan:config:" + Version.getSchemaVersion();
-   public static final String SERVER_NAMESPACE = "urn:infinispan:server:" + Version.getSchemaVersion();
 
    @Test
    public void testLine() {
@@ -62,8 +61,13 @@ public class YamlConfigurationReaderTest {
       assertNull(p.value);
       p = yaml.parseLine("  - value");
       assertEquals(2, p.indent);
-      assertTrue(p.list);
+      assertTrue(p.listItem);
       assertNull(p.name);
+      assertEquals("value", p.value);
+      p = yaml.parseLine("  - key: value");
+      assertEquals(2, p.indent);
+      assertTrue(p.listItem);
+      assertEquals("key", p.name);
       assertEquals("value", p.value);
 
       Exceptions.expectException(ConfigurationReaderException.class, () -> yaml.parseLine("  key # comment"));
@@ -92,10 +96,10 @@ public class YamlConfigurationReaderTest {
          assertAttribute(yaml, "d", "4");
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "camel-item3");
-         assertEquals("camel-attribute", yaml.getAttributeName(1));
-         assertEquals("YAML is awful", yaml.getAttributeValue(1));
-         assertEquals("another-camel-attribute", yaml.getAttributeName(0));
-         assertEquals("YAML is really awful", yaml.getAttributeValue(0));
+         assertEquals("camel-attribute", yaml.getAttributeName(0));
+         assertEquals("YAML is awful", yaml.getAttributeValue(0));
+         assertEquals("another-camel-attribute", yaml.getAttributeName(1));
+         assertEquals("YAML is really awful", yaml.getAttributeValue(1));
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "camel-item3");
          yaml.nextElement();
@@ -110,6 +114,24 @@ public class YamlConfigurationReaderTest {
          assertEquals("v8", yaml.getElementText());
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item7");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item8");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item8");
+         assertEquals(2, yaml.getAttributeCount());
+         assertAttribute(yaml, "a", "1");
+         assertAttribute(yaml, "b", "2");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item8");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item8");
+         assertEquals(2, yaml.getAttributeCount());
+         assertAttribute(yaml, "a", "3");
+         assertAttribute(yaml, "b", "4");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item8");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item8");
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item1");
          yaml.nextElement();

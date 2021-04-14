@@ -3,6 +3,7 @@ package org.infinispan.server.configuration.security;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
@@ -24,12 +25,12 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
    }
 
    public CredentialStoreConfigurationBuilder addCredentialStore(String name) {
-      CredentialStoreConfigurationBuilder credentialStoreBuilder = new CredentialStoreConfigurationBuilder(this);
+      CredentialStoreConfigurationBuilder credentialStoreBuilder = new CredentialStoreConfigurationBuilder(this, name);
       credentialStores.put(name, credentialStoreBuilder);
       return credentialStoreBuilder;
    }
 
-   public <C extends Credential> C getCredential(String store, String alias, Class<C> type) {
+   public <C extends Credential> C getCredential(String store, String alias, Class<C> type, Properties properties) {
       CredentialStoreConfigurationBuilder credentialStoreConfigurationBuilder;
       if (store == null) {
          if (credentialStores.size() == 1) {
@@ -43,7 +44,7 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       if (credentialStoreConfigurationBuilder == null) {
          throw Server.log.unknownCredentialStore(store);
       }
-      C credential = credentialStoreConfigurationBuilder.getCredential(alias, type);
+      C credential = credentialStoreConfigurationBuilder.getCredential(alias, type, properties);
       if (credential == null) {
          throw Server.log.unknownCredential(alias, store);
       } else {

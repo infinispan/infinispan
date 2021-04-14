@@ -12,20 +12,17 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.URI;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.URI;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -38,7 +35,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
  * @since 5.2
  */
 public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RemoteStoreConfiguration, RemoteStoreConfigurationBuilder> implements
-      RemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder>, ConfigurationBuilderInfo {
+      RemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> {
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private final SecurityConfigurationBuilder security;
@@ -49,7 +46,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
       security = new SecurityConfigurationBuilder(this);
-      getChildrenInfo().addAll(Arrays.asList(connectionPool, asyncExecutorFactory, security));
    }
 
    @Override
@@ -62,18 +58,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return attributes;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return RemoteStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public ConfigurationBuilderInfo getNewBuilderInfo(String name) {
-      if (name.equals(Element.SERVER.getLocalName())) return addServer();
-      return this;
-   }
-
-   @Override
    public ExecutorFactoryConfigurationBuilder asyncExecutorFactory() {
       return asyncExecutorFactory;
    }

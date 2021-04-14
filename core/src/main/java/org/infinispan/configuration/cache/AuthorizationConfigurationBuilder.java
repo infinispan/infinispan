@@ -7,9 +7,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -18,22 +16,12 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthorizationConfiguration>, ConfigurationBuilderInfo {
+public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthorizationConfiguration> {
    private final AttributeSet attributes;
 
    public AuthorizationConfigurationBuilder(SecurityConfigurationBuilder securityBuilder) {
       super(securityBuilder);
       attributes = AuthorizationConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return AuthorizationConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

@@ -1,7 +1,5 @@
 package org.infinispan.configuration.global;
 
-import static org.infinispan.configuration.parsing.Element.ALLOW_LIST;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,20 +8,15 @@ import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 @BuiltBy(AllowListConfigurationBuilder.class)
-public class AllowListConfiguration implements ConfigurationInfo {
+public class AllowListConfiguration {
    static final AttributeDefinition<Set<String>> CLASSES = AttributeDefinition.builder("classes", new HashSet<>(), (Class<Set<String>>) (Class<?>) Set.class)
          .initializer(HashSet::new).immutable().build();
    static final AttributeDefinition<List<String>> REGEXPS = AttributeDefinition.builder("regexps", new ArrayList<>(), (Class<List<String>>) (Class<?>) List.class)
          .initializer(ArrayList::new).immutable().build();
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ALLOW_LIST.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AllowListConfiguration.class, CLASSES, REGEXPS);
@@ -37,12 +30,6 @@ public class AllowListConfiguration implements ConfigurationInfo {
       this.classLoader = classLoader;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

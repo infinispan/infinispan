@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.Self;
 
 /**
@@ -10,5 +9,5 @@ import org.infinispan.commons.configuration.Self;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface StoreConfigurationBuilder<T extends StoreConfiguration, S extends StoreConfigurationBuilder<T, S>> extends Builder<T>, StoreConfigurationChildBuilder<S>, Self<S>, ConfigurationBuilderInfo {
+public interface StoreConfigurationBuilder<T extends StoreConfiguration, S extends StoreConfigurationBuilder<T, S>> extends Builder<T>, StoreConfigurationChildBuilder<S>, Self<S> {
 }

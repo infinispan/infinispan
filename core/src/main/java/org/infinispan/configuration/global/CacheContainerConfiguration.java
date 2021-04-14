@@ -1,21 +1,14 @@
 package org.infinispan.configuration.global;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Features;
-import org.infinispan.configuration.parsing.Element;
 
 /*
  * @since 10.0
  */
-class CacheContainerConfiguration implements ConfigurationInfo {
+class CacheContainerConfiguration {
 
    private static final String ZERO_CAPACITY_NODE_FEATURE = "zero-capacity-node";
 
@@ -37,8 +30,6 @@ class CacheContainerConfiguration implements ConfigurationInfo {
             NON_BLOCKING_EXECUTOR, BLOCKING_EXECUTOR);
    }
 
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.CACHE_CONTAINER.getLocalName());
-
    private final Attribute<String> defaultCache;
    private final Attribute<String> name;
    private final Attribute<Boolean> statistics;
@@ -54,7 +45,6 @@ class CacheContainerConfiguration implements ConfigurationInfo {
    private final GlobalStateConfiguration globalState;
    private final ShutdownConfiguration shutdown;
    private final AttributeSet attributes;
-   private final List<ConfigurationInfo> children;
 
    CacheContainerConfiguration(AttributeSet attributes,
                                ThreadsConfiguration threadsConfiguration,
@@ -80,17 +70,6 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       this.serialization = serialization;
       this.transport = transport;
       this.zeroCapacityAvailable = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE);
-      this.children = Arrays.asList(shutdown, transport, security, serialization, metrics, jmx, globalState);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return children;
    }
 
    public AttributeSet attributes() {

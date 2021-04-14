@@ -1,37 +1,25 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.persistence.jdbc.configuration.Element.STRING_KEYED_TABLE;
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 
-public class TableManipulationConfiguration implements ConfigurationInfo {
+public class TableManipulationConfiguration {
 
-   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder("tableNamePrefix", null, String.class).xmlName("prefix").immutable().build();
-   public static final AttributeDefinition<String> CACHE_NAME = AttributeDefinition.builder("cacheName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.PREFIX, null, String.class).immutable().build();
    // TODO remove in 10.0
-   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()).immutable().build();
-   public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
-   public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder("createOnStart", true).immutable().build();
-   public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder("dropOnExit", false).immutable().build();
+   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.BATCH_SIZE, AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()).immutable().build();
+   public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.FETCH_SIZE, TableManager.DEFAULT_FETCH_SIZE).immutable().build();
+   public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.CREATE_ON_START, true).immutable().build();
+   public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DROP_ON_EXIT, false).immutable().build();
 
    static AttributeSet attributeSet() {
-      return new AttributeSet(TableManipulationConfiguration.class, TABLE_NAME_PREFIX, CACHE_NAME, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
+      return new AttributeSet(TableManipulationConfiguration.class, TABLE_NAME_PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STRING_KEYED_TABLE.getLocalName());
-
    private final Attribute<String> tableNamePrefix;
-   private final Attribute<String> cacheName;
 
    private final Attribute<Integer> batchSize;
    private final Attribute<Integer> fetchSize;
@@ -43,7 +31,6 @@ public class TableManipulationConfiguration implements ConfigurationInfo {
    private final DataColumnConfiguration dataColumn;
    private final TimestampColumnConfiguration timeStamp;
    private final SegmentColumnConfiguration segmentColumn;
-   private List<ConfigurationInfo> subElements;
 
    TableManipulationConfiguration(AttributeSet attributes,
                                   IdColumnConfiguration idColumn,
@@ -52,7 +39,6 @@ public class TableManipulationConfiguration implements ConfigurationInfo {
                                   SegmentColumnConfiguration segmentColumn) {
       this.attributes = attributes.checkProtection();
       tableNamePrefix = attributes.attribute(TABLE_NAME_PREFIX);
-      cacheName = attributes.attribute(CACHE_NAME);
       batchSize = attributes.attribute(BATCH_SIZE);
       fetchSize = attributes.attribute(FETCH_SIZE);
       createOnStart = attributes.attribute(CREATE_ON_START);
@@ -61,17 +47,6 @@ public class TableManipulationConfiguration implements ConfigurationInfo {
       this.dataColumn = dataColumn;
       this.timeStamp = timestampColumn;
       this.segmentColumn = segmentColumn;
-      subElements = Arrays.asList(idColumn, dataColumn, timestampColumn, segmentColumn);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
    }
 
    public boolean createOnStart() {
@@ -92,10 +67,6 @@ public class TableManipulationConfiguration implements ConfigurationInfo {
 
    public String tableNamePrefix() {
       return tableNamePrefix.get();
-   }
-
-   public String cacheName() {
-      return cacheName.get();
    }
 
    public String dataColumnName() {

@@ -2,15 +2,11 @@ package org.infinispan.configuration.global;
 
 import java.util.Objects;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 
-public class ShutdownConfiguration implements ConfigurationInfo {
+public class ShutdownConfiguration {
    static final AttributeDefinition<ShutdownHookBehavior> HOOK_BEHAVIOR = AttributeDefinition.builder("shutdownHook", ShutdownHookBehavior.DEFAULT).immutable().build();
 
    private final AttributeSet attributes;
@@ -20,16 +16,9 @@ public class ShutdownConfiguration implements ConfigurationInfo {
       return new AttributeSet(ShutdownConfiguration.class, HOOK_BEHAVIOR);
    }
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SHUTDOWN.getLocalName(), false);
-
    ShutdownConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       hookBehavior = attributes.attribute(HOOK_BEHAVIOR);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public ShutdownHookBehavior hookBehavior() {

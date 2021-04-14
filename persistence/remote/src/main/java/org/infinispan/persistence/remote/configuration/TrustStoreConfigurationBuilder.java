@@ -7,28 +7,20 @@ import static org.infinispan.persistence.remote.configuration.TrustStoreConfigur
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @since 10.0
  */
-public class TrustStoreConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<TrustStoreConfiguration>, ConfigurationBuilderInfo {
+public class TrustStoreConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<TrustStoreConfiguration> {
    private static final Log log = LogFactory.getLog(TrustStoreConfigurationBuilder.class);
 
    protected TrustStoreConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, TrustStoreConfiguration.attributeDefinitionSet());
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return TrustStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    public TrustStoreConfigurationBuilder trustStoreFileName(String trustStoreFileName) {

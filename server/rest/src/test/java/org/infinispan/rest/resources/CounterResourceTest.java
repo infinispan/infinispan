@@ -13,7 +13,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -155,7 +154,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
 
    private void createCounter(String name, CounterConfiguration configuration) {
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(name, configuration);
-      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, new JsonWriter().toJSON(config));
+      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, counterConfigToJson(config));
       CompletionStage<RestResponse> response = client.counter(name).create(restEntity);
       assertThat(response).isOk();
    }

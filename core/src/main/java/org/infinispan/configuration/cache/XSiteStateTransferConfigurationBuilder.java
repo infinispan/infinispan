@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.CHUNK_SIZE;
-import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MODE;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
@@ -9,9 +8,7 @@ import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -21,7 +18,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 7.0
  */
 public class XSiteStateTransferConfigurationBuilder extends AbstractConfigurationChildBuilder
-      implements Builder<XSiteStateTransferConfiguration>, ConfigurationBuilderInfo {
+      implements Builder<XSiteStateTransferConfiguration> {
    private final BackupConfigurationBuilder backupConfigurationBuilder;
    private final AttributeSet attributes;
 
@@ -51,16 +48,6 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       if (mode == XSiteStateTransferMode.AUTO && backupConfigurationBuilder.strategy() == BackupConfiguration.BackupStrategy.SYNC) {
          throw CONFIG.autoXSiteStateTransferModeNotAvailableInSync();
       }
-   }
-
-   @Override
-   public ElementDefinition<XSiteStateTransferConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override

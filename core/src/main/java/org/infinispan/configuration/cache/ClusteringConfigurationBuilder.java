@@ -7,17 +7,11 @@ import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALID
 import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.partitionhandling.PartitionHandling;
 
@@ -28,13 +22,12 @@ import org.infinispan.partitionhandling.PartitionHandling;
  *
  */
 public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder implements
-      ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration>, ConfigurationBuilderInfo {
+      ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration> {
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
    private final PartitionHandlingConfigurationBuilder partitionHandlingConfigurationBuilder;
-   private final AttributeSet attributes;
-   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
+   final AttributeSet attributes;
 
    ClusteringConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -43,18 +36,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
       this.partitionHandlingConfigurationBuilder = new PartitionHandlingConfigurationBuilder(this);
-      this.subElements.addAll(Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder));
-   }
-
-   @Override
-   public ElementDefinition<? extends ConfigurationInfo> getElementDefinition() {
-      return ClusteringConfiguration.ELEMENT_DEFINITION;
-   }
-
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    /**
@@ -211,10 +192,4 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
             ", partitionHandlingConfigurationBuilder=" + partitionHandlingConfigurationBuilder +
             ", attributes=" + attributes + "]";
    }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
 }

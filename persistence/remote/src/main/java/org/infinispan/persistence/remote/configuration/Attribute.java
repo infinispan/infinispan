@@ -16,6 +16,7 @@ public enum Attribute {
    ASYNC_EXECUTOR("async-executor"),
    BALANCING_STRATEGY("balancing-strategy"),
    CONNECT_TIMEOUT("connect-timeout"),
+   ENABLED("enabled"),
    EXHAUSTED_ACTION("exhausted-action"),
    FACTORY("factory"),
    FORCE_RETURN_VALUES("force-return-values"),
@@ -61,8 +62,7 @@ public enum Attribute {
     * @deprecated Since 12.0, will be removed in 15.0
     */
    @Deprecated
-   VALUE_SIZE_ESTIMATE("value-size-estimate"),
-   ;
+   VALUE_SIZE_ESTIMATE("value-size-estimate");
 
    private final String name;
 
