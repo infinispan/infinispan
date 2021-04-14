@@ -39,16 +39,12 @@ import org.apache.directory.shared.kerberos.components.EncryptionKey;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
- * @since 10.0
+ * @since 12.1
  **/
-public class LdapServerRule implements TestRule {
+public class LdapServerListener implements InfinispanServerListener {
    public static final int KDC_PORT = 6088;
    public static final int LDAP_PORT = 10389;
    public static final int LDAPS_PORT = 10636;
@@ -57,49 +53,29 @@ public class LdapServerRule implements TestRule {
    public static final String REALM = "INFINISPAN.ORG";
 
    private final String initLDIF;
-   private final InfinispanServerRule infinispanServerRule;
    private DirectoryService directoryService;
    private LdapServer ldapServer;
    private KdcServer kdcServer;
    private boolean withKdc;
 
-   public LdapServerRule(InfinispanServerRule infinispanServerRule) {
-      this(infinispanServerRule, DEFAULT_LDIF, false);
+   public LdapServerListener() {
+      this(DEFAULT_LDIF, false);
    }
 
-   public LdapServerRule(InfinispanServerRule infinispanServerRule, String initLDIF, boolean withKdc) {
-      this.infinispanServerRule = infinispanServerRule;
+   public LdapServerListener(String initLDIF, boolean withKdc) {
       this.initLDIF = initLDIF;
       this.withKdc = withKdc;
-      if (withKdc) {
-         infinispanServerRule.registerConfigurationEnhancer(configDir -> {
-            generateKeyTab(new File(configDir, "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
-            generateKeyTab(new File(configDir, "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
-         });
-
-      }
    }
-
 
    @Override
-   public Statement apply(Statement base, Description description) {
-      return new Statement() {
-         @Override
-         public void evaluate() throws Throwable {
-            before();
-            try {
-               base.evaluate();
-            } finally {
-               after();
-            }
-         }
-      };
-   }
-
-   private void before() {
+   public void before(InfinispanServerDriver driver) {
       Exceptions.unchecked(() -> {
+         if (withKdc) {
+            generateKeyTab(new File(driver.getConfDir(), "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
+            generateKeyTab(new File(driver.getConfDir(), "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
+         }
          createDs();
-         createLdap();
+         createLdap(driver);
          ldapServer.start();
          if (withKdc) {
             createKdc();
@@ -108,7 +84,8 @@ public class LdapServerRule implements TestRule {
       });
    }
 
-   private void after() {
+   @Override
+   public void after(InfinispanServerDriver driver) {
       try {
          if (kdcServer != null) {
             kdcServer.stop();
@@ -124,6 +101,8 @@ public class LdapServerRule implements TestRule {
 
       // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
       ThreadLeakChecker.ignoreThreadsContaining("pool-.*thread-");
+      //
+      ThreadLeakChecker.ignoreThreadsContaining("^Thread-\\d+$");
    }
 
    @CreateDS(
@@ -154,7 +133,7 @@ public class LdapServerRule implements TestRule {
    }
 
    @CreateLdapServer(transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = "0.0.0.0")})
-   public void createLdap() throws Exception {
+   public void createLdap(InfinispanServerDriver driver) throws Exception {
 
       final SchemaManager schemaManager = directoryService.getSchemaManager();
 
@@ -167,7 +146,7 @@ public class LdapServerRule implements TestRule {
 
       final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
       ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
-      ldapServer.setKeystoreFile(infinispanServerRule.getServerDriver().getCertificateFile("server").getAbsolutePath());
+      ldapServer.setKeystoreFile(driver.getCertificateFile("server").getAbsolutePath());
       ldapServer.setCertificatePassword(AbstractInfinispanServerDriver.KEY_PASSWORD);
       Transport ldaps = new TcpTransport(LDAPS_PORT);
       ldaps.enableSSL(true);

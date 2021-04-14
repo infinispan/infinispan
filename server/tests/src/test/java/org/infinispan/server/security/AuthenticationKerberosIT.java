@@ -20,7 +20,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.LdapServerRule;
+import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -47,10 +47,8 @@ public class AuthenticationKerberosIT {
          InfinispanServerRuleBuilder.config("configuration/AuthenticationKerberosTest.xml")
                                     .numServers(1)
                                     .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+                                    .addListener(new LdapServerListener("ldif/infinispan-kerberos.ldif", true))
                                     .build();
-
-   @ClassRule
-   public static LdapServerRule LDAP = new LdapServerRule(SERVERS, "ldif/infinispan-kerberos.ldif", true);
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
