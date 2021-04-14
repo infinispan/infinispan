@@ -1,43 +1,31 @@
 package org.infinispan.server.configuration.security;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import java.security.KeyStore;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.server.Server;
+import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
-import org.infinispan.server.configuration.PasswordSerializer;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-public class CredentialStoreConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class).build();
-   static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).build();
-   static final AttributeDefinition<String> TYPE = AttributeDefinition.builder("type", "pkcs12", String.class).build();
-   static final AttributeDefinition<String> CREDENTIAL = AttributeDefinition.builder("credential", null, String.class).serializer(PasswordSerializer.INSTANCE).build();
-
-   private final AttributeSet attributes;
+public class CredentialStoreConfiguration extends ConfigurationElement<CredentialStoresConfiguration> {
+   public static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
+   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
+   public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
+   public static final AttributeDefinition<String> TYPE = AttributeDefinition.builder(Attribute.TYPE, "pkcs12", String.class).build();
+   public static final AttributeDefinition<String> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, String.class).autoPersist(false).build();
 
    static AttributeSet attributeDefinitionSet() {
+      KeyStore.getDefaultType();
       return new AttributeSet(CredentialStoreConfiguration.class, NAME, PATH, RELATIVE_TO, TYPE, CREDENTIAL);
    }
 
-   private static final ElementDefinition<CredentialStoreConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.CREDENTIAL_STORE.toString());
-
    CredentialStoreConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition<CredentialStoreConfiguration> getElementDefinition() {
-      return ELEMENT_DEFINITION;
+      super(Element.CREDENTIAL_STORE, attributes);
    }
 }

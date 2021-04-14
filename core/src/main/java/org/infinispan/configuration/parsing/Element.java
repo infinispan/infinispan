@@ -3,6 +3,8 @@ package org.infinispan.configuration.parsing;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.io.NamingStrategy;
+
 /**
  * An enumeration of all the recognized XML element local names, by name.
  *
@@ -140,7 +142,7 @@ public enum Element {
     }
 
     Element() {
-        this.name = name().toLowerCase().replace('_', '-');
+        this.name = NamingStrategy.KEBAB_CASE.convert(name()).toLowerCase();
     }
 
     /**

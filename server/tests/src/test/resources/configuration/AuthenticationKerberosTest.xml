@@ -18,6 +18,8 @@
 
       <xi:include href="security/ldap-with-kerberos.xml"/>
 
-      <xi:include href="endpoints/kerberos.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/kerberos.xml"/>
+      </endpoints>
    </server>
 </infinispan>

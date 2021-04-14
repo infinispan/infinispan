@@ -1,14 +1,11 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.ParseUtils;
 
-public class GlobalStatePathConfiguration implements ConfigurationInfo {
+public class GlobalStatePathConfiguration {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
          .initializer(() -> SecurityActions.getSystemProperty("user.dir"))
@@ -19,7 +16,6 @@ public class GlobalStatePathConfiguration implements ConfigurationInfo {
    private final Attribute<String> path;
    private final Attribute<String> relativeTo;
    private final String elementName;
-   private final ElementDefinition elementDefinition;
    private final String location;
 
    public static AttributeSet attributeDefinitionSet() {
@@ -34,15 +30,8 @@ public class GlobalStatePathConfiguration implements ConfigurationInfo {
       this.relativeTo = attributes.attribute(RELATIVE_TO);
       this.elementName = elementName;
       this.location = ParseUtils.resolvePath(path.get(), relativeTo.get());
-      this.elementDefinition = new DefaultElementDefinition<>(elementName);
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return elementDefinition;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

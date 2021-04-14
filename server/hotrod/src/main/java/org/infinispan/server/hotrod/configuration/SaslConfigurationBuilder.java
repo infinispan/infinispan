@@ -29,14 +29,8 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
 
    private Map<String, String> mechProperties = new HashMap<>();
 
-   private final PolicyConfigurationBuilder policy = new PolicyConfigurationBuilder(this);
-
    SaslConfigurationBuilder() {
       this.attributes = SaslConfiguration.attributeDefinitionSet();
-   }
-
-   public PolicyConfigurationBuilder policy() {
-      return policy;
    }
 
    public SaslConfigurationBuilder serverName(String name) {
@@ -61,6 +55,14 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       List<Strength> strengths = attribute.get();
       strengths.add(Strength.fromString(value));
       attribute.set(strengths);
+      return this;
+   }
+
+   public SaslConfigurationBuilder addPolicy(String value) {
+      Attribute<List<Policy>> attribute = attributes.attribute(SaslConfiguration.POLICY);
+      List<Policy> policies = attribute.get();
+      policies.add(Policy.fromString(value));
+      attribute.set(policies);
       return this;
    }
 
@@ -134,7 +136,7 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    @Override
    public SaslConfiguration create() {
       Map<String, String> mechProperties = getMechProperties();
-      return new SaslConfiguration(attributes.protect(), mechProperties, policy.create());
+      return new SaslConfiguration(attributes.protect(), mechProperties);
    }
 
    @Override

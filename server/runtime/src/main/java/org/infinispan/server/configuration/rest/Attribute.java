@@ -24,7 +24,10 @@ public enum Attribute {
    SECURITY_REALM,
    SERVER_PRINCIPAL,
    SOCKET_BINDING,
-   ;
+   ALLOWED_HEADERS,
+   ALLOWED_ORIGINS,
+   ALLOWED_METHODS,
+   EXPOSE_HEADERS;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

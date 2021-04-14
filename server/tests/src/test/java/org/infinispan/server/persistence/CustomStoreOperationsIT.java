@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -25,6 +26,7 @@ public class CustomStoreOperationsIT {
          InfinispanServerRuleBuilder.config("configuration/CustomStoreTest.xml")
                .numServers(1)
                .artifacts(artifacts())
+               .runMode(ServerRunMode.CONTAINER)
                .build();
 
    private static JavaArchive[] artifacts() {

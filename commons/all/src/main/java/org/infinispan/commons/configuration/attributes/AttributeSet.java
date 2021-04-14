@@ -2,6 +2,7 @@ package org.infinispan.commons.configuration.attributes;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -9,14 +10,16 @@ import java.util.Map;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 
 /**
- * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link AttributeDefinition}s.
- * AttributeSets are initially unprotected, which means that the contained attributes can be modified. If the {@link #protect()} method is invoked
- * then only attributes which are not {@link AttributeDefinition#isImmutable()} can be modified from then on.
+ * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link
+ * AttributeDefinition}s. AttributeSets are initially unprotected, which means that the contained attributes can be
+ * modified. If the {@link #protect()} method is invoked then only attributes which are not {@link
+ * AttributeDefinition#isImmutable()} can be modified from then on.
  *
  * @author Tristan Tarrant
  * @since 7.2
  */
 public class AttributeSet implements AttributeListener<Object>, Matchable<AttributeSet> {
+   public static final AttributeSet EMPTY = new AttributeSet(null, "", null, new AttributeDefinition[0]).protect();
    private final Class<?> klass;
    private final String name;
    private final Map<String, Attribute<?>> attributes;
@@ -70,6 +73,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    /**
     * Returns whether this attribute set contains the specified named attribute
+    *
     * @param name the name of the attribute
     */
    public boolean contains(String name) {
@@ -87,6 +91,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    /**
     * Returns the named attribute
+    *
     * @param name the name of the attribute to return
     * @return the attribute
     */
@@ -96,7 +101,18 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    }
 
    /**
+    * Returns the named attribute
+    *
+    * @param name the name of the attribute to return
+    * @return the attribute
+    */
+   public <T> Attribute<T> attribute(Enum<?> name) {
+      return attribute(name.toString());
+   }
+
+   /**
     * Returns the attribute identified by the supplied {@link AttributeDefinition}
+    *
     * @param def the attribute definition
     * @return the attribute
     */
@@ -136,7 +152,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       AttributeSet protectedSet = new AttributeSet(klass, name, null, attrDefs);
       for (Attribute<?> attribute : protectedSet.attributes.values()) {
          Attribute<?> localAttr = this.attributes.get(attribute.name());
-         attribute.read((Attribute)localAttr);
+         attribute.read((Attribute) localAttr);
          attribute.protect();
       }
       protectedSet.protect = true;
@@ -147,7 +163,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * Returns whether any attributes in this set have been modified
     */
    public boolean isModified() {
-      for(Attribute<?> attribute : attributes.values()) {
+      for (Attribute<?> attribute : attributes.values()) {
          if (attribute.isModified())
             return true;
       }
@@ -163,18 +179,20 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    /**
     * Writer a single attribute to the specified {@link ConfigurationWriter} using the attribute's xmlName
+    *
     * @param writer the writer
-    * @param def the Attribute definition
+    * @param def    the Attribute definition
     */
    public void write(ConfigurationWriter writer, AttributeDefinition<?> def) {
-      write(writer, def, def.xmlName());
+      write(writer, def, def.name());
    }
 
    /**
     * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name
+    *
     * @param writer the writer
-    * @param def the Attribute definition
-    * @param name the XML tag name for the attribute
+    * @param def    the Attribute definition
+    * @param name   the XML tag name for the attribute
     */
    public void write(ConfigurationWriter writer, AttributeDefinition<?> def, Enum<?> name) {
       write(writer, def, name.toString());
@@ -182,9 +200,10 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    /**
     * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name
+    *
     * @param writer the writer
-    * @param def the Attribute definition
-    * @param name the XML tag name for the attribute
+    * @param def    the Attribute definition
+    * @param name   the XML tag name for the attribute
     */
    public void write(ConfigurationWriter writer, AttributeDefinition<?> def, String name) {
       Attribute<?> attribute = attribute(def);
@@ -193,31 +212,38 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
 
    /**
-    * Writes this attributeset to the specified XMLStreamWriter as an element
+    * Writes this attributeset to the specified ConfigurationWriter as an element
+    *
     * @param writer
     */
-   public void write(ConfigurationWriter writer, String xmlElementName) {
+   public void write(ConfigurationWriter writer, String name) {
       if (isModified()) {
-         writer.writeStartElement(xmlElementName);
+         writer.writeStartElement(name);
          write(writer);
          writer.writeEndElement();
       }
    }
 
    /**
-    * Writes the specified attributes in this attributeset to the specified XMLStreamWriter as an element
+    * Writes this attributeset to the specified ConfigurationWriter as an element
+    *
     * @param writer
     */
-   public void write(ConfigurationWriter writer, String xmlElementName, AttributeDefinition<?>... defs) {
-      boolean skip = true;
-      for (AttributeDefinition def : defs) {
-         skip = skip && !attribute(def).isModified();
-      }
-      if (!skip) {
-         writer.writeStartElement(xmlElementName);
+   public void write(ConfigurationWriter writer, Enum<?> name) {
+      write(writer, name.toString());
+   }
+
+   /**
+    * Writes the specified attributes in this attributeset to the specified ConfigurationWriter as an element
+    *
+    * @param writer
+    */
+   public void write(ConfigurationWriter writer, String persistentName, AttributeDefinition<?>... defs) {
+      if (Arrays.stream(defs).anyMatch(def -> attribute(def).isModified())) {
+         writer.writeStartElement(persistentName);
          for (AttributeDefinition def : defs) {
             Attribute attr = attribute(def);
-            attr.write(writer, attr.getAttributeDefinition().xmlName());
+            attr.write(writer, attr.getAttributeDefinition().name());
          }
          writer.writeEndElement();
       }
@@ -225,12 +251,13 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    /**
     * Writes the attributes of this attributeset as part of the current element
+    *
     * @param writer
     */
    public void write(ConfigurationWriter writer) {
       for (Attribute<?> attr : attributes.values()) {
          if (attr.isPersistent())
-            attr.write(writer, attr.getAttributeDefinition().xmlName());
+            attr.write(writer, attr.getAttributeDefinition().name());
       }
    }
 

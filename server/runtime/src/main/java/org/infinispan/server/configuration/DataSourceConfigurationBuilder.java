@@ -43,7 +43,7 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
       return this;
    }
 
-   public DataSourceConfigurationBuilder password(String password) {
+   public DataSourceConfigurationBuilder password(char[] password) {
       attributes.attribute(DataSourceConfiguration.PASSWORD).set(password);
       return this;
    }

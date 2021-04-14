@@ -2,100 +2,115 @@ package org.infinispan.commons.configuration.io.json;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationWriter;
+import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
 public class JsonConfigurationWriter extends AbstractConfigurationWriter {
-   private boolean openTag;
    private boolean attributes;
+   private boolean openTag;
+   private final Deque<Json> json;
 
    public JsonConfigurationWriter(Writer writer, boolean prettyPrint) {
-      super(writer,2, prettyPrint, NamingStrategy.KEBAB_CASE);
+      super(writer, 2, prettyPrint, NamingStrategy.KEBAB_CASE);
+      json = new ArrayDeque<>();
    }
 
    @Override
    public void writeStartDocument() {
-      try {
-         writer.write('{');
-         nl();
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      json.push(Json.object());
    }
 
    @Override
    public void writeStartElement(String name) {
-      try {
-         if (attributes) {
-            writer.write(',');
-            nl();
-         }
-         tagStack.push(new Tag(name));
-         writeIndent();
-         writer.write('"');
-         writer.write(naming.convert(name));
-         writer.write("\": {");
-         openTag = true;
-         attributes = false;
-         nl();
-         indent();
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
+      writeStartElement(name, true);
+   }
+
+   private void writeStartElement(String name, boolean convert) {
+      if (convert) {
+         name = naming.convert(name);
       }
+      Tag parentTag = tagStack.peek();
+      tagStack.push(new Tag(name, false, true, true));
+      Json object = Json.object();
+      Json parent = json.peek();
+      if (parent.isArray()) {
+         parent.add(object);
+      } else if (parentTag != null && parentTag.isRepeating()) {
+         if (parent.has(name)) {
+            parent.at(name).add(object);
+         } else {
+            parent.set(name, Json.array(object));
+         }
+      } else {
+         parent.set(name, object);
+      }
+      json.push(object);
+      openTag = true;
+      attributes = false;
    }
 
    @Override
    public void writeStartElement(String prefix, String namespace, String name) {
-      writeStartElement((prefix == null ? "" : (prefix + ":")) + name);
+      writeStartElement(prefixName(prefix, namespace, name));
+   }
+
+   private String prefixName(String prefix, String namespace, String name) {
+      if (prefix == null) {
+         return name;
+      } else if (namespaces.containsKey(prefix)) {
+         return prefix + ":" + name;
+      } else {
+         return namespace + ":" + name;
+      }
+   }
+
+   @Override
+   public void writeStartArrayElement(String name) {
+      tagStack.push(new Tag(name, true, true, false));
+      Json array = Json.array();
+      json.peek().set(name, array);
+      json.push(array);
+      attributes = false;
+   }
+
+   @Override
+   public void writeEndArrayElement() {
+      tagStack.pop();
+      json.pop();
    }
 
    @Override
    public void writeStartListElement(String name, boolean explicit) {
-      try {
-         writer.write('[');
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      tagStack.push(new Tag(name, true, explicit, true));
+      Json array = Json.array();
+      json.peek().set(name, array);
+      json.push(array);
+      openTag = true;
+      attributes = false;
    }
 
    @Override
    public void writeStartListElement(String prefix, String namespace, String name, boolean explicit) {
-      writeStartListElement(prefixName(prefix, name), explicit);
-   }
-
-   private String prefixName(String prefix, String name) {
-      return (prefix == null ? "" : (prefix + ":")) + name;
+      writeStartListElement(prefixName(prefix, namespace, name), explicit);
    }
 
    @Override
    public void writeEndListElement() {
-      try {
-         writer.write(']');
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      tagStack.pop();
+      json.pop();
+      openTag = false;
    }
 
-   @Override
-   public void writeStartMapElement(String name) {
-   }
-
-   @Override
-   public void writeEndMapElement() {
-   }
-
-   @Override
-   public void writeStartMapEntry(String name, String key, String value) {
-
-   }
-
-   @Override
    public void writeNamespace(String prefix, String namespace) {
       if (!openTag) {
          throw new ConfigurationWriterException("Cannot set namespace without a started element");
@@ -111,82 +126,105 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeEndElement() {
-      try {
-         nl();
-         outdent();
-         writeIndent();
-         writer.write('}');
-         nl();
-         openTag = false;
-         attributes = false;
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      tagStack.pop();
+      json.pop();
+      openTag = false;
    }
 
    @Override
    public void writeEndDocument() {
       try {
-         writer.write('}');
-         nl();
+         Json json = this.json.pop();
+         writer.write(prettyPrint ? json.toPrettyString() : json.toString());
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
+   }
+
+   @Override
+   public void writeAttribute(String name, String[] values) {
+      Json parent = attributeParent();
+      Json array = Json.array();
+      for (String value : values) {
+         array.add(value);
+      }
+      parent.set(name, array);
+   }
+
+   private Json attributeParent() {
+      attributes = true;
+      Json parent = json.peek();
+      if (parent.isArray()) { // Replace the array with an object
+         json.pop();
+         parent = json.peek().replace(parent, Json.object());
+         json.push(parent);
+      }
+      return parent;
    }
 
    @Override
    public void writeAttribute(String name, String value) {
-      try {
-         openTag = false;
-         if (!attributes) {
-            attributes = true;
-         } else {
-            writer.write(',');
-            nl();
-         }
-         writeIndent();
-         writer.write('"');
-         writer.write(name);
-         writer.write("\": \"");
-         writer.write(value);
-         writer.write('"');
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      Json parent = attributeParent();
+      parent.set(name, value);
+   }
 
+   @Override
+   public void writeAttribute(String name, boolean value) {
+      Json parent = attributeParent();
+      parent.set(name, value);
+   }
+
+   @Override
+   public void writeArrayElement(String outer, String inner, String attribute, Iterable<String> values) {
+      Json array = Json.array();
+      values.forEach(array::add);
+      json.peek().set(outer, array);
    }
 
    @Override
    public void writeCharacters(String chars) {
-      try {
-         if (attributes) {
-            writeAttribute("value", chars);
-         } else {
-            writer.write(": \"");
-            writer.write(chars);
-            writer.write('"');
-            nl();
-         }
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      //json.peek().add(chars);
    }
 
    @Override
    public void writeEmptyElement(String name) {
-      writeStartElement(name);
-      writeCharacters("");
-      writeEndElement();
+      json.peek().set(name, null);
    }
 
    @Override
    public void writeComment(String comment) {
-      try {
-         writer.write("# ");
-         writer.write(comment);
-         nl();
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      // Comments are unsupported in JSON
+   }
+
+   @Override
+   public void writeStartMap(String name) {
+      writeStartElement(name);
+   }
+
+   @Override
+   public void writeMapItem(String element, String name, String key, String value) {
+      json.peek().set(key, value);
+   }
+
+   @Override
+   public void writeMapItem(String element, String name, String key) {
+      writeStartElement(key, false);
+      writeStartElement(element);
+   }
+
+   @Override
+   public void writeEndMapItem() {
+      writeEndElement();
+      writeEndElement();
+   }
+
+   @Override
+   public void writeEndMap() {
+      writeEndElement();
+   }
+
+   @Override
+   public boolean hasFeature(ConfigurationFormatFeature feature) {
+      return false;
    }
 }

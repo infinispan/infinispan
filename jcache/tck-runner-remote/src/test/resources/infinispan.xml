@@ -1,9 +1,9 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
-                            urn:infinispan:server:12.1 https://infinispan.org/schemas/infinispan-server-12.1.xsd"
-        xmlns="urn:infinispan:config:12.1"
-        xmlns:server="urn:infinispan:server:12.1">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                            urn:infinispan:server:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-server-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+      xmlns:server="urn:infinispan:server:${infinispan.core.schema.version}">
 
     <jgroups>
         <stack name="test-tcp" extends="tcp">
@@ -22,7 +22,7 @@
         </serialization>
     </cache-container>
 
-    <server xmlns="urn:infinispan:server:12.1">
+    <server xmlns="urn:infinispan:server:${infinispan.core.schema.version}">
         <interfaces>
             <interface name="public">
                 <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
@@ -34,9 +34,6 @@
             <socket-binding name="memcached" port="11221"/>
         </socket-bindings>
 
-        <endpoints socket-binding="default">
-            <hotrod-connector name="hotrod"/>
-            <rest-connector name="rest"/>
-        </endpoints>
+        <endpoints socket-binding="default" />
     </server>
 </infinispan>

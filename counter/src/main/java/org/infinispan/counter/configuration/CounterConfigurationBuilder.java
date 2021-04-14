@@ -1,7 +1,6 @@
 package org.infinispan.counter.configuration;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.counter.api.Storage;
 
@@ -14,7 +13,7 @@ import org.infinispan.counter.api.Storage;
  * @since 9.0
  */
 public interface CounterConfigurationBuilder<T extends AbstractCounterConfiguration, S extends CounterConfigurationBuilder<T, S>>
-      extends Builder<T>, Self<S>, ConfigurationBuilderInfo {
+      extends Builder<T>, Self<S> {
 
    /**
     * Sets the counter's name.
@@ -24,6 +23,8 @@ public interface CounterConfigurationBuilder<T extends AbstractCounterConfigurat
     * @param name the counter's name.
     */
    S name(String name);
+
+   String name();
 
    /**
     * Sets the counter's initial value.

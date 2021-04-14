@@ -18,6 +18,8 @@
 
       <xi:include href="security/keycloak-oauth2.xml"/>
 
-      <xi:include href="endpoints/oauth.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/oauth.xml"/>
+      </endpoints>
    </server>
 </infinispan>

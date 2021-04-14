@@ -215,7 +215,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <local-cache name=\"default\">\n" +
             "      <persistence >\n" +
             "         <store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" >\n" +
-            "            <property name=\"fetchPersistentState\">true</property>" +
+            "            <property name=\"fetchState\">true</property>" +
             "         </store >\n" +
             "      </persistence >\n" +
             "   </local-cache>\n" +
@@ -279,6 +279,18 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       parseStringConfiguration(config);
    }
 
+   public void testNoCacheName() {
+      String config =
+         "<local-cache>\n" +
+         "   <expiration interval=\"10500\" lifespan=\"11\" max-idle=\"11\"/>\n" +
+         "</local-cache>";
+      ConfigurationBuilderHolder holder = parseStringConfiguration(config);
+      Configuration configuration = holder.getCurrentConfigurationBuilder().build();
+      assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
+      assertEquals(10500, configuration.expiration().wakeUpInterval());
+      assertEquals(11, configuration.expiration().lifespan());
+      assertEquals(11, configuration.expiration().maxIdle());
+   }
 
    public void testWildcards() throws IOException {
       String config = TestingUtil.wrapXMLWithSchema(

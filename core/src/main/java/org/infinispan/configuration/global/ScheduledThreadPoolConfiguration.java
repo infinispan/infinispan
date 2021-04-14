@@ -1,14 +1,10 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 
-class ScheduledThreadPoolConfiguration implements ConfigurationInfo {
+class ScheduledThreadPoolConfiguration {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<String> THREAD_FACTORY = AttributeDefinition.builder("threadFactory", null, String.class).build();
 
@@ -20,17 +16,10 @@ class ScheduledThreadPoolConfiguration implements ConfigurationInfo {
       return new AttributeSet(ScheduledThreadPoolConfiguration.class, NAME, THREAD_FACTORY);
    }
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SCHEDULED_THREAD_POOL.getLocalName());
-
    ScheduledThreadPoolConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.name = attributes.attribute(NAME);
       this.threadFactory = attributes.attribute(THREAD_FACTORY);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public AttributeSet attributes() {

@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
@@ -18,21 +19,27 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.apache.logging.log4j.core.util.StringBuilderWriter;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.counter.configuration.AbstractCounterConfiguration;
+import org.infinispan.counter.configuration.CounterConfigurationSerializer;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -241,5 +248,21 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       }
       restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
       return clientConfigurationBuilder;
+   }
+
+   public static String cacheConfigToJson(String name, Configuration configuration) {
+      StringBuilderWriter sw = new StringBuilderWriter();
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(false).build()) {
+         new ParserRegistry().serialize(w, name, configuration);
+      }
+      return sw.toString();
+   }
+
+   public static String counterConfigToJson(AbstractCounterConfiguration config) {
+      org.infinispan.commons.io.StringBuilderWriter sw = new org.infinispan.commons.io.StringBuilderWriter();
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+         new CounterConfigurationSerializer().serializeConfiguration(w, config);
+      }
+      return sw.toString();
    }
 }

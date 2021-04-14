@@ -1,17 +1,10 @@
 package org.infinispan.configuration.global;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 
@@ -22,14 +15,12 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class GlobalStateConfiguration implements ConfigurationInfo {
+public class GlobalStateConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalStateConfiguration.class, ENABLED);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.GLOBAL_STATE.getLocalName());
 
    private final AttributeSet attributes;
    private final Attribute<Boolean> enabled;
@@ -37,7 +28,6 @@ public class GlobalStateConfiguration implements ConfigurationInfo {
    private final GlobalStatePathConfiguration sharedPersistenceLocationConfiguration;
    private final TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration;
    private final GlobalStorageConfiguration globalStorageConfiguration;
-   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    public GlobalStateConfiguration(AttributeSet attributes,
                                    GlobalStatePathConfiguration persistenceLocationConfiguration,
@@ -50,17 +40,6 @@ public class GlobalStateConfiguration implements ConfigurationInfo {
       this.sharedPersistenceLocationConfiguration = sharedPersistenceLocationConfiguration;
       this.temporaryLocationConfiguration = temporaryLocationConfiguration;
       this.globalStorageConfiguration = globalStorageConfiguration;
-      this.subElements.addAll(Arrays.asList(persistenceLocationConfiguration, sharedPersistenceLocationConfiguration, temporaryLocationConfiguration, globalStorageConfiguration));
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {

@@ -6,9 +6,7 @@ import static org.infinispan.configuration.cache.GroupsConfiguration.GROUPERS;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
@@ -18,7 +16,7 @@ import org.infinispan.distribution.group.Grouper;
  * @author pmuir
  *
  */
-public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<GroupsConfiguration>, ConfigurationBuilderInfo {
+public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<GroupsConfiguration> {
 
    private final AttributeSet attributes;
 
@@ -29,11 +27,6 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
 
    public boolean isEnabled() {
       return attributes.attribute(ENABLED).get();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return GroupsConfiguration.ELEMENT_DEFINTION;
    }
 
    /**
@@ -114,10 +107,5 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
    @Override
    public String toString() {
       return "GroupsConfigurationBuilder [attributes=" + attributes + "]";
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 }

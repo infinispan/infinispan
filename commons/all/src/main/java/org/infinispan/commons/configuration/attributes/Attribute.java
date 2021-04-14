@@ -8,21 +8,21 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.util.Util;
 
 /**
- * Attribute. This class implements a configuration attribute value holder. A configuration attribute is defined by an {@link AttributeDefinition}.
- * An attribute contains an optional value (or defers to its AttributeDefinition for the default value). It is possible to determine whether
- * a value has been changed with respect to its initial value. An Attribute remains modifiable until it is protected. At which point it can only
- * be modified if its AttributeDefinition allows it to be mutable. Additionally it is possible to register listeners when values change so that
- * code can react to these changes.
+ * Attribute. This class implements a configuration attribute value holder. A configuration attribute is defined by an
+ * {@link AttributeDefinition}. An attribute contains an optional value (or defers to its AttributeDefinition for the
+ * default value). It is possible to determine whether a value has been changed with respect to its initial value. An
+ * Attribute remains modifiable until it is protected. At which point it can only be modified if its AttributeDefinition
+ * allows it to be mutable. Additionally it is possible to register listeners when values change so that code can react
+ * to these changes.
  *
  * @author Tristan Tarrant
  * @since 7.2
  */
 public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
    private final AttributeDefinition<T> definition;
-   protected T value;
+   private T value;
    private boolean protect;
    private boolean modified;
    private List<AttributeListener<T>> listeners;
@@ -38,6 +38,10 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
 
    public T get() {
       return value;
+   }
+
+   public T orElse(T other) {
+      return modified ? value : other;
    }
 
    public T getInitialValue() {
@@ -93,8 +97,8 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       return modified;
    }
 
-   public <K> K asObject() {
-      return (K) value;
+   public boolean isRepeated() {
+      return definition.isRepeated();
    }
 
    public void addListener(AttributeListener<T> listener) {
@@ -113,14 +117,6 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       }
    }
 
-   T getValue() {
-      return value;
-   }
-
-   void setValue(T value) {
-      this.value = value;
-   }
-
    public boolean isNull() {
       return value == null;
    }
@@ -129,16 +125,8 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       return protect;
    }
 
-   void setProtect(boolean protect) {
-      this.protect = protect;
-   }
-
    public AttributeDefinition<T> getAttributeDefinition() {
       return definition;
-   }
-
-   void setModified(boolean modified) {
-      this.modified = modified;
    }
 
    private void fireValueChanged(T oldValue) {
@@ -206,9 +194,10 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
 
    /**
     * Compares this attribute to another attribute taking into account the {@link AttributeDefinition#isGlobal()} flag.
-    * If the attribute is global, then this method will return true only if the values are identical.
-    * If the attribute is local, then this method will return true even if the values don't match.
-    * Essentially, this method only ensures that the attribute definitions are equals.
+    * If the attribute is global, then this method will return true only if the values are identical. If the attribute
+    * is local, then this method will return true even if the values don't match. Essentially, this method only ensures
+    * that the attribute definitions are equals.
+    *
     * @param other
     * @return
     */
@@ -242,16 +231,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
 
    void write(ConfigurationWriter writer, String name) {
       if (modified && value != null) {
-         Class<?> klass = value.getClass();
-         if (klass == Class.class) {
-            writer.writeAttribute(name, ((Class<?>) value).getName());
-         } else if (klass.isEnum()) {
-            writer.writeAttribute(name, value.toString());
-         } else if (Util.isBasicType(klass)) {
-            writer.writeAttribute(name, value.toString());
-         } else {
-            writer.writeAttribute(name, klass.getName());
-         }
+         definition.serializer().serialize(writer, name, value);
       }
    }
 }

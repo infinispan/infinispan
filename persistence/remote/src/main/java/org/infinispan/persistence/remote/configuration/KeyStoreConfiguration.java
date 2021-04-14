@@ -1,26 +1,20 @@
 package org.infinispan.persistence.remote.configuration;
 
-import static org.infinispan.persistence.remote.configuration.Element.KEYSTORE;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 
 /**
  * @since 10.0
  */
-public class KeyStoreConfiguration implements ConfigurationInfo {
+public class KeyStoreConfiguration {
 
-   static final AttributeDefinition<String> KEYSTORE_FILENAME = AttributeDefinition.builder("keyStoreFilename", null, String.class).xmlName(org.infinispan.persistence.remote.configuration.Attribute.FILENAME.getLocalName()).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> KEYSTORE_TYPE = AttributeDefinition.builder("keyStoreType", "JKS", String.class).immutable().autoPersist(false).xmlName(org.infinispan.persistence.remote.configuration.Attribute.TYPE.getLocalName()).build();
-   static final AttributeDefinition<String> KEYSTORE_PASSWORD = AttributeDefinition.builder("keyStorePassword", null, String.class).xmlName(org.infinispan.persistence.remote.configuration.Attribute.PASSWORD.getLocalName()).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> KEYSTORE_CERTIFICATE_PASSWORD = AttributeDefinition.builder("keyStoreCertificatePassword", null, String.class).immutable().xmlName(org.infinispan.persistence.remote.configuration.Attribute.CERTIFICATE_PASSWORD.getLocalName()).autoPersist(false).build();
-   static final AttributeDefinition<String> KEY_ALIAS = AttributeDefinition.builder("keyAlias", null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_FILENAME = AttributeDefinition.builder(Attribute.FILENAME, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_TYPE = AttributeDefinition.builder(Attribute.TYPE, "JKS", String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_CERTIFICATE_PASSWORD = AttributeDefinition.builder(Attribute.CERTIFICATE_PASSWORD, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEY_ALIAS = AttributeDefinition.builder(Attribute.KEY_ALIAS, null, String.class).immutable().autoPersist(false).build();
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(KEYSTORE.getLocalName());
    private final AttributeSet attributes;
 
    static AttributeSet attributeDefinitionSet() {
@@ -29,11 +23,6 @@ public class KeyStoreConfiguration implements ConfigurationInfo {
 
    KeyStoreConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public AttributeSet attributes() {

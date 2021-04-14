@@ -10,6 +10,9 @@ package org.infinispan.commons.util;
 public final class GlobUtils {
 
    public static boolean isGlob(String s) {
+      if (s == null) {
+         return false;
+      }
       for(int i = 0; i < s.length(); i++) {
          char ch = s.charAt(i);
          if (ch == '*' || ch == '?') {

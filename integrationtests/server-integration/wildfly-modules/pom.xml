@@ -15,7 +15,7 @@
 
    <properties>
       <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
-      <ispn.config.file>${basedir}/../server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
+      <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
       <jvm.x64.args />

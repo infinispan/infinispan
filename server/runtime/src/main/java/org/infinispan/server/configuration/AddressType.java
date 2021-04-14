@@ -4,18 +4,29 @@ package org.infinispan.server.configuration;
  * @since 10.0
  */
 public enum AddressType {
-   ANY_ADDRESS,
-   INET_ADDRESS,
-   LINK_LOCAL,
-   GLOBAL,
-   LOOPBACK,
-   NON_LOOPBACK,
-   SITE_LOCAL,
-   MATCH_INTERFACE,
-   MATCH_ADDRESS,
-   MATCH_HOST;
+   ANY_ADDRESS(false),
+   INET_ADDRESS(true),
+   LINK_LOCAL(false),
+   GLOBAL(false),
+   LOOPBACK(false),
+   NON_LOOPBACK(false),
+   SITE_LOCAL(false),
+   MATCH_INTERFACE(true),
+   MATCH_ADDRESS(true),
+   MATCH_HOST(true);
 
-   public String displayName() {
-      return this.toString().replaceAll("_", "-").toLowerCase();
+   final boolean value;
+
+   AddressType(boolean value) {
+      this.value = value;
+   }
+
+   public boolean hasValue() {
+      return value;
+   }
+
+   @Override
+   public String toString() {
+      return name().toLowerCase();
    }
 }

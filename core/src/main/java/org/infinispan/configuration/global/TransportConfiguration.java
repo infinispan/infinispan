@@ -2,17 +2,13 @@ package org.infinispan.configuration.global;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.parsing.Element;
 import org.infinispan.remoting.transport.Transport;
 
-public class TransportConfiguration implements ConfigurationInfo {
+public class TransportConfiguration {
    public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("cluster", "ISPN")
          .immutable().build();
    public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machine", null, String.class)
@@ -37,8 +33,6 @@ public class TransportConfiguration implements ConfigurationInfo {
       return new AttributeSet(TransportConfiguration.class, CLUSTER_NAME, MACHINE_ID, RACK_ID, SITE_ID, NODE_NAME,
             DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, STACK, TRANSPORT_EXECUTOR, REMOTE_EXECUTOR);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TRANSPORT.getLocalName());
 
    private final Attribute<String> clusterName;
    private final Attribute<String> stack;
@@ -74,11 +68,6 @@ public class TransportConfiguration implements ConfigurationInfo {
       initialClusterSize = attributes.attribute(INITIAL_CLUSTER_SIZE);
       initialClusterTimeout = attributes.attribute(INITIAL_CLUSTER_TIMEOUT);
       nodeName = attributes.attribute(NODE_NAME);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public String clusterName() {

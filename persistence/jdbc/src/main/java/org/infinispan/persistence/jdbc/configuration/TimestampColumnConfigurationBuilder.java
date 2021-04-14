@@ -4,26 +4,14 @@ import static org.infinispan.persistence.jdbc.configuration.TimestampColumnConfi
 import static org.infinispan.persistence.jdbc.configuration.TimestampColumnConfiguration.TIMESTAMP_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class TimestampColumnConfigurationBuilder implements Builder<TimestampColumnConfiguration>, ConfigurationBuilderInfo {
+public class TimestampColumnConfigurationBuilder implements Builder<TimestampColumnConfiguration> {
 
    private final AttributeSet attributes;
 
    TimestampColumnConfigurationBuilder() {
       attributes = TimestampColumnConfiguration.attributeSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return TimestampColumnConfiguration.ELEMENT_DEFINITION;
    }
 
    public TimestampColumnConfigurationBuilder dataColumnName(String dataColumnName) {

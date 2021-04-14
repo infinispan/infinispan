@@ -35,6 +35,8 @@ public enum NamingStrategy {
             if (i > 0 && isWordBoundary(c, s.charAt(i - 1))) {
                b.append('-');
                b.append(Character.toLowerCase(c));
+            } else if (c == '_') {
+               b.append('-');
             } else {
                b.append(c);
             }
@@ -51,6 +53,8 @@ public enum NamingStrategy {
             if (i > 0 && isWordBoundary(c, s.charAt(i - 1))) {
                b.append('_');
                b.append(Character.toLowerCase(c));
+            } else if (c == '-') {
+               b.append('_');
             } else {
                b.append(c);
             }

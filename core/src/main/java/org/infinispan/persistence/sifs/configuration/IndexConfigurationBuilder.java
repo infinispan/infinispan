@@ -7,16 +7,14 @@ import static org.infinispan.persistence.sifs.configuration.IndexConfiguration.M
 import static org.infinispan.persistence.sifs.configuration.IndexConfiguration.MIN_NODE_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.sifs.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * @since 10.0
  */
-public class IndexConfigurationBuilder implements Builder<IndexConfiguration>, ConfigurationBuilderInfo {
+public class IndexConfigurationBuilder implements Builder<IndexConfiguration> {
 
    private static final Log log = LogFactory.getLog(IndexConfigurationBuilder.class, Log.class);
 
@@ -26,12 +24,6 @@ public class IndexConfigurationBuilder implements Builder<IndexConfiguration>, C
       this.attributes = IndexConfiguration.attributeDefinitionSet();
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return IndexConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

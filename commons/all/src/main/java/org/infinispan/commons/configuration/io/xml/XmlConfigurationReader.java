@@ -6,16 +6,21 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationReaderException;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.Location;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
+import org.infinispan.commons.util.SimpleImmutableEntry;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -97,7 +102,7 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
       try {
          int event = token < 0 ? state.parser.next() : token;
          token = -1;
-         for(;;) {
+         for (; ; ) {
             if (event == XmlPullParser.START_TAG && XINCLUDE.equals(getLocalName()) && XINCLUDE_NS.equals(getNamespace())) {
                event = include();
             } else if (event == XmlPullParser.END_TAG && XINCLUDE.equals(getLocalName()) && XINCLUDE_NS.equals(getNamespace())) {
@@ -167,8 +172,8 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
    }
 
    @Override
-   public String getAttributeValue(String localName) {
-      String value = state.parser.getAttributeValue(null, localName);
+   public String getAttributeValue(String localName, NamingStrategy strategy) {
+      String value = state.parser.getAttributeValue(null, strategy.convert(localName));
       return replaceProperties(value);
    }
 
@@ -189,6 +194,31 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
    @Override
    public String getAttributeNamespace(int index) {
       return state.parser.getAttributeNamespace(index);
+   }
+
+   @Override
+   public Map.Entry<String, String> getMapItem(String nameAttribute) {
+      String type = getLocalName();
+      String name = getAttributeValue(nameAttribute);
+      return new SimpleImmutableEntry<>(name, type);
+   }
+
+   @Override
+   public void endMapItem() {
+      // Do nothing
+   }
+
+   @Override
+   public String[] readArray(String outer, String inner) {
+      List<String> list = new ArrayList<>();
+      while (inTag(outer)) {
+         if (inner.equals(getLocalName())) {
+            list.add(getElementText());
+         } else {
+            throw new ConfigurationReaderException(getLocalName(), getLocation());
+         }
+      }
+      return list.toArray(new String[0]);
    }
 
    private int include() {
@@ -226,7 +256,17 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
    }
 
    @Override
-   public void close() throws Exception {
+   public boolean hasFeature(ConfigurationFormatFeature feature) {
+      switch (feature) {
+         case MIXED_ELEMENTS:
+            return true;
+         default:
+            return false;
+      }
+   }
+
+   @Override
+   public void close() {
       Util.close(state.reader);
    }
 

@@ -18,6 +18,8 @@
 
       <xi:include href="security/ldap.xml"/>
 
-      <xi:include href="endpoints/auth-explicit.xml"/>
+      <endpoints>
+         <xi:include href="endpoints/auth-explicit.xml"/>
+      </endpoints>
    </server>
 </infinispan>

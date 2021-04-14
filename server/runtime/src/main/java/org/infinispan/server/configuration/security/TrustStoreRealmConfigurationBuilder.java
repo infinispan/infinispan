@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.KeyStore;
+import java.util.Properties;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -36,7 +37,7 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
    public void validate() {
    }
 
-   public TrustStoreRealmConfigurationBuilder build() {
+   public TrustStoreRealmConfigurationBuilder build(Properties properties) {
       if (trustManagerFactory == null) {
          SSLContextBuilder sslContextBuilder = securityRealmBuilder.sslContextBuilder();
          if (sslContextBuilder == null) {
@@ -44,7 +45,7 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
          }
          String name = attributes.attribute(TrustStoreRealmConfiguration.NAME).get();
          try {
-            KeyStore keyStore = securityRealmBuilder.serverIdentitiesConfiguration().sslConfiguration().trustStore().trustStore();
+            KeyStore keyStore = securityRealmBuilder.serverIdentitiesConfiguration().sslConfiguration().trustStore().trustStore(properties);
             trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(keyStore);
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {

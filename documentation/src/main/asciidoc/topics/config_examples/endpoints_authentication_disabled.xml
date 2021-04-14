@@ -1,4 +1,1 @@
-<endpoints socket-binding="default">
-  <hotrod-connector name="hotrod"/>
-  <rest-connector name="rest"/>
-</endpoints>
+<endpoints socket-binding="default" />

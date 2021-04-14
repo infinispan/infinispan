@@ -128,8 +128,11 @@ public class Create extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
          Json counterBody = Json.object()
                .set("initial-value", initialValue)
-               .set("concurrency-level", concurrencyLevel)
-               .set("storage", storage);
+               .set("storage", storage)
+               .set("name", name);
+         if ("weak".equals(type)) {
+            counterBody.set("concurrency-level", concurrencyLevel);
+         }
          if (upperBound != null) {
             counterBody.set("upper-bound", upperBound);
          }

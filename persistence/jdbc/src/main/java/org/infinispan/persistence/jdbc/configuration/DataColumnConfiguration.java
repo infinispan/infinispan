@@ -1,23 +1,16 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.persistence.jdbc.configuration.Element.DATA_COLUMN;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class DataColumnConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder("dataColumnName", null, String.class).xmlName("name").immutable().build();
-   public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().xmlName("type").build();
+public class DataColumnConfiguration {
+   public static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.NAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.TYPE, null, String.class).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(DataColumnConfiguration.class, DATA_COLUMN_NAME, DATA_COLUMN_TYPE);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(DATA_COLUMN.getLocalName());
 
    private final Attribute<String> dataColumnName;
    private final Attribute<String> dataColumnType;
@@ -30,12 +23,6 @@ public class DataColumnConfiguration implements ConfigurationInfo {
       this.attributes = attributes;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

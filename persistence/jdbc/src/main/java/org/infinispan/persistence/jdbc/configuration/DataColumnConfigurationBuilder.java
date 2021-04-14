@@ -4,26 +4,14 @@ import static org.infinispan.persistence.jdbc.configuration.DataColumnConfigurat
 import static org.infinispan.persistence.jdbc.configuration.DataColumnConfiguration.DATA_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class DataColumnConfigurationBuilder implements Builder<DataColumnConfiguration>, ConfigurationBuilderInfo {
+public class DataColumnConfigurationBuilder implements Builder<DataColumnConfiguration> {
 
    private final AttributeSet attributes;
 
    DataColumnConfigurationBuilder() {
       attributes = DataColumnConfiguration.attributeSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return DataColumnConfiguration.ELEMENT_DEFINITION;
    }
 
    public DataColumnConfigurationBuilder dataColumnName(String dataColumnName) {

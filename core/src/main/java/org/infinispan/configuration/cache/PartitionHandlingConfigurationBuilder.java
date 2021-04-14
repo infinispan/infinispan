@@ -5,9 +5,7 @@ import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -18,17 +16,12 @@ import org.infinispan.partitionhandling.PartitionHandling;
  * @author Mircea Markus
  * @since 7.0
  */
-public class PartitionHandlingConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<PartitionHandlingConfiguration>, ConfigurationBuilderInfo {
+public class PartitionHandlingConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<PartitionHandlingConfiguration> {
    private final AttributeSet attributes;
 
    public PartitionHandlingConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
       attributes = PartitionHandlingConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return PartitionHandlingConfiguration.ELEMENT_DEFINITION;
    }
 
    PartitionHandling whenSplit() {
@@ -66,10 +59,7 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
       return this;
    }
 
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }
-
-
 }

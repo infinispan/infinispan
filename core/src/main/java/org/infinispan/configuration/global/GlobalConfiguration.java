@@ -1,15 +1,11 @@
 package org.infinispan.configuration.global;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.Version;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -34,7 +30,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public class GlobalConfiguration implements ConfigurationInfo {
+public class GlobalConfiguration {
 
    /**
     * Default replication version, from {@link org.infinispan.commons.util.Version#getVersionShort}.
@@ -50,10 +46,6 @@ public class GlobalConfiguration implements ConfigurationInfo {
    private final CacheContainerConfiguration cacheContainerConfiguration;
    private final Features features;
 
-   private static ElementDefinition<GlobalConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>("infinispan");
-
-   private List<ConfigurationInfo> subElements;
-
    GlobalConfiguration(CacheContainerConfiguration cacheContainerConfiguration,
                        List<?> modules, SiteConfiguration site,
                        ClassLoader cl, Features features) {
@@ -66,19 +58,6 @@ public class GlobalConfiguration implements ConfigurationInfo {
       this.site = site;
       this.cl = cl;
       this.features = features;
-      JGroupsConfiguration jgroupsConfiguration = cacheContainerConfiguration.transport().jgroups();
-      ThreadsConfiguration threads = cacheContainerConfiguration.threads();
-      this.subElements = Arrays.asList(jgroupsConfiguration, threads, cacheContainerConfiguration);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
    }
 
    CacheContainerConfiguration cacheContainer() {

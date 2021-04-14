@@ -1,24 +1,17 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 
-import static org.infinispan.persistence.jdbc.configuration.Element.SEGMENT_COLUMN;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 
-public class SegmentColumnConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder("segmentColumnName", null, String.class).xmlName("name").immutable().build();
-   public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder("segmentColumnType", null, String.class).xmlName("type").immutable().build();
+public class SegmentColumnConfiguration {
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.NAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.TYPE, null, String.class).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(SegmentColumnConfiguration.class, SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SEGMENT_COLUMN.getLocalName());
 
    private final Attribute<String> segmentColumnName;
    private final Attribute<String> segmentColumnType;
@@ -31,12 +24,6 @@ public class SegmentColumnConfiguration implements ConfigurationInfo {
       segmentColumnType = attributes.attribute(SEGMENT_COLUMN_TYPE);
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

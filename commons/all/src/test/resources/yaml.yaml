@@ -18,3 +18,8 @@ item1:
   item7:
     - v7
     - v8
+  item8:
+    - a: 1
+      b: 2
+    - a: 3
+      b: 4

@@ -1,25 +1,26 @@
 package org.infinispan.configuration.serializer;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
-import org.infinispan.commons.configuration.JsonReader;
-import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -32,28 +33,67 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
-   @Test(dataProvider = "configurationFiles")
-   public void configurationSerializationTest(Path config) throws Exception {
+   public static List<MediaType> ALL = Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON);
+   public static List<MediaType> XML = Arrays.asList(MediaType.APPLICATION_XML);
+
+   public static class Parameter {
+      final Path config;
+      final MediaType mediaType;
+      final ParserRegistry registry;
+
+      public Parameter(Path config, MediaType mediaType, ParserRegistry registry) {
+         this.config = config;
+         this.mediaType = mediaType;
+         this.registry = registry;
+      }
+
+      public String toString() {
+         return config.subpath(config.getNameCount() - 3, config.getNameCount()) + " (" + mediaType.getSubType().toUpperCase() + ")";
+      }
+   }
+
+   @DataProvider(name = "configurationFiles")
+   public Object[][] configurationFiles() throws Exception {
+      Path configDir = Paths.get(System.getProperty("build.directory"), "test-classes", "configs", "all");
       Properties properties = new Properties();
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holderBefore = registry.parse(url);
+      List<Path> paths = Files.list(configDir).collect(Collectors.toList());
+      return paths.stream().flatMap(p -> typesFor(p).stream().map(t -> new Object[]{new Parameter(p, t, registry)})).toArray(Object[][]::new);
+   }
+
+   public static List<MediaType> typesFor(Path p) {
+      try {
+         // If the file name starts with a number and it's >= 12, then use all media types. Otherwise just test XML
+         return Integer.parseInt(p.getFileName().toString().split("\\.")[0]) >= 12 ? ALL : XML;
+      } catch (NumberFormatException e) {
+         // The file name is not a version number, test all media types.
+         return ALL;
+      }
+   }
+
+   @Test(dataProvider = "configurationFiles")
+   public void configurationSerializationTest(Parameter parameter) throws IOException {
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(parameter.config.toString(), Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holderBefore = parameter.registry.parse(url);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
       Map<String, Configuration> configurations = new HashMap<>();
       for (Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
          configurations.put(configuration.getKey(), configuration.getValue().build());
       }
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      registry.serialize(baos, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
+      try (ConfigurationWriter writer = ConfigurationWriter.to(baos).withType(parameter.mediaType).build()) {
+         parameter.registry.serialize(writer, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
+      }
+      System.out.println(baos);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = registry.parse(bais, null, MediaType.fromExtension(config.getFileName().toString()));
+      ConfigurationBuilderHolder holderAfter = parameter.registry.parse(bais, null, parameter.mediaType);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
-
       assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());
       assertEquals(globalConfigurationBefore.security().securityCacheSize(), globalConfigurationAfter.security().securityCacheSize());
       compareAttributeSets("Global", globalConfigurationBefore.globalState().attributes(), globalConfigurationAfter.globalState().attributes(), "localConfigurationStorage");
@@ -65,21 +105,10 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
       for (String name : holderBefore.getNamedConfigurationBuilders().keySet()) {
          Configuration configurationBefore = holderBefore.getNamedConfigurationBuilders().get(name).build();
+         assertTrue(name, holderAfter.getNamedConfigurationBuilders().containsKey(name));
          Configuration configurationAfter = holderAfter.getNamedConfigurationBuilders().get(name).build();
-
          compareConfigurations(name, configurationBefore, configurationAfter);
       }
-
-      baos = new ByteArrayOutputStream();
-      ConfigurationWriter yamlWriter = ConfigurationWriter.to(baos).withType(MediaType.APPLICATION_YAML).build();
-      registry.serialize(yamlWriter, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
-      yamlWriter.close();
-
-      bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationReader yamlReader = ConfigurationReader.from(bais).withProperties(properties).withType(MediaType.APPLICATION_YAML).withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
-      ConfigurationBuilderHolder yamlHolder = new ConfigurationBuilderHolder();
-      registry.parse(yamlReader, yamlHolder);
-      yamlReader.close();
    }
 
    private void compareConfigurations(String name, Configuration configurationBefore, Configuration configurationAfter) {
@@ -106,26 +135,6 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       assertEquals(String.format("Indexing attributes for %s mismatch", name), before.attributes(), after.attributes());
       assertEquals(String.format("Indexing reader for %s mismatch", name), before.reader(), after.reader());
       assertEquals(String.format("Indexing writer for %s mismatch", name), before.writer(), after.writer());
-
-   }
-
-   @Test(dataProvider = "configurationFiles")
-   public void jsonSerializationTest(Path config) throws Exception {
-      JsonWriter jsonWriter = new JsonWriter();
-      Properties properties = new Properties();
-      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
-      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holderBefore = registry.parse(url);
-      JsonReader jsonReader = new JsonReader();
-      for (Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
-         Configuration confBefore = configuration.getValue().build();
-         String json = jsonWriter.toJSON(confBefore);
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         jsonReader.readJson(builder, json);
-         Configuration confAfter = builder.build();
-         compareConfigurations(configuration.getKey(), confBefore, confAfter);
-      }
    }
 
    protected void compareExtraConfiguration(String name, Configuration configurationBefore, Configuration configurationAfter) {

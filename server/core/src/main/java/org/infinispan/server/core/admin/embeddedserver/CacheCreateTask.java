@@ -3,12 +3,14 @@ package org.infinispan.server.core.admin.embeddedserver;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -54,10 +56,15 @@ public class CacheCreateTask extends AdminServerTask<Void> {
    protected Configuration getConfiguration(String name, String configuration) {
       ParserRegistry parserRegistry = new ParserRegistry();
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
-      if (!builderHolder.getNamedConfigurationBuilders().containsKey(name)) {
+      Iterator<Map.Entry<String, ConfigurationBuilder>> it = builderHolder.getNamedConfigurationBuilders().entrySet().iterator();
+      if (!it.hasNext()) {
          throw log.missingCacheConfiguration(name, configuration);
       }
-      return builderHolder.getNamedConfigurationBuilders().get(name).build();
+      Map.Entry<String, ConfigurationBuilder> entry = it.next();
+      if (entry.getKey() != null && !entry.getKey().equals(name)) {
+         throw log.missingCacheConfiguration(name, configuration);
+      }
+      return entry.getValue().build();
    }
 
    @Override

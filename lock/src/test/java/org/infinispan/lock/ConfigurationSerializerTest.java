@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.configuration.Reliability;
 import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -33,13 +31,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
 
-   @DataProvider
-   public static Object[][] configurationFiles() {
-      return new Object[][]{{Paths.get("config/clustered-locks-dist.xml")}, {Paths.get("config/clustered-locks-repl.xml")}};
-   }
-
    public void testParserAvailableReliability() throws IOException {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/clustered-locks-dist.xml");
+      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-dist.xml");
       withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
          cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
          GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
@@ -54,7 +47,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    }
 
    public void testParserConsistentReliability() throws IOException {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/clustered-locks-repl.xml");
+      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-repl.xml");
       withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
          cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
          GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();

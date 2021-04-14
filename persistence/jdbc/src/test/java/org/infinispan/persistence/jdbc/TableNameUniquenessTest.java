@@ -29,7 +29,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
    public void testForJdbcStringBasedCacheStore() throws Exception {
       CacheContainer cm = null;
       try {
-         cm = TestCacheManagerFactory.fromXml("configs/string-based.xml");
+         cm = TestCacheManagerFactory.fromXml("configs/all/string-based.xml");
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 

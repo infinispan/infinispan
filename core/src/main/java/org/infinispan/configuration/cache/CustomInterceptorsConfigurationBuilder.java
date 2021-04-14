@@ -5,10 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures custom interceptors to be added to the cache.
@@ -17,7 +14,7 @@ import org.infinispan.configuration.parsing.Element;
  * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
 @Deprecated
-public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<CustomInterceptorsConfiguration>, ConfigurationBuilderInfo {
+public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<>();
 
@@ -34,19 +31,6 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
       InterceptorConfigurationBuilder builder = new InterceptorConfigurationBuilder(this);
       this.interceptorBuilders.add(builder);
       return builder;
-   }
-
-   @Override
-   public ConfigurationBuilderInfo getNewBuilderInfo(String name) {
-      if (name.equals(Element.INTERCEPTOR.getLocalName())) {
-         return addInterceptor();
-      }
-      return null;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return CustomInterceptorsConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

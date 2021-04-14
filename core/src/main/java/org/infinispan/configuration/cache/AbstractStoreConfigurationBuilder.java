@@ -1,7 +1,7 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_STATE;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.READ_ONLY;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
@@ -13,14 +13,10 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.WRIT
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.persistence.Store;
@@ -32,17 +28,15 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
-      extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S>, ConfigurationBuilderInfo {
+      extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S> {
 
    protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
-   protected final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
       super(builder);
       this.attributes = attributes;
       this.async = new AsyncStoreConfigurationBuilder(this);
-      subElements.add(async);
    }
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes,
@@ -50,17 +44,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       super(builder);
       this.attributes = attributes;
       this.async = new AsyncStoreConfigurationBuilder(this, asyncAttributeSet);
-      subElements.add(async);
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**
@@ -76,7 +59,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S fetchPersistentState(boolean b) {
-      attributes.attribute(FETCH_PERSISTENT_STATE).set(b);
+      attributes.attribute(FETCH_STATE).set(b);
       return self();
    }
 
@@ -85,7 +68,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S ignoreModifications(boolean b) {
-      attributes.attribute(IGNORE_MODIFICATIONS).set(b);
+      attributes.attribute(READ_ONLY).set(b);
       return self();
    }
 
@@ -170,6 +153,10 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       return self();
    }
 
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    @Override
    public void validate() {
       validate(false);
@@ -185,10 +172,10 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       async.validate();
       boolean shared = attributes.attribute(SHARED).get();
       boolean preload = attributes.attribute(PRELOAD).get();
-      boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
+      boolean fetchPersistentState = attributes.attribute(FETCH_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
-      boolean readOnly = attributes.attribute(IGNORE_MODIFICATIONS).get();
+      boolean readOnly = attributes.attribute(READ_ONLY).get();
       boolean writeOnly = attributes.attribute(WRITE_ONLY).get();
       ConfigurationBuilder builder = getBuilder();
 
@@ -212,9 +199,9 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
             && builder.clustering().cacheMode().isClustered() && !getBuilder().template())
          CONFIG.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
-      if (fetchPersistentState && attributes.attribute(FETCH_PERSISTENT_STATE).isModified() &&
+      if (fetchPersistentState && attributes.attribute(FETCH_STATE).isModified() &&
             clustering().cacheMode().isInvalidation()) {
-         throw CONFIG.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
+         throw CONFIG.attributeNotAllowedInInvalidationMode(FETCH_STATE.name());
       }
 
       if (shared && !builder.clustering().cacheMode().isClustered()) {

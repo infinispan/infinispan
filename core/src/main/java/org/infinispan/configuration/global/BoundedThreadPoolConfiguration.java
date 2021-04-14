@@ -1,17 +1,13 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.parsing.Element;
 
 /**
  * @since 10.0
  */
-class BoundedThreadPoolConfiguration implements ConfigurationInfo {
+class BoundedThreadPoolConfiguration {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<String> THREAD_FACTORY = AttributeDefinition.builder("threadFactory", null, String.class).build();
    static final AttributeDefinition<Integer> MAX_THREADS = AttributeDefinition.builder("maxThreads", null, Integer.class).build();
@@ -34,8 +30,6 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
             KEEP_ALIVE_TIME, QUEUE_LENGTH, NON_BLOCKING);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL.getLocalName());
-
    BoundedThreadPoolConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.name = attributes.attribute(NAME);
@@ -45,11 +39,6 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
       this.keepAliveTime = attributes.attribute(KEEP_ALIVE_TIME);
       this.queueLength = attributes.attribute(QUEUE_LENGTH);
       this.nonBlocking = attributes.attribute(NON_BLOCKING);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public AttributeSet attributes() {

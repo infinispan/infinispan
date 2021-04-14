@@ -1,12 +1,14 @@
 package org.infinispan.server.configuration.security;
 
 import static org.infinispan.server.configuration.security.CredentialStoreConfiguration.CREDENTIAL;
+import static org.infinispan.server.configuration.security.CredentialStoreConfiguration.NAME;
 import static org.infinispan.server.configuration.security.CredentialStoreConfiguration.PATH;
 import static org.infinispan.server.configuration.security.CredentialStoreConfiguration.RELATIVE_TO;
 import static org.infinispan.server.configuration.security.CredentialStoreConfiguration.TYPE;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -30,8 +32,9 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
    private final AttributeSet attributes;
    private CredentialStoreSpi credentialStore;
 
-   CredentialStoreConfigurationBuilder(CredentialStoresConfigurationBuilder credentialStoresConfigurationBuilder) {
+   CredentialStoreConfigurationBuilder(CredentialStoresConfigurationBuilder credentialStoresConfigurationBuilder, String name) {
       this.attributes = CredentialStoreConfiguration.attributeDefinitionSet();
+      attributes.attribute(NAME).set(name);
    }
 
    public CredentialStoreConfigurationBuilder path(String value) {
@@ -56,12 +59,10 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
 
    @Override
    public void validate() {
-
    }
 
    @Override
    public CredentialStoreConfiguration create() {
-      build();
       return new CredentialStoreConfiguration(attributes.protect());
    }
 
@@ -71,13 +72,13 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
       return this;
    }
 
-   CredentialStoreSpi build() {
+   CredentialStoreSpi build(Properties properties) {
       if (credentialStore == null) {
          if (attributes.attribute(PATH).isNull()) {
             throw new IllegalStateException("file has to be specified");
          }
          String path = attributes.attribute(PATH).get();
-         String relativeTo = attributes.attribute(RELATIVE_TO).get();
+         String relativeTo = properties.getProperty(attributes.attribute(RELATIVE_TO).get());
          String location = ParseUtils.resolvePath(path, relativeTo);
          credentialStore = new KeyStoreCredentialStore();
          final Map<String, String> map = new HashMap<>();
@@ -102,8 +103,8 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
       return credentialStore;
    }
 
-   public <C extends Credential> C getCredential(String alias, Class<C> type) {
-      build();
+   public <C extends Credential> C getCredential(String alias, Class<C> type, Properties properties) {
+      build(properties);
       try {
          if (alias == null) {
             if (credentialStore.getAliases().size() == 1) {

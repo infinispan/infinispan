@@ -16,6 +16,7 @@ import java.util.Properties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.util.BeanUtils;
 import org.w3c.dom.Element;
 
@@ -74,7 +75,7 @@ public class XmlConfigHelper {
    public static Map<Object, Object> setAttributes(AttributeSet attributes, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingAttribute) {
       Map<Object, Object> ignoredAttribs = new HashMap<>();
       for(Entry<?, ?> entry : attribs.entrySet()) {
-         String name = (String) entry.getKey();
+         String name = NamingStrategy.KEBAB_CASE.convert((String) entry.getKey());
          if (attributes.contains(name)) {
             Attribute<Object> attribute = attributes.attribute(name);
             attribute.set(valueConverter(attribute.getAttributeDefinition().getType(), (String) entry.getValue()));

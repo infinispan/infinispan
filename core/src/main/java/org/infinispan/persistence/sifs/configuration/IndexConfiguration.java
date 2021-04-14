@@ -1,20 +1,16 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import static org.infinispan.configuration.parsing.Element.INDEX;
-
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.parsing.Attribute;
 
-public class IndexConfiguration implements ConfigurationInfo {
+public class IndexConfiguration {
 
-   public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", null, String.class).immutable().autoPersist(false).xmlName("path").build();
-   public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().autoPersist(false).xmlName("max-queue-length").build();
-   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 16).immutable().autoPersist(false).xmlName("segments").build();
-   public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", 0).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder(Attribute.PATH, null, String.class).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder(Attribute.INDEX_QUEUE_LENGTH, 1000).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder(Attribute.SEGMENTS, 16).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder(Attribute.MIN_NODE_SIZE, 0).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder(Attribute.MAX_NODE_SIZE, 4096).immutable().autoPersist(false).build();
 
    private final AttributeSet attributes;
 
@@ -22,18 +18,10 @@ public class IndexConfiguration implements ConfigurationInfo {
       return new AttributeSet(IndexConfiguration.class, INDEX_LOCATION, INDEX_QUEUE_LENGTH, INDEX_SEGMENTS, MIN_NODE_SIZE, MAX_NODE_SIZE);
    }
 
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEX.getLocalName());
-
    public IndexConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
    }
 
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
    public AttributeSet attributes() {
       return attributes;
    }

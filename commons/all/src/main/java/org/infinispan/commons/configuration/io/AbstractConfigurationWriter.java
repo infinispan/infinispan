@@ -7,6 +7,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.util.Util;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
@@ -17,7 +19,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    final protected Map<String, String> namespaces = new HashMap<>();
    protected int currentIndent = 0;
    private final int indent;
-   private final boolean prettyPrint;
+   protected final boolean prettyPrint;
    protected final NamingStrategy naming;
 
    protected AbstractConfigurationWriter(Writer writer, int indent, boolean prettyPrint, NamingStrategy naming) {
@@ -38,6 +40,16 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    }
 
    @Override
+   public void writeStartArrayElement(Enum<?> name) {
+      writeStartArrayElement(name.toString());
+   }
+
+   @Override
+   public void writeArrayElement(Enum<?> outer, Enum<?> inner, Enum<?> attribute, Iterable<String> values) {
+      writeArrayElement(outer.toString(), inner.toString(), attribute != null ? attribute.toString(): null, values);
+   }
+
+   @Override
    public void writeStartListElement(Enum<?> name, boolean explicit) {
       writeStartListElement(name.toString(), explicit);
    }
@@ -53,23 +65,43 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    }
 
    @Override
-   public void writeStartMapElement(Enum<?> name) {
-      writeStartMapElement(name.toString());
-   }
-
-   @Override
-   public void writeStartMapEntry(Enum<?> name, Enum<?> key, String value) {
-      writeStartMapEntry(name.toString(), key.toString(), value);
-   }
-
-   @Override
    public void writeAttribute(Enum<?> name, String value) {
       writeAttribute(name.toString(), value);
    }
 
    @Override
+   public void writeAttribute(Enum<?> name, String[] value) {
+      writeAttribute(name.toString(), value);
+   }
+
+   @Override
+   public void writeAttribute(Enum<?> name, boolean value) {
+      writeAttribute(name.toString(), value);
+   }
+
+   @Override
+   public void writeAttribute(String name, boolean value) {
+      writeAttribute(name, String.valueOf(value));
+   }
+
+   @Override
    public void writeEmptyElement(Enum<?> name) {
       writeEmptyElement(name.toString());
+   }
+
+   @Override
+   public void writeStartMap(Enum<?> name) {
+      writeStartMap(name.toString());
+   }
+
+   @Override
+   public void writeMapItem(Enum<?> element, Enum<?> name, String key, String value) {
+      writeMapItem(element.toString(), name.toString(), key, value);
+   }
+
+   @Override
+   public void writeMapItem(Enum<?> element, Enum<?> name, String key) {
+      writeMapItem(element.toString(), name.toString(), key);
    }
 
    protected void nl() throws IOException {
@@ -78,7 +110,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
       }
    }
 
-   protected void writeIndent() throws IOException {
+   protected void tab() throws IOException {
       if (prettyPrint) {
          for (int i = 0; i < currentIndent; i++) {
             writer.write(' ');
@@ -95,23 +127,26 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    }
 
    @Override
-   public void close() throws Exception {
-      writer.close();
+   public void close() {
+      Util.close(writer);
    }
 
    public static class Tag {
       final String name;
       final boolean repeating;
-      final boolean explicit;
+      final boolean explicitOuter;
+      final boolean explicitInner;
+      int children;
 
-      public Tag(String name, boolean repeating, boolean explicit) {
+      public Tag(String name, boolean repeating, boolean explicitOuter, boolean explicitInner) {
          this.name = name;
          this.repeating = repeating;
-         this.explicit = explicit;
+         this.explicitOuter = explicitOuter;
+         this.explicitInner = explicitInner;
       }
 
       public Tag(String name) {
-         this(name, false, false);
+         this(name, false, false, true);
       }
 
       public String getName() {
@@ -122,8 +157,12 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
          return repeating;
       }
 
-      public boolean isExplicit() {
-         return explicit;
+      public boolean isExplicitOuter() {
+         return explicitOuter;
+      }
+
+      public boolean isExplicitInner() {
+         return explicitInner;
       }
 
       @Override

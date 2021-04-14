@@ -8,9 +8,7 @@ import static org.infinispan.persistence.jdbc.configuration.SimpleConnectionFact
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -20,23 +18,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.2
  */
 public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
-      implements ConnectionFactoryConfigurationBuilder<SimpleConnectionFactoryConfiguration>, ConfigurationBuilderInfo {
+      implements ConnectionFactoryConfigurationBuilder<SimpleConnectionFactoryConfiguration> {
 
    private final AttributeSet attributes;
 
    public SimpleConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
       attributes = SimpleConnectionFactoryConfiguration.attributeSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return SimpleConnectionFactoryConfiguration.ELEMENT_DEFINITION;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> connectionUrl(String connectionUrl) {

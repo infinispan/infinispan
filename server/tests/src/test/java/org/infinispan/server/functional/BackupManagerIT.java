@@ -392,7 +392,6 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertEquals(200, rsp.getStatus());
       String content = rsp.getBody();
       Json config = Json.read(content).at(type.toString());
-      assertEquals(name, config.at("name").asString());
       assertEquals(storage.toString(), config.at("storage").asString());
       assertEquals(0, config.at("initial-value").asInteger());
 

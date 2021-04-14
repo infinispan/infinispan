@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -8,13 +7,13 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 
-public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
+public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Boolean> MANAGE_CONNECTION_FACTORY = AttributeDefinition.builder("manageConnectionFactory", true).immutable().build();
-   static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder("databaseType", null, DatabaseType.class).immutable().xmlName("dialect").build();
-   static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder("databaseMajorVersion", null, Integer.class).immutable().xmlName("db-major-version").build();
-   static final AttributeDefinition<Integer> DB_MINOR_VERSION = AttributeDefinition.builder("databaseMinorVersion", null, Integer.class).immutable().xmlName("db-minor-version").build();
-   static final AttributeDefinition<Integer> READ_QUERY_TIMEOUT = AttributeDefinition.builder("readQueryTimeout", 0, Integer.class).xmlName("read-query-timeout").build();
-   static final AttributeDefinition<Integer> WRITE_QUERY_TIMEOUT = AttributeDefinition.builder("writeQueryTimeout", 0, Integer.class).xmlName("write-query-timeout").build();
+   static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DIALECT, null, DatabaseType.class).immutable().build();
+   static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DB_MAJOR_VERSION, null, Integer.class).immutable().build();
+   static final AttributeDefinition<Integer> DB_MINOR_VERSION = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DB_MINOR_VERSION, null, Integer.class).immutable().build();
+   static final AttributeDefinition<Integer> READ_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.READ_QUERY_TIMEOUT, 0, Integer.class).build();
+   static final AttributeDefinition<Integer> WRITE_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.WRITE_QUERY_TIMEOUT, 0, Integer.class).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractJdbcStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(),
@@ -38,7 +37,6 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
       readQueryTimeout = attributes.attribute(READ_QUERY_TIMEOUT);
       writeQueryTimeout = attributes.attribute(WRITE_QUERY_TIMEOUT);
-      subElements.add(connectionFactory);
    }
 
    public ConnectionFactoryConfiguration connectionFactory() {

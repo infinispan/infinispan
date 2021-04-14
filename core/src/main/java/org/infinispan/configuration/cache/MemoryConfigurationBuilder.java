@@ -3,17 +3,13 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -24,10 +20,8 @@ import org.infinispan.eviction.EvictionType;
  * @author William Burns
  */
 public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements
-                                                                                  Builder<MemoryConfiguration>,
-                                                                                  ConfigurationBuilderInfo {
+                                                                                  Builder<MemoryConfiguration> {
    private MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder;
-   private final List<ConfigurationBuilderInfo> elements;
    private final AttributeSet attributes;
    private final List<String> legacyAttributesUsed = new ArrayList<>();
    private boolean newAttributesUsed = false;
@@ -36,7 +30,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    MemoryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.memoryStorageConfigurationBuilder = new MemoryStorageConfigurationBuilder(builder);
-      this.elements = Collections.singletonList(memoryStorageConfigurationBuilder);
       this.attributes = MemoryConfiguration.attributeDefinitionSet();
 
       // Keep new and legacy attributes in sync
@@ -92,16 +85,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
             isInListener = false;
          }
       });
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return elements;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**
@@ -172,11 +155,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       return this;
    }
 
-   @Override
-   public ElementDefinition<?> getElementDefinition() {
-      return MemoryConfiguration.ELEMENT_DEFINITION;
-   }
-
    /**
     * The configured eviction size, please see {@link MemoryConfigurationBuilder#size(long)}.
     * @return the configured evicted size
@@ -209,7 +187,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    private <T> Attribute<T> memoryStorageAttribute(AttributeDefinition<T> attributeDefinition) {
-      return memoryStorageConfigurationBuilder.attributes().attribute(attributeDefinition);
+      return memoryStorageConfigurationBuilder.attributes.attribute(attributeDefinition);
    }
 
    /**
@@ -362,24 +340,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          updateMaxSize(maxSize());
       }
       return this;
-   }
-
-   @Override
-   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
-      switch (name) {
-         case "off-heap":
-            storage(StorageType.OFF_HEAP);
-            break;
-         case "binary":
-            storage(StorageType.BINARY);
-            break;
-         case "object":
-            storage(StorageType.OBJECT);
-            break;
-         default:
-            return null;
-      }
-      return memoryStorageConfigurationBuilder;
    }
 
    private void updateMaxSize(String maxSize) {

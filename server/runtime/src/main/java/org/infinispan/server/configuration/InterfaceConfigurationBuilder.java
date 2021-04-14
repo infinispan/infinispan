@@ -9,9 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.network.NetworkAddress;
 
 public class InterfaceConfigurationBuilder implements Builder<InterfaceConfiguration> {
-
    private final AttributeSet attributes;
-
    private final AddressConfigurationBuilder address = new AddressConfigurationBuilder();
    private NetworkAddress networkAddress;
 

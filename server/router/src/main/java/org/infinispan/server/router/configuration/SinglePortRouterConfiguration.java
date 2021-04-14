@@ -24,6 +24,6 @@ public class SinglePortRouterConfiguration extends ProtocolServerConfiguration {
      * Creates new configuration based on the IP address and port.
      */
     public SinglePortRouterConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
-        super(attributes, ssl, ipRules);
+        super("endpoint", attributes, ssl, ipRules);
     }
 }

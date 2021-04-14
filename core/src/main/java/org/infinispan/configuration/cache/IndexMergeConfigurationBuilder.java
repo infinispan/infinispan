@@ -8,17 +8,15 @@ import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_SIZ
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.MIN_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 12.0
  */
 public class IndexMergeConfigurationBuilder extends AbstractIndexingConfigurationChildBuilder
-      implements Builder<IndexMergeConfiguration>, ConfigurationBuilderInfo {
+      implements Builder<IndexMergeConfiguration> {
 
    private final AttributeSet attributes;
    private final Attribute<Integer> maxEntries;
@@ -37,11 +35,6 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
       this.maxSize = attributes.attribute(MAX_SIZE);
       this.maxForceSize = attributes.attribute(MAX_FORCED_SIZE);
       this.calibrateByDeletes = attributes.attribute(CALIBRATE_BY_DELETES);
-   }
-
-   @Override
-   public ElementDefinition<IndexMergeConfiguration> getElementDefinition() {
-      return IndexMergeConfiguration.ELEMENT_DEFINITION;
    }
 
    public IndexMergeConfigurationBuilder maxEntries(int value) {
@@ -80,11 +73,6 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
    public IndexMergeConfigurationBuilder calibrateByDeletes(boolean value) {
       calibrateByDeletes.set(value);
       return this;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override

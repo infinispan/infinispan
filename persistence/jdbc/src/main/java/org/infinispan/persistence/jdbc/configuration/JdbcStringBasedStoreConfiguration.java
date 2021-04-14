@@ -1,15 +1,10 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.persistence.jdbc.configuration.Element.STRING_KEYED_JDBC_STORE;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
@@ -18,14 +13,12 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 @BuiltBy(JdbcStringBasedStoreConfigurationBuilder.class)
 @ConfigurationFor(JdbcStringBasedStore.class)
 @SerializedWith(JdbcStringBasedStoreConfigurationSerializer.class)
-public class JdbcStringBasedStoreConfiguration extends AbstractJdbcStoreConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", DefaultTwoWayKey2StringMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
+public class JdbcStringBasedStoreConfiguration extends AbstractJdbcStoreConfiguration {
+   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.KEY_TO_STRING_MAPPER, DefaultTwoWayKey2StringMapper.class.getName()).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JdbcStringBasedStoreConfiguration.class, AbstractJdbcStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER);
    }
-
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STRING_KEYED_JDBC_STORE.getLocalName(), true, false);
 
    private final Attribute<String> key2StringMapper;
    private final TableManipulationConfiguration table;
@@ -35,12 +28,6 @@ public class JdbcStringBasedStoreConfiguration extends AbstractJdbcStoreConfigur
       super(attributes, async, connectionFactory);
       this.table = table;
       key2StringMapper = attributes.attribute(KEY2STRING_MAPPER);
-      subElements.add(table);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    public String key2StringMapper() {

@@ -31,7 +31,7 @@ import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.time.DefaultTimeService;
@@ -59,6 +59,7 @@ import org.infinispan.security.audit.LoggingAuditLogger;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
@@ -431,8 +432,9 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    @Override
-   public ConfigurationInfo getConfiguration() {
-      return serverConfiguration;
+   public void serializeConfiguration(ConfigurationWriter writer) {
+      ServerConfigurationSerializer serializer = new ServerConfigurationSerializer();
+      serializer.serialize(writer, this.serverConfiguration);
    }
 
    @Override

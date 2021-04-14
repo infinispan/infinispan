@@ -6,14 +6,8 @@ import static org.infinispan.configuration.cache.HashConfiguration.KEY_PARTITION
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -24,22 +18,15 @@ import org.infinispan.distribution.ch.KeyPartitioner;
  *
  * @author pmuir
  */
-public class HashConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<HashConfiguration>, ConfigurationBuilderInfo {
+public class HashConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<HashConfiguration> {
 
    private final AttributeSet attributes;
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
-   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
    HashConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
       this.attributes = HashConfiguration.attributeDefinitionSet();
       this.groupsConfigurationBuilder = new GroupsConfigurationBuilder(builder);
-      subElements.add(groupsConfigurationBuilder);
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return HashConfiguration.ELEMENT_DEFINITION;
    }
 
    /**
@@ -143,15 +130,5 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public String toString() {
       return "HashConfigurationBuilder [attributes=" + attributes + ", groupsConfigurationBuilder="
             + groupsConfigurationBuilder + "]";
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 }

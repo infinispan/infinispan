@@ -10,8 +10,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.infinispan.cloudevents.configuration.CloudEventsConfiguration;
 import org.infinispan.cloudevents.configuration.CloudEventsGlobalConfiguration;
@@ -23,8 +21,6 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.SkipException;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -37,13 +33,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class CloudEventsConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
 
-   @DataProvider
-   public static Object[][] configurationFiles() {
-      return new Object[][]{{Paths.get("config/cloudevents.xml")}};
-   }
-
    public void testParser() throws IOException {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/cloudevents.xml");
+      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/cloudevents.xml");
       try (EmbeddedCacheManager cacheManager = createClusteredCacheManager(false, holder)) {
          CloudEventsGlobalConfiguration cloudEventsGlobalConfiguration =
                cacheManager.getCacheManagerConfiguration().module(CloudEventsGlobalConfiguration.class);
@@ -68,16 +59,9 @@ public class CloudEventsConfigurationSerializerTest extends AbstractConfiguratio
 
    public void testInvalid() throws IOException {
       ConfigurationBuilderHolder holder =
-            new ParserRegistry().parseFile("config/cloudevents-missing-bootstrap-servers.xml");
+            new ParserRegistry().parseFile("configs/cloudevents-missing-bootstrap-servers.xml");
       expectException(CacheConfigurationException.class, "ISPN030502: .*",
                       () -> holder.getGlobalConfigurationBuilder().build());
-   }
-
-   @Test(dataProvider = "configurationFiles")
-   @Override
-   public void jsonSerializationTest(Path config) throws Exception {
-      // FIXME JSON deserialization doesn't handle custom configuration modules
-      throw new SkipException("JSON deserialization doesn't work");
    }
 
    @Override

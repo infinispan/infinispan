@@ -4,15 +4,12 @@ import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedCon
 import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.DRIVER_CLASS;
 import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.PASSWORD;
 import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.USERNAME;
-import static org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration.PROPERTY_FILE;
 
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -22,19 +19,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.2
  */
 public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
-      implements ConnectionFactoryConfigurationBuilder<PooledConnectionFactoryConfiguration>, ConfigurationBuilderInfo {
+      implements ConnectionFactoryConfigurationBuilder<PooledConnectionFactoryConfiguration> {
 
    private final AttributeSet attributes;
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
 
    protected PooledConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
