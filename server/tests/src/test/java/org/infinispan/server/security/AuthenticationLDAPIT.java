@@ -9,11 +9,11 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.LdapServerListener;
+import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.infinispan.server.test.core.LdapServerRule;
-import org.infinispan.server.test.core.category.Security;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,10 +32,8 @@ public class AuthenticationLDAPIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationLDAPTest.xml")
+                                    .addListener(new LdapServerListener())
                                     .build();
-
-   @ClassRule
-   public static LdapServerRule LDAP = new LdapServerRule(SERVERS);
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);

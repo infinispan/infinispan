@@ -36,6 +36,7 @@ public class RequestTracingIT {
    public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/app-sre/jaegertracing-all-in-one:latest");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
+
    private static JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE);
 
    @ClassRule
@@ -43,6 +44,7 @@ public class RequestTracingIT {
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
                                     .runMode(ServerRunMode.CONTAINER)
                                     .numServers(1)
+// Jaeger client version 0.34.3 and dependencies
                                     .mavenArtifacts("io.jaegertracing:jaeger-core:0.34.3",
                                                     "io.jaegertracing:jaeger-thrift:0.34.3",
                                                     "io.jaegertracing:jaeger-tracerresolver:0.34.3",
@@ -55,6 +57,7 @@ public class RequestTracingIT {
                                                     "io.opentracing:opentracing-util:0.31.0",
                                                     "io.opentracing:opentracing-noop:0.31.0",
                                                     "org.slf4j:slf4j-jdk14:1.7.5")
+// Alternative Jaeger client version 1.5.0 and dependencies
 //                                    .mavenArtifacts("io.jaegertracing:jaeger-core:1.5.0",
 //                                                    "io.jaegertracing:jaeger-thrift:1.5.0",
 //                                                    "io.jaegertracing:jaeger-tracerresolver:1.5.0",

@@ -33,7 +33,6 @@ import org.testcontainers.utility.DockerImageName;
 public class CloudEventsIntegrationIT {
    public static final String CACHE_ENTRIES_TOPIC = "cache-entries";
 
-   @ClassRule
    public static KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"));
 
    @ClassRule
@@ -47,6 +46,11 @@ public class CloudEventsIntegrationIT {
                      KAFKA.start();
                      driver.getConfiguration().properties()
                            .setProperty("kafka.bootstrap.servers", KAFKA.getBootstrapServers());
+                  }
+
+                  @Override
+                  public void after(InfinispanServerDriver driver) {
+                     KAFKA.stop();
                   }
                })
                .build();
