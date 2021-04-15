@@ -124,7 +124,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
-      CLUSTER.exceptionHandlingCommand(command, throwable);
+      if (command.logThrowable(throwable)) {
+         CLUSTER.exceptionHandlingCommand(command, throwable);
+      }
       if (throwable instanceof Exception) {
          return new ExceptionResponse(((Exception) throwable));
       } else {

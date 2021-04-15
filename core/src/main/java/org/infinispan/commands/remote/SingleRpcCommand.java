@@ -114,4 +114,9 @@ public class SingleRpcCommand extends BaseRpcCommand {
    public boolean canBlock() {
       return command.canBlock();
    }
+
+   @Override
+   public boolean logThrowable(Throwable t) {
+      return command.logThrowable(t);
+   }
 }

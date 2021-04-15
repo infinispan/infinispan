@@ -13,6 +13,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.util.concurrent.TimeoutException;
 
 
 /**
@@ -126,5 +127,16 @@ public class RemoveExpiredCommand extends RemoveCommand {
 
    public Long getLifespan() {
       return lifespan;
+   }
+
+   @Override
+   public boolean logThrowable(Throwable t) {
+      Throwable cause = t;
+      do {
+         if (cause instanceof TimeoutException) {
+            return !hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
+         }
+      } while ((cause = cause.getCause()) != null);
+      return true;
    }
 }
