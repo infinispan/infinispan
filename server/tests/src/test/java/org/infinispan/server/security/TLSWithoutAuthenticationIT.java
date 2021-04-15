@@ -60,4 +60,20 @@ public class TLSWithoutAuthenticationIT {
       builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
       Exceptions.expectException(TransportException.class, ClosedChannelException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
    }
+
+   @Test
+   public void testForceTLSv12() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      builder.security().ssl().protocol("TLSv1.2");
+      SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+   }
+
+   @Test
+   public void testForceTLSv13() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      builder.security().ssl().protocol("TLSv1.3");
+      SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+   }
 }
