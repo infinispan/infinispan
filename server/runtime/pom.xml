@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>12.1.2-SNAPSHOT</version>
+      <version>13.0.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -18,7 +18,8 @@
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
-      <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
+      <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}
+      </server.output.dir>
       <server.test.lib.dir>${project.build.directory}/testlibs</server.test.lib.dir>
    </properties>
 
@@ -185,6 +186,24 @@
    </dependencies>
 
    <build>
+      <testResources>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.xml</include>
+               <include>**/*.yaml</include>
+            </includes>
+         </testResource>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+            <excludes>
+               <exclude>**/*.xml</exclude>
+               <exclude>**/*.yaml</exclude>
+            </excludes>
+         </testResource>
+      </testResources>
       <plugins>
          <plugin>
             <groupId>org.infinispan</groupId>
@@ -387,11 +406,12 @@
                            <includes>
                               <include>licenses.xml</include>
                            </includes>
-                           <stylesheet>${project.basedir}/../../distribution/src/main/resources/template/licenses.xsl</stylesheet>
+                           <stylesheet>${project.basedir}/../../distribution/src/main/resources/template/licenses.xsl
+                           </stylesheet>
                            <outputDir>${server.output.dir}/docs/licenses</outputDir>
                            <fileMappers>
                               <fileMapper
-                                      implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                    implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                                  <targetExtension>.html</targetExtension>
                               </fileMapper>
                            </fileMappers>

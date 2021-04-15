@@ -115,23 +115,23 @@ VERSION=`xsltproc $BASEDIR/extract-gav.xslt $POMLOCATION | cut -d: -f4`
 echo "Pom file location: $POMLOCATION"
 echo "Current version: $VERSION"
 echo -n "New version: "
-if [ -z $NEWVERSION ]; then
-    read NEWVERSION
+if [ -z "$NEWVERSION" ]; then
+    read -r NEWVERSION
 fi
 
 echo "Changing from $VERSION to $NEWVERSION"
 
 for POM in $(find . -name 'pom.xml'); do
    sed -i "s/<version>$VERSION<\/version>/<version>$NEWVERSION<\/version>/g" $POM
-   git add $POM
+   git add "$POM"
 done
 
-OLDSCHEMAMAJOR=`echo $VERSION|cut -d. -f1`
-OLDSCHEMAMINOR=`echo $VERSION|cut -d. -f2`
-OLDSCHEMAVERSION=`echo $VERSION|cut -d. -f1,2`
-NEWSCHEMAMAJOR=`echo $NEWVERSION|cut -d. -f1`
-NEWSCHEMAMINOR=`echo $NEWVERSION|cut -d. -f2`
-NEWSCHEMAVERSION=`echo $NEWVERSION|cut -d. -f1,2`
+OLDSCHEMAMAJOR=$(echo "$VERSION"|cut -d. -f1)
+OLDSCHEMAMINOR=$(echo "$VERSION"|cut -d. -f2)
+OLDSCHEMAVERSION=$(echo "$VERSION"|cut -d. -f1,2)
+NEWSCHEMAMAJOR=$(echo "$NEWVERSION"|cut -d. -f1)
+NEWSCHEMAMINOR=$(echo "$NEWVERSION"|cut -d. -f2)
+NEWSCHEMAVERSION=$(echo "$NEWVERSION"|cut -d. -f1,2)
 
 if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true ] ;  then
     echo "Current schema: $OLDSCHEMAVERSION"
@@ -144,19 +144,32 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     git add pom.xml
 
     # Create new test configurations
-    copyXMLs . $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
-    copyXMLs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
-    addNamespace $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    copyXMLs . "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    copyXMLs _ "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    addNamespace "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+
+    # Update the server configurations
+    CONFIGS=$(find server/runtime/src/main/server/server/conf/ -name '*xml')
+    for CONFIG in $CONFIGS; do
+         rewriteXML "$CONFIG" "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    done
 
     # Update the server test configurations
     CONFIGS=$(find server/tests/ -regex '.*/src/test/resources/[^0-9]*xml')
     for CONFIG in $CONFIGS; do
-         rewriteXML $CONFIG $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+         rewriteXML "$CONFIG" "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
     done
 
+    # Update the server configurations
+    CONFIGS=$(find integrationtests/server-integration/server-integration-commons/ -name '*xml')
+    for CONFIG in $CONFIGS; do
+         rewriteXML "$CONFIG" "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    done
+
+
     # Rewrite the XSDs
-    rewriteXSDs . $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
-    rewriteXSDs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    rewriteXSDs . "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    rewriteXSDs _ "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
 
     echo "DONE!"
 fi

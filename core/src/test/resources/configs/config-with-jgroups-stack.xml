@@ -1,9 +1,9 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
                           urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
-        xmlns="urn:infinispan:config:12.1"
-        xmlns:ispn="urn:infinispan:config:12.1">
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+        xmlns:ispn="urn:infinispan:config:${infinispan.core.schema.version}">
     <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
         <!-- Load external JGroups stacks -->
         <stack-file name="udp-test" path="stacks/udp.xml"/>

@@ -17,6 +17,7 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Version;
 import org.junit.Test;
 
 /**
@@ -25,8 +26,8 @@ import org.junit.Test;
  **/
 public class YamlConfigurationReaderTest {
 
-   public static final String DEFAULT_NAMESPACE = "urn:infinispan:config:12.1";
-   public static final String SERVER_NAMESPACE = "urn:infinispan:server:12.1";
+   public static final String DEFAULT_NAMESPACE = "urn:infinispan:config:" + Version.getSchemaVersion();
+   public static final String SERVER_NAMESPACE = "urn:infinispan:server:" + Version.getSchemaVersion();
 
    @Test
    public void testLine() {

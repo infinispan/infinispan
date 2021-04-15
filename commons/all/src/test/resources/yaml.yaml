@@ -1,6 +1,6 @@
 %YAML 1.2
-%TAG ! urn:infinispan:config:12.1
-%TAG !server! urn:infinispan:server:12.1
+%TAG ! urn:infinispan:config:${infinispan.core.schema.version}
+%TAG !server! urn:infinispan:server:${infinispan.core.schema.version}
 %TAG !jgroups! urn:org:jgroups
 ---
 # This is a YAML file which uses the Infinispan configuration conventions
