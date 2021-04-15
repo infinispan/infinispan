@@ -29,6 +29,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 
@@ -49,6 +50,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    @Inject IracVersionGenerator iracVersionGenerator;
    @Inject VersionGenerator versionGenerator;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject IracManager iracManager;
 
    public NonTxIracRemoteSiteInterceptor(boolean needsVersions) {
       this.needsVersions = needsVersions;
@@ -147,11 +149,13 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       IracEntryVersion remoteVersion = remoteMetadata.getVersion();
       switch (remoteVersion.compareTo(localVersion)) {
          case CONFLICTING:
-            return resolveConflict(entry, command, localMetadata, remoteMetadata);
+             iracManager.incrementConflicts();
+             return resolveConflict(entry, command, localMetadata, remoteMetadata);
          case EQUAL:
          case BEFORE:
-            discardUpdate(entry, command, remoteMetadata);
-            return CompletableFutures.completedFalse();
+             iracManager.incrementDiscards();
+             discardUpdate(entry, command, remoteMetadata);
+             return CompletableFutures.completedFalse();
       }
       return CompletableFutures.completedTrue();
    }

@@ -96,4 +96,12 @@ public interface IracManager {
     * @return Whether this key is expired on all other sites
     */
    CompletionStage<Boolean> checkAndTrackExpiration(Object key);
+   /**
+    * Increase the count of discards.
+    */
+   void incrementDiscards();
+   /**
+    * Increase the count of conflicts
+    */
+   void incrementConflicts();
 }

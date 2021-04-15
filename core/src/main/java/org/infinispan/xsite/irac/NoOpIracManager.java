@@ -2,6 +2,7 @@ package org.infinispan.xsite.irac;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
@@ -22,6 +23,9 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 public class NoOpIracManager implements IracManager {
 
    private static final NoOpIracManager INSTANCE = new NoOpIracManager();
+
+   private final LongAdder conflictsCounts = new LongAdder();
+   private final LongAdder discardCounts = new LongAdder();
 
    private NoOpIracManager() {
    }
@@ -69,4 +73,14 @@ public class NoOpIracManager implements IracManager {
    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
       return CompletableFutures.completedTrue();
    }
+
+   @Override
+    public void incrementDiscards() {
+        discardCounts.increment();
+    }
+
+    @Override
+    public void incrementConflicts() {
+        conflictsCounts.increment();
+    }
 }

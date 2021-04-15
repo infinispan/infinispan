@@ -13,7 +13,8 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
- * An {@link IracManager} implementation that can be controlled for testing purpose.
+ * An {@link IracManager} implementation that can be controlled for testing
+ * purpose.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -21,53 +22,63 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 @Scope(Scopes.NAMED_CACHE)
 public class ControlledIracManager implements IracManager {
 
-   protected final IracManager actual;
+    protected final IracManager actual;
 
-   public ControlledIracManager(IracManager actual) {
-      this.actual = actual;
-   }
+    public ControlledIracManager(IracManager actual) {
+        this.actual = actual;
+    }
 
-   @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      actual.trackUpdatedKey(segment, key, lockOwner);
-   }
+    @Override
+    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+        actual.trackUpdatedKey(segment, key, lockOwner);
+    }
 
-   @Override
-   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
-      return actual.trackForStateTransfer(stateList);
-   }
+    @Override
+    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+        return actual.trackForStateTransfer(stateList);
+    }
 
-   @Override
-   public void trackClear() {
-      actual.trackClear();
-   }
+    @Override
+    public void trackClear() {
+        actual.trackClear();
+    }
 
-   @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.cleanupKey(segment, key, lockOwner, tombstone);
-   }
+    @Override
+    public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+        actual.cleanupKey(segment, key, lockOwner, tombstone);
+    }
 
-   @Override
-   public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-      actual.onTopologyUpdate(oldCacheTopology, newCacheTopology);
-   }
+    @Override
+    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
+        actual.onTopologyUpdate(oldCacheTopology, newCacheTopology);
+    }
 
-   @Override
-   public void requestState(Address origin, IntSet segments) {
-      actual.requestState(origin, segments);
-   }
+    @Override
+    public void requestState(Address origin, IntSet segments) {
+        actual.requestState(origin, segments);
+    }
 
-   @Override
-   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.receiveState(segment, key, lockOwner, tombstone);
-   }
+    @Override
+    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+        actual.receiveState(segment, key, lockOwner, tombstone);
+    }
 
-   @Override
-   public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
-      return actual.checkAndTrackExpiration(key);
-   }
+    @Override
+    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
+        return actual.checkAndTrackExpiration(key);
+    }
 
-   protected Optional<DefaultIracManager> asDefaultIracManager() {
-      return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
-   }
+    protected Optional<DefaultIracManager> asDefaultIracManager() {
+        return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
+    }
+
+    @Override
+    public void incrementDiscards() {
+        actual.incrementDiscards();
+    }
+
+    @Override
+    public void incrementConflicts() {
+        actual.incrementConflicts();
+    }
 }

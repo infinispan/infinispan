@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.jmx.JmxStatisticsExposer;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -71,8 +77,9 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 11.0
  */
+@MBean(objectName = "XSiteStatistics", description = "Xsite statistics for Infinispan Reliable Asynchronous Communication")
 @Scope(Scopes.NAMED_CACHE)
-public class DefaultIracManager implements IracManager {
+public class DefaultIracManager implements IracManager,JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
 
@@ -87,10 +94,15 @@ public class DefaultIracManager implements IracManager {
    private final IracExecutor iracExecutor;
    private volatile boolean hasClear;
 
-   public DefaultIracManager(Configuration config) {
+   private boolean statisticsEnabled = false;
+   private final LongAdder conflictsCounts = new LongAdder();
+   private final LongAdder discardCounts = new LongAdder();
+
+   public DefaultIracManager(Configuration config){
       this.updatedKeys = new ConcurrentHashMap<>();
       this.iracExecutor = new IracExecutor(this::run);
       this.asyncBackups = asyncBackups(config);
+      setStatisticsEnabled(config.statistics().enabled());
    }
 
    private static Collection<XSiteBackup> asyncBackups(Configuration config) {
@@ -530,5 +542,62 @@ public class DefaultIracManager implements IracManager {
       synchronized boolean isCompleted() {
          return stateStatus == StateStatus.COMPLETED;
       }
-   }
+     }
+
+        @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)", displayName = "XsiteQueueSize", measurementType = MeasurementType.DYNAMIC)
+        public int getQueueSize() {
+            return updatedKeys.size();
+        }
+
+        @ManagedAttribute(description = "Number of Conflicts", displayName = "Number of Conflicts", measurementType = MeasurementType.TRENDSUP)
+        public long getNoOfConflicts() {
+            if (!getStatisticsEnabled()) {
+                return -1;
+            }
+            return conflictsCounts.longValue();
+        }
+
+        @ManagedAttribute(description = "Number of Discards", displayName = "Number of Discards", measurementType = MeasurementType.TRENDSUP)
+        public long getNoOfDiscards() {
+            if (!getStatisticsEnabled()) {
+                return -1;
+            }
+            return discardCounts.longValue();
+        }
+
+        @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+        @Override
+        public boolean getStatisticsEnabled() {
+            return statisticsEnabled;
+        }
+
+        /**
+         * @param enabled whether gathering statistics for JMX are enabled.
+         */
+        @Override
+        public void setStatisticsEnabled(boolean enabled) {
+            statisticsEnabled = enabled;
+        }
+
+        /**
+         * Resets statistics gathered. Is a no-op, and should be overridden if it is to
+         * be meaningful.
+         */
+        @ManagedOperation(displayName = "Reset Statistics", description = "Resets statistics gathered by this component")
+        @Override
+        public void resetStatistics() {
+            discardCounts.reset();
+            conflictsCounts.reset();
+        }
+
+        @Override
+        public void incrementDiscards() {
+            discardCounts.increment();
+        }
+
+        @Override
+        public void incrementConflicts() {
+            conflictsCounts.increment();
+        }
+
 }
