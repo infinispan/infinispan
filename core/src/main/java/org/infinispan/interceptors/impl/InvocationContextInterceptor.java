@@ -121,9 +121,11 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             log.debug("Exception executing call", th);
          } else if (th instanceof OutdatedTopologyException) {
             if (log.isTraceEnabled()) log.tracef("Topology changed, retrying command: %s", th);
-         } else {
+         } else if (command.logThrowable(th)) {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
+         } else {
+            log.trace("Unexpected exception encountered", th);
          }
          if (ctx.isInTxScope() && ctx.isOriginLocal()) {
             if (log.isTraceEnabled()) log.trace("Transaction marked for rollback as exception was received.");

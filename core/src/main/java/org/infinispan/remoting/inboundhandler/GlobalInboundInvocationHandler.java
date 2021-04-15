@@ -114,7 +114,9 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
             handleReplicableCommand(origin, command, reply, order);
          }
       } catch (Throwable t) {
-         CLUSTER.exceptionHandlingCommand(command, t);
+         if (command.logThrowable(t)) {
+            CLUSTER.exceptionHandlingCommand(command, t);
+         }
          reply.reply(exceptionHandlingCommand(t));
       }
    }
@@ -284,7 +286,9 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
                CLUSTER.debugf("Shutdown while handling command %s", command);
                return shuttingDownResponse();
             } else {
-               CLUSTER.exceptionHandlingCommand(command, throwable);
+               if (command.logThrowable(throwable)) {
+                  CLUSTER.exceptionHandlingCommand(command, throwable);
+               }
                return exceptionHandlingCommand(throwable);
             }
          } else {

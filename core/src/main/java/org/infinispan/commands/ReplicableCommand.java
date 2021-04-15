@@ -89,6 +89,10 @@ public interface ReplicableCommand {
       return false;
    }
 
+   default boolean logThrowable(Throwable t) {
+      return true;
+   }
+
    /**
     * Writes this instance to the {@link ObjectOutput}.
     *

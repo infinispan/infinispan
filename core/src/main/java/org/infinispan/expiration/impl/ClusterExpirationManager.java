@@ -28,6 +28,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -215,8 +216,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // This shouldn't block
             future.get(100, TimeUnit.MILLISECONDS);
          } catch (ExecutionException e) {
-            errors.incrementAndGet();
-            log.exceptionPurgingDataContainer(e.getCause());
+            Throwable ce = e.getCause();
+            while (ce instanceof RemoteException) {
+               ce = ce.getCause();
+            }
+            if (ce instanceof org.infinispan.util.concurrent.TimeoutException) {
+               // Ignoring a TimeoutException as it could just be the entry was being updated concurrently
+               log.tracef(e, "Encountered timeout exception, assuming it was due to a concurrent write. Entry will" +
+                     " be attempted to be removed on the next purge if still expired.");
+            } else {
+               errors.incrementAndGet();
+               log.exceptionPurgingDataContainer(e.getCause());
+            }
          }
          return true;
       }
