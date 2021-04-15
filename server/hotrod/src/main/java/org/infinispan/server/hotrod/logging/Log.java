@@ -76,7 +76,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Factory '%s' not found in server", id = 6016)
    IllegalStateException missingKeyValueFilterConverterFactory(String name);
 
-   @Message(value = "Unauthorized '%s' operation", id = 6017)
+   @Message(value = "Operation '%s' requires authentication", id = 6017)
    SecurityException unauthorizedOperation(String op);
 
    @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 6018)
