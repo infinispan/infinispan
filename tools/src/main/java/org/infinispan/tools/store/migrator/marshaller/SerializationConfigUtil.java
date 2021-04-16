@@ -72,6 +72,7 @@ public class SerializationConfigUtil {
             // Return the user marshaller so that PersistenceMarshaller object wrapping is avoided
             return pm.getUserMarshaller();
          case 12:
+         case 13:
             return props.isTargetStore() ? null : createPersistenceMarshaller(props);
          default:
             throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));

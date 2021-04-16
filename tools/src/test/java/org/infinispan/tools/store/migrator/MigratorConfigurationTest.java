@@ -49,6 +49,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
@@ -172,12 +173,14 @@ public class MigratorConfigurationTest {
       assertTrue(getMarshallerForVersion(10, SOURCE) instanceof DelegatingUserMarshaller);
       assertTrue(getMarshallerForVersion(11, SOURCE) instanceof DelegatingUserMarshaller);
       assertTrue(getMarshallerForVersion(12, SOURCE) instanceof PersistenceMarshaller);
+      assertTrue(getMarshallerForVersion(13, SOURCE) instanceof PersistenceMarshaller);
 
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(8, TARGET));
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(9, TARGET));
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(10, TARGET));
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(11, TARGET));
-      assertNull(getMarshallerForVersion(12, TARGET));
+      Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(12, TARGET));
+      assertNull(getMarshallerForVersion(Integer.parseInt(Version.getMajor()), TARGET));
    }
 
    private Marshaller getMarshallerForVersion(int version, Element storeType) {
