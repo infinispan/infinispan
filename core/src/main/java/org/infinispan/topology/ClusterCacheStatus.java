@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -872,14 +873,24 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers, getCapacityFactors());
       ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
 
+      boolean removeMembers = !expectedMembers.containsAll(currentCH.getMembers());
+      if (removeMembers) {
+         // Leavers should have been removed before starting a rebalance, but that might have failed
+         // e.g. if all the remaining members had capacity factor 0
+         Collection<Address> unwantedMembers = new LinkedList<>(currentCH.getMembers());
+         unwantedMembers.removeAll(expectedMembers);
+         CLUSTER.debugf("Removing unwanted members from the current consistent hash: %s", unwantedMembers);
+         currentCH = updatedMembersCH;
+      }
+
       boolean updateTopology = false;
       boolean rebalance = false;
       boolean updateStableTopology = false;
       if (rebalanceType == RebalanceType.NONE) {
          updateTopology = true;
       } else if (balancedCH.equals(currentCH)) {
-         log.tracef("The balanced CH is the same as the current CH, not rebalancing");
-         updateTopology = cacheTopology.getPendingCH() != null;
+         if (log.isTraceEnabled()) log.tracef("The balanced CH is the same as the current CH, not rebalancing");
+         updateTopology = cacheTopology.getPendingCH() != null || removeMembers;
          // After a cluster view change that leaves only 1 node, we don't need either a topology update or a rebalance
          // but we must still update the stable topology
          updateStableTopology =
