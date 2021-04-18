@@ -14,6 +14,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.Future;
@@ -168,22 +169,22 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       waitForClusterToForm(cacheName);
    }
 
-   public void testZeroCapacityFactorNodeStartsFirst() throws Exception {
-      String cacheName = "testCache";
+   public void testZeroCapacityFactorNodeStartsFirst(Method m) throws Exception {
+      String cacheName = m.getName();
       Queue<CacheStatusResponse> joinResponses = new LinkedBlockingQueue<>();
 
       assertTrue(node1.isCoordinator());
-      ClusterTopologyManager current = TestingUtil.extractGlobalComponent(node1, ClusterTopologyManager.class);
-      Answer<?> delegateAnswer = invocation -> invocation.getMethod().invoke(current, invocation.getArguments());
+      ClusterTopologyManager originalCTM = TestingUtil.extractGlobalComponent(node1, ClusterTopologyManager.class);
+      Answer<?> delegateAnswer = invocation -> invocation.getMethod().invoke(originalCTM, invocation.getArguments());
       ClusterTopologyManager trackingCTM = mock(ClusterTopologyManager.class, delegateAnswer);
       when(trackingCTM.handleJoin(eq(cacheName), any(), any(), anyInt()))
             .thenAnswer(invocation -> {
-               return current.handleJoin(cacheName, invocation.getArgument(1),
-                                         invocation.getArgument(2), invocation.getArgument(3))
-                             .thenApply(r -> {
-                                joinResponses.offer(r);
-                                return r;
-                             });
+               return originalCTM.handleJoin(cacheName, invocation.getArgument(1),
+                                             invocation.getArgument(2), invocation.getArgument(3))
+                                 .thenApply(r -> {
+                                    joinResponses.offer(r);
+                                    return r;
+                                 });
             });
       TestingUtil.replaceComponent(node1, ClusterTopologyManager.class, trackingCTM, true);
       ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -225,13 +226,43 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       cache(0, cacheName).put("key", "value");
       assertEquals("value", cache(0, cacheName).get("key"));
 
+      TestingUtil.replaceComponent(node1, ClusterTopologyManager.class, originalCTM, true);
+   }
+
+   public void testOnlyZeroCapacityNodesRemain(Method m) {
+      String cacheName = m.getName();
+
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+        .hash().numSegments(NUM_SEGMENTS);
+
+      ConfigurationBuilder cbZero = new ConfigurationBuilder();
+      cbZero.clustering().cacheMode(CacheMode.DIST_SYNC)
+            .hash().numSegments(NUM_SEGMENTS).capacityFactor(0f);
+
+      node2.createCache(cacheName, cb.build());
+      node1.createCache(cacheName, cbZero.build());
+      zeroCapacityNode.createCache(cacheName, cb.build());
+
+      waitForClusterToForm(cacheName);
+
       // Stop the only non-zero-capacity node
       node2.stop();
+      cacheManagers.remove(1);
 
       // There is no new cache topology, so any operation will time out
       // Lower the remote timeout just for this operation
-      cache(0, cacheName).getCacheConfiguration().clustering().remoteTimeout(10);
-      expectCompletionException(TimeoutException.class, cache(0, cacheName).getAsync("key"));
+      zeroCapacityNode.getCache(cacheName).getCacheConfiguration().clustering().remoteTimeout(10);
+      expectCompletionException(TimeoutException.class, zeroCapacityNode.getCache(cacheName).getAsync("key"));
+
+      // Start a new node with capacity
+      node2 = addClusterEnabledCacheManager();
+      node2.defineConfiguration(cacheName, cb.build());
+      node2.getCache(cacheName);
+
+      // Operations succeed again
+      zeroCapacityNode.getCache(cacheName).getCacheConfiguration().clustering().remoteTimeout(10_000);
+      zeroCapacityNode.getCache(cacheName).get("key");
    }
 
    public void testDenyReadWritesCacheStaysAvailableAfterZeroCapacityNodeCrash(Method m) {
