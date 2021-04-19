@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.expiration.TouchMode;
 
 /**
  * Controls the default expiration settings for entries in the cache.
@@ -20,11 +21,12 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
    public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder("maxIdle", -1l).build();
    public static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder("wakeUpInterval", TimeUnit.MINUTES.toMillis(1)).xmlName("interval").build();
+   public static final AttributeDefinition<TouchMode> TOUCH = AttributeDefinition.builder("touch", TouchMode.SYNC).immutable().build();
 
    public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(EXPIRATION.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL);
+      return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL, TOUCH);
    }
 
    @Override
@@ -36,6 +38,7 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
    private final Attribute<Long> maxIdle;
    private final Attribute<Boolean> reaperEnabled;
    private final Attribute<Long> wakeUpInterval;
+   private final Attribute<TouchMode> touch;
    private final AttributeSet attributes;
 
    ExpirationConfiguration(AttributeSet attributes) {
@@ -44,6 +47,7 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
       maxIdle = attributes.attribute(MAX_IDLE);
       reaperEnabled = attributes.attribute(REAPER_ENABLED);
       wakeUpInterval = attributes.attribute(WAKEUP_INTERVAL);
+      touch = attributes.attribute(TOUCH);
    }
 
    /**
@@ -82,6 +86,16 @@ public class ExpirationConfiguration implements Matchable<ExpirationConfiguratio
     */
    public long wakeUpInterval() {
       return wakeUpInterval.get();
+   }
+
+   /**
+    * Control how the timestamp of read keys are updated on all the key owners in a cluster.
+    *
+    * Default is {@link TouchMode#SYNC}.
+    * If the cache mode is ASYNC this attribute is ignored, and timestamps are updated asynchronously.
+    */
+   public TouchMode touch() {
+      return touch.get();
    }
 
    @Override
