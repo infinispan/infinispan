@@ -111,7 +111,7 @@
          <state-transfer enabled="true" timeout="120000" chunk-size="1000"/>
       </distributed-cache>
       <local-cache name="evictionCache">
-         <expiration interval="500" lifespan="60000" max-idle="1000"/>
+         <expiration interval="500" lifespan="60000" max-idle="1000" touch="ASYNC"/>
          <memory>
             <object strategy="REMOVE" size="5000"/>
          </memory>

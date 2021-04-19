@@ -20,8 +20,10 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -47,6 +49,21 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected LockManager lockManager;
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected DistributionManager distributionManager;
+
+   private TouchMode touchMode;
+   private boolean isScattered;
+
+   @Override
+   public void init() {
+      super.init();
+
+      isScattered = cacheConfiguration.clustering().cacheMode().isScattered();
+      if (cacheConfiguration.clustering().cacheMode().isSynchronous()) {
+         touchMode = cacheConfiguration.expiration().touch();
+      } else {
+         touchMode = TouchMode.ASYNC;
+      }
+   }
 
    protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
@@ -130,16 +147,23 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable {
-      if (isLocalModeForced(command)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          return invokeNext(ctx, command);
       }
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
+      // Scattered any node could be a backup, so we have to touch all members
+      List<Address> owners = isScattered ? cacheTopology.getActualMembers() : info.readOwners();
+
+      if (touchMode == TouchMode.ASYNC) {
+         if (ctx.isOriginLocal()) {
+            // Send to all the owners
+            rpcManager.sendToMany(owners, command, DeliverOrder.NONE);
+         }
+         return invokeNext(ctx, command);
+      }
 
       if (info.isPrimary()) {
-         boolean isScattered = cacheConfiguration.clustering().cacheMode().isScattered();
-         // Scattered any node could be a backup, so we have to touch all members
-         List<Address> owners = isScattered ? cacheTopology.getActualMembers() : info.readOwners();
          AbstractTouchResponseCollector collector = isScattered ? ScatteredTouchResponseCollector.INSTANCE :
                TouchResponseCollector.INSTANCE;
          CompletionStage<Boolean> remoteInvocation = rpcManager.invokeCommand(owners, command, collector,
