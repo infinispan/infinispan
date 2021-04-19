@@ -265,6 +265,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     */
    protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry entry, int segment, long currentTime) {
       CompletionStage<Boolean> future = cache.touch(entry.getKey(), segment, true);
+      if (CompletionStages.isCompletedSuccessfully(future)) {
+         return CompletableFutures.booleanStage(!CompletionStages.join(future));
+      }
       return future.thenApply(touched -> !touched);
    }
 

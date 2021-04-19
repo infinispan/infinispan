@@ -49,6 +49,7 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
@@ -1002,6 +1003,14 @@ public class CacheParser implements ConfigurationParser {
             }
             case INTERVAL: {
                builder.expiration().wakeUpInterval(Long.parseLong(value));
+               break;
+            }
+            case TOUCH: {
+               if (reader.getSchema().since(13, 0)) {
+                  builder.expiration().touch(TouchMode.valueOf(value));
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
                break;
             }
             default: {
