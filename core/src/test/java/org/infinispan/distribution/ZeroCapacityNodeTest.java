@@ -3,6 +3,8 @@ package org.infinispan.distribution;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
+import static org.infinispan.test.TestingUtil.installNewView;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,6 +35,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.op.TestFunctionalWriteOperation;
@@ -229,6 +232,37 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       // Lower the remote timeout just for this operation
       cache(0, cacheName).getCacheConfiguration().clustering().remoteTimeout(10);
       expectCompletionException(TimeoutException.class, cache(0, cacheName).getAsync("key"));
+   }
+
+   public void testDenyReadWritesCacheStaysAvailableAfterZeroCapacityNodeCrash(Method m) {
+      String cacheName = m.getName();
+
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+        .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
+        .hash().numSegments(NUM_SEGMENTS);
+
+      ConfigurationBuilder cbZero = new ConfigurationBuilder();
+      cbZero.clustering().cacheMode(CacheMode.DIST_SYNC)
+            .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
+            .hash().numSegments(NUM_SEGMENTS).capacityFactor(0f);
+
+      node1.createCache(cacheName, cb.build());
+      node2.createCache(cacheName, cbZero.build());
+      zeroCapacityNode.createCache(cacheName, cb.build());
+
+      waitForClusterToForm(cacheName);
+
+      installNewView(node1);
+      installNewView(node2, zeroCapacityNode);
+
+      waitForNoRebalance(node1.getCache(cacheName));
+      cache(0, cacheName).get("key");
+
+      installNewView(node1, node2, zeroCapacityNode);
+
+      waitForNoRebalance(caches(cacheName));
+      cache(0, cacheName).get("key");
    }
 
    private ConsistentHash consistentHash(int managerIndex, String cacheName) {
