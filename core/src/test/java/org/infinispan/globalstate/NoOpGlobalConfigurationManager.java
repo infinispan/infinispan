@@ -20,22 +20,22 @@ public class NoOpGlobalConfigurationManager implements GlobalConfigurationManage
    }
 
    @Override
-   public CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletableFuture<Configuration> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return CompletableFutures.completedNull();
    }
 

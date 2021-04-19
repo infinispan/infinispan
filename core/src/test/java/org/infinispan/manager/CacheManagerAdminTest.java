@@ -1,19 +1,17 @@
 package org.infinispan.manager;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -67,11 +65,7 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
 
    protected void checkCacheExistenceAcrossCluster(String cacheName, boolean exists) {
       for (EmbeddedCacheManager m : cacheManagers) {
-         if (exists) {
-            assertTrue("Cache '" + cacheName + "' should be present on " + m, m.cacheExists(cacheName));
-         } else {
-            assertFalse("Cache '" + cacheName + "' should NOT be present on " + m, m.cacheExists(cacheName));
-         }
+         eventuallyEquals("Cache '" + cacheName + "' should be present on " + m, exists, () -> m.cacheExists(cacheName));
       }
    }
 

@@ -49,8 +49,9 @@ public interface GlobalConfigurationManager {
     * @param cacheName the name of the configuration
     * @param configuration the configuration object
     * @param flags the flags to apply
+    * @return
     */
-   CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
+   CompletableFuture<Void> createCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
 
    /**
     * Defines a cluster-wide cache configuration or retrieves an existing one
@@ -58,7 +59,7 @@ public interface GlobalConfigurationManager {
     * @param configuration the configuration object
     * @param flags the flags to apply
     */
-   CompletableFuture<Configuration> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
+   CompletableFuture<Void> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
 
    /**
     * Defines a cluster-wide cache configuration using the supplied template
@@ -66,7 +67,7 @@ public interface GlobalConfigurationManager {
     * @param template the template name to use
     * @param flags the flags to apply
     */
-   CompletableFuture<Configuration> createCache(String cacheName, String template, EnumSet<AdminFlag> flags);
+   CompletableFuture<Void> createCache(String cacheName, String template, EnumSet<AdminFlag> flags);
 
    /**
     * Defines a cluster-wide cache configuration using the supplied template or retrieves an existing one
@@ -74,7 +75,7 @@ public interface GlobalConfigurationManager {
     * @param template the template name to use
     * @param flags the flags to apply
     */
-   CompletableFuture<Configuration> getOrCreateCache(String cacheName, String template, EnumSet<AdminFlag> flags);
+   CompletableFuture<Void> getOrCreateCache(String cacheName, String template, EnumSet<AdminFlag> flags);
 
    /**
     * Removes a cluster-wide cache and its configuration
