@@ -41,6 +41,7 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.ConditionFuture;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -753,6 +754,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       // Creating the initial topology requires at least one node with a non-zero capacity factor
       return hasInitialTopologyFuture.newConditionStage(ccs -> ccs.getCurrentTopology() != null,
+                                                        () -> new TimeoutException("Timed out waiting for initial cache topology"),
                                                         joinInfo.getTimeout(), TimeUnit.MILLISECONDS);
    }
 

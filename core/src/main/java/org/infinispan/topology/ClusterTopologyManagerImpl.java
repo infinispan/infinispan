@@ -216,8 +216,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                        joiner, joinerViewId);
          }
          viewStage = joinViewFuture.newConditionStage(ctmi -> ctmi.canHandleJoin(joinerViewId),
-                                                      joinInfo.getTimeout(), MILLISECONDS)
-                                   .exceptionally(e -> wrapJoinTimeoutException(joinerViewId, e));
+                                                      () -> CLUSTER.coordinatorTimeoutWaitingForView(
+                                                            joinerViewId, viewId, clusterManagerStatus),
+                                                      joinInfo.getTimeout(), MILLISECONDS);
       }
 
       // After we have the right view, obtain the ClusterCacheStatus
@@ -231,13 +232,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          return cacheStatus.nodeCanJoinFuture(joinInfo)
                            .thenApply(ignored -> cacheStatus.doJoin(joiner, joinInfo));
       });
-   }
-
-   private Void wrapJoinTimeoutException(int joinerViewId, Throwable e) {
-      if (e instanceof TimeoutException) {
-         throw log.coordinatorTimeoutWaitingForView(joinerViewId, viewId, clusterManagerStatus);
-      }
-      throw CompletableFutures.asCompletionException(e);
    }
 
    private ClusterCacheStatus prepareJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,

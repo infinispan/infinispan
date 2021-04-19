@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 
@@ -33,15 +34,20 @@ public class ConditionFuture<T> {
       this.timeoutExecutor = timeoutExecutor;
    }
 
+   public CompletionStage<Void> newConditionStage(Predicate<T> test, long timeout, TimeUnit timeUnit) {
+      return newConditionStage(test, TimeoutException::new, timeout, timeUnit);
+   }
+
    /**
     * Create a new {@link CompletionStage} that completes after the first {@link #update(Object)} call
     * with a value satisfying the {@code test} predicate.
     *
     * @param test The predicate.
+    * @param exceptionGenerator Exception generator for timeout errors.
     * @param timeout Maximum time to wait for a value satisfying the predicate.
     * @param timeUnit Timeout time unit.
     */
-   public CompletionStage<Void> newConditionStage(Predicate<T> test, long timeout, TimeUnit timeUnit) {
+   public CompletionStage<Void> newConditionStage(Predicate<T> test, Supplier<Exception> exceptionGenerator, long timeout, TimeUnit timeUnit) {
       Objects.requireNonNull(test);
 
       if (!running) {
@@ -50,7 +56,7 @@ public class ConditionFuture<T> {
 
       Data data = new Data();
       data.cancelFuture = timeoutExecutor.schedule(() -> {
-         data.completeExceptionally(new TimeoutException());
+         data.completeExceptionally(exceptionGenerator.get());
          return null;
       }, timeout, timeUnit);
 

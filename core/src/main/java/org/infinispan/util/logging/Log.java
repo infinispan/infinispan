@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -2161,4 +2162,14 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "[%s] Failed to receive a response from any nodes. Automatic cross-site state transfer to site '%s' is not started.", id = 635)
    void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
+
+   @Message(value = "State transfer timeout (%d) must be greater than or equal to the remote timeout (%d)", id = 636)
+   CacheConfigurationException invalidStateTransferTimeout(Long stateTransferTimeout, Long remoteTimeout);
+
+   @Message(value = "Timeout waiting for topology %d, current topology is %d", id = 637)
+   TimeoutException topologyTimeout(int expectedTopologyId, int currentTopologyId);
+
+   @Message(value = "Timeout waiting for topology %d transaction data", id = 638)
+   TimeoutException transactionDataTimeout(int expectedTopologyId);
+
 }
