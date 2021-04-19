@@ -274,6 +274,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry entry, int segment) {
       TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
       CompletionStage<Boolean> future = (CompletionStage) touchCommand.invokeAsync(componentRegistry);
+      if (CompletionStages.isCompletedSuccessfully(future)) {
+         return CompletableFutures.booleanStage(CompletionStages.join(future));
+      }
       return future.thenApply(touched -> !touched);
    }
 

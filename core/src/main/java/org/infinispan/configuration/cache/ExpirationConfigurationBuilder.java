@@ -3,8 +3,10 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.ExpirationConfiguration.LIFESPAN;
 import static org.infinispan.configuration.cache.ExpirationConfiguration.MAX_IDLE;
 import static org.infinispan.configuration.cache.ExpirationConfiguration.REAPER_ENABLED;
+import static org.infinispan.configuration.cache.ExpirationConfiguration.TOUCH;
 import static org.infinispan.configuration.cache.ExpirationConfiguration.WAKEUP_INTERVAL;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
@@ -12,6 +14,7 @@ import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.expiration.TouchMode;
 
 /**
  * Controls the default expiration settings for entries in the cache.
@@ -130,8 +133,20 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       return wakeUpInterval(unit.toMillis(l));
    }
 
+   /**
+    * Control how the timestamp of read keys are updated on all the key owners in a cluster.
+    *
+    * Default is {@link TouchMode#SYNC}.
+    * If the cache mode is ASYNC this attribute is ignored, and timestamps are updated asynchronously.
+    */
+   public ExpirationConfigurationBuilder touch(TouchMode touchMode) {
+      attributes.attribute(TOUCH).set(touchMode);
+      return this;
+   }
+
    @Override
    public void validate() {
+      Objects.requireNonNull(attributes.attribute(TOUCH).get());
    }
 
    @Override

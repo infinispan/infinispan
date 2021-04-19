@@ -68,6 +68,7 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
@@ -2027,6 +2028,14 @@ public class Parser implements ConfigurationParser {
             }
             case INTERVAL: {
                builder.expiration().wakeUpInterval(Long.parseLong(value));
+               break;
+            }
+            case TOUCH: {
+               if (reader.getSchema().since(9, 4)) {
+                  builder.expiration().touch(TouchMode.valueOf(value));
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
                break;
             }
             default: {
