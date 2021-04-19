@@ -26,12 +26,14 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -78,6 +80,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private Address localAddress;
    private long timeout;
    private String cacheName;
+   private boolean transactional;
+   private TouchMode touchMode;
 
    @Override
    public void start() {
@@ -87,6 +91,13 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       this.cacheName = cache.getName();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = configuration.clustering().remoteTimeout();
+
+      transactional = configuration.transaction().transactionMode().isTransactional();
+      if (configuration.clustering().cacheMode().isSynchronous()) {
+         touchMode = configuration.expiration().touch();
+      } else {
+         touchMode = TouchMode.ASYNC;
+      }
    }
 
    @Override
@@ -457,8 +468,33 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       TouchCommand touchCommand = cf.running().buildTouchCommand(ice.getKey(), segment);
       touchCommand.setTopologyId(lct.getTopologyId());
 
-      CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
+      boolean isScattered = configuration.clustering().cacheMode().isScattered();
+      DistributionInfo di = lct.getSegmentDistribution(segment);
+      // Scattered any node could be a backup, so we have to touch all members
+      List<Address> owners = isScattered ? lct.getActualMembers() : di.writeOwners();
+
       long accessTime = timeService.wallClockTime();
+      if (touchMode == TouchMode.ASYNC) {
+         // The ICE can be a copy in cases such as off heap - we need to update its time that is reported to the user
+         // It doesn't matter if the touch fails later, as the application will not see this entry
+         ice.touch(accessTime);
+
+         // Send to all the owners
+         rpcManager.sendToMany(owners, touchCommand, DeliverOrder.NONE);
+         return touchCommand.invokeAsync(componentRegistry, accessTime).thenApply(b -> {
+            if (b == Boolean.TRUE) {
+               return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+         });
+      }
+
+      CompletionStage<Boolean> remoteStage =
+            rpcManager.invokeCommand(owners, touchCommand,
+                                     isScattered ? new ScatteredTouchResponseCollector() :
+                                     new TouchResponseCollector(),
+                                     rpcManager.getSyncRpcOptions());
+
       CompletionStage<Object> localStage = touchCommand.invokeAsync(componentRegistry, accessTime);
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
