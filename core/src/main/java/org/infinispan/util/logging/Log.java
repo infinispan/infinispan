@@ -2194,4 +2194,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed to recover '%s' persisted data.", id = 644)
    PersistenceException corruptDataMigrationFailed(String cacheName, @Cause Throwable cause);
+
+   @Message(value = "Async cache modes like %s do not allow expiration with SYNC touch mode", id = 645)
+   CacheConfigurationException invalidTouchMode(CacheMode cacheMode);
 }

@@ -23,6 +23,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -69,12 +70,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private Address localAddress;
    private long timeout;
+   private TouchMode touchMode;
 
    @Override
    public void start() {
       super.start();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = configuration.clustering().remoteTimeout();
+      if (configuration.clustering().cacheMode().isSynchronous()) {
+         touchMode = configuration.expiration().touch();
+      } else {
+         touchMode = TouchMode.ASYNC;
+      }
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {

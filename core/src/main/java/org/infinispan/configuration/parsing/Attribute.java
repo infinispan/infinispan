@@ -192,6 +192,7 @@ public enum Attribute {
     THREAD_POOL_SIZE,
     TIMEOUT,
     TOTAL_ORDER_EXECUTOR,
+    TOUCH,
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
     TRANSACTION_PROTOCOL("protocol"),
     TRANSACTIONAL,
