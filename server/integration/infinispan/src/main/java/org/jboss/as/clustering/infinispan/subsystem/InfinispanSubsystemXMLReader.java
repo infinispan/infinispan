@@ -1640,6 +1640,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     ExpirationConfigurationResource.INTERVAL.parseAndSetParameter(value, expiration, reader);
                     break;
                 }
+                case TOUCH: {
+                    ExpirationConfigurationResource.TOUCH.parseAndSetParameter(value, expiration, reader);
+                    break;
+                }
                 default: {
                     throw ParseUtils.unexpectedAttribute(reader, i);
                 }

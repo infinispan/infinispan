@@ -23,11 +23,13 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.ExpirationConfiguration;
+import org.infinispan.expiration.TouchMode;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.client.helpers.MeasurementUnit;
+import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -70,7 +72,16 @@ public class ExpirationConfigurationResource extends CacheConfigurationChildReso
                     .setDefaultValue(new ModelNode().set(ExpirationConfiguration.MAX_IDLE.getDefaultValue()))
                     .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {MAX_IDLE, LIFESPAN, INTERVAL};
+    static final SimpleAttributeDefinition TOUCH =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.TOUCH, ModelType.STRING, true)
+                    .setXmlName(Attribute.TOUCH.getLocalName())
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .setValidator(new EnumValidator<>(TouchMode.class, true, true))
+                    .setDefaultValue(null)
+                    .build();
+
+    static final AttributeDefinition[] ATTRIBUTES = {MAX_IDLE, LIFESPAN, INTERVAL, TOUCH};
 
     public ExpirationConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.EXPIRATION, parent, ATTRIBUTES);

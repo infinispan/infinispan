@@ -68,6 +68,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
@@ -495,6 +496,9 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             final long maxIdle = ExpirationConfigurationResource.MAX_IDLE.resolveModelAttribute(context, expiration).asLong();
             final long lifespan = ExpirationConfigurationResource.LIFESPAN.resolveModelAttribute(context, expiration).asLong();
             final long interval = ExpirationConfigurationResource.INTERVAL.resolveModelAttribute(context, expiration).asLong();
+            final String touch = expiration.hasDefined(ModelKeys.TOUCH) ?
+                                 ExpirationConfigurationResource.TOUCH.resolveModelAttribute(context, expiration).asString() :
+                                 null;
 
             builder.expiration()
                     .maxIdle(maxIdle)
@@ -506,6 +510,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.expiration().enableReaper();
             } else {
                 builder.expiration().disableReaper();
+            }
+
+            if (touch != null) {
+                builder.expiration().touch(TouchMode.valueOf(touch));
             }
         }
 

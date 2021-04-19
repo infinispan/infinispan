@@ -150,6 +150,7 @@ public enum Attribute {
     THREAD_POOL_SIZE("thread-pool-size"),
     TIMEOUT("timeout"),
     TOTAL_ORDER_EXECUTOR("total-order-executor"),
+    TOUCH("touch"),
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
     TRANSACTION_PROTOCOL("protocol"),
     TRANSACTIONAL("transactional"),

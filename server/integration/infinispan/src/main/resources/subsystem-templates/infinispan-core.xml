@@ -253,7 +253,7 @@
             </distributed-cache>
 
             <distributed-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="2000" max-idle="1000" touch="SYNC" />
                <persistence>
                   <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" fetch-state="true" preload="true" purge="false" shared="false">
                      <string-keyed-table prefix="ISPN_NC_SK">
@@ -304,7 +304,7 @@
                </memory>
             </local-cache>
             <local-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="2000" max-idle="1000" touch="SYNC" />
             </local-cache>
          </cache-container>
       </replacement>
@@ -342,7 +342,7 @@
             </distributed-cache>
 
             <distributed-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="2000" max-idle="1000" touch="SYNC" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />

@@ -499,6 +499,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             this.writeOptional(writer, Attribute.MAX_IDLE, expiration, ModelKeys.MAX_IDLE);
             this.writeOptional(writer, Attribute.LIFESPAN, expiration, ModelKeys.LIFESPAN);
             this.writeOptional(writer, Attribute.INTERVAL, expiration, ModelKeys.INTERVAL);
+            this.writeOptional(writer, Attribute.TOUCH, expiration, ModelKeys.TOUCH);
             writer.writeEndElement();
         }
 

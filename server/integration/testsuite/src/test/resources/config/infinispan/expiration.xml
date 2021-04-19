@@ -11,7 +11,7 @@
                     <persistence>
                         <file-store name="expirationCacheStore"         path="rest-expiration-cache-store" purge="true" />
                     </persistence>
-                    <expiration lifespan="2000" max-idle="2000" />
+                    <expiration lifespan="2000" max-idle="2000" touch="ASYNC"/>
                 </replicated-cache>
                 <replicated-cache name="memcachedCache"/>
             </cache-container>

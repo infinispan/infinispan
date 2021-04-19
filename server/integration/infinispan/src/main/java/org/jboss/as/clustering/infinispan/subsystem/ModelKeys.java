@@ -281,6 +281,7 @@ public class ModelKeys {
     static final String TIMEOUT = "timeout";
     static final String TIMESTAMP_COLUMN = "timestamp-column";
     static final String TOTAL_ORDER_EXECUTOR = "total-order-executor";
+    static final String TOUCH = "touch";
     static final String TRANSACTION = "transaction";
     static final String TRANSACTION_NAME = "TRANSACTION";
     static final String TRANSPORT = "transport";

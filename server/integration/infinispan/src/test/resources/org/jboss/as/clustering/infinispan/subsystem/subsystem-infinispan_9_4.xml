@@ -203,7 +203,7 @@
             <memory>
                 <object size="20000"/>
             </memory>
-            <expiration interval="10000" lifespan="10" max-idle="10"/>
+            <expiration interval="10000" lifespan="10" max-idle="10" touch="ASYNC"/>
             <persistence>
                 <cluster-loader remote-timeout="60000" name="cluster-loader"/>
             </persistence>

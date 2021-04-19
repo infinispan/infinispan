@@ -189,6 +189,7 @@ public enum Attribute {
     TIMEOUT(ModelKeys.TIMEOUT),
     @Deprecated
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
+    TOUCH(ModelKeys.TOUCH),
     TYPE(ModelKeys.TYPE),
     USERNAME(ModelKeys.USERNAME),
     UPPER_BOUND(ModelKeys.UPPER_BOUND),
