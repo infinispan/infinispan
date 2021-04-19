@@ -1203,6 +1203,15 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="touch" type="tns:touch-mode" default="${Expiration.touch}">
+      <xs:annotation>
+        <xs:documentation>
+          Control how the timestamp of read keys are updated on all the key owners in a cluster.
+          Default is SYNC.
+          If the cache mode is ASYNC this attribute is ignored, and timestamps are updated asynchronously.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="store-as-binary">
@@ -2876,6 +2885,28 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="touch-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="SYNC">
+        <xs:annotation>
+          <xs:documentation>Delay read operations until the other owners confirm updating the timestamp of the
+            entry.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ASYNC">
+        <xs:annotation>
+          <xs:documentation>
+            Send touch commands to other owners, but do not wait for their confirmation.
+            This allows read operations to return the value of a key even if another node has started
+            expiring it.
+            When that happens, the read won't extend the lifespan of the key.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="xsite-merge-policy">
     <xs:union memberTypes="tns:xsite-merge-policy-defaults xs:string"/>
   </xs:simpleType>
@@ -2884,7 +2915,8 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="DEFAULT">
         <xs:annotation>
-          <xs:documentation>In case of conflict, it chooses the entry for the site's name with lower lexicographically
+          <xs:documentation>In case of conflict, it chooses the entry for the site's name with lower
+            lexicographically
             order.
           </xs:documentation>
         </xs:annotation>

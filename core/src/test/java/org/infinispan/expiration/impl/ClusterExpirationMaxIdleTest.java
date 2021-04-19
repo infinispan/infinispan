@@ -8,19 +8,13 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.triangle.BackupWriteCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
@@ -30,25 +24,24 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.expiration.TouchMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
- * Tests to make sure that when expiration occurs it occurs across the cluster
+ * Tests to make sure that when max-idle expiration occurs it occurs across the cluster
  *
  * @author William Burns
  * @since 8.0
  */
-@Test(groups = "functional", testName = "expiration.impl.ClusterExpirationFunctionalTest")
-public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "expiration.impl.ClusterExpirationMaxIdleTest")
+public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -60,6 +53,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    protected Cache<Object, String> cache1;
    protected Cache<Object, String> cache2;
 
+   private TouchMode touchMode = TouchMode.SYNC;
    protected ConfigurationBuilder configurationBuilder;
 
    @Override
@@ -67,13 +61,15 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       return Arrays.stream(StorageType.values())
             .flatMap(type ->
                Stream.builder()
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
+                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
+                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
                      .build()
             ).toArray();
    }
@@ -83,7 +79,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.clustering().cacheMode(cacheMode);
       configurationBuilder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
-      configurationBuilder.expiration().disableReaper();
+      configurationBuilder.expiration().disableReaper().touch(touchMode);
       if (storageType != null) {
          configurationBuilder.memory().storage(storageType);
       }
@@ -103,58 +99,6 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       TestingUtil.replaceComponent(manager(1), TimeService.class, ts1, true);
       ts2 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
-   }
-
-   public void testLifespanExpiredOnPrimaryOwner() throws Exception {
-      testLifespanExpiredEntryRetrieval(cache0, cache1, ts0, true);
-   }
-
-   public void testLifespanExpiredOnBackupOwner() throws Exception {
-      testLifespanExpiredEntryRetrieval(cache0, cache1, ts1, false);
-   }
-
-   private void testLifespanExpiredEntryRetrieval(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner,
-           ControlledTimeService timeService, boolean expireOnPrimary) throws Exception {
-      Object key = createKey(primaryOwner, backupOwner);
-      primaryOwner.put(key, key.toString(), 10, TimeUnit.MILLISECONDS);
-
-      assertEquals(key.toString(), primaryOwner.get(key));
-      assertEquals(key.toString(), backupOwner.get(key));
-
-      // Now we expire on cache0, it should still exist on cache1
-      // Note this has to be within the buffer in RemoveExpiredCommand (100 ms the time of this commit)
-      timeService.advance(11);
-
-      Cache<?, ?> expiredCache;
-      Cache<?, ?> otherCache;
-      if (expireOnPrimary) {
-         expiredCache = primaryOwner;
-         otherCache = backupOwner;
-      } else {
-         expiredCache = backupOwner;
-         otherCache = primaryOwner;
-      }
-
-      Cache<?, ?> other;
-      if (cacheMode.isScattered()) {
-         // In scattered cache the read would go to primary always
-         other = otherCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
-      } else {
-         other = otherCache;
-      }
-      assertEquals(key.toString(), other.get(key));
-
-      // By calling get on an expired key it will remove it all over
-      Object expiredValue = expiredCache.get(key);
-      // In scattered mode, the get goes from backup to remote node where the time has not passed yet,
-      // therefore it is not expired. We don't check expiration on local node after receiving the response.
-      if (cacheMode.isScattered() && !expireOnPrimary) {
-         assertEquals(key.toString(), expiredValue);
-      }  else {
-         assertNull(expiredValue);
-         // This should be expired on the other node soon - note expiration is done asynchronously on a get
-         eventually(() -> !other.containsKey(key), 10, TimeUnit.SECONDS);
-      }
    }
 
    private Object createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
@@ -189,28 +133,19 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testLifespanExpiredOnBoth() {
-      Object key = createKey(cache0, cache1);
-      cache0.put(key, key.toString(), 10, TimeUnit.MINUTES);
-
-      assertEquals(key.toString(), cache0.get(key));
-      assertEquals(key.toString(), cache1.get(key));
-
-      // Now we expire on cache0, it should still exist on cache1
-      ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-      ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-
-      // Both should be null
-      assertNull(cache0.get(key));
-      assertNull(cache1.get(key));
-   }
-
    public void testMaxIdleExpiredOnBoth() {
       Object key = createKey(cache0, cache1);
       cache0.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
 
+      incrementAllTimeServices(1, TimeUnit.MINUTES);
       assertEquals(key.toString(), cache0.get(key));
       assertEquals(key.toString(), cache1.get(key));
+
+      if (touchMode == TouchMode.ASYNC) {
+         // Wait for the async touch commands to be replicated
+         eventuallyEquals(ts0.time(), () -> cache0.getAdvancedCache().getDataContainer().peek(key).getLastUsed());
+         eventuallyEquals(ts1.time(), () -> cache1.getAdvancedCache().getDataContainer().peek(key).getLastUsed());
+      }
 
       // It should be expired on all
       incrementAllTimeServices(11, TimeUnit.MINUTES);
@@ -242,14 +177,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
       // Scattered can pick backup at random - so make sure we know it
       if (cacheMode == CacheMode.SCATTERED_SYNC) {
-         for (Cache cache : caches()) {
-            if (cache == primaryOwner) {
-               continue;
-            }
-            if (cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(key)) {
-               backupOwner = cache.getAdvancedCache();
-            }
-         }
+         backupOwner = findScatteredBackup(primaryOwner, key);
       }
 
       assertEquals(key.toString(), primaryOwner.get(key));
@@ -272,6 +200,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       // Now we increment it a bit and force an access on the node that it doesn't expire on
       incrementAllTimeServices(5, TimeUnit.MINUTES);
       assertNotNull(otherCache.get(key));
+      if (touchMode == TouchMode.ASYNC) {
+         // Wait for the async touch commands to be replicated
+         eventuallyEquals(ts0.time(), () -> cache0.getAdvancedCache().getDataContainer().peek(key).getLastUsed());
+         eventuallyEquals(ts1.time(), () -> cache1.getAdvancedCache().getDataContainer().peek(key).getLastUsed());
+      }
 
       // Now increment enough to cause it to be expired on the other node that didn't access it
       incrementAllTimeServices(6, TimeUnit.MINUTES);
@@ -298,6 +231,19 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
             assertEquals(targetTime, ce.getLastUsed());
          }
       }
+   }
+
+   private AdvancedCache<Object, String> findScatteredBackup(AdvancedCache<Object, String> primaryOwner, Object key) {
+      AdvancedCache<Object, String> backupOwner = null;
+      for (Cache cache : caches()) {
+         if (cache == primaryOwner) {
+            continue;
+         }
+         if (cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(key)) {
+            backupOwner = cache.getAdvancedCache();
+         }
+      }
+      return backupOwner;
    }
 
    private void testMaxIdleExpireExpireIteration(boolean expireOnPrimary, boolean iterateOnPrimary) {
@@ -371,52 +317,6 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       assertEquals(value, cache0.get(key));
    }
 
-   @Test(groups = "unstable", description = "https://issues.redhat.com/browse/ISPN-11422")
-   public void testWriteExpiredEntry() {
-      String key = "key";
-      String value = "value";
-
-      for (int i = 0; i < 100; ++i) {
-         Cache<Object, String> cache = cache0;
-         Object prev = cache.get(key);
-         if (prev == null) {
-            prev = cache.putIfAbsent(key, value, 1, TimeUnit.SECONDS);
-
-            // Should be guaranteed to be null
-            assertNull(prev);
-
-            // We should always have a value still
-            assertNotNull(cache.get(key));
-         }
-
-         long secondOneMilliAdvanced = TimeUnit.SECONDS.toMillis(1);
-
-         ts0.advance(secondOneMilliAdvanced);
-         ts1.advance(secondOneMilliAdvanced);
-         ts2.advance(secondOneMilliAdvanced);
-      }
-   }
-
-   // Simpler test for https://issues.redhat.com/browse/ISPN-11422
-//   public void testBackupExpirationWritePrimary() {
-//      testExpirationButOnBackupDuringWrite(true);
-//   }
-//
-//   public void testBackupExpirationWriteBackup() {
-//      testExpirationButOnBackupDuringWrite(false);
-//   }
-//
-//   private void testExpirationButOnBackupDuringWrite(boolean primary) {
-//      Object key = createKey(cache0, cache1);
-//      String value = key.toString();
-//      assertNull(cache0.put(key, value, 10, TimeUnit.SECONDS));
-//
-//      // Advance the backup so it is expired there
-//      ts1.advance(TimeUnit.SECONDS.toMillis(11));
-//
-//      assertEquals(value, ((primary ? cache0 : cache1).put(key, "replacement-value")));
-//   }
-
    public void testMaxIdleReadNodeDiesPrimary() {
       // Scattered cache does not support replicating expiration metadata
       // This is to be fixed in https://issues.redhat.com/browse/ISPN-11208
@@ -456,42 +356,18 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       assertNotNull(cache1.get(key));
    }
 
-   public void testPrimaryNotExpiredButBackupWas() throws InterruptedException, ExecutionException, TimeoutException {
-      if (transactional || cacheMode == CacheMode.SCATTERED_SYNC) {
-         throw new SkipException("Test isn't supported in transactional mode or scattered cache");
-      }
-      Object key = createKey(cache0, cache1);
-      String value = key.toString();
-      cache0.put(key, value,10, TimeUnit.SECONDS);
+   protected MultipleCacheManagersTest touch(TouchMode touchMode) {
+      this.touchMode = touchMode;
+      return this;
+   }
 
-      final ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(cache0);
-      Class<? extends ReplicableCommand> commandToExpect;
-      if (cacheMode == CacheMode.DIST_SYNC) {
-         controlledRpcManager.excludeCommands(PutKeyValueCommand.class);
-         commandToExpect = BackupWriteCommand.class;
-      } else {
-         commandToExpect = PutKeyValueCommand.class;
-      }
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "touch");
+   }
 
-      try {
-         Future<String> result = fork(() -> cache0.put(key, value + "-expire-backup"));
-
-         ControlledRpcManager.BlockedRequest<? extends ReplicableCommand> blockedRequest = controlledRpcManager.expectCommand(commandToExpect);
-
-         incrementAllTimeServices(11, TimeUnit.SECONDS);
-
-         ControlledRpcManager.SentRequest sentRequest = blockedRequest.send();
-
-         if (sentRequest != null) {
-            sentRequest.expectAllResponses().receive();
-         }
-
-         assertEquals(value, result.get(10, TimeUnit.SECONDS));
-      } finally {
-         controlledRpcManager.revertRpcManager();
-      }
-      assertEquals(value + "-expire-backup", cache0.get(key));
-      assertEquals(value + "-expire-backup", cache1.get(key));
-      assertEquals(value + "-expire-backup", cache2.get(key));
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), touchMode);
    }
 }

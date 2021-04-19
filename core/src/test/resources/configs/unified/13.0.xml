@@ -164,7 +164,7 @@
          </encoding>
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
-         <expiration interval="11000" lifespan="12" max-idle="12"/>
+         <expiration interval="11000" lifespan="12" max-idle="12" touch="ASYNC"/>
          <persistence>
             <cluster-loader remote-timeout="35000" preload="false"/>
          </persistence>
@@ -230,7 +230,7 @@
          <backup-for remote-cache="users" remote-site="LON"/>
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
-         <expiration interval="11500" lifespan="13" max-idle="13"/>
+         <expiration interval="11500" lifespan="13" max-idle="13" touch="SYNC"/>
          <memory>
             <object size="21500"/>
          </memory>
