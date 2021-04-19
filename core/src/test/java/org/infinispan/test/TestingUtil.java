@@ -149,6 +149,7 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
+import org.jgroups.util.MutableDigest;
 import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
@@ -252,8 +253,13 @@ public class TestingUtil {
       List<org.jgroups.Address> viewMembers = members.map(a -> ((JGroupsAddress) a).getJGroupsAddress()).collect(Collectors.toList());
 
       List<View> previousViews = new ArrayList<>(where.length);
+      // Compute the merge digest, without it nodes would request the retransmission of all messages
+      // Including those that were removed by STABLE earlier
+      MutableDigest digest = new MutableDigest(viewMembers.toArray(new org.jgroups.Address[0]));
       for (EmbeddedCacheManager ecm : where) {
-         previousViews.add(((GMS) channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class)).view());
+         GMS gms = channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class);
+         previousViews.add(gms.view());
+         digest.merge(gms.getDigest());
       }
 
       long viewId = previousViews.stream().mapToLong(view -> view.getViewId().getId()).max().orElse(0) + 1;
@@ -266,7 +272,7 @@ public class TestingUtil {
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
-         ((GMS) channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class)).installView(newView);
+         ((GMS) channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class)).installView(newView, digest);
       }
    }
 
