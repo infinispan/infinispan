@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,6 +19,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.ConditionFuture;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -116,7 +118,17 @@ public class StateTransferLockImpl implements StateTransferLock {
       }
 
       return transactionDataFuture.newConditionStage(stli -> stli.transactionDataTopologyId >= expectedTopologyId,
+                                                     () -> transactionDataTimeoutException(expectedTopologyId),
                                                      remoteTimeout, TimeUnit.MILLISECONDS);
+   }
+
+   private TimeoutException transactionDataTimeoutException(int expectedTopologyId) {
+      int currentTopologyId = this.topologyId;
+      if (expectedTopologyId > currentTopologyId) {
+         return CLUSTER.transactionDataTimeout(expectedTopologyId);
+      } else {
+         return CLUSTER.topologyTimeout(expectedTopologyId, currentTopologyId);
+      }
    }
 
    @Override
@@ -154,6 +166,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       }
 
       return topologyFuture.newConditionStage(stli -> stli.topologyId >= expectedTopologyId,
+                                              () -> CLUSTER.topologyTimeout(expectedTopologyId, topologyId),
                                               stateTransferTimeout, TimeUnit.MILLISECONDS);
    }
 
