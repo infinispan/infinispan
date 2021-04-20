@@ -113,6 +113,12 @@
             </excludes>
          </resource>
       </resources>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
 
       <plugins>
          <!-- compiler to use -XDignore.symbol.file to suppress warnings regarding the use of sun.misc.Unsafe -->
