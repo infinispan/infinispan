@@ -112,7 +112,7 @@ public class ServerEventLogger implements EventLogger {
             query.setParameter("when", start);
             category.ifPresent(c -> query.setParameter("category", c));
             level.ifPresent(l -> query.setParameter("level", l));
-            return query.list();
+            return query.execute().list();
          }, (address, nodeEvents, t) -> {
             if (t == null) {
                events.addAll(nodeEvents);

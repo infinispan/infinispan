@@ -1,17 +1,19 @@
 package org.infinispan.query.impl;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.engine.search.query.SearchQuery;
+import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.query.SearchTimeoutException;
+import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
+import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 
 /**
@@ -28,6 +30,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    protected final PartitionHandlingSupport partitionHandlingSupport;
    protected QueryDefinition queryDefinition;
    protected LocalQueryStatistics queryStatistics;
+   private static final int SCROLL_CHUNK = 100;
 
    public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
       this.queryDefinition = queryDefinition;
@@ -80,30 +83,41 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       long start = 0;
       if (queryStatistics.isEnabled()) start = System.nanoTime();
 
-      List<E> queryHits = fetchHits(searchQuery);
+      MappingIterator<?, Object> limit = new MappingIterator<>(iterator(searchQuery))
+            .skip(queryDefinition.getFirstResult())
+            .limit(queryDefinition.getMaxResults());
 
       if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
 
-      return new FilterIterator<>(queryHits.iterator(), Objects::nonNull);
+      return (CloseableIterator<E>) limit;
+   }
+
+   @Override
+   public QueryResult<E> execute() {
+      try {
+         partitionHandlingSupport.checkCacheAvailable();
+         SearchQuery<E> searchQuery = (SearchQuery<E>) queryDefinition.getSearchQuery().build();
+         long start = 0;
+         if (queryStatistics.isEnabled()) start = System.nanoTime();
+
+         SearchResult<E> searchResult = searchQuery.fetch(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+
+         if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
+
+         return new QueryResultImpl<>(searchResult.total().hitCount(), searchResult.hits());
+      } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
+         throw new SearchTimeoutException();
+      }
    }
 
    @Override
    public List<E> list() throws SearchException {
-      partitionHandlingSupport.checkCacheAvailable();
-      SearchQuery<?> searchQuery = queryDefinition.getSearchQuery().build();
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
-
-      List<E> searchResult = fetchHits(searchQuery);
-
-      if (queryStatistics.isEnabled()) recordQuery(queryDefinition.getQueryString(), System.nanoTime() - start);
-
-      return searchResult;
+      return execute().list();
    }
 
-   private List<E> fetchHits(SearchQuery<?> searchQuery) {
+   private CloseableIterator<?> iterator(SearchQuery<?> searchQuery) {
       try {
-         return (List<E>) searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+         return new ScrollerIteratorAdaptor<>(searchQuery.scroll(SCROLL_CHUNK));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }

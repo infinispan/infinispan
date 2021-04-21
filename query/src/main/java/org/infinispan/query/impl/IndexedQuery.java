@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.dsl.QueryResult;
 
 /**
  * A distributed Lucene query.
@@ -33,6 +34,8 @@ public interface IndexedQuery<E> {
    IndexedQuery<E> maxResults(int numResults);
 
    CloseableIterator<E> iterator();
+
+   QueryResult<E> execute();
 
    int getResultSize();
 
