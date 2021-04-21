@@ -688,4 +688,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public CompletionStage<Void> updateBloomFilter() {
       return CompletableFuture.completedFuture(null);
    }
+
+   @Override
+   public String toString() {
+      return "RemoteCache " + name;
+   }
 }
