@@ -9,7 +9,6 @@ deployment of custom classes.
 
 .Procedure
 
-. Package your server task implementation in a JAR file.
 . Add a `META-INF/services/org.infinispan.tasks.ServerTask` file that contains
 the fully qualified names of server tasks, for example:
 +
@@ -18,6 +17,7 @@ the fully qualified names of server tasks, for example:
 example.HelloTask
 ----
 +
+. Package your server task implementation in a JAR file.
 . Copy the JAR file to the `{server_home}/server/lib` directory of your {brandname} server.
 . Add your classes to the deserialization allow list in your {brandname}
 configuration. Alternatively set the allow list using system properties.
