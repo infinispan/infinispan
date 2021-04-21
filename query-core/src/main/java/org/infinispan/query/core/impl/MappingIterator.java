@@ -20,7 +20,7 @@ public final class MappingIterator<S, T> implements CloseableIterator<T> {
    private long skip = 0;
    private long max = -1;
 
-   private S current;
+   private T current;
    private long index;
 
    public MappingIterator(CloseableIterator<S> iterator, Function<? super S, ? extends T> mapper) {
@@ -28,16 +28,21 @@ public final class MappingIterator<S, T> implements CloseableIterator<T> {
       this.mapper = mapper;
    }
 
+   public MappingIterator(CloseableIterator<S> iterator) {
+      this.iterator = iterator;
+      this.mapper = null;
+   }
+
    @Override
    public boolean hasNext() {
       updateNext();
-      return current != null && (max == -1 || index <= skip + max);
+      return current != null;
    }
 
    @Override
    public T next() {
       if (hasNext()) {
-         T element = mapper.apply(current);
+         T element = current;
          current = null;
          return element;
       } else {
@@ -46,16 +51,26 @@ public final class MappingIterator<S, T> implements CloseableIterator<T> {
    }
 
    private void updateNext() {
-      if (current == null) {
-         while (index < skip && iterator.hasNext()) {
-            iterator.next();
+      while (current == null && iterator.hasNext()) {
+         T mapped = transform(iterator.next());
+         if (mapped != null) {
             index++;
          }
-         if (iterator.hasNext()) {
-            current = iterator.next();
-            index++;
+         if (index > skip && (max == -1 || index <= skip + max)) {
+            current = mapped;
          }
       }
+   }
+
+   private T transform(S s) {
+      if (s == null) {
+         return null;
+      }
+      if (mapper == null) {
+         return (T) s;
+      }
+
+      return mapper.apply(s);
    }
 
    public MappingIterator<S, T> skip(long skip) {

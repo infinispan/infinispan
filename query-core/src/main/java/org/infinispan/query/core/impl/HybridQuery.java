@@ -46,11 +46,11 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
-      return new FilteringIterator<>(getBaseIterator(), objectFilter::filter);
+      return new MappingIterator<>(getBaseIterator(), objectFilter::filter);
    }
 
    protected CloseableIterator<?> getBaseIterator() {
-      return baseQuery.iterator();
+      return baseQuery.startOffset(0).maxResults(-1).iterator();
    }
 
    @Override

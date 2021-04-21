@@ -52,8 +52,8 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
    @Override
    protected CloseableIterator<?> getBaseIterator() {
       RowGrouper grouper = new RowGrouper(noOfGroupingColumns, accumulators, twoPhaseAcc);
-      for (Object[] row : baseQuery) {
-         grouper.addRow(row);
+      try (CloseableIterator<Object[]> iterator = baseQuery.iterator()) {
+         iterator.forEachRemaining(item -> grouper.addRow(item));
       }
       return Closeables.iterator(grouper.finish());
    }

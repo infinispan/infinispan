@@ -411,7 +411,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            -1, -1, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -585,7 +585,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
                Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
-               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), -1, -1, indexQuery, queryStatistics);
+               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
@@ -662,7 +662,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (startOffset >= 0) {
          cacheQuery = cacheQuery.firstResult((int) startOffset);
       }
-      if (maxResults > 0) {
+      if (maxResults >= 0) {
          cacheQuery = cacheQuery.maxResults(maxResults);
       }
       return (IndexedQuery<E>) cacheQuery;

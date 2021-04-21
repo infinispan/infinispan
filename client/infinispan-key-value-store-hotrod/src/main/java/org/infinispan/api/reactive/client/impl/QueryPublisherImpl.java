@@ -28,7 +28,7 @@ public class QueryPublisherImpl<T> implements Publisher<T> {
    @Override
    public void subscribe(Subscriber<? super T> subscriber) {
       CompletableFuture.supplyAsync(() ->
-            (List<T>) query.list(), executorService)
+            (List<T>) query.execute().list(), executorService)
             .whenComplete((r, ex) -> {
                Flowable<T> flowable;
                if (ex != null) {
