@@ -589,6 +589,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                   log.tracef("Cannot remove entry due to it not being expired - this can be caused by different " +
                         "clocks on nodes or a concurrent write");
                }
+            } else if (log.isTraceEnabled()) {
+               log.tracef("Cannot remove entry due to the value not being equal. Matcher: %s, PrevValue: %s, ExpectedValue: %s. Double check equality is working for the value",
+                     valueMatcher, prevValue, optionalValue);
             }
          } else if (log.isTraceEnabled()) {
             log.trace("Cannot remove entry as its lifespan or value do not match");
