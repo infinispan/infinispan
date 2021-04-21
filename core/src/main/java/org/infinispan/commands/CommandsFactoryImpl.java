@@ -217,13 +217,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan,
          long flagsBitSet) {
       return new RemoveExpiredCommand(key, value, lifespan, false, segment, flagsBitSet,
-            generateUUID(transactional));
+            generateUUID(false));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
       return new RemoveExpiredCommand(key, value, null, true, segment, flagsBitSet,
-            generateUUID(transactional));
+            generateUUID(false));
    }
 
    @Override

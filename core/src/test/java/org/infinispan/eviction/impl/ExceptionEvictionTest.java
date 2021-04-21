@@ -481,13 +481,10 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          assertNull(cache(0).get(expiringKey));
       }
 
-      // Off heap doesn't expire entries on access yet ISPN-8380
-      // Also max idle in a transaction don't remove entries until reaper runs
-      if (storageType == StorageType.OFF_HEAP || maxIdle) {
-         for (Cache cache : caches()) {
-            ExpirationManager em = cache.getAdvancedCache().getExpirationManager();
-            em.processExpiration();
-         }
+      // Manually triggering batch expiration is no longer required, but it helps reproduce ISPN-12971
+      for (Cache cache : caches()) {
+         ExpirationManager<?, ?> em = cache.getAdvancedCache().getExpirationManager();
+         em.processExpiration();
       }
 
       Object storageKey = cache(0).getAdvancedCache().getKeyDataConversion().toStorage(expiringKey);
