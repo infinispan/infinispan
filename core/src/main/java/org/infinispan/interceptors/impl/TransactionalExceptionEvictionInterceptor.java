@@ -63,7 +63,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private KeyValueMetadataSizeCalculator<Object, Object> calculator;
    private InternalExpirationManager<Object, Object> expirationManager;
 
-   private InvocationSuccessAction<RemoveExpiredCommand> removeExpiredAction = this::removeExpiredAccept;
+   private InvocationSuccessAction<RemoveExpiredCommand> removeExpiredAccept = this::removeExpiredAccept;
 
    public long getCurrentSize() {
       return currentSize.get();
@@ -119,7 +119,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          if (log.isTraceEnabled()) {
             log.tracef("Key %s found to have expired", key);
          }
-         increaseSize(- calculator.calculateSize(key, value, metadata, privateMetadata));
+         adjustSize(- calculator.calculateSize(key, value, metadata, privateMetadata));
       }
    }
 
@@ -130,18 +130,18 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          changeAmount -= calculator.calculateSize(entry.getKey(), entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
       }
       if (changeAmount != 0) {
-         increaseSize(changeAmount);
+         adjustSize(changeAmount);
       }
    }
 
-   private boolean increaseSize(long increaseAmount) {
+   private boolean adjustSize(long amount) {
       while (true) {
          long size = currentSize.get();
-         long targetSize = size + increaseAmount;
+         long targetSize = size + amount;
          if (targetSize <= maxSize) {
-            if (currentSize.compareAndSet(size, size + increaseAmount)) {
+            if (currentSize.compareAndSet(size, size + amount)) {
                if (log.isTraceEnabled()) {
-                  log.tracef("Increased exception based size by %d to %d", increaseAmount, size + increaseAmount);
+                  log.tracef("Adjusted exception based size by %d to %d", amount, size + amount);
                }
                return true;
             }
@@ -165,7 +165,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          }
       }
       if (changeAmount != 0) {
-         increaseSize(changeAmount);
+         adjustSize(changeAmount);
       }
       return super.visitInvalidateCommand(ctx, command);
    }
@@ -178,7 +178,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       if (ctx.isOriginLocal() && dm != null && !dm.getCacheTopology().getSegmentDistribution(command.getSegment()).isPrimary()) {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenAccept(ctx, command, removeExpiredAction);
+      return invokeNextThenAccept(ctx, command, removeExpiredAccept);
    }
 
    private void removeExpiredAccept(InvocationContext rCtx, RemoveExpiredCommand rCommand, Object rValue) {
@@ -191,7 +191,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
             }
 
             long changeAmount = -calculator.calculateSize(rKey, entry.getOldValue(), entry.getOldMetadata(), entry.getInternalMetadata());
-            if (changeAmount != 0 && !increaseSize(changeAmount)) {
+            if (changeAmount != 0 && !adjustSize(changeAmount)) {
                throw CONTAINER.containerFull(maxSize);
             }
          }
@@ -248,7 +248,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          }
       }
 
-      if (changeAmount != 0 && !increaseSize(changeAmount)) {
+      if (changeAmount != 0 && !adjustSize(changeAmount)) {
          throw CONTAINER.containerFull(maxSize);
       }
 
