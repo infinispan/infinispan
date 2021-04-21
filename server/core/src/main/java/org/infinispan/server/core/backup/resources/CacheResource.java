@@ -1,5 +1,6 @@
 package org.infinispan.server.core.backup.resources;
 
+import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
 
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,19 +20,27 @@ import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.ScopedState;
+import org.infinispan.globalstate.impl.CacheState;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
@@ -48,6 +58,7 @@ import org.infinispan.server.core.BackupManager;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.function.SerializableFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -106,6 +117,7 @@ public class CacheResource extends AbstractContainerResource {
    @Override
    public CompletionStage<Void> restore(ZipFile zip) {
       AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
+
       for (String cacheName : resources) {
          stages.dependsOn(blockingManager.runBlocking(() -> {
             Path cacheRoot = root.resolve(cacheName);
@@ -115,11 +127,35 @@ public class CacheResource extends AbstractContainerResource {
             String zipPath = cacheRoot.resolve(configFile).toString();
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
                ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null, MediaType.fromExtension(configFile));
-               Configuration cfg = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
-               log.debugf("Restoring Cache %s: %s", cacheName, cfg.toXMLString(cacheName));
-               // GetOrCreate in the event that a default cache is defined. This also allows cache-configurations to be
-               // modified prior to a restore if only the backed up data is required
-               SecurityActions.getOrCreateCache(cm, cacheName, cfg);
+               Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
+               log.debugf("Restoring Cache %s: %s", cacheName, config.toXMLString(cacheName));
+
+               String configXml = config.toXMLString(cacheName);
+               SerializableFunction<EmbeddedCacheManager, Void> createCacheFunction = m -> {
+                  GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
+                  if (globalConfig.isZeroCapacityNode()) {
+                     log.debugf("Define configuration on zero-capacity node. cache=%s, config=%s", cacheName, configXml);
+                     ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
+                     Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
+                     m.defineConfiguration(cacheName, configuration);
+                  } else {
+                     log.debugf("Create on non-zero-capacity node cache=%s, config=%s", cacheName, configXml);
+                     CacheState state = new CacheState(null, configXml, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
+                     GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(m);
+                     gcr.getComponent(GlobalConfigurationManager.class).getStateCache().getAdvancedCache()
+                           .withFlags(Flag.CACHE_MODE_LOCAL, Flag.IGNORE_RETURN_VALUES)
+                           .putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
+                  }
+                  return null;
+               };
+               ClusterExecutor executor = SecurityActions.getClusterExecutor(cm);
+               CompletionStages.join(
+                     executor.submitConsumer(createCacheFunction, (a, v, t) -> {
+                        if (t != null) {
+                           throw new CacheException(t);
+                        }
+                     })
+               );
             } catch (IOException e) {
                throw new CacheException(e);
             }

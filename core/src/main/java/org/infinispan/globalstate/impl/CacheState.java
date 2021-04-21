@@ -26,7 +26,7 @@ public class CacheState {
    private final EnumSet<CacheContainerAdmin.AdminFlag> flags;
 
 
-   CacheState(String template, String configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CacheState(String template, String configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       this.template = template;
       this.configuration = configuration;
       this.flags = flags.clone();
