@@ -1,0 +1,33 @@
+/**
+ * @Indexed
+ */
+message IndexedEntity {
+
+  /**
+   * @Field(analyze = Analyze.YES, store = Store.YES)
+   */
+  required string indexedStoredField = 1;
+
+  /**
+   * @Field(analyze = Analyze.YES, store = Store.NO)
+   */
+  required string indexedNotStoredField = 2;
+
+  /**
+  * @Field(analyze = Analyze.NO, store = Store.NO)
+  */
+  required string sortableNotStoredField = 3;
+
+  /**
+  * @Field(analyze = Analyze.NO, store = Store.YES)
+  */
+  required int64 sortableStoredField = 4;
+
+  required string notIndexedField = 5;
+}
+
+message NotIndexedEntity {
+
+  required string field1 = 1;
+  required string field2 = 2;
+}

@@ -1,6 +1,9 @@
 package org.infinispan.query.clustered;
 
-import java.util.ArrayList;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +12,9 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
@@ -27,9 +32,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    private final ClusteredQueryInvoker invoker;
 
-   // like QueryHits.DEFAULT_TOP_DOC_RETRIEVAL_SIZE = 100;
-   // (just to have the same default size of not clustered queries)
-   private int maxResults = 100;
+   private int maxResults = Integer.MAX_VALUE;
 
    private int firstResult = 0;
 
@@ -89,10 +92,10 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       List<QueryResponse> responses = invoker.broadcast(command);
 
       for (QueryResponse queryResponse : responses) {
-         if (queryResponse.getResultSize() > 0) {
+         if (queryResponse.getNodeTopDocs().topDocs != null) {
             topDocsResponses.put(queryResponse.getNodeTopDocs().address, queryResponse.getNodeTopDocs());
-            resultSize += queryResponse.getResultSize();
          }
+         resultSize += queryResponse.getResultSize();
       }
 
       this.resultSize = resultSize;
@@ -100,15 +103,15 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    }
 
    @Override
-   public List<E> list() throws SearchException {
+   public QueryResult<E> execute() {
       partitionHandlingSupport.checkCacheAvailable();
-      List<E> values = new ArrayList<>();
-      try (CloseableIterator<E> iterator = iterator()) {
-         while (iterator.hasNext()) {
-            values.add(iterator.next());
-         }
-      }
-      return values;
+      List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false).collect(toList());
+      return new QueryResultImpl<>(resultSize, hits);
+   }
+
+   @Override
+   public List<E> list() throws SearchException {
+      return execute().list();
    }
 
    @Override

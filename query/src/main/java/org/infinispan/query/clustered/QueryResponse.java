@@ -18,49 +18,24 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 public final class QueryResponse {
 
    private final NodeTopDocs nodeTopDocs;
+   private final long resultSize;
 
-   private final Integer resultSize;
-
-   private final Object fetchedValue;
-
-   public QueryResponse() {
-      nodeTopDocs = null;
-      resultSize = null;
-      fetchedValue = null;
-   }
-
-   public QueryResponse(Object fetchedValue) {
-      this.fetchedValue = fetchedValue;
-      nodeTopDocs = null;
-      resultSize = null;
-   }
-
-   public QueryResponse(int resultSize) {
+   public QueryResponse(long resultSize) {
       this.resultSize = resultSize;
       nodeTopDocs = null;
-      fetchedValue = null;
    }
 
    public QueryResponse(NodeTopDocs nodeTopDocs) {
-      if (nodeTopDocs == null) {
-         this.resultSize = 0;
-      } else {
-         this.resultSize = Math.toIntExact(nodeTopDocs.topDocs == null ? 0 : nodeTopDocs.topDocs.totalHits.value);
-      }
+      this.resultSize = nodeTopDocs.totalHitCount;
       this.nodeTopDocs = nodeTopDocs;
-      this.fetchedValue = null;
    }
 
    public NodeTopDocs getNodeTopDocs() {
       return nodeTopDocs;
    }
 
-   public Integer getResultSize() {
+   public Long getResultSize() {
       return resultSize;
-   }
-
-   public Object getFetchedValue() {
-      return fetchedValue;
    }
 
    public static final class Externalizer implements AdvancedExternalizer<QueryResponse> {
@@ -79,10 +54,7 @@ public final class QueryResponse {
       public void writeObject(ObjectOutput output, QueryResponse queryResponse) throws IOException {
          output.writeObject(queryResponse.nodeTopDocs);
          if (queryResponse.nodeTopDocs == null) {
-            output.writeObject(queryResponse.resultSize);
-            if (queryResponse.resultSize == null) {
-               output.writeObject(queryResponse.fetchedValue);
-            }
+            output.writeLong(queryResponse.resultSize);
          }
       }
 
@@ -92,11 +64,7 @@ public final class QueryResponse {
          if (nodeTopDocs != null) {
             return new QueryResponse(nodeTopDocs);
          }
-         Integer resultSize = (Integer) input.readObject();
-         if (resultSize != null) {
-            return new QueryResponse(resultSize.intValue());
-         }
-         return new QueryResponse(input.readObject());
+         return new QueryResponse(input.readLong());
       }
    }
 }

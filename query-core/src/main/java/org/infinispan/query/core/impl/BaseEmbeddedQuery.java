@@ -71,11 +71,11 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       long start = 0;
       if (queryStatistics.isEnabled()) start = System.nanoTime();
 
-      List<T> results = listInternal(getComparator());
+      QueryResult<T> result = executeInternal(getComparator());
 
       if (queryStatistics.isEnabled()) recordQuery(start);
 
-      return new QueryResultImpl<>(results);
+      return result;
    }
 
    @Override
@@ -83,33 +83,38 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       partitionHandlingSupport.checkCacheAvailable();
       Comparator<Comparable<?>[]> comparator = getComparator();
       if (comparator == null) {
-         MappingIterator<FilterResult, Object> iterator = new MappingIterator<>(getInternalIterator(), this::mapFilterResult)
-               .limit(maxResults).skip(startOffset);
+         MappingIterator<FilterResult, Object> iterator = new MappingIterator<>(getInternalIterator(), this::mapFilterResult);
          return (CloseableIterator<T>) iterator;
       }
-      List<T> results = listInternal(comparator);
-      return Closeables.iterator(results.iterator());
+      final QueryResult<T> result = executeInternal(comparator);
+      return Closeables.iterator(result.list().iterator());
    }
 
-   private List<T> listInternal(Comparator<Comparable<?>[]> comparator) {
+   private QueryResult<T> executeInternal(Comparator<Comparable<?>[]> comparator) {
       List<Object> results;
       try (CloseableIterator<FilterResult> iterator = getInternalIterator()) {
          if (!iterator.hasNext()) {
-            results = Collections.emptyList();
+            return (QueryResult<T>) QueryResultImpl.EMPTY;
          } else {
             if (comparator == null) {
-               results = StreamSupport.stream(spliteratorUnknownSize(new MappingIterator<>(iterator, s -> s).limit(maxResults).skip(startOffset), 0), false)
+               final SlicingCollector<Object, Object, List<Object>> collector =
+                     new SlicingCollector<>(new TimedCollector<>(Collectors.toList(), timeout), startOffset, maxResults);
+               results = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
                      .map(this::mapFilterResult)
-                     .collect(new TimedCollector<>(Collectors.toList(), timeout));
+                     .collect(collector);
+               return new QueryResultImpl(collector.getCount(), results);
             } else {
                log.warnPerfSortedNonIndexed(queryString);
+               final int[] count = new int[1];
                // Collect and sort results in a PriorityQueue, in reverse order for now. We'll reverse them again before returning.
                // We keep the FilterResult wrapper in the queue rather than the actual value because we need FilterResult.getSortProjection() to perform sorting.
                PriorityQueue<FilterResult> queue = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
+                     .peek(filterResult -> count[0]++)
                      .collect(new TimedCollector<>(Collector.of(() -> new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator)),
                            this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
 
                // trim the results that are outside of the requested range and reverse them
+               int queueSize = count[0];
                if (queue.size() > startOffset) {
                   Object[] res = new Object[queue.size() - startOffset];
                   int i = queue.size();
@@ -121,11 +126,10 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                } else {
                   results = Collections.emptyList();
                }
+               return new QueryResultImpl<>(queueSize, (List<T>) results);
             }
          }
       }
-
-      return (List<T>) results;
    }
 
    private void addToPriorityQueue(PriorityQueue<FilterResult> queue, FilterResult filterResult) {

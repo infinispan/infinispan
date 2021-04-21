@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.impl;
 
-import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -14,6 +13,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -59,10 +59,9 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
       BaseQuery<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults);
-      List<Object> results = query.list();
-      int totalResults = query.getResultSize();
+      QueryResult<Object> queryResult = query.execute();
       String[] projection = query.getProjection();
-      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, totalResults, results);
+      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.hitCount().orElse(-1), queryResult.list());
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }
