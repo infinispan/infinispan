@@ -398,7 +398,7 @@ public class QueryEngine<TypeMetadata> {
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            -1, -1, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");

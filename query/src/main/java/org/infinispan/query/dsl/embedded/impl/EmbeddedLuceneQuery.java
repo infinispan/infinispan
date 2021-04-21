@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -40,7 +39,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
     * An Infinispan Cache query that wraps an actual Lucene query object. This is built lazily when the query is
     * executed first time.
     */
-   private IndexedQuery<T> cacheQuery;
+   private IndexedQuery<T> indexedQuery;
 
    EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
@@ -57,19 +56,19 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public void resetQuery() {
-      cacheQuery = null;
+      indexedQuery = null;
    }
 
-   private IndexedQuery<T> createCacheQuery() {
+   private IndexedQuery<T> createIndexedQuery() {
       // query is created first time only
-      if (cacheQuery == null) {
+      if (indexedQuery == null) {
          validateNamedParameters();
-         cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
+         indexedQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
          if (timeout > 0) {
-            cacheQuery.timeout(timeout, TimeUnit.NANOSECONDS);
+            indexedQuery.timeout(timeout, TimeUnit.NANOSECONDS);
          }
       }
-      return cacheQuery;
+      return indexedQuery;
    }
 
    @Override
@@ -79,22 +78,20 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public QueryResult<T> execute() {
-      List<?> results = StreamSupport.stream(spliterator(), false)
-            .map(i -> (projection == null) ? i : convertProjectionItem(i))
-            .collect(Collectors.toList());
-
-      return new QueryResultImpl<>(createCacheQuery().getResultSize(), (List<T>) results);
+      QueryResult<T> execute = createIndexedQuery().execute();
+      List<Object> collect = execute.list().stream().map(this::convertResult).collect(Collectors.toList());
+      return new QueryResultImpl<>(execute.hitCount().orElse(-1), (List<T>) collect);
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      IndexedQuery<T> cacheQuery = createCacheQuery();
-      return new MappingIterator(cacheQuery.iterator(), i -> (projection == null) ? i : convertProjectionItem(i));
+      IndexedQuery<T> indexedQuery = createIndexedQuery();
+      return new MappingIterator(indexedQuery.iterator(), this::convertResult);
    }
 
    @Override
    public int getResultSize() {
-      return Math.toIntExact(createCacheQuery().getResultSize());
+      return Math.toIntExact(createIndexedQuery().getResultSize());
    }
 
    @Override
@@ -107,17 +104,19 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
             +'}';
    }
 
-   private Object[] convertProjectionItem(Object row) {
+   private Object convertResult(Object result) {
+      if (projection == null) return result;
+
       Object[] array;
-      if (row instanceof Object[]) {
-         array = (Object[]) row;
-      } else if (row instanceof List) {
+      if (result instanceof Object[]) {
+         array = (Object[]) result;
+      } else if (result instanceof List) {
          // Hibernate Search 6 uses list to wrap multiple item projection
-         List<?> castedRow = (List<?>) row;
+         List<?> castedRow = (List<?>) result;
          array = castedRow.toArray(new Object[0]);
       } else {
          // Hibernate Search 6 does not wrap single item projection
-         array = new Object[]{row};
+         array = new Object[]{result};
       }
 
       return (rowProcessor == null) ? array : rowProcessor.apply(array);

@@ -55,23 +55,23 @@ final class CQCreateEagerQuery extends CQWorker {
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> fetchReferences(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
-               if (queryResult.total().hitCount() == 0L) return null;
+               long hitCount = queryResult.total().hitCount();
 
                Object[] keys = queryResult.hits().stream()
                      .map(EntityReference::key)
                      .toArray(Object[]::new);
-               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), keys, null);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, keys, null);
             });
    }
 
    private CompletionStage<NodeTopDocs> collectProjections(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> fetchHits(query), "CQCreateEagerQuery#collectProjections")
             .thenApply(queryResult -> {
-               if (queryResult.total().hitCount() == 0L) return null;
+               long hitCount = queryResult.total().hitCount();
 
                List<?> hits = queryResult.hits();
                Object[] projections = hits.toArray(new Object[0]);
-               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), null, projections);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, null, projections);
             });
    }
 }

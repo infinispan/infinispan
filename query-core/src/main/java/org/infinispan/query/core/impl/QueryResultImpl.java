@@ -1,5 +1,6 @@
 package org.infinispan.query.core.impl;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 
@@ -11,6 +12,8 @@ import org.infinispan.query.dsl.QueryResult;
 public final class QueryResultImpl<E> implements QueryResult<E> {
 
    private final OptionalLong hitCount;
+
+   public static final QueryResult<?> EMPTY = new QueryResultImpl<>(0, Collections.emptyList());
 
    private final List<E> list;
 

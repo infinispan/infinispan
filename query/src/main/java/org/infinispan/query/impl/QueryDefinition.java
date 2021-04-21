@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.engine.search.query.SearchQuery;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
@@ -29,8 +28,8 @@ public final class QueryDefinition {
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
    private SearchQueryBuilder searchQuery;
-   private int maxResults = 100;
-   private int firstResult;
+   private int maxResults = -1;
+   private int firstResult = 0;
    private long timeout = -1;
    private Set<String> sortableFields;
    private Class<?> indexedType;
@@ -90,7 +89,7 @@ public final class QueryDefinition {
    }
 
    public int getMaxResults() {
-      return maxResults;
+      return maxResults == -1 ? Integer.MAX_VALUE : maxResults;
    }
 
    public void setMaxResults(int maxResults) {
