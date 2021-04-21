@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -78,5 +79,9 @@ final class SecurityActions {
    static ComponentRegistry getComponentRegistry(AdvancedCache<?,?> cache) {
       GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
       return doPrivileged(action);
+   }
+
+   static ClusterExecutor getClusterExecutor(EmbeddedCacheManager embeddedCacheManager) {
+      return doPrivileged(embeddedCacheManager::executor);
    }
 }
