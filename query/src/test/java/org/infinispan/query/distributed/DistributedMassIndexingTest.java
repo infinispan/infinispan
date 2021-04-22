@@ -95,5 +95,6 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
       Query cacheQuery = Search.getQueryFactory(cache).create(q);
       assertEquals(expectedCount, cacheQuery.getResultSize());
+      assertEquals(expectedCount, cacheQuery.list().size());
    }
 }
