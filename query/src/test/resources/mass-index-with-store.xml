@@ -26,9 +26,7 @@
             <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
          <persistence passivation="true">
-            <store class="org.infinispan.persistence.dummy.DummyInMemoryStore">
-               <property name="storeName">MassIndexingWithStoreTest</property>
-            </store>
+            <store class="org.infinispan.persistence.dummy.DummyInMemoryStore"/>
          </persistence>
          <state-transfer timeout="480000" enabled="true" />
       </replicated-cache>
