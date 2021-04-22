@@ -26,6 +26,7 @@ import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.security.actions.GetClusterExecutorAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetOrCreateCacheAction;
 import org.infinispan.security.actions.GetOrCreateTemplateAction;
@@ -82,6 +83,6 @@ final class SecurityActions {
    }
 
    static ClusterExecutor getClusterExecutor(EmbeddedCacheManager embeddedCacheManager) {
-      return doPrivileged(embeddedCacheManager::executor);
+      return doPrivileged(new GetClusterExecutorAction(embeddedCacheManager));
    }
 }

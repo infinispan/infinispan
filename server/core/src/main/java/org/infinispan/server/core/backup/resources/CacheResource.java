@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
@@ -133,29 +134,35 @@ public class CacheResource extends AbstractContainerResource {
                String configXml = config.toXMLString(cacheName);
                SerializableFunction<EmbeddedCacheManager, Void> createCacheFunction = m -> {
                   GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
-                  if (globalConfig.isZeroCapacityNode()) {
-                     log.debugf("Define configuration on zero-capacity node. cache=%s, config=%s", cacheName, configXml);
-                     ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
-                     Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
+
+                  log.debugf("Create cache %s locally. config=%s", cacheName, configXml);
+                  ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
+                  Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
+                  if (!m.getCacheConfigurationNames().contains(cacheName)) {
                      m.defineConfiguration(cacheName, configuration);
-                  } else {
-                     log.debugf("Create on non-zero-capacity node cache=%s, config=%s", cacheName, configXml);
-                     CacheState state = new CacheState(null, configXml, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
-                     GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(m);
-                     gcr.getComponent(GlobalConfigurationManager.class).getStateCache().getAdvancedCache()
-                           .withFlags(Flag.CACHE_MODE_LOCAL, Flag.IGNORE_RETURN_VALUES)
-                           .putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
                   }
+                  m.getCache(cacheName);
                   return null;
                };
                ClusterExecutor executor = SecurityActions.getClusterExecutor(cm);
-               CompletionStages.join(
-                     executor.submitConsumer(createCacheFunction, (a, v, t) -> {
-                        if (t != null) {
-                           throw new CacheException(t);
-                        }
-                     })
-               );
+               CompletableFuture<Void> remoteCall = executor.submitConsumer(createCacheFunction, (a, v, t) -> {
+                  if (t != null) {
+                     throw new CacheException(t);
+                  }
+               });
+
+               // Insert the cache configuration in the CONFIG state in parallel
+               // Note: cm.admin().getOrCreateCache() looks better, but it is not guaranteed to insert the entry
+               // in the CONFIG cache if the cache already exists locally.
+               log.debugf("Define cache %s globally. config=%s", cacheName, configXml);
+               CacheState state = new CacheState(null, configXml, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
+               GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cm);
+               gcr.getComponent(GlobalConfigurationManager.class).getStateCache().getAdvancedCache()
+                  .withFlags(Flag.IGNORE_RETURN_VALUES)
+                  .putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
+
+               // Wait for the cache to be started everywhere
+               CompletionStages.join(remoteCall);
             } catch (IOException e) {
                throw new CacheException(e);
             }
