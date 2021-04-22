@@ -9,6 +9,7 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.security.actions.GetClusterExecutorAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
@@ -39,6 +40,6 @@ final class SecurityActions {
    }
 
    static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(cacheManager::executor);
+      return doPrivileged(new GetClusterExecutorAction(cacheManager));
    }
 }
