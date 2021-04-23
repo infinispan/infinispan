@@ -31,6 +31,9 @@ import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
+import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
+import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteMergePolicy;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.AssertJUnit;
@@ -116,7 +119,7 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
 
         assertEquals(noOfConflicts, (long) 0);
 
-        createConflict();
+        createConflict(Boolean.FALSE);
 
         noOfConflicts = (Long) mBeanServer.getAttribute(iracManager2, "NoOfConflicts");
         assertEquals(noOfConflicts, (long) 1);
@@ -127,15 +130,135 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
 
         mBeanServer.invoke(iracManager2, "resetStatistics", new Object[0], new String[0]);
         assertEquals(mBeanServer.getAttribute(iracManager2, "noOfConflicts"), (long) 0);
-        // now reset statistics
-        mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
 
         mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
-
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
         assertEquals(mBeanServer.getAttribute(iracManager1, "noOfConflicts"), (long) -1);
 
         // reset stats enabled parameter
         mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.TRUE));
+
+    }
+
+    public void testNumberOfConflictLocalWins() throws Exception {
+
+        MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+        ObjectName iracManager1 = getCacheObjectName(DOMAIN_NAME + 0, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        ObjectName iracManager2 = getCacheObjectName(DOMAIN_NAME + 10, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        assertTrue(mBeanServer.isRegistered(iracManager1));
+        assertTrue(mBeanServer.isRegistered(iracManager2));
+
+        long numberOfConflictLocalWins = (Long) mBeanServer.getAttribute(iracManager1, "numberOfConflictLocalWins");
+
+        assertEquals(numberOfConflictLocalWins, (long) 0);
+
+        createConflict(Boolean.FALSE);
+
+        numberOfConflictLocalWins = (Long) mBeanServer.getAttribute(iracManager1, "numberOfConflictLocalWins");
+
+        assertEquals(numberOfConflictLocalWins, 1);
+
+        // now reset statistics
+        mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictLocalWins"), (long) 0);
+
+        mBeanServer.invoke(iracManager2, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager2, "numberOfConflictLocalWins"), (long) 0);
+
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
+
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictLocalWins"), (long) -1);
+        // reset stats enabled parameter
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.TRUE));
+
+    }
+
+    public void testNumberOfConflictRemoteWins() throws Exception {
+
+        MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+        ObjectName iracManager1 = getCacheObjectName(DOMAIN_NAME + 0, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        ObjectName iracManager2 = getCacheObjectName(DOMAIN_NAME + 10, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        assertTrue(mBeanServer.isRegistered(iracManager1));
+        assertTrue(mBeanServer.isRegistered(iracManager2));
+
+        long numberOfConflictRemoteWins = (Long) mBeanServer.getAttribute(iracManager2, "numberOfConflictRemoteWins");
+
+        assertEquals(numberOfConflictRemoteWins, (long) 0);
+
+        createConflict(Boolean.FALSE);
+
+        numberOfConflictRemoteWins = (Long) mBeanServer.getAttribute(iracManager2, "numberOfConflictRemoteWins");
+        assertEquals(numberOfConflictRemoteWins, (long) 1);
+
+        // now reset statistics
+        mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictRemoteWins"), (long) 0);
+
+        mBeanServer.invoke(iracManager2, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager2, "numberOfConflictRemoteWins"), (long) 0);
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictRemoteWins"), (long) -1);
+
+        // reset stats enabled parameter
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.TRUE));
+
+    }
+
+    public void testNumberOfConflictMerged() throws Exception {
+
+        MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+        ObjectName iracManager1 = getCacheObjectName(DOMAIN_NAME + 0, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        ObjectName iracManager2 = getCacheObjectName(DOMAIN_NAME + 10, getDefaultCacheName() + "(dist_sync)",
+                "XSiteStatistics");
+        assertTrue(mBeanServer.isRegistered(iracManager1));
+        assertTrue(mBeanServer.isRegistered(iracManager2));
+
+        TestingUtil.replaceComponent(cache(0, 0), XSiteEntryMergePolicy.class,
+                AlwaysRemoveXSiteEntryMergePolicy.getInstance(), true);
+        TestingUtil.replaceComponent(cache(1, 0), XSiteEntryMergePolicy.class,
+                AlwaysRemoveXSiteEntryMergePolicy.getInstance(), true);
+
+        // do test, i.e. create a conflict and check the metric
+
+        long numberOfConflictMerged = (Long) mBeanServer.getAttribute(iracManager1, "numberOfConflictMerged");
+
+        assertEquals(numberOfConflictMerged, (long) 0);
+
+        createConflict(Boolean.TRUE);
+
+        numberOfConflictMerged = (Long) mBeanServer.getAttribute(iracManager2, "numberOfConflictMerged");
+        assertEquals(numberOfConflictMerged, (long) 1);
+
+        TestingUtil.replaceComponent(cache(0, 0), XSiteEntryMergePolicy.class,
+                DefaultXSiteEntryMergePolicy.getInstance(), true);
+        TestingUtil.replaceComponent(cache(1, 0), XSiteEntryMergePolicy.class,
+                DefaultXSiteEntryMergePolicy.getInstance(), true);
+
+        // now reset statistics
+        mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictMerged"), (long) 0);
+
+        mBeanServer.invoke(iracManager2, "resetStatistics", new Object[0], new String[0]);
+        assertEquals(mBeanServer.getAttribute(iracManager2, "numberOfConflictMerged"), (long) 0);
+
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
+
+        assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictMerged"), (long) -1);
+
+        // reset stats enabled parameter
+        mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.TRUE));
 
     }
 
@@ -160,11 +283,13 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
         mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
 
         mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
         assertEquals(mBeanServer.getAttribute(iracManager1, "noOfDiscards"), (long) -1);
 
         // reset stats enabled parameter
         mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
+        mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.TRUE));
     }
 
     @Override
@@ -209,7 +334,7 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
         }
     }
 
-    private void createConflict() {
+    private void createConflict(Boolean isConflictMerged) {
         final String key = "conflict-key";
         cache(0, 0).put(key, "value1");
         // make sure all sites received the key
@@ -224,7 +349,11 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
         // enable xsite. this will send the keys!
         iracManagerList.forEach(manualIracManager -> manualIracManager.disable(ManualIracManager.DisableMode.SEND));
 
-        eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals("v-2", cache.get(key)));
+        if (isConflictMerged)
+            eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(null, cache.get(key)));
+        else
+            eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals("v-2", cache.get(key)));
+
     }
 
     private void createDiscard() {

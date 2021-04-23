@@ -14,7 +14,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
- * A no-op implementation of {@link IracManager} for cache without asynchronous remote site backups.
+ * A no-op implementation of {@link IracManager} for cache without asynchronous
+ * remote site backups.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -22,59 +23,62 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 @Scope(Scopes.NAMED_CACHE)
 public class NoOpIracManager implements IracManager {
 
-   private static final NoOpIracManager INSTANCE = new NoOpIracManager();
+    private static final NoOpIracManager INSTANCE = new NoOpIracManager();
 
-   private final LongAdder conflictsCounts = new LongAdder();
-   private final LongAdder discardCounts = new LongAdder();
+    private final LongAdder conflictsCounts = new LongAdder();
+    private final LongAdder discardCounts = new LongAdder();
+    private final LongAdder numberOfConflictLocalWins = new LongAdder();
+    private final LongAdder numberOfConflictRemoteWins = new LongAdder();
+    private final LongAdder numberOfConflictMerged = new LongAdder();
 
-   private NoOpIracManager() {
-   }
+    private NoOpIracManager() {
+    }
 
-   public static NoOpIracManager getInstance() {
-      return INSTANCE;
-   }
+    public static NoOpIracManager getInstance() {
+        return INSTANCE;
+    }
 
-   @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      //no-op
-   }
+    @Override
+    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+        // no-op
+    }
 
-   @Override
-   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
-      return CompletableFutures.completedNull();
-   }
+    @Override
+    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+        return CompletableFutures.completedNull();
+    }
 
-   @Override
-   public void trackClear() {
-      //no-op
-   }
+    @Override
+    public void trackClear() {
+        // no-op
+    }
 
-   @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      //no-op
-   }
+    @Override
+    public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+        // no-op
+    }
 
-   @Override
-   public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-      //no-op
-   }
+    @Override
+    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
+        // no-op
+    }
 
-   @Override
-   public void requestState(Address origin, IntSet segments) {
-      //no-op
-   }
+    @Override
+    public void requestState(Address origin, IntSet segments) {
+        // no-op
+    }
 
-   @Override
-   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      //no-op
-   }
+    @Override
+    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+        // no-op
+    }
 
-   @Override
-   public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
-      return CompletableFutures.completedTrue();
-   }
+    @Override
+    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
+        return CompletableFutures.completedTrue();
+    }
 
-   @Override
+    @Override
     public void incrementDiscards() {
         discardCounts.increment();
     }
@@ -82,5 +86,20 @@ public class NoOpIracManager implements IracManager {
     @Override
     public void incrementConflicts() {
         conflictsCounts.increment();
+    }
+
+    @Override
+    public void increaseNumberOfConflictLocalWins() {
+        numberOfConflictLocalWins.increment();
+    }
+
+    @Override
+    public void increaseNumberOfConflictRemoteWins() {
+        numberOfConflictRemoteWins.increment();
+    }
+
+    @Override
+    public void increaseNumberOfConflictMerged() {
+        numberOfConflictMerged.increment();
     }
 }
