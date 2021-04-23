@@ -32,7 +32,7 @@ public class NoOpIracManager implements IracManager {
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      //no-op
+      // no-op
    }
 
    @Override
@@ -42,31 +42,51 @@ public class NoOpIracManager implements IracManager {
 
    @Override
    public void trackClear() {
-      //no-op
+      // no-op
    }
 
    @Override
    public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      //no-op
+      // no-op
    }
 
    @Override
    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-      //no-op
+      // no-op
    }
 
    @Override
    public void requestState(Address origin, IntSet segments) {
-      //no-op
+      // no-op
    }
 
    @Override
    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      //no-op
+      // no-op
    }
 
    @Override
    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
       return CompletableFutures.completedTrue();
+   }
+
+   @Override
+   public void incrementDiscards() {
+      // no-op
+   }
+
+   @Override
+   public void incrementNumberOfConflictLocalWins() {
+      // no-op
+   }
+
+   @Override
+   public void incrementNumberOfConflictRemoteWins() {
+      // no-op
+   }
+
+   @Override
+   public void incrementNumberOfConflictMerged() {
+      // no-op
    }
 }

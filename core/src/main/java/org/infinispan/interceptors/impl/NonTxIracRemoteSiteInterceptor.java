@@ -29,6 +29,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 
@@ -45,10 +46,16 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    private static final Log log = LogFactory.getLog(NonTxIracRemoteSiteInterceptor.class);
    private final boolean needsVersions;
    private final InvocationSuccessAction<DataWriteCommand> setMetadataForOwnerAction = this::setIracMetadataForOwner;
-   @Inject XSiteEntryMergePolicy<Object, Object> mergePolicy;
-   @Inject IracVersionGenerator iracVersionGenerator;
-   @Inject VersionGenerator versionGenerator;
-   @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject
+   XSiteEntryMergePolicy<Object, Object> mergePolicy;
+   @Inject
+   IracVersionGenerator iracVersionGenerator;
+   @Inject
+   VersionGenerator versionGenerator;
+   @Inject
+   ClusteringDependentLogic clusteringDependentLogic;
+   @Inject
+   IracManager iracManager;
 
    public NonTxIracRemoteSiteInterceptor(boolean needsVersions) {
       this.needsVersions = needsVersions;
@@ -65,19 +72,20 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       Ownership ownership = getOwnership(command.getSegment());
 
       switch (ownership) {
-         case PRIMARY:
-            //we are on primary and the lock is acquired
-            //if the update is discarded, command.isSuccessful() will return false.
-            CompletionStage<Boolean> validationResult = validateOnPrimary(ctx, command);
-            if (CompletionStages.isCompletedSuccessfully(validationResult)) {
-               return validate(validationResult.toCompletableFuture().join(), ctx, command);
-            }
-            return validationResult.thenApply(isValid -> validate(isValid, ctx, command));
-         case BACKUP:
-            if (!ctx.isOriginLocal()) {
-               //backups only commit when the command are remote (i.e. after validated from the originator)
-               return invokeNextThenAccept(ctx, command, setMetadataForOwnerAction);
-            }
+      case PRIMARY:
+         // we are on primary and the lock is acquired
+         // if the update is discarded, command.isSuccessful() will return false.
+         CompletionStage<Boolean> validationResult = validateOnPrimary(ctx, command);
+         if (CompletionStages.isCompletedSuccessfully(validationResult)) {
+            return validate(validationResult.toCompletableFuture().join(), ctx, command);
+         }
+         return validationResult.thenApply(isValid -> validate(isValid, ctx, command));
+      case BACKUP:
+         if (!ctx.isOriginLocal()) {
+            // backups only commit when the command are remote (i.e. after validated from
+            // the originator)
+            return invokeNextThenAccept(ctx, command, setMetadataForOwnerAction);
+         }
       }
       return invokeNext(ctx, command);
    }
@@ -97,7 +105,8 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    }
 
    /**
-    * Invoked on the primary owner, it validates if the remote site update is valid or not.
+    * Invoked on the primary owner, it validates if the remote site update is valid
+    * or not.
     * <p>
     * It also performs a conflict resolution if a conflict is found.
     */
@@ -111,11 +120,11 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       }
 
       if (needsVersions) {
-         //we are in the primary owner with the lock acquired.
-         //create a version for write-skew check before validating and sending to backup owners.
+         // we are in the primary owner with the lock acquired.
+         // create a version for write-skew check before validating and sending to backup
+         // owners.
          PrivateMetadata metadata = PrivateMetadata.getBuilder(command.getInternalMetadata())
-               .entryVersion(generateWriteSkewVersion(entry))
-               .build();
+               .entryVersion(generateWriteSkewVersion(entry)).build();
          command.setInternalMetadata(key, metadata);
       }
 
@@ -126,7 +135,8 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    }
 
    /**
-    * Invoked by backup owners, it make sure the entry has the same version as set by the primary owner.
+    * Invoked by backup owners, it make sure the entry has the same version as set
+    * by the primary owner.
     */
    private void setIracMetadataForOwner(InvocationContext ctx, DataWriteCommand command,
          @SuppressWarnings("unused") Object rv) {
@@ -146,12 +156,13 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       IracEntryVersion localVersion = localMetadata.getVersion();
       IracEntryVersion remoteVersion = remoteMetadata.getVersion();
       switch (remoteVersion.compareTo(localVersion)) {
-         case CONFLICTING:
-            return resolveConflict(entry, command, localMetadata, remoteMetadata);
-         case EQUAL:
-         case BEFORE:
-            discardUpdate(entry, command, remoteMetadata);
-            return CompletableFutures.completedFalse();
+      case CONFLICTING:
+         return resolveConflict(entry, command, localMetadata, remoteMetadata);
+      case EQUAL:
+      case BEFORE:
+         iracManager.incrementDiscards();
+         discardUpdate(entry, command, remoteMetadata);
+         return CompletableFutures.completedFalse();
       }
       return CompletableFutures.completedTrue();
    }
@@ -162,7 +173,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
          log.tracef("[IRAC] Conflict found between local and remote metadata: %s and %s", localMetadata,
                remoteMetadata);
       }
-      //same site? conflict?
+      // same site? conflict?
       SiteEntry<Object> localSiteEntry = createSiteEntryFrom(entry, localMetadata.getSite());
       SiteEntry<Object> remoteSiteEntry = command.createSiteEntry(remoteMetadata.getSite());
 
@@ -170,17 +181,22 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
          if (log.isTraceEnabled()) {
             log.tracef("[IRAC] resolve(%s, %s) = %s", localSiteEntry, remoteSiteEntry, resolved);
          }
-         //fast track, it is the same entry as stored already locally. do nothing!
+         // fast track, it is the same entry as stored already locally. do nothing!
          if (resolved.equals(localSiteEntry)) {
             discardUpdate(entry, command, remoteMetadata);
+            iracManager.incrementNumberOfConflictLocalWins();
             return false;
          } else if (!resolved.equals(remoteSiteEntry)) {
-            //new value/metadata to store. Change the command!
+            // new value/metadata to store. Change the command!
             Object key = entry.getKey();
             command.updateCommand(resolved);
             PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(command.getInternalMetadata())
-                  .iracMetadata(mergeVersion(resolved.getSiteName(), localMetadata.getVersion(), remoteMetadata.getVersion()));
+                  .iracMetadata(mergeVersion(resolved.getSiteName(), localMetadata.getVersion(),
+                        remoteMetadata.getVersion()));
             command.setInternalMetadata(key, builder.build());
+            iracManager.incrementNumberOfConflictMerged();
+         } else {
+            iracManager.incrementNumberOfConflictRemoteWins();
          }
          return true;
       });
@@ -198,20 +214,20 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       return version;
    }
 
-
    private void discardUpdate(CacheEntry<?, ?> entry, DataWriteCommand command, IracMetadata metadata) {
       final Object key = entry.getKey();
       logUpdateDiscarded(key, metadata, this);
       assert metadata != null : "[IRAC] Metadata must not be null!";
-      command.fail(); //this prevents the sending to the backup owners
-      entry.setChanged(false); //this prevents the local node to apply the changes.
-      //we are discarding the update but try to make it visible for the next write operation
+      command.fail(); // this prevents the sending to the backup owners
+      entry.setChanged(false); // this prevents the local node to apply the changes.
+      // we are discarding the update but try to make it visible for the next write
+      // operation
       iracVersionGenerator.updateVersion(command.getSegment(), metadata.getVersion());
    }
 
    private IracMetadata getIracMetadata(CacheEntry<?, ?> entry) {
       PrivateMetadata privateMetadata = entry.getInternalMetadata();
-      if (privateMetadata == null) { //new entry!
+      if (privateMetadata == null) { // new entry!
          return iracVersionGenerator.getTombstone(entry.getKey());
       }
       IracMetadata metadata = privateMetadata.iracMetadata();

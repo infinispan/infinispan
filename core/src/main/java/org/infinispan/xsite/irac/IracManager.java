@@ -14,8 +14,8 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 /**
  * It manages the keys changed in the local cluster and sends to all asynchronous backup configured.
  * <p>
- * The {@code lockOwner} is the last command (or transaction) who updated the key. It is used to detect conflicting
- * local updates while sending to the remote backups (sites).
+ * The {@code lockOwner} is the last command (or transaction) who updated the key. It is used to
+ * detect conflicting local updates while sending to the remote backups (sites).
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -26,22 +26,27 @@ public interface IracManager {
    /**
     * Sets the {@code key} as changed by the {@code lockOwner}.
     *
-    * @param segment   The key's segment.
-    * @param key       The key changed.
-    * @param lockOwner The lock owner who updated the key.
+    * @param segment
+    *           The key's segment.
+    * @param key
+    *           The key changed.
+    * @param lockOwner
+    *           The lock owner who updated the key.
     */
    void trackUpdatedKey(int segment, Object key, Object lockOwner);
 
    /**
     * Tracks a set of keys to be send to the remote site.
     * <p>
-    * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, Object)}. It just returns
-    * a {@link CompletionStage} to notify when the keys were sent. It is required by the cross-site state transfer
-    * protocol to know when it has finish.
+    * There is no much difference between this method and
+    * {@link #trackUpdatedKey(int, Object, Object)}. It just returns a {@link CompletionStage} to
+    * notify when the keys were sent. It is required by the cross-site state transfer protocol to
+    * know when it has finish.
     *
-    * @param stateList The list of {@link XSiteState}.
-    * @return A {@link CompletionStage} which is completed when all the keys in {@code stateList} have been sent to the
-    * remote site.
+    * @param stateList
+    *           The list of {@link XSiteState}.
+    * @return A {@link CompletionStage} which is completed when all the keys in {@code stateList}
+    *         have been sent to the remote site.
     */
    CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList);
 
@@ -55,45 +60,79 @@ public interface IracManager {
     * <p>
     * If {@code lockOwner} isn't the last one who updated the key, this method is a no-op.
     *
-    * @param segment   The key's segment.
-    * @param key       The key.
-    * @param lockOwner The lock owner who updated the key.
-    * @param tombstone The tombstone (can be {@code null}).
+    * @param segment
+    *           The key's segment.
+    * @param key
+    *           The key.
+    * @param lockOwner
+    *           The lock owner who updated the key.
+    * @param tombstone
+    *           The tombstone (can be {@code null}).
     */
    void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    /**
     * Notifies a topology changed.
     *
-    * @param oldCacheTopology The old {@link CacheTopology}.
-    * @param newCacheTopology The new {@link CacheTopology}.
+    * @param oldCacheTopology
+    *           The old {@link CacheTopology}.
+    * @param newCacheTopology
+    *           The new {@link CacheTopology}.
     */
    void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology);
 
    /**
     * Requests the state stored in this instance for the given {@code segments}.
     *
-    * @param origin   The requestor.
-    * @param segments The segments requested.
+    * @param origin
+    *           The requestor.
+    * @param segments
+    *           The segments requested.
     */
    void requestState(Address origin, IntSet segments);
 
    /**
     * Receives the state related to the {@code key}.
     *
-    * @param segment   The key's segment.
-    * @param key       The key modified.
-    * @param lockOwner The last {@code lockOwner}.
-    * @param tombstone The tombstone (can be {@code null})
+    * @param segment
+    *           The key's segment.
+    * @param key
+    *           The key modified.
+    * @param lockOwner
+    *           The last {@code lockOwner}.
+    * @param tombstone
+    *           The tombstone (can be {@code null})
     */
    void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone);
 
    /**
-    * Checks if the given key is expired on all other sites. If the key is expired on all other sites this will return
-    * true
+    * Checks if the given key is expired on all other sites. If the key is expired on all other
+    * sites this will return true
     *
-    * @param key The key to check if it is expired or not
+    * @param key
+    *           The key to check if it is expired or not
     * @return Whether this key is expired on all other sites
     */
    CompletionStage<Boolean> checkAndTrackExpiration(Object key);
+
+   /**
+    * Increase the count of discards.
+    */
+   void incrementDiscards();
+
+   /**
+    * Increase the count of conflicts if merge policy discard update (local value wins)
+    */
+   void incrementNumberOfConflictLocalWins();
+
+   /**
+    * Increase the count of conflicts if merge policy applies update (remote value wins)
+    */
+   void incrementNumberOfConflictRemoteWins();
+
+   /**
+    * Increase the count of conflicts if merge policy created a new value (merge remote value with
+    * local value)
+    */
+   void incrementNumberOfConflictMerged();
 }

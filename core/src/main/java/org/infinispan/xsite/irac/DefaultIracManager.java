@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.jmx.JmxStatisticsExposer;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -56,46 +62,62 @@ import net.jcip.annotations.GuardedBy;
 /**
  * Default implementation of {@link IracManager}.
  * <p>
- * It tracks the keys updated by this site and sends them, periodically, to the configured remote sites.
+ * It tracks the keys updated by this site and sends them, periodically, to the configured remote
+ * sites.
  * <p>
- * The primary owner coordinates everything. It sends the updates request to the remote site and coordinates the local
- * site backup owners. After sending the updates to the remote site, it sends a cleanup request to the local site backup
- * owners
+ * The primary owner coordinates everything. It sends the updates request to the remote site and
+ * coordinates the local site backup owners. After sending the updates to the remote site, it sends
+ * a cleanup request to the local site backup owners
  * <p>
  * The backup owners only keeps a backup list of the tracked keys.
  * <p>
- * On topology change, the updated keys list is replicate to the new owner(s). Also, if a segment is being transferred
- * (i.e. the primary owner isn't a write and read owner), no updates to the remote site is sent since, most likely, the
- * node doesn't have the most up-to-date value.
+ * On topology change, the updated keys list is replicate to the new owner(s). Also, if a segment is
+ * being transferred (i.e. the primary owner isn't a write and read owner), no updates to the remote
+ * site is sent since, most likely, the node doesn't have the most up-to-date value.
  *
  * @author Pedro Ruivo
  * @since 11.0
  */
+@MBean(objectName = "XSiteStatistics", description = "Xsite statistics for Infinispan Reliable Asynchronous Communication")
 @Scope(Scopes.NAMED_CACHE)
-public class DefaultIracManager implements IracManager {
+public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
 
-   @Inject RpcManager rpcManager;
-   @Inject TakeOfflineManager takeOfflineManager;
-   @Inject ClusteringDependentLogic clusteringDependentLogic;
-   @Inject CommandsFactory commandsFactory;
-   @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject
+   RpcManager rpcManager;
+   @Inject
+   TakeOfflineManager takeOfflineManager;
+   @Inject
+   ClusteringDependentLogic clusteringDependentLogic;
+   @Inject
+   CommandsFactory commandsFactory;
+   @Inject
+   IracVersionGenerator iracVersionGenerator;
 
    private final Map<Object, State> updatedKeys;
    private final Collection<XSiteBackup> asyncBackups;
    private final IracExecutor iracExecutor;
    private volatile boolean hasClear;
 
+   private boolean statisticsEnabled = false;
+   //private final LongAdder conflictsCounts = new LongAdder();
+   private final LongAdder discardCounts = new LongAdder();
+   private final LongAdder numberOfConflictLocalWins = new LongAdder();
+   private final LongAdder numberOfConflictRemoteWins = new LongAdder();
+   private final LongAdder numberOfConflictMerged = new LongAdder();
+
    public DefaultIracManager(Configuration config) {
       this.updatedKeys = new ConcurrentHashMap<>();
       this.iracExecutor = new IracExecutor(this::run);
       this.asyncBackups = asyncBackups(config);
+      setStatisticsEnabled(config.statistics().enabled());
    }
 
    private static Collection<XSiteBackup> asyncBackups(Configuration config) {
-      return config.sites().asyncBackupsStream()
-            .map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) //convert to sync
+      return config.sites().asyncBackupsStream().map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) // convert
+            // to
+            // sync
             .collect(Collectors.toList());
    }
 
@@ -106,7 +128,7 @@ public class DefaultIracManager implements IracManager {
    @Inject
    public void inject(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
                       @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
-      //using the inject method here in order to decrease the class size
+      // using the inject method here in order to decrease the class size
       iracExecutor.setBackOff(new ExponentialBackOffImpl(executorService));
       iracExecutor.setExecutor(blockingExecutor);
    }
@@ -140,7 +162,7 @@ public class DefaultIracManager implements IracManager {
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
          CompletableState completableState = new CompletableState(segment, state.key(), "state-transfer");
-         //if an update is in progress, we don't need to send the same value again.
+         // if an update is in progress, we don't need to send the same value again.
          if (updatedKeys.putIfAbsent(state.key(), completableState) == null) {
             cf.dependsOn(completableState.completableFuture);
          }
@@ -173,22 +195,24 @@ public class DefaultIracManager implements IracManager {
       }
       Address local = rpcManager.getAddress();
       if (!newCacheTopology.getMembers().contains(local)) {
-         //not in teh cache topology
+         // not in teh cache topology
          return;
       }
-      IntSet addedSegments = IntSets.mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+      IntSet addedSegments = IntSets
+            .mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       if (oldCacheTopology.getMembers().contains(local)) {
          addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       }
 
       if (addedSegments.isEmpty()) {
-         //this node doesn't have any new segments but it may become the primary owner of some.
-         //trigger a new round (it also removes the keys if the node isn't a owner)
+         // this node doesn't have any new segments but it may become the primary owner
+         // of some.
+         // trigger a new round (it also removes the keys if the node isn't a owner)
          iracExecutor.run();
          return;
       }
 
-      //group new segments by primary owner
+      // group new segments by primary owner
       Map<Address, IntSet> primarySegments = new HashMap<>();
       for (int segment : addedSegments) {
          Address primary = newCacheTopology.getWriteConsistentHash().locatePrimaryOwnerForSegment(segment);
@@ -218,7 +242,8 @@ public class DefaultIracManager implements IracManager {
       }
       IracTouchKeyCommand command = commandsFactory.buildIracTouchCommand(key);
       AtomicBoolean expired = new AtomicBoolean(true);
-      // TODO: technically this waits for all backups to respond - we can optimize so we return early
+      // TODO: technically this waits for all backups to respond - we can optimize so
+      // we return early
       // if at least one backup says it isn't expired
       AggregateCompletionStage<AtomicBoolean> collector = CompletionStages.aggregateCompletionStage(expired);
       for (XSiteBackup backup : asyncBackups) {
@@ -226,7 +251,7 @@ public class DefaultIracManager implements IracManager {
             if (log.isTraceEnabled()) {
                log.tracef("Skipping %s as it is offline", backup.getSiteName());
             }
-            continue; //backup is offline
+            continue; // backup is offline
          }
          if (log.isTraceEnabled()) {
             log.tracef("Sending irac touch key command to %s", backup);
@@ -246,25 +271,25 @@ public class DefaultIracManager implements IracManager {
       return collector.freeze().thenApply(AtomicBoolean::get);
    }
 
-   //public for testing purposes
+   // public for testing purposes
    public void sendStateIfNeeded(Address origin, IntSet segments, int segment, Object key, Object lockOwner) {
       if (!segments.contains(segment)) {
          return;
       }
-      //send the tombstone too
+      // send the tombstone too
       IracMetadata tombstone = iracVersionGenerator.getTombstone(key);
       CacheRpcCommand cmd = commandsFactory.buildIracStateResponseCommand(segment, key, lockOwner, tombstone);
       rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
    }
 
    private CompletionStage<Void> run() {
-      //this run on a blocking thread!
+      // this run on a blocking thread!
       if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Sending keys to remote site(s). Has clear? %s, keys: %s", hasClear, updatedKeys.keySet());
       }
       if (hasClear) {
-         //clear doesn't work very well with concurrent updates
-         //let's block all updates until the clear is applied everywhere
+         // clear doesn't work very well with concurrent updates
+         // let's block all updates until the clear is applied everywhere
          return sendClearUpdate();
       }
 
@@ -277,21 +302,20 @@ public class DefaultIracManager implements IracManager {
             state.sendFail();
             continue;
          } else if (!dInfo.isWriteOwner()) {
-            //topology changed! cleanup the key
+            // topology changed! cleanup the key
             state.discard();
             continue;
          } else if (!dInfo.isReadOwner()) {
-            //state transfer in progress (we are a write owner but not a read owner)
-            //we need the data in DataContainer and CacheLoaders, so we must wait until we receive the key or will end up sending a remove update.
-            //when the new topology arrives, this will be triggered again
+            // state transfer in progress (we are a write owner but not a read owner)
+            // we need the data in DataContainer and CacheLoaders, so we must wait until we
+            // receive the key or will end up sending a remove update.
+            // when the new topology arrives, this will be triggered again
             state.sendFail();
             continue;
          }
 
-         fetchEntry(state.key, dInfo.segmentId())
-               .thenApply(lEntry -> lEntry == null ?
-                     buildRemoveCommand(state) :
-                     commandsFactory.buildIracPutKeyCommand(lEntry))
+         fetchEntry(state.key, dInfo.segmentId()).thenApply(
+               lEntry -> lEntry == null ? buildRemoveCommand(state) : commandsFactory.buildIracPutKeyCommand(lEntry))
                .thenAccept(cmd -> {
                   IracResponseCollector rsp = sendCommandToAllBackups(cmd);
                   rsp.whenComplete(state); // this can block in JGroups Flow Control. move to thread pool?
@@ -311,11 +335,9 @@ public class DefaultIracManager implements IracManager {
    }
 
    private CompletionStage<Void> sendClearUpdate() {
-      //make sure the clear is replicated everywhere before sending the updates!
-      return sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand())
-            .whenComplete(this::onClearCompleted)
-            .exceptionally(CompletableFutures.toNullFunction())
-            .thenRun(() -> {
+      // make sure the clear is replicated everywhere before sending the updates!
+      return sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand()).whenComplete(this::onClearCompleted)
+            .exceptionally(CompletableFutures.toNullFunction()).thenRun(() -> {
             });
    }
 
@@ -332,7 +354,7 @@ public class DefaultIracManager implements IracManager {
          log.tracef("[IRAC] Round completed (is clear? %s). Result: %s (throwable=%s)", isClear, result, throwable);
       }
       if (throwable != null) {
-         //unlikely, retry
+         // unlikely, retry
          log.unexpectedErrorFromIrac(throwable);
          iracExecutor.run();
          return;
@@ -342,7 +364,7 @@ public class DefaultIracManager implements IracManager {
             iracExecutor.disableBackOff();
             if (isClear) {
                hasClear = false;
-               //re-schedule after clear
+               // re-schedule after clear
                iracExecutor.run();
             }
             return;
@@ -351,7 +373,7 @@ public class DefaultIracManager implements IracManager {
             iracExecutor.run();
             return;
          case REMOTE_EXCEPTION:
-            //retry
+            // retry
             iracExecutor.disableBackOff();
             iracExecutor.run();
             return;
@@ -376,9 +398,10 @@ public class DefaultIracManager implements IracManager {
       if (log.isTraceEnabled()) {
          log.tracef("Replication completed for key '%s'. Lock Owner='%s'", state.key, state.owner);
       }
-      //removes the key from the "updated keys map" in all owners.
+      // removes the key from the "updated keys map" in all owners.
       DistributionInfo dInfo = getDistributionInfo(state.segment);
-      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.segment, state.key, state.owner, state.tombstone);
+      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.segment, state.key, state.owner,
+            state.tombstone);
       rpcManager.sendToMany(dInfo.writeOwners(), cmd, DeliverOrder.NONE);
       removeStateFromLocal(state);
    }
@@ -400,7 +423,7 @@ public class DefaultIracManager implements IracManager {
       IracResponseCollector collector = new IracResponseCollector();
       for (XSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
-            continue; //backup is offline
+            continue; // backup is offline
          }
          collector.dependsOn(sendToRemoteSite(backup, command));
       }
@@ -422,9 +445,7 @@ public class DefaultIracManager implements IracManager {
    }
 
    private enum StateStatus {
-      NEW,
-      SENDING,
-      COMPLETED
+      NEW, SENDING, COMPLETED
    }
 
    private class State implements BiConsumer<IracResponseCollector.Result, Throwable> {
@@ -472,11 +493,12 @@ public class DefaultIracManager implements IracManager {
 
       @Override
       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+         if (this == o)
+            return true;
+         if (o == null || getClass() != o.getClass())
+            return false;
          State state = (State) o;
-         return key.equals(state.key) &&
-               owner.equals(state.owner);
+         return key.equals(state.key) && owner.equals(state.owner);
       }
 
       @Override
@@ -490,7 +512,7 @@ public class DefaultIracManager implements IracManager {
             sendFail();
          } else {
             synchronized (this) {
-               //send succeed.
+               // send succeed.
                if (log.isTraceEnabled()) {
                   log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
                }
@@ -531,4 +553,103 @@ public class DefaultIracManager implements IracManager {
          return stateStatus == StateStatus.COMPLETED;
       }
    }
+
+   @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)", displayName = "XsiteQueueSize", measurementType = MeasurementType.DYNAMIC)
+   public int getQueueSize() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+      return updatedKeys.size();
+   }
+
+   @ManagedAttribute(description = "Number of Conflicts", displayName = "Number of Conflicts", measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflicts() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+
+      long conflictsCounts = numberOfConflictLocalWins.longValue() + numberOfConflictRemoteWins.longValue()
+            + numberOfConflictMerged.longValue();
+      return conflictsCounts;
+   }
+
+   @ManagedAttribute(description = "Number of Discards", displayName = "Number of Discards", measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfDiscards() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+      return discardCounts.longValue();
+   }
+
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy discards the remote update.", displayName = "NumberOfConflictLocalWins", measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictLocalWins() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+      return numberOfConflictLocalWins.longValue();
+   }
+
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy applies the remote update.", displayName = "NumberOfConflictRemoteWins", measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictRemoteWins() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+      return numberOfConflictRemoteWins.longValue();
+   }
+
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy created a new entry", displayName = "NumberOfConflictMerged", measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictMerged() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
+      return numberOfConflictMerged.longValue();
+   }
+
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+   @Override
+   public boolean getStatisticsEnabled() {
+      return statisticsEnabled;
+   }
+
+   /**
+    * @param enabled
+    *           whether gathering statistics for JMX are enabled.
+    */
+   @Override
+   public void setStatisticsEnabled(boolean enabled) {
+      statisticsEnabled = enabled;
+   }
+
+   /**
+    * Resets statistics gathered. Is a no-op, and should be overridden if it is to be meaningful.
+    */
+   @ManagedOperation(displayName = "Reset Statistics", description = "Resets statistics gathered by this component")
+   @Override
+   public void resetStatistics() {
+      discardCounts.reset();
+      numberOfConflictLocalWins.reset();
+      numberOfConflictRemoteWins.reset();
+      numberOfConflictMerged.reset();
+   }
+
+   @Override
+   public void incrementDiscards() {
+      discardCounts.increment();
+   }
+
+   @Override
+   public void incrementNumberOfConflictLocalWins() {
+      numberOfConflictLocalWins.increment();
+   }
+
+   @Override
+   public void incrementNumberOfConflictRemoteWins() {
+      numberOfConflictRemoteWins.increment();
+   }
+
+   @Override
+   public void incrementNumberOfConflictMerged() {
+      numberOfConflictMerged.increment();
+   }
+
 }

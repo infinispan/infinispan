@@ -70,4 +70,24 @@ public class ControlledIracManager implements IracManager {
    protected Optional<DefaultIracManager> asDefaultIracManager() {
       return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
    }
+
+   @Override
+   public void incrementDiscards() {
+      actual.incrementDiscards();
+   }
+
+   @Override
+   public void incrementNumberOfConflictLocalWins() {
+      actual.incrementNumberOfConflictLocalWins();
+   }
+
+   @Override
+   public void incrementNumberOfConflictRemoteWins() {
+      actual.incrementNumberOfConflictRemoteWins();
+   }
+
+   @Override
+   public void incrementNumberOfConflictMerged() {
+      actual.incrementNumberOfConflictMerged();
+   }
 }
