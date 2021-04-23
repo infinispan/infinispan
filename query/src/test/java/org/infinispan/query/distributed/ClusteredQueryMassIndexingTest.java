@@ -23,7 +23,7 @@ public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest 
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
       Query cacheQuery = Search.getQueryFactory(cache).create(q);
 
-      assertEquals(expectedCount, cacheQuery.execute().hitCount().orElse(-1));
+      assertEquals(expectedCount, cacheQuery.execute().list().size());
    }
 
 }
