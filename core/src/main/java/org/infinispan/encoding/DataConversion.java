@@ -238,8 +238,10 @@ public final class DataConversion {
       Wrapper wrapper = getWrapper();
       if (isKey) return wrapper.unwrap(stored);
 
-      // If the value wrapper is indexable, just use it
-      if (wrapper.isFilterable()) return stored;
+      if (wrapper.isFilterable()) {
+         // If the value wrapper is indexable, return the already wrapped value or wrap it otherwise
+         return stored.getClass().equals(wrapperClass) ? stored : wrapper.wrap(stored);
+      }
 
       // Otherwise convert to the request format
       Object unencoded = encoder.fromStorage(wrapper.unwrap(stored));
@@ -287,26 +289,26 @@ public final class DataConversion {
       if (o == null || getClass() != o.getClass()) return false;
       DataConversion that = (DataConversion) o;
       return isKey == that.isKey &&
-             Objects.equals(encoder, that.encoder) &&
-             Objects.equals(customWrapper, that.customWrapper) &&
-             Objects.equals(transcoder, that.transcoder) &&
-             Objects.equals(requestMediaType, that.requestMediaType);
+            Objects.equals(encoder, that.encoder) &&
+            Objects.equals(customWrapper, that.customWrapper) &&
+            Objects.equals(transcoder, that.transcoder) &&
+            Objects.equals(requestMediaType, that.requestMediaType);
    }
 
    @Override
    public String toString() {
       return "DataConversion{" +
-             "encoderClass=" + encoderClass +
-             ", wrapperClass=" + wrapperClass +
-             ", requestMediaType=" + requestMediaType +
-             ", storageMediaType=" + storageMediaType +
-             ", encoderId=" + encoderId +
-             ", wrapperId=" + wrapperId +
-             ", encoder=" + encoder +
-             ", wrapper=" + customWrapper +
-             ", isKey=" + isKey +
-             ", transcoder=" + transcoder +
-             '}';
+            "encoderClass=" + encoderClass +
+            ", wrapperClass=" + wrapperClass +
+            ", requestMediaType=" + requestMediaType +
+            ", storageMediaType=" + storageMediaType +
+            ", encoderId=" + encoderId +
+            ", wrapperId=" + wrapperId +
+            ", encoder=" + encoder +
+            ", wrapper=" + customWrapper +
+            ", isKey=" + isKey +
+            ", transcoder=" + transcoder +
+            '}';
    }
 
    @Override

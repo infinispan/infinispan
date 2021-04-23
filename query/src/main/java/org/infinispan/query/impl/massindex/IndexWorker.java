@@ -11,7 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.CacheEntry;
@@ -47,10 +46,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
       AdvancedCache<Object, Object> cache = SecurityActions.getUnwrappedCache(embeddedCacheManager.getCache(cacheName)).getAdvancedCache();
       DataConversion valueDataConversion = cache.getValueDataConversion();
-      Wrapper valueWrapper = valueDataConversion.getWrapper();
-      boolean valueFilterable = valueWrapper.isFilterable();
 
-      AdvancedCache<Object, Object> reindexCache = valueFilterable ? cache.withStorageMediaType() : cache;
+      AdvancedCache<Object, Object> reindexCache = cache.withStorageMediaType();
 
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
@@ -59,7 +56,6 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       IndexUpdater indexUpdater = new IndexUpdater(searchMapping);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
-      DataConversion keyDataConversion = reindexCache.getKeyDataConversion();
       if (keys == null || keys.size() == 0) {
          preIndex(cache, indexUpdater);
          MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
@@ -68,26 +64,23 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                   .cacheEntrySet().stream()) {
                stream.forEach(entry -> {
                   Object key = entry.getKey();
-                  Object storedKey = keyDataConversion.toStorage(key);
-                  Object value = entry.getValue();
-                  if (valueFilterable) {
-                     value = valueWrapper.wrap(value);
-                  }
-                  int segment = keyPartitioner.getSegment(storedKey);
+                  Object value = valueDataConversion.extractIndexable(entry.getValue());
+                  int segment = keyPartitioner.getSegment(key);
 
                   if (value != null && indexedTypes.contains(indexUpdater.toConvertedEntityJavaClass(value))) {
-                     progressState.addItem(entry.getKey(), value,
-                           indexUpdater.updateIndex(entry.getKey(), value, segment));
+                     progressState.addItem(key, value,
+                           indexUpdater.updateIndex(key, value, segment));
                   }
                });
             }
          }
          postIndex(indexUpdater, progressState, notifier);
       } else {
+         DataConversion keyDataConversion = cache.getKeyDataConversion();
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
             Object storedKey = keyDataConversion.toStorage(key);
-            Object unwrappedKey = keyDataConversion.getWrapper().unwrap(storedKey);
+            Object unwrappedKey = keyDataConversion.extractIndexable(storedKey);
             Object value = cache.get(key);
             if (value != null) {
                indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey));
