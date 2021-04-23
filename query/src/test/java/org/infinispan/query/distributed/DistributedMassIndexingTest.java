@@ -1,11 +1,15 @@
 package org.infinispan.query.distributed;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.core.stats.IndexInfo;
+import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
@@ -58,11 +62,12 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       //re-sync datacontainer with indexes:
       rebuildIndexes();
       verifyFindsCar(3, "megane");
-      //verify we cleanup old stale index values:
+      //verify we cleanup old stale index values by deleting an entry without deleting the corresponding index value
       cache(2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
-      verifyFindsCar(3, "megane");
+      assertIndexedEntities(3, Car.class, cache(2));
       //re-sync
       rebuildIndexes();
+      assertIndexedEntities(2, Car.class, cache(2));
       verifyFindsCar(2, "megane");
    }
 
@@ -93,8 +98,22 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected void verifyFindsCar(Cache<?, Car> cache, int expectedCount, String carMake) {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      Query cacheQuery = Search.getQueryFactory(cache).create(q);
-      assertEquals(expectedCount, cacheQuery.getResultSize());
-      assertEquals(expectedCount, cacheQuery.list().size());
+      Query<Car> cacheQuery = Search.getQueryFactory(cache).create(q);
+      assertEquals(cacheQuery.list().size(), expectedCount);
+   }
+
+   private void assertIndexedEntities(int expected, Class<?> entityClass, Cache<?, Car> cache) {
+      IndexStatisticsSnapshot indexStatistics = await(Search.getClusteredSearchStatistics(cache)).getIndexStatistics();
+      IndexInfo indexInfo = indexStatistics.indexInfos().get(entityClass.getName());
+      int count = (int) indexInfo.count();
+      // each entry is indexed in all owners for redundancy
+      final ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
+      long indexedCount;
+      if (clusteringConfiguration.cacheMode().isReplicated()) {
+         indexedCount = count / caches().size();
+      } else {
+         indexedCount = count / clusteringConfiguration.hash().numOwners();
+      }
+      assertEquals(indexedCount, expected);
    }
 }
