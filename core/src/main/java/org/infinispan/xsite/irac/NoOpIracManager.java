@@ -76,22 +76,17 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void incrementConflicts() {
+   public void incrementNumberOfConflictLocalWins() {
       // no-op
    }
 
    @Override
-   public void increaseNumberOfConflictLocalWins() {
+   public void incrementNumberOfConflictRemoteWins() {
       // no-op
    }
 
    @Override
-   public void increaseNumberOfConflictRemoteWins() {
-      // no-op
-   }
-
-   @Override
-   public void increaseNumberOfConflictMerged() {
+   public void incrementNumberOfConflictMerged() {
       // no-op
    }
 }

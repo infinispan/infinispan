@@ -62,20 +62,18 @@ import net.jcip.annotations.GuardedBy;
 /**
  * Default implementation of {@link IracManager}.
  * <p>
- * It tracks the keys updated by this site and sends them, periodically, to the
- * configured remote sites.
+ * It tracks the keys updated by this site and sends them, periodically, to the configured remote
+ * sites.
  * <p>
- * The primary owner coordinates everything. It sends the updates request to the
- * remote site and coordinates the local site backup owners. After sending the
- * updates to the remote site, it sends a cleanup request to the local site
- * backup owners
+ * The primary owner coordinates everything. It sends the updates request to the remote site and
+ * coordinates the local site backup owners. After sending the updates to the remote site, it sends
+ * a cleanup request to the local site backup owners
  * <p>
  * The backup owners only keeps a backup list of the tracked keys.
  * <p>
- * On topology change, the updated keys list is replicate to the new owner(s).
- * Also, if a segment is being transferred (i.e. the primary owner isn't a write
- * and read owner), no updates to the remote site is sent since, most likely,
- * the node doesn't have the most up-to-date value.
+ * On topology change, the updated keys list is replicate to the new owner(s). Also, if a segment is
+ * being transferred (i.e. the primary owner isn't a write and read owner), no updates to the remote
+ * site is sent since, most likely, the node doesn't have the most up-to-date value.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -103,7 +101,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    private volatile boolean hasClear;
 
    private boolean statisticsEnabled = false;
-   private final LongAdder conflictsCounts = new LongAdder();
+   //private final LongAdder conflictsCounts = new LongAdder();
    private final LongAdder discardCounts = new LongAdder();
    private final LongAdder numberOfConflictLocalWins = new LongAdder();
    private final LongAdder numberOfConflictRemoteWins = new LongAdder();
@@ -118,8 +116,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private static Collection<XSiteBackup> asyncBackups(Configuration config) {
       return config.sites().asyncBackupsStream().map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) // convert
-                                                                                          // to
-                                                                                          // sync
+            // to
+            // sync
             .collect(Collectors.toList());
    }
 
@@ -128,9 +126,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    @Inject
-   public void inject(
-         @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
-         @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
+   public void inject(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
+                      @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
       // using the inject method here in order to decrease the class size
       iracExecutor.setBackOff(new ExponentialBackOffImpl(executorService));
       iracExecutor.setExecutor(blockingExecutor);
@@ -228,8 +225,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Override
    public void requestState(Address origin, IntSet segments) {
-      updatedKeys.values()
-            .forEach(state -> sendStateIfNeeded(origin, segments, state.segment, state.key, state.owner));
+      updatedKeys.values().forEach(state -> sendStateIfNeeded(origin, segments, state.segment, state.key, state.owner));
    }
 
    @Override
@@ -289,8 +285,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    private CompletionStage<Void> run() {
       // this run on a blocking thread!
       if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] Sending keys to remote site(s). Has clear? %s, keys: %s", hasClear,
-               updatedKeys.keySet());
+         log.tracef("[IRAC] Sending keys to remote site(s). Has clear? %s, keys: %s", hasClear, updatedKeys.keySet());
       }
       if (hasClear) {
          // clear doesn't work very well with concurrent updates
@@ -319,8 +314,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             continue;
          }
 
-         fetchEntry(state.key, dInfo.segmentId()).thenApply(lEntry -> lEntry == null ? buildRemoveCommand(state)
-               : commandsFactory.buildIracPutKeyCommand(lEntry)).thenAccept(cmd -> {
+         fetchEntry(state.key, dInfo.segmentId()).thenApply(
+               lEntry -> lEntry == null ? buildRemoveCommand(state) : commandsFactory.buildIracPutKeyCommand(lEntry))
+               .thenAccept(cmd -> {
                   IracResponseCollector rsp = sendCommandToAllBackups(cmd);
                   rsp.whenComplete(state); // this can block in JGroups Flow Control. move to thread pool?
                   rsp.whenComplete(this::onSendingCompleted);
@@ -364,26 +360,26 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          return;
       }
       switch (result) {
-      case OK:
-         iracExecutor.disableBackOff();
-         if (isClear) {
-            hasClear = false;
-            // re-schedule after clear
+         case OK:
+            iracExecutor.disableBackOff();
+            if (isClear) {
+               hasClear = false;
+               // re-schedule after clear
+               iracExecutor.run();
+            }
+            return;
+         case NETWORK_EXCEPTION:
+            iracExecutor.enableBackOff();
             iracExecutor.run();
-         }
-         return;
-      case NETWORK_EXCEPTION:
-         iracExecutor.enableBackOff();
-         iracExecutor.run();
-         return;
-      case REMOTE_EXCEPTION:
-         // retry
-         iracExecutor.disableBackOff();
-         iracExecutor.run();
-         return;
-      default:
-         log.unexpectedErrorFromIrac(new IllegalStateException("Unknown result: " + result));
-         iracExecutor.run();
+            return;
+         case REMOTE_EXCEPTION:
+            // retry
+            iracExecutor.disableBackOff();
+            iracExecutor.run();
+            return;
+         default:
+            log.unexpectedErrorFromIrac(new IllegalStateException("Unknown result: " + result));
+            iracExecutor.run();
       }
    }
 
@@ -560,26 +556,32 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)", displayName = "XsiteQueueSize", measurementType = MeasurementType.DYNAMIC)
    public int getQueueSize() {
+      if (!getStatisticsEnabled()) {
+         return -1;
+      }
       return updatedKeys.size();
    }
 
    @ManagedAttribute(description = "Number of Conflicts", displayName = "Number of Conflicts", measurementType = MeasurementType.TRENDSUP)
-   public long getNoOfConflicts() {
+   public long getNumberOfConflicts() {
       if (!getStatisticsEnabled()) {
          return -1;
       }
-      return conflictsCounts.longValue();
+
+      long conflictsCounts = numberOfConflictLocalWins.longValue() + numberOfConflictRemoteWins.longValue()
+            + numberOfConflictMerged.longValue();
+      return conflictsCounts;
    }
 
    @ManagedAttribute(description = "Number of Discards", displayName = "Number of Discards", measurementType = MeasurementType.TRENDSUP)
-   public long getNoOfDiscards() {
+   public long getNumberOfDiscards() {
       if (!getStatisticsEnabled()) {
          return -1;
       }
       return discardCounts.longValue();
    }
 
-   @ManagedAttribute(description = "Number of merge policy discard update (local value wins)", displayName = "NumberOfConflictLocalWins", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy discards the remote update.", displayName = "NumberOfConflictLocalWins", measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictLocalWins() {
       if (!getStatisticsEnabled()) {
          return -1;
@@ -587,7 +589,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return numberOfConflictLocalWins.longValue();
    }
 
-   @ManagedAttribute(description = "Number of merge policy applies update (remote value wins)", displayName = "NumberOfConflictRemoteWins", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy applies the remote update.", displayName = "NumberOfConflictRemoteWins", measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictRemoteWins() {
       if (!getStatisticsEnabled()) {
          return -1;
@@ -595,7 +597,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return numberOfConflictRemoteWins.longValue();
    }
 
-   @ManagedAttribute(description = "Number of merge policy created a new value (merge remote value with local value)", displayName = "NumberOfConflictMerged", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Increases the count of conflicts if merge policy created a new entry", displayName = "NumberOfConflictMerged", measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictMerged() {
       if (!getStatisticsEnabled()) {
          return -1;
@@ -610,7 +612,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    /**
-    * @param enabled whether gathering statistics for JMX are enabled.
+    * @param enabled
+    *           whether gathering statistics for JMX are enabled.
     */
    @Override
    public void setStatisticsEnabled(boolean enabled) {
@@ -618,14 +621,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    /**
-    * Resets statistics gathered. Is a no-op, and should be overridden if it is to
-    * be meaningful.
+    * Resets statistics gathered. Is a no-op, and should be overridden if it is to be meaningful.
     */
    @ManagedOperation(displayName = "Reset Statistics", description = "Resets statistics gathered by this component")
    @Override
    public void resetStatistics() {
       discardCounts.reset();
-      conflictsCounts.reset();
       numberOfConflictLocalWins.reset();
       numberOfConflictRemoteWins.reset();
       numberOfConflictMerged.reset();
@@ -637,22 +638,17 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    @Override
-   public void incrementConflicts() {
-      conflictsCounts.increment();
-   }
-
-   @Override
-   public void increaseNumberOfConflictLocalWins() {
+   public void incrementNumberOfConflictLocalWins() {
       numberOfConflictLocalWins.increment();
    }
 
    @Override
-   public void increaseNumberOfConflictRemoteWins() {
+   public void incrementNumberOfConflictRemoteWins() {
       numberOfConflictRemoteWins.increment();
    }
 
    @Override
-   public void increaseNumberOfConflictMerged() {
+   public void incrementNumberOfConflictMerged() {
       numberOfConflictMerged.increment();
    }
 

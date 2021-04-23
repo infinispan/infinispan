@@ -77,22 +77,17 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void incrementConflicts() {
-      actual.incrementConflicts();
+   public void incrementNumberOfConflictLocalWins() {
+      actual.incrementNumberOfConflictLocalWins();
    }
 
    @Override
-   public void increaseNumberOfConflictLocalWins() {
-      actual.increaseNumberOfConflictLocalWins();
+   public void incrementNumberOfConflictRemoteWins() {
+      actual.incrementNumberOfConflictRemoteWins();
    }
 
    @Override
-   public void increaseNumberOfConflictRemoteWins() {
-      actual.increaseNumberOfConflictRemoteWins();
-   }
-
-   @Override
-   public void increaseNumberOfConflictMerged() {
-      actual.increaseNumberOfConflictMerged();
+   public void incrementNumberOfConflictMerged() {
+      actual.incrementNumberOfConflictMerged();
    }
 }

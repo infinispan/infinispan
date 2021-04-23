@@ -104,7 +104,7 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
 
    }
 
-   public void testNoOfConflictsStats() throws Exception {
+   public void testNumberOfConflictsStats() throws Exception {
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName iracManager1 = getCacheObjectName(DOMAIN_NAME + 0, getDefaultCacheName() + "(dist_sync)",
@@ -115,25 +115,25 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
       assertTrue(mBeanServer.isRegistered(iracManager2));
 
       // The initial state transfer uses cache commands, so it also increases the
-      long noOfConflicts = (Long) mBeanServer.getAttribute(iracManager1, "NoOfConflicts");
+      long numberOfConflicts = (Long) mBeanServer.getAttribute(iracManager1, "NumberOfConflicts");
 
-      assertEquals(noOfConflicts, (long) 0);
+      assertEquals(numberOfConflicts, (long) 0);
 
       createConflict(Boolean.FALSE);
 
-      noOfConflicts = (Long) mBeanServer.getAttribute(iracManager2, "NoOfConflicts");
-      assertEquals(noOfConflicts, (long) 1);
+      numberOfConflicts = (Long) mBeanServer.getAttribute(iracManager2, "NumberOfConflicts");
+      assertEquals(numberOfConflicts, (long) 1);
 
       // now reset statistics
       mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(mBeanServer.getAttribute(iracManager1, "noOfConflicts"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(iracManager1, "NumberOfConflicts"), (long) 0);
 
       mBeanServer.invoke(iracManager2, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(mBeanServer.getAttribute(iracManager2, "noOfConflicts"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(iracManager2, "NumberOfConflicts"), (long) 0);
 
       mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
       mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
-      assertEquals(mBeanServer.getAttribute(iracManager1, "noOfConflicts"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(iracManager1, "NumberOfConflicts"), (long) -1);
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -262,7 +262,7 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
 
    }
 
-   public void testNoOfDiscardsStats() throws Exception {
+   public void testNumberOfDiscardsStats() throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName iracManager1 = getCacheObjectName(DOMAIN_NAME + 0, getDefaultCacheName() + "(dist_sync)",
             "XSiteStatistics");
@@ -272,20 +272,20 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
       assertTrue(mBeanServer.isRegistered(iracManager2));
 
       // The initial state transfer uses cache commands, so it also increases the
-      long noOfDiscards = (Long) mBeanServer.getAttribute(iracManager1, "noOfDiscards");
-      assertEquals(noOfDiscards, (long) 0);
+      long numberOfDiscards = (Long) mBeanServer.getAttribute(iracManager1, "numberOfDiscards");
+      assertEquals(numberOfDiscards, (long) 0);
 
       createDiscard();
 
-      noOfDiscards = (Long) mBeanServer.getAttribute(iracManager2, "noOfDiscards");
-      assertEquals(noOfDiscards, (long) 1);
+      numberOfDiscards = (Long) mBeanServer.getAttribute(iracManager2, "numberOfDiscards");
+      assertEquals(numberOfDiscards, (long) 1);
       // now reset statistics
       mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
 
       mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
       mBeanServer.setAttribute(iracManager2, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
-      assertEquals(mBeanServer.getAttribute(iracManager1, "noOfDiscards"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfDiscards"), (long) -1);
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(iracManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));

@@ -157,7 +157,6 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       IracEntryVersion remoteVersion = remoteMetadata.getVersion();
       switch (remoteVersion.compareTo(localVersion)) {
       case CONFLICTING:
-         iracManager.incrementConflicts();
          return resolveConflict(entry, command, localMetadata, remoteMetadata);
       case EQUAL:
       case BEFORE:
@@ -185,7 +184,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
          // fast track, it is the same entry as stored already locally. do nothing!
          if (resolved.equals(localSiteEntry)) {
             discardUpdate(entry, command, remoteMetadata);
-            iracManager.increaseNumberOfConflictLocalWins();
+            iracManager.incrementNumberOfConflictLocalWins();
             return false;
          } else if (!resolved.equals(remoteSiteEntry)) {
             // new value/metadata to store. Change the command!
@@ -195,9 +194,9 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
                   .iracMetadata(mergeVersion(resolved.getSiteName(), localMetadata.getVersion(),
                         remoteMetadata.getVersion()));
             command.setInternalMetadata(key, builder.build());
-            iracManager.increaseNumberOfConflictMerged();
+            iracManager.incrementNumberOfConflictMerged();
          } else {
-            iracManager.increaseNumberOfConflictRemoteWins();
+            iracManager.incrementNumberOfConflictRemoteWins();
          }
          return true;
       });
