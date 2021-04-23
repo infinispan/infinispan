@@ -126,6 +126,8 @@ public class IracXsiteStatsTest extends AbstractMultipleSitesTest {
 
       assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictRemoteWins"), (long) 0);
       assertEquals(mBeanServer.getAttribute(iracManager2, "numberOfConflictLocalWins"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(iracManager1, "numberOfConflictMerged"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(iracManager2, "numberOfConflictMerged"), (long) 0);
 
       // now reset statistics
       mBeanServer.invoke(iracManager1, "resetStatistics", new Object[0], new String[0]);
