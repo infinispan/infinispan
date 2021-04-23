@@ -192,6 +192,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
             }
             completeTransaction(transactionInfo, cacheTopology);
          }
+         if (log.isDebugEnabled()) {
+            log.debug("Finished sending commit commands for partial completed transactions");
+         }
       }
    }
 
@@ -200,28 +203,31 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       TransactionBoundaryCommand command = transactionInfo.buildCommand(commandsFactory);
       command.setTopologyId(cacheTopology.getTopologyId());
       CompletionStage<Map<Address, Response>> remoteInvocation = commitNodes != null ?
-            rpcManager.invokeCommand(commitNodes, command, MapResponseCollector.validOnly(commitNodes.size()),
+            rpcManager.invokeCommand(commitNodes, command, MapResponseCollector.ignoreLeavers(commitNodes.size()),
                                      rpcManager.getSyncRpcOptions()) :
             rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
                                           rpcManager.getSyncRpcOptions());
       remoteInvocation.whenComplete((responseMap, throwable) -> {
+         final boolean trace = log.isTraceEnabled();
          final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
          if (throwable != null) {
             log.failedPartitionHandlingTxCompletion(globalTransaction, throwable);
             return;
          }
 
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Future done for transaction %s. Response are %s", globalTransaction, responseMap);
          }
 
          for (Response response : responseMap.values()) {
             if (response == UnsureResponse.INSTANCE || response == CacheNotFoundResponse.INSTANCE) {
-               log.topologyChangedPartitionHandlingTxCompletion(globalTransaction);
+               if (trace) {
+                  log.tracef("Topology changed while completing partial transaction %s", globalTransaction);
+               }
                return;
             }
          }
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Performing cleanup for transaction %s", globalTransaction);
          }
          lockManager.unlockAll(transactionInfo.getLockedKeys(), globalTransaction);
