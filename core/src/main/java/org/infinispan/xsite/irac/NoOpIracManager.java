@@ -2,7 +2,6 @@ package org.infinispan.xsite.irac;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
@@ -23,83 +22,77 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 @Scope(Scopes.NAMED_CACHE)
 public class NoOpIracManager implements IracManager {
 
-    private static final NoOpIracManager INSTANCE = new NoOpIracManager();
+   private static final NoOpIracManager INSTANCE = new NoOpIracManager();
 
-    private final LongAdder conflictsCounts = new LongAdder();
-    private final LongAdder discardCounts = new LongAdder();
-    private final LongAdder numberOfConflictLocalWins = new LongAdder();
-    private final LongAdder numberOfConflictRemoteWins = new LongAdder();
-    private final LongAdder numberOfConflictMerged = new LongAdder();
+   private NoOpIracManager() {
+   }
 
-    private NoOpIracManager() {
-    }
+   public static NoOpIracManager getInstance() {
+     return INSTANCE;
+   }
 
-    public static NoOpIracManager getInstance() {
-        return INSTANCE;
-    }
+   @Override
+   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+     // no-op
+   }
 
-    @Override
-    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-        // no-op
-    }
+   @Override
+   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+     return CompletableFutures.completedNull();
+   }
 
-    @Override
-    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
-        return CompletableFutures.completedNull();
-    }
+   @Override
+   public void trackClear() {
+     // no-op
+   }
 
-    @Override
-    public void trackClear() {
-        // no-op
-    }
+   @Override
+   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+     // no-op
+   }
 
-    @Override
-    public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-        // no-op
-    }
+   @Override
+   public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
+     // no-op
+   }
 
-    @Override
-    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-        // no-op
-    }
+   @Override
+   public void requestState(Address origin, IntSet segments) {
+     // no-op
+   }
 
-    @Override
-    public void requestState(Address origin, IntSet segments) {
-        // no-op
-    }
+   @Override
+   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+     // no-op
+   }
 
-    @Override
-    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-        // no-op
-    }
+   @Override
+   public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
+     return CompletableFutures.completedTrue();
+   }
 
-    @Override
-    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
-        return CompletableFutures.completedTrue();
-    }
+   @Override
+   public void incrementDiscards() {
+   	  // no-op
+   }
 
-    @Override
-    public void incrementDiscards() {
-        discardCounts.increment();
-    }
+   @Override
+   public void incrementConflicts() {
+   	  // no-op
+   }
 
-    @Override
-    public void incrementConflicts() {
-        conflictsCounts.increment();
-    }
+   @Override
+   public void increaseNumberOfConflictLocalWins() {
+   	  // no-op
+   }
 
-    @Override
-    public void increaseNumberOfConflictLocalWins() {
-        numberOfConflictLocalWins.increment();
-    }
+   @Override
+   public void increaseNumberOfConflictRemoteWins() {
+   	  // no-op
+   }
 
-    @Override
-    public void increaseNumberOfConflictRemoteWins() {
-        numberOfConflictRemoteWins.increment();
-    }
-
-    @Override
-    public void increaseNumberOfConflictMerged() {
-        numberOfConflictMerged.increment();
-    }
+   @Override
+   public void increaseNumberOfConflictMerged() {
+   	  // no-op
+   }
 }
