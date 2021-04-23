@@ -28,6 +28,6 @@ public class UnsharedDistMassIndexTest extends DistributedMassIndexingTest {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
       Query cacheQuery = queryFactory.create(q);
-      assertEquals(expectedCount, cacheQuery.execute().hitCount().orElse(-1));
+      assertEquals(expectedCount, cacheQuery.execute().list().size());
    }
 }
