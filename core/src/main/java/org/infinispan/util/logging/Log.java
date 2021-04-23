@@ -2149,9 +2149,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception completing partial completed transaction %s. Retrying later.", id = 629)
    void failedPartitionHandlingTxCompletion(GlobalTransaction globalTransaction, @Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Another partition or topology changed for while completing partial completed transaction %s. Retrying later.", id = 630)
-   void topologyChangedPartitionHandlingTxCompletion(GlobalTransaction globalTransaction);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Another partition or topology changed for while completing partial completed transaction. Retrying later.", id = 630)
+//   void topologyChangedPartitionHandlingTxCompletion();
 
    @Message(value = "Cross-Site state transfer mode cannot be null.", id = 633)
    CacheConfigurationException invalidXSiteStateTransferMode();
