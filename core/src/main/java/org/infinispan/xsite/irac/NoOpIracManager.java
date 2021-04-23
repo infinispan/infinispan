@@ -13,8 +13,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
- * A no-op implementation of {@link IracManager} for cache without asynchronous
- * remote site backups.
+ * A no-op implementation of {@link IracManager} for cache without asynchronous remote site backups.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -28,71 +27,71 @@ public class NoOpIracManager implements IracManager {
    }
 
    public static NoOpIracManager getInstance() {
-     return INSTANCE;
+      return INSTANCE;
    }
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-     // no-op
+      // no-op
    }
 
    @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
-     return CompletableFutures.completedNull();
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public void trackClear() {
-     // no-op
+      // no-op
    }
 
    @Override
    public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-     // no-op
+      // no-op
    }
 
    @Override
    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
-     // no-op
+      // no-op
    }
 
    @Override
    public void requestState(Address origin, IntSet segments) {
-     // no-op
+      // no-op
    }
 
    @Override
    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-     // no-op
+      // no-op
    }
 
    @Override
    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
-     return CompletableFutures.completedTrue();
+      return CompletableFutures.completedTrue();
    }
 
    @Override
    public void incrementDiscards() {
-   	  // no-op
+      // no-op
    }
 
    @Override
    public void incrementConflicts() {
-   	  // no-op
+      // no-op
    }
 
    @Override
    public void increaseNumberOfConflictLocalWins() {
-   	  // no-op
+      // no-op
    }
 
    @Override
    public void increaseNumberOfConflictRemoteWins() {
-   	  // no-op
+      // no-op
    }
 
    @Override
    public void increaseNumberOfConflictMerged() {
-   	  // no-op
+      // no-op
    }
 }

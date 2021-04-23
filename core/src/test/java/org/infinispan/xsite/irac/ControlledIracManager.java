@@ -13,8 +13,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
- * An {@link IracManager} implementation that can be controlled for testing
- * purpose.
+ * An {@link IracManager} implementation that can be controlled for testing purpose.
  *
  * @author Pedro Ruivo
  * @since 11.0
