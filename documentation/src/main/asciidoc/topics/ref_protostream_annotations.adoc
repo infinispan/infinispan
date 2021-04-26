@@ -1,0 +1,151 @@
+[id='protostream-annotations_{context}']
+= ProtoStream annotations
+The ProtoStream API includes annotations that you can add to Java applications to define Protobuf schemas, which provide a structured format for your objects.
+
+This topic provides additional details about ProtoStream annotations.
+You should refer to the documentation in the link:{protostreamdocroot}/org/infinispan/protostream/annotations/package-summary.html[org.infinispan.protostream.annotations] package for complete information.
+
+[discrete]
+== ProtoField
+
+`@ProtoField` defines a Protobuf message field.
+
+This annotation is required and applies to fields as well as getter and setter methods.
+A class must have at least one field annotated with `@ProtoField` before {brandname} can marshall it as Protobuf.
+
+[%header,cols=4*]
+|===
+|Parameter
+|Value
+|Optional or required
+|Description
+
+|`number`
+|Integer
+|Required
+|Tag numbers must be unique within the class.
+
+|`type`
+|Type
+|Optional
+|Declares the Protobuf type of the field. If you do not specify a type, it is inferred from the Java property.
+
+You can use the `@ProtoField(type)` element to change the Protobuf type, similarly to changing Java `int` to `fixed32`. Any incompatible declarations for the Java property cause compiler errors.
+
+|`collectionImplementation`
+|Class
+|Optional
+|Indicates the actual collection type if the property type is an interface or abstract class.
+
+|`javaType`
+|Class
+|Optional
+|Indicates the actual Java type if the property type is an abstract class or interface.
+The value must be an instantiable Java type assignable to the property type.
+
+If you declare a type with the `javaType` parameter, then all user code must adhere to that type.
+The generated marshaller for the entry uses that implementation if it is unmarshalled.
+If the local client uses a different implementation than declared it causes ClassCastExceptions.
+
+|`name`
+|String
+|Optional
+|Specifies a name for the Protobuf schema.
+
+|`defaultValue`
+|String
+|Optional
+|Specifies the default value for fields if they are not available when reading from the cache. The value must follow the correct syntax for the Java field type.
+
+|===
+
+[discrete]
+== ProtoFactory
+
+`@ProtoFactory` marks a single constructor or static factory method for creating instances of the message class.
+
+You can use this annotation to support immutable message classes.
+All fields annotated with `@ProtoField` must be included in the parameters.
+
+* Field names and parameters of the `@ProtoFactory` constructor or method must match the corresponding Protobuf message, however, the order is not important.
+* If you do not add a `@ProtoFactory` annotated constructor to a class, that class must have a default no-argument constructor, otherwise errors occur during compilation.
+
+[discrete]
+== AutoProtoSchemaBuilder
+
+`@AutoProtoSchemaBuilder` generates an implementation of a class or interface that extends `SerializationContextInitializer`.
+
+If active, the ProtoStream processor generates the implementation at compile time in the same package with the `Impl` suffix or a name that you specify with the `className` parameter.
+
+The `includeClasses` or `basePackages` parameters reference classes that the ProtoStream processor should scan and include in the Protobuf schema and marshaller.
+If you do not set either of these parameters, the ProtoStream processor scans the entire source path, which can lead to unexpected results and is not recommended.
+You can also use the `excludeClasses` parameter with the `basePackages` parameter to exclude classes.
+
+The `schemaFileName` and `schemaPackageName` parameters register the generated Protobuf schema under this name.
+If you do not set these parameters, the annotated simple class name is used with the unnamed, or default, package.
+Schema names must end with the `.proto` file extension.
+You can also use the `marshallersOnly` to generate marshallers only and suppress the Protobuf schema generation.
+
+The ProtoStream process automatically generates `META-INF/services` service metadata files, which you can use so that {brandname} Server automatically picks up the JAR to register the Protobuf schema.
+
+The `dependsOn` parameter lists annotated classes that implement `SerializedContextInitializer` to execute first.
+If the class does not implement `SerializedContextInitializer` or is not annotated with `AutoProtoSchemaBuilder`, a compile time error occurs.
+
+[discrete]
+== ProtoAdapter
+
+`@ProtoAdapter` is a marshalling adapter for a class or enum that you cannot annotate directly.
+
+If you use this annotation for:
+
+* Classes, the annotated class must have one `@ProtoFactory` annotated factory method for the marshalled class and annotated accessor methods for each field. These methods can be instance or static methods and their first argument must be the marshalled class.
+* Enums, an identically named enum value must exist in the target enum.
+
+[discrete]
+== ProtoDoc and ProtoDocs
+
+`@ProtoDoc` and `@ProtoDocs` are human-readable text that document message types, enums, or fields for the generated schema.
+
+You use these annotation to configure indexing for Ickle queries.
+
+[discrete]
+== ProtoName
+
+`@ProtoName` is an optional annotation that specifies the Protobuf message or enum type name and replaces the `@ProtoMessage` annotation.
+
+[discrete]
+== ProtoEnumValue
+
+`@ProtoEnumValue` defines a Protobuf enum value. You can apply this annotation to members of a Java enum only.
+
+[discrete]
+== ProtoReserved and ProtoReservedStatements
+
+`@ProtoReserved` and `@ProtoReservedStatements` add `reserved` statements to generated messages or enum definitions to prevent future usage of numbers, ranges, and names.
+
+[discrete]
+== ProtoTypeId
+
+`@ProtoTypeId` optionally specifies a globally unique numeric type identifier for a Protobuf message or enum type.
+
+[NOTE]
+====
+You should not add this annotation to classes because {brandname} uses it internally and identifiers can change without notice.
+====
+
+[discrete]
+== ProtoUnknownFieldSet
+
+`@ProtoUnknownFieldSet` optionally indicates the field, or JavaBean property of type `{@link org.infinispan.protostream.UnknownFieldSet}`, which stores any unknown fields.
+
+[NOTE]
+====
+{brandname} does not recommend using this annotation because it is no longer supported by Google and is likely to be removed in future.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/package-summary.html[org.infinispan.protostream.annotations]
+* link:{dev_docs}#search_api[Querying values in caches]
+* link:https://developers.google.com/protocol-buffers/docs/proto#reserved[Protocol Buffers Language Guide - Reserved Fields]
+* link:https://developers.google.com/protocol-buffers/docs/proto#reserved_values[Protocol Buffers Language Guide - Reserved Values]

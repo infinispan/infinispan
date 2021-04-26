@@ -2,10 +2,10 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 public class Author {
-   @ProtoField(number = 1)
+   @ProtoField(1)
    final String name;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    final String surname;
 
    @ProtoFactory

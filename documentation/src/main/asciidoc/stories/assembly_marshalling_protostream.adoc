@@ -1,12 +1,32 @@
 [id='marshalling_user_types']
 :context: marshalling
-= Marshalling with ProtoStream
+= Marshalling custom objects with ProtoStream
 
-include::{topics}/con_marshalling.adoc[leveloffset=+1]
+Marshalling is a process that converts Java objects into a binary format that can be transferred across the network or stored to disk.
+The reverse process, unmarshalling, transforms data from a binary format back into Java objects.
+
+{brandname} performs marshalling and unmarshalling to:
+
+* Send data to other {brandname} nodes in a cluster.
+* Store data in persistent cache stores.
+* Transmit objects between clients and remote caches.
+* Store objects in native memory outside the JVM heap.
+* Store objects in JVM heap memory when the cache encoding is not `application/x-java-object`.
+
+When storing custom objects in {brandname} caches, you should use Protobuf-based marshalling with the ProtoStream marshaller.
+
 include::{topics}/con_protostream.adoc[leveloffset=+1]
 include::{topics}/ref_protostream_types.adoc[leveloffset=+2]
-include::{topics}/proc_generating_protostream_sci.adoc[leveloffset=+1]
-include::{topics}/proc_manually_registering_sci.adoc[leveloffset=+1]
+include::{topics}/ref_protostream_annotations.adoc[leveloffset=+2]
+include::{topics}/con_protostream_sci_implementations.adoc[leveloffset=+1]
+include::{topics}/proc_adding_protostream_processor.adoc[leveloffset=+2]
+include::{topics}/proc_adding_protostream_annotations.adoc[leveloffset=+2]
+include::{topics}/proc_creating_protostream_adapter.adoc[leveloffset=+2]
+include::{topics}/proc_annotating_auto_proto_schema_builder.adoc[leveloffset=+2]
+
+include::{topics}/proc_registering_sci_embedded_caches.adoc[leveloffset=+2]
+include::{topics}/proc_registering_sci_remote_caches.adoc[leveloffset=+2]
+include::{topics}/con_protostream_sci_manual.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

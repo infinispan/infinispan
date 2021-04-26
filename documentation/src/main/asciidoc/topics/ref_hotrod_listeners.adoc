@@ -145,7 +145,7 @@ cache.addClientListener(new EventPrintListener());
 ----
 
 You can also register dynamic filter instances that filter based on parameters
-provided when the listener is registered are also possible. Filters use the 
+provided when the listener is registered are also possible. Filters use the
 parameters received by the filter factories to enable this option, for example:
 
 [source,java]
@@ -207,7 +207,6 @@ set the flag as follows:
 ----
 remoteCache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).put(1, "one");
 ----
-
 
 [[customizing_events]]
 == Customizing Events
@@ -496,7 +495,7 @@ the data before filtering/converting. To do so, you must configure the required 
 as part of the {brandname} server configuration.
 
 
-See link:{dev_docs}#protostream_cm_config[ProtoStream] for more information.
+See link:{encoding_docs}[Cache Encoding and Marshalling] for more information.
 
 == Listener State Handling
 

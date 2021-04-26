@@ -1,0 +1,12 @@
+enum Language {
+
+   EN = 0;
+
+   DE = 1;
+
+   IT = 2;
+
+   ES = 3;
+
+   FR = 4;
+}

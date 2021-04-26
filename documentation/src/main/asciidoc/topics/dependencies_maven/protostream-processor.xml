@@ -13,11 +13,6 @@
   <dependency>
     <groupId>org.infinispan.protostream</groupId>
     <artifactId>protostream-processor</artifactId>
-    <!--
-      This dependency should be declared in the "provided" scope or made "optional"
-      because it is a compile-only dependency and is not required at runtime.
-      Transitive propagation of this dependency should be also be avoided.
-    -->
     <scope>provided</scope>
   </dependency>
 </dependencies>

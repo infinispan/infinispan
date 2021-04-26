@@ -1,7 +1,7 @@
 [id='hotrod-data-format_{context}']
 = Hot Rod DataFormat API
 Read and write operations on remote caches via the Hot Rod endpoint use the client marshaller by default.
-Hot Rod provides a `DataFormat` API for Java clients that you can use to perform cache operations with different media type encodings.
+Hot Rod provides a `DataFormat` API for Java clients that you can use to perform cache operations with different media type encodings and/or marshallers.
 
 .Different marshallers for key and values
 
@@ -29,29 +29,8 @@ remoteCache.withDataFormat(rawKeyAndValues);
 [IMPORTANT]
 ====
 Using different marshallers and data formats for keys with `keyMarshaller()` and `keyType()` methods can interfere with client intelligence routing mechanisms, causing extra network hops within the {brandname} cluster.
-If performance is critical, you should use the format for keys in the remote cache.
+If performance is critical, you should use the same encoding for keys on the client and on the server.
 ====
-
-.Returning XML Values
-
-The following code snippet returns values as XML:
-
-[source,java]
-----
-Object xmlValue = remoteCache
-      .withDataFormat(DataFormat.builder()
-      .valueType(APPLICATION_XML)
-      .valueMarshaller(new UTF8StringMarshaller())
-      .build())
-      .get(key);
-----
-
-For example, the preceding `get(key)` call returns values such as:
-
-[source,xml]
-----
-<?xml version="1.0" ?><string>Hello!</string>
-----
 
 .Reading data in different encodings
 
@@ -73,10 +52,14 @@ RemoteCache<byte[], byte[]> rawResultsCache =
 protobufCache.withDataFormat(jsonString);
 ----
 
+.Using custom value marshallers
+
+You can use custom marshallers for values, as in the following example that returns values as `org.codehaus.jackson.JsonNode` objects.
+
+In this example, {brandname} Server handles the data conversion and throws an exception if it does not support the specified media type.
+
 [source,java]
 ----
-// Alternatively, use a custom value marshaller
-// that returns `org.codehaus.jackson.JsonNode` objects
 DataFormat jsonNode =
 DataFormat.builder()
           .valueType(MediaType.APPLICATION_JSON)
@@ -87,7 +70,26 @@ RemoteCache<String, JsonNode> jsonNodeCache =
 remoteCache.withDataFormat(jsonNode);
 ----
 
-In the preceding example, {brandname} Server handles the data conversion and throws an exception if it does not support a specified media type.
+.Returning values as XML
+
+The following code snippet returns values as XML:
+
+[source,java]
+----
+Object xmlValue = remoteCache
+      .withDataFormat(DataFormat.builder()
+      .valueType(APPLICATION_XML)
+      .valueMarshaller(new UTF8StringMarshaller())
+      .build())
+      .get(key);
+----
+
+For example, the preceding `get(key)` call returns values such as:
+
+[source,xml]
+----
+<?xml version="1.0" ?><string>Hello!</string>
+----
 
 .Reference
 

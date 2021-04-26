@@ -1,0 +1,18 @@
+[id='protostream-sci-implementations_{context}']
+= Creating serialization context initializers
+
+A serialization context initializer lets you register the following with {brandname}:
+
+* Protobuf schemas that describe user types.
+* Marshallers that provide serialization and deserialization capabilities.
+
+From a high level, you should do the following to create a serialization context initializer:
+
+. Add ProtoStream annotations to your Java classes.
+. Use the ProtoStream processor that {brandname} provides to compile your `SerializationContextInitializer` implementation.
+
+[NOTE]
+====
+The `org.infinispan.protostream.MessageMarshaller` interface is deprecated and planned for removal in a future version of ProtoStream.
+You should ignore any code examples or documentation that show how to use `MessageMarshaller` until it is completely removed.
+====

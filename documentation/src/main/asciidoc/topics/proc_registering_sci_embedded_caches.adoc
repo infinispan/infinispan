@@ -1,6 +1,8 @@
-[id='manually_registering_sci-{context}']
-= Manually Registering Serialization Context Initializers
-You can disable automatic registration of `SerializationContextInitializer` implementations and then register them manually.
+[id='registering-sci-embedded-caches_{context}']
+= Registering serialization context initializers
+For embedded caches, {brandname} automatically registers serialization contexts and marshallers in your annotated `SerializationContextInitializer` implementation using the `java.util.ServiceLoader`.
+
+If you prefer, you can disable automatic registration of `SerializationContextInitializer` implementations and then register them manually.
 
 [IMPORTANT]
 ====
@@ -21,7 +23,7 @@ You must then manually register all other implementations.
 )
 ----
 +
-. Manually register `SerializationContextInitializer` implementations, as in the following examples:
+. Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
 
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
