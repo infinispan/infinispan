@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -140,13 +139,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void start() {
       try {
          file = getStoreFile(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName());
-         if (!file.exists()) {
+         if (!SecurityActions.fileExists(file)) {
             File dir = file.getParentFile();
-            if (!dir.mkdirs() && !dir.exists()) {
+            if (!SecurityActions.createDirectoryIfNeeded(dir)) {
                throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
             }
          }
-         channel = new RandomAccessFile(file, "rw").getChannel();
+         channel = SecurityActions.openFileChannel(file);
 
          // initialize data structures. Only use LinkedHashMap (LRU) for entries when cache store is bounded
          Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
@@ -267,7 +266,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       // Only update the key/value/meta bytes if the default marshaller is configured
       boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
 
-      try (FileChannel newChannel = new RandomAccessFile(newFile, "rw").getChannel()) {
+      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
          //Write Magic
          newChannel.truncate(0);
          newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
@@ -360,7 +359,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          //replace old file with the new file
          Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
-         channel = new RandomAccessFile(file, "rw").getChannel();
+         channel = SecurityActions.openFileChannel(file);
          //update file position
          filePos = newFilePos;
          PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
