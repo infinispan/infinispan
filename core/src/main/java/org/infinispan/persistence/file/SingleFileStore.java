@@ -2,7 +2,6 @@ package org.infinispan.persistence.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -106,13 +105,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             location = "Infinispan-SingleFileStore";
 
          file = new File(location, ctx.getCache().getName() + ".dat");
-         if (!file.exists()) {
+         if (!SecurityActions.fileExists(file)) {
             File dir = file.getParentFile();
-            if (!dir.mkdirs() && !dir.exists()) {
+            if (!SecurityActions.createDirectoryIfNeeded(dir)) {
                throw log.directoryCannotBeCreated(dir.getAbsolutePath());
             }
          }
-         channel = new RandomAccessFile(file, "rw").getChannel();
+         channel = SecurityActions.openFileChannel(file);
 
          // initialize data structures. Only use LinkedHashMap (LRU) for entries when cache store is bounded
          Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
