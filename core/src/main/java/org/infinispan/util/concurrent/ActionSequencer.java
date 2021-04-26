@@ -37,8 +37,8 @@ public class ActionSequencer {
    private final TimeService timeService;
    private final Executor executor;
    private final boolean forceExecutor;
-   private volatile SimpleStat queueTimes = new DefaultSimpleStat();
-   private volatile SimpleStat runningTimes = new DefaultSimpleStat();
+   private final SimpleStat queueTimes = new DefaultSimpleStat();
+   private final SimpleStat runningTimes = new DefaultSimpleStat();
    private volatile boolean collectStats;
 
    /**
@@ -108,8 +108,8 @@ public class ActionSequencer {
    }
 
    public void resetStatistics() {
-      runningTimes = new DefaultSimpleStat();
-      queueTimes = new DefaultSimpleStat();
+      runningTimes.reset();
+      queueTimes.reset();
    }
 
    public long getAverageQueueTimeNanos() {

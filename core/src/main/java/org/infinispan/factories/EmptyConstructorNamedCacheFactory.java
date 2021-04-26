@@ -71,6 +71,9 @@ import org.infinispan.xsite.NoOpBackupSender;
 import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.NoOpIracManager;
+import org.infinispan.xsite.metrics.DefaultXSiteMetricsCollector;
+import org.infinispan.xsite.metrics.NoOpXSiteMetricsCollector;
+import org.infinispan.xsite.metrics.XSiteMetricsCollector;
 import org.infinispan.xsite.statetransfer.NoOpXSiteStateProvider;
 import org.infinispan.xsite.statetransfer.NoOpXSiteStateTransferManager;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -102,7 +105,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
                               InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
-                              BackupReceiver.class, StorageConfigurationManager.class
+                              BackupReceiver.class, StorageConfigurationManager.class, XSiteMetricsCollector.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -233,6 +236,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                null;
       } else if (componentName.equals(StorageConfigurationManager.class.getName())) {
          return new StorageConfigurationManager();
+      } else if (componentName.equals(XSiteMetricsCollector.class.getName())) {
+         return configuration.sites().hasEnabledBackups() ?
+                new DefaultXSiteMetricsCollector(configuration) :
+                NoOpXSiteMetricsCollector.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

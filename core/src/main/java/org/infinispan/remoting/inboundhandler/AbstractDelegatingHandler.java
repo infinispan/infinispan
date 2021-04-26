@@ -56,27 +56,6 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
       //no-op by default
    }
 
-
-   @Override
-   public void registerXSiteCommandReceiver() {
-      delegate.registerXSiteCommandReceiver();
-   }
-
-   @Override
-   public boolean getStatisticsEnabled() {
-      return delegate.getStatisticsEnabled();
-   }
-
-   @Override
-   public void setStatisticsEnabled(boolean enabled) {
-      delegate.setStatisticsEnabled(enabled);
-   }
-
-   @Override
-   public void resetStatistics() {
-      delegate.resetStatistics();
-   }
-
    @Override
    public void checkForReadyTasks() {
       delegate.checkForReadyTasks();

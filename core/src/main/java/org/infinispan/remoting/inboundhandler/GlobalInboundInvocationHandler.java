@@ -43,6 +43,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.metrics.XSiteMetricsCollector;
 
 /**
  * {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} implementation that handles all the {@link
@@ -137,9 +138,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          reply.reply(new ExceptionResponse(log.xsiteCacheNotStarted(origin, localCache.cacheName)));
          return;
       }
-      PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
-      assert handler != null;
-      handler.registerXSiteCommandReceiver();
+      cr.getComponent(XSiteMetricsCollector.class).recordRequestsReceived(origin);
       command.performInLocalSite(cr, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
    }
 

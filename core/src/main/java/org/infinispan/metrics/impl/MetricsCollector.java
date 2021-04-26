@@ -1,6 +1,7 @@
 package org.infinispan.metrics.impl;
 
 import java.net.InetAddress;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -107,11 +108,11 @@ public class MetricsCollector implements Constants {
       return hostName + '-' + rand;
    }
 
-   public Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String namePrefix, String cacheName) {
+   public Set<MetricID> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
       Set<MetricID> metricIds = new HashSet<>();
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
-      for (MBeanMetadata.AttributeMetadata attr : beanMetadata.getAttributes()) {
+      for (MBeanMetadata.AttributeMetadata attr : attributes) {
          Supplier<?> getter = attr.getter(instance);
          Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
 

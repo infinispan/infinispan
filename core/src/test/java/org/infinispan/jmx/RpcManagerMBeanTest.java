@@ -3,7 +3,6 @@ package org.infinispan.jmx;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.infinispan.test.TestingUtil.replaceField;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -14,7 +13,6 @@ import static org.testng.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
@@ -27,19 +25,12 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.data.DelayedMarshallingPojo;
-import org.infinispan.util.ControlledTimeService;
-import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.annotations.Test;
 
 /**
@@ -141,82 +132,5 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       } finally {
          rpcManager.setTransport(originalTransport);
       }
-   }
-
-   @Test(dependsOnMethods = "testEnableJmxStats")
-   public void testXsiteStats() throws Exception {
-      ControlledTimeService timeService = new ControlledTimeService();
-      RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache(0), RpcManager.class);
-      replaceField(timeService, "timeService", rpcManager, RpcManagerImpl.class);
-      Transport originalTransport = rpcManager.getTransport();
-
-      List<XSiteResponse> responses = new ArrayList<>(3);
-      List<CompletableFuture<ValidResponse>> asyncFutures = new ArrayList<>(2);
-      List<CompletableFuture<ValidResponse>> syncFutures = new ArrayList<>(2);
-
-      try {
-         Transport mockTransport = mock(Transport.class);
-         when(mockTransport.backupRemotely(any(XSiteBackup.class), any(XSiteReplicateCommand.class)))
-               .then(invocationOnMock -> {
-                  XSiteBackup arg1 = invocationOnMock.getArgument(0);
-                  CompletableFuture<ValidResponse> cf = new CompletableFuture<>();
-                  XSiteResponseImpl rsp = new XSiteResponseImpl(timeService, arg1);
-                  if (arg1.isSync()) {
-                     syncFutures.add(cf);
-                  } else {
-                     asyncFutures.add(cf);
-                  }
-                  cf.whenComplete(rsp);
-                  return rsp;
-               });
-
-         rpcManager.setTransport(mockTransport);
-
-         XSiteBackup site1 = newBackup("Site1", true);
-         XSiteBackup site2 = newBackup("Site2", false);
-
-
-         responses.add(rpcManager.invokeXSite(site1, mock(XSiteReplicateCommand.class)));
-         responses.add(rpcManager.invokeXSite(site2, mock(XSiteReplicateCommand.class)));
-         responses.add(rpcManager.invokeXSite(site2, mock(XSiteReplicateCommand.class)));
-         responses.add(rpcManager.invokeXSite(site1, mock(XSiteReplicateCommand.class)));
-      } finally {
-         rpcManager.setTransport(originalTransport);
-      }
-
-      assertEquals(responses.size(), 4);
-      assertEquals(asyncFutures.size(), 2);
-
-      //in the end, we end up with 2 sync request and 2 async requests
-      timeService.advance(10);
-      asyncFutures.get(0).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-      syncFutures.get(0).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-      responses.get(0).toCompletableFuture().join();
-
-      timeService.advance(20);
-      asyncFutures.get(1).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-      syncFutures.get(1).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-      responses.get(1).toCompletableFuture().join();
-      responses.get(2).toCompletableFuture().join();
-      responses.get(3).toCompletableFuture().join();
-
-      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      ObjectName rpcManagerName = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
-
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "NumberXSiteRequests"), (long) 4);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumXSiteReplicationTime"), (long) 10);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumXSiteReplicationTime"), (long) 30);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageXSiteReplicationTime"), (long) 20);
-
-      mBeanServer.invoke(rpcManagerName, "resetStatistics", new Object[0], new String[0]);
-
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "NumberXSiteRequests"), (long) 0);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumXSiteReplicationTime"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumXSiteReplicationTime"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageXSiteReplicationTime"), (long) -1);
-   }
-
-   private static XSiteBackup newBackup(String name, boolean sync) {
-      return new XSiteBackup(name, sync, Long.MAX_VALUE);
    }
 }

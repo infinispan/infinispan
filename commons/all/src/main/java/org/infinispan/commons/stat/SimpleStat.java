@@ -1,5 +1,6 @@
 package org.infinispan.commons.stat;
 
+
 /**
  * A simple statistic recorder that computes the average, minimum and maximum value observed.
  *
@@ -7,6 +8,9 @@ package org.infinispan.commons.stat;
  * @since 10.0
  */
 public interface SimpleStat {
+
+   SimpleStat EMPTY = new SimpleStat() {
+   };
 
    default void record(long value) {
    }
@@ -29,6 +33,12 @@ public interface SimpleStat {
 
    default boolean isEmpty() {
       return count() == 0;
+   }
+
+   default void setTimer(TimerTracker timer) {
+   }
+
+   default void reset() {
    }
 
 }
