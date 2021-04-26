@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -135,13 +134,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void start() {
       try {
          file = getStoreFile(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName());
-         if (!file.exists()) {
+         if (!SecurityActions.fileExists(file)) {
             File dir = file.getParentFile();
-            if (!dir.mkdirs() && !dir.exists()) {
+            if (!SecurityActions.createDirectoryIfNeeded(dir)) {
                throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
             }
          }
-         channel = new RandomAccessFile(file, "rw").getChannel();
+         channel = SecurityActions.openFileChannel(file);
 
          // initialize data structures. Only use LinkedHashMap (LRU) for entries when cache store is bounded
          Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
@@ -271,7 +270,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       long newFilePos = MAGIC_11_0.length;
       long oldFilePos = MAGIC_BEFORE_11.length;
 
-      try (FileChannel newChannel = new RandomAccessFile(newFile, "rw").getChannel()) {
+      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
          //Write Magic
          newChannel.truncate(0);
          newChannel.write(ByteBuffer.wrap(MAGIC_11_0), 0);
@@ -365,7 +364,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   newFile.getAbsolutePath(), file.getAbsolutePath()));
          }
          //reopen the file
-         channel = new RandomAccessFile(file, "rw").getChannel();
+         channel = SecurityActions.openFileChannel(file);
          //update file position
          filePos = newFilePos;
          PERSISTENCE.persistedDataSuccessfulMigrated();
