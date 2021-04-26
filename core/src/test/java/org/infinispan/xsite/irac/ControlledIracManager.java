@@ -72,8 +72,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void incrementDiscards() {
-      actual.incrementDiscards();
+   public void incrementNumberOfDiscards() {
+      actual.incrementNumberOfDiscards();
    }
 
    @Override

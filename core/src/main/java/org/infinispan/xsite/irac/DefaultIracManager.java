@@ -1,5 +1,8 @@
 package org.infinispan.xsite.irac;
 
+import static org.infinispan.commons.util.IntSets.mutableCopyFrom;
+import static org.infinispan.commons.util.IntSets.mutableEmptySet;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +22,6 @@ import org.infinispan.commands.irac.IracCleanupKeyCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
@@ -78,22 +80,17 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 11.0
  */
-@MBean(objectName = "XSiteStatistics", description = "Xsite statistics for Infinispan Reliable Asynchronous Communication")
+@MBean(objectName = "AsyncXSiteStatistics", description = "Statistics for Asynchronous cross-site replication")
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
 
-   @Inject
-   RpcManager rpcManager;
-   @Inject
-   TakeOfflineManager takeOfflineManager;
-   @Inject
-   ClusteringDependentLogic clusteringDependentLogic;
-   @Inject
-   CommandsFactory commandsFactory;
-   @Inject
-   IracVersionGenerator iracVersionGenerator;
+   @Inject RpcManager rpcManager;
+   @Inject TakeOfflineManager takeOfflineManager;
+   @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject CommandsFactory commandsFactory;
+   @Inject IracVersionGenerator iracVersionGenerator;
 
    private final Map<Object, State> updatedKeys;
    private final Collection<XSiteBackup> asyncBackups;
@@ -101,11 +98,10 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    private volatile boolean hasClear;
 
    private boolean statisticsEnabled = false;
-   //private final LongAdder conflictsCounts = new LongAdder();
    private final LongAdder discardCounts = new LongAdder();
-   private final LongAdder numberOfConflictLocalWins = new LongAdder();
-   private final LongAdder numberOfConflictRemoteWins = new LongAdder();
-   private final LongAdder numberOfConflictMerged = new LongAdder();
+   private final LongAdder conflictLocalWinsCount = new LongAdder();
+   private final LongAdder conflictRemoteWinsCount = new LongAdder();
+   private final LongAdder conflictMergedCount = new LongAdder();
 
    public DefaultIracManager(Configuration config) {
       this.updatedKeys = new ConcurrentHashMap<>();
@@ -115,14 +111,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    private static Collection<XSiteBackup> asyncBackups(Configuration config) {
-      return config.sites().asyncBackupsStream().map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) // convert
-            // to
-            // sync
+      return config.sites().asyncBackupsStream()
+            .map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) //convert to sync
             .collect(Collectors.toList());
    }
 
    private static IntSet newIntSet(Address ignored) {
-      return IntSets.mutableEmptySet();
+      return mutableEmptySet();
    }
 
    @Inject
@@ -198,8 +193,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          // not in teh cache topology
          return;
       }
-      IntSet addedSegments = IntSets
-            .mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+      IntSet addedSegments = mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       if (oldCacheTopology.getMembers().contains(local)) {
          addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       }
@@ -554,55 +548,46 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       }
    }
 
-   @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)", displayName = "XsiteQueueSize", measurementType = MeasurementType.DYNAMIC)
+   @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)",
+         displayName = "Queue size",
+         measurementType = MeasurementType.DYNAMIC)
    public int getQueueSize() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-      return updatedKeys.size();
+      return getStatisticsEnabled() ? updatedKeys.size() : -1;
    }
 
-   @ManagedAttribute(description = "Number of Conflicts", displayName = "Number of Conflicts", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "The total number of conflicts between local and remote sites.",
+         displayName = "Number of conflicts",
+         measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflicts() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-
-      long conflictsCounts = numberOfConflictLocalWins.longValue() + numberOfConflictRemoteWins.longValue()
-            + numberOfConflictMerged.longValue();
-      return conflictsCounts;
+      return getStatisticsEnabled() ? sumConflicts() : -1;
    }
 
-   @ManagedAttribute(description = "Number of Discards", displayName = "Number of Discards", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "The number of updates from remote sites discarded (duplicate or old update).",
+         displayName = "Number of discards",
+         measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfDiscards() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-      return discardCounts.longValue();
+      return getStatisticsEnabled() ? discardCounts.longValue() : -1;
    }
 
-   @ManagedAttribute(description = "Increases the count of conflicts if merge policy discards the remote update.", displayName = "NumberOfConflictLocalWins", measurementType = MeasurementType.TRENDSUP)
-   public long getNumberOfConflictLocalWins() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-      return numberOfConflictLocalWins.longValue();
+   @ManagedAttribute(description = "The number of conflicts where the merge policy discards the remote update.",
+         displayName = "Number of conflicts where local value is used",
+         measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictsLocalWins() {
+      return getStatisticsEnabled() ? conflictLocalWinsCount.longValue() : -1;
    }
 
-   @ManagedAttribute(description = "Increases the count of conflicts if merge policy applies the remote update.", displayName = "NumberOfConflictRemoteWins", measurementType = MeasurementType.TRENDSUP)
-   public long getNumberOfConflictRemoteWins() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-      return numberOfConflictRemoteWins.longValue();
+   @ManagedAttribute(description = "The number of conflicts where the merge policy applies the remote update.",
+         displayName = "Number of conflicts where remote value is used",
+         measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictsRemoteWins() {
+      return getStatisticsEnabled() ? conflictRemoteWinsCount.longValue() : -1;
    }
 
-   @ManagedAttribute(description = "Increases the count of conflicts if merge policy created a new entry", displayName = "NumberOfConflictMerged", measurementType = MeasurementType.TRENDSUP)
-   public long getNumberOfConflictMerged() {
-      if (!getStatisticsEnabled()) {
-         return -1;
-      }
-      return numberOfConflictMerged.longValue();
+   @ManagedAttribute(description = "Number of conflicts where the merge policy created a new entry.",
+         displayName = "Number of conflicts merged",
+         measurementType = MeasurementType.TRENDSUP)
+   public long getNumberOfConflictsMerged() {
+      return getStatisticsEnabled() ? conflictMergedCount.longValue() : -1;
    }
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
@@ -612,8 +597,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    /**
-    * @param enabled
-    *           whether gathering statistics for JMX are enabled.
+    * @param enabled whether gathering statistics for JMX are enabled.
     */
    @Override
    public void setStatisticsEnabled(boolean enabled) {
@@ -627,29 +611,33 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    @Override
    public void resetStatistics() {
       discardCounts.reset();
-      numberOfConflictLocalWins.reset();
-      numberOfConflictRemoteWins.reset();
-      numberOfConflictMerged.reset();
+      conflictLocalWinsCount.reset();
+      conflictRemoteWinsCount.reset();
+      conflictMergedCount.reset();
+   }
+
+   private long sumConflicts() {
+      return conflictLocalWinsCount.longValue() + conflictRemoteWinsCount.longValue() + conflictMergedCount.longValue();
    }
 
    @Override
-   public void incrementDiscards() {
+   public void incrementNumberOfDiscards() {
       discardCounts.increment();
    }
 
    @Override
    public void incrementNumberOfConflictLocalWins() {
-      numberOfConflictLocalWins.increment();
+      conflictLocalWinsCount.increment();
    }
 
    @Override
    public void incrementNumberOfConflictRemoteWins() {
-      numberOfConflictRemoteWins.increment();
+      conflictRemoteWinsCount.increment();
    }
 
    @Override
    public void incrementNumberOfConflictMerged() {
-      numberOfConflictMerged.increment();
+      conflictMergedCount.increment();
    }
 
 }

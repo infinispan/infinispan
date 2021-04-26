@@ -46,16 +46,11 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    private static final Log log = LogFactory.getLog(NonTxIracRemoteSiteInterceptor.class);
    private final boolean needsVersions;
    private final InvocationSuccessAction<DataWriteCommand> setMetadataForOwnerAction = this::setIracMetadataForOwner;
-   @Inject
-   XSiteEntryMergePolicy<Object, Object> mergePolicy;
-   @Inject
-   IracVersionGenerator iracVersionGenerator;
-   @Inject
-   VersionGenerator versionGenerator;
-   @Inject
-   ClusteringDependentLogic clusteringDependentLogic;
-   @Inject
-   IracManager iracManager;
+   @Inject XSiteEntryMergePolicy<Object, Object> mergePolicy;
+   @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject VersionGenerator versionGenerator;
+   @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject IracManager iracManager;
 
    public NonTxIracRemoteSiteInterceptor(boolean needsVersions) {
       this.needsVersions = needsVersions;
@@ -72,20 +67,20 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       Ownership ownership = getOwnership(command.getSegment());
 
       switch (ownership) {
-      case PRIMARY:
-         // we are on primary and the lock is acquired
-         // if the update is discarded, command.isSuccessful() will return false.
-         CompletionStage<Boolean> validationResult = validateOnPrimary(ctx, command);
-         if (CompletionStages.isCompletedSuccessfully(validationResult)) {
-            return validate(validationResult.toCompletableFuture().join(), ctx, command);
-         }
-         return validationResult.thenApply(isValid -> validate(isValid, ctx, command));
-      case BACKUP:
-         if (!ctx.isOriginLocal()) {
-            // backups only commit when the command are remote (i.e. after validated from
-            // the originator)
-            return invokeNextThenAccept(ctx, command, setMetadataForOwnerAction);
-         }
+         case PRIMARY:
+            // we are on primary and the lock is acquired
+            // if the update is discarded, command.isSuccessful() will return false.
+            CompletionStage<Boolean> validationResult = validateOnPrimary(ctx, command);
+            if (CompletionStages.isCompletedSuccessfully(validationResult)) {
+               return validate(validationResult.toCompletableFuture().join(), ctx, command);
+            }
+            return validationResult.thenApply(isValid -> validate(isValid, ctx, command));
+         case BACKUP:
+            if (!ctx.isOriginLocal()) {
+               // backups only commit when the command are remote (i.e. after validated from
+               // the originator)
+               return invokeNextThenAccept(ctx, command, setMetadataForOwnerAction);
+            }
       }
       return invokeNext(ctx, command);
    }
@@ -156,13 +151,13 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       IracEntryVersion localVersion = localMetadata.getVersion();
       IracEntryVersion remoteVersion = remoteMetadata.getVersion();
       switch (remoteVersion.compareTo(localVersion)) {
-      case CONFLICTING:
-         return resolveConflict(entry, command, localMetadata, remoteMetadata);
-      case EQUAL:
-      case BEFORE:
-         iracManager.incrementDiscards();
-         discardUpdate(entry, command, remoteMetadata);
-         return CompletableFutures.completedFalse();
+         case CONFLICTING:
+            return resolveConflict(entry, command, localMetadata, remoteMetadata);
+         case EQUAL:
+         case BEFORE:
+            iracManager.incrementNumberOfDiscards();
+            discardUpdate(entry, command, remoteMetadata);
+            return CompletableFutures.completedFalse();
       }
       return CompletableFutures.completedTrue();
    }

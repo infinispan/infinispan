@@ -71,7 +71,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void incrementDiscards() {
+   public void incrementNumberOfDiscards() {
       // no-op
    }
 
