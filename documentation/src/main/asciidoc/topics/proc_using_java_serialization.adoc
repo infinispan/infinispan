@@ -2,6 +2,12 @@
 = Using Java serialization
 You can use Java serialization with {brandname} to marshall objects that implement the Java `Serializable` interface.
 
+[TIP]
+====
+Java serialization offers worse performance than ProtoStream marshalling.
+You should use Java serialization only if there is a strict requirement to do so.
+====
+
 .Procedure
 
 . Configure {brandname} to use `JavaSerializationMarshaller`.

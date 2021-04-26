@@ -1,8 +1,8 @@
 [id='alternative-marshallers']
 :context: marshaller-implementations
 = Using alternative and custom marshaller implementations
-{brandname} recommends you use ProtoStream marshalling for best performance.
-However you can use alternative marshallers or a custom marshaller implementation, if required.
+{brandname} recommends you use Protobuf-based marshalling with the ProtoStream marshaller so you can take advantage of Ickle queries and use the {brandname} CLI and Console.
+However, if required, you can use alternative marshallers or a custom marshaller implementation.
 
 include::{topics}/proc_adding_deserialization_allowlist.adoc[leveloffset=+1]
 include::{topics}/proc_using_jboss_marshaller.adoc[leveloffset=+1]

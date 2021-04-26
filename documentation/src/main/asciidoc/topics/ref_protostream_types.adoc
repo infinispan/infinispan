@@ -1,4 +1,4 @@
-[id='protostream_types-{context}']
+[id='protostream-types_{context}']
 = ProtoStream types
 {brandname} uses a ProtoStream library that can handle the following types for keys and values, as well as the unboxed equivalents in the case of primitive types:
 
@@ -15,8 +15,42 @@
 * `java.util.Date`
 * `java.time.Instant`
 
+[discrete]
+== Additional type collections
+
+The ProtoStream library includes several adapter classes for common Java types, for example:
+
+* `java.math.BigDecimal`
+* `java.math.BigInteger`
+* `java.util.UUID`
+
+{brandname} provides all adapter classes for some common JDK classes in the `protostream-types` artifact, which is included in the `infinispan-core` and `infinispan-client-hotrod` dependencies.
+You do not need any configuration to store adapter classes as keys or values.
+
+However, if you want to use adapter classes as marshallable fields in ProtoStream-annotated POJOS, you can do so in the following ways:
+
+* Specify the `CommonTypesSchema` and `CommonContainerTypesSchema` classes with the `dependsOn` element of the `AutoProtoSchemaBuilder` annotation.
+
+[source,java,options="nowrap",subs=attributes+]
+----
+@AutoProtoSchemaBuilder(dependsOn = {org.infinispan.protostream.types.java.CommonTypes, org.infinispan.protostream.types.java.CommonContainerTypes}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
+public interface LibraryInitalizer extends SerializationContextInitializer {
+}
+----
+
+* Specify the required adapter classes with the `includeClasses` element of the `AutoProtoSchemaBuilder` annotation
+
+[source,java,options="nowrap",subs=attributes+]
+----
+@AutoProtoSchemaBuilder(includeClasses = { Author.class, Book.class, UUIDAdaptor.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
+public interface LibraryInitalizer extends SerializationContextInitializer {
+
+}
+----
+
 [role="_additional-resources"]
 .Additional resources
+* link:https://developers.google.com/protocol-buffers[Protocol Buffers]
 * link:{protostreamdocroot}[{brandname} ProtoStream API]
 //Community content
 ifdef::community[]

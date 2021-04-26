@@ -5,7 +5,7 @@ Find out how to configure {brandname} caches with different media types and how 
 
 include::{topics}/con_cache_encoding.adoc[leveloffset=+1]
 include::{topics}/con_protobuf_encoding.adoc[leveloffset=+1]
-include::{topics}/proc_encoding_protobuf.adoc[leveloffset=+2]
+include::{topics}/proc_encoding_protostream.adoc[leveloffset=+2]
 include::{topics}/con_text_encoding.adoc[leveloffset=+1]
 include::{topics}/con_clients_text_encoding.adoc[leveloffset=+2]
 include::{topics}/con_marshalled_object_encoding.adoc[leveloffset=+1]

@@ -4,7 +4,8 @@ JBoss Marshalling is a serialization-based marshalling library and was the defau
 
 [NOTE]
 ====
-Use JBoss Marshalling only if your use case requires the `AdvancedExternalizer` interface, which is now deprecated but depends on JBoss Marshalling, or if you are temporarily using JBoss Marshalling to migrate your client applications from an older version of {brandname}.
+JBoss Marshalling is deprecated.
+You should use it only as a temporary measure while migrating your applications from an older version of {brandname}.
 ====
 
 .Procedure

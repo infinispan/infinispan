@@ -1,0 +1,19 @@
+[id='adding-protostream-processor_{context}']
+= Adding the ProtoStream processor
+
+{brandname} provides a ProtoStream processor artifact that processes Java annotations in your classes at compile time to generate Protobuf schemas, accompanying marshallers, and a concrete implementation of the `SerializationContextInitializer` interface.
+
+.Procedure
+
+* Add the `protostream-processor` dependency to your `pom.xml` with the `provided` scope.
++
+[NOTE]
+====
+This dependency is required at compile-time only so you should use the `provided` scope or mark it as optional.
+You should also ensure the `protostream-processor` is not propagated as a transitive dependency.
+====
++
+[source,xml]
+----
+include::dependencies_maven/protostream-processor.xml[]
+----

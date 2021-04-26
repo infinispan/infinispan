@@ -1,0 +1,12 @@
+[id='protostream-sci-manual_{context}']
+= Manual serialization context initializer implementations
+
+[IMPORTANT]
+====
+{brandname} strongly recommends against manually implementing the `SerializationContextInitializer` or `GeneratedSchema` interfaces.
+====
+
+It is possible to manually implement `SerializationContextInitializer` or `GeneratedSchema` interfaces using `ProtobufTagMarshaller` and `RawProtobufMarshaller` annotations.
+
+However, manual implementations require a lot of tedious overhead and are prone to error.
+Implementations that you generate with the `protostream-processor` artifact are a much more efficient and reliable way to configure ProtoStream marshalling.
