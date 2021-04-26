@@ -1,0 +1,41 @@
+[id='annotating-autoprotoschemabuilder_{context}']
+= Generating serialization context initializers
+
+After you add the ProtoStream processor and annotate your Java classes, you can add the `@AutoProtoSchemaBuilder` annotation to an interface so that {brandname} generates the Protobuf schema, accompanying marshallers, and a concrete implementation of the `SerializationContextInitializer`.
+
+[NOTE]
+====
+By default, generated implementation names are the annotated class name with an "Impl" suffix.
+====
+
+.Procedure
+
+. Define an interface that extends `GeneratedSchema` or its super interface, `SerializationContextInitializer`.
++
+[NOTE]
+====
+The `GeneratedSchema` interface includes a method to access the Protobuf schema whereas the `SerializationContextInitializer` interface supports only registration methods.
+====
++
+. Annotate the interface with `@AutoProtoSchemaBuilder`.
+. Ensure that `includeClasses` parameter includes all classes for the generated `SerializationContextInitializer` implementation.
+. Specify a name for the generated `.proto` schema with the `schemaFileName` parameter.
+. Set a path under `target/classes` where schema files are generated with the `schemaFilePath` parameter.
+. Specify a package name for the generated `.proto` schema with the `schemaPackageName` parameter.
+
+The following example shows a `GeneratedSchema` interface annotated with `@AutoProtoSchemaBuilder`:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/LibraryInitializer.java[]
+----
+
+.Next steps
+
+If you use embedded caches, {brandname} automatically registers your `SerializationContextInitializer` implementation.
+
+If you use remote caches, you must register your `SerializationContextInitializer` implementation with {brandname} Server.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/AutoProtoSchemaBuilder.html[org.infinispan.protostream.annotations.AutoProtoSchemaBuilder]

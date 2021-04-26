@@ -1,9 +1,19 @@
 [id='clients-unmarshalled-objects_{context}']
-= Clients and unmarshalled objects
-If you configure cache encoding to store unmarshalled objects, then you also need to configure clients to operate on those caches.
+= Clients and POJOs
+Even though {brandname} does not recommend doing so, clients can operate on caches that store unmarshalled POJOs with the `application/x-java-object` media type.
 
 [discrete]
 == Hot Rod clients
 
-To store unmarshalled Java objects in remote caches, you need to add JAR files with your custom classes to the {brandname} Server classpath.
-Only Hot Rod Java clients can read and write unmarshalled Java objects in remote caches.
+Hot Rod client marshallers must be available to {brandname} Server so it can deserialize your Java objects.
+By default, the ProtoStream and Java Serialization marshallers are available on the server.
+
+[discrete]
+== REST clients
+
+REST clients must use either JSON or XML for keys and values so {brandname} can convert to and from POJOs.
+
+[NOTE]
+====
+{brandname} requires you to add Java classes to the deserialization allowlist to convert XML to and from POJOs.
+====

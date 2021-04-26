@@ -3,7 +3,7 @@
 {brandname} caches store data in formats that you can define with a
 https://en.wikipedia.org/wiki/Media_type[MediaType].
 
-See the link:{dev_docs}#data_encoding[Encoding] section for more information about MediaTypes and encoding data with {brandname}.
+See the link:{encoding_docs}[Cache Encoding and Marshalling] for more information about MediaTypes and encoding data with {brandname}.
 
 The following example configures the storage format for entries:
 
@@ -23,20 +23,20 @@ between those formats when required.
 
 The following "standard" formats are interchangeable:
 
-* _application/x-java-object_
-* _application/octet-stream_
-* _application/x-www-form-urlencoded_
-* _text/plain_
+* `application/x-java-object`
+* `application/octet-stream`
+* `application/x-www-form-urlencoded`
+* `text/plain`
 
 You can also convert the preceding data formats into the following formats:
 
-* __application/xml__
-* _application/json_
-* _application/x-jboss-marshalling_
-* _application/x-protostream_
-* _application/x-java-serialized_
+* `application/xml`
+* `application/json`
+* `application/x-jboss-marshalling`
+* `application/x-protostream`
+* `application/x-java-serialized`
 
-{brandname} also lets you convert between _application/x-protostream_ and _application/json_.
+{brandname} also lets you convert between `application/x-protostream` and `application/json`.
 
 All calls to the REST API can provide headers describing the content written or
 the required format of the content when reading. {brandname} supports the
@@ -57,7 +57,7 @@ Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
 
 The preceding header causes {brandname} to first return content in JSON format
 (higher priority 0.8). If it is not possible to convert the storage format
-to JSON, {brandname} attempts the next format of _text/plain_ (second highest
+to JSON, {brandname} attempts the next format of `text/plain` (second highest
 priority 0.7). Finally, {brandname} falls back to _*/*_, which picks a suitable
 format based on the cache configuration.
 
@@ -112,31 +112,29 @@ Headers:
 Key-Content-Type: application/x-java-object;type=java.lang.Double
 ----
 
-The _type_ parameter for _application/x-java-object_ is restricted to:
+The _type_ parameter for `application/x-java-object` is restricted to:
 
 * Primitive wrapper types
 * java.lang.String
-* Bytes, making _application/x-java-object;type=Bytes_ equivalent to _application/octet-stream;encoding=hex_
+* Bytes, making `application/x-java-object;type=Bytes` equivalent to `application/octet-stream;encoding=hex`.
 
 [id='rest_json_proto_conversion']
 == JSON/Protostream Conversion
-When caches are indexed, or specifically configured to store _application/x-protostream_, you can send and receive
-JSON documents that are automatically converted to and from Protostream.
+When caches are indexed, or specifically configured to store _application/x-protostream`, you can send and receive JSON documents that are automatically converted to and from Protobuf.
 
-You must register a protobuf schema for the conversion to work.
+You must register a Protobuf schema for the conversion to work.
 
-To register protobuf schemas via REST, invoke a POST or PUT in the ____protobuf_metadata_ cache as in the following example:
+To register protobuf schemas via REST, invoke a POST or PUT in the `____protobuf_metadata_` cache as in the following example:
 
 [source,bash]
 ----
 curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:11222/rest/v2/caches/___protobuf_metadata/schema.proto
 ----
 
-When writing JSON documents, a special field *__type_* must be present in the document to identity the protobuf _Message_  that corresponds to the document.
+When writing JSON documents, a special field *__type_* must be present in the document to identity the Protobuf _Message_  that corresponds to the document.
 
-For example, consider the following schema:
-
-[source,protobuf]
+Person.proto
+[source,protobuf,options="nowrap",subs=attributes+,role="primary"]
 ----
 message Person  {
   required string name = 1;
@@ -144,9 +142,8 @@ message Person  {
 }
 ----
 
-The corresponding JSON document is as follows:
-
-[source,json]
+Person.json
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
 {
    "_type": "Person",

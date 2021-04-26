@@ -1,5 +1,5 @@
-//Create cache configuration that encodes keys and values as Protobuf
+//Create cache configuration that encodes keys and values as ProtoStream
 ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-builder.encoding().key().mediaType("application/x-protostream");
-builder.encoding().value().mediaType("application/x-protostream");
+builder.clustering().cacheMode(CacheMode.DIST_SYNC)
+       .encoding().key().mediaType("application/x-protostream")
+       .encoding().value().mediaType("application/x-protostream");

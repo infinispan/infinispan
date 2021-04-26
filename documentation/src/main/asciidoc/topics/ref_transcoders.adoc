@@ -8,13 +8,3 @@ The default API is `org.infinispan.commons.dataconversion.Transcoder`:
 ----
 include::code_examples/Transcoder.java[]
 ----
-
-[NOTE]
-====
-For embedded caches, you must add the following to your project:
-
-[source,options="nowrap"]
-----
-org.infinispan:infinispan-server-core
-----
-====

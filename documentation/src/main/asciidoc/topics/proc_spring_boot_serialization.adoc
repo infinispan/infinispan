@@ -39,5 +39,4 @@ infinispan.remote.java-serial-allowlist=your_marshalled_beans_package.*
 
 [role="_additional-resources"]
 .Additional resources
-
-* link:{dev_docs}#marshalling_user_types[Marshalling User Types with ProtoStream]
+* link:{encoding_docs}[Cache Encoding and Marshalling]

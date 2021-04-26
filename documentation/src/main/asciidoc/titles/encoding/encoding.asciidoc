@@ -12,12 +12,13 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :toclevels: 3
 :numbered:
 :sectanchors:
+:stem: asciimath
 
 //Title
 = Marshalling and Encoding Data
 
-{brandname} is a flexible data store that can hold key/value pairs in different formats.
-This document describes how {brandname} encodes data for remote and embedded caches and explains how use various media types with your applications.
+{brandname} caches can store keys and values in different encodings.
+This document describes how {brandname} encodes data for remote and embedded caches and explains how to use various media types with your applications.
 
 //User stories
 include::stories.adoc[]
