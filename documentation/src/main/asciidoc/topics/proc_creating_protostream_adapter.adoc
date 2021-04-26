@@ -1,0 +1,16 @@
+[id='creating-protostream-adapter_{context}']
+= Creating ProtoStream adapter classes
+ProtoStream provides a `@ProtoAdapter` annotation that you can use to marshall external, third-party Java object classes that you cannot annotate directly.
+
+.Procedure
+
+. Create an `Adapter` class and add the `@ProtoAdapter` annotation, as in the following example:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/ProtoAdapter.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/ProtoAdapter.html[org.infinispan.protostream.annotations.ProtoAdapter]

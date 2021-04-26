@@ -1,6 +1,6 @@
 [id='protostream_{context}']
 = ProtoStream marshalling
-{brandname} includes an implementation of the ProtoStream API that can marshall Java objects as Protocol Buffers (Protobuf).
+{brandname} includes the ProtoStream API that makes it possible to marshall Java objects as Protocol Buffers (Protobuf).
 
 ProtoStream natively supports many different Java data types, which means you do not need to configure ProtoStream marshalling for those types.
 For custom or user types, you need to provide some information so that {brandname} can marshall those objects to and from your caches.

@@ -1,6 +1,6 @@
-[id='encoding-caches-protobuf_{context}']
-= Encoding caches as Protobuf
-Configure {brandname} to store cache entries as Protobuf.
+[id='encoding-caches-protostream_{context}']
+= Encoding caches as ProtoStream
+Configure {brandname} to use the ProtoStream library to store cache entries as Protocol Buffers (Protobuf).
 
 .Procedure
 
@@ -16,6 +16,20 @@ include::config_examples/encoding_protostream.xml[]
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/ConfigurationBuilderCacheEncoding.java[]
+----
+
+Alternatively you can use the same encoding for keys and values:
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<encoding media-type="application/x-protostream"/>
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+.encoding().mediaType("application/x-protostream");
 ----
 
 [role="_additional-resources"]

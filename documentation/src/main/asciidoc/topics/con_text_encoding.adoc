@@ -9,13 +9,24 @@ key=hello
 value=world
 ----
 
-{brandname} supports the following text-based media types:
+If you encode caches with the `text/plain` media type, {brandname} can convert to and from the following media types:
 
-* `text/plain`
+* `application/xml`
+* `application/json`
+* `application/x-protostream`
+* `application/x-jboss-marshalling`
+* `application/x-java-serialized`
+
+
+{brandname} can also store any text-based encoding as byte array, such as the following:
+
 * `text/html`
+* `text/css`
 * `text/csv`
 
-For example, the following configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
+However {brandname} does not support conversion of these media types.
+
+The following example configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----

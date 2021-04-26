@@ -1,0 +1,44 @@
+[id='adding-protostream-annotations_{context}']
+= Adding ProtoStream annotations to Java classes
+
+Declare ProtoStream metadata by adding annotations to a Java class and its members.
+{brandname} then uses the ProtoStream processor to generate Protobuf schema and related marshallers from those annotations.
+
+.Procedure
+
+. Annotate the Java fields that you want to marshall with `@ProtoField`, either directly on the field or on the getter or setter method.
+. Use `@ProtoFactory` to annotate constructors for immutable objects. The annotated constructors must initialize all fields annotated with `@ProtoField`.
+. Annotate members of any Java enum with `@ProtoEnumValue`.
+
+The following `Author.java` and `Book.java` examples show Java classes annotated with `@ProtoField` and `@ProtoFactory`:
+
+.Author.java
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/Author.java[]
+----
+
+.Book.java
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/Book.java[]
+----
+
+The following `Language.java` example shows a Java enum annotated with `@ProtoEnumValue` along with the corresponding Protobuf schema:
+
+.Language.java
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/Language.java[]
+----
+
+.Language.proto
+[source,proto,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::protobuf/language.proto[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/ProtoField.html[org.infinispan.protostream.annotations.ProtoField]
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/ProtoFactory.html[org.infinispan.protostream.annotations.ProtoFactory]
