@@ -106,6 +106,10 @@ public class ManualIracManager extends ControlledIracManager {
 
    }
 
+   public boolean isEmpty() {
+      return asDefaultIracManager().map(DefaultIracManager::isEmpty).orElse(true);
+   }
+
    public enum DisableMode {
       SEND,
       DROP

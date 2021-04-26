@@ -118,7 +118,7 @@ public interface IracManager {
    /**
     * Increase the count of discards.
     */
-   void incrementDiscards();
+   void incrementNumberOfDiscards();
 
    /**
     * Increase the count of conflicts if merge policy discard update (local value wins)

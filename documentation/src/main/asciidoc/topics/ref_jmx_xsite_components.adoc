@@ -7,7 +7,8 @@ The `org.infinispan:type=Cache` component provides the following JMX MBeans:
 
 * `XSiteAdmin` exposes cross-site operations that apply to specific cache instances.
 * `StateTransferManager` provides statistics for state transfer operations.
-* `InboundInvocationHandler` provides statistics and operations for asynchronous and synchronous cross-site requests.
+* `RpcManager` provides statistics about network requests for cross-site replication.
+* `AsyncXSiteStatistics` provides statistics for asynchronous cross-site replication, including queue size and number of conflicts.
 
 The `org.infinispan:type=CacheManager` component includes the following JMX MBean:
 
