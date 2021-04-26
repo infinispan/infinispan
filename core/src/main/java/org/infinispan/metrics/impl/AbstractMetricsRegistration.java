@@ -1,5 +1,8 @@
 package org.infinispan.metrics.impl;
 
+import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -80,16 +83,18 @@ abstract class AbstractMetricsRegistration {
             if (instance != null) {
                MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
                if (beanMetadata != null) {
-                  Set<MetricID> ids = registerMetrics(instance, beanMetadata, null, component.getName(), null);
+                  Set<MetricID> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
                   metricIds.addAll(ids);
+                  if (instance instanceof CustomMetricsSupplier) {
+                     metricIds.addAll(registerMetrics(instance, beanMetadata.getJmxObjectName(), ((CustomMetricsSupplier) instance).getCustomMetrics(), null, component.getName(), null));
+                  }
                }
             }
          }
       }
    }
 
-   private Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String type, String componentName, String prefix) {
-      String jmxObjectName = beanMetadata.getJmxObjectName();
+   private Set<MetricID> registerMetrics(Object instance, String jmxObjectName, Collection<AttributeMetadata> attributes,  String type, String componentName, String prefix) {
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
       }
@@ -106,10 +111,10 @@ abstract class AbstractMetricsRegistration {
          }
          metricPrefix += NameUtils.decamelize(jmxObjectName) + '_';
       }
-      return internalRegisterMetrics(instance, beanMetadata, metricPrefix);
+      return internalRegisterMetrics(instance, attributes, metricPrefix);
    }
 
-   protected abstract Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix);
+   protected abstract Set<MetricID> internalRegisterMetrics(Object instance, Collection<AttributeMetadata> attributes, String metricPrefix);
 
    /**
     * Register metrics for a component that was manually registered later, after component registry startup. The metric
@@ -123,7 +128,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      Set<MetricID> ids = registerMetrics(instance, beanMetadata, type, componentName, null);
+      Set<MetricID> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), type, componentName, null);
       metricIds.addAll(ids);
    }
 
@@ -139,7 +144,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      return registerMetrics(instance, beanMetadata, null, null, prefix);
+      return registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, null, prefix);
    }
 
    public void unregisterMetrics(Set<MetricID> metricIds) {

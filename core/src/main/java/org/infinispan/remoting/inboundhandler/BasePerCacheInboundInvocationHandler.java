@@ -2,11 +2,9 @@ package org.infinispan.remoting.inboundhandler;
 
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.MBEAN_COMPONENT_NAME;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -23,10 +21,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -48,11 +42,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.1
  */
 @Scope(Scopes.NAMED_CACHE)
-@MBean(objectName = MBEAN_COMPONENT_NAME, description = "Handles all the remote requests.")
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
    private static final Log log = LogFactory.getLog(BasePerCacheInboundInvocationHandler.class);
 
-   public static final String MBEAN_COMPONENT_NAME = "InboundInvocationHandler";
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
 
    // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11483
@@ -67,9 +59,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    private volatile boolean stopped = false;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
-
-   private final LongAdder xSiteReceived = new LongAdder();
-   private volatile boolean statisticsEnabled = false;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
       ReplicableCommand innerCmd = command.getCommand();
@@ -99,7 +88,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Start
    public void start() {
       this.stopped = false;
-      setStatisticsEnabled(configuration.statistics().enabled());
    }
 
    @Stop
@@ -202,43 +190,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       } else {
          return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync);
       }
-   }
-
-   @Override
-   public void registerXSiteCommandReceiver() {
-      if (statisticsEnabled) {
-         xSiteReceived.increment();
-      }
-   }
-
-   @Override
-   public boolean getStatisticsEnabled() {
-      return isStatisticsEnabled();
-   }
-
-   @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
-   public void resetStatistics() {
-      xSiteReceived.reset();
-   }
-
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component",
-         displayName = "Statistics enabled",
-         dataType = DataType.TRAIT,
-         writable = true)
-   public boolean isStatisticsEnabled() {
-      return statisticsEnabled;
-   }
-
-   @Override
-   public void setStatisticsEnabled(boolean enabled) {
-      this.statisticsEnabled = enabled;
-   }
-
-   @ManagedAttribute(description = "Returns the number of cross-site requests received by this node",
-         displayName = "Cross-Site Requests Received")
-   public long getXSiteRequestsReceived() {
-      return statisticsEnabled ? xSiteReceived.sum() : 0;
    }
 
    private BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId, boolean sync, ReadyAction readyAction) {

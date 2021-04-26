@@ -1,5 +1,6 @@
 package org.infinispan.metrics.impl;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.eclipse.microprofile.metrics.MetricID;
@@ -44,7 +45,7 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    }
 
    @Override
-   protected Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix) {
-      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix, cacheName);
+   protected Set<MetricID> internalRegisterMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String metricPrefix) {
+      return metricsCollector.registerMetrics(instance, attributes, metricPrefix, cacheName);
    }
 }

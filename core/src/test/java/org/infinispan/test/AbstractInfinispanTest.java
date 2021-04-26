@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -85,7 +86,7 @@ public abstract class AbstractInfinispanTest {
       boolean isSatisfied() throws Exception;
    }
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
    private final ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
