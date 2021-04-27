@@ -34,14 +34,14 @@
            timeout_check_interval="1000"
    />
    <VERIFY_SUSPECT timeout="1000"/>
-   <pbcast.NAKACK2 xmit_interval="200"
+   <pbcast.NAKACK2 xmit_interval="100"
                    max_xmit_req_size="500"
                    xmit_table_num_rows="50"
                    xmit_table_msgs_per_row="1024"
                    xmit_table_max_compaction_time="30000"
                    resend_last_seqno="true"
    />
-   <UNICAST3 xmit_interval="200"
+   <UNICAST3 xmit_interval="100"
              max_xmit_req_size="500"
              xmit_table_num_rows="50"
              xmit_table_msgs_per_row="1024"
