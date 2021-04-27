@@ -9,10 +9,6 @@ Since 12.0, {brandname} ignores this parameter since it detects the optimal way 
 
 == JGroups configuration changes
 
-=== Reduce the overlap of retransmission requests
-The retransmission interval (`UNICAST3.xmit_interval` and `NAKACK2.xmit_interval`) is now 200ms, instead of 100ms.
-The maximum number of messages requested per retransmission (`UNICAST3.max_xmit_req_size` and `NAKACK2.max_xmit_req_size`) is now 500, instead of 8500 (with UDP) or 64000 (with TCP).
-
 === Message bundler
 The default JGroups bundler has changed from
 "no-bundler" (a thread sending a message writes it to the TCP socket or sends the UDP datagram directly) to
