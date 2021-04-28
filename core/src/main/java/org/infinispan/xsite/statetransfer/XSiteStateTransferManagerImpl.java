@@ -302,7 +302,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
                .filter(RemoteSiteStatus::isStateTransferInProgress)
                .map(RemoteSiteStatus::getSiteName)
                .forEach(this::doCancelSendingForRestart);
-      } else {
+      } else if (cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
          //it is balanced
          for (RemoteSiteStatus status : sites.values()) {
             if (!status.restartStateTransfer(newMembers)) {

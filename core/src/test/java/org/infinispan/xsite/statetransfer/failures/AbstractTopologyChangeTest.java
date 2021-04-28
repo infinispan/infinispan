@@ -17,6 +17,7 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.xsite.statetransfer.AbstractStateTransferTest;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 /**
  * Helper methods for x-site state transfer during topology changes.
@@ -49,6 +50,9 @@ public abstract class AbstractTopologyChangeTest extends AbstractStateTransferTe
    void awaitXSiteStateSent(String site) {
       log.debugf("Await until all nodes in '%s' has sent the state!", site);
       assertEventuallyInSite(site,
+            cache -> extractComponent(cache, XSiteStateTransferManager.class).getRunningStateTransfers().isEmpty(), 30,
+            TimeUnit.SECONDS);
+      assertEventuallyInSite(site,
             cache -> extractComponent(cache, XSiteStateProvider.class).getCurrentStateSending().isEmpty(), 30,
             TimeUnit.SECONDS);
    }
@@ -63,9 +67,9 @@ public abstract class AbstractTopologyChangeTest extends AbstractStateTransferTe
             return null;
          });
       } else {
-         log.debug("Adding new cache");
-         site(siteName).addCache(globalConfigurationBuilderForSite(siteName), lonConfigurationBuilder());
          return fork(() -> {
+            log.debug("Adding new cache");
+            site(siteName).addCache(globalConfigurationBuilderForSite(siteName), lonConfigurationBuilder());
             log.debugf("Wait for cluster to form on caches %s", site(siteName).getCaches(null));
             site(siteName).waitForClusterToForm(null, 60, TimeUnit.SECONDS);
             return null;

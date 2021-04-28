@@ -49,13 +49,14 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
    public void cancelTransfer() {
       T currentTask = task.getAndSet(null);
       if (currentTask != null) {
-         currentTask.cancel();
+         currentTask.complete();
       }
    }
 
    @Override
    public boolean isSending() {
-      return task.get() != null;
+      T currentTask = task.get();
+      return currentTask != null && !currentTask.isCompleted();
    }
 
    @Override
@@ -65,10 +66,6 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
    }
 
    // methods for OutboundTask
-   void taskFinished() {
-      task.set(null);
-   }
-
    XSiteBackup getBackup() {
       return backup;
    }
@@ -92,7 +89,8 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
       private final Address coordinator;
       final XSiteStateProvider provider;
       final BaseXSiteStateProviderState<?> state;
-      private volatile boolean canceled = false;
+      // this task is completed when all keys are sent or the coordinator ask us to cancel it.
+      private volatile boolean completed = false;
 
       OutboundTask(Address coordinator, XSiteStateProvider provider, BaseXSiteStateProviderState<?> state) {
          this.coordinator = coordinator;
@@ -113,17 +111,20 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
                      .concatMapCompletable(this, 1)
                      .subscribe(this),
                provider.getExecutor());
-
       }
 
-      public void cancel() {
-         canceled = true;
+      public void complete() {
+         completed = true;
+      }
+
+      public boolean isCompleted() {
+         return completed;
       }
 
       @Override
       public boolean test(List<XSiteState> ignored) {
          //Flowable#takeUntil method
-         return canceled;
+         return completed;
       }
 
       @Override
@@ -134,21 +135,21 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
       @Override
       public void onComplete() {
          //if canceled, the coordinator already cleanup the resources. There is nothing to be done here.
-         if (canceled) {
+         if (completed) {
             return;
          }
          provider.notifyStateTransferEnd(state.getBackup().getSiteName(), coordinator, true);
-         state.taskFinished();
+         complete();
       }
 
       @Override
       public void onError(@NonNull Throwable e) {
          //if canceled, the coordinator already cleanup the resources. There is nothing to be done here.
-         if (canceled) {
+         if (completed) {
             return;
          }
          provider.notifyStateTransferEnd(state.getBackup().getSiteName(), coordinator, false);
-         state.taskFinished();
+         complete();
       }
    }
 }

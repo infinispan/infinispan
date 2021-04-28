@@ -112,7 +112,7 @@ public class SyncProviderState extends BaseXSiteStateProviderState<SyncProviderS
                   log.tracef("Command %s is going to be retried.", cmd);
                }
                if (waitTimeMillis <= 0) {
-                  send();
+                  doSend();
                } else {
                   provider.getScheduledExecutorService().schedule(this::nonBlockingSend, waitTimeMillis, TimeUnit.MILLISECONDS);
                }

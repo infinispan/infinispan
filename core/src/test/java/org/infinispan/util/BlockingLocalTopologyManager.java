@@ -170,15 +170,30 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public void stopBlocking() {
+      stopBlocking(false);
+   }
+
+   public void stopBlocking(boolean unblockAll) {
       if (exception != null) {
          throw exception;
       }
-      if (!queuedTopologies.isEmpty()) {
-         log.error("Stopped blocking topology updates, but there are " + queuedTopologies.size() +
-                      " blocked updates in the queue: " + queuedTopologies);
-      }
       enabled = false;
-      log.debugf("Stopped blocking topology updates");
+      if (queuedTopologies.isEmpty()) {
+         log.debug("Stopped blocking topology updates");
+         return;
+      }
+      String msg = "Stopped blocking topology updates, but there are " + queuedTopologies.size() +
+            " blocked updates in the queue";
+      log.debug(msg + ": " + queuedTopologies);
+
+      if (unblockAll) {
+         Event topology;
+         while ((topology = queuedTopologies.poll()) != null) {
+            topology.unblock();
+         }
+         return;
+      }
+      throw new IllegalStateException(msg);
    }
 
    @Override
@@ -190,9 +205,8 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
                               Type.CH_UPDATE);
       queuedTopologies.add(event);
       log.debugf("Blocking topology update for cache %s: %s", cacheName, cacheTopology);
-      return event.whenUnblocked().thenRun(() -> {
-         log.debugf("Continue consistent hash update for cache %s: %s", cacheName, cacheTopology);
-      });
+      return event.whenUnblocked()
+                  .thenRun(() -> log.debugf("Continue consistent hash update for cache %s: %s", cacheName, cacheTopology));
    }
 
    @Override
@@ -204,14 +218,13 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
                               Type.REBALANCE_START);
       queuedTopologies.add(event);
       log.debugf("Blocking rebalance start for cache %s: %s", cacheName, cacheTopology);
-      return event.whenUnblocked().thenRun(() -> {
-         log.debugf("Continue rebalance start for cache %s: %s", cacheName, cacheTopology);
-      });
+      return event.whenUnblocked()
+                  .thenRun(() -> log.debugf("Continue rebalance start for cache %s: %s", cacheName, cacheTopology));
    }
 
    @Override
    protected final void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
-      if (!expectedCacheName.equals(cacheName))
+      if (!enabled || !expectedCacheName.equals(cacheName))
          return;
 
       Event event = new Event(null, topologyId, -1, Type.CONFIRMATION);
@@ -291,7 +304,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public class BlockedTopology {
-      private Event event;
+      private final Event event;
 
       BlockedTopology(Event event) {
          this.event = event;
@@ -319,7 +332,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public class BlockedConfirmation {
-      private Event event;
+      private final Event event;
 
       BlockedConfirmation(Event event) {
          this.event = event;
