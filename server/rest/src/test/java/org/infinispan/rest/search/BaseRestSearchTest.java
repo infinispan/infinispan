@@ -315,6 +315,22 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    @Test
+   public void testReindexAfterSchemaChanges() throws Exception {
+      if (!getConfigBuilder().indexing().enabled()) return;
+
+      // Update the schema adding an extra field
+      String changedSchema = Util.getResourceAsString("person-changed.proto", getClass().getClassLoader());
+      registerProtobuf(changedSchema);
+
+      // reindex
+      join(client.cache(CACHE_NAME).reindex());
+
+      // Query on the new field
+      Json result = query("FROM org.infinispan.rest.search.entity.Person where newField = 'value'", GET);
+      assertZeroHits(result);
+   }
+
+   @Test
    public void testQueryStats() throws Exception {
       RestResponse response = join(cacheClient.queryStats());
       if (!getConfigBuilder().indexing().enabled()) {
@@ -436,7 +452,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    protected void registerProtobuf(String protoFileContents) {
-      CompletionStage<RestResponse> response = client.schemas().post(PROTO_FILE_NAME, protoFileContents);
+      CompletionStage<RestResponse> response = client.schemas().put(PROTO_FILE_NAME, protoFileContents);
       ResponseAssertion.assertThat(response).hasNoErrors();
    }
 

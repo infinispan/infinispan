@@ -425,7 +425,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> reindex() {
-      return executeIndexOperation("mass-index");
+      return executeIndexOperation("reindex");
    }
 
    @Override

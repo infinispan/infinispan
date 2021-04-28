@@ -55,7 +55,8 @@ public class SearchAdminResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").deprecated().withAction("mass-index").handleWith(this::reindex)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("reindex").handleWith(this::reindex)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").deprecated().handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").deprecated().handleWith(this::queryStats)
