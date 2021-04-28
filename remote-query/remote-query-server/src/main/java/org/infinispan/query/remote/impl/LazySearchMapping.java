@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.locks.StampedLock;
 
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.infinispan.AdvancedCache;
@@ -36,7 +37,8 @@ public class LazySearchMapping implements SearchMapping {
    private final SearchMappingCommonBuilding commonBuilding;
    private final EntityLoader<?> entityLoader;
    private final SerializationContext serCtx;
-   private final LazyRef<SearchMapping> searchMappingRef = new LazyRef<>(this::createMapping);
+   private LazyRef<SearchMapping> searchMappingRef = new LazyRef<>(this::createMapping);
+   private final StampedLock stampedLock = new StampedLock();
 
    public LazySearchMapping(SearchMappingCommonBuilding commonBuilding, EntityLoader<?> entityLoader,
                             SerializationContext serCtx, AdvancedCache<?, ?> cache,
@@ -50,67 +52,92 @@ public class LazySearchMapping implements SearchMapping {
 
    @Override
    public <E> SearchScope<E> scope(Collection<? extends Class<? extends E>> types) {
-      return searchMappingRef.get().scope(types);
+      return mapping().scope(types);
    }
 
    @Override
    public SearchScope<?> scopeAll() {
-      return searchMappingRef.get().scopeAll();
+      return mapping().scopeAll();
    }
 
    @Override
    public FailureHandler getFailureHandler() {
-      return searchMappingRef.get().getFailureHandler();
+      return mapping().getFailureHandler();
    }
 
    @Override
    public void close() {
-      searchMappingRef.get().close();
+      mapping().close();
    }
 
    @Override
    public boolean isClose() {
-      return searchMappingRef.get().isClose();
+      return mapping().isClose();
    }
 
    @Override
    public SearchSession getMappingSession() {
-      return searchMappingRef.get().getMappingSession();
+      return mapping().getMappingSession();
    }
 
    @Override
    public SearchIndexer getSearchIndexer() {
-      return searchMappingRef.get().getSearchIndexer();
+      return mapping().getSearchIndexer();
    }
 
    @Override
    public SearchIndexedEntity indexedEntity(Class<?> entityType) {
-      return searchMappingRef.get().indexedEntity(entityType);
+      return mapping().indexedEntity(entityType);
    }
 
    @Override
    public SearchIndexedEntity indexedEntity(String entityName) {
-      return searchMappingRef.get().indexedEntity(entityName);
+      return mapping().indexedEntity(entityName);
    }
 
    @Override
    public Collection<? extends SearchIndexedEntity> allIndexedEntities() {
-      return searchMappingRef.get().allIndexedEntities();
+      return mapping().allIndexedEntities();
    }
 
    @Override
    public Set<String> allIndexedEntityNames() {
-      return searchMappingRef.get().allIndexedEntityNames();
+      return mapping().allIndexedEntityNames();
    }
 
    @Override
    public Set<Class<?>> allIndexedEntityJavaClasses() {
-      return searchMappingRef.get().allIndexedEntityJavaClasses();
+      return mapping().allIndexedEntityJavaClasses();
    }
 
    @Override
    public Class<?> toConvertedEntityJavaClass(Object value) {
-      return searchMappingRef.get().toConvertedEntityJavaClass(value);
+      return mapping().toConvertedEntityJavaClass(value);
+   }
+
+   @Override
+   public void reload() {
+      long stamp = stampedLock.writeLock();
+      try {
+         searchMappingRef.get().close();
+         searchMappingRef = new LazyRef<>(this::createMapping);
+      } finally {
+         stampedLock.unlockWrite(stamp);
+      }
+   }
+
+   private SearchMapping mapping() {
+      long stamp = stampedLock.tryOptimisticRead();
+      SearchMapping searchMapping = searchMappingRef.get();
+      if (!stampedLock.validate(stamp)) {
+         stamp = stampedLock.readLock();
+         try {
+            searchMapping = searchMappingRef.get();
+         } finally {
+            stampedLock.unlockRead(stamp);
+         }
+      }
+      return searchMapping;
    }
 
    private SearchMapping createMapping() {

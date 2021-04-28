@@ -61,7 +61,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
       DataConversion keyDataConversion = reindexCache.getKeyDataConversion();
       if (keys == null || keys.size() == 0) {
-         preIndex(indexUpdater);
+         preIndex(cache, indexUpdater);
          MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
          if (!skipIndex) {
             try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
@@ -100,8 +100,9 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       return null;
    }
 
-   private void preIndex(IndexUpdater indexUpdater) {
+   private void preIndex(AdvancedCache<Object, Object> cache, IndexUpdater indexUpdater) {
       indexUpdater.purge(indexedTypes);
+      ComponentRegistryUtils.getSearchMapping(cache).reload();
    }
 
    private void postIndex(IndexUpdater indexUpdater, MassIndexerProgressState progressState, MassIndexerProgressNotifier notifier) {
