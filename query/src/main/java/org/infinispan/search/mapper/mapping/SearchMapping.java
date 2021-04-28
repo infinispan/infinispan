@@ -1,14 +1,14 @@
 package org.infinispan.search.mapper.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 public interface SearchMapping extends AutoCloseable {
 
@@ -72,6 +72,12 @@ public interface SearchMapping extends AutoCloseable {
    // which means for example that we can't reindex just one protobuf type;
    // see the callers for more details.
    Set<Class<?>> allIndexedEntityJavaClasses();
+
+   /**
+    * Releases all used resources (IO, threads) and restarts from the mapping configuration.
+    */
+   default void reload() {
+   }
 
    /**
     * @param value An entity.
