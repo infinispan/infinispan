@@ -6,6 +6,7 @@ import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNEC
 import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
 import static org.infinispan.configuration.parsing.Element.CLUSTER_LOADER;
 import static org.infinispan.configuration.parsing.Element.FILE_STORE;
+import static org.infinispan.configuration.parsing.Element.SINGLE_FILE_STORE;
 import static org.infinispan.configuration.parsing.Element.STORE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -26,6 +27,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 
 /**
  * Configuration for cache stores.
@@ -79,6 +81,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
       if (name.equals(FILE_STORE.getLocalName())) {
+         return addSoftIndexFileStore();
+      }
+      if (name.equals(SINGLE_FILE_STORE.getLocalName())) {
          return addSingleFileStore();
       }
       if (name.equals(CLUSTER_LOADER.getLocalName())) {
@@ -192,9 +197,21 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    /**
     * Adds a single file cache store.
+    * @deprecated since 13.0. To be removed in 14.0 has been replaced by {@link #addSoftIndexFileStore()}
     */
+   @Deprecated
    public SingleFileStoreConfigurationBuilder addSingleFileStore() {
       SingleFileStoreConfigurationBuilder builder = new SingleFileStoreConfigurationBuilder(this);
+      this.stores.add(builder);
+      return builder;
+   }
+
+   /**
+    * Adds a soft index file cache store.
+    * @return the configuration for a soft index file store
+    */
+   public SoftIndexFileStoreConfigurationBuilder addSoftIndexFileStore() {
+      SoftIndexFileStoreConfigurationBuilder builder = new SoftIndexFileStoreConfigurationBuilder(this);
       this.stores.add(builder);
       return builder;
    }
@@ -281,8 +298,8 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       clearStores();
       for (StoreConfiguration c : template.stores()) {
          Class<? extends StoreConfigurationBuilder<?, ?>> builderClass = getBuilderClass(c);
-         StoreConfigurationBuilder builder =  this.addStore(builderClass);
-         builder.read(c);
+         StoreConfigurationBuilder builder =  this.getBuilderFromClass(builderClass);
+         stores.add((StoreConfigurationBuilder) builder.read(c));
       }
 
       return this;

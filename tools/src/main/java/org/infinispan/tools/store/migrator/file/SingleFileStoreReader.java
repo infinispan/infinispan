@@ -157,7 +157,6 @@ public class SingleFileStoreReader implements StoreIterator {
          }
          byteBuffer.flip();
          Entry entry = readEntry();
-         byteBuffer.flip();
          return entry;
       }
 

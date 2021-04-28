@@ -3,13 +3,11 @@ package org.infinispan.persistence.sifs;
 import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -35,8 +34,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -126,6 +125,7 @@ import io.reactivex.rxjava3.core.Maybe;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ConfiguredBy(SoftIndexFileStoreConfigurationBuilder.class)
 public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
@@ -190,12 +190,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
       }
 
-      File singleFileStoreFile = SingleFileStore.getStoreFile(ctx.getGlobalConfiguration(), configuration.dataLocation(),
-            ctx.getCache().getName());
-      Iterator<MarshallableEntry<K, V>> marshallableEntryIterator = singleFileStoreFile.exists() ?
-         SingleFileStore.iterator(singleFileStoreFile, ctx.getByteBufferFactory(), ctx.getMarshallableEntryFactory())
-            : null;
-
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());
       compactor = new Compactor(fileProvider, temporaryTable, marshaller, timeService, keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
@@ -245,20 +239,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                logAppender.setSeqId(maxSeqId.get() + 1);
             }
 
-            if (marshallableEntryIterator != null) {
-               log.debugf("Migrating cache data from SingleFileStore to SoftIndexFileStore for cache %s",
-                     ctx.getCache().getName());
-               marshallableEntryIterator.forEachRemaining(me -> {
-                  int segment = keyPartitioner.getSegment(me.getKey());
-                  CompletionStages.join(write(segment, me));
-               });
-               singleFileStoreFile.delete();
-            }
-
          }, "soft-index-start");
 
-      } else if (marshallableEntryIterator != null) {
-         log.debug("Deleting previous SFS data for this cache as purgeOnStartup was true");
       }
       log.debug("Not building the index - purge will be executed");
       return CompletableFutures.completedNull();

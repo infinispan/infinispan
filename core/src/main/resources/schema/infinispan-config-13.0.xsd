@@ -1247,6 +1247,13 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="single-file-store" type="tns:single-file-store">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated since 13.0. Defines a filesystem-based cache store that stores its elements in a single file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:any namespace="##other" />
     </xs:choice>
     <xs:attribute name="passivation" type="xs:boolean" default="${Persistence.passivation}">
@@ -2000,7 +2007,7 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="file-store">
+  <xs:complexType name="single-file-store">
     <xs:complexContent>
       <xs:extension base="tns:store">
         <xs:attribute name="max-entries" type="xs:int">
@@ -2032,6 +2039,134 @@
         </xs:attribute>
       </xs:extension>
     </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="file-store">
+    <xs:complexContent>
+      <xs:extension base="tns:store">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+          <xs:element name="index" type="tns:index-type" minOccurs="0" maxOccurs="1" />
+          <xs:element name="data" type="tns:data-type" minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+        <xs:attribute name="max-entries" type="xs:int">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated since 13.0 which ignores the property.
+              Specifies the maximum number of entries that the file store can
+              hold. To increase the speed of lookups, Single File cache stores
+              index keys and their locations in the file. To avoid excessive
+              memory usage, you can configure the maximum number of entries so
+              that entries are removed permanently from both memory and the
+              cache store when the maximum is exceeded. However, this can lead
+              to data loss. You should only set a maximum number of entries if
+              data can be recomputed or retrieved from an authoritative data
+              store. By default, the value is `-1` which means that there is no
+              maximum number of entries.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="path" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated since 13.0 which ignores the property.
+              Specifies a filesystem directory for data. The value can be a
+              relative or absolute path. Relative paths are created relative to
+              the configured global persistent location. Absolute paths must be
+              subdirectories of the global persistent location, otherwise an
+              exception is thrown.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+
+        <xs:attribute name="open-files-limit" type="xs:int" default="${SoftIndexFileStore.openFilesLimit}">
+          <xs:annotation>
+            <xs:documentation>
+              Max number of data files opened for reading (current log file, compaction output and index segments are not included here).
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="compaction-threshold" type="xs:double" default="${SoftIndexFileStore.compactionThreshold}">
+          <xs:annotation>
+            <xs:documentation>
+              If amount of unused space in some data file gets above this threshold, the file is compacted - entries from that file are copied to a new file and the old file is deleted.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="data-type">
+    <xs:annotation>
+      <xs:documentation>
+        Configure where and how should be the entries stored - this is the persistent location.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="path" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          A location on disk where the store writes entries. Files are written sequentially, reads are random.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-file-size" type="xs:int" default="${Data.maxFileSize}">
+      <xs:annotation>
+        <xs:documentation>
+          Max size of single file with entries, in bytes.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="sync-writes" type="xs:boolean" default="${Data.syncWrites}">
+      <xs:annotation>
+        <xs:documentation>
+          If true, the write is confirmed only after the entry is fsynced on disk.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="index-type">
+    <xs:annotation>
+      <xs:documentation>
+        Configure where and how should be the index stored.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="path" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          A location where the store keeps index - this does not have be persistent across restarts, and SSD storage is recommended (the index is accessed randomly).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="segments" type="xs:int" default="${Index.indexSegments}">
+      <xs:annotation>
+        <xs:documentation>
+          Number of index segment files. Increasing this value improves throughput but requires more threads to be spawned.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-queue-length" type="xs:int" default="${Index.indexQueueLength}">
+      <xs:annotation>
+        <xs:documentation>
+          Max number of entry writes that are waiting to be written to the index, per index segment.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-node-size" type="xs:int" default="${Index.maxNodeSize}">
+      <xs:annotation>
+        <xs:documentation>
+          Max size of node (continuous block on filesystem used in index implementation), in bytes.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="min-node-size" type="xs:int" default="${Index.minNodeSize}">
+      <xs:annotation>
+        <xs:documentation>
+          If the size of node (continuous block on filesystem used in index implementation) drops below this threshold, the node will try to balance its size with some neighbour node, possibly causing join of multiple nodes.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+
   </xs:complexType>
 
   <xs:complexType name="remote-server">

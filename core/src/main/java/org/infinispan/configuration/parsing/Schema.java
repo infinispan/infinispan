@@ -1,6 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
+import org.infinispan.commons.util.Version;
 
 /**
  * Schema.
@@ -40,9 +41,9 @@ public class Schema implements ConfigurationSchemaVersion {
    }
 
    public static Schema fromNamespaceURI(String namespaceURI) {
+      int major = Integer.parseInt(Version.getMajor());
+      int minor = Integer.parseInt(Version.getMinor());
       if (namespaceURI.startsWith("uri:") || namespaceURI.startsWith("urn:")) {
-         int major = 999;
-         int minor = 999;
          int colon = namespaceURI.lastIndexOf(':');
          String uri = namespaceURI.substring(0, colon);
          String version = namespaceURI.substring(colon + 1);
@@ -55,7 +56,7 @@ public class Schema implements ConfigurationSchemaVersion {
          }
          return new Schema(uri, major, minor);
       } else {
-         return new Schema("", 999, 999);
+         return new Schema("", major, minor);
       }
    }
 

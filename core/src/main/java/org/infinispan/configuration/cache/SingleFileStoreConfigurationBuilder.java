@@ -40,11 +40,6 @@ public class SingleFileStoreConfigurationBuilder
    }
 
    @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
    public SingleFileStoreConfigurationBuilder self() {
       return this;
    }

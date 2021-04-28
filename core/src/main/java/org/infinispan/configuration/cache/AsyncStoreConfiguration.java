@@ -23,7 +23,7 @@ public class AsyncStoreConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Integer> THREAD_POOL_SIZE = AttributeDefinition.builder("threadPoolSize", 1).immutable().build();
    public static final AttributeDefinition<Boolean> FAIL_SILENTLY = AttributeDefinition.builder("failSilently", false).immutable().build();
 
-   static AttributeSet attributeDefinitionSet() {
+   public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, FAIL_SILENTLY);
    }
 
@@ -36,7 +36,7 @@ public class AsyncStoreConfiguration implements ConfigurationInfo {
 
    private final AttributeSet attributes;
 
-   AsyncStoreConfiguration(AttributeSet attributes) {
+   public AsyncStoreConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
       this.modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);

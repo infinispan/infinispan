@@ -32,7 +32,6 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
@@ -40,7 +39,6 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -80,7 +78,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.NonBlockingStore.Characteristic;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.StoreUnavailableException;
-import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
@@ -189,7 +186,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          Completable storeStartup = Flowable.fromIterable(configuration.persistence().stores())
                // We have to ensure stores are started in configured order to ensure the stores map retains that order
                .concatMapSingle(storeConfiguration -> {
-                  NonBlockingStore<?, ?> actualStore = storeFromConfiguration(storeConfiguration);
+                  NonBlockingStore<?, ?> actualStore = PersistenceUtil.storeFromConfiguration(storeConfiguration);
                   NonBlockingStore<?, ?> nonBlockingStore;
                   if (storeConfiguration.async().enabled()) {
                      nonBlockingStore = new AsyncNonBlockingStore<>(actualStore);
@@ -328,20 +325,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }),
             this::releaseReadLock)
             .toCompletionStage(null);
-   }
-
-   private NonBlockingStore<?, ?> storeFromConfiguration(StoreConfiguration cfg) {
-      final Object bareInstance;
-      if (cfg.segmented() && cfg instanceof AbstractSegmentedStoreConfiguration) {
-         bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
-      } else {
-         bareInstance = PersistenceUtil.createStoreInstance(cfg);
-      }
-      if (!(bareInstance instanceof NonBlockingStore)) {
-         // All prior stores implemented at least Lifecycle
-         return new NonBlockingStoreAdapter<>((Lifecycle) bareInstance);
-      }
-      return (NonBlockingStore<?, ?>) bareInstance;
    }
 
    @Override

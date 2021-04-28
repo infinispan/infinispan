@@ -22,8 +22,13 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    private final AttributeSet attributes;
 
    AsyncStoreConfigurationBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
+      this(builder, AsyncStoreConfiguration.attributeDefinitionSet());
+   }
+
+   AsyncStoreConfigurationBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder,
+         AttributeSet attributeSet) {
       super(builder);
-      this.attributes = AsyncStoreConfiguration.attributeDefinitionSet();
+      this.attributes = attributeSet;
    }
 
    /**

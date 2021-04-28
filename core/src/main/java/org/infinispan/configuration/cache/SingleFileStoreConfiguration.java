@@ -1,9 +1,6 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.parsing.Element.FILE_STORE;
-
-import java.util.Arrays;
-import java.util.List;
+import static org.infinispan.configuration.parsing.Element.SINGLE_FILE_STORE;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -33,7 +30,7 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
       return new AttributeSet(SingleFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, MAX_ENTRIES, FRAGMENTATION_FACTOR);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(FILE_STORE.getLocalName(), true, false);
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SINGLE_FILE_STORE.getLocalName(), true, false);
 
    private final Attribute<String> location;
    private final Attribute<Integer> maxEntries;
@@ -79,11 +76,6 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
 
    public float fragmentationFactor() {
       return fragmentationFactor.get();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override

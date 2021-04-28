@@ -361,6 +361,10 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       storeStats.remove(storeName);
    }
 
+   public static AtomicReferenceArray<Map<Object, byte[]>> getStoreDataForName(String storeName) {
+      return stores.get(storeName);
+   }
+
    public boolean isEmpty() {
       for (int i = 0; i < store.length(); ++i) {
          Map<Object, byte[]> map = store.get(i);

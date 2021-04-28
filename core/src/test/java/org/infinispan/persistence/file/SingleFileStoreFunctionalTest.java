@@ -58,7 +58,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <persistence passivation=\"false\"> \n" +
-            "         <file-store shared=\"false\" preload=\"true\"/> \n" +
+            "         <single-file-store shared=\"false\" preload=\"true\"/> \n" +
             "      </persistence>\n" +
             "   </local-cache>\n" +
             "</cache-container>");
@@ -75,7 +75,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <persistence passivation=\"false\"> \n" +
-            "         <file-store path=\"other-location\" max-entries=\"100\" shared=\"false\" preload=\"true\" fragmentation-factor=\"0.75\"/> \n" +
+            "         <single-file-store path=\"other-location\" max-entries=\"100\" shared=\"false\" preload=\"true\" fragmentation-factor=\"0.75\"/> \n" +
             "      </persistence>\n" +
             "   </local-cache>\n" +
             "</cache-container>");

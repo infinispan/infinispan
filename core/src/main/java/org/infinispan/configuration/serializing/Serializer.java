@@ -71,6 +71,9 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.factories.threads.NonBlockingThreadPoolExecutorFactory;
+import org.infinispan.persistence.sifs.configuration.DataConfiguration;
+import org.infinispan.persistence.sifs.configuration.IndexConfiguration;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
@@ -745,8 +748,10 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    }
 
    private void writeStore(ConfigurationWriter writer, StoreConfiguration configuration) {
-      if (configuration instanceof SingleFileStoreConfiguration) {
-         writeFileStore(writer, (SingleFileStoreConfiguration) configuration);
+      if (configuration instanceof SoftIndexFileStoreConfiguration) {
+         writeFileStore(writer, (SoftIndexFileStoreConfiguration) configuration);
+      } else if (configuration instanceof SingleFileStoreConfiguration) {
+         writeSingleFileStore(writer, (SingleFileStoreConfiguration) configuration);
       } else if (configuration instanceof ClusterLoaderConfiguration) {
          writeClusterLoader(writer, (ClusterLoaderConfiguration) configuration);
       } else if (configuration instanceof CustomStoreConfiguration) {
@@ -812,8 +817,35 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       }
    }
 
-   private void writeFileStore(ConfigurationWriter writer, SingleFileStoreConfiguration configuration) {
+
+   private void writeFileStore(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
       writer.writeStartElement(Element.FILE_STORE);
+      configuration.attributes().write(writer);
+      writeCommonStoreSubAttributes(writer, configuration);
+      writeDataElement(writer, configuration);
+      writeIndexElement(writer, configuration);
+      writeCommonStoreElements(writer, configuration);
+      writer.writeEndElement();
+   }
+
+   private void writeDataElement(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
+      configuration.data().attributes().write(writer, Element.DATA.getLocalName(),
+            DataConfiguration.DATA_LOCATION,
+            DataConfiguration.MAX_FILE_SIZE,
+            DataConfiguration.SYNC_WRITES);
+   }
+
+   private void writeIndexElement(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
+      configuration.index().attributes().write(writer, Element.INDEX.getLocalName(),
+            IndexConfiguration.INDEX_LOCATION,
+            IndexConfiguration.INDEX_QUEUE_LENGTH,
+            IndexConfiguration.INDEX_SEGMENTS,
+            IndexConfiguration.MIN_NODE_SIZE,
+            IndexConfiguration.MAX_NODE_SIZE);
+   }
+
+   private void writeSingleFileStore(ConfigurationWriter writer, SingleFileStoreConfiguration configuration) {
+      writer.writeStartElement(Element.SINGLE_FILE_STORE);
       configuration.attributes().write(writer);
       writeCommonStoreSubAttributes(writer, configuration);
       writeCommonStoreElements(writer, configuration);

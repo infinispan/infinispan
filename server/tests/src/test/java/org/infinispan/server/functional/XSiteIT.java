@@ -66,7 +66,7 @@ public class XSiteIT {
 
    protected static final String LON_CACHE_OFF_HEAP =
          "<infinispan><cache-container statistics=\"true\">" +
-               "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" start=\"EAGER\" statistics=\"true\">" +
+               "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" statistics=\"true\">" +
                "        <backups>" +
                "            <backup site=\"NYC\" strategy=\"ASYNC\" timeout=\"30000\">" +
                "                <take-offline after-failures=\"-1\" min-wait=\"60000\"/>" +
@@ -74,7 +74,7 @@ public class XSiteIT {
                "        </backups>" +
                "        <memory storage=\"OFF_HEAP\" max-count=\"100\" when-full=\"REMOVE\"/>" +
                "        <persistence passivation=\"true\">" +
-               "     <file-store max-entries=\"100\" shared=\"false\" preload=\"true\" purge=\"false\" fetch-state=\"true\"/>" +
+               "     <file-store shared=\"false\" preload=\"true\" purge=\"false\" fetch-state=\"true\"/>" +
                "  </persistence>" +
                "  </distributed-cache>" +
                "</cache-container></infinispan>";

@@ -278,6 +278,13 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
+   public void destroy() {
+      for (int i = 0; i < stores.length(); ++i) {
+         destroyStore(i);
+      }
+   }
+
+   @Override
    public void addSegments(IntSet segments) {
       segments.forEach((IntConsumer) this::startNewStoreForSegment);
    }
