@@ -2,14 +2,11 @@ package org.infinispan.query.impl.massindex;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
@@ -23,7 +20,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
@@ -43,7 +39,6 @@ public class DistributedExecutorMassIndexer implements Indexer {
    private final AdvancedCache<?, ?> cache;
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
-   private final BlockingManager blockingManager;
    private final IndexLock lock;
    private final Authorizer authorizer;
 
@@ -59,8 +54,6 @@ public class DistributedExecutorMassIndexer implements Indexer {
       this.cache = cache;
       this.indexUpdater = new IndexUpdater(cache);
       this.executor = cache.getCacheManager().executor();
-      this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
-            .getComponent(BlockingManager.class);
       this.lock = MassIndexerLockFactory.buildLock(cache);
       this.authorizer = cache.getComponentRegistry().getComponent(Authorizer.class);
    }
@@ -125,24 +118,13 @@ public class DistributedExecutorMassIndexer implements Indexer {
             isRunning = true;
             Collection<Class<?>> javaClasses = (entities.length == 0) ?
                   indexUpdater.allJavaClasses() : Arrays.asList(entities);
-            Deque<Class<?>> toFlush = new LinkedList<>(javaClasses);
-
-            BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
-               try {
-                  indexUpdater.flush(toFlush);
-                  indexUpdater.refresh(toFlush);
-               } finally {
-                  CompletionStages.join(lock.unlock());
-                  isRunning = false;
-               }
-            };
             IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, null);
-            CompletableFuture<Void> future = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
-            return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this);
+            return executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
          } catch (Throwable t) {
+            return CompletableFutures.completedExceptionFuture(t);
+         } finally {
             lock.unlock();
             isRunning = false;
-            return CompletableFutures.completedExceptionFuture(t);
          }
       });
    }
