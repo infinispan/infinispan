@@ -24,10 +24,6 @@ Sets the number of results to return. The default is `10`.
 *-o, --offset*='OFFSET'::
 Specifies the index of the first result to return. The default is `0`.
 
-*--query-mode*='QUERY_MODE'::
-Specifies how the server executes the query. Values are `FETCH` and BROADCAST.
-The default is `FETCH`.
-
 
 EXAMPLES
 --------

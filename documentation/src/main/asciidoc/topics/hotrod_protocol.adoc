@@ -2760,16 +2760,14 @@ Query Request (0x1F):
  {
   "query":"From Entity where field1:'value1'",
   "offset": 12,
-  "max-results": 1000,
-  "query-mode": "FETCH"
- }
+  "max-results": 1000
+}
 
 Where:
 
  query: the Ickle query String.
  offset: the index of the first result to return.
  max_results: the maximum number of results to return.
- query_mode: the indexed query mode. Either FETCH or BROADCAST. FECTH is the default.
 |==============================================================================
 
 Query Response (0x20):

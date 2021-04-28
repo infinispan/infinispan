@@ -4,7 +4,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static java.util.Collections.emptyMap;
 import static org.infinispan.query.remote.json.JSONConstants.MAX_RESULTS;
 import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
-import static org.infinispan.query.remote.json.JSONConstants.QUERY_MODE;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
 
 import java.io.IOException;
@@ -82,7 +81,6 @@ class CacheResourceQueryAction {
    private JsonQueryRequest getQueryFromString(RestRequest restRequest) {
       String queryString = getParameterValue(restRequest, QUERY_STRING);
       String strOffset = getParameterValue(restRequest, OFFSET);
-      String queryMode = getParameterValue(restRequest, QUERY_MODE);
       String strMaxResults = getParameterValue(restRequest, MAX_RESULTS);
       Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
