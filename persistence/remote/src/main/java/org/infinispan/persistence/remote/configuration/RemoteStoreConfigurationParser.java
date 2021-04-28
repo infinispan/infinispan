@@ -426,6 +426,10 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                builder.valueSizeEstimate(Integer.parseInt(value));
                break;
             }
+            case URI: {
+               builder.uri(value);
+               break;
+            }
             default: {
                Parser.parseStoreAttribute(reader, i, builder);
                break;

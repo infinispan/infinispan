@@ -55,6 +55,7 @@ public enum Attribute {
    TEST_WHILE_IDLE("test-idle"),
    TIME_BETWEEN_EVICTION_RUNS("eviction-interval"),
    TRANSPORT_FACTORY("transport-factory"),
+   URI("uri"),
    USERNAME("username"),
    /**
     * @deprecated Since 12.0, will be removed in 15.0

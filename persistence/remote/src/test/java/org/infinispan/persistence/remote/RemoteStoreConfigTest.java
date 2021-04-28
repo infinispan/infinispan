@@ -26,38 +26,56 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.remote.RemoteStoreConfigTest", groups = "functional")
 public class RemoteStoreConfigTest extends AbstractInfinispanTest {
 
+   private static final int PORT = 19711;
    public static final String CACHE_LOADER_CONFIG = "remote-cl-config.xml";
    public static final String STORE_CACHE_NAME = "RemoteStoreConfigTest";
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotRodServer;
+   private String cacheLoaderConfig;
+   private String storeCacheName;
+   private int port;
+
+   public RemoteStoreConfigTest(String cacheLoaderConfig, String storeCacheName, int port) {
+      super();
+      this.cacheLoaderConfig = cacheLoaderConfig;
+      this.storeCacheName = storeCacheName;
+      this.port = port;
+   }
+
+   public RemoteStoreConfigTest() {
+      this(CACHE_LOADER_CONFIG, STORE_CACHE_NAME, PORT);
+   }
 
    @BeforeClass
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
-      Cache<?, ?> storeCache = cacheManager.createCache(STORE_CACHE_NAME, hotRodCacheConfiguration().build());
+      Cache<?, ?> storeCache = cacheManager.createCache(this.storeCacheName, hotRodCacheConfiguration().build());
       assertEquals(storeCache.size(), 0);
-      hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
+      hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, this.port);
    }
 
    public void simpleTest() throws Exception {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG)) {
+
+      String cacheName = this.storeCacheName;
+
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(this.cacheLoaderConfig)) {
          @Override
          public void call() {
-            Cache<Object, Object> cache = cm.getCache();
+            Cache<Object, Object> cache = cm.getCache(cacheName);
 
             cache.put("k", "v");
 
-            Cache<Object, Object> storeCache = cacheManager.getCache(STORE_CACHE_NAME);
+            Cache<Object, Object> storeCache = cacheManager.getCache(cacheName);
             assertEquals(1, storeCache.size());
             cache.stop();
             assertEquals(1, storeCache.size());
          }
       });
 
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG)) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(this.cacheLoaderConfig)) {
          @Override
          public void call() {
-            Cache cache = cm.getCache(STORE_CACHE_NAME);
+            Cache cache = cm.getCache(cacheName);
             assertEquals("v", cache.get("k"));
          }
       });

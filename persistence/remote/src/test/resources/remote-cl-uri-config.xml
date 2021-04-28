@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                          urn:infinispan:config:store:remote:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-cachestore-remote-config-${infinispan.core.schema.version}.xsd"
+	xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+	xmlns:remote="urn:infinispan:config:store:remote:${infinispan.core.schema.version}">
+
+	<!-- Default cache named to preserve old default cache name -->
+	<cache-container
+		default-cache="RemoteStoreConfigUriTest">
+		<local-cache name="RemoteStoreConfigUriTest">
+			<persistence>
+				<remote-store
+					xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
+					cache="RemoteStoreConfigUriTest"
+					shared="true"
+					segmented="false"
+					uri="hotrods://127.0.0.1:19811?use_ssl=false&amp;tcp_no_delay=true&amp;tcp_keep_alive=false&amp;force_return_values=false">
+				</remote-store>
+			</persistence>
+		</local-cache>
+	</cache-container>
+
+</infinispan>
