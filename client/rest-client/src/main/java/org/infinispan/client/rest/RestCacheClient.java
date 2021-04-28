@@ -260,9 +260,8 @@ public interface RestCacheClient {
     * @param query the ickle query
     * @param maxResults the maximum number of results to return
     * @param offset the offset within the result from which to return results
-    * @param queryMode the query mode
     */
-   CompletionStage<RestResponse> query(String query, int maxResults, int offset, RestQueryMode queryMode);
+   CompletionStage<RestResponse> query(String query, int maxResults, int offset);
 
    /**
     * @return the status of all backup sites

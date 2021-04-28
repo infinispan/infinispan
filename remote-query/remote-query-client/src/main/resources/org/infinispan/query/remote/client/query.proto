@@ -46,13 +46,6 @@ message QueryRequest {
        */
       required org.infinispan.protostream.WrappedMessage value = 2;
    }
-
-   /**
-    * EXPERIMENTAL! DO NOT USE! This is the query mode (FETCH / BROADCAST), currently represented as string,
-    * but it will be renamed / refactored into an enum, eventually with more possible values, one additional
-    * possibility would be NON_INDEXED to force querying without using the index.
-    */
-   optional string indexedQueryMode = 6;
 }
 
 /**

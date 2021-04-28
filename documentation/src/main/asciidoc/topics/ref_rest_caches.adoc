@@ -440,10 +440,6 @@ Hits can contain all fields or a subset of fields if you use a `Select` clause.
 |`offset`
 |OPTIONAL
 |Specifies the index of the first result to return. The default is `0`.
-
-|`query_mode`
-|OPTIONAL
-|Specifies how the {brandname} server executes the query. Values are `FETCH` and `BROADCAST`. The default is `FETCH`.
 |===
 
 To use the body of the request instead of specifying query parameters, invoke

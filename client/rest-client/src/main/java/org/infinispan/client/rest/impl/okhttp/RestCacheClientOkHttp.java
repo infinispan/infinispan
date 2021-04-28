@@ -11,7 +11,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
-import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
@@ -326,9 +325,9 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> query(String query, int maxResults, int offset, RestQueryMode queryMode) {
+   public CompletionStage<RestResponse> query(String query, int maxResults, int offset) {
       Request.Builder builder = new Request.Builder();
-      builder.url(String.format("%s?action=search&query=%s&max_results=%d&offset=%d&query_mode=%s", cacheUrl, sanitize(query), maxResults, offset, queryMode.name())).get();
+      builder.url(String.format("%s?action=search&query=%s&max_results=%d&offset=%d", cacheUrl, sanitize(query), maxResults, offset)).get();
       return client.execute(builder);
    }
 

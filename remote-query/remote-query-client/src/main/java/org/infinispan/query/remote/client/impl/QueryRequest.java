@@ -33,8 +33,6 @@ public final class QueryRequest implements JsonSerialization {
 
    private Integer maxResults;
 
-   private String indexedQueryMode;
-
    public String getQueryString() {
       return queryString;
    }
@@ -78,14 +76,6 @@ public final class QueryRequest implements JsonSerialization {
       return params;
    }
 
-   public void setIndexedQueryMode(String indexedQueryMode) {
-      this.indexedQueryMode = indexedQueryMode;
-   }
-
-   public String getIndexedQueryMode() {
-      return indexedQueryMode;
-   }
-
    public static QueryRequest fromJson(Json jsonRequest) {
       String queryString = jsonRequest.at(QUERY_STRING_FIELD).asString();
       Json offsetValue = jsonRequest.at(START_OFFSET_FIELD);
@@ -120,7 +110,6 @@ public final class QueryRequest implements JsonSerialization {
          queryRequest.setStartOffset(reader.readLong("startOffset"));
          queryRequest.setMaxResults(reader.readInt("maxResults"));
          queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<>(), NamedParameter.class));
-         queryRequest.setIndexedQueryMode(reader.readString("indexedQueryMode"));
          return queryRequest;
       }
 
@@ -130,7 +119,6 @@ public final class QueryRequest implements JsonSerialization {
          writer.writeLong("startOffset", queryRequest.getStartOffset());
          writer.writeInt("maxResults", queryRequest.getMaxResults());
          writer.writeCollection("namedParameters", queryRequest.getNamedParameters(), NamedParameter.class);
-         writer.writeString("indexedQueryMode", queryRequest.getIndexedQueryMode());
       }
 
       @Override
