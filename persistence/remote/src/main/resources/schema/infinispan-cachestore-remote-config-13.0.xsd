@@ -12,7 +12,7 @@
     <xs:complexContent>
       <xs:extension base="config:store">
         <xs:sequence>
-          <xs:element name="remote-server" type="config:remote-server" minOccurs="1" maxOccurs="unbounded"/>
+          <xs:element name="remote-server" type="config:remote-server" minOccurs="0" maxOccurs="unbounded"/>
           <xs:element name="connection-pool" type="tns:connectionPool" minOccurs="0">
             <xs:annotation>
               <xs:documentation>
@@ -118,6 +118,13 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 12.0, does nothing and will be removed in 15.0
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="uri" type="xs:anyURI" use="optional">
+          <xs:annotation>
+            <xs:documentation>
+                            URI for the remote cache that lets you configure connection strings with Hot Rod client properties.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

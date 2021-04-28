@@ -14,6 +14,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.URI;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,6 +155,11 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
       attributes.attribute(REMOTE_CACHE_NAME).set(remoteCacheName);
+      return this;
+   }
+
+   public RemoteStoreConfigurationBuilder uri(String uri) {
+      attributes.attribute(URI).set(uri);
       return this;
    }
 

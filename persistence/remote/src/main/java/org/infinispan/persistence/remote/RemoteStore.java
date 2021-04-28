@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +19,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec27;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -416,14 +418,18 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private ConfigurationBuilder buildRemoteConfiguration(RemoteStoreConfiguration configuration, Marshaller marshaller) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
 
-      for (RemoteServerConfiguration s : configuration.servers()) {
-         builder.addServer()
-               .host(s.host())
-               .port(s.port());
+      ConfigurationBuilder builder = (configuration.uri() != null
+            && !configuration.uri().isEmpty())
+                  ? HotRodURI.create(configuration.uri()).toConfigurationBuilder()
+                  : new ConfigurationBuilder();
+
+      List<RemoteServerConfiguration> servers = configuration.servers();
+      for (RemoteServerConfiguration s : servers) {
+           builder.addServer()
+                 .host(s.host())
+                 .port(s.port());
       }
-
       ConnectionPoolConfiguration poolConfiguration = configuration.connectionPool();
       Long connectionTimeout = configuration.connectionTimeout();
       Long socketTimeout = configuration.socketTimeout();
@@ -461,6 +467,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                .protocol(ssl.protocol())
                .sniHostName(ssl.sniHostName());
       }
+
       AuthenticationConfiguration auth = configuration.security().authentication();
       if (auth.enabled()) {
          builder.security().authentication()

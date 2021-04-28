@@ -52,13 +52,16 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
          .immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", "").immutable().xmlName("cache").build();
 
+   static final AttributeDefinition<String> URI = AttributeDefinition.builder("uri", null, String.class).immutable()
+         .build();
+
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
    private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE, URI);
    }
 
    static ElementDefinition<RemoteStoreConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(REMOTE_STORE.getLocalName(), true, false);
@@ -73,6 +76,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<String> marshaller;
    private final Attribute<ProtocolVersion> protocolVersion;
    private final Attribute<String> remoteCacheName;
+   private final Attribute<String> uri;
    private final Attribute<Long> socketTimeout;
    private final Attribute<Boolean> tcpNoDelay;
    private final ConnectionPoolConfiguration connectionPool;
@@ -94,6 +98,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       marshaller = attributes.attribute(MARSHALLER);
       protocolVersion = attributes.attribute(PROTOCOL_VERSION);
       remoteCacheName = attributes.attribute(REMOTE_CACHE_NAME);
+      uri = attributes.attribute(URI);
       socketTimeout = attributes.attribute(SOCKET_TIMEOUT);
       tcpNoDelay = attributes.attribute(TCP_NO_DELAY);
       this.asyncExecutorFactory = asyncExecutorFactory;
@@ -105,6 +110,10 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       subElements.add(asyncExecutorFactory);
       subElements.add(security);
       subElements.addAll(servers);
+   }
+
+   public String uri() {
+      return uri.get();
    }
 
    @Override
