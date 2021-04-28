@@ -2175,4 +2175,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
    void sendFailMissingTombstone(Object key);
+
+   @LogMessage(level = WARN)
+   @Message(value = "SingleFileStore has been deprecated and will be removed in a future version, replaced by SoftIndexFileStore", id = 640)
+   void warnUsingDeprecatedSingleFileStore();
 }

@@ -8,11 +8,14 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
@@ -24,7 +27,9 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.commons.reactive.RxJavaInterop;
+import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
+import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -183,6 +188,10 @@ public class PersistenceUtil {
             .sequential();
    }
 
+   /**
+    * @deprecated This method is only public for use with prior Store classes, use
+    * {@link #storeFromConfiguration(StoreConfiguration)} when dealing with {@link NonBlockingStore} instances
+    */
    @SuppressWarnings("unchecked")
    public static <T> T createStoreInstance(StoreConfiguration config) {
       Class<?> classBasedOnConfigurationAnnotation = getClassBasedOnConfigurationAnnotation(config);
@@ -192,6 +201,20 @@ public class PersistenceUtil {
       } catch (CacheConfigurationException unableToInstantiate) {
          throw PERSISTENCE.unableToInstantiateClass(config.getClass());
       }
+   }
+
+   public static <K, V> NonBlockingStore<K, V> storeFromConfiguration(StoreConfiguration cfg) {
+      final Object bareInstance;
+      if (cfg.segmented() && cfg instanceof AbstractSegmentedStoreConfiguration) {
+         bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
+      } else {
+         bareInstance = PersistenceUtil.createStoreInstance(cfg);
+      }
+      if (!(bareInstance instanceof NonBlockingStore)) {
+         // All prior stores implemented at least Lifecycle
+         return new NonBlockingStoreAdapter<>((Lifecycle) bareInstance);
+      }
+      return (NonBlockingStore<K, V>) bareInstance;
    }
 
    private static Class<?> getClassBasedOnConfigurationAnnotation(StoreConfiguration cfg) {

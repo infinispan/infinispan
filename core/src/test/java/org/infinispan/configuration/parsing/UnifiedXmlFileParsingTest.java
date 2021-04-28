@@ -61,6 +61,7 @@ import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
@@ -469,9 +470,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(10, c.expiration().lifespan());
             assertEquals(10, c.expiration().maxIdle());
             assertFalse(c.persistence().passivation());
-            SingleFileStoreConfiguration fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
+            StoreConfiguration fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertFalse(fileStore.fetchPersistentState());
-            assertEquals("path", fileStore.location());
             assertFalse(fileStore.purgeOnStartup());
             assertTrue(fileStore.preload());
             assertFalse(fileStore.shared());
@@ -581,7 +581,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
                   (schemaMajor < 9 && schemaMinor < 5) ? StorageType.HEAP : StorageType.OBJECT;
             assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
@@ -612,7 +612,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
             assertFalse(c.indexing().enabled());
@@ -625,7 +625,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
@@ -635,7 +635,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(10000, c.memory().size());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
             assertFalse(c.indexing().enabled());
@@ -647,7 +647,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(-1, c.memory().size());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
@@ -658,7 +658,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(-1, c.memory().size());
-            fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
+            fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
@@ -712,6 +712,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       public boolean isIncludedBy(int major, int minor) {
          return major > this.major || (major == this.major && minor >= this.minor);
+      }
+
+      Class<? extends StoreConfiguration> getFileStoreClass(int schemaMajor) {
+         if (schemaMajor < 13) {
+            return SingleFileStoreConfiguration.class;
+         }
+         return SoftIndexFileStoreConfiguration.class;
       }
    }
 

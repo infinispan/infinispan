@@ -23,7 +23,6 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -41,6 +40,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -487,12 +487,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(c.persistence().passivation());
       assertEquals(1, c.persistence().stores().size());
 
-      SingleFileStoreConfiguration loaderCfg = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
+      SoftIndexFileStoreConfiguration loaderCfg = (SoftIndexFileStoreConfiguration) c.persistence().stores().get(0);
 
       assertTrue(loaderCfg.fetchPersistentState());
       assertFalse(loaderCfg.ignoreModifications());
       assertFalse(loaderCfg.purgeOnStartup());
-      assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
+      assertEquals("/tmp/FileCacheStore-Location", loaderCfg.dataLocation());
       assertTrue(loaderCfg.async().enabled());
       assertEquals(700, loaderCfg.async().modificationQueueSize());
 
@@ -502,8 +502,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(15000, clusterLoaderCfg.remoteCallTimeout());
 
       c = getCacheConfiguration(holder, "withLoaderDefaults");
-      loaderCfg = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
-      assertEquals("/tmp/Another-FileCacheStore-Location", loaderCfg.location());
+      loaderCfg = (SoftIndexFileStoreConfiguration) c.persistence().stores().get(0);
+      assertEquals("/tmp/Another-FileCacheStore-Location", loaderCfg.dataLocation());
 
       c = getCacheConfiguration(holder, "withouthJmxEnabled");
       assertFalse(c.statistics().enabled());

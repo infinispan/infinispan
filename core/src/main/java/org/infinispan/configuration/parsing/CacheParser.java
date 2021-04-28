@@ -38,6 +38,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -51,6 +52,7 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.xsite.spi.XSiteMergePolicy;
@@ -1354,6 +1356,10 @@ public class CacheParser implements ConfigurationParser {
             case LOADER:
                ignoreElement(reader, element);
                break;
+            case SINGLE_FILE_STORE:
+               CONFIG.warnUsingDeprecatedClusterLoader();
+               parseSingleFileStore(reader, holder);
+               break;
             default:
                reader.handleAny(holder);
          }
@@ -1381,9 +1387,23 @@ public class CacheParser implements ConfigurationParser {
    }
 
    protected void parseFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      SingleFileStoreConfigurationBuilder storeBuilder = holder.getCurrentConfigurationBuilder().persistence().addSingleFileStore();
-      String path = null;
-      String relativeTo = null;
+      SoftIndexFileStoreConfigurationBuilder sifsBuilder = null;
+
+      PersistenceConfigurationBuilder persistence = holder.getCurrentConfigurationBuilder().persistence();
+      AbstractStoreConfigurationBuilder<?, ?> actualStoreConfig;
+      int majorSchema = reader.getSchema().getMajor();
+      boolean isVersion13 = false;
+      if (majorSchema < 13) {
+         parseSingleFileStore(reader, holder);
+         return;
+      } else if (majorSchema == 13) {
+         sifsBuilder = persistence.addStore(SFSToSIFSConfigurationBuilder.class);
+         actualStoreConfig = sifsBuilder;
+         isVersion13 = true;
+      } else {
+         sifsBuilder = persistence.addSoftIndexFileStore();
+         actualStoreConfig = sifsBuilder;
+      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -1395,7 +1415,151 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case PATH: {
-               path = value;
+               if (isVersion13) {
+                  sifsBuilder.dataLocation(value);
+               } else {
+                  throw ParseUtils.attributeRemoved(reader, i);
+               }
+               break;
+            }
+            case MAX_ENTRIES: {
+               if (isVersion13) {
+                  ignoreAttribute(reader, i);
+               } else {
+                  throw ParseUtils.attributeRemoved(reader, i);
+               }
+               break;
+            }
+            case FRAGMENTATION_FACTOR: {
+               if (isVersion13) {
+                  ignoreAttribute(reader, i);
+               } else {
+                  throw ParseUtils.attributeRemoved(reader, i);
+               }
+               break;
+            }
+            case OPEN_FILES_LIMIT:
+               if (sifsBuilder != null) {
+                  sifsBuilder.openFilesLimit(Integer.parseInt(value));
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+               break;
+            case COMPACTION_THRESHOLD:
+               if (sifsBuilder != null) {
+                  sifsBuilder.compactionThreshold(Double.parseDouble(value));
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+               break;
+            case PURGE: {
+               actualStoreConfig.purgeOnStartup(Boolean.parseBoolean(value));
+               break;
+            }
+            default: {
+               parseStoreAttribute(reader, i, actualStoreConfig);
+            }
+         }
+      }
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case DATA:
+               if (sifsBuilder != null) {
+                  parseData(reader, sifsBuilder);
+               } else {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            case INDEX:
+               if (sifsBuilder != null) {
+                  parseIndex(reader, sifsBuilder);
+               } else {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            default:
+               parseStoreElement(reader, actualStoreConfig);
+         }
+      }
+   }
+
+   private void parseData(ConfigurationReader reader, SoftIndexFileStoreConfigurationBuilder builder) {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case PATH: {
+               builder.dataLocation(value);
+               break;
+            }
+            case RELATIVE_TO: {
+               if (reader.getSchema().since(13, 0))
+                  throw ParseUtils.attributeRemoved(reader, i);
+               ignoreAttribute(reader, i);
+               break;
+            }
+            case MAX_FILE_SIZE:
+               builder.maxFileSize(Integer.parseInt(value));
+               break;
+            case SYNC_WRITES:
+               builder.syncWrites(Boolean.parseBoolean(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseIndex(ConfigurationReader reader, SoftIndexFileStoreConfigurationBuilder builder) {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case PATH: {
+               builder.indexLocation(value);
+               break;
+            }
+            case RELATIVE_TO: {
+               if (reader.getSchema().since(13, 0))
+                  throw ParseUtils.attributeRemoved(reader, i);
+               ignoreAttribute(reader, i);
+               break;
+            }
+            case SEGMENTS:
+               builder.indexSegments(Integer.parseInt(value));
+               break;
+            case INDEX_QUEUE_LENGTH:
+               builder.indexQueueLength(Integer.parseInt(value));
+               break;
+            case MIN_NODE_SIZE:
+               builder.minNodeSize(Integer.parseInt(value));
+               break;
+            case MAX_NODE_SIZE:
+               builder.maxNodeSize(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   protected void parseSingleFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      SingleFileStoreConfigurationBuilder storeBuilder = holder.getCurrentConfigurationBuilder().persistence().addSingleFileStore();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case RELATIVE_TO: {
+               if (reader.getSchema().since(11, 0))
+                  throw ParseUtils.attributeRemoved(reader, i);
+               ignoreAttribute(reader, i);
+               break;
+            }
+            case PATH: {
+               storeBuilder.location(value);
                break;
             }
             case MAX_ENTRIES: {
@@ -1410,10 +1574,6 @@ public class CacheParser implements ConfigurationParser {
                parseStoreAttribute(reader, i, storeBuilder);
             }
          }
-      }
-      path = ParseUtils.resolvePath(path, relativeTo);
-      if (path != null) {
-         storeBuilder.location(path);
       }
       this.parseStoreElements(reader, storeBuilder);
    }

@@ -141,7 +141,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       for (int i = 0; i < beforeStores.size(); i++) {
          StoreConfiguration beforeStore = beforeStores.get(i);
          StoreConfiguration afterStore = afterStores.get(i);
-         assertEquals("Configuration " + name + " stores class mismatch", beforeStore.getClass(), afterStore.getClass());
+
          compareStoreConfiguration(name, beforeStore, afterStore);
       }
    }

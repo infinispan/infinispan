@@ -46,6 +46,14 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       subElements.add(async);
    }
 
+   public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes,
+         AttributeSet asyncAttributeSet) {
+      super(builder);
+      this.attributes = attributes;
+      this.async = new AsyncStoreConfigurationBuilder(this, asyncAttributeSet);
+      subElements.add(async);
+   }
+
    @Override
    public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
       return subElements;

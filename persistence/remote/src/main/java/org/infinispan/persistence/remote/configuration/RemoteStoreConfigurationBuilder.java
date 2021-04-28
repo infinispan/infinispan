@@ -44,15 +44,13 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private final SecurityConfigurationBuilder security;
    private List<RemoteServerConfigurationBuilder> servers = new ArrayList<RemoteServerConfigurationBuilder>();
-   private final List<ConfigurationBuilderInfo> subElements;
 
    public RemoteStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RemoteStoreConfiguration.attributeDefinitionSet());
       asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
       security = new SecurityConfigurationBuilder(this);
-      subElements = new ArrayList<>(super.getChildrenInfo());
-      subElements.addAll(Arrays.asList(connectionPool, asyncExecutorFactory, security));
+      getChildrenInfo().addAll(Arrays.asList(connectionPool, asyncExecutorFactory, security));
    }
 
    @Override
@@ -68,11 +66,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public ElementDefinition getElementDefinition() {
       return RemoteStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return subElements;
    }
 
    @Override

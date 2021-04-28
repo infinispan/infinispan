@@ -50,7 +50,7 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * @param segment the segment to append
     * @return string with the segment appended to the file location
     */
-   protected static String fileLocationTransform(String location, int segment) {
+   public static String fileLocationTransform(String location, int segment) {
       if (location.endsWith(File.separator)) {
          return location.substring(0, location.length() - 1) + "-" + segment + File.separatorChar;
       }
