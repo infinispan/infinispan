@@ -758,6 +758,38 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testIndexDataSyncInvalidSchema() {
+      String notQuiteIndexed = "package schemas;\n" +
+            " /* @Indexed */\n" +
+            " message Entity {\n" +
+            "    optional string name=1;\n" +
+            " }";
+
+      // Register schema
+      RestResponse restResponse = join(client.schemas().put("schemas.proto", notQuiteIndexed));
+      assertThat(restResponse).isOk();
+
+      // Create the indexed cache
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable().storage(LOCAL_HEAP).addIndexedEntities("schemas.Entity");
+      String cacheConfig = new JsonWriter().toJSON(builder.build());
+      RestCacheClient cacheClient = client.cache("sync-data-index");
+      RestEntity config = RestEntity.create(APPLICATION_JSON, cacheConfig);
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(config);
+      assertThat(response).isOk();
+
+      // Write an entry, it should error
+      String value = Json.object().set("_type", "schemas.Entity").set("name", "Jun").toString();
+      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, value);
+      restResponse = join(cacheClient.put("key", restEntity));
+      assertThat(restResponse).containsReturnedText("make sure at least one field has the @Field annotation");
+
+      // Cache should not have any data
+      response = cacheClient.size();
+      assertThat(response).containsReturnedText("0");
+   }
+
+   @Test
    public void testLazySearchMapping() {
       String proto = " package future;\n" +
             " /* @Indexed */\n" +

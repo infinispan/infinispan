@@ -147,6 +147,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          return invokeNext(ctx, command);
       }
+      // Make sure the searchMapping is ready to accept requests before allowing the invocation to proceed further
+      assert !searchMapping.isClose();
       return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
          if (!cmd.isSuccessful()) {
             return rv;
