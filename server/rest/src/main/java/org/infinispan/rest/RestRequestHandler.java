@@ -4,7 +4,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
-import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.util.Objects;
@@ -100,7 +99,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       }
       authenticator.challenge(restRequest, ctx).whenComplete((authResponse, authThrowable) -> {
          boolean hasError = authThrowable != null;
-         boolean authorized = !hasError && authResponse.getStatus() != UNAUTHORIZED.code();
+         boolean authorized = !hasError && authResponse.getStatus() < BAD_REQUEST.code();
          if (authorized) {
             authorization = restRequest.getAuthorizationHeader();
             subject = restRequest.getSubject();
