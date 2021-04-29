@@ -49,6 +49,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "testCache";
 
    private ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
+   private ExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("Executor"));
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
@@ -85,6 +86,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
       gbcr.replaceComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -138,6 +140,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       verifyRebalance(transport, ltm, ctm, 2, 1, singletonList(A), asList(A, B));
 
       transport.verifyNoErrors();
+      gcr.stop();
    }
 
    /**
@@ -163,6 +166,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
       gbcr.replaceComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -252,6 +256,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       verifyRebalance(transport, ltm, ctm, 7, 4, singletonList(B), asList(B, A));
 
       transport.verifyNoErrors();
+      gcr.stop();
    }
 
    private void verifyRebalance(MockTransport transport, MockLocalTopologyManager ltm, ClusterTopologyManagerImpl ctm,
@@ -320,8 +325,10 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    }
 
    @AfterClass(alwaysRun = true)
-   public void shutdownExecutor() throws InterruptedException {
+   public void shutdownExecutors() throws InterruptedException {
       executor.shutdownNow();
       assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+      scheduledExecutor.shutdownNow();
+      assertTrue(scheduledExecutor.awaitTermination(10, TimeUnit.SECONDS));
    }
 }
