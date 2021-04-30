@@ -79,10 +79,17 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) throws Exception {
-      log.debug("Exception caught", t);
+      if (log.isTraceEnabled()) log.trace("Exception caught", t);
       if (t instanceof DecoderException) {
          t = t.getCause();
       }
+      if (!ctx.channel().isActive() && t instanceof IllegalStateException &&
+          t.getMessage().equals("ssl is null")) {
+         // Workaround for ISPN-12996 -- OpenSSLEngine shut itself down too soon
+         // Ignore the exception, trying to write a response or close the context will cause a StackOverflowError
+         return;
+      }
+
       cacheProcessor.writeException(getHeader(), t);
    }
 

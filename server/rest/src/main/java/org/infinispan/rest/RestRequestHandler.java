@@ -168,7 +168,8 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          // a Netty IO Exception. The only solution is to ignore it, just like Tomcat does.
          logger.debug("Native IO Exception", e);
          ctx.close();
-      } else if (e instanceof IllegalStateException && e.getMessage().equals("ssl is null")){
+      } else if (!ctx.channel().isActive() && e instanceof IllegalStateException &&
+                 e.getMessage().equals("ssl is null")) {
          // Workaround for ISPN-12558 -- OpenSSLEngine shut itself down too soon
          // Ignore the exception, trying to close the context will cause a StackOverflowError
       } else {

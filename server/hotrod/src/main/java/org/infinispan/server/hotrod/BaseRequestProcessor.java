@@ -81,6 +81,7 @@ public class BaseRequestProcessor {
             status = OperationStatus.ServerError;
          }
       } else if (header != null) {
+         log.exceptionReported(cause);
          status = header.encoder().errorStatus(cause);
          msg = createErrorMsg(cause);
       } else {
