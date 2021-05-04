@@ -25,10 +25,13 @@ class OracleTableManager extends AbstractTableManager {
    private static final Log log = LogFactory.getLog(OracleTableManager.class, Log.class);
 
    private static final int MAX_INDEX_IDENTIFIER_SIZE = 30;
-   private static final String INDEX_PREFIX = "IDX";
+   private static final String TIMESTAMP_INDEX_PREFIX = "IDX";
+   private static final String SEGMENT_INDEX_PREFIX = "SDX";
+   private final int dbVersion;
 
    OracleTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
+      dbVersion = dbMetadata.getMajorVersion() * 100 + dbMetadata.getMinorVersion();
    }
 
    @Override
@@ -73,10 +76,16 @@ class OracleTableManager extends AbstractTableManager {
    public String getIndexName(boolean withIdentifier, String indexExt) {
       if (indexExt.equals(timestampIndexExt)) {
          // Timestamp for Oracle began with IDX, to keep backwards compatible we have to keep using that
-         indexExt = INDEX_PREFIX;
+         indexExt = TIMESTAMP_INDEX_PREFIX;
+      }
+      String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
+      /*  Oracle version 12.1 and below supports index names only 30 characters long.
+          If cache names have length greater that 15 and have the same prefix it is possible to have the same index names timestamp and segments.
+      */
+      if (dbVersion <= 1201 && indexExt.equals(segmentIndexExt) && plainTableName.length() + indexExt.length() + 1 > MAX_INDEX_IDENTIFIER_SIZE) {
+         indexExt = SEGMENT_INDEX_PREFIX;
       }
       int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - indexExt.length() - 1;
-      String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
       String truncatedName = plainTableName.length() > maxNameSize ? plainTableName.substring(0, maxNameSize) : plainTableName;
       String indexName = indexExt + "_" + truncatedName;
       if (withIdentifier) {
