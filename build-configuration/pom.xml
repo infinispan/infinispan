@@ -191,7 +191,7 @@
       <version.protostream>4.4.0.Final</version.protostream>
       <version.protostuff>1.6.2</version.protostuff>
       <version.reactivestreams>1.0.3</version.reactivestreams>
-      <version.rocksdb>6.15.5</version.rocksdb>
+      <version.rocksdb>6.19.3</version.rocksdb>
       <version.rxjava>3.0.4</version.rxjava>
       <version.smallrye-config>1.6.2</version.smallrye-config>
       <version.smallrye-metrics>2.4.0</version.smallrye-metrics>
