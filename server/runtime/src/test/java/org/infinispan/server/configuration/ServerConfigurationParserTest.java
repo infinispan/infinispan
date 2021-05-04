@@ -114,6 +114,9 @@ public class ServerConfigurationParserTest {
       assertEquals(1, dataSource.minSize());
       assertEquals(1, dataSource.initialSize());
       assertEquals(1, dataSource.connectionProperties().size());
+      assertEquals(10000, dataSource.leakDetection());
+      assertEquals(1000, dataSource.backgroundValidation());
+      assertEquals(500, dataSource.validateOnAcquisition());
       assertEquals("somevalue", dataSource.connectionProperties().get("someproperty"));
       dataSource = dataSources.get("database-with-credential");
       assertEquals("test", dataSource.password());

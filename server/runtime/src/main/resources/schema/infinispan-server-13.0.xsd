@@ -208,7 +208,15 @@
       <xs:attribute name="background-validation" type="xs:nonNegativeInteger">
          <xs:annotation>
             <xs:documentation>
-               Time in milliseconds between background validation runs
+               Time in milliseconds between background validation runs. A duration of 0 means that this feature is disabled.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="validate-on-acquisition" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>
+               Connections idle for longer than this time, specified in milliseconds, are validated before being
+               acquired (foreground validation). A duration of 0 means that this feature is disabled.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

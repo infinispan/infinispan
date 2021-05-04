@@ -9,3 +9,17 @@
 ----
 include::config_examples/server_datasources.xml[]
 ----
+
+Connection pools can be tuned using the following parameters:
+
+* `initial-size`: Initial number of connections the pool should hold.
+* `max-size`: Maximum number of connections in the pool.
+* `min-size`: Minimum number of connections the pool should hold.
+* `blocking-timeout`: Maximum time in milliseconds to block while waiting for a connection before throwing an exception.
+This will never throw an exception if creating a new connection takes an inordinately long period of time.
+Default is 0 meaning that a call will wait indefinitely.
+* `background-validation`: Time in milliseconds between background validation runs. A duration of 0 means that this feature is disabled.
+* `validate-on-acquisition`: Connections idle for longer than this time, specified in milliseconds, are validated before being
+acquired (foreground validation). A duration of 0 means that this feature is disabled.
+* `idle-removal`: Time in minutes a connection has to be idle before it can be removed.
+* `leak-detection`: Time in milliseconds a connection has to be held before a leak warning.
