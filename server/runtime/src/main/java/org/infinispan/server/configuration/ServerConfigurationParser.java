@@ -1350,6 +1350,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case BACKGROUND_VALIDATION:
                dataSourceBuilder.backgroundValidation(Long.parseLong(value));
                break;
+            case VALIDATE_ON_ACQUISITION:
+               dataSourceBuilder.validateOnAcquisition(Long.parseLong(value));
+               break;
             case LEAK_DETECTION:
                dataSourceBuilder.leakDetection(Long.parseLong(value));
                break;

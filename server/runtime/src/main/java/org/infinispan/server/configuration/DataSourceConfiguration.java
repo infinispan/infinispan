@@ -31,6 +31,7 @@ public class DataSourceConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<Long> BLOCKING_TIMEOUT = AttributeDefinition.builder("blockingTimeout", 0L, Long.class).build();
    static final AttributeDefinition<Long> BACKGROUND_VALIDATION = AttributeDefinition.builder("backgroundValidation", 0L, Long.class).build();
+   static final AttributeDefinition<Long> VALIDATE_ON_ACQUISITION = AttributeDefinition.builder("validateOnAcquisition", 0L, Long.class).build();
    static final AttributeDefinition<Long> LEAK_DETECTION = AttributeDefinition.builder("leakDetection", 0L, Long.class).build();
    static final AttributeDefinition<Integer> IDLE_REMOVAL = AttributeDefinition.builder("idleRemoval", 0, Integer.class).build();
 
@@ -41,7 +42,7 @@ public class DataSourceConfiguration implements ConfigurationInfo {
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DataSourceConfiguration.class, NAME, JNDI_NAME, STATISTICS, DRIVER, URL,
             USERNAME, PASSWORD, INITIAL_SQL, TRANSACTION_ISOLATION, MAX_SIZE, MIN_SIZE, INITIAL_SIZE,
-            BLOCKING_TIMEOUT, BACKGROUND_VALIDATION, LEAK_DETECTION, IDLE_REMOVAL,
+            BLOCKING_TIMEOUT, BACKGROUND_VALIDATION, VALIDATE_ON_ACQUISITION, LEAK_DETECTION, IDLE_REMOVAL,
             CONNECTION_PROPERTIES);
    }
 
@@ -110,6 +111,10 @@ public class DataSourceConfiguration implements ConfigurationInfo {
 
    public long backgroundValidation() {
       return attributes.attribute(BACKGROUND_VALIDATION).get();
+   }
+
+   public long validateOnAcquisition() {
+      return attributes.attribute(VALIDATE_ON_ACQUISITION).get();
    }
 
    public long leakDetection() {
