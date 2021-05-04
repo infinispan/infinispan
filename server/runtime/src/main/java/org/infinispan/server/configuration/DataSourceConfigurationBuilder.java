@@ -88,6 +88,11 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
       return this;
    }
 
+   public DataSourceConfigurationBuilder validateOnAcquisition(long validateOnAcquisition) {
+      attributes.attribute(DataSourceConfiguration.VALIDATE_ON_ACQUISITION).set(validateOnAcquisition);
+      return this;
+   }
+
    public DataSourceConfigurationBuilder leakDetection(long leakDetection) {
       attributes.attribute(DataSourceConfiguration.LEAK_DETECTION).set(leakDetection);
       return this;
