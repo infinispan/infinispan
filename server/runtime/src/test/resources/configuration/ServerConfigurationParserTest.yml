@@ -204,6 +204,7 @@ infinispan:
           maxSize: "10"
           minSize: "1"
           backgroundValidation: "1000"
+          validateOnAcquisition: "500"
           idleRemoval: "1"
           initialSize: "1"
           leakDetection: "10000"

@@ -10,6 +10,7 @@ import org.infinispan.server.Server;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 
 import io.agroal.api.AgroalDataSource;
+import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import io.agroal.api.configuration.supplier.AgroalConnectionFactoryConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalConnectionPoolConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
@@ -45,6 +46,8 @@ public class DataSourceFactory {
             .maxSize(configuration.maxSize())
             .minSize(configuration.minSize())
             .initialSize(configuration.initialSize())
+            .connectionValidator(AgroalConnectionPoolConfiguration.ConnectionValidator.defaultValidator())
+            .idleValidationTimeout(Duration.ofMillis(configuration.validateOnAcquisition()))
             .acquisitionTimeout(Duration.ofMillis(configuration.blockingTimeout()))
             .validationTimeout(Duration.ofMillis(configuration.backgroundValidation()))
             .leakTimeout(Duration.ofMillis(configuration.leakDetection()))
