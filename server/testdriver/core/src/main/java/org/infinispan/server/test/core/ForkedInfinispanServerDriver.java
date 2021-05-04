@@ -1,12 +1,19 @@
 package org.infinispan.server.test.core;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -17,9 +24,11 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.Server;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -30,19 +39,30 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    private static final Log log = LogFactory.getLog(ForkedInfinispanServerDriver.class);
    private static final int SHUTDOWN_TIMEOUT_SECONDS = 15;
    private final List<ForkedServer> forkedServers = new ArrayList<>();
-   private final String[] serverHomes;
+   private final List<Path> serverHomes;
 
    protected ForkedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
-      String allServerHomes = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
-      if (allServerHomes == null) {
-         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_SERVER_HOME + " property pointing to a comma-separated list of server homes.");
+      String globalServerHome = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR);
+      if (globalServerHome == null || globalServerHome.isEmpty()) {
+         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR + " property.");
       }
-      serverHomes = allServerHomes.replaceAll("\\s+", "").split(",");
-      if (serverHomes.length != configuration.numServers()) {
-         throw new IllegalArgumentException("configuration.numServers should be the same " +
-               "as the number of servers declared on org.infinispan.test.server");
+      this.serverHomes = new ArrayList<>();
+      Path src = Paths.get(globalServerHome).normalize();
+      for (int i = 0; i < configuration.numServers(); i++) {
+         Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), UUID.randomUUID().toString());
+         try {
+            Files.createDirectory(dest);
+            Files.walkFileTree(src, new CommonsTestingUtil.CopyFileVisitor(dest, true));
+         } catch (IOException e) {
+            throw new UncheckedIOException("Cannot copy the server to temp folder", e);
+         }
+         serverHomes.add(dest);
       }
+   }
+
+   private Path getServerConfDir(String home) {
+      return Paths.get(home,"server", "conf");
    }
 
    @Override
@@ -53,9 +73,18 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
       for (int i = 0; i < configuration.numServers(); i++) {
-         ForkedServer server = new ForkedServer(serverHomes[i])
+         String dest = serverHomes.get(i).toString();
+         ForkedServer server = new ForkedServer(dest)
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
+         server.addVmArgument(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+         try {
+            Path source = Paths.get(server.getServerConfiguration());
+            Path destination = getServerConfDir(dest).resolve(source.getFileName());
+            Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+         } catch (IOException e) {
+            throw new UncheckedIOException("Cannot copy the server to temp folder", e);
+         }
          // Replace 99 with index of server to debug
          if (i == 99) {
             server.setJvmOptions(debugJvmOption());
