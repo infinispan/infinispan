@@ -9,7 +9,7 @@ determines when entries expire.
 {brandname} checks if lifespan or maximum idle metadata is set and then
 compares the values with the current time.
 
-If `(creation + lifespan > currentTime)` or `(lastUsed + maxIdle > currentTime)` then {brandname} detects that the entry is expired.
+If `(creation + lifespan < currentTime)` or `(lastUsed + maxIdle < currentTime)` then {brandname} detects that the entry is expired.
 
 Expiration occurs whenever entries are accessed or found by the expiration
 reaper.
