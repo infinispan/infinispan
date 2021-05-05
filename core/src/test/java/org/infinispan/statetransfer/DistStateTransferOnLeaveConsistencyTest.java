@@ -268,7 +268,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
    }
 
-   static class LatchInterceptor extends BaseAsyncInterceptor {
+   public static class LatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch startedLatch;
       private final CountDownLatch proceedLatch;
 
