@@ -1600,6 +1600,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
       public void up(MessageBatch batch) {
          ByRef<Message> firstMessage = new ByRef<>(null);
          batch.forEach((message, messages) -> {
+            // Removed messages are null
+            if (message == null) return;
+
             // Regular (non-OOB) messages must be processed in-order
             // Normally a batch should either have only OOB or only regular messages,
             // but we check for every message to be on the safe side.
