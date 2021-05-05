@@ -13,38 +13,40 @@ import java.nio.charset.StandardCharsets;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class Application<T> implements ServerTask<T> {
+public class CustomServerTask<Object> implements ServerTask<Object> {
    private TaskContext ctx;
 
    /**
     * Allows access to execution context information including task parameters, cache references on
     * which tasks are executed, and so on. In most cases, implementations store this information
-    * locally and use it when tasks are actually executed.
+    * locally in all cases as it is set on each node.
     */
    @Override
    public void setTaskContext(TaskContext ctx) {
-       this.ctx = ctx;
+      this.ctx = ctx;
    }
-   
+
    /**
     * Computes a result. This method is defined in the java.util.concurrent.Callable interface and
     * is invoked with server tasks.
     */
 
    @Override
-   public T call() {
-       return null;
+   public Object call() {
+      // TODO add task logic here.
+      return null;
    }
-   
+
    /**
     * Returns unique names for tasks. Clients invoke tasks with these names.
     */
 
    @Override
    public String getName() {
-       return null;
+      // TODO update to return the name of the task
+      return null;
    }
-   
+
    /**
     * Returns the execution mode for tasks.
     * 
@@ -57,6 +59,7 @@ public class Application<T> implements ServerTask<T> {
     */
    @Override
    public TaskExecutionMode getExecutionMode() {
-      return null;
+      // TODO update
+      return TaskExecutionMode.ONE_NODE;
    }
 }
