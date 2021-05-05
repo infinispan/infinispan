@@ -58,6 +58,26 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_CONTAINER_DATABASE_LOG_MESSAGE = "org.infinispan.test.database.container.log.regex";
    /**
+    * Specifies a different set of databases, default is H2, MySQL and PostgreSQL
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_TYPES = "org.infinispan.test.database.types";
+   /**
+    * Specifies an external database configuration, default is src/test/resources/database/id.properties
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES = "org.infinispan.test.database.properties.path";
+   /**
+    * JDBC drivers to the servers in order to run tests against specific databases. Default is H2, MySQL and PostgreSQL
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_LIBS = "org.infinispan.test.database.jdbc.drivers";
+   /**
+    * Convenient way to set GAV jdbc drivers from a file
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE = "org.infinispan.test.database.jdbc.drivers.file";
+   /**
+    * Specifies external JDBC drivers which is not find into maven repo
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS = "org.infinispan.test.database.jdbc.drivers.external";
+   /**
     * Specifies the name of the keycloak base image
     */
    public static final String KEYCLOAK_IMAGE = "org.infinispan.test.keycloakImage";
@@ -77,4 +97,5 @@ public class TestSystemPropertyNames {
     * Specifies the name of the Jaeger image
     */
    public static final String JAEGER_IMAGE = "org.infinispan.test.jaegerImage";
+
 }

@@ -33,12 +33,12 @@ public class AsyncJdbcStringBasedCacheStore {
     private final Database database;
 
     public AsyncJdbcStringBasedCacheStore(String databaseType) {
-        this.database = PersistenceIT.DATABASE.getDatabase(databaseType);
+        this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
     }
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        String[] databaseTypes = PersistenceIT.DATABASE.getDatabaseTypes();
+        String[] databaseTypes = PersistenceIT.DATABASE_LISTENER.getDatabaseTypes();
         List<Object[]> params = new ArrayList<>(databaseTypes.length);
         for (String databaseType : databaseTypes) {
             params.add(new Object[]{databaseType});

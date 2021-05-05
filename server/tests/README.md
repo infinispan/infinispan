@@ -24,15 +24,21 @@ The default is to run all categories, except `[Unstable, Profiling, Stress]`, bu
 
 The JDBC tests can run against either standalone or containerized databases. 
 The default is to test against containerized versions of H2, MySQL and PostgreSQL. 
-You can specify a different set of databases by setting the system property `org.infinispan.test.server.jdbc.databases`, e.g.:
+You can specify a different set of databases by setting the system property `org.infinispan.test.database.types`, e.g.:
 
-`mvn -Dorg.infinispan.test.server.jdbc.databases=h2,mysql,postgres,mariadb,oracle,db2,sql_server ...`
+`mvn -Dorg.infinispan.test.database.types=h2,mysql,postgres,mariadb,oracle,db2,sql_server ...`
 
 In order for the test to work, for each supplied database name `id` there must be a `src/test/resources/database/id.properties` file which describes the database types and configuration.
+You can also use the `org.infinispan.test.database.properties.path`system property to specify the path to your database configuration
 
-To add JDBC drivers to the servers in order to run tests against specific databases, use the `org.infinispan.test.server.extension.libs` system property:
+To add JDBC drivers to the servers in order to run tests against specific databases, you can use `org.infinispan.test.database.jdbc.drivers` or `org.infinispan.test.database.jdbc.drivers.file` system property:
 
-`mvn -Dorg.infinispan.test.server.extension.libs=com.h2database:h2:1.4.199,com.oracle.jdbc:ojdbc8:jar:18.3.0.0 ...`
+`mvn -Dorg.infinispan.test.database.jdbc.drivers=com.h2database:h2:1.4.199,com.oracle.jdbc:ojdbc8:jar:18.3.0.0 ...`
+
+`mvn -Dorg.infinispan.test.database.jdbc.drivers.file=/opt/jdbc-drivers.txt`
+
+You can also specify an external JDBC driver which is not find into maven repositories using `org.infinispan.test.database.jdbc.drivers.external` system property, e.g.::
+`mvn -Dorg.infinispan.test.database.jdbc.drivers.external="/opt/jconn4.jar,/opt/another-jdbc.driver.jar`
 
 To pass in the address of external databases, use the `org.infinispan.server.test.database.id.address` system property, replacing `id` with the name of your database:
 

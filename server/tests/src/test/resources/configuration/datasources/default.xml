@@ -2,26 +2,58 @@
            xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
            xmlns="urn:infinispan:server:13.0">
    <data-source name="h2" jndi-name="jdbc/h2" statistics="true">
-      <connection-factory driver="org.h2.Driver"
+      <connection-factory driver="${org.infinispan.server.test.database.h2.driver:org.h2.Driver}"
                           username="${org.infinispan.server.test.database.h2.username:test}"
                           password="${org.infinispan.server.test.database.h2.password:test}"
-                          url="${org.infinispan.server.test.h2.jdbcUrl}"
+                          url="${org.infinispan.server.test.database.h2.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">
-      <connection-factory driver="com.mysql.cj.jdbc.Driver"
+      <connection-factory driver="${org.infinispan.server.test.database.mysql.driver:com.mysql.cj.jdbc.Driver}"
                           username="${org.infinispan.server.test.database.mysql.username:test}"
                           password="${org.infinispan.server.test.database.mysql.password:test}"
-                          url="${org.infinispan.server.test.mysql.jdbcUrl}"
+                          url="${org.infinispan.server.test.database.mysql.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="postgres" jndi-name="jdbc/postgres" statistics="true">
-      <connection-factory driver="org.postgresql.Driver"
+      <connection-factory driver="${org.infinispan.server.test.database.postgres.driver:org.postgresql.Driver}"
                           username="${org.infinispan.server.test.database.postgres.username:test}"
                           password="${org.infinispan.server.test.database.postgres.username:test}"
-                          url="${org.infinispan.server.test.postgres.jdbcUrl}"
+                          url="${org.infinispan.server.test.database.postgres.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="db2" jndi-name="jdbc/db2" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.db2.driver:com.ibm.db2.jcc.DB2Driver}"
+                          username="${org.infinispan.server.test.database.db2.username}"
+                          password="${org.infinispan.server.test.database.db2.password}"
+                          url="${org.infinispan.server.test.database.db2.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="mariadb" jndi-name="jdbc/mariadb" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.mariadb.driver:org.mariadb.jdbc.Driver}"
+                          username="${org.infinispan.server.test.database.mariadb.username}"
+                          password="${org.infinispan.server.test.database.mariadb.password}"
+                          url="${org.infinispan.server.test.database.mariadb.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="mariadbgalera" jndi-name="jdbc/mariadbgalera" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.mariadbgalera.driver:org.mariadb.jdbc.Driver}"
+                          username="${org.infinispan.server.test.database.mariadbgalera.username}"
+                          password="${org.infinispan.server.test.database.mariadbgalera.password}"
+                          url="${org.infinispan.server.test.database.mariadbgalera.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="sybase" jndi-name="jdbc/sybase" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.sybase.driver:com.sybase.jdbc4.jdbc.SybDriver}"
+                          username="${org.infinispan.server.test.database.sybase.username}"
+                          password="${org.infinispan.server.test.database.sybase.password}"
+                          url="${org.infinispan.server.test.database.sybase.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
