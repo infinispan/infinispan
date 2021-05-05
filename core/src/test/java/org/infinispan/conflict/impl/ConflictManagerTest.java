@@ -274,7 +274,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new DelayStateResponseCommandHandler(latch, delegate)));
    }
 
-   private class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
+   public class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
       final CountDownLatch latch;
 
       DelayStateResponseCommandHandler(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
