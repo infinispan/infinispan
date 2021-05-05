@@ -22,6 +22,7 @@
         <module>client</module>
         <module>embedded</module>
         <module>store</module>
+        <module>servertask</module>
     </modules>
 
     <dependencies>
