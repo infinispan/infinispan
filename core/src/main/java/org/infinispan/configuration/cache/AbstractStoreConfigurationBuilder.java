@@ -36,8 +36,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
-
-   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
+   protected final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
       super(builder);

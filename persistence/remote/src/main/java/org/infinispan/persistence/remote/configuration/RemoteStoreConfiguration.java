@@ -2,7 +2,6 @@ package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.persistence.remote.configuration.Element.REMOTE_STORE;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
@@ -10,7 +9,6 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
@@ -57,7 +55,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
-   private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
@@ -105,7 +102,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       this.connectionPool = connectionPool;
       this.security = security;
       this.servers = servers;
-      this.subElements = new ArrayList<>(super.subElements());
       subElements.add(connectionPool);
       subElements.add(asyncExecutorFactory);
       subElements.add(security);
@@ -119,11 +115,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    @Override
    public ElementDefinition<RemoteStoreConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {

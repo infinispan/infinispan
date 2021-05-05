@@ -40,13 +40,10 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    private static final Set<Class<? extends StoreConfigurationBuilder<?, ?>>> AVAILABLE_BUILDERS =
          Configurations.lookupPersistenceBuilders();
 
-   private static List<Class<? extends StoreConfigurationBuilder<?, ?>>> subElements = new ArrayList<>();
-
    protected PersistenceConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = PersistenceConfiguration.attributeDefinitionSet();
    }
-
 
    public StoreConfigurationBuilder getBuilderFromName(String name) {
       Optional<Class<? extends StoreConfigurationBuilder<?, ?>>> first = AVAILABLE_BUILDERS.stream().filter(klass -> {

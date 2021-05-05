@@ -50,11 +50,6 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
 
 
    @Override
-   public List<ConfigurationInfo> subElements() {
-      return Arrays.asList(async());
-   }
-
-   @Override
    public SingleFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
       AttributeSet set = SingleFileStoreConfiguration.attributeDefinitionSet();
       set.read(attributes);

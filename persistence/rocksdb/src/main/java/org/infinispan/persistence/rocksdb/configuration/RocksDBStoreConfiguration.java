@@ -2,9 +2,6 @@ package org.infinispan.persistence.rocksdb.configuration;
 
 import static org.infinispan.persistence.rocksdb.configuration.Element.ROCKSDB_STORE;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -56,6 +53,7 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
       cacheSize = attributes.attribute(CACHE_SIZE);
       clearThreshold = attributes.attribute(CLEAR_THRESHOLD);
       this.expiration = expiration;
+      subElements.add(expiration);
    }
 
    public RocksDBExpirationConfiguration expiration() {
@@ -65,11 +63,6 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
    @Override
    public ElementDefinition getElementDefinition() {
       return ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return Collections.singletonList(expiration);
    }
 
    @Override

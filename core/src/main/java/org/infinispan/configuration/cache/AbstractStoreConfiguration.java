@@ -23,7 +23,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
-   private final List<ConfigurationInfo> subElements = new ArrayList<>();
+   protected final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
