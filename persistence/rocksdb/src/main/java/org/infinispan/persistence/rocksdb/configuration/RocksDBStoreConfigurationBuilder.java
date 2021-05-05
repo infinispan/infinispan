@@ -7,9 +7,6 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfi
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.COMPRESSION_TYPE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -31,6 +28,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       this(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
+      subElements.add(expiration);
    }
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributeSet) {
@@ -40,11 +38,6 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    @Override
    public ElementDefinition getElementDefinition() {
       return RocksDBStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Collections.singletonList(expiration);
    }
 
    @Override

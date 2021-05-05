@@ -7,8 +7,6 @@ import static org.infinispan.persistence.jdbc.configuration.Element.STRING_KEYED
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.PROPERTIES;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
@@ -36,6 +34,7 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
    public JdbcStringBasedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JdbcStringBasedStoreConfiguration.attributeDefinitionSet());
       table = new StringTableManipulationConfigurationBuilder(this);
+      subElements.add(table);
    }
 
    @Override
@@ -63,11 +62,6 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
    @Override
    public ElementDefinition getElementDefinition() {
       return JdbcStringBasedStoreConfiguration.ELEMENT_DEFINITION;
-   }
-
-   @Override
-   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Collections.singletonList(table);
    }
 
    @Override

@@ -26,7 +26,6 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
    public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
    private final IndexConfiguration index;
    private final DataConfiguration data;
-   private final List<ConfigurationInfo> elements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SoftIndexFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), OPEN_FILES_LIMIT, COMPACTION_THRESHOLD);
@@ -46,12 +45,7 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
       super(attributes, async);
       index = indexConfiguration;
       data = dataConfiguration;
-      elements = Arrays.asList(index, data);
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return elements;
+      subElements.addAll(Arrays.asList(index, data));
    }
 
    public String dataLocation() {

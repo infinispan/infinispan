@@ -1,8 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -32,8 +29,6 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
    private final Attribute<Integer> writeQueryTimeout;
    private final ConnectionFactoryConfiguration connectionFactory;
 
-   private final List<ConfigurationInfo> subElements;
-
    protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, ConnectionFactoryConfiguration connectionFactory) {
       super(attributes, async);
       this.connectionFactory = connectionFactory;
@@ -43,13 +38,7 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
       readQueryTimeout = attributes.attribute(READ_QUERY_TIMEOUT);
       writeQueryTimeout = attributes.attribute(WRITE_QUERY_TIMEOUT);
-      subElements = new ArrayList<>(super.subElements());
       subElements.add(connectionFactory);
-   }
-
-   @Override
-   public List<ConfigurationInfo> subElements() {
-      return subElements;
    }
 
    public ConnectionFactoryConfiguration connectionFactory() {
