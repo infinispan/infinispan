@@ -2,9 +2,13 @@ package org.infinispan.server.configuration.security;
 
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_LIFESPAN;
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_MAX_SIZE;
+import static org.infinispan.server.configuration.security.RealmConfiguration.DEFAULT_REALM;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
@@ -13,7 +17,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Element;
-
 /**
  * @since 10.0
  */
@@ -27,6 +30,11 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       attributes.attribute(RealmConfiguration.NAME).set(name);
    }
 
+   public RealmConfigurationBuilder defaultRealm(String defaultRealm) {
+      this.attributes.attribute(DEFAULT_REALM).set(defaultRealm);
+      return this;
+   }
+
    public RealmConfigurationBuilder cacheMaxSize(int size) {
       this.attributes.attribute(CACHE_MAX_SIZE).set(size);
       return this;
@@ -35,6 +43,10 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    public RealmConfigurationBuilder cacheLifespan(long lifespan) {
       this.attributes.attribute(CACHE_LIFESPAN).set(lifespan);
       return this;
+   }
+
+   public DistributedRealmConfigurationBuilder distributedConfiguration() {
+      return addBuilder(Element.DISTRIBUTED_REALM, new DistributedRealmConfigurationBuilder());
    }
 
    public FileSystemRealmConfigurationBuilder fileSystemConfiguration() {
@@ -54,7 +66,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    public TrustStoreRealmConfigurationBuilder trustStoreConfiguration() {
-      return addBuilder(Element.TRUSTSTORE_REALM, new TrustStoreRealmConfigurationBuilder(), 0);
+      return addBuilder(Element.TRUSTSTORE_REALM, new TrustStoreRealmConfigurationBuilder());
    }
 
    public PropertiesRealmConfigurationBuilder propertiesConfiguration() {
@@ -66,27 +78,30 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    private <T extends RealmProviderBuilder> T addBuilder(Enum<?> type, T builder) {
-      return addBuilder(type, builder, builders.size());
-   }
-
-   private <T extends RealmProviderBuilder> T addBuilder(Enum<?> type, T builder, int index) {
       for(RealmProviderBuilder<?> b : builders) {
          if (b.getClass().equals(builder.getClass())) {
             throw Server.log.duplicateRealmType(type.toString(), attributes.attribute(RealmConfiguration.NAME).get());
          }
       }
-      builders.add(index, builder);
+      builders.add(builder);
       return builder;
    }
 
    @Override
    public void validate() {
       serverIdentitiesConfiguration.validate();
-      builders.forEach(Builder::validate);
+      Set<String> names = new HashSet<>();
+      for(RealmProviderBuilder<?> builder : builders) {
+         if (names.contains(builder.name())) {
+            throw Server.log.duplicateRealm(builder.name());
+         }
+         builder.validate();
+      }
    }
 
    @Override
    public RealmConfiguration create() {
+      Collections.sort(builders);
       return new RealmConfiguration(
             attributes.protect(),
             serverIdentitiesConfiguration.create(),

@@ -9,6 +9,7 @@ include::{topics}/ref_server_realm_ldap.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_ldap_rewrite.adoc[leveloffset=+2]
 include::{topics}/ref_server_realm_token.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_trust.adoc[leveloffset=+1]
+include::{topics}/ref_server_realm_distributed.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

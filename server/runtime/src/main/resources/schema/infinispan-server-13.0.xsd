@@ -993,8 +993,16 @@
          <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-token" name="token-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-trust" name="truststore-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-distributed" name="distributed-realm" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="default-realm" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies which of the underlying realms will be used by default. It defaults to the first realm.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="cache-max-size" type="xs:int" default="256">
          <xs:annotation>
             <xs:documentation>
@@ -1713,6 +1721,23 @@
 
    <xs:complexType name="security-realm-trust">
       <xs:attribute type="xs:string" name="name"/>
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-distributed">
+      <xs:annotation>
+         <xs:documentation>
+            A realm definition for authentication and authorization of identities distributed between multiple realms.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute name="realms" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               A list of security realms that should be used for authentication until one succeeds.
+               If no realms are specified, all of the available realms will be used.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:attribute name="security-realm" type="xs:string">

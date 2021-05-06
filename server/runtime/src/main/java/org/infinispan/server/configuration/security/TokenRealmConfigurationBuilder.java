@@ -34,6 +34,11 @@ public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<Toke
       return this;
    }
 
+   @Override
+   public String name() {
+      return attributes.attribute(DistributedRealmConfiguration.NAME).get();
+   }
+
    public TokenRealmConfigurationBuilder authServerUrl(String authServerUrl) {
       attributes.attribute(AUTH_SERVER_URL).set(authServerUrl);
       return this;
@@ -70,5 +75,10 @@ public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<Toke
       jwtConfiguration.read(template.jwtConfiguration());
       oauth2Configuration.read(template.oauth2Configuration());
       return this;
+   }
+
+   @Override
+   public int compareTo(RealmProviderBuilder o) {
+      return 0; // Irrelevant
    }
 }

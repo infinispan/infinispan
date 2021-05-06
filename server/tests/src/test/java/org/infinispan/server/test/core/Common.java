@@ -26,7 +26,6 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.test.TestingUtil;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -37,8 +36,6 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  **/
 public class Common {
    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
-
-   public static final Map<String, User> USER_MAP;
 
    public static final Collection<Object[]> SASL_MECHS;
 
@@ -57,14 +54,6 @@ public class Common {
    };
 
    static {
-      USER_MAP = new HashMap<>();
-      USER_MAP.put("admin", new User("admin", "adminPassword", AuthorizationPermission.ALL.name()));
-      USER_MAP.put("supervisor", new User("supervisorPassword", AuthorizationPermission.ALL_READ.name(), AuthorizationPermission.ALL_WRITE.name()));
-      USER_MAP.put("reader", new User("reader", "readerPassword", AuthorizationPermission.ALL_READ.name()));
-      USER_MAP.put("writer", new User("writer", "writerPassword", AuthorizationPermission.ALL_WRITE.name()));
-      USER_MAP.put("unprivileged", new User("unprivileged", "unprivilegedPassword", AuthorizationPermission.NONE.name()));
-      USER_MAP.put("executor", new User("executor", "executorPassword", AuthorizationPermission.EXEC.name()));
-
       SASL_MECHS = new ArrayList<>();
       SASL_MECHS.add(new Object[]{""});
       SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.PLAIN});
@@ -104,18 +93,6 @@ public class Common {
       }
       assertEquals(completeStatus, response.getStatus());
       return response;
-   }
-
-   public static class User {
-      final String username;
-      final char[] password;
-      final Iterable<String> groups;
-
-      public User(String username, String password, String... groups) {
-         this.username = username;
-         this.password = password.toCharArray();
-         this.groups = Arrays.asList(groups);
-      }
    }
 
    public static <T> T sync(CompletionStage<T> stage) {
