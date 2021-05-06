@@ -10,5 +10,5 @@
 	<artifactId>server-task</artifactId>
 	<packaging>jar</packaging>
 	<name>Infinispan Server Task Archetype</name>
-	<description>Maven archetype to create a Infinispan ServerTask implementation.</description>
+	<description>Maven archetype to create a Infinispan Server Task implementation.</description>
 </project>

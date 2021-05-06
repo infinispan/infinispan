@@ -30,7 +30,6 @@ public class CustomServerTask<Object> implements ServerTask<Object> {
     * Computes a result. This method is defined in the java.util.concurrent.Callable interface and
     * is invoked with server tasks.
     */
-
    @Override
    public Object call() {
       // TODO add task logic here.
@@ -40,7 +39,6 @@ public class CustomServerTask<Object> implements ServerTask<Object> {
    /**
     * Returns unique names for tasks. Clients invoke tasks with these names.
     */
-
    @Override
    public String getName() {
       // TODO update to return the name of the task

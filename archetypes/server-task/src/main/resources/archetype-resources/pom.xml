@@ -5,12 +5,11 @@
     <artifactId>\${artifactId}</artifactId>
     <packaging>jar</packaging>
     <version>\${version}</version>
-    <name>Custom Cache Store</name>
-    <description>Archetype project for building custom cache stores for use within Infinispan</description>
+    <name>Server Task</name>
+    <description>Archetype project for building Server Task for use within Infinispan</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
     </properties>
 
     <dependencyManagement>
