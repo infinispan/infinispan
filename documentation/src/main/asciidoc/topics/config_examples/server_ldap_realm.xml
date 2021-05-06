@@ -16,7 +16,8 @@
                     direct-verification="true">
             <!-- Defines how principals are mapped to LDAP entries. -->
             <identity-mapping rdn-identifier="uid"
-                              search-dn="ou=People,dc=infinispan,dc=org">
+                              search-dn="ou=People,dc=infinispan,dc=org"
+                              search-recursive="false">
                <!-- Retrieves all the groups of which the user is a member. -->
                <attribute-mapping>
                   <attribute from="cn"

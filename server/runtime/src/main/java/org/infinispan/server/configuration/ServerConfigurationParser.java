@@ -701,6 +701,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case RDN_IDENTIFIER:
                identityMapBuilder.rdnIdentifier(value);
                break;
+            case SEARCH_RECURSIVE:
+               identityMapBuilder.searchRecursive(Boolean.valueOf(value));
+               break;
+            case FILTER_NAME:
+               identityMapBuilder.filterName(value);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
