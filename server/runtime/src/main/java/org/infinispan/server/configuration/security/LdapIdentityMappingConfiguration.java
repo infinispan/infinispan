@@ -15,11 +15,13 @@ import org.infinispan.server.configuration.Element;
  */
 public class LdapIdentityMappingConfiguration implements ConfigurationInfo {
 
-   static final AttributeDefinition<String> RDN_IDENTIFIER = AttributeDefinition.builder("rdnIdentifier", null, String.class).build();
-   static final AttributeDefinition<String> SEARCH_BASE_DN = AttributeDefinition.builder("searchBaseDn", null, String.class).build();
+   static final AttributeDefinition<String> RDN_IDENTIFIER = AttributeDefinition.builder("rdnIdentifier", null, String.class).immutable().build();
+   static final AttributeDefinition<String> SEARCH_BASE_DN = AttributeDefinition.builder("searchBaseDn", null, String.class).immutable().build();
+   static final AttributeDefinition<Boolean> SEARCH_RECURSIVE = AttributeDefinition.builder("searchRecursive", false, Boolean.class).immutable().build();
+   static final AttributeDefinition<String> FILTER_NAME = AttributeDefinition.builder("filterName", "(rdn_identifier={0})", String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LdapIdentityMappingConfiguration.class, RDN_IDENTIFIER, SEARCH_BASE_DN);
+      return new AttributeSet(LdapIdentityMappingConfiguration.class, RDN_IDENTIFIER, SEARCH_BASE_DN, SEARCH_RECURSIVE, FILTER_NAME);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.IDENTITY_MAPPING.toString());

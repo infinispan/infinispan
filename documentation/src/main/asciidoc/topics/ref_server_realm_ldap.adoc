@@ -23,9 +23,12 @@ The principal for LDAP connections must have necessary privileges to perform
 LDAP queries and access specific attributes.
 ====
 
-As an alternative to verifying user credentials with the `direct-verification` attribute, you can specify a LDAP password with the `user-password-mapper` element.
+As an alternative to verifying user credentials with the `direct-verification` attribute, you can specify an LDAP password with the `user-password-mapper` element.
 
 The `rdn-identifier` attribute specifies an LDAP attribute that finds the user entry based on a provided identifier, which is typically a username; for example, the `uid` or `sAMAccountName` attribute.
+Add `search-recursive="true"` to the configuration to search the directory recursively.
+By default, the search for the user entry uses the `(rdn_identifier={0})` filter.
+Specify a different filter with the `filter-name` attribute.
 
 The `attribute-mapping` element retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
 

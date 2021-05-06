@@ -5,7 +5,7 @@
       <security-realm name="default">
          <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
-            <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
+            <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
                <attribute-mapping>
                   <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
                              filter-dn="ou=Roles,dc=infinispan,dc=org"/>
