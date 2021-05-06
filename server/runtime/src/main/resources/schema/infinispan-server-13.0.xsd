@@ -1268,6 +1268,21 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="search-recursive" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Indicates if queries are recursive.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="filter-name" type="xs:string" default="(rdn_identifier={0})">
+         <xs:annotation>
+            <xs:documentation>
+               The LDAP filter for getting identity by name.
+               The string "{0}" will be replaced by the searched identity name and the "rdn_identifier" will be the value of the "rdn-identifier" attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="ldap-attribute-mapping">
