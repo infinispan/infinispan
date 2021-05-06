@@ -24,6 +24,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.Op;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -108,7 +109,12 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
       //when
       Op op = new Op(0xA0, (byte) 0x01, (byte) 20, client().defaultCacheName(), k(m), 0, 0, v(m), 0, 0, (byte) 1, 0);
-      boolean success = client().writeOp(op, false);
+      boolean success = false;
+      try {
+         success = client().writeOp(op, false);
+      } catch (TimeoutException e) {
+         // Ignore the exception caused by https://issues.redhat.com/browse/WFSSL-73
+      }
 
       //assert
       Assert.assertFalse(success);

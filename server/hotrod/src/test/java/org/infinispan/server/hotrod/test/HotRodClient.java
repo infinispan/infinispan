@@ -60,6 +60,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -156,7 +157,10 @@ public class HotRodClient implements Closeable {
 
    @Override
    public void close() {
-      stop().awaitUninterruptibly();
+      Future<?> stopFuture = stop();
+      if (!stopFuture.awaitUninterruptibly(30, TimeUnit.SECONDS))
+         throw new TimeoutException();
+      stopFuture.syncUninterruptibly();
    }
 
    public Future<?> stop() {
@@ -209,7 +213,8 @@ public class HotRodClient implements Closeable {
       Op op = new Op(0xA0, protocolVersion, (byte) 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1, (byte) 0, 0);
       idToOp.put(op.id, op);
       ChannelFuture future = ch.writeAndFlush(op);
-      future.awaitUninterruptibly();
+      if (!future.awaitUninterruptibly(30, TimeUnit.SECONDS))
+         throw new TimeoutException();
       assertFalse(future.isSuccess());
    }
 
@@ -307,9 +312,12 @@ public class HotRodClient implements Closeable {
    public boolean writeOp(Op op, boolean assertSuccess) {
       idToOp.put(op.id, op);
       ChannelFuture future = ch.writeAndFlush(op);
-      future.awaitUninterruptibly();
-      if (assertSuccess)
-         assertTrue(future.isSuccess());
+      if (!future.awaitUninterruptibly(30, TimeUnit.SECONDS))
+         throw new TimeoutException();
+      if (assertSuccess) {
+         // Report the exception if failed
+         future.syncUninterruptibly();
+      }
       return future.isSuccess();
    }
 
