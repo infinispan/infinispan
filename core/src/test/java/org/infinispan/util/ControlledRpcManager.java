@@ -112,12 +112,12 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    @Stop
    public void stopBlocking() {
-      log.debug("Stopping intercepting RPC calls");
+      log.debugf("Stopping intercepting RPC calls on %s", realOne.getAddress());
       stopped = true;
       executor.shutdownNow();
       throwGlobalError();
       if (!waiters.isEmpty()) {
-         fail("Stopped intercepting RPCs, but there are " + waiters.size() + " waiters in the queue");
+         fail("Stopped intercepting RPCs on " + realOne.getAddress() + ", but there are " + waiters.size() + " waiters in the queue");
       }
    }
 
