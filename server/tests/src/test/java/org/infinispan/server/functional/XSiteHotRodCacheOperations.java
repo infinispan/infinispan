@@ -73,7 +73,7 @@ public class XSiteHotRodCacheOperations {
    }
 
    @Test
-   public void testHotRodOperationsWithOffHeapSingleFileStore() {
+   public void testHotRodOperationsWithOffHeapFileStore() {
       String lonXML = String.format(LON_CACHE_OFF_HEAP, SERVER_TEST.getMethodName());
       RemoteCache<Integer, Integer> lonCache = SERVER_TEST.hotrod(LON)
             .withServerConfiguration(new XMLStringConfiguration(lonXML)).create();
