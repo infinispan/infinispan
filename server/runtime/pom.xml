@@ -88,10 +88,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-persistence-soft-index</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-client</artifactId>
       </dependency>
       <dependency>

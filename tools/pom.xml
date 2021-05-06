@@ -80,11 +80,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-persistence-soft-index</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>gnu.getopt</groupId>
          <artifactId>java-getopt</artifactId>
       </dependency>

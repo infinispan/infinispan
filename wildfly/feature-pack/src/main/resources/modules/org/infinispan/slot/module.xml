@@ -19,7 +19,6 @@
       <artifact name="${org.infinispan:infinispan-jcache-commons}"/>
       <artifact name="${org.infinispan:infinispan-multimap}"/>
       <artifact name="${org.infinispan:infinispan-objectfilter}"/>
-      <artifact name="${org.infinispan:infinispan-persistence-soft-index}"/>
       <artifact name="${org.infinispan:infinispan-query}"/>
       <artifact name="${org.infinispan:infinispan-query-core}"/>
       <artifact name="${org.infinispan:infinispan-query-dsl}"/>
