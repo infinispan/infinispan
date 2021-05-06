@@ -2,7 +2,9 @@ package org.infinispan.server.configuration.security;
 
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -33,12 +35,14 @@ import org.wildfly.security.ssl.SSLContextBuilder;
  */
 public class RealmConfiguration extends ConfigurationElement<RealmConfiguration> {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
+   static final AttributeDefinition<String> DEFAULT_REALM = AttributeDefinition.builder(Attribute.DEFAULT_REALM, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder(Attribute.CACHE_MAX_SIZE, 256).build();
    static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, -1l).build();
    private EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
+   Map<String, SecurityRealm> realms; // visible to DistributedRealmConfiguration
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RealmConfiguration.class, NAME, CACHE_MAX_SIZE, CACHE_LIFESPAN);
+      return new AttributeSet(RealmConfiguration.class, NAME, DEFAULT_REALM, CACHE_MAX_SIZE, CACHE_LIFESPAN);
    }
 
    private final ServerIdentitiesConfiguration serverIdentitiesConfiguration;
@@ -113,9 +117,10 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
          // Initialize the SSLContexts now, because they may be needed for client connections of the LDAP or Token realms
          buildSSLContexts(sslContextBuilder);
       }
-
+      realms = new HashMap<>(realmProviders.size());
       for(RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
+         realms.put(provider.name(), realm);
          if (realm != null) {
             domainBuilder.addRealm(provider.name(), cacheable(realm)).build();
             if (domainBuilder.getDefaultRealmName() == null) {

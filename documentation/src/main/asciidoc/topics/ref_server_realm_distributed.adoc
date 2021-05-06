@@ -1,0 +1,15 @@
+[id='distributed_realm-{context}']
+= Distributed Realm
+A distributed realm combines multiple realms as one: when authenticating a user, each realm will be tried in turn
+until one is found which can perform the authentication.
+
+.Distributed realm configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_distributed_realm.xml[]
+----
+
+.Supported authentication mechanisms
+
+Distributed realms support the authentication mechanisms of the underlying realms.

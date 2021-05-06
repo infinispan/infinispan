@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.DistributedRealmConfiguration.NAME;
+
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -27,6 +29,11 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
    public LdapRealmConfigurationBuilder name(String name) {
       attributes.attribute(LdapRealmConfiguration.NAME).set(name);
       return this;
+   }
+
+   @Override
+   public String name() {
+      return attributes.attribute(NAME).get();
    }
 
    public LdapRealmConfigurationBuilder url(String url) {
@@ -99,5 +106,10 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       attributes.read(template.attributes());
       identityMapping.read(template.identityMapping());
       return this;
+   }
+
+   @Override
+   public int compareTo(RealmProviderBuilder o) {
+      return 0; // Irrelevant
    }
 }

@@ -14,6 +14,10 @@ public enum Element {
    ATTRIBUTE,
    ATTRIBUTE_MAPPING,
    ATTRIBUTE_REFERENCE,
+   BINDINGS,
+   CONNECTION_PROPERTIES,
+   CONNECTORS,
+   DISTRIBUTED_REALM,
    ENDPOINT,
    ENDPOINTS,
    ENGINE,
@@ -70,9 +74,7 @@ public enum Element {
    IP_FILTER,
    ACCEPT,
    REJECT,
-   BINDINGS,
-   CONNECTION_PROPERTIES,
-   CONNECTORS;
+   ;
 
    private static final Map<String, Element> ELEMENTS;
 

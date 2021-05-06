@@ -1,0 +1,31 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+          xmlns="urn:infinispan:server:13.0">
+   <security-realms>
+      <security-realm name="default" default-realm="distributed">
+         <server-identities>
+            <ssl>
+               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
+                         alias="server"/>
+               <truststore path="trust.pfx"  relative-to="infinispan.server.config.path" password="secret"/>
+            </ssl>
+         </server-identities>
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                     principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+            <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
+               <attribute-mapping>
+                  <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                             filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+               </attribute-mapping>
+               <user-password-mapper from="userPassword"/>
+            </identity-mapping>
+         </ldap-realm>
+         <properties-realm groups-attribute="Roles">
+            <user-properties path="users.properties" relative-to="infinispan.server.config.path"/>
+            <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
+         </properties-realm>
+         <truststore-realm/>
+         <distributed-realm/>
+      </security-realm>
+   </security-realms>
+</security>

@@ -235,4 +235,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot add multiple realms of type '%s' to security realm '%s'", id = 80062)
    CacheConfigurationException duplicateRealmType(String type, String realm);
+
+   @Message(value = "Duplicate realm '%s'", id = 80063)
+   CacheConfigurationException duplicateRealm(String realmName);
+
+   @Message(value = "Unknown realm '%s'", id = 80064)
+   CacheConfigurationException unknownRealm(String realmName);
 }
