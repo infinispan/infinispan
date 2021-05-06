@@ -1,0 +1,15 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+          xmlns="urn:infinispan:server:{schemaversion}">
+   <security-realms>
+      <security-realm name="default">
+         <ldap-realm>
+            <!-- ... -->
+         </ldap-realm>
+         <properties-realm>
+            <!-- ... -->
+         </properties-realm>
+         <distributed-realm/> <!-- will use both the ldap and properties realms -->
+      </security-realm>
+   </security-realms>
+</security>

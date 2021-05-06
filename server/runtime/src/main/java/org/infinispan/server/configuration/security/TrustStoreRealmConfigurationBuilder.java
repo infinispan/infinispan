@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.DistributedRealmConfiguration.NAME;
+
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -18,6 +20,11 @@ public class TrustStoreRealmConfigurationBuilder implements RealmProviderBuilder
    }
 
    @Override
+   public String name() {
+      return attributes.attribute(NAME).get();
+   }
+
+   @Override
    public TrustStoreRealmConfiguration create() {
       return new TrustStoreRealmConfiguration(attributes.protect());
    }
@@ -26,5 +33,10 @@ public class TrustStoreRealmConfigurationBuilder implements RealmProviderBuilder
    public TrustStoreRealmConfigurationBuilder read(TrustStoreRealmConfiguration template) {
       attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public int compareTo(RealmProviderBuilder o) {
+      return -1; // Must be the first
    }
 }

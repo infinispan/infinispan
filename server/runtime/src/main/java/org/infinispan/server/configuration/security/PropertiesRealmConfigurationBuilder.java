@@ -20,6 +20,11 @@ public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder
       return this;
    }
 
+   @Override
+   public String name() {
+      return attributes.attribute(DistributedRealmConfiguration.NAME).get();
+   }
+
    public PropertiesRealmConfigurationBuilder groupAttribute(String groupAttribute) {
       attributes.attribute(GROUPS_ATTRIBUTE).set(groupAttribute);
       return this;
@@ -50,5 +55,10 @@ public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder
       userProperties.read(template.userProperties());
       groupProperties.read(template.groupProperties());
       return this;
+   }
+
+   @Override
+   public int compareTo(RealmProviderBuilder o) {
+      return 0; // Irrelevant
    }
 }

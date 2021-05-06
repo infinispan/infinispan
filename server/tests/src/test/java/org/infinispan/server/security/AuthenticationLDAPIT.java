@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.category.Security;
@@ -57,8 +58,8 @@ public class AuthenticationLDAPIT {
                .saslMechanism(mechanism)
                .serverName("infinispan")
                .realm("default")
-               .username("admin")
-               .password("strongPassword");
+               .username(TestUser.ADMIN.getUser())
+               .password(TestUser.ADMIN.getPassword());
       }
 
       try {

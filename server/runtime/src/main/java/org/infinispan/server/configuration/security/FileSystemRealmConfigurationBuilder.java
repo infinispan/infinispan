@@ -23,6 +23,11 @@ public class FileSystemRealmConfigurationBuilder implements RealmProviderBuilder
       return this;
    }
 
+   @Override
+   public String name() {
+      return attributes.attribute(DistributedRealmConfiguration.NAME).get();
+   }
+
    public FileSystemRealmConfigurationBuilder path(String path) {
       attributes.attribute(PATH).set(path);
       return this;
@@ -52,5 +57,10 @@ public class FileSystemRealmConfigurationBuilder implements RealmProviderBuilder
    public FileSystemRealmConfigurationBuilder read(FileSystemRealmConfiguration template) {
       attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public int compareTo(RealmProviderBuilder o) {
+      return 0; // Irrelevant
    }
 }
