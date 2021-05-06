@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.SEARCH_RECURSIVE;
+import static org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration.FILTER_NAME;
 import static org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration.RDN_IDENTIFIER;
 import static org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration.SEARCH_BASE_DN;
 
@@ -34,6 +36,20 @@ public class LdapIdentityMappingConfigurationBuilder implements Builder<LdapIden
    public LdapIdentityMappingConfigurationBuilder searchBaseDn(String searchBaseDn) {
       attributes.attribute(SEARCH_BASE_DN).set(searchBaseDn);
       ldapConfigurationBuilder.getIdentityMappingBuilder().setSearchDn(searchBaseDn);
+      return this;
+   }
+
+   public LdapIdentityMappingConfigurationBuilder searchRecursive(boolean searchRecursive) {
+      attributes.attribute(SEARCH_RECURSIVE).set(searchRecursive);
+      if (searchRecursive) {
+         ldapConfigurationBuilder.getIdentityMappingBuilder().searchRecursive();
+      }
+      return this;
+   }
+
+   public LdapIdentityMappingConfigurationBuilder filterName(String filterName) {
+      attributes.attribute(FILTER_NAME).set(filterName);
+      ldapConfigurationBuilder.getIdentityMappingBuilder().setFilterName(filterName);
       return this;
    }
 
