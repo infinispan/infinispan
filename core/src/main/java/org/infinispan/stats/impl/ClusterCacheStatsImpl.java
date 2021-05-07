@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,9 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
@@ -106,13 +109,18 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       ConcurrentMap<Address, Map<String, Number>> resultMap = new ConcurrentHashMap<>();
       TriConsumer<Address, Map<String, Number>, Throwable> triConsumer = (a, v, t) -> {
          if (t != null) {
+            if (t instanceof CacheConfigurationException || t instanceof IllegalLifecycleStateException) {
+               log.tracef(t,"Exception encountered on %s whilst trying to calculate stats for cache %s", a, cache.getName());
+               return;
+            }
             throw new CacheException(t);
          }
          if (a == null) {
             // Local cache manager reports null for address
             a = LocalModeAddress.INSTANCE;
          }
-         resultMap.put(a, v);
+         if (!v.isEmpty())
+            resultMap.put(a, v);
       };
       CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedCacheStatsCallable(cache.getName()), triConsumer);
       future.join();
@@ -478,6 +486,9 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
       @Override
       public Map<String, Number> apply(EmbeddedCacheManager embeddedCacheManager) {
+         if (!embeddedCacheManager.cacheExists(cacheName))
+            return Collections.emptyMap();
+
          AdvancedCache<Object, Object> remoteCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
 
          Map<String, Number> map = new HashMap<>();
