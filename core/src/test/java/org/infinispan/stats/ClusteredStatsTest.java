@@ -1,16 +1,22 @@
 package org.infinispan.stats;
 
 
+import java.util.stream.IntStream;
+
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.ClusteredStatsTest")
 public class ClusteredStatsTest extends SingleStatsTest {
 
    protected final int CLUSTER_SIZE = 3;
+   protected final String CACHE_NAME = ClusteredStatsTest.class.getSimpleName();
    protected ClusterCacheStats stats;
 
    @Override
@@ -23,11 +29,20 @@ public class ClusteredStatsTest extends SingleStatsTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      configure(cfg);
-      createCluster(cfg, CLUSTER_SIZE);
-      waitForClusterToForm();
-      cache = cache(0);
+      ConfigurationBuilder configBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      configure(configBuilder);
+      Configuration config = configBuilder.build();
+      createCluster(CLUSTER_SIZE);
+      // ISPN-13022 Define the configuration on a subset of nodes to ensure an exception is not thrown if a cluster member
+      // does not contain a cache definition
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+         cacheManagers.get(i).createCache(CACHE_NAME, config);
+      }
+      TestingUtil.blockUntilViewsReceived(30000, cacheManagers);
+      TestingUtil.waitForNoRebalance(
+            IntStream.range(0, CLUSTER_SIZE - 1).mapToObj(i -> cache(i, CACHE_NAME)).toArray(Cache[]::new)
+      );
+      cache = cache(0, CACHE_NAME);
       refreshStats();
    }
 
@@ -36,7 +51,7 @@ public class ClusteredStatsTest extends SingleStatsTest {
          cache.put("key" + i, "value" + i);
       }
 
-      eventuallyEquals(CLUSTER_SIZE * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), () -> {
+      eventuallyEquals((CLUSTER_SIZE - 1) * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), () -> {
          refreshClusterStats();
          return (int) stats.getPassivations();
       });
