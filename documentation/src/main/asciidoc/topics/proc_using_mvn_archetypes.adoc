@@ -26,6 +26,7 @@ $ mvn archetype:generate -DarchetypeGroupId=org.infinispan.archetypes \
 * `client` Creates a sample Hot Rod Java client application.
 * `embedded` Creates a sample application that embeds {brandname}.
 * `store` Creates a sample implementation of a custom cache store.
+* `server-task` Creates a sample implementation of a ServerTask.
 +
 <2> Specifies the {brandname} version to use, for example:
 +
@@ -41,7 +42,7 @@ $ mvn package exec:java
 +
 [NOTE]
 ====
-The `store` archetype does not include a project application,
+The `store` and `server-task` archetype does not include a project application,
 `Application.java`, that you can run.
 ====
 
