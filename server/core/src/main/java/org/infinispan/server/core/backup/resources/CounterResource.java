@@ -2,8 +2,9 @@ package org.infinispan.server.core.backup.resources;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,7 +70,7 @@ public class CounterResource extends AbstractContainerResource {
             Flowable.using(
                   () -> {
                      mkdirs(root);
-                     return Files.newOutputStream(root.resolve(COUNTERS_FILE));
+                     return new DataOutputStream(Files.newOutputStream(root.resolve(COUNTERS_FILE)));
                   },
                   output ->
                         Flowable.fromIterable(resources)
@@ -104,7 +105,7 @@ public class CounterResource extends AbstractContainerResource {
             return;
          }
 
-         try (InputStream is = zip.getInputStream(zipEntry)) {
+         try (DataInputStream is = new DataInputStream(zip.getInputStream(zipEntry))) {
             while (is.available() > 0) {
                CounterBackupEntry entry = readMessageStream(serCtx, CounterBackupEntry.class, is);
                if (!countersToRestore.contains(entry.name)) {
