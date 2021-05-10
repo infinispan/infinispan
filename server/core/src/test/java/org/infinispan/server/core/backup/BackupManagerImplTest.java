@@ -44,6 +44,7 @@ import java.util.zip.ZipFile;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -158,6 +159,31 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                }
             }
       );
+   }
+
+   public void testBackupAndRestoreJson() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      EncodingConfigurationBuilder encoding = builder.encoding();
+      encoding.key().mediaType("application/x-java-object;type=java.lang.String");
+      encoding.value().mediaType(MediaType.APPLICATION_JSON_TYPE);
+      Configuration config = builder.build();
+
+      String name = "testBackupAndRestoreJson";
+      String cacheName = "cache";
+      int numEntries = 1;
+      createAndRestore(
+            (source, backupManager) -> {
+               Cache<String, String> cache = source.createCache(cacheName, config);
+               for (int i = 0; i < numEntries; i++)
+                  cache.put(""+i, String.format("{\"value\":\"%d\"}", i));
+               return backupManager.create(name, null);
+            },
+            (target, backupManager, backup) -> {
+               assertTrue(target.getCacheNames().isEmpty());
+               await(backupManager.restore(name, backup));
+               assertTrue(target.cacheExists(cacheName));
+               assertEquals(numEntries, target.getCache(cacheName).size());
+            });
    }
 
    public void testBackupAndRestoreEntryExceeding256Bytes() {

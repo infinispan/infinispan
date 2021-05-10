@@ -185,8 +185,8 @@ public class CacheResource extends AbstractContainerResource {
             PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
             Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
-            boolean keyMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getValueStorageMediaType());
-            boolean valueMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getValueStorageMediaType());
+            boolean keyMarshalling = !scm.getKeyStorageMediaType().isBinary();
+            boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
 
             SerializationContextRegistry ctxRegistry = SecurityActions.getGlobalComponentRegistry(cm).getComponent(SerializationContextRegistry.class);
             ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
@@ -250,8 +250,8 @@ public class CacheResource extends AbstractContainerResource {
          );
 
          StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
-         boolean keyMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getKeyStorageMediaType());
-         boolean valueMarshalling = MediaType.APPLICATION_OBJECT.equals(scm.getValueStorageMediaType());
+         boolean keyMarshalling = !scm.getKeyStorageMediaType().isBinary();
+         boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
          PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
          Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
