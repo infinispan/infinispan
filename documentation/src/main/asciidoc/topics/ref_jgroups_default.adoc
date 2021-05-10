@@ -1,40 +1,45 @@
-[id='preconfigured_jgroups_stacks-{context}']
+[id='jgroups-default_{context}']
 = Default JGroups Stacks
-Learn about default JGroups stacks that configure cluster transport.
+
+{brandname} provides default JGroups stack files, `default-jgroups-*.xml`, in the `default-configs` directory inside the `infinispan-core-{ispn_version}.jar` file.
+
+ifdef::remote_caches[]
+You can find this JAR file in the `{server_home}/lib` directory.
+endif::remote_caches[]
 
 [%header,cols="2,1,3"]
 |===
-| File name
-| Stack name
-| Description
+|File name
+|Stack name
+|Description
 
-| `default-jgroups-udp.xml`
-| `udp`
-| Uses UDP for transport and UDP multicast for discovery. Suitable for larger clusters (over 100 nodes) or if you are using replicated caches or invalidation mode. Minimizes the number of open sockets.
+|`default-jgroups-udp.xml`
+|`udp`
+|Uses UDP for transport and UDP multicast for discovery. Suitable for larger clusters (over 100 nodes) or if you are using replicated caches or invalidation mode. Minimizes the number of open sockets.
 
-| `default-jgroups-tcp.xml`
-| `tcp`
-| Uses TCP for transport and the `MPING` protocol for discovery, which uses
+|`default-jgroups-tcp.xml`
+|`tcp`
+|Uses TCP for transport and the `MPING` protocol for discovery, which uses
 `UDP` multicast. Suitable for smaller clusters (under 100 nodes) _only if_ you are using distributed caches because TCP is more efficient than UDP as a point-to-point protocol.
 
-| `default-jgroups-ec2.xml`
-| `ec2`
-| Uses TCP for transport and `S3_PING` for discovery. Suitable for Amazon EC2 nodes where UDP multicast is not available.
+|`default-jgroups-kubernetes.xml`
+|`kubernetes`
+|Uses TCP for transport and `DNS_PING` for discovery. Suitable for Kubernetes and {openshift} nodes where UDP multicast is not always available.
 
-| `default-jgroups-kubernetes.xml`
-| `kubernetes`
-| Uses TCP for transport and `DNS_PING` for discovery. Suitable for Kubernetes and {openshift} nodes where UDP multicast is not always available.
+|`default-jgroups-ec2.xml`
+|`ec2`
+|Uses TCP for transport and `NATIVE_S3_PING` for discovery. Suitable for Amazon EC2 nodes where UDP multicast is not available. Requires additional dependencies.
 
-| `default-jgroups-google.xml`
-| `google`
-| Uses TCP for transport and `GOOGLE_PING2` for discovery. Suitable for Google Cloud Platform nodes where UDP multicast is not available.
+|`default-jgroups-google.xml`
+|`google`
+|Uses TCP for transport and `GOOGLE_PING2` for discovery. Suitable for Google Cloud Platform nodes where UDP multicast is not available. Requires additional dependencies.
 
-| `default-jgroups-azure.xml`
-| `azure`
-| Uses TCP for transport and `AZURE_PING` for discovery. Suitable for Microsoft Azure nodes where UDP multicast is not available.
+|`default-jgroups-azure.xml`
+|`azure`
+|Uses TCP for transport and `AZURE_PING` for discovery. Suitable for Microsoft Azure nodes where UDP multicast is not available. Requires additional dependencies.
 
 |===
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#protlist[JGroups Protocols]
