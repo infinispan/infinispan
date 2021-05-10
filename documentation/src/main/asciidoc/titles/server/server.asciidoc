@@ -17,7 +17,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //
 // Conditional statements
 //
-:server_mode:
+:remote_caches:
 
 //Title
 = Deploying and Configuring {brandname} {infinispanversion} Servers

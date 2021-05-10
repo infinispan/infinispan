@@ -1,4 +1,4 @@
-[id='discovery_tcpgossip-{context}']
+[id='discovery-tcp-gossip_{context}']
 = TCPGOSSIP
 Gossip routers provide a centralized location on the network from which your
 {brandname} cluster can retrieve addresses of other nodes.
@@ -14,6 +14,6 @@ You inject the address (`IP:PORT`) of the Gossip router into {brandname} nodes a
 include::config_examples/tcpgossip.xml[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#TCPGOSSIP_Prot[JGroups Gossip Router]

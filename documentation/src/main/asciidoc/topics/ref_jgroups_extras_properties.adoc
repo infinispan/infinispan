@@ -1,0 +1,95 @@
+[id='jgroups-extras-properties_{context}']
+= System Properties for Cloud Discovery Protocols
+
+Use the following properties to configure JGroups discovery protocols for hosted platforms.
+
+== Amazon EC2
+
+System properties for configuring `NATIVE_S3_PING`.
+
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.s3.region_name`
+| Name of the Amazon S3 region.
+| No default value.
+| Optional
+
+| `jgroups.s3.bucket_name`
+| Name of the Amazon S3 bucket. The name must exist and be unique.
+| No default value.
+| Optional
+
+|===
+
+== Google Cloud Platform
+
+System properties for configuring `GOOGLE_PING2`.
+
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.google.bucket_name`
+| Name of the Google Compute Engine bucket. The name must exist and be unique.
+| No default value.
+| Required
+
+|===
+
+== Azure
+
+System properties for `AZURE_PING`.
+
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jboss.jgroups.azure_ping.storage_account_name`
+| Name of the Azure storage account. The name must exist and be unique.
+| No default value.
+| Required
+
+| `jboss.jgroups.azure_ping.storage_access_key`
+| Name of the Azure storage access key.
+| No default value.
+| Required
+
+| `jboss.jgroups.azure_ping.container`
+| Valid DNS name of the container that stores ping information.
+| No default value.
+| Required
+
+|===
+
+== {k8s}
+
+System properties for `DNS_PING`.
+
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.dns.query`
+| Sets the DNS record that returns cluster members.
+| No default value.
+| Required
+
+|===

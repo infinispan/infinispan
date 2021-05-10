@@ -1,0 +1,53 @@
+[id='jgroups-cloud-discovery-protocols_{context}']
+= Cloud Discovery Protocols
+
+{brandname} includes default JGroups stacks that use discovery protocol implementations that are specific to cloud providers.
+
+[%header,cols=4*]
+|===
+|Discovery protocol
+|Default stack file
+|Artifact
+|Version
+
+|`NATIVE_S3_PING`
+|`default-jgroups-ec2.xml`
+|`org.jgroups.aws.s3:native-s3-ping`
+|`1.0.0.Final`
+
+|`GOOGLE_PING2`
+|`default-jgroups-google.xml`
+|`org.jgroups.google:jgroups-google`
+|`1.0.0.Final`
+
+|`AZURE_PING`
+|`default-jgroups-azure.xml`
+|`org.jgroups.azure:jgroups-azure`
+|`1.3.0.Final`
+|===
+
+[discrete]
+== Providing Dependencies for Cloud Discovery Protocols
+
+To use `NATIVE_S3_PING`, `GOOGLE_PING2`, or `AZURE_PING` cloud discovery protocols, you need to provide dependent libraries to {brandname}.
+
+.Procedure
+
+ifdef::embedded_caches[]
+* Add the artifact dependencies to your project `pom.xml`.
+endif::embedded_caches[]
+
+ifdef::remote_caches[]
+. Download the artifact JAR file and all dependencies.
+. Add the artifact JAR file and all dependencies to the `{server_home}/server/lib` directory of your {brandname} Server installation.
++
+For more details see the link:https://access.redhat.com/solutions/6048651[Downloading artifacts for JGroups cloud discover protocols for Data Grid Server] ({RedHat} knowledgebase article)
+endif::remote_caches[]
+
+You can then configure the cloud discovery protocol as part of a JGroups stack file or with system properties.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{jgroups_extras}/native-s3-ping[JGroups NATIVE_S3_PING]
+* link:{jgroups_extras}/jgroups-google[JGroups GOOGLE_PING2]
+* link:{jgroups_extras}/jgroups-azure[JGroups AZURE_PING]
