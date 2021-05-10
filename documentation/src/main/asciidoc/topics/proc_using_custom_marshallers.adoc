@@ -6,7 +6,7 @@
 
 . Implement the `Marshaller` interface.
 . Configure {brandname} to use your marshaller.
-. Add your Java classes to the deserialization allowlist.
+. Add your Java classes to the deserialization whitelist.
 
 * Programmatically:
 +
@@ -30,5 +30,5 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 
 .Reference
 
+* link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]

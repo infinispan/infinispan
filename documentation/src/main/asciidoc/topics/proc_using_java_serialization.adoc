@@ -6,7 +6,7 @@ only if your Java objects implement the Java `Serializable` interface.
 .Procedure
 
 . Configure {brandname} to use `JavaSerializationMarshaller` as the marshaller.
-. Add your Java classes to the deserialization allowlist.
+. Add your Java classes to the deserialization whitelist.
 +
 * Programmatically:
 +
