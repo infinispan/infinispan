@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -28,12 +30,11 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.reactive.RxJavaInterop;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -147,11 +148,19 @@ public class CacheResource extends AbstractContainerResource {
                   return null;
                };
                ClusterExecutor executor = SecurityActions.getClusterExecutor(cm);
+               final AtomicReference<Throwable> cause = new AtomicReference<>();
                CompletableFuture<Void> remoteCall = executor.submitConsumer(createCacheFunction, (a, v, t) -> {
                   if (t != null) {
-                     throw new CacheException(t);
+                     // Log failures for all nodes and return the first received failure
+                     log.errorf("%s unable to create cache %s", a, cacheName);
+                     cause.compareAndSet(null, t);
                   }
                });
+               // Wait for the cache to be started everywhere
+               CompletionStages.join(remoteCall);
+               if (cause.get() != null) {
+                  throw new CacheException(cause.get());
+               }
 
                // Insert the cache configuration in the CONFIG state in parallel
                // Note: cm.admin().getOrCreateCache() looks better, but it is not guaranteed to insert the entry
@@ -162,9 +171,6 @@ public class CacheResource extends AbstractContainerResource {
                gcr.getComponent(GlobalConfigurationManager.class).getStateCache().getAdvancedCache()
                   .withFlags(Flag.IGNORE_RETURN_VALUES)
                   .putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
-
-               // Wait for the cache to be started everywhere
-               CompletionStages.join(remoteCall);
             } catch (IOException e) {
                throw new CacheException(e);
             }
@@ -216,7 +222,7 @@ public class CacheResource extends AbstractContainerResource {
    }
 
    private CompletionStage<Void> createCacheBackup(String cacheName) {
-      return blockingManager.runBlocking(() -> {
+      return blockingManager.supplyBlocking(() -> {
          AdvancedCache<?, ?> cache = cm.getCache(cacheName).getAdvancedCache();
          Configuration configuration = SecurityActions.getCacheConfiguration(cm, cacheName);
 
@@ -241,14 +247,6 @@ public class CacheResource extends AbstractContainerResource {
          String dataFileName = dataFile(cacheName);
          Path datFile = cacheRoot.resolve(dataFileName);
 
-         int bufferSize = configuration.clustering().stateTransfer().chunkSize();
-
-         // Create the publisher using the BlockingManager to ensure that all entries are subscribed to on a blocking thread
-         Publisher<CacheEntry<Object, Object>> p = blockingManager.blockingPublisher(
-               clusterPublisherManager.entryPublisher(null, null, null, true,
-                     DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity())
-         );
-
          StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
          boolean keyMarshalling = !scm.getKeyStorageMediaType().isBinary();
          boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
@@ -256,30 +254,48 @@ public class CacheResource extends AbstractContainerResource {
          Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
          log.debugf("Backing up Cache %s", configuration.toXMLString(cacheName));
+
+         int bufferSize = configuration.clustering().stateTransfer().chunkSize();
+         Publisher<CacheBackupEntry> p =
+               Flowable.fromPublisher(
+                     clusterPublisherManager.entryPublisher(null, null, null, true,
+                     DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity())
+               )
+               .map(e -> {
+                  CacheBackupEntry be = new CacheBackupEntry();
+                  be.key = keyMarshalling ? marshall(e.getKey(), userMarshaller) : (byte[]) scm.getKeyWrapper().unwrap(e.getKey());
+                  be.value = valueMarshalling ? marshall(e.getValue(), userMarshaller) : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
+                  be.metadata = marshall(e.getMetadata(), persistenceMarshaller);
+                  be.internalMetadata = e.getInternalMetadata();
+                  be.created = e.getCreated();
+                  be.lastUsed = e.getLastUsed();
+                  return be;
+               });
+
+         DataOutputStream output;
+         try {
+            output = new DataOutputStream(Files.newOutputStream(datFile));
+         } catch (IOException e) {
+            throw Util.rewrapAsCacheException(e);
+         }
          final AtomicInteger entries = new AtomicInteger();
-         Flowable.using(
-               () -> new DataOutputStream(Files.newOutputStream(datFile)),
-               output ->
-                     Flowable.fromPublisher(p)
-                           .map(e -> {
-                              CacheBackupEntry be = new CacheBackupEntry();
-                              be.key = keyMarshalling ? marshall(e.getKey(), userMarshaller) : (byte[]) scm.getKeyWrapper().unwrap(e.getKey());
-                              be.value = valueMarshalling ? marshall(e.getValue(), userMarshaller) : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
-                              be.metadata = marshall(e.getMetadata(), persistenceMarshaller);
-                              be.internalMetadata = e.getInternalMetadata();
-                              be.created = e.getCreated();
-                              be.lastUsed = e.getLastUsed();
-                              return be;
-                           })
-                           .doOnNext(e -> {
-                              entries.incrementAndGet();
-                              writeMessageStream(e, serCtx, output);
-                           })
-                           .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper())
-                           .doOnComplete(() -> log.debugf("Cache %s backed up %d entries", cacheName, entries.get())),
-               OutputStream::close)
-               .subscribe();
-      }, "backup-cache");
+         // Consume the publisher using the BlockingManager to ensure that all entries are subscribed to on a blocking thread
+         CompletionStage<Void> stage = blockingManager.subscribeBlockingConsumer(p, backup -> {
+            entries.incrementAndGet();
+            try {
+               writeMessageStream(backup, serCtx, output);
+            } catch (IOException ex) {
+               throw Util.rewrapAsCacheException(ex);
+            }
+         }, "backup-cache-entries");
+
+         return stage.whenComplete((Void, t) -> {
+            if (t == null)
+               log.debugf("Cache %s backed up %d entries", cacheName, entries.get());
+            Util.close(output);
+         });
+      }, "backup-cache")
+            .thenCompose(Function.identity());
    }
 
    private String configFile(String cache) {
