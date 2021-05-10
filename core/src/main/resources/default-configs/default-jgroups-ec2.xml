@@ -1,6 +1,6 @@
 <!--
-   This configuration file uses NATIVE_S3_PING which is not shipped as part of the default jgroups distribution. To use
-   it you must add a dependency on org.jgroups.aws.s3:native-s3-ping:0.9.5
+   This configuration file uses NATIVE_S3_PING which requires artifacts that are not included with the default JGroups distribution.
+   To use NATIVE_S3_PING you must add the org.jgroups.aws.s3:native-s3-ping:1.0.0.Final dependency.
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

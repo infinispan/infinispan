@@ -1,6 +1,7 @@
-[id='jgroups_system_props-{context}']
-= System Properties for JGroups Stacks
-Set system properties that configure JGroups cluster transport stacks.
+[id='jgroups-system-properties_{context}']
+= Cluster Transport Properties
+
+Use the following properties to customize JGroups cluster transport.
 
 [%header,cols="1,3,2,1"]
 |===
@@ -54,74 +55,6 @@ Set system properties that configure JGroups cluster transport stacks.
 | Number of times a thread pool needs to be full before a thread dump is logged.
 | 10000
 | Optional
-
-|===
-
-
-.Amazon EC3
-
-The following system properties apply only to `default-jgroups-ec2.xml`:
-
-[%header,cols="1,3,2,1"]
-|===
-
-| System Property
-| Description
-| Default Value
-| Required/Optional
-
-| `jgroups.s3.access_key`
-| Amazon S3 access key for an S3 bucket.
-| No default value.
-| Optional
-
-| `jgroups.s3.secret_access_key`
-| Amazon S3 secret key used for an S3 bucket.
-| No default value.
-| Optional
-
-| `jgroups.s3.bucket`
-| Name of the Amazon S3 bucket. The name must exist and be unique.
-| No default value.
-| Optional
-
-|===
-
-.Kubernetes
-
-The following system properties apply only to `default-jgroups-kubernetes.xml`:
-
-[%header,cols="1,3,2,1"]
-|===
-
-| System Property
-| Description
-| Default Value
-| Required/Optional
-
-| `jgroups.dns.query`
-| Sets the DNS record that returns cluster members.
-| No default value.
-| Required
-
-|===
-
-.Google Cloud Platform
-
-The following system properties apply only to `default-jgroups-google.xml`:
-
-[%header,cols="1,3,2,1"]
-|===
-
-| System Property
-| Description
-| Default Value
-| Required/Optional
-
-| `jgroups.google.bucket_name`
-| Name of the Google Compute Engine bucket. The name must exist and be unique.
-| No default value.
-| Required
 
 |===
 

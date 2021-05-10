@@ -1,6 +1,6 @@
 <!--
-   This configuration file uses GOOGLE_PING2 which is not shipped as part of the default jgroups distribution. To use
-   it you must add a dependency on org.jgroups.google:jgroups-google:1.0.0
+   This configuration file uses GOOGLE_PING2 which requires artifacts that are not included with the default JGroups distribution.
+   To use GOOGLE_PING2 you must add the org.jgroups.google:jgroups-google:1.0.0.Final dependency.
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

@@ -16,7 +16,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //
 // Conditional statements
 //
-:embedded_mode:
+:embedded_caches:
 
 //Title
 = Embedding {brandname} {infinispanversion}
