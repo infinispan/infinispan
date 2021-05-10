@@ -1,5 +1,5 @@
-[id='jgroups_getting_started-{context}']
-= Getting Started with Default Stacks
+[id='using-jgroups-default-stacks_{context}']
+= Using the Default JGroups Stacks
 {brandname} uses JGroups protocol stacks so nodes can send each other messages on dedicated cluster channels.
 
 {brandname} provides preconfigured JGroups stacks for `UDP` and `TCP` protocols.
@@ -7,13 +7,7 @@ You can use these default stacks as a starting point for building custom cluster
 
 .Procedure
 
-. Locate the default JGroups stacks, `default-jgroups-*.xml`, in the `default-configs` directory inside the `infinispan-core-{ispn_version}.jar` file.
-ifdef::server_mode[]
-+
-The `jar` file is in the `{server_home}/lib` directory.
-+
-endif::server_mode[]
-. Do one of the following:
+Do one of the following to use one of the default JGroups stacks:
 
 * Use the `stack` attribute in your `infinispan.xml` file.
 +
@@ -22,7 +16,7 @@ endif::server_mode[]
 include::config_examples/jgroups_cluster_transport.xml[]
 ----
 
-ifdef::embedded_mode[]
+ifdef::embedded_caches[]
 * Use the `addProperty()` method to set the JGroups stack file:
 +
 [source,java]
@@ -30,16 +24,18 @@ ifdef::embedded_mode[]
 include::code_examples/ConfigureTransportDefault.java[]
 ----
 <1> Uses the `default-jgroups-udp.xml` stack for cluster transport.
-endif::embedded_mode[]
+endif::embedded_caches[]
 
-ifdef::server_mode[]
-* Use the `cluster-stack` argument when you start the server:
+ifdef::remote_caches[]
+* Use the `cluster-stack` argument to set the JGroups stack file when {brandname} Server starts:
 +
 [source,sh,options="nowrap",subs=attributes+]
 ----
 $ bin/server.sh --cluster-stack=udp
 ----
-endif::server_mode[]
+endif::remote_caches[]
+
+.Verification
 
 {brandname} logs the following message to indicate which stack it uses:
 

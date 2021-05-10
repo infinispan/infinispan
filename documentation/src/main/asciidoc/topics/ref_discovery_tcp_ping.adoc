@@ -1,4 +1,4 @@
-[id='discovery_tcpping-{context}']
+[id='discovery-tcpping_{context}']
 = TCPPING
 TCPPING is a generic JGroups discovery mechanism that uses a list of static addresses for cluster members.
 
@@ -10,6 +10,6 @@ With TCPPING, you manually specify the IP address or hostname of each node in th
 include::config_examples/tcpping.xml[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#TCPPING_Prot[JGroups TCPPING]

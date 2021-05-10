@@ -1,4 +1,4 @@
-[id='discovery_jdbcping-{context}']
+[id='discovery-jdbcping_{context}']
 = JDBC_PING
 JDBC_PING uses shared databases to store information about {brandname} clusters.
 This protocol supports any database that can use a JDBC connection.
@@ -17,7 +17,7 @@ include::config_examples/jdbc_ping.xml[]
 Add the appropriate JDBC driver to the classpath so {brandname} can use JDBC_PING.
 ====
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#_jdbc_ping[JDBC_PING]
 * link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki]

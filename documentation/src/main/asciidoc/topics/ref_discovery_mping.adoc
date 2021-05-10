@@ -1,4 +1,4 @@
-[id='discovery_mping-{context}']
+[id='discovery-mping_{context}']
 = MPING
 MPING uses IP multicast to discover the initial membership of {brandname} clusters.
 
@@ -11,6 +11,6 @@ However, you can also use MPING with UDP stacks.
 include::config_examples/mping.xml[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#MPING[JGroups MPING]

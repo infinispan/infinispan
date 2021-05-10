@@ -16,8 +16,8 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //
 // Conditional statements
 //
-:embedded_mode:
-:server_mode:
+:embedded_caches:
+:remote_caches:
 
 //Title
 = Security Guide for {brandname} {infinispanversion}

@@ -1,4 +1,4 @@
-[id='discovery_dnsping-{context}']
+[id='discovery-dns-ping_{context}']
 = DNS_PING
 JGroups DNS_PING queries DNS servers to discover {brandname} cluster members
 in Kubernetes environments such as OKD and {openshift}.
@@ -9,7 +9,7 @@ in Kubernetes environments such as OKD and {openshift}.
 include::config_examples/dnsping.xml[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#_dns_ping[JGroups DNS_PING]
 * link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods] (Kubernetes documentation for adding DNS entries)

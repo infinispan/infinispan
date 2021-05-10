@@ -13,10 +13,10 @@ include::{topics}/ref_acl_cache.adoc[leveloffset=+1]
 include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
 include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
 
-ifdef::embedded_mode[]
+ifdef::embedded_caches[]
 include::{topics}/proc_configuring_authz_programmatic.adoc[leveloffset=+1]
 include::{topics}/ref_executing_secure_caches.adoc[leveloffset=+1]
-endif::embedded_mode[]
+endif::embedded_caches[]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

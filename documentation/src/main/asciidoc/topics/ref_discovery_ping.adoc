@@ -1,4 +1,4 @@
-[id='discovery_ping-{context}']
+[id='discovery-ping_{context}']
 = PING
 PING, or UDPPING is a generic JGroups discovery mechanism that uses dynamic multicasting with the UDP protocol.
 
@@ -12,6 +12,6 @@ If no nodes respond to the PING request, the joining node becomes the coordinato
 include::config_examples/ping.xml[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#PING[JGroups PING]

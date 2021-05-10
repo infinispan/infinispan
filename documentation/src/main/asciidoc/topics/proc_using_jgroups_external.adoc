@@ -4,12 +4,12 @@ Reference external files that define custom JGroups stacks in `infinispan.xml` f
 
 .Procedure
 
-ifdef::server_mode[]
+ifdef::remote_caches[]
 . Add custom JGroups stack files to the `{server_home}/server/conf` directory.
-endif::server_mode[]
-ifdef::embedded_mode[]
+endif::remote_caches[]
+ifdef::embedded_caches[]
 . Put custom JGroups stack files on the application classpath.
-endif::embedded_mode[]
+endif::embedded_caches[]
 +
 Alternatively you can specify an absolute path when you declare the external stack file.
 +
