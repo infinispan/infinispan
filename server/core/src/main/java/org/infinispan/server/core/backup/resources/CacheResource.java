@@ -3,6 +3,8 @@ package org.infinispan.server.core.backup.resources;
 import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -190,7 +192,7 @@ public class CacheResource extends AbstractContainerResource {
             ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
 
             int entries = 0;
-            try (InputStream is = zip.getInputStream(zipEntry)) {
+            try (DataInputStream is = new DataInputStream(zip.getInputStream(zipEntry))) {
                while (is.available() > 0) {
                   CacheBackupEntry entry = readMessageStream(serCtx, CacheBackupEntry.class, is);
                   Object key = keyMarshalling ? unmarshall(entry.key, userMarshaller) : scm.getKeyWrapper().wrap(entry.key);
@@ -256,7 +258,7 @@ public class CacheResource extends AbstractContainerResource {
          log.debugf("Backing up Cache %s", configuration.toXMLString(cacheName));
          final AtomicInteger entries = new AtomicInteger();
          Flowable.using(
-               () -> Files.newOutputStream(datFile),
+               () -> new DataOutputStream(Files.newOutputStream(datFile)),
                output ->
                      Flowable.fromPublisher(p)
                            .map(e -> {
