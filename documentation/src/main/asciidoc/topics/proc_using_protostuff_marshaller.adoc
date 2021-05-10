@@ -64,5 +64,5 @@ META-INF/services/org/infinispan/marshaller/protostuff/SchemaRegistryService
 
 .Reference
 
-* link:#deserialization_allowlist-marshallers[Adding Java Classes to Deserialization Allow Lists]
+* link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
 * link:https://github.com/protostuff/protostuff[Protostuff on GitHub]

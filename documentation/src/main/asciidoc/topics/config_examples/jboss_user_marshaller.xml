@@ -1,6 +1,6 @@
 <serialization marshaller="org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller">
-  <allow-list>
+  <white-list>
       <class>org.infinispan.concrete.SomeClass</class>
       <regex>org.infinispan.example.*</regex>
-  </allow-list>
+  <white-list>
 </serialization>

@@ -3,7 +3,7 @@
 {brandname} does not allow deserialization of arbritrary Java classes for
 security reasons, which applies to JSON, XML, and marshalled `byte[]` content.
 
-You must add Java classes to a deserialization white list, either using system
+You must add Java classes to a deserialization whitelist, either using system
 properties or specifying them in the {brandname} configuration.
 
 .System properties

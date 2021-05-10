@@ -18,7 +18,7 @@ JBoss Marshalling.
 
 . Add the `infinispan-jboss-marshalling` dependency to your classpath.
 . Configure {brandname} to use the `GenericJBossMarshaller`.
-. Add your Java classes to the deserialization allowlist.
+. Add your Java classes to the deserialization whitelist.
 
 * Programmatically:
 +
