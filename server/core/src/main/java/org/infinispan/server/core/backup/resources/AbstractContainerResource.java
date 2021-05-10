@@ -1,8 +1,8 @@
 package org.infinispan.server.core.backup.resources;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,18 +85,19 @@ abstract class AbstractContainerResource implements ContainerResource {
       }
    }
 
-   protected static void writeMessageStream(Object o, ImmutableSerializationContext serCtx, OutputStream output) throws IOException {
+   protected static void writeMessageStream(Object o, ImmutableSerializationContext serCtx, DataOutputStream output) throws IOException {
       // It's necessary to first write the length of each message stream as the Protocol Buffer wire format is not self-delimiting
       // https://developers.google.com/protocol-buffers/docs/techniques#streaming
       byte[] b = ProtobufUtil.toByteArray(serCtx, o);
-      output.write(b.length);
+      output.writeInt(b.length);
       output.write(b);
+      output.flush();
    }
 
-   protected static <T> T readMessageStream(ImmutableSerializationContext ctx, Class<T> clazz, InputStream is) throws IOException {
-      int length = is.read();
+   protected static <T> T readMessageStream(ImmutableSerializationContext ctx, Class<T> clazz, DataInputStream is) throws IOException {
+      int length = is.readInt();
       byte[] b = new byte[length];
-      is.read(b);
+      is.readFully(b);
       return ProtobufUtil.fromByteArray(ctx, b, clazz);
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.server.core.backup;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN_TYPE;
 import static org.infinispan.functional.FunctionalTestUtils.MAX_WAIT_SECS;
@@ -157,6 +158,28 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                }
             }
       );
+   }
+
+   public void testBackupAndRestoreEntryExceeding256Bytes() {
+      String name = "testBackupAndRestoreEntryExceeding256Bytes";
+      String cacheName = "cache";
+      createAndRestore(
+            (source, backupManager) -> {
+               Cache<byte[], byte[]> cache = source.createCache(cacheName, config(APPLICATION_OCTET_STREAM_TYPE));
+               cache.put(new byte[1], new byte[256]);
+               return backupManager.create(name, null);
+            },
+            (target, backupManager, backup) -> {
+               assertTrue(target.getCacheNames().isEmpty());
+               Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default",
+                     new BackupManagerResources.Builder()
+                           .includeAll()
+                           .build()
+               );
+               await(backupManager.restore(name, backup, paramMap));
+               assertTrue(target.cacheExists(cacheName));
+               assertEquals(1, target.getCache(cacheName).size());
+            });
    }
 
    public void testBackupAndRestoreIgnoreResources() throws Exception {
