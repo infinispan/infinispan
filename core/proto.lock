@@ -284,43 +284,6 @@
             ]
           },
           {
-            "name": "UUID",
-            "fields": [
-              {
-                "id": 1,
-                "name": "mostSigBits",
-                "type": "uint64"
-              },
-              {
-                "id": 2,
-                "name": "leastSigBits",
-                "type": "uint64"
-              },
-              {
-                "id": 3,
-                "name": "mostSigBitsFixed",
-                "type": "fixed64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "leastSigBitsFixed",
-                "type": "fixed64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              }
-            ]
-          },
-          {
             "name": "SimpleClusteredVersion",
             "fields": [
               {
