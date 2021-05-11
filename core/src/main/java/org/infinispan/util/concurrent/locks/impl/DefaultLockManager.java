@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -173,6 +174,13 @@ public class DefaultLockManager implements LockManager {
    public void unlockAll(InvocationContext context) {
       unlockAll(context.getLockedKeys(), context.getLockOwner());
       context.clearLockedKeys();
+      if (context instanceof TxInvocationContext<?>) {
+         // this may be on overkill but if the TM's Transaction Reaper aborts a transaction and a lock is not acquired
+         // (i.e it is in WAITING state) when the RollbackCommand is executed, the lock is not released.
+         // In other words, WAITING state moves to ACQUIRED state and the RollbackCommand is never executed again
+         // leaving the lock acquired forever
+         unlockAll(((TxInvocationContext<?>) context).getAffectedKeys(), context.getLockOwner());
+      }
    }
 
    @Override

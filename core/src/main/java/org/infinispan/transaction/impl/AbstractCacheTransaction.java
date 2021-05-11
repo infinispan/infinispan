@@ -380,6 +380,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       }
    }
 
+   protected final void checkIfRolledBack() {
+      if (isMarkedForRollback()) {
+         throw log.transactionAlreadyRolledBack(getGlobalTransaction());
+      }
+   }
+
    final void internalSetStateTransferFlag(Flag stateTransferFlag) {
       this.stateTransferFlag = stateTransferFlag;
    }
