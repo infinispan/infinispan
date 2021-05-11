@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
 
-import org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImpl;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "marshall.ProtoStreamBackwardsCompatibilityTest")
@@ -25,7 +25,7 @@ public class ProtoStreamBackwardsCompatibilityTest {
 
       // Initialise SerializationContext using the new core initializer
       SerializationContext coreCtx = ProtobufUtil.newSerializationContext();
-      SerializationContextInitializer sci = new PersistenceContextInitializerImpl();
+      CommonTypesSchema sci = new CommonTypesSchema();
       sci.registerSchema(coreCtx);
       sci.registerMarshallers(coreCtx);
 

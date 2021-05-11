@@ -7,7 +7,6 @@ import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.TopologyIracVersion;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.marshall.protostream.impl.UUIDAdapter;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -48,7 +47,6 @@ import org.infinispan.util.logging.events.EventLogLevel;
             IracEntryVersion.MapEntry.class,
             TopologyIracVersion.class,
             IracMetadata.class,
-            UUIDAdapter.class,
             ClusterRoleMapper.RoleSet.class
       },
       schemaFileName = "persistence.core.proto",
