@@ -909,6 +909,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             return null;
          });
       } else if (status == Status.STATUS_ROLLEDBACK) {
+         localTransaction.markForRollback(true); //make sure writes no longer succeed
          return txCoordinator.rollback(localTransaction).exceptionally(t -> {
             throw new CacheException("Could not commit.", t);
          });

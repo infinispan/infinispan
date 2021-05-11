@@ -79,9 +79,11 @@ import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.EntryWrapper;
+import org.infinispan.util.concurrent.locks.LockReleasedException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -112,6 +114,12 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private boolean useOnePhaseForAutoCommitTx;
    private boolean useVersioning;
    private boolean statisticsEnabled;
+
+   private static void checkTransactionThrowable(CacheTransaction tx, Throwable throwable) {
+      if (tx.isMarkedForRollback() && throwable instanceof LockReleasedException) {
+         throw log.transactionAlreadyRolledBack(tx.getGlobalTransaction());
+      }
+   }
 
    @Start
    public void start() {
@@ -218,6 +226,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          if (!rCtx.isOriginLocal()) {
             return verifyRemoteTransaction((RemoteTxInvocationContext) rCtx, rCommand, rv, throwable);
          }
+         checkTransactionThrowable(((TxInvocationContext<?>) rCtx).getCacheTransaction(), throwable);
          return valueOrException(rv, throwable);
       });
    }
@@ -406,6 +415,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
             if (rCtx.isOriginLocal() && rCtx.isInTxScope() && !writeCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY)) {
                TxInvocationContext<?> txCtx = (TxInvocationContext<?>) rCtx;
+               // avoid invoke setRollbackOnly() if the transaction is already rolled back
+               checkTransactionThrowable(txCtx.getCacheTransaction(), t);
                txCtx.getTransaction().setRollbackOnly();
             }
          }
