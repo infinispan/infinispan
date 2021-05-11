@@ -1,6 +1,5 @@
 package org.infinispan.rest.search;
 
-import static org.infinispan.client.rest.RestQueryMode.BROADCAST;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.functional.FunctionalTestUtils.await;
@@ -334,7 +333,7 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
    }
 
    private CompletionStage<RestResponse> queryWithoutPagination(RestCacheClient client, String query) {
-      return client.query(query, -1, 0, BROADCAST);
+      return client.query(query, -1, 0);
    }
 
    private CompletionStage<RestResponse> queryWithDefaultPagination(RestCacheClient client, String query) {
@@ -342,7 +341,7 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
    }
 
    private CompletionStage<RestResponse> queryWithPagination(RestCacheClient client, String query, int maxResults, int offset) {
-      return client.query(query, maxResults, offset, BROADCAST);
+      return client.query(query, maxResults, offset);
    }
 
    private int getFieldAggregationValue(CompletionStage<RestResponse> response, String field) {
