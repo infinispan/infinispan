@@ -300,14 +300,14 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
             int remainingLength;
             ByRef.Long offset = new ByRef.Long(oldFe.offset + KEY_POS_11_0);
-            K key = loadLegacyObject(buf, offset, oldFe.keyLen, false);
+            K key = loadLegacyObject(buf, offset, oldFe.keyLen);
             if (transformationRequired) {
                ByteBuffer newKey = transformLegacyObject(key);
-               ByteBuffer newValue = loadAndTransformLegacy(buf, offset, oldFe.dataLen, false);
+               ByteBuffer newValue = loadAndTransformLegacy(buf, offset, oldFe.dataLen);
 
                ByteBuffer newMeta = null;
                if (oldFe.metadataLen > 0) {
-                  newMeta = loadAndTransformLegacy(buf, offset, oldFe.metadataLen - TIMESTAMP_BYTES, true);
+                  newMeta = loadAndTransformLegacy(buf, offset, oldFe.metadataLen - TIMESTAMP_BYTES);
                }
 
                int newMetaSize = newMeta != null ? newMeta.limit() + TIMESTAMP_BYTES : 0;
@@ -370,9 +370,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
-   private ByteBuffer loadAndTransformLegacy(ByteBuffer buf, ByRef.Long offset, int length, boolean allowInternal)
+   private ByteBuffer loadAndTransformLegacy(ByteBuffer buf, ByRef.Long offset, int length)
          throws ClassNotFoundException, InterruptedException, IOException {
-      Object obj = loadLegacyObject(buf, offset, length, allowInternal);
+      Object obj = loadLegacyObject(buf, offset, length);
       return transformLegacyObject(obj);
    }
 
@@ -382,7 +382,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T loadLegacyObject(ByteBuffer buf, ByRef.Long offset, int length, boolean allowInternal) throws ClassNotFoundException, IOException {
+   private <T> T loadLegacyObject(ByteBuffer buf, ByRef.Long offset, int length) throws ClassNotFoundException, IOException {
       buf = readChannelUpdateOffset(buf, offset, length);
       // Read using raw user marshaller without MarshallUserObject wrapping
       byte[] bytes = buf.array();
@@ -390,11 +390,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          return (T) marshaller.objectFromByteBuffer(bytes, 0, length);
       } catch (IllegalArgumentException e) {
-         // For metadata we need to attempt to read with user-marshaller first in case custom metadata used, otherwise use the persistence marshaller
-         if (allowInternal) {
-            return (T) ctx.getPersistenceMarshaller().objectFromByteBuffer(bytes, 0, length);
-         }
-         throw e;
+         // For internal cache key/values and custom metadata we need to use the persistence marshaller
+         return (T) ctx.getPersistenceMarshaller().objectFromByteBuffer(bytes, 0, length);
       }
    }
 
