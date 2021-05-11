@@ -24,6 +24,7 @@ import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 import org.infinispan.util.concurrent.locks.LockListener;
+import org.infinispan.util.concurrent.locks.LockReleasedException;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -342,7 +343,7 @@ public class InfinispanLock {
                case ACQUIRED:
                   return; //acquired!
                case RELEASED:
-                  throw new IllegalStateException("Lock already released!");
+                  throw new LockReleasedException("Requestor '" + owner + "' failed to acquire lock. Lock already released!");
                case TIMED_OUT:
                   cleanup();
                   throw new TimeoutException("Timeout waiting for lock.");
@@ -433,7 +434,7 @@ public class InfinispanLock {
             case ACQUIRED:
                return acquired.get();
             case RELEASED:
-               return exception.apply(new IllegalStateException("Lock already released!"));
+               return exception.apply(new LockReleasedException("Requestor '" + owner + "' failed to acquire lock. Lock already released!"));
             case TIMED_OUT:
                cleanup();
                return exception.apply(timeoutSupplier.get());

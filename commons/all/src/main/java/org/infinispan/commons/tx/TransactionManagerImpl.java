@@ -69,15 +69,21 @@ public abstract class TransactionManagerImpl implements TransactionManager {
    public void commit() throws RollbackException, HeuristicMixedException,
          HeuristicRollbackException, SecurityException,
          IllegalStateException, SystemException {
-      getTransactionAndFailIfNone().commit();
-      dissociateTransaction();
+      try {
+         getTransactionAndFailIfNone().commit();
+      } finally {
+         dissociateTransaction();
+      }
    }
 
    @Override
    public void rollback() throws IllegalStateException, SecurityException,
          SystemException {
-      getTransactionAndFailIfNone().rollback();
-      dissociateTransaction();
+      try {
+         getTransactionAndFailIfNone().rollback();
+      } finally {
+         dissociateTransaction();
+      }
    }
 
    @Override

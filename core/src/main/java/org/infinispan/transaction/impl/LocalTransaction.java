@@ -14,7 +14,6 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
@@ -47,7 +46,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private volatile boolean isFromRemoteSite;
 
    private boolean prepareSent;
-   private boolean commitOrRollbackSent;
 
    @GuardedBy("this")
    private Map<Object, CompletionStage<IracMetadata>> iracMetadata;
@@ -103,9 +101,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (isMarkedForRollback()) {
-         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
-      }
+      checkIfRolledBack();
       if (lookedUpEntries == null)
          lookedUpEntries = new HashMap<>(4);
 
@@ -114,9 +110,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
-      if (isMarkedForRollback()) {
-         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
-      }
+      checkIfRolledBack();
       if (lookedUpEntries == null) {
          lookedUpEntries = new HashMap<>(entries);
       } else {
@@ -221,20 +215,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     */
    public final boolean isPrepareSent() {
       return prepareSent;
-   }
-
-   /**
-    * Sets the commit or rollback sent for this transaction
-    */
-   public final void markCommitOrRollbackSent() {
-      commitOrRollbackSent = true;
-   }
-
-   /**
-    * @return  true if the commit or rollback was sent to the other nodes
-    */
-   public final boolean isCommitOrRollbackSent() {
-      return commitOrRollbackSent;
    }
 
    /**

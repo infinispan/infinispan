@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "tx.locking.LocalPessimisticTxTest")
+@Test(groups = "functional", testName = "tx.locking.LocalPessimisticTxTest")
 public class LocalPessimisticTxTest extends AbstractLocalTest {
 
    public void testLockingWithRollback() throws Exception {

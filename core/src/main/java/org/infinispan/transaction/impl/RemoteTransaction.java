@@ -15,7 +15,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -127,12 +126,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    public int lookedUpEntriesTopology() {
       return lookedUpEntriesTopology;
-   }
-
-   private void checkIfRolledBack() {
-      if (isMarkedForRollback()) {
-         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is already rolled back");
-      }
    }
 
    public final CompletableFuture<Void> enterSynchronizationAsync(CompletableFuture<Void> releaseFuture) {

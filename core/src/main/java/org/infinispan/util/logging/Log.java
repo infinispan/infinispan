@@ -54,6 +54,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.ByteString;
@@ -2175,4 +2176,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
    void sendFailMissingTombstone(Object key);
+
+   // id = 640 is a new log from main
+
+   @Message(value = "The transaction %s is already rolled back", id = 641)
+   InvalidTransactionException transactionAlreadyRolledBack(GlobalTransaction gtx);
+
 }
