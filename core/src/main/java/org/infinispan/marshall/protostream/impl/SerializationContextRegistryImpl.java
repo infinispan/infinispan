@@ -57,18 +57,14 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
-      update(GLOBAL, ctx -> ctx.addContextInitializer(commonTypesSchema)
-            .addContextInitializer(commonContainerTypesSchema)
-            .addContextInitializer(new PersistenceContextInitializerImpl())
+      update(GLOBAL, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
             // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
             .addContextInitializer(new org.infinispan.commons.GlobalContextInitializerImpl())
             .addMarshaller(userObjectMarshaller)
             .update()
       );
 
-      update(PERSISTENCE, ctx -> ctx.addContextInitializer(commonTypesSchema)
-            .addContextInitializer(commonContainerTypesSchema)
-            .addContextInitializer(new PersistenceContextInitializerImpl())
+      update(PERSISTENCE, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
             .addMarshaller(userObjectMarshaller)
             .update()
       );
@@ -145,10 +141,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
       }
 
       void update() {
-         initializers.forEach(sci -> {
-            sci.registerSchema(ctx);
-            sci.registerMarshallers(ctx);
-         });
+         initializers.forEach(sci -> register(sci, ctx));
          schemas.forEach(ctx::registerProtoFiles);
          marshallers.forEach(ctx::registerMarshaller);
       }
