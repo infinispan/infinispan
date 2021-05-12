@@ -190,6 +190,19 @@ public interface NonBlockingStore<K, V> {
    CompletionStage<Void> stop();
 
    /**
+    * This method is to be invoked when the store should clean up all underlying data and storage of said data. For
+    * example a database store would remove the underlying table(s) that it is using and a file based store would
+    * remove all of the various files or directories it may have created.
+    * @implSpec
+    * The default implementation invokes the {@link #stop()} method returning the stage it returned.
+    * @return a stage that, when complete, indicates that this store is stopped and all data and storage for it are also
+    *    cleaned up
+    */
+   default CompletionStage<Void> destroy() {
+      return stop();
+   }
+
+   /**
     * Returns a set of characteristics for this store and its elements. This method may be invoked multiple times
     * to determine which methods of the store can be used and how the data in the store can be handled.
     * <p>

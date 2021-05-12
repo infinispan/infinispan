@@ -20,6 +20,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -111,6 +112,17 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(oldStoreImpl::stop, nextTraceId("stop"));
+   }
+
+   @Override
+   public CompletionStage<Void> destroy() {
+      return blockingManager.runBlocking(() -> {
+         if (oldStoreImpl instanceof ExternalStore) {
+            ((ExternalStore<?, ?>) oldStoreImpl).destroy();
+         } else {
+            oldStoreImpl.stop();
+         }
+      }, nextTraceId("destroy"));
    }
 
    @Override
