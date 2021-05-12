@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,8 +91,9 @@ public final class QueryRequest implements JsonSerialization {
       String queryString = jsonRequest.at(QUERY_STRING_FIELD).asString();
       Json offsetValue = jsonRequest.at(START_OFFSET_FIELD);
       Json maxResults = jsonRequest.at(MAX_RESULTS_FIELD);
-      List<NamedParameter> params = jsonRequest.at(NAMED_PARAMETERS_FIELD).asJsonList().stream()
-            .map(NamedParameter::fromJson).collect(toList());
+      Json named = jsonRequest.at(NAMED_PARAMETERS_FIELD);
+      List<NamedParameter> params = named.isArray() ? named.asJsonList().stream()
+            .map(NamedParameter::fromJson).collect(toList()) : Collections.emptyList();
 
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setQueryString(queryString);
