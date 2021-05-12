@@ -11,17 +11,15 @@
             <configuration>
                 <property name="jbossHome">${basedir}/target/node1</property>
                 <property name="javaHome">${server.jvm}</property>
+                <!-- To debug the Arquillian managed application server: Add the following javaVmArguments
+                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                -->
                 <property name="javaVmArguments">
                     ${server.jvm.args}
                     -Djboss.socket.binding.port-offset=100 -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                 </property>
-                <!-- To debug the Arquillian managed application server: -->
-                <!--<property name="javaVmArguments">-Xrunjdwp:transport=dt_socket,address=8000,server=n,suspend=y -Dorg.jboss.remoting-jmx.timeout=300-->
-                    <!-- -Djboss.socket.binding.port-offset=100 -Xmx512m -Djava.net.preferIPv4Stack=true-->
-                    <!-- -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000-->
-                <!--</property>-->
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">standalone-test.xml</property>
             </configuration>
