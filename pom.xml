@@ -262,7 +262,7 @@
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
       <versionx.com.thoughtworks.xstream.xstream>1.4.16</versionx.com.thoughtworks.xstream.xstream>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
-      <versionx.commons-io.commons-io>2.5</versionx.commons-io.commons-io>
+      <versionx.commons-io.commons-io>2.8.0</versionx.commons-io.commons-io>
       <versionx.commons-logging.commons-logging>1.2</versionx.commons-logging.commons-logging>
       <versionx.de.javakaffee.kryo-serializers>0.41</versionx.de.javakaffee.kryo-serializers>
       <versionx.gnu.getopt.java-getopt>1.0.13</versionx.gnu.getopt.java-getopt>
