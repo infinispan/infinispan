@@ -46,5 +46,9 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
       Json jsonNode = Json.read(results.iterator().next());
       assertEquals("Tom", jsonNode.at("name").asString());
       assertEquals("Cat", jsonNode.at("surname").asString());
+
+      query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = \"Tom\"");
+      results = query.execute().list();
+      assertEquals(1, results.size());
    }
 }
