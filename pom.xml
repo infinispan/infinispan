@@ -85,6 +85,8 @@
       <module>checkstyle</module>
       <module>component-annotations</module>
       <module>component-processor</module>
+      <module>logging/logging-annotations</module>
+      <module>logging/logging-processor</module>
       <module>commons</module>
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
@@ -1066,6 +1068,13 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-logging-processor</artifactId>
+            <version>${version.infinispan}</version>
+            <!-- compile-only dependency -->
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-console</artifactId>
             <version>${version.console}</version>
          </dependency>
@@ -1776,6 +1785,11 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-annotations</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-logging-annotations</artifactId>
       </dependency>
 
       <dependency>
