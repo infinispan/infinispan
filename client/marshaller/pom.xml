@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>11.0.11.Final</version>
+        <version>11.0.12-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
