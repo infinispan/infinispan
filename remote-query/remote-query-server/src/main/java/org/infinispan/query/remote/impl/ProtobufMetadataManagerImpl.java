@@ -15,6 +15,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -90,6 +91,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       }
       register(new CommonTypesSchema());
       register(new CommonContainerTypesSchema());
+      register(new UserContextInitializerImpl());
    }
 
    void register(SerializationContextInitializer initializer) {

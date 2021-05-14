@@ -3,19 +3,22 @@ package org.infinispan.spring.remote.provider;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
-import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -121,6 +124,22 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       cache.put("key", null);
 
       // then
-      assertEquals(NullValue.NULL, cache.get("key"));
+      Cache.ValueWrapper valueWrapper = cache.get("key");
+      assertNotNull(valueWrapper);
+      assertNull(valueWrapper.get());
+
+      if (cacheName.equals(TEST_CACHE_NAME_PROTO)) {
+         // The server should be able to convert application/x-protostream to application/json
+         RemoteCache<?, ?> nativeCache = (RemoteCache<?, ?>) cache.getNativeCache();
+         RemoteCache<Object, Object> jsonCache =
+               nativeCache.withDataFormat(DataFormat.builder()
+                                                    .valueType(MediaType.APPLICATION_JSON)
+                                                    .valueMarshaller(new UTF8StringMarshaller())
+                                                    .build());
+         Object jsonValue = jsonCache.get("key");
+         assertEquals("\n{\n" +
+                      "   \"_type\": \"org.infinispan.commons.NullValue\"\n" +
+                      "}\n", jsonValue);
+      }
    }
 }
