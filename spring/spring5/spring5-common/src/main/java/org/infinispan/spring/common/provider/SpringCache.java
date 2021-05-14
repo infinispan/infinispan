@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.NullValue;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -25,6 +26,8 @@ import org.springframework.util.Assert;
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
  */
 public class SpringCache implements Cache {
+   public static final SimpleValueWrapper NULL_VALUE_WRAPPER = new SimpleValueWrapper(null);
+
    private final BasicCache nativeCache;
    private final long readTimeout;
    private final long writeTimeout;
@@ -67,9 +70,9 @@ public class SpringCache implements Cache {
    public ValueWrapper get(final Object key) {
       try {
          if (readTimeout > 0)
-            return wrap(nativeCache.getAsync(key).get(readTimeout, TimeUnit.MILLISECONDS));
+            return encodedToValueWrapper(nativeCache.getAsync(key).get(readTimeout, TimeUnit.MILLISECONDS));
          else
-            return wrap(nativeCache.get(key));
+            return encodedToValueWrapper(nativeCache.get(key));
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -87,7 +90,7 @@ public class SpringCache implements Cache {
          else
             value = nativeCache.get(key);
 
-         value = unwrapNull(value);
+         value = decodeNull(value);
          if (value != null && type != null && !type.isInstance(value)) {
             throw new IllegalStateException("Cached value is not of required type [" + type.getName() + "]: " + value);
          }
@@ -103,7 +106,7 @@ public class SpringCache implements Cache {
 
    @Override
    public <T> T get(Object key, Callable<T> valueLoader) {
-      ReentrantLock lock = null;
+      ReentrantLock lock;
       T value = (T) nativeCache.get(key);
       if (value == null) {
          lock = synchronousGetLocks.computeIfAbsent(key, k -> new ReentrantLock());
@@ -114,7 +117,7 @@ public class SpringCache implements Cache {
                   T newValue = valueLoader.call();
                   // we can't use computeIfAbsent here since in distributed embedded scenario we would
                   // send a lambda to other nodes. This is the behavior we want to avoid.
-                  value = (T) nativeCache.putIfAbsent(key, newValue == null ? NullValue.NULL : newValue);
+                  value = (T) nativeCache.putIfAbsent(key, encodeNull(newValue));
                   if (value == null) {
                      value = newValue;
                   }
@@ -127,7 +130,7 @@ public class SpringCache implements Cache {
             synchronousGetLocks.remove(key);
          }
       }
-      return unwrapNull(value);
+      return decodeNull(value);
    }
 
    /**
@@ -137,9 +140,9 @@ public class SpringCache implements Cache {
    public void put(final Object key, final Object value) {
       try {
          if (writeTimeout > 0)
-            this.nativeCache.putAsync(key, value != null ? value : NullValue.NULL).get(writeTimeout, TimeUnit.MILLISECONDS);
+            this.nativeCache.putAsync(key, encodeNull(value)).get(writeTimeout, TimeUnit.MILLISECONDS);
          else
-            this.nativeCache.put(key, value != null ? value : NullValue.NULL);
+            this.nativeCache.put(key, encodeNull(value));
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -154,9 +157,9 @@ public class SpringCache implements Cache {
    public void put(Object key, Object value, long lifespan, TimeUnit unit) {
       try {
          if (writeTimeout > 0)
-            this.nativeCache.putAsync(key, value != null ? value : NullValue.NULL, lifespan, unit).get(writeTimeout, TimeUnit.MILLISECONDS);
+            this.nativeCache.putAsync(key, encodeNull(value), lifespan, unit).get(writeTimeout, TimeUnit.MILLISECONDS);
          else
-            this.nativeCache.put(key, value != null ? value : NullValue.NULL, lifespan, unit);
+            this.nativeCache.put(key, encodeNull(value), lifespan, unit);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -169,9 +172,9 @@ public class SpringCache implements Cache {
    public ValueWrapper putIfAbsent(Object key, Object value) {
       try {
          if (writeTimeout > 0)
-            return wrap(this.nativeCache.putIfAbsentAsync(key, value).get(writeTimeout, TimeUnit.MILLISECONDS));
+            return encodedToValueWrapper(this.nativeCache.putIfAbsentAsync(key, encodeNull(value)).get(writeTimeout, TimeUnit.MILLISECONDS));
          else
-            return wrap(this.nativeCache.putIfAbsent(key, value));
+            return encodedToValueWrapper(this.nativeCache.putIfAbsent(key, encodeNull(value)));
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -225,21 +228,22 @@ public class SpringCache implements Cache {
       return "InfinispanCache [nativeCache = " + this.nativeCache + "]";
    }
 
-   private ValueWrapper wrap(Object value) {
+   private ValueWrapper encodedToValueWrapper(Object value) {
       if (value == null) {
          return null;
       }
       if (value == NullValue.NULL) {
-         return NullValue.NULL;
+         return NULL_VALUE_WRAPPER;
       }
       return new SimpleValueWrapper(value);
    }
 
-   private <T> T unwrapNull(Object value) {
-      if (value == NullValue.NULL) {
-         return null;
-      }
-      return (T) value;
+   private Object encodeNull(Object value) {
+      return value != null ? value : NullValue.NULL;
+   }
+
+   private <T> T decodeNull(Object value) {
+      return value != NullValue.NULL ? (T) value : null;
    }
 
    //Implemented as a static holder class for backwards compatibility.

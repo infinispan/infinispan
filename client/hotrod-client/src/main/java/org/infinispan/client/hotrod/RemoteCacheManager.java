@@ -72,6 +72,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
+import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -406,16 +407,22 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private void initializeProtoStreamMarshaller(ProtoStreamMarshaller protoMarshaller) {
       SerializationContext ctx = protoMarshaller.getSerializationContext();
 
-      // First things first! Register some useful builtin schemas, which the user can override later.
+      // Register some useful builtin schemas, which the user can override later.
       registerDefaultSchemas(ctx,
                              "org.infinispan.protostream.types.java.CommonContainerTypesSchema",
                              "org.infinispan.protostream.types.java.CommonTypesSchema");
+      registerSerializationContextInitializer(ctx, new UserContextInitializerImpl());
 
       // Register the configured schemas.
       for (SerializationContextInitializer sci : configuration.getContextInitializers()) {
-         sci.registerSchema(ctx);
-         sci.registerMarshallers(ctx);
+         registerSerializationContextInitializer(ctx, sci);
       }
+   }
+
+   private static void registerSerializationContextInitializer(SerializationContext ctx,
+                                                               SerializationContextInitializer sci) {
+      sci.registerSchema(ctx);
+      sci.registerMarshallers(ctx);
    }
 
    private static void registerDefaultSchemas(SerializationContext ctx, String... classNames) {
@@ -429,8 +436,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             log.failedToCreatePredefinedSerializationContextInitializer(className, e);
             continue;
          }
-         sci.registerSchema(ctx);
-         sci.registerMarshallers(ctx);
+         registerSerializationContextInitializer(ctx, sci);
       }
    }
 

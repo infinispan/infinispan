@@ -11,10 +11,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.NullValue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.embedded.support.InfinispanNamedEmbeddedCacheFactoryBean;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -213,7 +213,8 @@ public class SpringCacheTest extends SingleCacheManagerTest {
       Cache.ValueWrapper existingValue = this.cache.putIfAbsent("test", "test1");
 
       //then
-      assertEquals(NullValue.NULL, existingValue);
+      assertNotNull(existingValue);
+      assertNull(existingValue.get());
    }
 
    @Test

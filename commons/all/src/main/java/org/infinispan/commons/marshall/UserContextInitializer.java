@@ -1,5 +1,6 @@
-package org.infinispan.spring.common.provider;
+package org.infinispan.commons.marshall;
 
+import org.infinispan.commons.util.NullValue;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
@@ -8,16 +9,16 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * Marshaller implementations and provided .proto schemas.
  *
  * @author Dan Berindei
- * @since 12.1
+ * @since 13.0
  */
 @AutoProtoSchemaBuilder(
       includeClasses = {
             NullValue.class,
       },
-      schemaFileName = "persistence.spring5.provider.proto",
+      schemaFileName = "user.commons.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.spring.provider",
+      schemaPackageName = "org.infinispan.commons",
       service = false
 )
-public interface PersistenceContextInitializer extends SerializationContextInitializer {
+public interface UserContextInitializer extends SerializationContextInitializer {
 }

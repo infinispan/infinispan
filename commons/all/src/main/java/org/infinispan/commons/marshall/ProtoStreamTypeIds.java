@@ -45,6 +45,7 @@ public interface ProtoStreamTypeIds {
    // 2 byte Ids 128..16383
    // Commons range 128 -> 999
    int COMMONS_LOWER_BOUND = 128;
+   int NULL_VALUE = COMMONS_LOWER_BOUND;
 
    // Core range 1000 -> 3999
    int CORE_LOWER_BOUND = 1000;
@@ -132,6 +133,7 @@ public interface ProtoStreamTypeIds {
 
    // Spring integration 5900 -> 5999
    int SPRING_LOWER_BOUND = 5900;
+   @Deprecated
    int SPRING_NULL_VALUE = SPRING_LOWER_BOUND;
    int SPRING_SESSION = SPRING_LOWER_BOUND + 1;
    int SPRING_SESSION_ATTRIBUTE = SPRING_LOWER_BOUND + 2;

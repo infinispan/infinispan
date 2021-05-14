@@ -6,13 +6,13 @@ import static org.infinispan.marshall.protostream.impl.SerializationContextRegis
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.util.NullValue;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.session.MapSessionProtoAdapter;
 import org.springframework.session.MapSession;
 
@@ -33,14 +33,7 @@ public class SpringEmbeddedModule implements ModuleLifecycle {
       JavaSerializationMarshaller serializationMarshaller = new JavaSerializationMarshaller(serializationAllowList);
 
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      addProviderContextInitializer(ctxRegistry);
       addSessionContextInitializerAndMarshaller(ctxRegistry, serializationMarshaller);
-   }
-
-   private void addProviderContextInitializer(SerializationContextRegistry ctxRegistry) {
-      org.infinispan.spring.common.provider.PersistenceContextInitializerImpl providerSci = new org.infinispan.spring.common.provider.PersistenceContextInitializerImpl();
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, providerSci);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, providerSci);
    }
 
    private void addSessionContextInitializerAndMarshaller(SerializationContextRegistry ctxRegistry,
