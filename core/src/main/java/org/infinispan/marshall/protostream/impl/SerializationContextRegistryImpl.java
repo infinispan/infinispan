@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
@@ -43,9 +44,11 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    @Start
    public void start() {
       CommonTypesSchema commonTypesSchema = new CommonTypesSchema();
-      CommonContainerTypesSchema commonContainerTypesSchema = new CommonContainerTypesSchema();
       register(commonTypesSchema, user);
+      CommonContainerTypesSchema commonContainerTypesSchema = new CommonContainerTypesSchema();
       register(commonContainerTypesSchema, user);
+      UserContextInitializerImpl userContextInitializer = new UserContextInitializerImpl();
+      register(userContextInitializer, user);
 
       // Add user configured SCIs
       Collection<SerializationContextInitializer> initializers = globalConfig.serialization().contextInitializers();

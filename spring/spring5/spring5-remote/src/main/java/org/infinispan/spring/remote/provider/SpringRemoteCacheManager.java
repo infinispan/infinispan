@@ -12,10 +12,10 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.util.NullValue;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.spring.common.provider.NullValue;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.MapSessionProtoAdapter;
 import org.springframework.session.MapSession;
@@ -166,16 +166,8 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
       if (protoMarshaller != null) {
          // Apply our own serialization context initializers
          SerializationContext ctx = protoMarshaller.getSerializationContext();
-         addProviderContextInitializer(ctx);
          addSessionContextInitializerAndMarshaller(ctx, serializationMarshaller);
       }
-   }
-
-   private void addProviderContextInitializer(SerializationContext ctx) {
-      org.infinispan.spring.common.provider.PersistenceContextInitializerImpl providerSci =
-            new org.infinispan.spring.common.provider.PersistenceContextInitializerImpl();
-      providerSci.registerMarshallers(ctx);
-      providerSci.registerSchema(ctx);
    }
 
    private void addSessionContextInitializerAndMarshaller(SerializationContext ctx,
