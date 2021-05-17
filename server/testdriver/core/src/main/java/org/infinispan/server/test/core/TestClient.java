@@ -11,6 +11,7 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestClient;
@@ -89,6 +90,8 @@ public class TestClient {
       RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
          scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));
+      }  catch (HotRodClientException e) {
+         throw e;
       } catch (Exception e) {
          throw new RuntimeException(e);
       }

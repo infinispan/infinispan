@@ -172,6 +172,47 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
+   public void testScriptUpload() {
+      InfinispanServerTestMethodRule serverTest = getServerTest();
+
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
+         RemoteCacheManager remoteCacheManager = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
+         serverTest.addScript(remoteCacheManager, "scripts/test.js");
+      }
+
+      for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
+         RemoteCacheManager remoteCacheManager = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
+         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+                 () -> serverTest.addScript(remoteCacheManager, "scripts/test.js")
+         );
+      }
+   }
+
+   @Test
+   public void testExecScripts() {
+      InfinispanServerTestMethodRule serverTest = getServerTest();
+      RemoteCache cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
+      String scriptName = serverTest.addScript(cache.getRemoteCacheManager(), "scripts/test.js");
+      Map params = new HashMap<>();
+      params.put("key", "k");
+      params.put("value", "v");
+
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.APPLICATION, TestUser.DEPLOYER)) {
+         RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
+         cacheExec.execute(scriptName, params);
+      }
+
+      for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
+         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+                 () -> {
+                    RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
+                    cacheExec.execute(scriptName, params);
+                 }
+         );
+      }
+   }
+
+   @Test
    public void testRestWriterCannotReadExplicit() {
       testRestWriterCannotRead("admin", "observer", "deployer", "application", "writer", "reader");
    }
