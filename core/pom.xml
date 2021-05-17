@@ -15,6 +15,11 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.jctools</groupId>
+         <artifactId>jctools-core</artifactId>
+         <version>3.3.0</version>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
       </dependency>
