@@ -33,6 +33,7 @@ final class RemoteQueryBuilder extends BaseQueryBuilder {
       if (log.isTraceEnabled()) {
          log.tracef("Query string : %s", queryString);
       }
-      return new RemoteQuery<>(queryFactory, cache, serializationContext, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+      // QueryBuilder is deprecated and will not support local mode
+      return new RemoteQuery<>(queryFactory, cache, serializationContext, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults, false);
    }
 }

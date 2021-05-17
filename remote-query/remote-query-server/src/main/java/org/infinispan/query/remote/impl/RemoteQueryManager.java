@@ -54,5 +54,5 @@ public interface RemoteQueryManager {
    DataConversion getValueDataConversion();
 
    byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                       AdvancedCache<?, ?> cache, MediaType outputFormat);
+                       AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal);
 }

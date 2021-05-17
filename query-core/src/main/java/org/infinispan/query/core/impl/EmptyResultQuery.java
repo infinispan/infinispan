@@ -22,7 +22,7 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
    public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
                            Map<String, Object> namedParameters, long startOffset, int maxResults,
                            LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults, queryStatistics);
+      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults, queryStatistics, false);
    }
 
    @Override

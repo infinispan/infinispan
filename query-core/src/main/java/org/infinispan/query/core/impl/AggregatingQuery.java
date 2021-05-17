@@ -36,8 +36,8 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
                            int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                            ObjectFilter objectFilter,
                            long startOffset, int maxResults,
-                           BaseQuery<?> baseQuery, LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery, queryStatistics);
+                           BaseQuery<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local) {
+      super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery, queryStatistics, local);
       if (!baseQuery.hasProjections()) {
          throw new IllegalArgumentException("Base query must use projections");
       }

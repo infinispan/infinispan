@@ -75,7 +75,7 @@ final class FilterQueryFactory extends BaseQueryFactory {
    private static final class FilterQuery<T> extends BaseQuery<T> {
 
       FilterQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
-         super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
+         super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, false);
       }
 
       @Override

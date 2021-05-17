@@ -27,6 +27,6 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
       if (log.isTraceEnabled()) {
          log.tracef("Query string : %s", queryString);
       }
-      return new DelegatingQuery<>(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+      return new DelegatingQuery<>(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults, false);
    }
 }

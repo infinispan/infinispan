@@ -59,7 +59,7 @@ class CacheResourceQueryAction {
       }
 
       String cacheName = restRequest.variables().get("cacheName");
-
+      boolean isLocal = Boolean.parseBoolean(restRequest.getParameter("local"));
       MediaType keyContentType = restRequest.keyContentType();
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest);
       String queryString = query.getQuery();
@@ -69,7 +69,7 @@ class CacheResourceQueryAction {
       return CompletableFuture.supplyAsync(() -> {
          try {
             byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
-                  finalQuery.getMaxResults(), cache, MediaType.APPLICATION_JSON);
+                  finalQuery.getMaxResults(), cache, MediaType.APPLICATION_JSON, isLocal);
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {

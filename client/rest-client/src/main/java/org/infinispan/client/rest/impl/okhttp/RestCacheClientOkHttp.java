@@ -318,9 +318,9 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> query(String query) {
+   public CompletionStage<RestResponse> query(String query, boolean local) {
       Request.Builder builder = new Request.Builder();
-      builder.url(cacheUrl + "?action=search&query=" + sanitize(query)).get();
+      builder.url(cacheUrl + "?action=search&query=" + sanitize(query) + "&local=" + local).get();
       return client.execute(builder);
    }
 
@@ -425,12 +425,17 @@ public class RestCacheClientOkHttp implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> reindex() {
-      return executeIndexOperation("reindex");
+      return executeIndexOperation("reindex", false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> reindexLocal() {
+      return executeIndexOperation("reindex", true);
    }
 
    @Override
    public CompletionStage<RestResponse> clearIndex() {
-      return executeIndexOperation("clear");
+      return executeIndexOperation("clear", false);
    }
 
    @Override
@@ -448,9 +453,9 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       return executeSearchStatOperation("query", "clear");
    }
 
-   private CompletionStage<RestResponse> executeIndexOperation(String action) {
+   private CompletionStage<RestResponse> executeIndexOperation(String action, boolean local) {
       Request.Builder builder = new Request.Builder();
-      builder.post(EMPTY_BODY).url(String.format("%s/search/indexes?action=%s", cacheUrl, action));
+      builder.post(EMPTY_BODY).url(String.format("%s/search/indexes?action=%s&local=%s", cacheUrl, action, local));
       return client.execute(builder);
    }
 

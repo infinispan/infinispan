@@ -13,9 +13,14 @@ public interface Indexer {
     * Deletes all indexes for the cache and rebuilds them.
     * The indexing operation can take a long time to complete, depending on the size of the cache.
     * You should not query caches until the indexing operation is complete because it affects query performance and results.
-    *
     */
    CompletionStage<Void> run();
+
+   /**
+    * same as {@link #run()} but will only re-index data from the local member.
+    */
+   CompletionStage<Void> runLocal();
+
 
    /**
     * Re-indexes values associated with the provided keys only.

@@ -34,6 +34,11 @@ message QueryRequest {
     */
    repeated NamedParameter namedParameters = 5;
 
+   /**
+    * Whether the query is limited to the data from node that receives the request
+    */
+   optional bool local = 6;
+
    message NamedParameter {
 
       /**

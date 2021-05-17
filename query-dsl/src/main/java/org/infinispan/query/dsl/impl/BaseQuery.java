@@ -34,6 +34,8 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    protected int maxResults;
 
+   protected boolean local;
+
    /**
     * Optional timeout in nanoseconds.
     */
@@ -41,7 +43,8 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?
    protected BaseQuery(QueryFactory queryFactory, String queryString,
-                       Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+                       Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults,
+                       boolean local) {
       this.paramsDefined = true;
       this.queryFactory = queryFactory;
       this.queryString = queryString;
@@ -49,6 +52,7 @@ public abstract class BaseQuery<T> implements Query<T> {
       this.projection = projection != null && projection.length > 0 ? projection : null;
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
       this.maxResults = maxResults;
+      this.local = local;
    }
 
    protected BaseQuery(QueryFactory queryFactory, String queryString) {
@@ -184,6 +188,17 @@ public abstract class BaseQuery<T> implements Query<T> {
       this.maxResults = maxResults;
       resetQuery();
       return this;
+   }
+
+   @Override
+   public Query<T> local(boolean local) {
+      this.local = local;
+      resetQuery();
+      return this;
+   }
+
+   public boolean isLocal() {
+      return local;
    }
 
    @Override

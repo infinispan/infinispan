@@ -41,8 +41,8 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    }
 
    RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
-               String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
+               String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults, boolean local) {
+      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
       this.cache = cache;
       this.serializationContext = serializationContext;
    }

@@ -108,7 +108,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    @Override
-   protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+   protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.getProjectedPaths() == null) {
          throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -184,7 +184,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       for (PropertyPath<?> p : columns.keySet()) {
          if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
             return buildQueryWithRepeatedAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults,
-                  parsingResult, havingClause, columns, noOfGroupingColumns);
+                  parsingResult, havingClause, columns, noOfGroupingColumns, local);
          }
       }
 
@@ -263,14 +263,14 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), local);
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
       return new AggregatingQuery<>(queryFactory, cache, secondPhaseQueryStr, namedParameters,
             noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics, local);
    }
 
    /**
@@ -358,7 +358,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    private BaseQuery<?> buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
                                                            IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
-                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns) {
+                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, boolean local) {
       // these types of aggregations can only be computed in memory
 
       StringBuilder firstPhaseQuery = new StringBuilder();
@@ -374,7 +374,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          }
       }
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), local);
 
       List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<>();
       List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<>();
@@ -411,7 +411,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            startOffset, maxResults, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics, local);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -445,12 +445,12 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return new AggregatingQuery<>(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
             noOfGroupingColumns, thirdPhaseAccumulators, true,
             getObjectFilter(new RowMatcher(_columns), thirdPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, projectingAggregatingQuery, queryStatistics);
+            startOffset, maxResults, projectingAggregatingQuery, queryStatistics, local);
    }
 
    @Override
    protected BaseQuery<?> buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
-                                                   long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+                                                   long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw CONTAINER.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
@@ -486,7 +486,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
 
       if (!isIndexed) {
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -574,37 +574,37 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                      };
                      PropertyPath[] deduplicatedProjection = projectionsMap.keySet().toArray(new PropertyPath[projectionsMap.size()]);
                      IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, deduplicatedProjection, projectedTypes, deduplicatedProjectedNullMarkers, sortFields);
-                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
+                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, local);
                   } else {
                      // happy case: no projections are duplicated
                      rowProcessor = makeProjectionProcessor(parsingResult.getProjectedTypes(), parsingResult.getProjectedNullMarkers());
                   }
                }
-               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
+               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, local);
             } else {
                IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
-               Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults);
+               Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, local);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
-               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics);
+               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
             IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
-            Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
+            Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, sortFields);
-            return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics);
+            return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
          }
       }
 
       if (expansion == ConstantBooleanExpr.TRUE) {
          // expansion leads to a full non-indexed query or the expansion is too long/complex
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
       }
 
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
-      Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
-      return new HybridQuery<>(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery, queryStatistics);
+      Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
+      return new HybridQuery<>(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery, queryStatistics, local);
    }
 
    /**
@@ -647,7 +647,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    public <E> IndexedQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult,
-                                               Map<String, Object> namedParameters, long startOffset, int maxResults) {
+                                               Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
       if (log.isDebugEnabled()) {
          log.debugf("Building Lucene query for : %s", ickleParsingResult.getQueryString());
       }
@@ -658,7 +658,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
       SearchQueryBuilder searchQuery = transformParsingResult(ickleParsingResult, namedParameters);
 
-      IndexedQuery<?> cacheQuery = makeCacheQuery(ickleParsingResult, searchQuery, namedParameters);
+      IndexedQuery<?> cacheQuery = makeCacheQuery(ickleParsingResult, searchQuery, namedParameters, local);
       if (startOffset >= 0) {
          cacheQuery = cacheQuery.firstResult((int) startOffset);
       }
@@ -701,12 +701,12 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    protected IndexedQuery<?> makeCacheQuery(IckleParsingResult<TypeMetadata> ickleParsingResult,
-                                            SearchQueryBuilder searchQuery, Map<String, Object> namedParameters) {
+                                            SearchQueryBuilder searchQuery, Map<String, Object> namedParameters, boolean local) {
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       String queryString = ickleParsingResult.getQueryString();
-      if (broadCastQuery) {
+      if (broadCastQuery && !local) {
          QueryDefinition queryDefinition = buildQueryDefinition(queryString);
          queryDefinition.setNamedParameters(namedParameters);
          return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics);

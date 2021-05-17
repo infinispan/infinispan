@@ -26,6 +26,7 @@ public final class QueryRequest implements JsonSerialization {
    public static final String START_OFFSET_FIELD = "startOffset";
    public static final String MAX_RESULTS_FIELD = "maxResults";
    public static final String NAMED_PARAMETERS_FIELD = "namedParameters";
+   public static final String LOCAL_FIELD = "local";
    private String queryString;
 
    private List<NamedParameter> namedParameters;
@@ -33,6 +34,8 @@ public final class QueryRequest implements JsonSerialization {
    private Long startOffset;
 
    private Integer maxResults;
+
+   private boolean local;
 
    public String getQueryString() {
       return queryString;
@@ -60,6 +63,14 @@ public final class QueryRequest implements JsonSerialization {
 
    public List<NamedParameter> getNamedParameters() {
       return namedParameters;
+   }
+
+   public boolean isLocal() {
+      return local;
+   }
+
+   public void setLocal(boolean local) {
+      this.local = local;
    }
 
    public void setNamedParameters(List<NamedParameter> namedParameters) {
@@ -100,7 +111,8 @@ public final class QueryRequest implements JsonSerialization {
             .set(QUERY_STRING_FIELD, queryString)
             .set(START_OFFSET_FIELD, startOffset)
             .set(MAX_RESULTS_FIELD, maxResults)
-            .set(NAMED_PARAMETERS_FIELD, Json.make(getNamedParameters()));
+            .set(NAMED_PARAMETERS_FIELD, Json.make(getNamedParameters()))
+            .set(LOCAL_FIELD, Json.factory().bool(local));
    }
 
    static final class Marshaller implements MessageMarshaller<QueryRequest> {
@@ -108,19 +120,21 @@ public final class QueryRequest implements JsonSerialization {
       @Override
       public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
          QueryRequest queryRequest = new QueryRequest();
-         queryRequest.setQueryString(reader.readString("queryString"));
-         queryRequest.setStartOffset(reader.readLong("startOffset"));
-         queryRequest.setMaxResults(reader.readInt("maxResults"));
-         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<>(), NamedParameter.class));
+         queryRequest.setQueryString(reader.readString(QUERY_STRING_FIELD));
+         queryRequest.setStartOffset(reader.readLong(START_OFFSET_FIELD));
+         queryRequest.setMaxResults(reader.readInt(MAX_RESULTS_FIELD));
+         queryRequest.setNamedParameters(reader.readCollection(NAMED_PARAMETERS_FIELD, new ArrayList<>(), NamedParameter.class));
+         queryRequest.setLocal(reader.readBoolean(LOCAL_FIELD));
          return queryRequest;
       }
 
       @Override
       public void writeTo(ProtoStreamWriter writer, QueryRequest queryRequest) throws IOException {
-         writer.writeString("queryString", queryRequest.getQueryString());
-         writer.writeLong("startOffset", queryRequest.getStartOffset());
-         writer.writeInt("maxResults", queryRequest.getMaxResults());
-         writer.writeCollection("namedParameters", queryRequest.getNamedParameters(), NamedParameter.class);
+         writer.writeString(QUERY_STRING_FIELD, queryRequest.getQueryString());
+         writer.writeLong(START_OFFSET_FIELD, queryRequest.getStartOffset());
+         writer.writeInt(MAX_RESULTS_FIELD, queryRequest.getMaxResults());
+         writer.writeCollection(NAMED_PARAMETERS_FIELD, queryRequest.getNamedParameters(), NamedParameter.class);
+         writer.writeBoolean(LOCAL_FIELD, queryRequest.isLocal());
       }
 
       @Override
