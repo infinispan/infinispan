@@ -156,11 +156,15 @@ public class ScriptingManagerImpl implements ScriptingManager {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
                SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
          if (authorizationManager != null) {
+            // when the cache is secured
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          } else {
-            authorizer.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
+            if (context.getSubject().isPresent()) {
+               authorizer.checkPermission(context.getSubject().get(), AuthorizationPermission.EXEC);
+            } else {
+               authorizer.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
+            }
          }
-
       }
 
       MediaType scriptMediaType = metadata.dataType();
