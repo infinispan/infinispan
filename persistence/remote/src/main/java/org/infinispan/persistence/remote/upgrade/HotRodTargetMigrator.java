@@ -61,9 +61,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
       RemoteStore store = stores.iterator().next();
       final RemoteCache remoteSourceCache = store.getRemoteCache();
       ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(cache.getCacheManager());
-      clusterExecutor
-            .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
-            .singleNodeSubmission();
+      clusterExecutor = clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS).singleNodeSubmission();
       CacheTopologyInfo sourceCacheTopologyInfo = remoteSourceCache.getCacheTopologyInfo();
       if (sourceCacheTopologyInfo.getSegmentsPerServer().size() == 1) {
          return migrateFromSingleServer(cache.getCacheManager(), cacheName, readBatch, threads);
