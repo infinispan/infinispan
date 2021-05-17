@@ -117,7 +117,8 @@ public class SearchAdminResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> reindex(RestRequest request) {
-      return runIndexer(request, Indexer::run, true);
+      boolean local = Boolean.parseBoolean(request.getParameter("local"));
+      return runIndexer(request, s -> local ? s.runLocal() : s.run(), true);
    }
 
    private CompletionStage<RestResponse> clearIndexes(RestRequest request) {

@@ -44,8 +44,8 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
                        String[] projection, QueryEngine.RowProcessor rowProcessor,
-                       long startOffset, int maxResults) {
-      super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults);
+                       long startOffset, int maxResults, boolean local) {
+      super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults, local);
       if (rowProcessor != null && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
@@ -63,7 +63,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       // query is created first time only
       if (indexedQuery == null) {
          validateNamedParameters();
-         indexedQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
+         indexedQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, isLocal());
          if (timeout > 0) {
             indexedQuery.timeout(timeout, TimeUnit.NANOSECONDS);
          }

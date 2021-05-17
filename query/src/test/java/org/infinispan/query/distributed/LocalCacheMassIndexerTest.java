@@ -78,6 +78,11 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       join(massIndexer.run());
       assertFalse(massIndexer.isRunning());
       assertEquals(NUM_ENTITIES, indexSize(cache));
+
+      // Force local
+      join(massIndexer.runLocal());
+      assertFalse(massIndexer.isRunning());
+      assertEquals(NUM_ENTITIES, indexSize(cache));
    }
 
    public void testPartiallyReindex() throws Exception {

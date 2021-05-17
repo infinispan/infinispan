@@ -66,6 +66,17 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
+   public void testSimpleLocal() {
+      loadTestingData();
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      Query<Person> cacheQuery = queryFactory.create("FROM " + Person.class.getName());
+
+      List<Person> found = cacheQuery.local(true).execute().list();
+
+      assertEquals(3, found.size());
+      StaticTestingErrorHandler.assertAllGood(this.cache);
+   }
+
    public void testEagerIterator() {
       loadTestingData();
       Query<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);

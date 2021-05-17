@@ -10,6 +10,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
@@ -31,8 +32,8 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    public EmbeddedQuery(QueryEngine<?> queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                         String queryString, Map<String, Object> namedParameters, String[] projection,
-                        long startOffset, int maxResults, LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults, queryStatistics);
+                        long startOffset, int maxResults, LocalQueryStatistics queryStatistics, boolean local) {
+      super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
    }
 
@@ -66,7 +67,11 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
-      CacheStream<CacheEntry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).cacheEntrySet().stream();
+      AdvancedCache<Object, Object> cache = (AdvancedCache<Object, Object>) this.cache;
+
+      if (isLocal()) cache = cache.withFlags(Flag.CACHE_MODE_LOCAL);
+
+      CacheStream<CacheEntry<Object, Object>> entryStream = (cache).cacheEntrySet().stream();
       if (timeout > 0) {
          entryStream = entryStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }

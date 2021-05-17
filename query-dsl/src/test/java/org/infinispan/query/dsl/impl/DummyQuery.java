@@ -58,6 +58,11 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
+   public Query<T> local(boolean local) {
+      return this;
+   }
+
+   @Override
    public String getQueryString() {
       return null;
    }

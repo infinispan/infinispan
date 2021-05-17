@@ -440,6 +440,10 @@ Hits can contain all fields or a subset of fields if you use a `Select` clause.
 |`offset`
 |OPTIONAL
 |Specifies the index of the first result to return. The default is `0`.
+
+|`local`
+|OPTIONAL
+|When `true`, the query is restricted to the data present in node that process the request. The default is `false`.
 |===
 
 To use the body of the request instead of specifying query parameters, invoke
@@ -460,18 +464,32 @@ include::json_examples/rest_query_request_body.json[]
 
 [id='rest_v2_query_reindex']
 = Re-indexing Data
-Re-index all data in caches with `POST` requests and the
-`?action=mass-index&mode={mode}` parameter.
+Re-index all data in caches with `POST` requests and the `?action=mass-index` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
+POST  /v2/caches/{cacheName}/search/indexes?action=mass-index
 ----
 
-Values for the `mode` parameter are as follows:
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`mode`
+|OPTIONAL
+|Values for the `mode` parameter are as follows:
 
 * `sync` returns `204 (No Content)` only after the re-indexing operation is complete.
-* `async` returns `204 (No Content)` immediately and the re-indexing operation continues running in the cluster. You can check the status with the link:#rest_v2_query_index_stats[Index Statistics] REST call.
+
+* `async` returns `204 (No Content)` immediately and the re-indexing operation continues
+running in the cluster. You can check the status with
+the link:#rest_v2_query_index_stats[Index Statistics] REST call.
+
+|`local`
+|OPTIONAL
+|When `true`, only the data from node that process the request is re-indexed. The default is `false`, meaning all data cluster-wide is re-indexed.
+|===
 
 [id='rest_v2_query_purge_index']
 = Purging Indexes

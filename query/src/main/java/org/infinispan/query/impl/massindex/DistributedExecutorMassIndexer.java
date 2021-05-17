@@ -60,12 +60,17 @@ public class DistributedExecutorMassIndexer implements Indexer {
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    public void start() {
-      CompletionStages.join(executeInternal(false));
+      CompletionStages.join(executeInternal(false, false));
    }
 
    @Override
    public CompletionStage<Void> run() {
-      return executeInternal(false).toCompletableFuture();
+      return executeInternal(false, false).toCompletableFuture();
+   }
+
+   @Override
+   public CompletionStage<Void> runLocal() {
+      return executeInternal(false, true).toCompletableFuture();
    }
 
    @Override
@@ -94,12 +99,12 @@ public class DistributedExecutorMassIndexer implements Indexer {
 
    @Override
    public CompletionStage<Void> remove() {
-      return executeInternal(true).toCompletableFuture();
+      return executeInternal(true, false).toCompletableFuture();
    }
 
    @Override
    public CompletionStage<Void> remove(Class<?>... entities) {
-      return executeInternal(true, entities);
+      return executeInternal(true, false, entities);
    }
 
    @Override
@@ -107,7 +112,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
       return isRunning;
    }
 
-   private CompletionStage<Void> executeInternal(boolean skipIndex, Class<?>... entities) {
+   private CompletionStage<Void> executeInternal(boolean skipIndex, boolean local, Class<?>... entities) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       CompletionStage<Boolean> lockStage = lock.lock();
       return lockStage.thenCompose(acquired -> {
@@ -119,7 +124,11 @@ public class DistributedExecutorMassIndexer implements Indexer {
             Collection<Class<?>> javaClasses = (entities.length == 0) ?
                   indexUpdater.allJavaClasses() : Arrays.asList(entities);
             IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, null);
-            return executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
+            ClusterExecutor clusterExecutor = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS);
+            if (local) {
+               clusterExecutor = clusterExecutor.filterTargets(a -> a.equals(cache.getRpcManager().getAddress()));
+            }
+            return clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
          } catch (Throwable t) {
             return CompletableFutures.completedExceptionFuture(t);
          } finally {

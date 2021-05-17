@@ -50,6 +50,8 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
       }
       queryRequest.setNamedParameters(getNamedParameters());
 
+      queryRequest.setLocal(remoteQuery.isLocal());
+
       // marshall and write the request
       byte[] requestBytes = querySerializer.serializeQueryRequest(remoteQuery, queryRequest);
 

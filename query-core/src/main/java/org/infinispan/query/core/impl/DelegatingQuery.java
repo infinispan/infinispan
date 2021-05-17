@@ -49,8 +49,8 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    protected DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString,
-                             Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
+                             Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults, boolean local) {
+      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
       this.queryEngine = queryEngine;
 
       // parse and validate early
@@ -88,7 +88,7 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    private Query<T> createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = (BaseQuery<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults);
+         query = (BaseQuery<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, local);
          if (timeout > 0) {
             query.timeout(timeout, TimeUnit.NANOSECONDS);
          }

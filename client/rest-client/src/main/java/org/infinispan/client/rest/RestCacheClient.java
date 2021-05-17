@@ -34,19 +34,22 @@ public interface RestCacheClient {
 
    /**
     * Retrieves entries without metadata
-    @return Response with InputStream to get the entries
+    *
+    * @return Response with InputStream to get the entries
     */
    CompletionStage<RestResponse> entries();
 
    /**
     * Retrieves entries limited by count
+    *
     * @param limit: The maximum number of entries to retrieve, or -1 to retrieve all
     */
    CompletionStage<RestResponse> entries(int limit);
 
    /**
     * Retrieves entries with limit and metadata
-    * @param limit: The maximum number of entries to retrieve, or -1 to retrieve all
+    *
+    * @param limit:    The maximum number of entries to retrieve, or -1 to retrieve all
     * @param metadata: if true, includes the metadata for each entry
     */
    CompletionStage<RestResponse> entries(int limit, boolean metadata);
@@ -194,6 +197,7 @@ public interface RestCacheClient {
 
    /**
     * Similar to {@link #get(String)} but only retrieves headers
+    *
     * @param key
     * @return
     */
@@ -251,15 +255,27 @@ public interface RestCacheClient {
 
    /**
     * Executes an Ickle-query
+    *
     * @param query the ickle query
     */
-   CompletionStage<RestResponse> query(String query);
+   default CompletionStage<RestResponse> query(String query) {
+      return query(query, false);
+   }
 
    /**
     * Executes an Ickle-query
+    *
     * @param query the ickle query
+    * @param local if true, query is restricted to the data present in the node that process the request.
+    */
+   CompletionStage<RestResponse> query(String query, boolean local);
+
+   /**
+    * Executes an Ickle-query
+    *
+    * @param query      the ickle query
     * @param maxResults the maximum number of results to return
-    * @param offset the offset within the result from which to return results
+    * @param offset     the offset within the result from which to return results
     */
    CompletionStage<RestResponse> query(String query, int maxResults, int offset);
 
@@ -274,7 +290,7 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> backupStatus(String site);
 
    /**
-    *  Take a backup site offline
+    * Take a backup site offline
     */
    CompletionStage<RestResponse> takeSiteOffline(String site);
 
@@ -358,12 +374,18 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> reindex();
 
    /**
+    * Same as {@link #reindex()} but only considers data from the local cluster member.
+    */
+   CompletionStage<RestResponse> reindexLocal();
+
+   /**
     * Deletes all the indexes from the cache.
     */
    CompletionStage<RestResponse> clearIndex();
 
    /**
     * Obtain statistics about queries.
+    *
     * @deprecated Use {@link #searchStats()} instead.
     */
    @Deprecated
@@ -371,6 +393,7 @@ public interface RestCacheClient {
 
    /**
     * Obtain statistics about the indexes.
+    *
     * @deprecated Use {@link #searchStats()} instead.
     */
    @Deprecated
@@ -378,6 +401,7 @@ public interface RestCacheClient {
 
    /**
     * Clear runtime query statistics.
+    *
     * @deprecated Use {@link #searchStats()} and {@link #clearSearchStats()}.
     */
    @Deprecated

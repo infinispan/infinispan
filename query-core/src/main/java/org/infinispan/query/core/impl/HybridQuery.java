@@ -28,8 +28,8 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
-                      Query<?> baseQuery, LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics);
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local) {
+      super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
    }
@@ -50,7 +50,7 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    }
 
    protected CloseableIterator<?> getBaseIterator() {
-      return baseQuery.startOffset(0).maxResults(-1).iterator();
+      return baseQuery.startOffset(0).maxResults(-1).local(local).iterator();
    }
 
    @Override

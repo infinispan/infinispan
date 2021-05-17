@@ -15,10 +15,14 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -29,13 +33,19 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.query.Search;
+import org.infinispan.query.core.stats.IndexInfo;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.rest.search.entity.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -59,6 +69,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    protected RestClient client;
    protected RestCacheClient cacheClient;
    private final List<RestServerHelper> restServers = new ArrayList<>();
+   private final List<RestClient> clients = new ArrayList<>();
 
    protected int getNumNodes() {
       return 3;
@@ -85,12 +96,12 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          RestServerHelper restServer = new RestServerHelper(cm);
          restServer.start(TestResourceTracker.getCurrentTestShortName());
          restServers.add(restServer);
+         RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
+         clientConfigurationBuilder.addServer().host(restServer.getHost()).port(restServer.getPort());
+         clients.add(RestClient.forConfiguration(clientConfigurationBuilder.build()));
       });
 
-      // start rest client
-      RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
-      restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
-      client = RestClient.forConfiguration(clientConfigurationBuilder.build());
+      client = clients.get(0);
       cacheClient = client.cache(CACHE_NAME);
       // register protobuf schema
       String protoFileContents = Util.getResourceAsString(PROTO_FILE_NAME, getClass().getClassLoader());
@@ -376,9 +387,84 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterClass
+   @Test
+   public void testLocalQuery() {
+      Configuration configuration = getConfigBuilder().build();
+      ClusteringConfiguration clustering = configuration.clustering();
+
+      int sum = clients.stream().map(cli -> {
+         RestResponse queryResponse = join(cli.cache(CACHE_NAME).query("FROM org.infinispan.rest.search.entity.Person", true));
+         return Json.read(queryResponse.getBody()).at(TOTAL_RESULTS).asInteger();
+      }).mapToInt(value -> value).sum();
+
+      int expected = ENTRIES;
+
+      if (clustering.cacheMode().isClustered()) {
+         expected = ENTRIES * clustering.hash().numOwners();
+      }
+      assertEquals(expected, sum);
+   }
+
+   @Test
+   public void testLocalReindexing() {
+      boolean indexEnabled = getConfigBuilder().indexing().enabled();
+      if (!indexEnabled || getNumNodes() < 2) return;
+
+      // reindex() reindex the whole cluster
+      join(clients.get(0).cache(CACHE_NAME).reindex());
+      assertAllIndexed();
+
+      clearIndexes();
+
+      // Local indexing should not touch the indexes of other caches
+      join(clients.get(0).cache(CACHE_NAME).reindexLocal());
+      assertOnlyIndexed(0);
+
+      clearIndexes();
+
+      join(clients.get(1).cache(CACHE_NAME).reindexLocal());
+      assertOnlyIndexed(1);
+
+      clearIndexes();
+
+      join(clients.get(2).cache(CACHE_NAME).reindexLocal());
+      assertOnlyIndexed(2);
+
+   }
+
+   void clearIndexes() {
+      join(clients.get(0).cache(CACHE_NAME).clearIndex());
+   }
+
+   private void assertIndexState(BiConsumer<IndexInfo, Integer> cacheIndexInfo) {
+      IntStream.range(0, getNumNodes()).forEach(i -> {
+         Cache<?, ?> cache = cache(i, CACHE_NAME);
+         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         Map<String, IndexInfo> indexInfo = join(searchStatistics.getIndexStatistics().computeIndexInfos());
+         cacheIndexInfo.accept(indexInfo.get(Person.class.getName()), i);
+      });
+   }
+
+   private void assertAllIndexed() {
+      assertIndexState((indexInfo, i) -> assertTrue(indexInfo.count() > 0));
+   }
+
+   private void assertOnlyIndexed(int id) {
+      assertIndexState((indexInfo, i) -> {
+         long count = indexInfo.count();
+         if (i == id) {
+            assertTrue(count > 0);
+         } else {
+            assertEquals(count, 0);
+         }
+      });
+   }
+
+   @AfterClass(alwaysRun = true)
    public void tearDown() throws Exception {
-      client.close();
+      for (RestClient client : clients) {
+         client.close();
+      }
       restServers.forEach(RestServerHelper::stop);
    }
 

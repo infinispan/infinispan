@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.Date;
@@ -73,15 +74,6 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
       userCache = client(0).getCache(USER_CACHE);
       accountCache = client(0).getCache(ACCOUNT_CACHE);
-   }
-
-   @Override
-   protected SerializationContextInitializer contextInitializer() {
-      return TestDomainSCI.INSTANCE;
-   }
-
-   @Test
-   public void testMassIndexing() {
       for (int i = 0; i < NUM_ENTRIES; i++) {
          AccountPB account = new AccountPB();
          account.setId(i);
@@ -96,7 +88,15 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
          user.setAccountIds(Collections.singleton(i));
          userCache.put(user.getId(), user);
       }
+   }
 
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
+   }
+
+   @Test
+   public void testMassIndexing() {
       assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
       assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
 
@@ -109,6 +109,16 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
       assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
       assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
+   }
+
+   @Test
+   public void testLocalQueries() {
+      Query<?> matchAll = Search.getQueryFactory(userCache).create("FROM  sample_bank_account.User");
+      long totalUsers = matchAll.execute().hitCount().orElse(-1);
+      assertEquals(totalUsers, NUM_ENTRIES);
+
+      long partialCount = matchAll.local(true).execute().hitCount().orElse(-1);
+      assertTrue(partialCount > 0 && partialCount < NUM_ENTRIES);
    }
 
    private void reindex(String cacheName) {

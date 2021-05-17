@@ -114,4 +114,12 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     *  is handled on a best effort basis, and the supplied time is rounded to the nearest millisecond.
     */
    Query<T> timeout(long timeout, TimeUnit timeUnit);
+
+   /**
+    * Set the query execution scope
+    *
+    * @param local if true, query will be restricted to the data present in the local node, ignoring the other
+    *                  members of the clusters
+    */
+   Query<T> local(boolean local);
 }

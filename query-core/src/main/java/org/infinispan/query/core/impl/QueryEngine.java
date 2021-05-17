@@ -84,18 +84,18 @@ public class QueryEngine<TypeMetadata> {
       this(cache, ReflectionMatcher.class);
    }
 
-   public BaseQuery<?> buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   public BaseQuery<?> buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
       if (log.isDebugEnabled()) {
          log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
       }
       BaseQuery<?> query = parsingResult.hasGroupingOrAggregations() ?
-            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult) :
-            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult);
+            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local) :
+            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local);
       query.validateNamedParameters();
       return query;
    }
 
-   protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+   protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.getProjectedPaths() == null) {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -171,7 +171,7 @@ public class QueryEngine<TypeMetadata> {
       for (PropertyPath<?> p : columns.keySet()) {
          if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
             return buildQueryWithRepeatedAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults,
-                  parsingResult, havingClause, columns, noOfGroupingColumns);
+                  parsingResult, havingClause, columns, noOfGroupingColumns, local);
          }
       }
 
@@ -250,14 +250,14 @@ public class QueryEngine<TypeMetadata> {
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), local);
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
       return new AggregatingQuery<>(queryFactory, cache, secondPhaseQueryStr, namedParameters,
             noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics, local);
    }
 
    /**
@@ -345,7 +345,7 @@ public class QueryEngine<TypeMetadata> {
 
    private BaseQuery<?> buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
                                                            IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
-                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns) {
+                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, boolean local) {
       // these types of aggregations can only be computed in memory
 
       StringBuilder firstPhaseQuery = new StringBuilder();
@@ -361,7 +361,7 @@ public class QueryEngine<TypeMetadata> {
          }
       }
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), local);
 
       List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<>();
       List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<>();
@@ -398,7 +398,7 @@ public class QueryEngine<TypeMetadata> {
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            startOffset, maxResults, baseQuery, queryStatistics);
+            startOffset, maxResults, baseQuery, queryStatistics, local);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -432,11 +432,11 @@ public class QueryEngine<TypeMetadata> {
       return new AggregatingQuery<>(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
             noOfGroupingColumns, thirdPhaseAccumulators, true,
             getObjectFilter(new RowMatcher(_columns), thirdPhaseQueryStr, namedParameters, null),
-            startOffset, maxResults, projectingAggregatingQuery, queryStatistics);
+            startOffset, maxResults, projectingAggregatingQuery, queryStatistics, local);
    }
 
    protected BaseQuery<?> buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
-                                                   long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+                                                   long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
@@ -472,7 +472,7 @@ public class QueryEngine<TypeMetadata> {
       }
 
       return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters,
-            parsingResult.getProjections(), startOffset, maxResults, queryStatistics);
+            parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {

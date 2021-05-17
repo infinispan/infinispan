@@ -47,8 +47,8 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
    protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
                                Map<String, Object> namedParameters, String[] projection, long startOffset,
-                               int maxResults, LocalQueryStatistics queryStatistics) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
+                               int maxResults, LocalQueryStatistics queryStatistics, boolean local) {
+      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
       this.queryStatistics = queryStatistics;
