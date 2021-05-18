@@ -1,11 +1,8 @@
 package org.infinispan.counter;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +16,8 @@ import java.util.Properties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -34,7 +33,6 @@ import org.infinispan.counter.configuration.StrongCounterConfigurationBuilder;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.configuration.WeakCounterConfigurationBuilder;
 import org.infinispan.counter.exception.CounterConfigurationException;
-import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -56,41 +54,34 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
 
    public void testParser() throws IOException {
       ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/counters.xml");
-      withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
-         cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
-         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-         CounterManagerConfiguration counterManagerConfiguration = globalConfiguration
-               .module(CounterManagerConfiguration.class);
-         assertNotNull(counterManagerConfiguration);
-         assertEquals(3, counterManagerConfiguration.numOwners());
-         assertEquals(Reliability.CONSISTENT, counterManagerConfiguration.reliability());
-         Map<String, AbstractCounterConfiguration> counterConfig = new HashMap<>();
-         for (AbstractCounterConfiguration configuration : counterManagerConfiguration.counters()) {
-            counterConfig.put(configuration.name(), configuration);
-         }
-         assertStrongCounter("c1", counterConfig.get("c1"), 1, Storage.PERSISTENT, false, Long.MIN_VALUE,
-               Long.MAX_VALUE);
-         assertStrongCounter("c2", counterConfig.get("c2"), 2, Storage.VOLATILE, true, 0, Long.MAX_VALUE);
-         assertStrongCounter("c3", counterConfig.get("c3"), 3, Storage.PERSISTENT, true, Long.MIN_VALUE, 5);
-         assertStrongCounter("c4", counterConfig.get("c4"), 4, Storage.VOLATILE, true, 0, 10);
-         assertWeakCounter(counterConfig.get("c5"));
-      });
+
+      GlobalConfiguration globalConfiguration = holder.getGlobalConfigurationBuilder().build();
+      CounterManagerConfiguration counterManagerConfiguration = globalConfiguration
+            .module(CounterManagerConfiguration.class);
+      assertNotNull(counterManagerConfiguration);
+      assertEquals(3, counterManagerConfiguration.numOwners());
+      assertEquals(Reliability.CONSISTENT, counterManagerConfiguration.reliability());
+      Map<String, AbstractCounterConfiguration> counterConfig = new HashMap<>();
+      for (AbstractCounterConfiguration configuration : counterManagerConfiguration.counters()) {
+         counterConfig.put(configuration.name(), configuration);
+      }
+      assertStrongCounter("c1", counterConfig.get("c1"), 1, Storage.PERSISTENT, false, Long.MIN_VALUE,
+                          Long.MAX_VALUE);
+      assertStrongCounter("c2", counterConfig.get("c2"), 2, Storage.VOLATILE, true, 0, Long.MAX_VALUE);
+      assertStrongCounter("c3", counterConfig.get("c3"), 3, Storage.PERSISTENT, true, Long.MIN_VALUE, 5);
+      assertStrongCounter("c4", counterConfig.get("c4"), 4, Storage.VOLATILE, true, 0, 10);
+      assertWeakCounter(counterConfig.get("c5"));
    }
 
    public void testInvalid() throws IOException {
-      try {
-         ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/invalid.xml");
-         fail("Expected exception. " + holder);
-      } catch (CacheConfigurationException | CounterConfigurationException e) {
-         log.debug("Expected exception", e);
-      }
+      Exceptions.expectException(CacheConfigurationException.class, CounterConfigurationException.class, () -> new ParserRegistry().parseFile("config/invalid.xml"));
    }
 
    @Test(dataProvider = "configurationFiles")
    public void jsonSerializationTest(Path config) throws Exception {
       JsonWriter jsonWriter = new JsonWriter();
       Properties properties = new Properties();
-      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
+      properties.put("jboss.server.temp.dir", CommonsTestingUtil.tmpDirectory(ConfigurationSerializerTest.class));
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = registry.parse(url);
