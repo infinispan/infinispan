@@ -3,18 +3,14 @@
 Protocol Buffers (Protobuf) is a lightweight binary media type for structured data.
 As a cache encoding, Protobuf gives you excellent performance as well as interoperability between client applications in different programming languages for both Hot Rod and REST endpoints.
 
+{brandname} uses a ProtoStream library to encode caches as Protobuf with the `application/x-protostream` media type.
+
 The following example shows a Protobuf message that describes a `Person` object:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::protobuf/personalshopper.proto[]
 ----
-
-[NOTE]
-====
-{brandname} uses a ProtoStream library to encode caches with the `application/x-protostream` media type.
-This encoding is similar to `application/x-protobuf` but the two media types have some differences and are not interchangeable.
-====
 
 [discrete]
 == Interoperability

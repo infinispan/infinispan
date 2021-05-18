@@ -1,6 +1,6 @@
 [id='text-encoding_{context}']
 = Text-based cache encoding
-Text-based encoding is human-readable content like plain text or HTML.
+Text-based encoding is human-readable content such as plain text.
 The classic "Hello World" example entry could be stored in a cache as follows:
 
 [source,text,options="nowrap",subs=attributes+]
@@ -16,15 +16,6 @@ If you encode caches with the `text/plain` media type, {brandname} can convert t
 * `application/x-protostream`
 * `application/x-jboss-marshalling`
 * `application/x-java-serialized`
-
-
-{brandname} can also store any text-based encoding as byte array, such as the following:
-
-* `text/html`
-* `text/css`
-* `text/csv`
-
-However {brandname} does not support conversion of these media types.
 
 The following example configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
 
