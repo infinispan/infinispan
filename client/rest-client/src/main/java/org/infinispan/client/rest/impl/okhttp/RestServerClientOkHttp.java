@@ -138,4 +138,15 @@ public class RestServerClientOkHttp implements RestServerClient {
       return client.execute(builder);
    }
 
+   @Override
+   public CompletionStage<RestResponse> dataSourceNames() {
+      return client.execute(baseServerURL, "datasources");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> dataSourceTest(String name) {
+      String url = String.format("%s/datasources/%s?action=test", baseServerURL, name);
+      Request.Builder builder = new Request.Builder().url(url).post(new FormBody.Builder().build());
+      return client.execute(builder);
+   }
 }

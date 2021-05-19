@@ -19,4 +19,10 @@ public interface Messages {
 
    @Message(value = "Request to stop connector '%s' attempted from the connector itself", id = 12501)
    String connectorMatchesRequest(String connectorName);
+
+   @Message(value = "Connection to data source '%s' successful", id = 12502)
+   String dataSourceTestOk(String name);
+
+   @Message(value = "Connection to data source '%s' failed. Verify that the JDBC URL and credentials are correct and that the driver is present in the server library directory", id = 12503)
+   String dataSourceTestFail(String name);
 }

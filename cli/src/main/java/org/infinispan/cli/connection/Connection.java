@@ -85,5 +85,7 @@ public interface Connection extends Closeable {
 
    void refreshServerInfo() throws IOException;
 
+   Collection<String> getDataSourceNames() throws IOException;
+
    enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

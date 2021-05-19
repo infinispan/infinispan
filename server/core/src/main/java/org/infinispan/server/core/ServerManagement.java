@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import javax.sql.DataSource;
+
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.tasks.TaskManager;
@@ -36,4 +38,6 @@ public interface ServerManagement {
    CompletionStage<Path> getServerReport();
 
    BackupManager getBackupManager();
+
+   Map<String, DataSource> getDataSources();
 }

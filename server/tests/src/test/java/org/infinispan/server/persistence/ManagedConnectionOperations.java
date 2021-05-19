@@ -7,9 +7,13 @@ import static org.junit.Assert.assertNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
+import org.infinispan.cli.commands.CLI;
+import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -100,5 +104,20 @@ public class ManagedConnectionOperations {
    protected void assertCleanCacheAndStore(RemoteCache cache) {
       cache.clear();
       assertEquals(0, cache.size());
+   }
+
+   @Test
+   public void testDataSourceCLI() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());
+         terminal.readln("connect " + SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222");
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+         terminal.readln("server datasource ls");
+         terminal.assertContains(database.getType());
+         terminal.clear();
+         terminal.readln("server datasource test " + database.getType());
+         terminal.assertContains("ISPN012502: Connection to data source '" + database.getType()+ "' successful");
+      }
    }
 }
