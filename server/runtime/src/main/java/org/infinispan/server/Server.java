@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import javax.naming.InitialContext;
 import javax.naming.spi.NamingManager;
+import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
@@ -185,6 +186,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private ServerInitialContextFactoryBuilder initialContextFactoryBuilder;
    private BlockingManager blockingManager;
    private BackupManager backupManager;
+   private Map<String, DataSource> dataSources;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -346,9 +348,12 @@ public class Server implements ServerManagement, AutoCloseable {
          serverConfiguration.setServer(this);
 
          // Initialize the data sources
+         dataSources = new HashMap<>();
          InitialContext initialContext = new InitialContext();
          for (DataSourceConfiguration dataSourceConfiguration : serverConfiguration.dataSources().values()) {
-            initialContext.bind(dataSourceConfiguration.jndiName(), DataSourceFactory.create(dataSourceConfiguration));
+            DataSource dataSource = DataSourceFactory.create(dataSourceConfiguration);
+            dataSources.put(dataSourceConfiguration.name(), dataSource);
+            initialContext.bind(dataSourceConfiguration.jndiName(), dataSource);
          }
 
          // Start the cache manager
@@ -645,5 +650,10 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public BackupManager getBackupManager() {
       return backupManager;
+   }
+
+   @Override
+   public Map<String, DataSource> getDataSources() {
+      return dataSources;
    }
 }
