@@ -1,3 +1,4 @@
+ifdef::context[:parent-context: {context}]
 [id='jgroups_encrypt']
 :context: cluster_transport
 = Encrypting Cluster Transport
