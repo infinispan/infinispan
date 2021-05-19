@@ -61,4 +61,8 @@ public interface RestServerClient {
    CompletionStage<RestResponse> connectorIpFiltersClear(String name);
 
    CompletionStage<RestResponse> connectorIpFilterSet(String name, List<IpFilterRule> rules);
+
+   CompletionStage<RestResponse> dataSourceNames();
+
+   CompletionStage<RestResponse> dataSourceTest(String name);
 }

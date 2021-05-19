@@ -5,7 +5,7 @@ Create managed datasources to optimize connection pooling and performance for
 database connections.
 
 You can specify database connection properties as part of a JDBC cache store
-configuration. However you must do this for each cache definition, which
+configuration. However, you must do this for each cache definition, which
 duplicates configuration and wastes resources by creating multiple distinct
 connection pools.
 
@@ -14,6 +14,7 @@ and pooling for more efficient usage.
 
 include::{topics}/ref_server_datasources.adoc[leveloffset=+1]
 include::{topics}/proc_server_using_datasources.adoc[leveloffset=+1]
+include::{topics}/proc_server_testing_datasources.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

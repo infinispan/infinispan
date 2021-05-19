@@ -4,6 +4,8 @@ import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.SERVICE_UNAVAILABLE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -16,6 +18,7 @@ import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.net.InetSocketAddress;
 import java.security.PrivilegedAction;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -24,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import javax.sql.DataSource;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -109,6 +114,12 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(DELETE).path("/v2/server/connectors/{connector}/ip-filter")
                .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER DELETE").auditContext(AuditContext.SERVER)
                .handleWith(this::connectorIpFilterClear)
+            .invocation().methods(GET).path("/v2/server/datasources")
+               .permission(AuthorizationPermission.ADMIN).name("DATASOURCE LIST").auditContext(AuditContext.SERVER)
+               .handleWith(this::dataSourceList)
+            .invocation().methods(POST).path("/v2/server/datasources/{datasource}").withAction("test")
+               .permission(AuthorizationPermission.ADMIN).name("DATASOURCE TEST").auditContext(AuditContext.SERVER)
+               .handleWith(this::dataSourceTest)
             .create();
    }
 
@@ -327,6 +338,32 @@ public class ServerResource implements ResourceHandler {
       String json = invocationHelper.getJsonWriter().toJSON(invocationHelper.getServer().getConfiguration());
       responseBuilder.entity(json).contentType(APPLICATION_JSON);
       return CompletableFuture.completedFuture(responseBuilder.build());
+   }
+
+   private CompletionStage<RestResponse> dataSourceList(RestRequest restRequest) {
+      return asJsonResponseFuture(Json.make(invocationHelper.getServer().getDataSources().keySet()));
+   }
+
+   private CompletionStage<RestResponse> dataSourceTest(RestRequest restRequest) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+
+      String name = restRequest.variables().get("datasource");
+      DataSource dataSource = invocationHelper.getServer().getDataSources().get(name);
+      if (dataSource == null) return completedFuture(builder.status(NOT_FOUND).build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         try (Connection connection = dataSource.getConnection()) {
+            if (connection.isValid(0)) {
+               builder.status(OK).entity(Messages.MSG.dataSourceTestOk(name));
+            } else {
+               builder.status(SERVICE_UNAVAILABLE).entity(Messages.MSG.dataSourceTestFail(name));
+            }
+         } catch (Exception e) {
+            Throwable rootCause = Util.getRootCause(e);
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+         }
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    static class ServerInfo implements JsonSerialization {
