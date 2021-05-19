@@ -10,7 +10,7 @@ server - server configuration and state management.
 
 DESCRIPTION
 -----------
-The *server* command describes and manages server endpoint connectors and retrieves aggregated diagnostic reports about both the server and host.
+The *server* command describes and manages server endpoint connectors and datasources and retrieves aggregated diagnostic reports about both the server and host.
 
 Reports provide details about CPU, memory, open files, network sockets and routing, threads, in addition to configuration and log files.
 
@@ -32,6 +32,10 @@ SYNOPSIS
 *server connector ipfilter set* 'connector-name' --rules='[ACCEPT|REJECT]/cidr',...
 
 *server connector ipfilter clear* 'connector-name'
+
+*server datasource ls*
+
+*server datasource test* 'datasource-name'
 
 
 SERVER CONNECTOR IPFILTER OPTIONS
@@ -69,3 +73,9 @@ This command will be refused if one of the rejection rules matches the address o
 
 `server connector ipfilter clear my-hotrod-connector` +
 Removes all IP filtering rules on a connector across the cluster.
+
+`server datasource ls` +
+Lists all available datasources on the server.
+
+`server datasource test my-datasource` +
+Performs a test connection on the datasource.
