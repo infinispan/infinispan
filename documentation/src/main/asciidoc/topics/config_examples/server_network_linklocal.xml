@@ -1,3 +1,4 @@
+<!-- Selects a link-local IP address in an IPv4 or IPv6 address block. -->
 <interfaces>
   <interface name="public">
     <link-local/>

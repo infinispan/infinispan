@@ -7,12 +7,16 @@ clientBuilder
       .ssl()
          // Server SNI hostname.
          .sniHostName("myservername")
-         // Server certificate keystore.
-         .trustStoreFileName("/path/to/truststore")
+         // Keystore that contains the public keys for {brandname} Server.
+         // Clients use the trust store to verify {brandname} Server identities.
+         .trustStoreFileName("/path/to/server/truststore")
          .trustStorePassword("truststorepassword".toCharArray())
          .trustStoreType("PCKS12")
-         // Client certificate keystore.
+         // Keystore that contains client certificates.
+         // Clients present these certificates to {brandname} Server.
          .keyStoreFileName("/path/to/client/keystore")
          .keyStorePassword("keystorepassword".toCharArray())
-         .keyStoreType("PCKS12");
-RemoteCache<String, String> cache=remoteCacheManager.getCache("secured");
+         .keyStoreType("PCKS12")
+      .authentication()
+         // Clients must use the EXTERNAL mechanism for certificate authentication.
+         .saslMechanism("EXTERNAL");
