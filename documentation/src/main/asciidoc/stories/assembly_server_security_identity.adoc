@@ -5,7 +5,6 @@ Server identities are defined within security realms and enable {brandname}
 servers to prove their identity to clients.
 
 include::{topics}/proc_server_identity_ssl.adoc[leveloffset=+1]
-include::{topics}/ref_server_credentials.adoc[leveloffset=+2]
 include::{topics}/proc_server_generating_keystores.adoc[leveloffset=+2]
 include::{topics}/proc_server_configuring_ssl_engine.adoc[leveloffset=+2]
 include::{topics}/proc_server_identity_kerberos.adoc[leveloffset=+1]
