@@ -1,0 +1,41 @@
+[id='configuring-client-certificate-authentication_{context}']
+= Configuring Client Certificate Authentication
+Configure {brandname} Server to use mutual TLS to secure client connections.
+
+You can configure {brandname} to verify client identities from certificates in a trust store in two ways:
+
+Validate:: Requires a trust store that contains only the signing certificate, which is typically a Certificate Authority (CA). Any client that presents a certificate signed by the CA can connect to {brandname}.
+Authenticate:: Requires a trust store that contains all client certificates in addition to the signing certificate. Only clients that present a signed certificate that is present in the trust store can connect to {brandname}.
+
+[TIP]
+====
+Alternatively to providing trust stores you can use shared system certificates.
+====
+
+.Prerequisites
+
+* Create a client trust store that contains either the CA certificate or all public certificates.
+* Create a keystore for {brandname} Server and configure an SSL/TLS identity.
+
+.Procedure
+
+. Add the `require-ssl-client-auth="true"` parameter to your `endpoints` configuration.
+. Add the client trust store to the `{server_home}/server/conf` directory.
+. Specify the `path` and `password` attributes for the `truststore` element in the {brandname} Server security realm configuration.
+. Add the `<truststore-realm/>` element to the security realm if you want {brandname} Server to authenticate each client certificate.
+
+.{brandname} Server trust store realm configuration
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_truststore_realm.xml[]
+----
+
+.Next steps
+
+* Set up authorization with client certificates in the {brandname} Server configuration if you control access with security roles and permissions.
+* Configure clients to negotiate SSL/TLS connections with {brandname} Server.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{hotrod_docs}#configuring-hotrod-encryption_hotrod-client-configuration[Configuring Hot Rod client encryption]
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/security_guide/sec-shared-system-certificates[Using Shared System Certificates] (Red Hat Enterprise Linux 7 Security Guide)

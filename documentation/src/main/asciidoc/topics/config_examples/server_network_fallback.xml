@@ -1,3 +1,5 @@
+<!-- Includes multiple strategies that {brandname} Server tries in the
+     declared order until it finds a match. -->
 <interfaces>
   <interface name="public">
     <match-host value="my_host_name"/>

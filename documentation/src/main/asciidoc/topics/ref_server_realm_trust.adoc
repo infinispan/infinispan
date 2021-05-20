@@ -1,18 +1,25 @@
-[id='trust_store_realm-{context}']
+[id='trust-store-realms_{context}']
 = Trust Store Realms
-Trust store realms use keystores that contain certificates, or certificate chains, that clients must present to connect to {brandname} Server.
+Trust store realms use certificates, or certificates chains, that verify {brandname} Server and client identities when they negotiate connections.
 
+Keystores:: Contain server certificates that provide a {brandname} Server identity to clients. If you configure a keystore with server certificates, {brandname} Server encrypts traffic using industry standard SSL/TLS protocols.
+Trust stores:: Contain client certificates, or certificate chains, that clients present to {brandname} Server. Client trust stores are optional and allow {brandname} Server to perform client certificate authentication.
+
+.Client certificate authentication
+
+You must add the `require-ssl-client-auth="true"` attribute to the endpoint configuration if you want {brandname} Server to validate or authenticate client certificates.
+
+.Endpoint authentication mechanisms
+
+If you configure {brandname} Server with a keystore only, you can use encryption in combination with any authentication mechanism.
+
+When you configure {brandname} Server to use a client trust store, you must configure endpoints to use the following authentication mechanisms:
+
+* Hot Rod (SASL): `EXTERNAL`
+* REST (HTTP): `CLIENT_CERT`
+
+.Trust store realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_truststore_realm.xml[]
 ----
-
-If you include the `truststore-realm` element, the trust store must contain public certificates for all clients.
-If you do not include the `truststore-realm` element, the trust store needs only a certificate chain to verify client identities.
-
-.Supported authentication mechanisms
-
-Trust store realms work with client-certificate authentication mechanisms:
-
-* **SASL:** `EXTERNAL`
-* **HTTP (REST):** `CLIENT_CERT`

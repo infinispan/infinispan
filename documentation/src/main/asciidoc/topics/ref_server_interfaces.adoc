@@ -1,134 +1,70 @@
-[id='server_interfaces-{context}']
-= Server Interfaces
-{brandname} servers can use different strategies for binding to IP addresses.
+[id='network-interfaces_{context}']
+= Network Interfaces
 
-== Address Strategy
-Uses an `inet-address` strategy that maps a single `public` interface to the
-IPv4 loopback address (`127.0.0.1`).
+{brandname} Server multiplexes endpoints to a single TCP/IP port and automatically detects protocols of inbound client requests.
+You can configure how {brandname} Server binds to network interfaces to listen for client requests.
 
-[source,xml]
+.Internet Protocol (IP) address
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/server_network_default.xml[]
 ----
 
-[TIP]
-====
-You can use the CLI `-b` argument or the `infinispan.bind.address` property to select a specific address from the
-command-line. See link:#changing_bind_address-server[Changing the Default Bind Address].
-====
-
-== Loopback Strategy
-Selects a loopback address.
-
-* *IPv4* the address block `127.0.0.0/8` is reserved for loopback addresses.
-* *IPv6* the address block `::1` is the only loopback address.
-
-[source,xml]
+.Loopback address
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_loopback.xml[]
 ----
 
-== Non-Loopback Strategy
-Selects a non-loopback address.
-
-[source,xml]
+.Non-loopback address
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_nonloopback.xml[]
 ----
 
-== Network Address Strategy
-Selects networks based on IP address.
-
-[source,xml]
-----
-include::config_examples/server_network_inetaddress.xml[]
-----
-
-== Any Address Strategy
-Selects the `INADDR_ANY` wildcard address. As a result
-{brandname} servers listen on all interfaces.
-
-[source,xml]
+.Any address
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_anyaddress.xml[]
 ----
 
-== Link Local Strategy
-Selects a _link-local_ IP address.
-
-* *IPv4* the address block `169.254.0.0/16` (`169.254.0.0 – 169.254.255.255`) is reserved for link-local addressing.
-* *IPv6* the address block `fe80::/10` is reserved for link-local unicast addressing.
-
-[source,xml]
+.Link local
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_inetaddress.xml[]
+include::config_examples/server_network_linklocal.xml[]
 ----
 
-== Site Local Strategy
-Selects a _site-local_ (private) IP address.
-
-* *IPv4* the address blocks `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16` are reserved for site-local addressing.
-* *IPv6* the address block `fc00::/7` is reserved for site-local unicast addressing.
-
-[source,xml]
+.Site local
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_inetaddress.xml[]
+include::config_examples/server_network_sitelocal.xml[]
 ----
 
-== Match Host Strategy
-Resolves the host name and selects one of the IP addresses that is assigned to
-any network interface.
+[discrete]
+== Match and fallback strategies
 
-{brandname} servers enumerate all available operating system interfaces to
-locate IP addresses resolved from the host name in your configuration.
+{brandname} Server can enumerate all network interfaces on the host system and bind to an interface, host, or IP address that matches a value, which can include regular expressions for additional flexibility.
 
-[source,xml]
+.Match host
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/server_network_matchhost.xml[]
 ----
 
-== Match Interface Strategy
-Selects an IP address assigned to a network interface that matches a regular
-expression.
-
-{brandname} servers enumerate all available operating system interfaces to
-locate the interface name in your configuration.
-
-[TIP]
-====
-Use regular expressions with this strategy for additional flexibility.
-====
-
-[source,xml]
+.Match interface
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_matchinterface.xml[]
 ----
 
-== Match Address Strategy
-Similar to `inet-address` but selects an IP address using a regular expression.
-
-{brandname} servers enumerate all available operating system interfaces to
-locate the IP address in your configuration.
-
-[TIP]
-====
-Use regular expressions with this strategy for additional flexibility.
-====
-
-[source,xml]
+.Match address
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_matchaddress.xml[]
 ----
 
-== Fallback Strategy
-Interface configurations can include multiple strategies. {brandname} servers
-try each strategy in the declared order.
-
-For example, with the following configuration, {brandname} servers first
-attempt to match a host, then an IP address, and then fall back to the
-`INADDR_ANY` wildcard address:
-
-[source,xml]
+.Fallback
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::config_examples/server_network_fallback.xml[]
 ----

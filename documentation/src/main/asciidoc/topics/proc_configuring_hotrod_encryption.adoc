@@ -1,19 +1,46 @@
 [id='configuring-hotrod-encryption_{context}']
-= Configuring Hot Rod Client Encryption
+= Configuring Hot Rod client encryption
 {brandname} Server can enforce SSL/TLS encryption and present Hot Rod clients with certificates to establish trust and negotiate secure connections.
 
-To verify server-issued certificates, Hot Rod clients require part of the TLS
-certificate chain.
-For example, the following image shows a certificate authority (CA), named "CA", that has issued a certificate for a server instance named "HotRodServer":
+To verify certificates issued to {brandname} Server, Hot Rod clients require either the full certificate chain or a partial chain that starts with the Root CA.
+You provide server certificates to Hot Rod clients as trust stores.
 
-image::cert_chain.png[align="center", title="Certificate chain"]
+[TIP]
+====
+Alternatively to providing trust stores you can use shared system certificates.
+====
+
+.Prerequisites
+
+* Create a trust store that Hot Rod clients can use to verify {brandname} Server identities.
+* If you configure {brandname} Server to validate or authenticate client certificates, create a keystore as appropriate.
 
 .Procedure
 
-. Create a Java keystore with part of the server certificate chain. In most cases you should use the public certificate for the CA.
-. Specify the keystore as a _TrustStore_ in the client configuration with the `SslConfigurationBuilder` class.
+. Add the trust store to the client configuration with the `trustStoreFileName()` and `trustStorePassword()` methods or corresponding properties.
+. If you configure client certificate authentication, do the following:
+.. Add the keystore to the client configuration with the `keyStoreFileName()` and `keyStorePassword()` methods or corresponding properties.
+.. Configure clients to use the `EXTERNAL` authentication mechanism.
 
-[source,java,options="nowrap",subs=attributes+]
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::code_examples/HotRodTLS.java[]
 ----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::config_examples/hotrod-client-tls.properties[]
+----
+
+.Next steps
+
+Add a client trust store to the `${server_home}/server/conf` directory and configure {brandname} Server to use it, if necessary.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#endpoint-encryption[Encrypting {brandname} Server Connections]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/security_guide/sec-shared-system-certificates[Using Shared System Certificates] (Red Hat Enterprise Linux 7 Security Guide)

@@ -1,4 +1,4 @@
-[id='endpoint_authentication']
+[id='endpoint-authentication']
 :context: server
 = Configuring Endpoint Authentication Mechanisms
 Configure Hot Rod and REST connectors with SASL or HTTP authentication
