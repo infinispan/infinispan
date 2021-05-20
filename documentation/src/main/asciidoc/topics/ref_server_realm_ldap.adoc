@@ -1,4 +1,4 @@
-[id='ldap_realm-{context}']
+[id='ldap-realms_{context}']
 = LDAP Realms
 LDAP realms connect to LDAP servers, such as OpenLDAP, Red Hat Directory
 Server, Apache Directory Server, or Microsoft Active Directory, to authenticate
@@ -10,8 +10,14 @@ LDAP servers can have different entry layouts, depending on the type of server a
 It is beyond the scope of this document to provide examples for all possible configurations.
 ====
 
-.LDAP realm configuration
+.Endpoint authentication mechanisms
 
+When you configure {brandname} Server to use an LDAP realm, you can configure endpoints to use the following authentication mechanisms:
+
+* Hot Rod (SASL): `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
+* REST (HTTP): `Basic` and `Digest`
+
+.LDAP realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_ldap_realm.xml[]
@@ -36,10 +42,3 @@ The `attribute-mapping` element retrieves all the groups of which the user is a 
 `<attribute-reference reference="memberOf" from="cn" to="Roles" />`
 +
 This reference gets all `memberOf` attributes from the user's entry, extracts the CN as specified by `from`, and adds them to the user's `Roles`.
-
-.Supported authentication mechanisms
-
-LDAP realms support the following authentication mechanisms directly:
-
-* **SASL:** `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
-* **HTTP (REST):** `Basic` and `Digest`

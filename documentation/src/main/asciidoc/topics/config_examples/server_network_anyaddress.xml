@@ -1,3 +1,5 @@
+<!-- Uses the `INADDR_ANY` wildcard address which means {brandname} Server
+     listens for inbound client requests on all interfaces. -->
 <interfaces>
   <interface name="public">
     <any-address/>

@@ -13,6 +13,10 @@ include::{topics}/ref_acl_cache.adoc[leveloffset=+1]
 include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
 include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
 
+ifdef::remote_caches[]
+include::{topics}/proc_configuring_client_cert_authz.adoc[leveloffset=+1]
+ifdef::remote_caches[]
+
 ifdef::embedded_caches[]
 include::{topics}/proc_configuring_authz_programmatic.adoc[leveloffset=+1]
 include::{topics}/ref_executing_secure_caches.adoc[leveloffset=+1]

@@ -2,7 +2,8 @@
   <cache-container default-cache="restricted" name="custom-authorization">
     <security>
       <authorization>
-        <!-- Declare a role mapper that associates a security principal to each role. -->
+        <!-- Declare a role mapper that associates a security principal
+             to each role. -->
         <identity-role-mapper />
         <!-- Specify user roles and corresponding permissions. -->
         <role name="admin" permissions="ALL" />

@@ -1,4 +1,4 @@
-[id='property_realm-{context}']
+[id='property-realms_{context}']
 = Property Realms
 Property realms use property files to define users and groups.
 
@@ -18,16 +18,15 @@ include::config_examples/server_users.properties[]
 include::config_examples/server_groups.properties[]
 ----
 
-.Property realm configuration
+.Endpoint authentication mechanisms
 
+When you configure {brandname} Server to use a property realm, you can configure endpoints to use the following authentication mechanisms:
+
+* Hot Rod (SASL): `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
+* REST (HTTP): `Basic` and `Digest`
+
+.Property realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_properties_realm.xml[]
 ----
-
-.Supported authentication mechanisms
-
-Property realms support the following authentication mechanisms:
-
-* **SASL:** `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
-* **HTTP (REST):** `Basic` and `Digest`
