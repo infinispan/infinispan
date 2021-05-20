@@ -5,19 +5,44 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <!-- Provides an SSL server identity with a keystore that contains server certificates. -->
+               <!-- Provides an SSL/TLS identity with a keystore that
+                    contains server certificates. -->
                <keystore path="server.p12"
                          relative-to="infinispan.server.config.path"
                          keystore-password="secret"
                          alias="server"/>
-               <!-- Provides a trust store that verifies client identities to the server. -->
+               <!-- Configures a trust store that contains client certificates
+                    or part of a certificate chain. -->
                <truststore path="trust.p12"
                            relative-to="infinispan.server.config.path"
                            password="secret"/>
             </ssl>
          </server-identities>
-         <!-- Authenticates client identities against the trust store, if required. -->
+         <!-- Validates client identities against the trust store.
+              If you configure this, the trust store must contain
+              the public certificates for all clients. -->
          <truststore-realm/>
       </security-realm>
    </security-realms>
 </security>
+<!-- Configures {brandname} Server to validate or authenticate client
+     certificates with the "require-ssl-client-auth" attribute. -->
+<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+           xmlns="urn:infinispan:server:{schemaversion}"
+           socket-binding="default"
+           security-realm="default"
+           require-ssl-client-auth="true">
+   <hotrod-connector>
+     <!-- Configures the Hot Rod endpoint for client certificate authentication. -->
+     <authentication>
+       <sasl mechanisms="EXTERNAL"
+             server-name="infinispan"
+             qop="auth"/>
+     </authentication>
+   </hotrod-connector>
+   <rest-connector>
+      <!-- Configures the REST endpoint for client certificate authentication. -->
+      <authentication mechanisms="CLIENT_CERT"/>
+   </rest-connector>
+</endpoints>

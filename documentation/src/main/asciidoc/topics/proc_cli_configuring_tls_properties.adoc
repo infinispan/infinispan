@@ -33,6 +33,6 @@ $ bin/cli.sh config get truststore-password
 truststore-password=secret
 ----
 
-.Reference
-
-link:{server_docs}#ssl_identity-server[Setting Up SSL Identities for {brandname} Server]
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#ssl_identity-server[Setting Up SSL Identities for {brandname} Server]

@@ -1,8 +1,18 @@
-[id='configuring_endpoints']
-:context: server
-= Configuring {brandname} Server Endpoints
-{brandname} servers provide listener endpoints that handle requests from remote
-client applications.
+[id='interfaces-endpoints']
+:context: network
+= Network Interfaces and Endpoints
+Expose {brandname} Server through a network interface by binding it to an IP address.
+You can then configure endpoints to use the interface so {brandname} Server can handle requests from remote client applications.
+
+[NOTE]
+====
+By default, {brandname} Server exposes a single port that automatically detects the protocol of inbound requests.
+====
+
+include::{topics}/ref_server_interfaces.adoc[leveloffset=+1]
+include::{topics}/ref_server_socket_bindings.adoc[leveloffset=+1]
+include::{topics}/proc_server_changing_bind_address.adoc[leveloffset=+1]
+include::{topics}/proc_server_changing_port_offset.adoc[leveloffset=+1]
 
 include::{topics}/con_endpoints.adoc[leveloffset=+1]
 include::{topics}/con_endpoints_hotrod.adoc[leveloffset=+2]
@@ -21,6 +31,7 @@ ifdef::community[]
 include::{topics}/ref_endpoints_memcached_connector.adoc[leveloffset=+2]
 endif::community[]
 include::{topics}/ref_server_ports.adoc[leveloffset=+1]
+include::{topics}/ref_single_port.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_firewall.adoc[leveloffset=+2]
 
 // Restore the parent context.

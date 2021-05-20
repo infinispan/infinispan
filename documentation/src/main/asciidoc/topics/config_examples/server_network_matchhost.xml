@@ -1,3 +1,4 @@
+<!-- Selects an IP address that is assigned to a matching host name. -->
 <interfaces>
   <interface name="public">
     <match-host value="my_host_name"/>

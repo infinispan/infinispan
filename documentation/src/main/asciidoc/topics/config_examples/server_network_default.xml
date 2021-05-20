@@ -1,3 +1,5 @@
+<!-- Selects a specific IPv4 address, which can be public, private, or loopback.
+     This is the default network interface for {brandname} Server. -->
 <interfaces>
   <interface name="public">
     <inet-address value="${infinispan.bind.address:127.0.0.1}"/>

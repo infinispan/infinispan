@@ -1,15 +1,14 @@
-[id='server_realms']
-:context: security
-= Defining {brandname} Server Security Realms
-Security realms provide identity, encryption, authentication, and authorization
-information to {brandname} server endpoints.
+[id='security-realms']
+:context: security-realms
+= Security Realms
+Security realms define identity, encryption, authentication, and authorization configuration for {brandname} Server endpoints.
 
 include::{topics}/ref_server_realm_property.adoc[leveloffset=+1]
 include::{topics}/proc_cli_creating_users.adoc[leveloffset=+2]
 include::{topics}/ref_server_realm_ldap.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_ldap_rewrite.adoc[leveloffset=+2]
-include::{topics}/ref_server_realm_trust.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_token.adoc[leveloffset=+1]
+include::{topics}/ref_server_realm_trust.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

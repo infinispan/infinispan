@@ -1,0 +1,24 @@
+[id='single_port']
+= Single Port
+{brandname} Server exposes multiple protocols through a single TCP port, which is `11222` by default.
+Handling multiple protocols with a single port simplifies configuration and reduces management complexity when deploying {brandname} clusters.
+Using a single port also enhances security by minimizing the attack surface on the network.
+
+{brandname} Server handles HTTP/1.1, HTTP/2, and Hot Rod protocol requests from clients via the single port in different ways.
+
+.HTTP/1.1 upgrade headers
+Client requests can include the `HTTP/1.1 upgrade` header field to initiate
+HTTP/1.1 connections with {brandname} Server.
+Client applications can then send the `Upgrade: protocol` header field, where `protocol` is a server endpoint.
+
+.Application-Layer Protocol Negotiation (ALPN)/Transport Layer Security (TLS)
+Client requests include Server Name Indication (SNI) mappings for {brandname} Server endpoints to negotiate protocols over a TLS connection.
+
+[NOTE]
+====
+Applications must use a TLS library that supports the ALPN extension.
+{brandname} uses WildFly OpenSSL bindings for Java.
+====
+
+.Automatic Hot Rod detection
+Client requests that include Hot Rod headers automatically route to Hot Rod endpoints.
