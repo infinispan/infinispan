@@ -10,7 +10,9 @@ clientBuilder
          // Server certificate keystore.
          .trustStoreFileName("/path/to/truststore")
          .trustStorePassword("truststorepassword".toCharArray())
+         .trustStoreType("PCKS12")
          // Client certificate keystore.
          .keyStoreFileName("/path/to/client/keystore")
-         .keyStorePassword("keystorepassword".toCharArray());
+         .keyStorePassword("keystorepassword".toCharArray())
+         .keyStoreType("PCKS12");
 RemoteCache<String, String> cache=remoteCacheManager.getCache("secured");

@@ -1,0 +1,53 @@
+[id='configuring-hotrod-java-clients_{context}']
+= Configuring Hot Rod Client Connections
+Configure Hot Rod Java client connections to {brandname} Server.
+
+.Procedure
+
+* Use the `ConfigurationBuilder` class to generate immutable configuration
+objects that you can pass to `RemoteCacheManager` or use a `hotrod-client.properties` file on the application classpath.
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientInstance.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::config_examples/hotrod-client.properties[]
+----
+
+[discrete]
+== Configuring Hot Rod URIs
+
+You can also configure Hot Rod client connections with URIs as follows:
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodUri.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::config_examples/hotrod-uri.properties[]
+----
+
+[discrete]
+== Adding properties outside the classpath
+
+If the `hotrod-client.properties` file is not on the application classpath then you need to specify the location, as in the following example:
+
+[source,java]
+----
+include::code_examples/HotRodClientProperties.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.ConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]

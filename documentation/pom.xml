@@ -177,7 +177,7 @@
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <download_url>${download.url}</download_url>
-                                <tutorials>${infininspan.tutorials}</tutorials>
+                                <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                 <imagesdir>../../topics/images</imagesdir>
                             </attributes>
                         </configuration>
@@ -250,7 +250,7 @@
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                         <download_url>${download.url}</download_url>
-                                        <tutorials>${infininspan.tutorials}</tutorials>
+                                        <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                         <imagesdir>../../topics/images</imagesdir>
                                     </attributes>
                                 </configuration>

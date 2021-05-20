@@ -1,7 +1,6 @@
-[id='hotrod_return_values']
+[id='forcing-return-values_{context}']
 = Forcing Return Values
-To avoid sending data unnecessarily, write operations on remote caches return
-`null` instead of previous values.
+To avoid sending data unnecessarily, write operations on remote caches return `null` instead of previous values.
 
 For example, the following method calls do not return previous values for keys:
 
@@ -11,22 +10,33 @@ V remove(Object key);
 V put(K key, V value);
 ----
 
-You can change this default behavior with the `FORCE_RETURN_VALUE` flag so your
-invocations return previous values.
+You can, however, change the default behavior so your invocations return previous values for keys.
 
 .Procedure
 
-* Use the `FORCE_RETURN_VALUE` flag to get previous values instead of `null` as
-in the following example:
+* Configure Hot Rod clients so method calls return previous values for keys in one of the following ways:
 
-[source,java]
+.FORCE_RETURN_VALUE flag
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
-cache.put("aKey", "initialValue");
-assert null == cache.put("aKey", "aValue");
-assert "aValue".equals(cache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey",
-   "newValue"));
+include::code_examples/HotRodForceReturn.java[]
 ----
 
-.Reference
+.Per-cache
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/HotRodForceReturnPerCache.java[]
+----
 
-link:{javadocroot}/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+# Use the "*" wildcard in the cache name to return previous values
+# for all caches that start with the "somecaches" string.
+
+infinispan.client.hotrod.cache.somecaches*.force_return_values = true
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]

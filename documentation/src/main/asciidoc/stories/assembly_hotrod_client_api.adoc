@@ -1,11 +1,10 @@
-[id='hotrod_api']
-:context: hotrod_client_api
+[id='hotrod-client-api_{context}']
+:context: hotrod-client-api
 = Hot Rod Client API
 {brandname} Hot Rod client API provides interfaces for creating caches
 remotely, manipulating data, monitoring the topology of clustered caches, and
 more.
 
-include::{topics}/ref_hotrod_basic_api.adoc[leveloffset=+1]
 include::{topics}/ref_hotrod_remote_cache.adoc[leveloffset=+1]
 include::{topics}/ref_hotrod_unsupported_methods.adoc[leveloffset=+2]
 include::{topics}/ref_hotrod_remote_iterator.adoc[leveloffset=+1]

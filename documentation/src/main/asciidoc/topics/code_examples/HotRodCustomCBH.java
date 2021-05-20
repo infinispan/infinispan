@@ -32,16 +32,11 @@ public class MyCallbackHandler implements CallbackHandler {
    }
 }
 
-   ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-   .addServer()
-      .host("127.0.0.1")
-      .port(11222)
-   .security()
-      .authentication()
-         .enable()
-         .serverName("myhotrodserver")
-         .saslMechanism("DIGEST-MD5")
-         .callbackHandler(new MyCallbackHandler("myuser","default","qwer1234!".toCharArray()));
-remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache=remoteCacheManager.getCache("secured");
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder.addServer()
+               .host("127.0.0.1")
+               .port(11222)
+             .security().authentication()
+               .serverName("myhotrodserver")
+               .saslMechanism("DIGEST-MD5")
+               .callbackHandler(new MyCallbackHandler("myuser","default","qwer1234!".toCharArray()));
