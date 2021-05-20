@@ -1,23 +1,34 @@
-[id='request_balancing']
+[id='request-balancing_{context}']
 = Request Balancing
-Clients that use topology-aware intelligence use request balancing for all
-requests. The default balancing strategy is round-robin, so topology-aware
-clients always send requests to servers in round-robin order.
+Hot Rod Java clients balance requests to {brandname} Server clusters so that read and write operations are spread across nodes.
 
-For example, `s1`, `s2`, `s3` are servers in a {brandname} cluster. Clients
-perform request balancing as follows:
+Clients that use `BASIC` or `TOPOLOGY_AWARE` intelligence use request balancing for all requests.
+Clients that use `HASH_DISTRIBUTION_AWARE` intelligence send requests directly to the node that stores the desired key.
+If the node does not respond, the clients then fall back to request balancing.
 
-[source,java]
+The default balancing strategy is round-robin, so Hot Rod clients perform request balancing as in the following example where `s1`, `s2`, `s3` are nodes in a {brandname} cluster:
+
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/RequestBalancing.java[]
 ----
 
-Clients that use distribution-aware intelligence use request balancing only
-for failed requests. When requests fail, distribution-aware clients retry the
-request on the next available server.
-
 .Custom balancing policies
-You can implement link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and specify your class in your
-`hotrod-client.properties` configuration with the following property:
 
-`infinispan.client.hotrod.request_balancing_strategy`
+You can use custom `FailoverRequestBalancingStrategy` implementations if you add your class in the Hot Rod client configuration.
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodCustomRequestBalancing.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::config_examples/hotrod-custom-balancing.properties[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[org.infinispan.client.hotrod.FailoverRequestBalancingStrategy]

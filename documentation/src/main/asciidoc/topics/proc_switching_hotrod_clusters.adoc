@@ -1,4 +1,4 @@
-[id='switching_clusters']
+[id='switching-hotrod-clusters_{context}']
 = Manually Switching {brandname} Clusters
 Manually switch Hot Rod Java client connections between {brandname} clusters.
 
@@ -12,6 +12,6 @@ client configuration.
 `switchToDefaultCluster()` switches to the default cluster in the client
 configuration, which is defined as a list of {brandname} servers.
 
-.Reference
-
-link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]

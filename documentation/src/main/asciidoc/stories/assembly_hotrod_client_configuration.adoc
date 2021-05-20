@@ -1,26 +1,23 @@
-[id='configuring_hotrod']
-:context: client
-= Configuring Hot Rod Java Clients
+[id='hotrod-client-configuration_{context}']
+:context: hotrod-client-configuration
+= Hot Rod Java Client Configuration
 
-include::{topics}/proc_creating_hotrod_java_client_instances.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_java_client_properties.adoc[leveloffset=+1]
-include::{topics}/con_client_intelligence.adoc[leveloffset=+1]
-include::{topics}/con_hotrod_request_balancing.adoc[leveloffset=+2]
-include::{topics}/con_hotrod_failover.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_hotrod_authentication.adoc[leveloffset=+1]
-include::{topics}/ref_endpoints_hotrod_authentication.adoc[leveloffset=+2]
+{brandname} provides a Hot Rod Java client configuration API that exposes configuration properties.
+
+include::{topics}/proc_configuring_hotrod_java_clients.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_clusters.adoc[leveloffset=+2]
+include::{topics}/proc_switching_hotrod_clusters.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_hotrod_connection_pools.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_hotrod_authentication.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_authentication.adoc[leveloffset=+2]
 include::{topics}/proc_creating_hotrod_client_logincontexts.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_hotrod_encryption.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_jmx.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_clusters.adoc[leveloffset=+1]
-include::{topics}/proc_switching_hotrod_clusters.adoc[leveloffset=+2]
-include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
-include::{topics}/proc_creating_caches_hotrod_onaccess.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_percache.adoc[leveloffset=+1]
+//Near caching
 include::{topics}/con_near_caches.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_nearcaching.adoc[leveloffset=+2]
 include::{topics}/proc_forcing_return_values.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_connection_pools.adoc[leveloffset=+1]
+include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

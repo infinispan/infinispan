@@ -441,7 +441,10 @@
  *           <th colspan="4">Per-cache properties</th>
  *        </tr>
  *        <tr>
- *           <th colspan="4">In the following properties, <i>cachename</i> may use wildcard globbing (e.g. <code>cache-*</code>) and may be enclosed in square brackets if the name includes the <code>'.'</code> character (e.g. <code>[example.MyConfig])</code></th>
+ *           <th colspan="4">In per-cache configuration properties, you can use wildcards with <i>cachename</i>, for example: <code>cache-*</code>.</th>
+ *        </tr>
+ *        <tr>
+ *           <th colspan="4">If cache names include the <code>'.'</code> character you must enclose the cache name in square brackets, for example: <code>[example.MyConfig]</code>.</th>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration</b></td>

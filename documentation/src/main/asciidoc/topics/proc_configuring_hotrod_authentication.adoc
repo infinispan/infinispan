@@ -1,84 +1,79 @@
-[id='hotrod_authentication']
+[id='configuring-hotrod-authentication_{context}']
 = Configuring Authentication Mechanisms for Hot Rod Clients
-{brandname} servers use different mechanisms to authenticate Hot Rod client
-connections.
+{brandname} Server uses different mechanisms to authenticate Hot Rod client connections.
 
 .Procedure
 
-* Specify the authentication mechanisms that {brandname} server uses with the `saslMechanism()` method from the `SecurityConfigurationBuilder` class.
+* Specify authentication mechanisms with the `saslMechanism()` method from the `AuthenticationConfigurationBuilder` class or with the `infinispan.client.hotrod.sasl_mechanism` property.
 
 .SCRAM
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::code_examples/HotRodScram.java[]
 ----
 
 .DIGEST
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodDigest.java[]
 ----
 
 .PLAIN
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodPlain.java[]
 ----
 
 .OAUTHBEARER
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodOAuthBearer.java[]
 ----
 
-.OAUTHBEARER authentication with TokenCallbackHandler
-
-You can configure clients with a `TokenCallbackHandler` to refresh OAuth2 tokens before they expire, as in the following example:
-
-[source,java]
-----
-include::code_examples/HotRodOAuthBearerTokenCBH.java[]
-----
-
 .EXTERNAL
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodExternal.java[]
 ----
 
 .GSSAPI
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodGSSAPI.java[]
 ----
 
-The preceding configuration uses the `BasicCallbackHandler` to retrieve the
-client subject and handle authentication. However, this actually invokes
-different callbacks:
+[discrete]
+== Basic Callback Handler
+
+The `BasicCallbackHandler`, as shown in the GSSAPI example, invokes the following callbacks:
 
 * `NameCallback` and `PasswordCallback` construct the client subject.
-
 * `AuthorizeCallback` is called during SASL authentication.
 
+[discrete]
+== OAUTHBEARER with Token Callback Handler
 
-.Custom CallbackHandler
+Use a `TokenCallbackHandler` to refresh OAuth2 tokens before they expire, as in the following example:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/HotRodOAuthBearerTokenCBH.java[]
+----
+
+[discrete]
+== Custom `CallbackHandler`
+
 Hot Rod clients set up a default `CallbackHandler` to pass credentials to SASL
-mechanisms. In some cases, you might need to provide a custom `CallbackHandler`.
+mechanisms. In some cases you might need to provide a custom `CallbackHandler`, as in the following example:
 
-[NOTE]
-====
-Your `CallbackHandler` needs to handle callbacks that are specific to the
-authentication mechanism that you use. However, it is beyond the scope of this
-document to provide examples for each possible callback type.
-====
-
-[source,java]
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodCustomCBH.java[]
 ----
+
+[NOTE]
+====
+A custom `CallbackHandler` needs to handle callbacks that are specific to the
+authentication mechanism that you use. However, it is beyond the scope of this
+document to provide examples for each possible callback type.
+====
