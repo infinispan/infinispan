@@ -1,12 +1,13 @@
-CacheContainer cacheContainer = new RemoteCacheManager();
-Cache<String, String> cache = cacheContainer.getCache();
+// Connect to the {brandname} cluster
+RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
+// Obtain the remote cache
+RemoteCache<String, String> cache = cacheManager.getCache("test");
 
-//client sends put request to s1
+//Hot Rod client sends a request to the "s1" node
 cache.put("key1", "aValue");
-//client sends put request to s2
+//Hot Rod client sends a request to the "s2" node
 cache.put("key2", "aValue");
-//client sends get request to s3
+//Hot Rod client sends a request to the "s3" node
 String value = cache.get("key1");
-//client dispatches to s1 again
+//Hot Rod client sends the next request to the "s1" node again
 cache.remove("key2");
-//and so on...

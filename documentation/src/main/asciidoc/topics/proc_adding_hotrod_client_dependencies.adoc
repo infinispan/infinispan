@@ -1,10 +1,10 @@
-[id='get_java_client']
-= Getting the Hot Rod Java Client
-Add the Hot Rod Java client to your project.
+[id='adding-hotrod-client-dependencies_{context}']
+= Adding Hot Rod Java Client Dependencies
+Add Hot Rod Java client dependencies to include it in your project.
 
 .Prerequisites
 
-Hot Rod Java clients can use Java 8 or Java 11.
+* Java 8 or Java 11
 
 .Procedure
 

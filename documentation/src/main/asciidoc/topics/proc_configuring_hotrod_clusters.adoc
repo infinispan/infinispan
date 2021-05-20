@@ -1,23 +1,21 @@
-[id='configuring_clusters']
+[id='configuring-hotrod-clusters_{context}']
 = Defining {brandname} Clusters in Client Configuration
 Provide the locations of {brandname} clusters in Hot Rod client configuration.
 
 .Procedure
 
-* Provide at least one {brandname} cluster name, hostname, and port with the
-`ClusterConfigurationBuilder` class.
+* Provide at least one {brandname} cluster name along with a host name and port for at least one node with the `ClusterConfigurationBuilder` class.
 +
-[source,java]
+If you want to define a cluster as default, so that clients always attempt to connect to it first, then define a server list with the `addServers("<host_name>:<port>; <host_name>:<port>")` method.
+
+.Multiple cluster connections
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::code_examples/HotRodAddCluster.java[]
 ----
 
-.Default Cluster
-When adding clusters to your Hot Rod client configuration, you can define a
-list of {brandname} servers in the format of `hostname1:port; hostname2:port`.
-{brandname} then uses the server list as the default cluster configuration.
-
-[source,java]
+.Default server list with a failover cluster
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/HotRodDefaultCluster.java[]
 ----
