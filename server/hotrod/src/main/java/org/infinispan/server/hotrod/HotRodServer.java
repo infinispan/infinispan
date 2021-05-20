@@ -78,7 +78,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -431,7 +433,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          PersistenceManager pm = cr.getComponent(PersistenceManager.class);
          boolean hasIndexing = SecurityActions.getCacheConfiguration(cache).indexing().index().isEnabled();
          CacheNotifierImpl cacheNotifier = (CacheNotifierImpl) cr.getComponent(CacheNotifier.class);
-         info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing, hasSyncListener(cacheNotifier));
+         // Ignore SingleFileStore
+         boolean persistence = pm.isEnabled() && !pm.getStores(CacheLoader.class).stream().allMatch(l -> (l instanceof SingleFileStore));
+         info = new CacheInfo(localNonBlocking, persistence, hasIndexing, hasSyncListener(cacheNotifier));
          cacheInfo.put(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype(), info);
       }
       return info;
