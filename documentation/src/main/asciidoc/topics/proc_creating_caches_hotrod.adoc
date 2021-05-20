@@ -1,78 +1,47 @@
-[id='create_cache_hotrod']
-= Creating Caches with Hot Rod Clients
-Programmatically create caches on {brandname} Server through the
-`RemoteCacheManager` API.
-
-[NOTE]
-====
-The following procedure demonstrates programmatic cache creation with the Hot
-Rod Java client. However Hot Rod clients are available in different languages
-such as Javascript or C{plusplus}.
-====
-
-.Prerequisites
-
-* Create a user and start at least one {brandname} server instance.
-* Get the Hot Rod Java client.
+[id='creating-caches-hotrod_{context}']
+= Creating Remote Caches with Hot Rod Clients
+When Hot Rod Java clients attempt to access caches that do not exist, they return `null` for `remoteCacheManager.getCache("myCache")` invocations.
+To avoid this scenario, you can configure Hot Rod clients to create caches on first access using cache configuration.
 
 .Procedure
 
-. Configure your client with the `ConfigurationBuilder` class.
-+
-----
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.DefaultTemplate;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
-...
+* Use the `remoteCache()` method in the `ConfigurationBuilder` or use the `configuration` and `configuration_uri` properties in `hotrod-client.properties`.
 
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.addServer()
-         .host("127.0.0.1")
-         .port(11222)
-       .security().authentication()
-          .enable()
-          .username("username")
-          .password("password")
-          .realm("default")
-          .saslMechanism("DIGEST-MD5");
-
-manager = new RemoteCacheManager(builder.build());
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
-+
-. Use the `XMLStringConfiguration` class to add cache definitions in XML format.
-. Call the `getOrCreateCache()` method to add the cache if it already exists or create it if not.
-+
-----
-private void createCacheWithXMLConfiguration() {
-    String cacheName = "CacheWithXMLConfiguration";
-    String xml = String.format("<distributed-cache name=\"%s\" mode=\"SYNC\"
-                                  statistics=\"true\">" +
-                                 "<locking isolation=\"READ_COMMITTED\"/>" +
-                                 "<transaction mode=\"NON_XA\"/>" +
-                                 "<expiration lifespan=\"60000\" interval=\"20000\"/>" +
-                               "</distributed-cache>" +
-                               , cacheName);
-    manager.administration().getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
-    System.out.println("Cache created or already exists.");
-}
-----
-+
-. Create caches with `org.infinispan` templates as in the following example with the `createCache()` invocation:
-+
-----
-private void createCacheWithTemplate() {
-    manager.administration().createCache("myCache", "org.infinispan.DIST_SYNC");
-    System.out.println("Cache created.");
-}
+include::code_examples/HotRodCreatePerCache.java[]
 ----
 
-.Next Steps
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+infinispan.client.hotrod.cache.another-cache.configuration=<distributed-cache name=\"another-cache\"/>
+infinispan.client.hotrod.cache.[my.other.cache].configuration_uri=file:///path/to/infinispan.xml
+----
 
-Try some working code examples that show you how to create remote caches with
-the Hot Rod Java client. Visit the link:{tutorials}[{brandname} Tutorials].
+[IMPORTANT]
+====
+When using `hotrod-client.properties` with cache names that contain the `.` character, you must enclose the cache name in square brackets as in the preceding example.
+====
 
-.Reference
+You can also create remote caches through the `RemoteCacheManager` API in other ways, such as the following example that adds a cache configuration with the `XMLStringConfiguration()` method and then calls the `getOrCreateCache()` method.
 
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[`RemoteCacheManager` Javadoc]
-* link:{hotrod_docs}#get_java_client[Getting the Hot Rod Java Client]
+However, {brandname} does not recommend this approach because it can more difficult to ensure XML validity and is generally a more cumbersome way to create caches.
+If you are creating complex cache configurations, you should save them to separate files in your project and reference them in your Hot Rod client configuration.
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/HotRodCreateCacheWithXML.java[]
+----
+
+.Hot Rod code examples
+
+Try some {brandname} code tutorials that show you how to create remote caches in different ways with the Hot Rod Java client.
+
+Visit link:{code_tutorials}[{brandname} code examples].
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder]

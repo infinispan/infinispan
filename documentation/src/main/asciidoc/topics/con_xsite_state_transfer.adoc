@@ -46,6 +46,12 @@ However, when using the asynchronous backup strategy, {brandname} can automatica
 When it detects that a backup location has come back online, and the network connection is stable, {brandname} initiates bi-directional state transfer between backup locations.
 For example, {brandname} simultaneously transfers state from **LON** to **NYC** and **NYC** to **LON**.
 
+[NOTE]
+====
+To avoid temporary network disconnects triggering state transfer operations, there are two conditions that backup locations must meet to go offline.
+The status of a backup location must be offline and it must not be included in the cross-site view with JGroups RELAY2.
+====
+
 .Reference
 
 * link:{javadocroot}/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]

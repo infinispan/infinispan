@@ -1,4 +1,4 @@
-[id='hotrod']
+[id='hotrod_{context}']
 = Hot Rod Protocol
 Hot Rod is a binary TCP protocol that {brandname} offers high-performance client-server interactions with the following capabilities:
 

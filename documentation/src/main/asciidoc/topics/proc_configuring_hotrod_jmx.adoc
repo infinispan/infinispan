@@ -1,4 +1,4 @@
-[id='hotrod_monitoring']
+[id='configuring-hotrod-jmx_{context}']
 = Monitoring Hot Rod Client Statistics
 Enable Hot Rod client statistics that include remote and near-cache hits and
 misses as well as connection pool usage.
@@ -8,21 +8,7 @@ misses as well as connection pool usage.
 * Use the `StatisticsConfigurationBuilder` class to enable and configure Hot
 Rod client statistics.
 
-[source,java]
+[source,java,options="nowrap",subs=attributes+]
 ----
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-   .statistics()
-    //Enable client statistics.
-    .enable()
-   //Register JMX MBeans for RemoteCacheManager and each RemoteCache.
-   .jmxEnable()
-    //Set JMX domain name to which MBeans are exposed.
-    .jmxDomain("org.example")
-   .addServer()
-    .host("127.0.0.1")
-    .port(11222);
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+include::code_examples/HotRodClientStatistics.java[]
 ----

@@ -1,0 +1,41 @@
+[id='hotrod-client-intelligence_{context}']
+= Client Intelligence
+Hot Rod clients use intelligence mechanisms to efficiently send requests to {brandname} Server clusters.
+
+.`BASIC` intelligence
+Clients do not receive topology change events for {brandname} clusters, such as nodes joining or leaving, and use only the list of {brandname} Server network locations that you add to the client configuration.
+
+.`TOPOLOGY_AWARE` intelligence
+Clients receive and store topology change events for {brandname} clusters to dynamically keep track of {brandname} Servers on the network.
+
+To receive cluster topology, clients need the network location, either IP address or host name, of at least one Hot Rod server at startup.
+After the client connects, {brandname} Server transmits the topology to the client.
+When {brandname} Server nodes join or leave the cluster, {brandname} transmits an updated topology to the client.
+
+.`HASH_DISTRIBUTION_AWARE` intelligence
+Clients receive and store topology change events for {brandname} clusters in addition to hashing information that enables clients to identify which nodes store specific keys.
+
+For example, consider a `put(k,v)` operation. The client calculates the hash value for the key so it can locate the exact {brandname} Server node on which the data resides.
+Clients can then connect directly to that node to perform read and write operations.
+
+The benefit of `HASH_DISTRIBUTION_AWARE` intelligence is that {brandname} Server does not need to look up values based on key hashes, which uses less server-side resources.
+Another benefit is that {brandname} Server responds to client requests more quickly because they do not need to make additional network roundtrips.
+
+[discrete]
+== Configuration
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientIntelligence.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::config_examples/hotrod-client-intelligence.properties[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]

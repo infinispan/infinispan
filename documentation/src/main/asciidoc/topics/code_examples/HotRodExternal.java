@@ -8,9 +8,11 @@ clientBuilder
          // TrustStore stores trusted CA certificates for the server.
          .trustStoreFileName("/path/to/truststore")
          .trustStorePassword("truststorepassword".toCharArray())
+         .trustStoreType("PCKS12")
          // KeyStore stores valid client certificates.
          .keyStoreFileName("/path/to/keystore")
          .keyStorePassword("keystorepassword".toCharArray())
+         .keyStoreType("PCKS12")
       .authentication()
          .saslMechanism("EXTERNAL");
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
