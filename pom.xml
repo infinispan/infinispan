@@ -410,7 +410,7 @@
       <versionx.org.wildfly.common.wildfly-common>1.5.1.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.1.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
-      <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl}</versionx.org.wildfly.openssl.natives>
+      <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
