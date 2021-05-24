@@ -184,7 +184,8 @@
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.3.Final</version.org.wildfly.core>
       <version.org.wildfly.elytron>1.15.1.Final</version.org.wildfly.elytron>
-      <version.org.wildfly.openssl>1.0.12.Final</version.org.wildfly.openssl>
+      <version.org.wildfly.openssl>2.1.4.Final</version.org.wildfly.openssl>
+      <version.org.wildfly.openssl.natives>2.1.0.Final</version.org.wildfly.openssl.natives>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>4.4.1.Final</version.protostream>
