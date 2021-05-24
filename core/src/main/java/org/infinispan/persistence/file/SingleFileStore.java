@@ -140,6 +140,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          file = getStoreFile(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName());
          if (!SecurityActions.fileExists(file)) {
+            if (configuration.ignoreModifications()) {
+               entries = Collections.emptyMap();
+               return;
+            }
             File dir = file.getParentFile();
             if (!SecurityActions.createDirectoryIfNeeded(dir)) {
                throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
@@ -156,6 +160,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
          // check file format and read persistent state if enabled for the cache
          byte[] header = new byte[MAGIC_LATEST.length];
+         boolean shouldClear = false;
          if (!configuration.purgeOnStartup() && channel.read(ByteBuffer.wrap(header), 0) == MAGIC_LATEST.length) {
             if (Arrays.equals(MAGIC_LATEST, header)) {
                rebuildIndex();
@@ -166,11 +171,15 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             } else if (Arrays.equals(MAGIC_BEFORE_11, header)) {
                throw PERSISTENCE.persistedDataMigrationAcrossMajorVersions();
             } else {
-               clear(); // otherwise (unknown file format or no preload) just reset the file
+               shouldClear = !configuration.ignoreModifications();
             }
          }
          else
+            // Store can't be configured with both purge and ignore modifications
+            shouldClear = true;
+         if (shouldClear) {
             clear(); // otherwise (unknown file format or no preload) just reset the file
+         }
 
          // Initialize the fragmentation factor
          fragmentationFactor = configuration.fragmentationFactor();
@@ -202,7 +211,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    @Override
    public void destroy() {
       stop();
-      if (file.delete()) {
+      if (file != null && file.delete()) {
          log.tracef("Deleted file: " + file);
       } else {
          log.tracef("Could not delete file: " + file);
@@ -211,7 +220,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public boolean isAvailable() {
-      return file.exists();
+      return file != null && file.exists();
    }
 
    /**
