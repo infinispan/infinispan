@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -26,6 +27,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -50,6 +52,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    private boolean unlock = false;
    private long flags = EnumUtil.EMPTY_BIT_SET;
 
+   @SuppressWarnings("unused")
    private LockControlCommand() {
       super(null); // For command id uniqueness test
    }
@@ -58,7 +61,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super(cacheName);
    }
 
-   public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction gtx) {
+   public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction gtx, boolean unlock) {
       super(cacheName);
       if (keys != null) {
          //building defensive copies is here in order to support replaceKey operation
@@ -68,14 +71,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       }
       this.flags = flags;
       this.globalTx = gtx;
-   }
-
-   public LockControlCommand(Object key, ByteString cacheName, long flags, GlobalTransaction gtx) {
-      this(cacheName);
-      this.keys = new ArrayList<>(1);
-      this.keys.add(key);
-      this.flags = flags;
-      this.globalTx = gtx;
+      this.unlock = unlock;
    }
 
    public void setGlobalTransaction(GlobalTransaction gtx) {
@@ -99,17 +95,26 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitLockControlCommand((TxInvocationContext) ctx, this);
+      return visitor.visitLockControlCommand((TxInvocationContext<?>) ctx, this);
    }
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      if (unlock) {
+         return unlockAll(registry);
+      }
       globalTx.setRemote(true);
       RemoteTxInvocationContext ctx = createContext(registry);
       if (ctx == null) {
          return CompletableFutures.completedNull();
       }
       return registry.getInterceptorChain().running().invokeAsync(ctx, this);
+   }
+
+   private CompletionStage<Void> unlockAll(ComponentRegistry registry) {
+      LockManager lockManager = registry.getLockManager().running();
+      lockManager.unlockAllFrom(globalTx);
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -142,7 +147,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       unlock = input.readBoolean();
@@ -166,11 +170,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
       LockControlCommand that = (LockControlCommand) o;
 
-      if (unlock != that.unlock) return false;
-      if (flags != that.flags) return false;
-      if (!keys.equals(that.keys)) return false;
-
-      return true;
+      return unlock == that.unlock &&
+            flags == that.flags &&
+            Objects.equals(keys, that.keys);
    }
 
    @Override

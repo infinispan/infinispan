@@ -58,6 +58,7 @@ import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.LockTimeoutException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -1095,7 +1096,7 @@ public interface Log extends BasicLogger {
    void authorizationEnabledWithoutSecurityManager();
 
    @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s", id = 299)
-   TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner);
+   LockTimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner, @Param Object lockOwner);
 
    @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
    CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
@@ -2197,4 +2198,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Async cache modes like %s do not allow expiration with SYNC touch mode", id = 645)
    CacheConfigurationException invalidTouchMode(CacheMode cacheMode);
+
+   @LogMessage(level = WARN)
+   @Message(value = "%s%nOwner transaction created %s ago. Locked keys=%s", id = 646)
+   void warnLockOwnerInfoOnTimeout(String excMessage, String duration, Collection<Object> lockedKeys);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Possible lock leaked: GlobalTransaction %s is local to this node but no active transaction found in TransactionTable", id = 647)
+   void leakedTransaction(GlobalTransaction gtx);
 }

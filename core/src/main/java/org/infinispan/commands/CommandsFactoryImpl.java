@@ -1,6 +1,7 @@
 package org.infinispan.commands;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -335,17 +336,22 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx) {
-      return new LockControlCommand(keys, cacheName, flagsBitSet, gtx);
+      return new LockControlCommand(keys, cacheName, flagsBitSet, gtx, false);
    }
 
    @Override
    public LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx) {
-      return new LockControlCommand(key, cacheName, flagsBitSet, gtx);
+      return new LockControlCommand(Collections.singleton(key), cacheName, flagsBitSet, gtx, false);
    }
 
    @Override
    public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet) {
-      return new LockControlCommand(keys, cacheName, flagsBitSet, null);
+      return new LockControlCommand(keys, cacheName, flagsBitSet, null, false);
+   }
+
+   @Override
+   public LockControlCommand buildUnlockControlCommand(GlobalTransaction gtx) {
+      return new LockControlCommand(null, cacheName, 0, gtx, true);
    }
 
    @Override

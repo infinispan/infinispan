@@ -12,9 +12,9 @@ import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -22,7 +22,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.LockTimeoutException;
 import org.testng.annotations.Test;
 
 /**
@@ -64,7 +64,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       // tx2 prepare times out trying to acquire the lock, but does not throw an exception at this time
       EmbeddedTransaction tx2 = tx2Future.get(30, SECONDS);
       assertEquals(Status.STATUS_MARKED_ROLLBACK, tx2.getStatus());
-      Exceptions.expectException(RollbackException.class, XAException.class, TimeoutException.class, () -> tx2.runCommit(false));
+      Exceptions.expectException(RollbackException.class, XAException.class, LockTimeoutException.class, () -> tx2.runCommit(false));
 
       // tx1 should commit successfully
       tx1.runCommit(false);

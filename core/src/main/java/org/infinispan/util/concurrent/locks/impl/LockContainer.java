@@ -30,6 +30,15 @@ public interface LockContainer {
    void release(Object key, Object lockOwner);
 
    /**
+    * Unlocks all locks owned by {@code lockOwner}.
+    * <p>
+    * This method checks all locks currently acquired and releases the ones locked by {@code lockOwner}.
+    *
+    * @param lockOwner The lock owner.
+    */
+   void releaseAll(Object lockOwner);
+
+   /**
     * @return number of locks held
     */
    int getNumLocksHeld();

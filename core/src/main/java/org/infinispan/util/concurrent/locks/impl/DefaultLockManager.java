@@ -184,6 +184,14 @@ public class DefaultLockManager implements LockManager {
    }
 
    @Override
+   public void unlockAllFrom(Object lockOwner) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Release locks for owner=%s", lockOwner);
+      }
+      lockContainer.releaseAll(lockOwner);
+   }
+
+   @Override
    public boolean ownsLock(Object key, Object lockOwner) {
       Object currentOwner = getOwner(key);
       return currentOwner != null && currentOwner.equals(lockOwner);
@@ -296,8 +304,9 @@ public class DefaultLockManager implements LockManager {
 
       @Override
       public TimeoutException get() {
+         Object owner = lockPromise.getOwner();
          return log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key), lockPromise.getRequestor(),
-               lockPromise.getOwner());
+               owner, owner);
       }
 
       KeyAwareExtendedLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService) {

@@ -438,13 +438,14 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, long, GlobalTransaction)}
+    * Same as {@link #buildLockControlCommand(Collection, long, GlobalTransaction)}
     * but for locking a single key vs a collection of keys.
     */
    LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx);
 
-
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet);
+
+   LockControlCommand buildUnlockControlCommand(GlobalTransaction gtx);
 
    ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments);
 

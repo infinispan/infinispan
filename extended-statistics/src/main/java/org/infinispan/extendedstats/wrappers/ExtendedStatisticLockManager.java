@@ -142,6 +142,11 @@ public class ExtendedStatisticLockManager implements LockManager {
    }
 
    @Override
+   public void unlockAllFrom(Object lockOwner) {
+      actual.unlockAllFrom(lockOwner);
+   }
+
+   @Override
    public boolean ownsLock(Object key, Object owner) {
       return actual.ownsLock(key, owner);
    }

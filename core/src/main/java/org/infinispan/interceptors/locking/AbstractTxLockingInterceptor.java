@@ -3,21 +3,36 @@ package org.infinispan.interceptors.locking;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InvocationExceptionFunction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.LockTimeoutException;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;
+import org.infinispan.util.logging.Log;
 
 /**
  * Base class for transaction based locking interceptors.
@@ -27,9 +42,16 @@ import org.infinispan.util.concurrent.locks.PendingLockPromise;
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    @Inject PartitionHandlingManager partitionHandlingManager;
    @Inject PendingLockManager pendingLockManager;
+   @Inject TransactionTable transactionTable;
+   @Inject RpcManager rpcManager;
+   @Inject CommandsFactory commandsFactory;
+   @Inject TimeService timeService;
+
+   protected final InvocationExceptionFunction<VisitableCommand> lockLeakCheck = this::checkForLockLeak;
+   private final Consumer<LockTimeoutException> checkGtxLockLeak = this::checkGlobalTransactionForLockLeak;
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
@@ -42,7 +64,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (t instanceof OutdatedTopologyException)
             throw t;
@@ -137,12 +159,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          //if it has already timed-out, do not try to acquire the lock
          return pendingLockPromise.hasTimedOut() ?
                pendingLockPromise.toInvocationStage() :
-               lockAndRecord(ctx, command, key, lockTimeout);
+               lockAndRecord(ctx, command, key, lockTimeout).andExceptionallyMakeStage(ctx, command, lockLeakCheck);
       }
 
       return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
          long remaining = pendingLockPromise.getRemainingTimeout();
-         return lockAndRecord(ctx, command, key, remaining);
+         return lockAndRecord(rCtx, rCommand, key, remaining).andExceptionallyMakeStage(rCtx, rCommand, lockLeakCheck);
       });
    }
 
@@ -154,12 +176,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          //if it has already timed-out, do not try to acquire the lock
          return pendingLockPromise.hasTimedOut() ?
                pendingLockPromise.toInvocationStage() :
-               lockAllAndRecord(ctx, command, keys, lockTimeout);
+               lockAllAndRecord(ctx, command, keys, lockTimeout).andExceptionallyMakeStage(ctx, command, lockLeakCheck);
       }
 
       return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, ((rCtx, rCommand, rv) -> {
          long remaining = pendingLockPromise.getRemainingTimeout();
-         return lockAllAndRecord(ctx, command, keys, remaining);
+         return lockAllAndRecord(rCtx, rCommand, keys, remaining).andExceptionallyMakeStage(rCtx, rCommand, lockLeakCheck);
       }));
    }
 
@@ -169,5 +191,52 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       if (shouldReleaseLocks) {
          lockManager.unlockAll(ctx);
       }
+   }
+
+   private Object checkForLockLeak(InvocationContext ctx, VisitableCommand cmd, Throwable throwable) throws Throwable {
+      LockTimeoutException.findLockTimeoutException(throwable)
+            .ifPresent(checkGtxLockLeak);
+      throw throwable;
+   }
+
+   private void checkGlobalTransactionForLockLeak(LockTimeoutException timeoutException) {
+      if (!(timeoutException.getLockOwner() instanceof GlobalTransaction)) {
+         return;
+      }
+      final GlobalTransaction gtx = (GlobalTransaction) timeoutException.getLockOwner();
+      final Log log = getLog();
+      if (isRemote(gtx)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("GlobalTransaction %s is remote to this node.", gtx);
+         }
+         return;
+      }
+      LocalTransaction tx = transactionTable.getLocalTransaction(gtx);
+      if (tx != null) {
+         final String msg = timeoutException.getMessage();
+         final long duration = timeService.timeDuration(tx.getCreationTime(), TimeUnit.MILLISECONDS);
+         final Collection<Object> keys = tx.getAffectedKeys();
+         log.warnLockOwnerInfoOnTimeout(msg, Util.prettyPrintTime(duration), keys);
+         return;
+      }
+      //leak?
+      log.leakedTransaction(gtx);
+      final int topologyId = cdl.getCacheTopology().getTopologyId();
+      RollbackCommand cmd = commandsFactory.buildRollbackCommand(gtx);
+      cmd.setTopologyId(topologyId);
+      rpcManager.invokeCommandOnAll(cmd, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions())
+            .thenAccept(aVoid -> sendTxCompletionCommand(gtx, topologyId));
+      lockManager.unlockAllFrom(gtx);
+   }
+
+   private void sendTxCompletionCommand(GlobalTransaction gtx, int topologyId) {
+      LockControlCommand txCmd = commandsFactory.buildUnlockControlCommand(gtx);
+      txCmd.setTopologyId(topologyId);
+      rpcManager.sendToAll(txCmd, DeliverOrder.NONE);
+   }
+
+   private boolean isRemote(GlobalTransaction gtx) {
+      Address origin = gtx.getAddress();
+      return origin != null && rpcManager != null && !origin.equals(rpcManager.getAddress());
    }
 }

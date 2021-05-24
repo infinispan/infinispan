@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -35,7 +36,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "interceptors.AsyncInterceptorChainInvocationTest")
 public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest {
    private VisitableCommand testCommand = new GetKeyValueCommand("k", 0, 0);
-   private VisitableCommand testSubCommand = new LockControlCommand("k", null, 0, null);
+   private VisitableCommand testSubCommand = new LockControlCommand(Collections.singleton("k"), null, 0, null, false);
 
    private final AtomicReference<String> sideEffects = new AtomicReference<>("");
 

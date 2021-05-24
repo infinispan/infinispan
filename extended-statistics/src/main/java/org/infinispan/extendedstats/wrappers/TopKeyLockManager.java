@@ -68,6 +68,11 @@ public class TopKeyLockManager implements LockManager {
    }
 
    @Override
+   public void unlockAllFrom(Object lockOwner) {
+      current.unlockAllFrom(lockOwner);
+   }
+
+   @Override
    public boolean ownsLock(Object key, Object owner) {
       return current.ownsLock(key, owner);
    }

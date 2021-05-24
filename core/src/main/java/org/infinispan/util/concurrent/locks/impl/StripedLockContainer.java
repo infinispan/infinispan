@@ -56,6 +56,13 @@ public class StripedLockContainer implements LockContainer {
    }
 
    @Override
+   public void releaseAll(Object lockOwner) {
+      for (InfinispanLock lock : sharedLocks) {
+         lock.release(lockOwner);
+      }
+   }
+
+   @Override
    public InfinispanLock getLock(Object key) {
       return sharedLocks[hashFunction.hashToSegment(key)];
    }

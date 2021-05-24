@@ -307,7 +307,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
       return lockTimeoutFuture;
    }
 
-   public class LockTimeoutFuture extends CompletableFuture<Void> implements Runnable, BiConsumer<Object, Throwable> {
+   public static class LockTimeoutFuture extends CompletableFuture<Void> implements Runnable, BiConsumer<Object, Throwable> {
       private final Object key;
       private final long lockTimeout;
       private ScheduledFuture<?> cancellation;
@@ -319,7 +319,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
       @Override
       public void run() {
-         completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), key, null, null));
+         completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), key, null, null, null));
       }
 
       @Override
@@ -350,7 +350,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
       public synchronized void add(CompletableFuture<?> cf) {
          if (cancelled) {
-            cf.completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), keys, null, null));
+            cf.completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), keys, null, null, null));
             return;
          }
          if (futures == null) futures = new ArrayList<>();
@@ -359,7 +359,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
       public synchronized void cancel() {
          for (CompletableFuture<?> cf : futures) {
-            cf.completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), keys, null, null));
+            cf.completeExceptionally(log.unableToAcquireLock(Util.prettyPrintTime(lockTimeout, TimeUnit.NANOSECONDS), keys, null, null, null));
          }
          cancelled = true;
       }

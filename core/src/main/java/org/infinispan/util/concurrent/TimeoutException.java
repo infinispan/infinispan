@@ -30,8 +30,7 @@ public class TimeoutException extends CacheException {
       super(msg, cause);
    }
 
-   @Override
-   public String toString() {
-      return super.toString();
+   protected TimeoutException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+      super(message, cause, enableSuppression, writableStackTrace);
    }
 }

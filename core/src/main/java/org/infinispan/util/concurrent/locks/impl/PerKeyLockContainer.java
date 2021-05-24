@@ -64,7 +64,16 @@ public class PerKeyLockContainer implements LockContainer {
    public void release(Object key, Object lockOwner) {
       lockMap.computeIfPresent(key, (ignoredKey, lock) -> {
          lock.release(lockOwner);
-         return !lock.isLocked() ? null : lock; //remove it if empty
+         return lock.isLocked() ? lock : null; //remove it if empty
+      });
+   }
+
+   @Override
+   public void releaseAll(Object lockOwner) {
+      lockMap.forEach((key, lock) -> {
+         if (lock.containsLockOwner(lockOwner)) {
+            release(key, lockOwner);
+         }
       });
    }
 

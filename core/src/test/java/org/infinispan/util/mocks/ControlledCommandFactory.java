@@ -351,6 +351,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public LockControlCommand buildUnlockControlCommand(GlobalTransaction gtx) {
+      return actual.buildUnlockControlCommand(gtx);
+   }
+
+   @Override
    public ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments) {
       return actual.buildConflictResolutionStartCommand(topologyId, segments);
    }

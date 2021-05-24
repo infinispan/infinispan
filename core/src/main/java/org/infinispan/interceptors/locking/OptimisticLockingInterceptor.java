@@ -34,7 +34,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final Collection<?> keysToLock = command.getKeysToLock();
       InvocationStage lockStage = InvocationStage.completedNullStage();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
@@ -52,12 +52,13 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       if (command.isOnePhaseCommit()) {
          return lockStage.thenApply(ctx, command, onePhaseCommitFunction);
       } else {
-         return asyncInvokeNext(ctx, command, lockStage);
+         return makeStage(asyncInvokeNext(ctx, command, lockStage))
+               .andExceptionally(ctx, command, lockLeakCheck);
       }
    }
 
    @Override
-   protected Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected Object visitDataReadCommand(InvocationContext ctx, DataCommand command) {
       return invokeNext(ctx, command);
    }
 
@@ -79,7 +80,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public Object visitLockControlCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
    }
 }

@@ -145,8 +145,9 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
    private static TimeoutException timeout(KeyValuePair<CacheTransaction, Object> lockOwner,
                                            GlobalTransaction thisGlobalTransaction, long timeout, TimeUnit timeUnit) {
+      Object owner = lockOwner.getKey().getGlobalTransaction();
       return log.unableToAcquireLock(prettyPrintTime(timeout, timeUnit), lockOwner.getValue(), thisGlobalTransaction,
-                                     lockOwner.getKey().getGlobalTransaction() + " (pending)");
+                                     owner + " (pending)", owner);
    }
 
    private Collection<PendingTransaction> getTransactionWithLockedKey(int transactionTopologyId, Object key,

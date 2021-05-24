@@ -74,6 +74,13 @@ public interface LockManager {
    void unlockAll(InvocationContext context);
 
    /**
+    * Releases all locks owned by {@code lockOwner}.
+    *
+    * @param lockOwner The lock owner.
+    */
+   void unlockAllFrom(Object lockOwner);
+
+   /**
     * Tests if the {@code lockOwner} owns a lock on the {@code key}.
     *
     * @param key       key to test.
