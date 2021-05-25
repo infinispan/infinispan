@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-commons-parent</artifactId>
-      <version>11.0.12-SNAPSHOT</version>
+      <version>11.0.12.DevAsyncTouch</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -34,4 +34,3 @@
       </plugins>
    </build>
 </project>
-
