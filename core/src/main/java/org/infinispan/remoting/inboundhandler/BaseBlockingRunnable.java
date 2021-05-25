@@ -3,6 +3,7 @@ package org.infinispan.remoting.inboundhandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -25,6 +26,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    protected final Reply reply;
    protected final boolean sync;
    protected Response response;
+   private BiConsumer<Response, Throwable> handleBeforeInvoke = this::handleBeforeInvoke;
 
    protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
                                   boolean sync) {
@@ -71,27 +73,31 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       CompletionStage<CacheNotFoundResponse> beforeStage = beforeInvoke();
       if (beforeStage == null) {
          invoke();
+      } else if (CompletionStages.isCompletedSuccessfully(beforeStage)) {
+         handleBeforeInvoke(CompletionStages.join(beforeStage), null);
       } else {
-         beforeStage.whenComplete((rsp, throwable) -> {
-            if (rsp != null) {
-               response = rsp;
-               afterInvoke();
-               if (handler.isStopped()) {
-                  response = rsp = CacheNotFoundResponse.INSTANCE;
-               }
-               reply.reply(rsp);
-               onFinally();
-            } else if (throwable != null) {
-               afterCommandException(unwrap(throwable));
-               if (handler.isStopped()) {
-                  response = CacheNotFoundResponse.INSTANCE;
-               }
-               reply.reply(response);
-               onFinally();
-            } else {
-               invoke();
-            }
-         });
+         beforeStage.whenComplete(handleBeforeInvoke);
+      }
+   }
+
+   private void handleBeforeInvoke(Response rsp, Throwable throwable) {
+      if (rsp != null) {
+         response = rsp;
+         afterInvoke();
+         if (handler.isStopped()) {
+            response = rsp = CacheNotFoundResponse.INSTANCE;
+         }
+         reply.reply(rsp);
+         onFinally();
+      } else if (throwable != null) {
+         afterCommandException(unwrap(throwable));
+         if (handler.isStopped()) {
+            response = CacheNotFoundResponse.INSTANCE;
+         }
+         reply.reply(response);
+         onFinally();
+      } else {
+         invoke();
       }
    }
 
