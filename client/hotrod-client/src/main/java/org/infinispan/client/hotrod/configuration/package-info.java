@@ -114,7 +114,7 @@
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.exhausted_action</b></td>
- *          <td>Integer</td>
+ *          <td>String</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.ExhaustedAction#WAIT WAIT}</td>
  *          <td>Specifies what happens when asking for a connection from a server's pool, and that pool is {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#exhaustedAction(org.infinispan.client.hotrod.configuration.ExhaustedAction) exhausted}.</td>
  *       </tr>
