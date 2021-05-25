@@ -112,6 +112,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<TransactionTable> transactionTable;
    private ComponentRef<VersionGenerator> versionGenerator;
    private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
+   // Global, but we don't cache components at global scope
+   private TimeService timeService;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -271,7 +273,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    public TimeService getTimeService() {
-      return globalComponents.getTimeService();
+      return timeService;
    }
 
    public String getCacheName() {
@@ -388,6 +390,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       transactionTable = basicComponentRegistry.getComponent(org.infinispan.transaction.impl.TransactionTable.class);
       versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class);
       xSiteStateTransferManager = basicComponentRegistry.getComponent(XSiteStateTransferManager.class);
+      timeService = basicComponentRegistry.getComponent(TimeService.class).running();
 
       // Initialize components that don't have any strong references from the cache
       basicComponentRegistry.getComponent(ClusterCacheStats.class);
