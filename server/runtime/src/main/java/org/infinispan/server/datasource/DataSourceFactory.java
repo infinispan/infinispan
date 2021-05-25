@@ -14,6 +14,12 @@ import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import io.agroal.api.configuration.supplier.AgroalConnectionFactoryConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalConnectionPoolConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
+import io.agroal.api.exceptionsorter.DB2ExceptionSorter;
+import io.agroal.api.exceptionsorter.MSSQLExceptionSorter;
+import io.agroal.api.exceptionsorter.MySQLExceptionSorter;
+import io.agroal.api.exceptionsorter.OracleExceptionSorter;
+import io.agroal.api.exceptionsorter.PostgreSQLExceptionSorter;
+import io.agroal.api.exceptionsorter.SybaseExceptionSorter;
 import io.agroal.api.security.NamePrincipal;
 import io.agroal.api.security.SimplePassword;
 
@@ -25,7 +31,8 @@ public class DataSourceFactory {
 
    public static DataSource create(DataSourceConfiguration configuration) throws SQLException, ClassNotFoundException {
       AgroalConnectionFactoryConfigurationSupplier factory = new AgroalConnectionFactoryConfigurationSupplier();
-      Class<?> driverClass = ReflectionUtil.getClassForName(configuration.driver(), Thread.currentThread().getContextClassLoader());
+      String driver = configuration.driver();
+      Class<?> driverClass = ReflectionUtil.getClassForName(driver, Thread.currentThread().getContextClassLoader());
       factory.connectionProviderClass(driverClass)
             .jdbcTransactionIsolation(configuration.transactionIsolation())
             .jdbcUrl(configuration.url())
@@ -46,6 +53,19 @@ public class DataSourceFactory {
             .leakTimeout(Duration.ofMillis(configuration.leakDetection()))
             .reapTimeout(Duration.ofMinutes(configuration.idleRemoval()));
 
+      if (driver.contains("postgresql")) {
+         pool.exceptionSorter(new PostgreSQLExceptionSorter());
+      } else if (driver.contains("mysql")|| driver.contains("mariadb")) {
+         pool.exceptionSorter(new MySQLExceptionSorter());
+      } else if (driver.contains("oracle")) {
+         pool.exceptionSorter(new OracleExceptionSorter());
+      } else if (driver.contains("sqlserver")) {
+         pool.exceptionSorter(new MSSQLExceptionSorter());
+      } else if (driver.contains("db2")) {
+         pool.exceptionSorter(new DB2ExceptionSorter());
+      } else if (driver.contains("sybase")) {
+         pool.exceptionSorter(new SybaseExceptionSorter());
+      }
 
       AgroalDataSourceConfigurationSupplier cs = new AgroalDataSourceConfigurationSupplier();
       cs.metricsEnabled(configuration.statistics())
