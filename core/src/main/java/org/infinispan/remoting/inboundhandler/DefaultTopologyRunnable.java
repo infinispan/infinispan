@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
@@ -51,7 +52,7 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
          default:
             break;
       }
-      if (stage != null) {
+      if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
          return stage.thenApply(nil -> handler.isCommandSentBeforeFirstTopology(commandTopologyId) ?
                CacheNotFoundResponse.INSTANCE :
                null);
