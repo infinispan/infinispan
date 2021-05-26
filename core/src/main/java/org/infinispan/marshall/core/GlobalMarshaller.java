@@ -14,7 +14,7 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Externalizer;
@@ -226,14 +226,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
       // So, this copying of the stream into a byte[] has not been problematic so far,
       // though it's not really ideal.
       int len = is.available();
-      ExposedByteArrayOutputStream bytes;
+      LazyByteArrayOutputStream bytes;
       byte[] buf;
       if(len > 0) {
-         bytes = new ExposedByteArrayOutputStream(len);
+         bytes = new LazyByteArrayOutputStream(len);
          buf = new byte[Math.min(len, 1024)];
       } else {
          // Some input stream providers do not implement available()
-         bytes = new ExposedByteArrayOutputStream();
+         bytes = new LazyByteArrayOutputStream();
          buf = new byte[1024];
       }
       int bytesRead;

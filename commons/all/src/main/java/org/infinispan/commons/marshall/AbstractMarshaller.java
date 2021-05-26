@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 
 /**
  * Abstract Marshaller implementation containing shared implementations.
@@ -89,14 +89,14 @@ public abstract class AbstractMarshaller implements Marshaller {
     */
    public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
       int len = inputStream.available();
-      ExposedByteArrayOutputStream bytes;
+      LazyByteArrayOutputStream bytes;
       byte[] buf;
       if(len > 0) {
-         bytes = new ExposedByteArrayOutputStream(len);
+         bytes = new LazyByteArrayOutputStream(len);
          buf = new byte[Math.min(len, 1024)];
       } else {
          // Some input stream providers do not implement available()
-         bytes = new ExposedByteArrayOutputStream();
+         bytes = new LazyByteArrayOutputStream();
          buf = new byte[1024];
       }
       int bytesRead;
