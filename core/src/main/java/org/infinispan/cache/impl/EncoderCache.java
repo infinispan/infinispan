@@ -375,8 +375,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
       K keyToStorage = keyToStorage(key);
-      return super.getCacheEntryAsync(keyToStorage)
-            .thenApply(returned -> unwrapCacheEntry(key, keyToStorage, returned));
+      CompletableFuture<CacheEntry<K, V>> entryStage = super.getCacheEntryAsync(keyToStorage);
+      if (CompletionStages.isCompletedSuccessfully(entryStage)) {
+         return CompletableFuture.completedFuture(unwrapCacheEntry(key, keyToStorage, entryStage.join()));
+      } else {
+         return entryStage.thenApply(returned -> unwrapCacheEntry(key, keyToStorage, returned));
+      }
    }
 
    private CacheEntry<K, V> unwrapCacheEntry(Object key, K keyToStorage, CacheEntry<K, V> returned) {
