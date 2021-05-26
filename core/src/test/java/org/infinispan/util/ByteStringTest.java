@@ -9,7 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -24,7 +24,7 @@ public class ByteStringTest extends AbstractInfinispanTest {
       ByteString byteString = ByteString.fromString("");
       assertSame(ByteString.emptyString(), byteString);
 
-      ExposedByteArrayOutputStream outputStream = new ExposedByteArrayOutputStream();
+      LazyByteArrayOutputStream outputStream = new LazyByteArrayOutputStream();
       try (ObjectOutput output = new ObjectOutputStream(outputStream)) {
          ByteString.writeObject(output, byteString);
       }
@@ -38,7 +38,7 @@ public class ByteStringTest extends AbstractInfinispanTest {
    public void testShortString() throws Exception {
       ByteString byteString = ByteString.fromString("abc");
 
-      ExposedByteArrayOutputStream outputStream = new ExposedByteArrayOutputStream();
+      LazyByteArrayOutputStream outputStream = new LazyByteArrayOutputStream();
       try (ObjectOutput output = new ObjectOutputStream(outputStream)) {
          ByteString.writeObject(output, byteString);
       }

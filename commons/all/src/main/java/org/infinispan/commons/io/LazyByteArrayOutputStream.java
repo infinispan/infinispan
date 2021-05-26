@@ -1,39 +1,44 @@
 package org.infinispan.commons.io;
 
-import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+
+import org.infinispan.commons.util.Util;
 
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * Extends ByteArrayOutputStream, but exposes the internal buffer. Using this, callers don't need to call toByteArray()
- * which copies the internal buffer. <p> Also overrides the superclass' behavior of always doubling the size of the
- * internal buffer any time more capacity is needed.  This class doubles the size until the internal buffer reaches a
- * configurable max size (default is 4MB), after which it begins growing the buffer in 25% increments.  This is intended
- * to help prevent an OutOfMemoryError during a resize of a large buffer. </p> <p> A version of this class was
- * originally created by Bela Ban as part of the JGroups library. </p> This class is not threadsafe as it will not
- * support concurrent readers and writers.
- * <p/>
+ * ByteArrayOutputStream alternative exposing the internal buffer. Using this, callers don't need to call toByteArray()
+ * which copies the internal buffer.
+ *
+ * <p>This class doubles the size until the internal buffer reaches a
+ * configurable max size (default is 4MB), after which it begins growing the buffer in 25% increments.
+ * This is intended to help prevent an OutOfMemoryError during a resize of a large buffer. </p>
+ * <p> A version of this class was originally created by Bela Ban as part of the JGroups library. </p>
+ * <p>This class is not threadsafe as it will not support concurrent readers and writers. <p/>
  *
  * @author <a href="mailto://brian.stansberry@jboss.com">Brian Stansberry</a>
- * @since 4.0
- * @deprecated Since 13.0, please use {@link LazyByteArrayOutputStream} instead.
+ * @author Dan Berindei
+ * @since 13.0
  */
 @NotThreadSafe
-@Deprecated
-public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+public final class LazyByteArrayOutputStream extends OutputStream {
+   public static final int DEFAULT_SIZE = 32;
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
     */
    public static final int DEFAULT_DOUBLING_SIZE = 4 * 1024 * 1024; // 4MB
 
+   private byte[] buf;
+   private int count;
+
    private int maxDoublingSize = DEFAULT_DOUBLING_SIZE;
 
-   public ExposedByteArrayOutputStream() {
-      super();
+   public LazyByteArrayOutputStream() {
+      buf = null;
    }
 
-   public ExposedByteArrayOutputStream(int size) {
-      super(size);
+   public LazyByteArrayOutputStream(int size) {
+      buf = new byte[size];
    }
 
    /**
@@ -44,8 +49,8 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     *                        than 100%
     * @throws IllegalArgumentException if size is negative.
     */
-   public ExposedByteArrayOutputStream(int size, int maxDoublingSize) {
-      super(size);
+   public LazyByteArrayOutputStream(int size, int maxDoublingSize) {
+      this(size);
       this.maxDoublingSize = maxDoublingSize;
    }
 
@@ -54,6 +59,8 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     * written to it; call <code>size()</code> to get the number of bytes of actual data.
     */
    public byte[] getRawBuffer() {
+      if (buf == null)
+         return Util.EMPTY_BYTE_ARRAY;
       return buf;
    }
 
@@ -67,11 +74,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
       }
 
       int newcount = count + len;
-      if (newcount > buf.length) {
-         byte newbuf[] = new byte[getNewBufferSize(buf.length, newcount)];
-         System.arraycopy(buf, 0, newbuf, 0, count);
-         buf = newbuf;
-      }
+      ensureCapacity(newcount);
 
       System.arraycopy(b, off, buf, count, len);
       count = newcount;
@@ -80,13 +83,20 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    @Override
    public void write(int b) {
       int newcount = count + 1;
-      if (newcount > buf.length) {
-         byte newbuf[] = new byte[getNewBufferSize(buf.length, newcount)];
+      ensureCapacity(newcount);
+      buf[count] = (byte) b;
+      count = newcount;
+   }
+
+   private void ensureCapacity(int newcount) {
+      if (buf == null) {
+         // Pretend we have half the default size so it's doubled
+         buf = new byte[Math.max(DEFAULT_SIZE, newcount)];
+      } else if (newcount > buf.length) {
+         byte[] newbuf = new byte[getNewBufferSize(buf.length, newcount)];
          System.arraycopy(buf, 0, newbuf, 0, count);
          buf = newbuf;
       }
-      buf[count] = (byte) b;
-      count = newcount;
    }
 
    /**
@@ -114,7 +124,6 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    /**
     * Overriden only to avoid unneeded synchronization
     */
-   @Override
    public int size() {
       return count;
    }

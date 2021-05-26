@@ -16,7 +16,7 @@ import java.net.URL;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -77,7 +77,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    final protected ByteBuffer objectToBuffer(final Object o, final int estimatedSize) throws IOException {
-      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
+      LazyByteArrayOutputStream baos = new LazyByteArrayOutputStream(estimatedSize);
       ObjectOutput marshaller = startObjectOutput(baos, false, estimatedSize);
       try {
          objectToObjectStream(o, marshaller);
