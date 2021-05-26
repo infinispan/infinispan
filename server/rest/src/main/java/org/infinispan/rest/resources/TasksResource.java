@@ -6,10 +6,9 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
-import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 
 import java.security.PrivilegedAction;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -27,7 +26,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
@@ -56,8 +54,9 @@ public class TasksResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
-      List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
-      return asJsonResponseFuture(Json.make(tasks));
+
+      return (userOnly ? taskManager.getUserTasksAsync() : taskManager.getTasksAsync())
+            .thenApply(tasks -> asJsonResponse(Json.make(tasks)));
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {

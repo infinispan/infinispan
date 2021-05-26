@@ -25,6 +25,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
@@ -116,8 +117,8 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache(SecureScriptingTest.SECURE_CACHE_NAME);
-                String value = (String) scriptingManager.runScript("testRole.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")).get();
+                String value = CompletionStages.join(scriptingManager.runScript("testRole.js",
+                        new TaskContext().cache(cache).addParameter("a", "value")));
 
                 assertEquals("value", value);
                 assertEquals("value", cache.get("a"));
@@ -142,8 +143,8 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                scriptingManager.runScript("testRole.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")).get();
+                CompletionStages.join(scriptingManager.runScript("testRole.js",
+                        new TaskContext().cache(cache).addParameter("a", "value")));
                 return null;
             }
         });
@@ -165,8 +166,8 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                List<JGroupsAddress> value = (List<JGroupsAddress>) scriptingManager.runScript("testRole_dist.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")).get();
+                List<JGroupsAddress> value = CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
+                        new TaskContext().cache(cache).addParameter("a", "value")));
 
                 assertEquals(value.get(0), manager(0).getAddress());
                 assertEquals(value.get(1), manager(1).getAddress());
@@ -193,8 +194,8 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                scriptingManager.runScript("testRole_dist.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")).get();
+                CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
+                        new TaskContext().cache(cache).addParameter("a", "value")));
                 return null;
             }
         });

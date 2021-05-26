@@ -28,12 +28,16 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.tasks.logging.Log;
+import org.infinispan.tasks.spi.NonBlockingTaskEngine;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * TaskManagerImpl.
@@ -74,40 +78,53 @@ public class TaskManagerImpl implements TaskManager {
 
    @Override
    public <T> CompletionStage<T> runTask(String name, TaskContext context) {
-      for(TaskEngine engine : engines) {
-         if (engine.handles(name)) {
-            context.cacheManager(cacheManager);
-            Address address = cacheManager.getAddress();
-            Subject subject = context.getSubject().orElseGet(() -> {
-               if(useSecurity) {
-                  return Security.getSubject();
-               } else {
-                  return null;
+      // This finds an engine that can accept the task
+      CompletionStage<TaskEngine> engineStage = Flowable.fromIterable(engines)
+            .concatMapMaybe(engine -> {
+               if (engine instanceof NonBlockingTaskEngine) {
+                  return Maybe.fromCompletionStage(((NonBlockingTaskEngine) engine).handlesAsync(name))
+                        .concatMap(canHandle -> canHandle ? Maybe.just(engine) : Maybe.empty());
                }
-            });
-            Optional<String> who = Optional.ofNullable(subject == null ? null : Security.getSubjectUserPrincipal(subject).getName());
-            TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
-            exec.setStart(timeService.instant());
-            runningTasks.put(exec.getUUID(), exec);
-            CompletionStage<T> task = engine.runTask(name, context, blockingManager);
-            return task.whenComplete((r, e) -> {
-               if (context.isLogEvent()) {
-                  EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());
-                  who.ifPresent(eventLog::who);
-                  context.getCache().ifPresent(eventLog::context);
-                  if (e != null) {
-                     eventLog.detail(e)
-                           .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));
-                  } else {
-                     eventLog.detail(String.valueOf(r))
-                           .info(EventLogCategory.TASKS, MESSAGES.taskSuccess(name));
-                  }
-               }
-               runningTasks.remove(exec.getUUID());
-            });
+               return engine.handles(name) ? Maybe.just(engine) : Maybe.empty();
+            })
+            .firstElement()
+            .toCompletionStage(null);
+
+      // Performs the actual task if an engine was found
+      return engineStage.thenCompose(engine -> {
+         if (engine == null) {
+            throw log.unknownTask(name);
          }
-      }
-      throw log.unknownTask(name);
+         context.cacheManager(cacheManager);
+         Address address = cacheManager.getAddress();
+         Subject subject = context.getSubject().orElseGet(() -> {
+            if(useSecurity) {
+               return Security.getSubject();
+            } else {
+               return null;
+            }
+         });
+         Optional<String> who = Optional.ofNullable(subject == null ? null : Security.getSubjectUserPrincipal(subject).getName());
+         TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
+         exec.setStart(timeService.instant());
+         runningTasks.put(exec.getUUID(), exec);
+         CompletionStage<T> task = engine.runTask(name, context, blockingManager);
+         return task.whenComplete((r, e) -> {
+            if (context.isLogEvent()) {
+               EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());
+               who.ifPresent(eventLog::who);
+               context.getCache().ifPresent(eventLog::context);
+               if (e != null) {
+                  eventLog.detail(e)
+                        .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));
+               } else {
+                  eventLog.detail(String.valueOf(r))
+                        .info(EventLogCategory.TASKS, MESSAGES.taskSuccess(name));
+               }
+            }
+            runningTasks.remove(exec.getUUID());
+         });
+      });
    }
 
    @Override
@@ -128,9 +145,35 @@ public class TaskManagerImpl implements TaskManager {
    }
 
    @Override
+   public CompletionStage<List<Task>> getTasksAsync() {
+      return taskFlowable()
+            .collect(Collectors.toList())
+            .toCompletionStage();
+   }
+
+   private Flowable<Task> taskFlowable() {
+      return Flowable.fromIterable(engines)
+            .flatMap(engine -> {
+               if (engine instanceof NonBlockingTaskEngine) {
+                  return Flowable.fromCompletionStage(((NonBlockingTaskEngine) engine).getTasksAsync())
+                        .flatMap(Flowable::fromIterable);
+               }
+               return Flowable.fromIterable(engine.getTasks());
+            });
+   }
+
+   @Override
    public List<Task> getUserTasks() {
       return engines.stream().flatMap(engine -> engine.getTasks().stream())
             .filter(t -> !t.getName().startsWith("@@"))
             .collect(Collectors.toList());
+   }
+
+   @Override
+   public CompletionStage<List<Task>> getUserTasksAsync() {
+      return taskFlowable()
+            .filter(t -> !t.getName().startsWith("@@"))
+            .collect(Collectors.toList())
+            .toCompletionStage();
    }
 }

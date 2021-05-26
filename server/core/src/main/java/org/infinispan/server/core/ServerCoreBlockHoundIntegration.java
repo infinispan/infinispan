@@ -1,6 +1,5 @@
 package org.infinispan.server.core;
 
-import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
@@ -31,14 +30,6 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
     * @param builder the block hound builder to register methods
     */
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
-      // ScriptingManger interface is blocking - but relies upon a persistent and clustered cache
-      // https://issues.redhat.com/browse/ISPN-11833
-      try {
-         CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, Class.forName("org.infinispan.scripting.impl.ScriptingManagerImpl"));
-      } catch (ClassNotFoundException e) {
-         // Just ignore - means that most likely this module isn't present (ie. server/core or server/memcached)
-      }
-
       // Counter creation is blocking
       // https://issues.redhat.com/browse/ISPN-11434
       builder.allowBlockingCallsInside("org.infinispan.counter.impl.manager.EmbeddedCounterManager", "createCounter");

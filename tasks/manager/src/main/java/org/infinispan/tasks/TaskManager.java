@@ -43,10 +43,23 @@ public interface TaskManager {
    List<Task> getTasks();
 
    /**
+    * Same as {@link #getTasks()} except that the tasks are returned in a non
+    * blocking fashion.
+    * @return a stage that when complete contains all the tasks available
+    */
+   CompletionStage<List<Task>> getTasksAsync();
+
+   /**
     *
     * @return Retrieves the list of all available tasks, excluding administrative tasks with names starting with '@@'
     */
    List<Task> getUserTasks();
+
+   /**
+    * Same as {@link #getTasks()} except that the user tasks are returned in a non
+    * @return a stage that when complete contains all the user tasks available
+    */
+   CompletionStage<List<Task>> getUserTasksAsync();
 
    /**
     * Registers a new {@link TaskEngine}

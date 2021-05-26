@@ -1,6 +1,6 @@
 package org.infinispan.scripting.impl;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * LocalRunner.
@@ -15,7 +15,7 @@ public class LocalRunner implements ScriptRunner {
    }
 
    @Override
-   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings bindings) {
+   public <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings bindings) {
       return scriptManager.execute(metadata, bindings);
    }
 
