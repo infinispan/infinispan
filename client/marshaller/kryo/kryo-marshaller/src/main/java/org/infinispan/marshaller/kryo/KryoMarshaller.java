@@ -7,7 +7,7 @@ import java.util.ServiceLoader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -54,7 +54,7 @@ public class KryoMarshaller extends AbstractMarshaller {
    @Override
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) {
       return pool.run((kryo) -> {
-         try (Output output = new Output(new ExposedByteArrayOutputStream(estimatedSize), estimatedSize)) {
+         try (Output output = new Output(new LazyByteArrayOutputStream(estimatedSize), estimatedSize)) {
             kryo.writeClassAndObject(output, obj);
             return ByteBufferImpl.create(output.toBytes());
          }
