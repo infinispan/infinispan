@@ -275,7 +275,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
       CompletionStage<Boolean> future = (CompletionStage) touchCommand.invokeAsync(componentRegistry);
       if (CompletionStages.isCompletedSuccessfully(future)) {
-         return CompletableFutures.booleanStage(CompletionStages.join(future));
+         return CompletableFutures.booleanStage(!CompletionStages.join(future));
       }
       return future.thenApply(touched -> !touched);
    }

@@ -495,7 +495,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                                      new TouchResponseCollector(),
                                      rpcManager.getSyncRpcOptions());
 
-      CompletionStage<Object> localStage = touchCommand.invokeAsync(componentRegistry, accessTime);
+      CompletionStage<?> localStage = touchCommand.invokeAsync(componentRegistry, accessTime);
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
          if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {

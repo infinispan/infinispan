@@ -3,7 +3,6 @@ package org.infinispan.expiration.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -76,7 +75,7 @@ public class TouchCommand extends BaseRpcCommand implements TopologyAffectedComm
       this.topologyId = topologyId;
    }
 
-   public CompletionStage<Object> invokeAsync(ComponentRegistry componentRegistry, long currentTimeMilli) {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry, long currentTimeMilli) {
       DistributionManager distributionManager = componentRegistry.getDistributionManager();
       InternalDataContainer internalDataContainer = componentRegistry.getInternalDataContainer().running();
       boolean touched = internalDataContainer.touch(segment, key, currentTimeMilli);
@@ -93,10 +92,10 @@ public class TouchCommand extends BaseRpcCommand implements TopologyAffectedComm
          // say we were touched anyways
          // TODO: There is a small window where the access time may not be updated which is described in https://issues.redhat.com/browse/ISPN-11144
          if (di.isWriteOwner() && !di.isReadOwner()) {
-            return CompletableFuture.completedFuture(Boolean.TRUE);
+            return CompletableFutures.completedTrue();
          }
       }
-      return CompletableFuture.completedFuture(touched);
+      return CompletableFutures.booleanStage(touched);
    }
 
    @Override
