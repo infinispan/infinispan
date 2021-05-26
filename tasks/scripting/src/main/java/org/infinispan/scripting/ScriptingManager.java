@@ -2,6 +2,7 @@ package org.infinispan.scripting;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.tasks.TaskContext;
 
@@ -46,7 +47,7 @@ public interface ScriptingManager {
     * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
     * @return a {@link CompletableFuture} which will return the result of the script execution
     */
-   <T> CompletableFuture<T> runScript(String scriptName);
+   <T> CompletionStage<T> runScript(String scriptName);
 
    /**
     * Runs a named script using the specified {@link TaskContext}
@@ -55,7 +56,7 @@ public interface ScriptingManager {
     * @param context A {@link TaskContext} within which the script will be executed
     * @return a {@link CompletableFuture} which will return the result of the script execution
     */
-   <T> CompletableFuture<T> runScript(String scriptName, TaskContext context);
+   <T> CompletionStage<T> runScript(String scriptName, TaskContext context);
 
    /**
     * Retrieves the source code of an existing script.

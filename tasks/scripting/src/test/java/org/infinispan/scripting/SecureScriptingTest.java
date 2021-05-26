@@ -21,6 +21,7 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.SecureScriptingTest")
@@ -98,29 +99,29 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = SecurityException.class)
    public void testSimpleScript() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
    }
 
    public void testSimpleScriptWithEXECPermissions() throws Exception {
-      String result = Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get());
+      String result = Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a"))));
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testSimpleScriptWithEXECPermissionsWrongRole() throws Exception {
-      String result = Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a")).get());
+      String result = Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a"))));
       assertEquals("a", result);
    }
 
    public void testSimpleScriptWithEXECPermissionsRightRole() throws Exception {
-      String result = Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a")).get());
+      String result = Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a"))));
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testSimpleScriptWithoutEXEC() throws Exception {
-      Security.doAs(ACHILLES, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a")).get());
+      Security.doAs(ACHILLES, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRole.js", new TaskContext().addParameter("a", "a"))));
    }
 
    @Test(expectedExceptions = PrivilegedActionException.class)
@@ -176,14 +177,14 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       nonSecCache.put("a", "value");
       assertEquals("value", nonSecCache.get("a"));
 
-      String result = Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(nonSecCache)).get());
+      String result = Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(nonSecCache))));
       assertEquals("a", result);
       assertEquals("a", nonSecCache.get("a"));
    }
 
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testScriptOnNonSecuredCacheWrongRole() throws ExecutionException, InterruptedException, PrivilegedActionException {
-      Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> (String) scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache"))).get());
+      Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache")))));
    }
 
 }

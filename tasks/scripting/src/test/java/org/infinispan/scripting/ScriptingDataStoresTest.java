@@ -69,7 +69,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    }
 
    public void testScriptWithParam() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get(1000, TimeUnit.MILLISECONDS);
+      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
       assertEquals("a", result);
       assertEquals("a", cacheManager.getCache(CACHE_NAME).get("a"));
    }
@@ -79,7 +79,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
       String key = "processValue";
       cacheManager.getCache(CACHE_NAME).put(key, value);
 
-      scriptingManager.runScript("testExecWithoutProp.js").get(1000, TimeUnit.MILLISECONDS);
+      scriptingManager.runScript("testExecWithoutProp.js").toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
       assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
    }
 }

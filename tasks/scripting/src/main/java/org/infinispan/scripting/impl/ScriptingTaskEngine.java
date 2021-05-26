@@ -3,11 +3,12 @@ package org.infinispan.scripting.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.spi.NonBlockingTaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**
@@ -16,7 +17,7 @@ import org.infinispan.util.concurrent.BlockingManager;
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class ScriptingTaskEngine implements TaskEngine {
+public class ScriptingTaskEngine implements NonBlockingTaskEngine {
    private final ScriptingManagerImpl scriptingManager;
 
    public ScriptingTaskEngine(ScriptingManagerImpl scriptingManager) {
@@ -40,8 +41,15 @@ public class ScriptingTaskEngine implements TaskEngine {
    }
 
    @Override
+   public CompletionStage<List<Task>> getTasksAsync() {
+      BlockingManager blockingManager = scriptingManager.cacheManager.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      return blockingManager.supplyBlocking(this::getTasks, "ScriptingTaskEngine - getTasksAsync");
+   }
+
+   @Override
    public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
-      return scriptingManager.runScript(taskName, context);
+      return scriptingManager.<T>runScript(taskName, context)
+            .toCompletableFuture();
    }
 
    @Override
@@ -49,4 +57,8 @@ public class ScriptingTaskEngine implements TaskEngine {
       return scriptingManager.containsScript(taskName);
    }
 
+   @Override
+   public CompletionStage<Boolean> handlesAsync(String taskName) {
+      return scriptingManager.containsScriptAsync(taskName);
+   }
 }

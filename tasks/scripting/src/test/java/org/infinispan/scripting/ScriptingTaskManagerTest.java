@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
+import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,6 +19,7 @@ import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
@@ -63,9 +65,13 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
-   public void testBrokenTask() throws Exception {
+   public void testBrokenTask() throws Throwable {
       ScriptingManager scriptingManager = extractGlobalComponent(cacheManager, ScriptingManager.class);
       ScriptingUtils.loadScript(scriptingManager, BROKEN_SCRIPT);
-      CompletionStages.join(taskManager.runTask(BROKEN_SCRIPT, new TaskContext()));
+      try {
+         CompletionStages.join(taskManager.runTask(BROKEN_SCRIPT, new TaskContext()));
+      } catch (CompletionException e) {
+         throw CompletableFutures.extractException(e);
+      }
    }
 }

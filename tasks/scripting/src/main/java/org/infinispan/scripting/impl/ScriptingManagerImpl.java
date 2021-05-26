@@ -1,8 +1,9 @@
 package org.infinispan.scripting.impl;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
@@ -34,6 +35,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 
@@ -53,6 +55,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    Authorizer authorizer;
    @Inject EncoderRegistry encoderRegistry;
    @Inject GlobalConfiguration globalConfiguration;
+   @Inject BlockingManager blockingManager;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
@@ -135,14 +138,19 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return SecurityActions.getUnwrappedCache(getScriptCache()).containsKey(taskName);
    }
 
+   CompletionStage<Boolean> containsScriptAsync(String taskName) {
+      return SecurityActions.getUnwrappedCache(getScriptCache()).getAsync(taskName)
+            .thenApply(Objects::nonNull);
+   }
+
    @Override
-   public <T> CompletableFuture<T> runScript(String scriptName) {
+   public <T> CompletionStage<T> runScript(String scriptName) {
       return runScript(scriptName, new TaskContext());
    }
 
 
    @Override
-   public <T> CompletableFuture<T> runScript(String scriptName, TaskContext context) {
+   public <T> CompletionStage<T> runScript(String scriptName, TaskContext context) {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
       if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
@@ -195,21 +203,21 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return (ScriptMetadata) scriptEntry.getMetadata();
    }
 
-   <T> CompletableFuture<T> execute(ScriptMetadata metadata, Bindings bindings) {
-      CompiledScript compiled = compiledScripts.get(metadata.name());
-      try {
-         if (compiled != null) {
-            T result = (T) compiled.eval(bindings);
-            return CompletableFuture.completedFuture(result);
-         } else {
-            ScriptEngine engine = getEngineForScript(metadata);
-            String script = getScriptCache().get(metadata.name());
-            T result = (T) engine.eval(script, bindings);
-            return CompletableFuture.completedFuture(result);
+   <T> CompletionStage<T> execute(ScriptMetadata metadata, Bindings bindings) {
+      return blockingManager.supplyBlocking(() -> {
+         CompiledScript compiled = compiledScripts.get(metadata.name());
+         try {
+            if (compiled != null) {
+               return (T) compiled.eval(bindings);
+            } else {
+               ScriptEngine engine = getEngineForScript(metadata);
+               String script = getScriptCache().get(metadata.name());
+               return (T) engine.eval(script, bindings);
+            }
+         } catch (ScriptException e) {
+            throw log.scriptExecutionError(e);
          }
-      } catch (ScriptException e) {
-         throw log.scriptExecutionError(e);
-      }
+      }, "ScriptingManagerImpl - execute");
    }
 
    ScriptEngine getEngineForScript(ScriptMetadata metadata) {

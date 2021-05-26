@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
 import javax.script.Bindings;
@@ -18,6 +18,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * DistributedScript.
@@ -47,12 +48,12 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
       bindings.put("cacheManager", dataTypedCacheManager);
       AdvancedCache<?, ?> cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
       bindings.put("cache", cache.withMediaType(scriptMediaType, scriptMediaType));
-      ctxParams.forEach((key, value) -> bindings.put(key, value));
+      ctxParams.forEach(bindings::put);
 
       try {
-         return (T) (scriptManager.execute(metadata, bindings).get());
-      } catch (InterruptedException | ExecutionException e) {
-         throw new CacheException(e);
+         return CompletionStages.join(scriptManager.execute(metadata, bindings));
+      } catch (CompletionException e) {
+         throw new CacheException(e.getCause());
       }
    }
 

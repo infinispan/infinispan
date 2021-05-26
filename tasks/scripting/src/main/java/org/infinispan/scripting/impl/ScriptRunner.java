@@ -1,6 +1,6 @@
 package org.infinispan.scripting.impl;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * ScriptRunner.
@@ -9,5 +9,5 @@ import java.util.concurrent.CompletableFuture;
  * @since 7.2
  */
 public interface ScriptRunner {
-   <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding);
+   <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding);
 }

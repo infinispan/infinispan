@@ -9,7 +9,8 @@ import static org.testng.AssertJUnit.assertNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.ScriptingTest")
@@ -46,7 +48,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testSimpleScript() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
    }
 
@@ -59,18 +61,21 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
    public void testRunNonExistentScript() throws Exception {
-      String result = (String) scriptingManager.runScript("nonExistent.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("nonExistent.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
-   public void testSimpleScriptWitoutPassingParameter() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js").get();
-      assertEquals("a", result);
+   public void testSimpleScriptWitoutPassingParameter() throws Throwable {
+      try {
+         CompletionStages.join(scriptingManager.runScript("test.js"));
+      } catch (CompletionException e) {
+         throw e.getCause();
+      }
    }
 
    public void testSimpleScriptReplacementWithNew() throws ExecutionException, InterruptedException, IOException {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
 
       //Replacing the existing script with new one.
@@ -78,7 +83,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       String script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
-      result = (String) scriptingManager.runScript("test.js").get();
+      result = CompletionStages.join(scriptingManager.runScript("test.js"));
       assertEquals("a:modified", result);
 
       //Rolling back the replacement.
@@ -90,17 +95,17 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
    public void testScriptingCacheClear() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
 
       cache(ScriptingManager.SCRIPT_CACHE).clear();
 
-      result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
    }
 
    public void testScriptingCacheManualReplace() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
 
       //Replacing the existing script with new one.
@@ -109,7 +114,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       cache(ScriptingManager.SCRIPT_CACHE).replace("test.js", script);
 
-      result = (String) scriptingManager.runScript("test.js").get();
+      result = CompletionStages.join(scriptingManager.runScript("test.js"));
       assertEquals("a:modified", result);
 
       //Rolling back the replacement.
@@ -125,22 +130,22 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       cacheManager.getCache(CACHE_NAME).put(key, value);
 
-      CompletableFuture<?> exec = scriptingManager.runScript("testExecWithoutProp.js");
-      exec.get(1000, TimeUnit.MILLISECONDS);
+      CompletionStage<?> exec = scriptingManager.runScript("testExecWithoutProp.js");
+      exec.toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
 
       assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
    }
 
    public void testScriptCallFromJavascript() throws Exception {
-      String result = (String) scriptingManager.runScript("testInnerScriptCall.js",
-            new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("testInnerScriptCall.js",
+            new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")));
 
       assertEquals("script1:additionFromJavascript", result);
       assertEquals("ahoj", cacheManager.getCache(CACHE_NAME).get("a"));
    }
 
    public void testSimpleScriptWithMissingLanguageInMetaPropeties() throws Exception {
-      String result = (String) scriptingManager.runScript("testMissingMetaProps.js", new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(scriptingManager.runScript("testMissingMetaProps.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
    }
 
@@ -163,25 +168,31 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
-   public void testWrongJavaRef() throws Exception {
+   public void testWrongJavaRef() throws Throwable {
       InputStream is = this.getClass().getResourceAsStream("/testWrongJavaRef.js");
       String script = loadFileAsString(is);
 
       scriptingManager.addScript("testWrongJavaRef.js", script);
 
-      String result = (String) scriptingManager.runScript("testWrongJavaRef.js", new TaskContext().addParameter("a", "a")).get();
-      assertEquals("a", result);
+      try {
+         CompletionStages.join(scriptingManager.runScript("testWrongJavaRef.js", new TaskContext().addParameter("a", "a")));
+      } catch (CompletionException e) {
+         throw e.getCause();
+      }
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
-   public void testWrongPropertyRef() throws Exception {
+   public void testWrongPropertyRef() throws Throwable {
       InputStream is = this.getClass().getResourceAsStream("/testWrongPropertyRef.js");
       String script = loadFileAsString(is);
 
       scriptingManager.addScript("testWrongPropertyRef.js", script);
 
-      String result = (String) scriptingManager.runScript("testWrongPropertyRef.js").get();
-      assertEquals("a", result);
+      try {
+         CompletionStages.join(scriptingManager.runScript("testWrongPropertyRef.js"));
+      } catch (CompletionException e) {
+         throw e.getCause();
+      }
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Compiler error for script.*")
@@ -191,7 +202,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       scriptingManager.addScript("testJsCompilationError.js", script);
 
-      String result = (String) scriptingManager.runScript("testJsCompilationError.js").get();
+      String result = CompletionStages.join(scriptingManager.runScript("testJsCompilationError.js"));
       assertEquals("a", result);
    }
 
@@ -219,7 +230,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       loadData(cache, "/macbeth.txt");
 
       scriptingManager.addScript("wordCountStream.js", script);
-      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)).get();
+      Map<String, Long> result = CompletionStages.join(scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)));
       assertEquals(3202, result.size());
       assertEquals(Long.valueOf(287), result.get("macbeth"));
    }

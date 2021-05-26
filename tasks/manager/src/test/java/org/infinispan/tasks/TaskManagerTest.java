@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -15,6 +16,7 @@ import org.infinispan.tasks.logging.Messages;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -45,8 +47,12 @@ public class TaskManagerTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testUnhandledTask() {
-      taskManager.runTask("UnhandledTask", new TaskContext());
+   public void testUnhandledTask() throws Throwable {
+      try {
+         CompletionStages.join(taskManager.runTask("UnhandledTask", new TaskContext()));
+      } catch (CompletionException e) {
+         throw CompletableFutures.extractException(e);
+      }
    }
 
    public void testStoredEngines() {
