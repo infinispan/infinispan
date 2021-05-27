@@ -718,8 +718,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata) {
-      return new IracRemoveKeyCommand(cacheName, key, iracMetadata);
+   public IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata, boolean expiration) {
+      return new IracRemoveKeyCommand(cacheName, key, iracMetadata, expiration);
    }
 
    @Override

@@ -637,7 +637,7 @@ public interface CommandsFactory {
 
    <K,V> IracPutKeyCommand buildIracPutKeyCommand(InternalCacheEntry<K, V> entry);
 
-   IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata);
+   IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata, boolean expiration);
 
    IracClearKeysCommand buildIracClearKeysCommand();
 

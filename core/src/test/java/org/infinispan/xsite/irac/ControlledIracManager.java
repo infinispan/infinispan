@@ -33,6 +33,11 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
+   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+      actual.trackExpiredKey(segment, key, lockOwner);
+   }
+
+   @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
       return actual.trackForStateTransfer(stateList);
    }

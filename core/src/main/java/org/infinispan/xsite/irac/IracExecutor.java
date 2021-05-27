@@ -109,7 +109,7 @@ public class IracExecutor implements Function<Void, CompletionStage<Void>> {
          try {
             return runnable.get();
          } catch (Throwable e) {
-            log.trace("Unexpected exception", e);
+            log.unexpectedErrorFromIrac(e);
             return CompletableFutures.completedNull();
          }
       }

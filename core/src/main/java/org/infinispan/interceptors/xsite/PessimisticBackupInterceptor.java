@@ -4,6 +4,9 @@ import java.util.Arrays;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationStage;
 
@@ -14,6 +17,14 @@ import org.infinispan.interceptors.InvocationStage;
  * @since 5.2
  */
 public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+      if (skipXSiteBackup(command) || !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         return invokeNext(ctx, command);
+      }
+      return invokeNextThenApply(ctx, command, handleSingleKeyWriteReturn);
+   }
 
    @SuppressWarnings("rawtypes")
    @Override

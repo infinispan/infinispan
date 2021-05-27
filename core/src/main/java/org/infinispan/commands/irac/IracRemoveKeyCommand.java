@@ -22,6 +22,7 @@ public class IracRemoveKeyCommand extends IracUpdateKeyCommand {
 
    private Object key;
    private IracMetadata iracMetadata;
+   private boolean expiration;
 
    @SuppressWarnings("unused")
    public IracRemoveKeyCommand() {
@@ -32,14 +33,15 @@ public class IracRemoveKeyCommand extends IracUpdateKeyCommand {
       super(COMMAND_ID, cacheName);
    }
 
-   public IracRemoveKeyCommand(ByteString cacheName, Object key, IracMetadata iracMetadata) {
+   public IracRemoveKeyCommand(ByteString cacheName, Object key, IracMetadata iracMetadata, boolean expiration) {
       super(COMMAND_ID, cacheName);
       this.key = key;
       this.iracMetadata = iracMetadata;
+      this.expiration = expiration;
    }
 
    public CompletionStage<Void> executeOperation(BackupReceiver receiver) {
-      return receiver.removeKey(key, iracMetadata);
+      return receiver.removeKey(key, iracMetadata, expiration);
    }
 
    @Override
@@ -47,17 +49,18 @@ public class IracRemoveKeyCommand extends IracUpdateKeyCommand {
       return COMMAND_ID;
    }
 
-
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       iracMetadata.writeTo(output);
+      output.writeBoolean(expiration);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       this.key = input.readObject();
       this.iracMetadata = IracMetadata.readFrom(input);
+      this.expiration = input.readBoolean();
    }
 
    @Override

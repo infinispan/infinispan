@@ -3,14 +3,17 @@ package org.infinispan.interceptors.xsite;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.SegmentAwareKey;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -42,11 +45,13 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    @Inject protected IracManager iracManager;
    @Inject protected ClusteringDependentLogic clusteringDependentLogic;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected CommandsFactory commandsFactory;
 
    private static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    private final InvocationSuccessFunction<ClearCommand> handleClearReturn = this::handleClearReturn;
    private final InvocationSuccessFunction<RemoveExpiredCommand> handleBackupMaxIdle = this::handleBackupMaxIdle;
    private final InvocationSuccessAction<RemoveExpiredCommand> handleExpiredReturn = this::handleExpiredReturn;
+   protected final InvocationSuccessFunction<DataWriteCommand> handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
@@ -90,7 +95,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    private void handleExpiredReturn(InvocationContext context, RemoveExpiredCommand command, Object returnValue) {
       if (command.isSuccessful()) {
-         iracManager.trackUpdatedKey(command.getSegment(), command.getKey(), command.getCommandInvocationId());
+         iracManager.trackExpiredKey(command.getSegment(), command.getKey(), command.getCommandInvocationId());
       }
    }
 
@@ -122,6 +127,34 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) {
       iracManager.trackClear();
       return backupSender.backupClear(rCommand).thenReturn(ctx, rCommand, rv);
+   }
+
+   private Object handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
+      if (!dataWriteCommand.isSuccessful()) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Command %s is not successful, not replicating", dataWriteCommand);
+         }
+         return rv;
+      }
+      int segment = dataWriteCommand.getSegment();
+      DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment);
+      if (dInfo.isWriteOwner()) {
+         //all owners has to keep track of the updates even if the primary owner is the only one who sends it.
+         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
+      }
+      if (dInfo.isPrimary()) { //primary owner sends for sync backups
+         CacheEntry<?,?> entry = ctx.lookupEntry(dataWriteCommand.getKey());
+         WriteCommand crossSiteCommand = createCommandForXSite(entry, segment, dataWriteCommand.getFlagsBitSet());
+         return backupSender.backupWrite(crossSiteCommand, dataWriteCommand).thenReturn(ctx, dataWriteCommand, rv);
+      }
+      return rv;
+   }
+
+   private WriteCommand createCommandForXSite(CacheEntry<?, ?> entry, int segment, long flagsBitSet) {
+      return entry.isRemoved() ?
+            commandsFactory.buildRemoveCommand(entry.getKey(), null, segment, flagsBitSet) :
+            commandsFactory.buildPutKeyValueCommand(entry.getKey(), entry.getValue(), segment, entry.getMetadata(),
+                  flagsBitSet);
    }
 
    private boolean isWriteOwner(SegmentAwareKey<?> key) {

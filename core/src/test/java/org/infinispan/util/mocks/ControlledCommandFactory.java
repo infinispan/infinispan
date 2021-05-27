@@ -683,8 +683,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata) {
-      return actual.buildIracRemoveKeyCommand(key, iracMetadata);
+   public IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata, boolean expiration) {
+      return actual.buildIracRemoveKeyCommand(key, iracMetadata, expiration);
    }
 
    @Override

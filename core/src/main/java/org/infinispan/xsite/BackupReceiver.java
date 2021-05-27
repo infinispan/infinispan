@@ -43,9 +43,10 @@ public interface BackupReceiver {
     *
     * @param key          The key to delete.
     * @param iracMetadata The {@link IracMetadata} for conflict resolution.
+    * @param expiration   {@code true} if it is to remove an expired key.
     * @return A {@link CompletionStage} that is completed when the key is deleted or it is discarded.
     */
-   CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata);
+   CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata, boolean expiration);
 
    /**
     * Clears the cache.

@@ -5,7 +5,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * TimeService that allows for wall clock time to be adjust manually.
+ * @deprecated Use {@link org.infinispan.commons.time.ControlledTimeService} instead.
  */
+@Deprecated
 public class ControlledTimeService extends EmbeddedTimeService {
    protected long currentMillis;
 
