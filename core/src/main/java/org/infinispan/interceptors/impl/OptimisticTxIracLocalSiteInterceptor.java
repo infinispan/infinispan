@@ -16,14 +16,13 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.responses.PrepareResponse;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Interceptor used by IRAC for optimistic transactional caches to handle the local site updates.
@@ -36,13 +35,14 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteInterceptor {
 
-   private static final Log log = LogFactory.getLog(OptimisticTxIracLocalSiteInterceptor.class);
-
    private final InvocationSuccessAction<PrepareCommand> afterLocalPrepare = this::afterLocalTwoPhasePrepare;
    private final InvocationSuccessFunction<PrepareCommand> afterRemotePrepare = this::afterRemoteTwoPhasePrepare;
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         return visitNonTxDataWriteCommand(ctx, command);
+      }
       final Object key = command.getKey();
       if (isIracState(command)) {
          // if this is a state transfer from a remote site, we set the versions here
@@ -78,16 +78,6 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
       //nothing extra to be done for rollback.
       return invokeNext(ctx, command);
-   }
-
-   @Override
-   public boolean isTraceEnabled() {
-      return log.isTraceEnabled();
-   }
-
-   @Override
-   public Log getLog() {
-      return log;
    }
 
    private void afterLocalTwoPhasePrepare(InvocationContext ctx, PrepareCommand command, Object rv) {

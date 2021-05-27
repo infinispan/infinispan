@@ -2172,4 +2172,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Timeout waiting for topology %d transaction data", id = 638)
    TimeoutException transactionDataTimeout(int expectedTopologyId);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
+   void sendFailMissingTombstone(Object key);
 }

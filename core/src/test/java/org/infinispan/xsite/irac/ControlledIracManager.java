@@ -33,6 +33,11 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
+   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+      actual.trackExpiredKey(segment, key, lockOwner);
+   }
+
+   @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
       return actual.trackForStateTransfer(stateList);
    }
@@ -67,10 +72,6 @@ public class ControlledIracManager implements IracManager {
       return actual.checkAndTrackExpiration(key);
    }
 
-   protected Optional<DefaultIracManager> asDefaultIracManager() {
-      return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
-   }
-
    @Override
    public void incrementNumberOfDiscards() {
       actual.incrementNumberOfDiscards();
@@ -89,5 +90,9 @@ public class ControlledIracManager implements IracManager {
    @Override
    public void incrementNumberOfConflictMerged() {
       actual.incrementNumberOfConflictMerged();
+   }
+
+   protected Optional<DefaultIracManager> asDefaultIracManager() {
+      return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
    }
 }

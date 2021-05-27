@@ -150,6 +150,20 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       }
       IracEntryVersion localVersion = localMetadata.getVersion();
       IracEntryVersion remoteVersion = remoteMetadata.getVersion();
+      if (command.isExpiration()) {
+         // expiration rules
+         // if the version is newer of equals, then the remove can continue
+         // if not, or if there is a conflict, we abort
+         switch (remoteVersion.compareTo(localVersion)) {
+            case AFTER:
+            case EQUAL:
+               return CompletableFutures.completedTrue();
+            default:
+               iracManager.incrementNumberOfDiscards();
+               discardUpdate(entry, command, remoteMetadata);
+               return CompletableFutures.completedFalse();
+         }
+      }
       switch (remoteVersion.compareTo(localVersion)) {
          case CONFLICTING:
             return resolveConflict(entry, command, localMetadata, remoteMetadata);

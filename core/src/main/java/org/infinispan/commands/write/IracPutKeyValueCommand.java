@@ -39,6 +39,7 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    private Metadata metadata;
    private PrivateMetadata privateMetadata;
    private boolean successful = true;
+   private boolean expiration;
 
    public IracPutKeyValueCommand() {}
 
@@ -164,6 +165,7 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(privateMetadata);
       UnsignedNumeric.writeUnsignedInt(output, segment);
+      output.writeBoolean(expiration);
    }
 
    @Override
@@ -174,7 +176,16 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
       commandInvocationId = CommandInvocationId.readFrom(input);
       privateMetadata = (PrivateMetadata) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
+      expiration = input.readBoolean();
       setFlagsBitSet(FlagBitSets.IRAC_UPDATE);
+   }
+
+   public boolean isExpiration() {
+      return expiration;
+   }
+
+   public void setExpiration(boolean expiration) {
+      this.expiration = expiration;
    }
 
    @Override

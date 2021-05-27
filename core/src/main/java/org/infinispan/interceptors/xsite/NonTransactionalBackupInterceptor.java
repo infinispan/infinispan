@@ -3,7 +3,6 @@ package org.infinispan.interceptors.xsite;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -44,10 +43,8 @@ import org.infinispan.util.logging.LogFactory;
 public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
 
    private static final Log log = LogFactory.getLog(NonTransactionalBackupInterceptor.class);
-   private final InvocationSuccessFunction<DataWriteCommand> handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
    private final InvocationSuccessFunction<WriteCommand> handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
 
-   @Inject CommandsFactory commandsFactory;
    @Inject InternalEntryFactory internalEntryFactory;
 
    @Override
@@ -125,34 +122,6 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return invokeNext(ctx, command);
       }
       return invokeNextThenApply(ctx, command, handleSingleKeyWriteReturn);
-   }
-
-   private Object handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
-      if (!dataWriteCommand.isSuccessful()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Command %s is not successful, not replicating", dataWriteCommand);
-         }
-         return rv;
-      }
-      int segment = dataWriteCommand.getSegment();
-      DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment);
-      if (dInfo.isWriteOwner()) {
-         //all owners has to keep track of the updates even if the primary owner is the only one who sends it.
-         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
-      }
-      if (dInfo.isPrimary()) { //primary owner sends for sync backups
-         CacheEntry<?,?> entry = ctx.lookupEntry(dataWriteCommand.getKey());
-         WriteCommand crossSiteCommand = createCommandForXSite(entry, segment, dataWriteCommand.getFlagsBitSet());
-         return backupSender.backupWrite(crossSiteCommand, dataWriteCommand).thenReturn(ctx, dataWriteCommand, rv);
-      }
-      return rv;
-   }
-
-   private WriteCommand createCommandForXSite(CacheEntry<?, ?> entry, int segment, long flagsBitSet) {
-      return entry.isRemoved() ?
-             commandsFactory.buildRemoveCommand(entry.getKey(), null, segment, flagsBitSet) :
-             commandsFactory.buildPutKeyValueCommand(entry.getKey(), entry.getValue(), segment, entry.getMetadata(),
-                   flagsBitSet);
    }
 
    private Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command) {

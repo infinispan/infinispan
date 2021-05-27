@@ -47,8 +47,6 @@ import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Interceptor used by IRAC for pessimistic transactional caches to handle the local site updates.
@@ -66,7 +64,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInterceptor {
 
-   private static final Log log = LogFactory.getLog(PessimisticTxIracLocalInterceptor.class);
    private static final IracMetadataResponseCollector RESPONSE_COLLECTOR = new IracMetadataResponseCollector();
 
    @Inject CommandsFactory commandsFactory;
@@ -74,7 +71,9 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-      return visitDataWriteCommand(ctx, command);
+      return command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ) ?
+            visitNonTxDataWriteCommand(ctx, command) :
+            visitDataWriteCommand(ctx, command);
    }
 
    @Override
@@ -172,16 +171,6 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
       //nothing extra to be done for rollback.
       return invokeNext(ctx, command);
-   }
-
-   @Override
-   public boolean isTraceEnabled() {
-      return log.isTraceEnabled();
-   }
-
-   @Override
-   public Log getLog() {
-      return log;
    }
 
    private Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
