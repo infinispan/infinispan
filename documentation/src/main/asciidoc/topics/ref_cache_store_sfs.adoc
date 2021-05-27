@@ -22,7 +22,7 @@ defragmented.
 [source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
-   <file-store max-entries="5000"/>
+   <file-store path="path"/>
 </persistence>
 ----
 

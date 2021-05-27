@@ -1954,6 +1954,7 @@
               data can be recomputed or retrieved from an authoritative data
               store. By default, the value is `-1` which means that there is no
               maximum number of entries.
+              Deprecated since 13.0, will be removed in 16.0.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

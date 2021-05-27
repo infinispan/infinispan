@@ -26,6 +26,10 @@ import org.infinispan.persistence.spi.InitializationContext;
 @ConfigurationFor(SingleFileStore.class)
 public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SingleFileStoreConfiguration> implements ConfigurationInfo {
    public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", null, String.class).immutable().xmlName("path").global(false).build();
+   /**
+    * @deprecated Since 13.0, will be removed in 16.0
+    */
+   @Deprecated
    public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder("maxEntries", -1).immutable().build();
    public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder("fragmentationFactor", 0.75f).immutable().build();
 
@@ -73,6 +77,10 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
       return location.get();
    }
 
+   /**
+    * @deprecated Since 13.0, will be removed in 16.0
+    */
+   @Deprecated
    public int maxEntries() {
       return maxEntries.get();
    }
