@@ -112,6 +112,16 @@ public class RestDispatcherTest {
       restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/dir1/dir2/file.txt").build();
       response = restDispatcher.dispatch(restRequest);
       assertEquals("/ctx/web/dir1/dir2/file.txt", join(response).getEntity().toString());
+
+      // Create a resource named "{c}"
+      restRequest = new SimpleRequest.Builder().setMethod(POST).setPath("/ctx/counters/{c}").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals(200, join(response).getStatus());
+
+      // Read a resource named "{c}"
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/counters/{c}").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("{c}->0", join(response).getEntity().toString());
    }
 
    @Test

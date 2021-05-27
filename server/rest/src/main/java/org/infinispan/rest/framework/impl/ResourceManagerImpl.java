@@ -53,7 +53,7 @@ public class ResourceManagerImpl implements ResourceManager {
    @Override
    public LookupResult lookupResource(Method method, String path, String action) {
       List<PathItem> pathItems = Arrays.stream(path.replaceAll("//+", "/").split("/"))
-            .map(s -> s.isEmpty() ? "/" : s).map(QueryStringDecoder::decodeComponent).map(PathItem::fromString).collect(Collectors.toList());
+            .map(s -> s.isEmpty() ? "/" : s).map(QueryStringDecoder::decodeComponent).map(StringPathItem::new).collect(Collectors.toList());
       return resourceTree.find(method, pathItems, action);
    }
 
