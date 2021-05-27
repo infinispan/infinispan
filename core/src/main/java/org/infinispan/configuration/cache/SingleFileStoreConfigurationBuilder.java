@@ -60,7 +60,10 @@ public class SingleFileStoreConfigurationBuilder
     * If this maximum limit is set when the Infinispan is used as an
     * authoritative data store, it could lead to data loss, and hence it's
     * not recommended for this use case.
+    *
+    * @deprecated Since 13.0, will be removed in 16.0
     */
+   @Deprecated
    public SingleFileStoreConfigurationBuilder maxEntries(int maxEntries) {
       attributes.attribute(MAX_ENTRIES).set(maxEntries);
       return this;
