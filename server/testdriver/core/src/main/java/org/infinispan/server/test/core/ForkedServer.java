@@ -48,6 +48,7 @@ public class ForkedServer {
    private final String serverLogDir;
    private final String serverLog;
    private String jvmOptions;
+   private String serverConfiguration;
 
    // Runtime
    private final UUID serverId;
@@ -69,7 +70,7 @@ public class ForkedServer {
       commands.add(serverHome + File.separator + "bin" + File.separator + "server" + extension);
 
       // Append random UUID for this server to be used in the case of forceful shutdown.
-      commands.add(String.format("-D%s-pid=%s", this.getClass().getName(), this.serverId));
+      addVmArgument(this.getClass().getName() + "-pid", this.serverId);
    }
 
    public ForkedServer setServerConfiguration(String serverConfiguration) {
@@ -77,6 +78,7 @@ public class ForkedServer {
       if (!new File(serverConfiguration).isAbsolute()) {
          serverConfiguration = getClass().getClassLoader().getResource(serverConfiguration).getPath();
       }
+      this.serverConfiguration = serverConfiguration;
       commands.add(serverConfiguration);
       return this;
    }
@@ -200,4 +202,11 @@ public class ForkedServer {
       throw new IllegalStateException("Unable to determine PID of the running Infinispan server.");
    }
 
+   public String getServerConfiguration() {
+      return serverConfiguration;
+   }
+
+   public void addVmArgument(String key, Object value) {
+      commands.add(String.format("-D%s=%s", key, value));
+   }
 }

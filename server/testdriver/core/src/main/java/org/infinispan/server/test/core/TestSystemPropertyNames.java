@@ -46,10 +46,6 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_LOG_FILE = PREFIX + "container.logFile";
    /**
-    * Specifies a comma-separated list to server home path. Only for FORKED
-    */
-   public static final String INFINISPAN_SERVER_HOME = PREFIX + "home";
-   /**
     * The maximum amount of memory the container can use.
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_MEMORY = PREFIX + "container.memory";
