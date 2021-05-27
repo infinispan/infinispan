@@ -83,7 +83,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
             Path destination = getServerConfDir(dest).resolve(source.getFileName());
             Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
          } catch (IOException e) {
-            throw new UncheckedIOException("Cannot copy the server to temp folder", e);
+            throw new UncheckedIOException("Cannot copy the server to temp directory", e);
          }
          // Replace 99 with index of server to debug
          if (i == 99) {
