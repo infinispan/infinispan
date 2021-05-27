@@ -110,8 +110,7 @@ To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later
 ----
 ConfigurationBuilder b = new ConfigurationBuilder();
 b.persistence()
-    .addSingleFileStore()
-    .maxEntries(5000);
+    .addSingleFileStore();
 ----
 
 However, Infinispan does not recommend using `SingleFileStore`.
