@@ -38,8 +38,8 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata) {
-      return delegate.removeKey(key, iracMetadata);
+   public CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata, boolean expiration) {
+      return delegate.removeKey(key, iracMetadata, expiration);
    }
 
    @Override

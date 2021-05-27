@@ -328,7 +328,6 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
                                                                GlobalConfigurationBuilder globalTemplate,
                                                                ConfigurationBuilder cacheTemplate, boolean waitBetweenCacheManager) {
          List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
-         final TransportFlags flags = transportFlags();
          for (int i = 0; i < numMembersInCluster; i++) {
             EmbeddedCacheManager cm = addCacheManager(cacheName, globalTemplate, cacheTemplate, waitBetweenCacheManager);
             if (cacheName != null) {

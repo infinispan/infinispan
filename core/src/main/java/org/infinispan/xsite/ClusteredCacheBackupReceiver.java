@@ -221,9 +221,10 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata) {
+   public CompletionStage<Void> removeKey(Object key, IracMetadata iracMetadata, boolean expiration) {
       IracPutKeyValueCommand cmd = commandsFactory.buildIracPutKeyValueCommand(key, segment(key), null, null,
             internalMetadata(iracMetadata));
+      cmd.setExpiration(expiration);
       InvocationContext ctx = invocationContextFactory.createSingleKeyNonTxInvocationContext();
       return invocationHelper.invokeAsync(ctx, cmd).handle(CHECK_EXCEPTION);
    }
