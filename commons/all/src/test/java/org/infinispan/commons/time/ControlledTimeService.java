@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
  * TimeService that allows for wall clock time to be adjust manually.
  */
 public class ControlledTimeService extends DefaultTimeService {
-   protected long currentMillis;
+   protected volatile long currentMillis;
 
    public ControlledTimeService() {
       this(System.currentTimeMillis());
@@ -32,7 +32,7 @@ public class ControlledTimeService extends DefaultTimeService {
       return Instant.ofEpochMilli(currentMillis);
    }
 
-   public void advance(long time) {
+   public synchronized void advance(long time) {
       if (time <= 0) {
          throw new IllegalArgumentException("Argument must be greater than 0");
       }

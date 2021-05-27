@@ -33,6 +33,17 @@ public interface IracManager {
    void trackUpdatedKey(int segment, Object key, Object lockOwner);
 
    /**
+    * Similar to {@link #trackUpdatedKey(int, Object, Object)} but it tracks expired keys instead.
+    * <p>
+    * Expired key need a different conflict resolution algorithm since remove expired should never win any conflict.
+    *
+    * @param segment   The key's segment.
+    * @param key       The key expired.
+    * @param lockOwner The lock owner who updated the key.
+    */
+   void trackExpiredKey(int segment, Object key, Object lockOwner);
+
+   /**
     * Tracks a set of keys to be send to the remote site.
     * <p>
     * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, Object)}. It just returns

@@ -11,8 +11,6 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -30,11 +28,10 @@ import net.jcip.annotations.GuardedBy;
 public class ManualIracManager extends ControlledIracManager {
 
    @GuardedBy("this")
-   private final Map<Object, Object> pendingKeys;
+   private final Map<Object, PendingKeyRequest> pendingKeys;
    @GuardedBy("this")
    private boolean enabled;
    private final List<StateTransferRequest> pendingStateTransfer;
-   @Inject KeyPartitioner keyPartitioner;
 
    private ManualIracManager(IracManager actual) {
       super(actual);
@@ -53,9 +50,18 @@ public class ManualIracManager extends ControlledIracManager {
    @Override
    public synchronized void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       if (enabled) {
-         pendingKeys.put(key, lockOwner);
+         pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, false));
       } else {
          super.trackUpdatedKey(segment, key, lockOwner);
+      }
+   }
+
+   @Override
+   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+      if (enabled) {
+         pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, true));
+      } else {
+         super.trackExpiredKey(segment, key, lockOwner);
       }
    }
 
@@ -74,17 +80,14 @@ public class ManualIracManager extends ControlledIracManager {
    public synchronized void requestState(Address origin, IntSet segments) {
       //send the state for the keys we have pending in this instance!
       asDefaultIracManager()
-            .ifPresent(im -> pendingKeys.forEach((k, lo) -> im.sendStateIfNeeded(origin, segments, keyPartitioner.getSegment(k), k, lo)));
+            .ifPresent(im -> pendingKeys.values().forEach(req -> im.sendStateIfNeeded(origin, segments, req.getSegment(), req.getKey(), req.getLockOwner())));
       super.requestState(origin, segments);
    }
 
    public synchronized void sendKeys() {
-      pendingKeys.forEach((key, lockOwner) -> super.trackUpdatedKey(keyPartitioner.getSegment(key), key, lockOwner));
+      pendingKeys.values().forEach(this::send);
       pendingKeys.clear();
-      pendingStateTransfer.forEach(request -> {
-         CompletionStage<Void> rsp = super.trackForStateTransfer(request.state);
-         rsp.whenComplete(request);
-      });
+      pendingStateTransfer.forEach(this::send);
       pendingStateTransfer.clear();
    }
 
@@ -106,6 +109,27 @@ public class ManualIracManager extends ControlledIracManager {
 
    }
 
+   public boolean isEmpty() {
+      return asDefaultIracManager().map(DefaultIracManager::isEmpty).orElse(true);
+   }
+
+   public boolean hasPendingKeys() {
+      return !pendingKeys.isEmpty();
+   }
+
+   private void send(PendingKeyRequest request) {
+      if (request.isExpiration()) {
+         super.trackExpiredKey(request.getSegment(), request.getKey(), request.getLockOwner());
+         return;
+      }
+      super.trackUpdatedKey(request.getSegment(), request.getKey(), request.getLockOwner());
+   }
+
+   private void send(StateTransferRequest request) {
+      CompletionStage<Void> rsp = super.trackForStateTransfer(request.getState());
+      rsp.whenComplete(request);
+   }
+
    public enum DisableMode {
       SEND,
       DROP
@@ -118,6 +142,9 @@ public class ManualIracManager extends ControlledIracManager {
          this.state = new ArrayList<>(state);
       }
 
+      Collection<XSiteState> getState() {
+         return state;
+      }
 
       @Override
       public void accept(Void unused, Throwable throwable) {
@@ -126,6 +153,36 @@ public class ManualIracManager extends ControlledIracManager {
          } else {
             complete(null);
          }
+      }
+   }
+
+   private static class PendingKeyRequest {
+      private final Object key;
+      private final Object lockOwner;
+      private final int segment;
+      private final boolean expiration;
+
+      private PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
+         this.key = key;
+         this.lockOwner = lockOwner;
+         this.segment = segment;
+         this.expiration = expiration;
+      }
+
+      Object getKey() {
+         return key;
+      }
+
+      Object getLockOwner() {
+         return lockOwner;
+      }
+
+      int getSegment() {
+         return segment;
+      }
+
+      boolean isExpiration() {
+         return expiration;
       }
    }
 }

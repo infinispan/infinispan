@@ -36,6 +36,11 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
+   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+      // no-op
+   }
+
+   @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
       return CompletableFutures.completedNull();
    }

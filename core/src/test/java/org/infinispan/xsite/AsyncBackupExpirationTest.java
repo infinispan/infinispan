@@ -1,14 +1,18 @@
 package org.infinispan.xsite;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,9 +21,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -135,14 +137,14 @@ public class AsyncBackupExpirationTest extends AbstractTwoSitesTest {
    }
 
    private ControlledTimeService replaceTimeService() {
-      ControlledTimeService timeService = new ControlledTimeService();
+      ControlledTimeService timeService = new ControlledTimeService(0);
       // Max idle requires all caches to show it as expired to be removed.
       for (Cache<?, ?> c : caches(LON)) {
-         TestingUtil.replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
+         replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
       }
 
       for (Cache<?, ?> c : caches(NYC)) {
-         TestingUtil.replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
+         replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
       }
 
       return timeService;
@@ -160,26 +162,28 @@ public class AsyncBackupExpirationTest extends AbstractTwoSitesTest {
       } else {
          cache.put(key, "v", -1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
       }
-      eventuallyEquals("v", () -> cache(LON, 0).get(key));
-      eventuallyEquals("v", () -> cache(LON, 1).get(key));
-      eventuallyEquals("v", () -> backup(LON).get(key));
 
-      if (!lifespan) {
-         // When using max idle all the nodes for the sites should be updated
-         for (int i = 0; i < 2; ++i) {
-            TestSite testSite = site(i);
-            for (int j = 0; j < 2; ++j) {
-               InternalCacheEntry<Object, Object> ice = TestingUtil.extractComponent(testSite.cache(j),
-                     InternalDataContainer.class).peek(key);
-               assertEquals(timeService.wallClockTime(), ice.getLastUsed());
-            }
-         }
-      }
+      // wait until all caches & sites see the new value
+      assertEventuallyInSite(LON, c -> Objects.equals("v", c.get(key)), 20, TimeUnit.SECONDS);
+      assertEventuallyInSite(NYC, c -> Objects.equals("v", c.get(key)), 20, TimeUnit.SECONDS);
+
+      // then make sure the entry have the correct created/lastUsed value in all sites
+      Stream.concat(caches(0).stream(), caches(1).stream())
+            .forEach(c -> {
+               InternalCacheEntry<?, ?> ice = extractComponent(c, InternalDataContainer.class).peek(key);
+               if (lifespan) {
+                  assertEquals(timeService.wallClockTime(), ice.getCreated());
+               } else {
+                  assertEquals(timeService.wallClockTime(), ice.getLastUsed());
+               }
+            });
 
       // Now expire the entry
       timeService.advance(TimeUnit.SECONDS.toMillis(2));
-      assertNull(cache.get(key));
-      assertNull(backup(LON).get(key));
+
+      // check that the entry is null in all caches & sites
+      assertInSite(LON, c -> assertNull(c.get(key)));
+      assertInSite(NYC, c -> assertNull(c.get(key)));
    }
 
    @Test(dataProvider = "two boolean cross product")

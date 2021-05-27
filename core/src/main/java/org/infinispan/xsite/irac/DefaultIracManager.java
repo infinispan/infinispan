@@ -19,6 +19,7 @@ import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
@@ -75,6 +76,7 @@ import net.jcip.annotations.GuardedBy;
 public class DefaultIracManager implements IracManager {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
+   private static final String STATE_TRANSFER_OWNER = "state-transfer";
 
    @Inject RpcManager rpcManager;
    @Inject TakeOfflineManager takeOfflineManager;
@@ -134,13 +136,22 @@ public class DefaultIracManager implements IracManager {
    }
 
    @Override
+   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Tracking expired key for %s: %s", lockOwner, key);
+      }
+      updatedKeys.put(key, new ExpirationState(segment, key, lockOwner));
+      iracExecutor.run();
+   }
+
+   @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
       AggregateCompletionStage<Void> cf = CompletionStages.aggregateCompletionStage();
       LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
-         CompletableState completableState = new CompletableState(segment, state.key(), "state-transfer");
-         //if an update is in progress, we don't need to send the same value again.
+         CompletableState completableState = new CompletableState(segment, state.key());
+         // if an update is in progress, we don't need to send the same value again.
          if (updatedKeys.putIfAbsent(state.key(), completableState) == null) {
             cf.dependsOn(completableState.completableFuture);
          }
@@ -293,9 +304,21 @@ public class DefaultIracManager implements IracManager {
                      buildRemoveCommand(state) :
                      commandsFactory.buildIracPutKeyCommand(lEntry))
                .thenAccept(cmd -> {
+                  if (cmd == null) { // only buildRemoveCommand can return null if tombstone is missing
+                     log.sendFailMissingTombstone(Util.toStr(state.key));
+                     // avoid retrying
+                     state.accept(IracResponseCollector.Result.OK, null);
+                     onSendingCompleted(IracResponseCollector.Result.OK, null);
+                     return;
+                  }
                   IracResponseCollector rsp = sendCommandToAllBackups(cmd);
                   rsp.whenComplete(state); // this can block in JGroups Flow Control. move to thread pool?
                   rsp.whenComplete(this::onSendingCompleted);
+               })
+               .exceptionally(throwable -> {
+                  state.sendFail();
+                  onSendingCompleted(null, CompletableFutures.extractException(throwable));
+                  return null;
                });
 
       }
@@ -414,7 +437,7 @@ public class DefaultIracManager implements IracManager {
          return null;
       }
       state.tombstone = metadata;
-      return commandsFactory.buildIracRemoveKeyCommand(key, metadata);
+      return commandsFactory.buildIracRemoveKeyCommand(key, metadata, state.isExpiration());
    }
 
    private CompletionStage<InternalCacheEntry<Object, Object>> fetchEntry(Object key, int segmentId) {
@@ -461,13 +484,17 @@ public class DefaultIracManager implements IracManager {
          removeStateFromLocal(this);
       }
 
-      public synchronized void sendFail() {
+      synchronized void sendFail() {
          if (log.isTraceEnabled()) {
             log.tracef("[IRAC] State.sendFail for key %s (status=%s)", key, stateStatus);
          }
          if (stateStatus == StateStatus.SENDING) {
             stateStatus = StateStatus.NEW;
          }
+      }
+
+      boolean isExpiration() {
+         return false;
       }
 
       @Override
@@ -508,8 +535,8 @@ public class DefaultIracManager implements IracManager {
 
       private final CompletableFuture<Void> completableFuture;
 
-      private CompletableState(int segment, Object key, Object owner) {
-         super(segment, key, owner);
+      private CompletableState(int segment, Object key) {
+         super(segment, key, STATE_TRANSFER_OWNER);
          completableFuture = new CompletableFuture<>();
       }
 
@@ -529,6 +556,18 @@ public class DefaultIracManager implements IracManager {
 
       synchronized boolean isCompleted() {
          return stateStatus == StateStatus.COMPLETED;
+      }
+   }
+
+   private class ExpirationState extends State {
+
+      private ExpirationState(int segment, Object key, Object owner) {
+         super(segment, key, owner);
+      }
+
+      @Override
+      boolean isExpiration() {
+         return true;
       }
    }
 }
