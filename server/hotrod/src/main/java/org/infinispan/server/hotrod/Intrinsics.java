@@ -5,6 +5,7 @@ import org.infinispan.server.core.transport.ExtendedByteBufJava;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
+import org.infinispan.util.ByteString;
 
 public class Intrinsics {
    public static int vInt(ByteBuf buf) {
@@ -60,6 +61,16 @@ public class Intrinsics {
          return "";
       } else {
          return new String(bytes, CharsetUtil.UTF_8);
+      }
+   }
+
+   public static ByteString byteString(ByteBuf buf) {
+      buf.markReaderIndex();
+      byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(buf);
+      if (bytes == null) {
+         return null;
+      } else {
+         return ByteString.wrapBytes(bytes);
       }
    }
 

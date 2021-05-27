@@ -70,6 +70,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.buffer.ByteBuf;
@@ -90,7 +91,7 @@ import io.netty.util.CharsetUtil;
 public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    public MemcachedDecoder(AdvancedCache<byte[], byte[]> memcachedCache, ScheduledExecutorService scheduler,
-                           NettyTransport transport, Predicate<? super String> ignoreCache,
+                           NettyTransport transport, Predicate<? super ByteString> ignoreCache,
                            MediaType valuePayload) {
 
       super(MemcachedDecoderState.DECODE_HEADER);
@@ -99,12 +100,14 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       this.transport = transport;
       this.ignoreCache = ignoreCache;
       isStatsEnabled = cache.getCacheConfiguration().statistics().enabled();
+      cacheName = ByteString.fromString(cache.getName());
    }
 
    private final AdvancedCache<byte[], byte[]> cache;
+   private final ByteString cacheName;
    private final ScheduledExecutorService scheduler;
    protected final NettyTransport transport;
-   protected final Predicate<? super String> ignoreCache;
+   protected final Predicate<? super ByteString> ignoreCache;
 
    private final static Log log = LogFactory.getLog(MemcachedDecoder.class, Log.class);
    private final static boolean isTrace = log.isTraceEnabled();
@@ -209,8 +212,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          return;
       }
       Channel ch = ctx.channel();
-      String cacheName = cache.getName();
-      if (ignoreCache.test(cacheName)) throw new CacheUnavailableException(cacheName);
+      if (ignoreCache.test(cacheName)) throw new CacheUnavailableException(cache.getName());
       cacheConfiguration = getCacheConfiguration();
       defaultLifespanTime = cacheConfiguration.expiration().lifespan();
       defaultMaxIdleTime = cacheConfiguration.expiration().maxIdle();

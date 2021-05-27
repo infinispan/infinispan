@@ -13,6 +13,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
@@ -88,7 +89,7 @@ public class BaseRequestProcessor {
          status = OperationStatus.ServerError;
       }
       if (header == null) {
-         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, ByteString.emptyString(), 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
       } else {
          header.op = HotRodOperation.ERROR;
       }

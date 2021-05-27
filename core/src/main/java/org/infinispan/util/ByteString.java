@@ -23,19 +23,19 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.BYTE_STRING)
 public final class ByteString {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
-   private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
+   private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY, "");
    private transient String s;
    private transient int hash;
 
    @ProtoField(number = 1)
    final byte[] bytes;
 
-   @ProtoFactory
-   ByteString(byte[] bytes) {
+   private ByteString(byte[] bytes, String s) {
       if (bytes.length > 255) {
          throw new IllegalArgumentException("ByteString must be shorter than 255 bytes");
       }
       this.bytes = bytes;
+      this.s = s;
       this.hash = Arrays.hashCode(bytes);
    }
 
@@ -43,7 +43,19 @@ public final class ByteString {
       if (s.length() == 0)
          return EMPTY;
       else
-         return new ByteString(s.getBytes(CHARSET));
+         return new ByteString(s.getBytes(CHARSET), s);
+   }
+
+   @ProtoFactory
+   public static ByteString wrapBytes(byte[] bytes) {
+      if (bytes.length == 0)
+         return EMPTY;
+
+      return new ByteString(bytes, null);
+   }
+
+   public boolean isEmpty() {
+      return bytes.length == 0;
    }
 
    public static ByteString emptyString() {
@@ -85,6 +97,6 @@ public final class ByteString {
 
       byte[] b = new byte[len];
       input.readFully(b);
-      return new ByteString(b);
+      return ByteString.wrapBytes(b);
    }
 }

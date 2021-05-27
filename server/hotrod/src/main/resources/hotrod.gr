@@ -25,6 +25,7 @@ import org.infinispan.counter.util.EncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.tx.ControlByte;
+import org.infinispan.util.ByteString;
 
 init {
    private final boolean accessLogging;
@@ -81,7 +82,7 @@ operation returns HotRodOperation
    : opCode { HotRodOperation.fromRequestOpCode(byte) }
    ;
 opCode: byte;
-cacheName: string;
+cacheName: byteString;
 flags: vInt;
 intelligence: byte;
 topologyId: vInt;

@@ -82,6 +82,7 @@ import org.infinispan.server.hotrod.iteration.IterationManager;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -108,7 +109,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
-   private final Map<String, CacheInfo> knownCaches = new ConcurrentHashMap<>();
+   private final Map<ByteString, CacheInfo> knownCaches = new ConcurrentHashMap<>();
    private QueryFacade queryFacade;
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
@@ -366,15 +367,15 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return getCacheInfo(header.cacheName, header.version, header.messageId, true);
    }
 
-   public CacheInfo getCacheInfo(String cacheName, byte hotRodVersion, long messageId, boolean checkIgnored) {
-      if (checkIgnored && isCacheIgnored(cacheName)) {
+   public CacheInfo getCacheInfo(ByteString cacheName, byte hotRodVersion, long messageId, boolean checkIgnored) {
+      if (checkIgnored && getCacheIgnore().isCacheIgnored(cacheName)) {
          throw new CacheUnavailableException();
       }
       CacheInfo info = knownCaches.get(cacheName);
       if (info == null) {
-         boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
+         boolean keep = checkCacheIsAvailable(cacheName.toString(), hotRodVersion, messageId);
 
-         AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName);
+         AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName.toString());
          Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
          info = new CacheInfo(cache, cacheCfg);
          updateCacheInfo(info);

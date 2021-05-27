@@ -25,6 +25,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.util.ByteString;
 
 /**
  * Manages the cache blacklisting for a given {@link EmbeddedCacheManager}
@@ -37,6 +38,7 @@ public final class CacheIgnoreManager {
 
    private Cache<String, IgnoredCaches> cache;
    private final IgnoredCaches ignored = new IgnoredCaches();
+   private final Set<ByteString> ignoredCachesByteString = ConcurrentHashMap.newKeySet();
    private final CacheListener listener = new CacheListener();
    private volatile boolean hasIgnores;
    private volatile boolean stopped;
@@ -58,6 +60,7 @@ public final class CacheIgnoreManager {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       synchronized (this) {
          ignored.caches.remove(cacheName);
+         ignoredCachesByteString.remove(ByteString.fromString(cacheName));
          hasIgnores = !ignored.caches.isEmpty();
          return cache.putAsync(IGNORED_CACHES_KEY, ignored).thenApply(r -> null);
       }
@@ -67,6 +70,7 @@ public final class CacheIgnoreManager {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       synchronized (this) {
          ignored.caches.add(cacheName);
+         ignoredCachesByteString.add(ByteString.fromString(cacheName));
          hasIgnores = !ignored.caches.isEmpty();
          return cache.putAsync(IGNORED_CACHES_KEY, ignored).thenApply(r -> null);
       }
@@ -76,15 +80,26 @@ public final class CacheIgnoreManager {
       return Collections.unmodifiableSet(ignored.caches);
    }
 
-   boolean isCacheIgnored(String cacheName) {
+   public boolean isCacheIgnored(ByteString cacheName) {
+      return hasIgnores && ignoredCachesByteString.contains(cacheName);
+   }
+
+   public boolean isCacheIgnored(String cacheName) {
       return hasIgnores && ignored.caches.contains(cacheName);
    }
 
    private void updateLocalCopy(IgnoredCaches ignored) {
       if (ignored != null) {
          synchronized (this) {
-            this.ignored.caches.clear();
+            // Readers do not synchronize, so they should never see an empty map
             this.ignored.caches.addAll(ignored.caches);
+            this.ignored.caches.retainAll(ignored.caches);
+
+            for (String c : ignored.caches) {
+               this.ignoredCachesByteString.add(ByteString.fromString(c));
+            }
+            ignoredCachesByteString.removeIf(c -> !ignored.caches.contains(c.toString()));
+
             hasIgnores = !this.ignored.caches.isEmpty();
          }
       }

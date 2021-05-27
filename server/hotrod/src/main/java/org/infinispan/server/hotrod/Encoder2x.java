@@ -446,7 +446,8 @@ class Encoder2x implements VersionedEncoder {
       CacheTopology cacheTopology;
 
       if (header.op != HotRodOperation.ERROR) {
-         if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(header.cacheName)) {
+         if (CounterRequestProcessor.CACHE_NAME.equals(header.cacheName)) {
+            // Handle counters separately because getCacheInfo() doesn't accept private caches
             cacheTopology = getCounterCacheTopology(server.getCacheManager());
             newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC,
                   cacheTopology);

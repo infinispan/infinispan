@@ -113,7 +113,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          auth.authenticator().init(this);
       }
       super.startInternal();
-      restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
+      restCacheManager = new RestCacheManager<>(cacheManager, getCacheIgnore()::isCacheIgnored);
 
       invocationHelper = new InvocationHelper(this, restCacheManager,
             (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),

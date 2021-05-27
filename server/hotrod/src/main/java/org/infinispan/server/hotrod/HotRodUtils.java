@@ -4,6 +4,7 @@ import java.io.StreamCorruptedException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.util.ByteString;
 
 class UnknownVersionException extends StreamCorruptedException {
    final byte version;
@@ -16,7 +17,7 @@ class UnknownVersionException extends StreamCorruptedException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, ByteString.emptyString(), 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
    }
 }
 
@@ -31,7 +32,7 @@ class HotRodUnknownOperationException extends UnknownOperationException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, ByteString.emptyString(), 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
    }
 }
 
@@ -62,7 +63,7 @@ class RequestParsingException extends CacheException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, ByteString.emptyString(), 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
    }
 }
 

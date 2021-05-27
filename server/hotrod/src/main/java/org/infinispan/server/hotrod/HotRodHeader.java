@@ -5,6 +5,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.ByteString;
 
 /**
  * @author wburns
@@ -16,7 +17,7 @@ public class HotRodHeader {
    HotRodOperation op;
    byte version;
    long messageId;
-   String cacheName;
+   ByteString cacheName;
    int flag;
    short clientIntel;
    int topologyId;
@@ -27,7 +28,7 @@ public class HotRodHeader {
       this(header.op, header.version, header.messageId, header.cacheName, header.flag, header.clientIntel, header.topologyId, header.keyType, header.valueType);
    }
 
-   public HotRodHeader(HotRodOperation op, byte version, long messageId, String cacheName, int flag, short clientIntel, int topologyId, MediaType keyType, MediaType valueType) {
+   public HotRodHeader(HotRodOperation op, byte version, long messageId, ByteString cacheName, int flag, short clientIntel, int topologyId, MediaType keyType, MediaType valueType) {
       this.op = op;
       this.version = version;
       this.messageId = messageId;
@@ -63,7 +64,7 @@ public class HotRodHeader {
       return messageId;
    }
 
-   public String getCacheName() {
+   public ByteString getCacheName() {
       return cacheName;
    }
 

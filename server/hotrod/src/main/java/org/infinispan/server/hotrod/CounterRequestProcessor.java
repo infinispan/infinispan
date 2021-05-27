@@ -17,6 +17,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.counter.listener.ListenerOperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -24,6 +25,7 @@ import io.netty.channel.Channel;
 
 class CounterRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CounterRequestProcessor.class, Log.class);
+   public static final ByteString CACHE_NAME = ByteString.fromString(CounterModuleLifecycle.COUNTER_CACHE_NAME);
 
    private final ClientCounterManagerNotificationManager notificationManager;
    private final EmbeddedCounterManager counterManager;
@@ -40,7 +42,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    private EmbeddedCounterManager counterManager(HotRodHeader header) {
-      header.cacheName = CounterModuleLifecycle.COUNTER_CACHE_NAME;
+      header.cacheName = CACHE_NAME;
       return counterManager;
    }
 

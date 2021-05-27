@@ -196,7 +196,6 @@ public class CacheManagerResource implements ResourceHandler {
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
 
-      Set<String> ignoredCaches = cacheIgnoreManager.getIgnoredCaches();
       for(CacheHealth ch: SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
          cachesHealth.put(ch.getCacheName(), ch.getStatus());
       }
@@ -223,11 +222,11 @@ public class CacheManagerResource implements ResourceHandler {
                cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
 
                // If the cache is ignored, status is IGNORED
-               if(ignoredCaches.contains(cacheName)) {
+               if(cacheIgnoreManager.isCacheIgnored(cacheName)) {
                   cacheInfo.status = "IGNORED";
                } else {
                   if(cacheHealth != HealthStatus.FAILED) {
-                     Cache cache = restCacheManager.getCache(cacheName, request);
+                     Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
                      cacheInfo.status = cache.getStatus().toString();
                   } else {
                      cacheInfo.status = ComponentStatus.FAILED.toString();

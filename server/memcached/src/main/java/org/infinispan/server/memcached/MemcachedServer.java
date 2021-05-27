@@ -70,7 +70,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    public ChannelInboundHandler getDecoder() {
-      return new MemcachedDecoder(memcachedCache, scheduler, transport, this::isCacheIgnored, configuration.clientEncoding());
+      return new MemcachedDecoder(memcachedCache, scheduler, transport, getCacheIgnore()::isCacheIgnored, configuration.clientEncoding());
    }
 
    @Override
