@@ -9,8 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -26,7 +25,7 @@ public final class DependencyGraph<T> {
    private final Map<T, Set<T>> outgoingEdges = new HashMap<>();
    private final Map<T, Set<T>> incomingEdges = new HashMap<>();
 
-   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+   private final StampedLock lock = new StampedLock();
 
    /**
     * Calculates a topological sort of the graph, in linear time
@@ -35,7 +34,7 @@ public final class DependencyGraph<T> {
     * @throws CyclicDependencyException if cycles are present in the graph and thus no topological sort is possible
     */
    public List<T> topologicalSort() throws CyclicDependencyException {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          ArrayList<T> result = new ArrayList<>();
          Deque<T> noIncomingEdges = new ArrayDeque<>();
@@ -71,7 +70,7 @@ public final class DependencyGraph<T> {
             return result;
          }
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
@@ -84,13 +83,13 @@ public final class DependencyGraph<T> {
       if (from == null || to == null || from.equals(to)) {
          throw new IllegalArgumentException("Invalid parameters");
       }
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          if (addOutgoingEdge(from, to)) {
             addIncomingEdge(to, from);
          }
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
    }
 
@@ -101,7 +100,7 @@ public final class DependencyGraph<T> {
     * @throws java.lang.IllegalArgumentException if either to or from don't exist
     */
    public void removeDependency(T from, T to) {
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          Set<T> dependencies = outgoingEdges.get(from);
          if (dependencies == null || !dependencies.contains(to)) {
@@ -110,17 +109,17 @@ public final class DependencyGraph<T> {
          dependencies.remove(to);
          incomingEdges.get(to).remove(from);
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
    }
 
    public void clearAll() {
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          outgoingEdges.clear();
          incomingEdges.clear();
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
    }
 
@@ -159,12 +158,12 @@ public final class DependencyGraph<T> {
     * @throws java.lang.IllegalArgumentException if element is not present in the graph
     */
    public boolean hasDependent(T element) {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          Set<T> ts = this.incomingEdges.get(element);
          return ts != null && ts.size() > 0;
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
@@ -174,7 +173,7 @@ public final class DependencyGraph<T> {
     * @return list of elements depending on element
     */
    public Set<T> getDependents(T element) {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          Set<T> dependants = this.incomingEdges.get(element);
          if (dependants == null || dependants.isEmpty()) {
@@ -182,7 +181,7 @@ public final class DependencyGraph<T> {
          }
          return Collections.unmodifiableSet(this.incomingEdges.get(element));
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
@@ -192,7 +191,7 @@ public final class DependencyGraph<T> {
     * @param element the element
     */
    public void remove(T element) {
-      lock.writeLock().lock();
+      long stamp = lock.writeLock();
       try {
          if (outgoingEdges.remove(element) != null) {
             for (Set<T> values : outgoingEdges.values()) {
@@ -205,7 +204,7 @@ public final class DependencyGraph<T> {
             }
          }
       } finally {
-         lock.writeLock().unlock();
+         lock.unlockWrite(stamp);
       }
    }
 }
