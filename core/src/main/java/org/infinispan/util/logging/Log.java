@@ -2064,4 +2064,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
    void cannotObtainFailedCache(String name, @Cause Throwable t);
+
+   @Message(value = "SingleFileStore does not support max-entries when segmented", id = 639)
+   CacheConfigurationException segmentedSingleFileStoreDoesNotSupportMaxEntries();
 }

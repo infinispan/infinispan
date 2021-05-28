@@ -78,7 +78,7 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
    }
 
    /**
-    * @deprecated Since 13.0, will be removed in 16.0
+    * @deprecated Since 13.0, will be removed in 16.0.
     */
    @Deprecated
    public int maxEntries() {
