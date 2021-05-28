@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -180,7 +179,6 @@ public class JGroupsTransport implements Transport {
    // and channelConnectedLatch is signaled
    protected volatile ClusterView clusterView =
          new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null);
-   private volatile Set<String>  sitesView = Collections.emptySet();
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
 
@@ -507,6 +505,12 @@ public class JGroupsTransport implements Transport {
       RELAY2 relay2 = findRelay2();
       if (relay2 != null) {
          relay2.setRouteStatusListener(listener);
+         // if a node join, and is a site master, to a running cluster, it does not get any site up/down event.
+         // there is a chance to get a duplicated log entry but it does not matter.
+         Collection<String> view = getSitesView();
+         if (view != null && !view.isEmpty()) {
+            XSITE.receivedXSiteClusterView(view);
+         }
       }
    }
 
@@ -872,7 +876,29 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public Set<String> getSitesView() {
-      return sitesView;
+      RELAY2 relay2 = findRelay2();
+      if (relay2 == null) {
+         return null;
+      }
+      List<String> sites = relay2.getCurrentSites();
+      return sites ==null ? Collections.emptySet() : new TreeSet<>(sites);
+   }
+
+   @Override
+   public boolean isSiteCoordinator() {
+      RELAY2 relay2 = findRelay2();
+      return relay2 != null && relay2.isSiteMaster();
+   }
+
+   @Override
+   public Collection<Address> getSiteCoordinatorsAddress() {
+      RELAY2 relay2 = findRelay2();
+      if (relay2 == null) {
+         return Collections.emptyList();
+      }
+      return relay2.siteMasters().stream()
+                   .map(JGroupsAddressCache::fromJGroupsAddress)
+                   .collect(Collectors.toList());
    }
 
    @Override
@@ -1223,12 +1249,9 @@ public class JGroupsTransport implements Transport {
    private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
       viewUpdateLock.lock();
       try {
-         SortedSet<String> reachableSites = new TreeSet<>(sitesView);
-         reachableSites.addAll(sitesUp);
-         reachableSites.removeAll(sitesDown);
+         Set<String> reachableSites = getSitesView();
          log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
          XSITE.receivedXSiteClusterView(reachableSites);
-         sitesView = Collections.unmodifiableSortedSet(reachableSites);
       } finally {
          viewUpdateLock.unlock();
       }

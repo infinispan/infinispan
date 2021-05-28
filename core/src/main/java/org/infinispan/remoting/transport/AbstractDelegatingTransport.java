@@ -179,6 +179,16 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public boolean isSiteCoordinator() {
+      return actual.isSiteCoordinator();
+   }
+
+   @Override
+   public Collection<Address> getSiteCoordinatorsAddress() {
+      return actual.getSiteCoordinatorsAddress();
+   }
+
+   @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
