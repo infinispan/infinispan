@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -116,9 +117,22 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public Collection<String> getSites() {
-      return cacheManager.getTransport() == null ?
-            Collections.emptyList() :
-            cacheManager.getTransport().getSitesView();
+      return Optional.ofNullable(cacheManager.getTransport())
+            .map(Transport::getSitesView)
+            .orElseGet(Collections::emptySet);
+   }
+
+   public boolean isSiteCoordinator() {
+      Transport transport = cacheManager.getTransport();
+      return transport != null && transport.isSiteCoordinator();
+   }
+
+   public Collection<String> getSiteCoordinatorsAddress() {
+      Transport transport = cacheManager.getTransport();
+      if (transport == null) {
+         return LOCAL_NODE;
+      }
+      return transport.getSiteCoordinatorsAddress().stream().map(Objects::toString).collect(Collectors.toList());
    }
 
    @Override
@@ -140,6 +154,8 @@ public class CacheManagerInfo implements JsonSerialization {
             .set("cluster_size", getClusterSize())
             .set("defined_caches", Json.make(getDefinedCaches()))
             .set("local_site", getLocalSite())
+            .set("site_coordinator", isSiteCoordinator())
+            .set("site_coordinators_address", getSiteCoordinatorsAddress())
             .set("sites_view", Json.make(getSites()));
    }
 

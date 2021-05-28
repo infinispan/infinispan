@@ -290,6 +290,16 @@ public class MockTransport implements Transport {
    }
 
    @Override
+   public boolean isSiteCoordinator() {
+      return false;
+   }
+
+   @Override
+   public Collection<Address> getSiteCoordinatorsAddress() {
+      return Collections.emptyList();
+   }
+
+   @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<T>
       collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return blockRequest(Collections.singleton(target), command, collector);

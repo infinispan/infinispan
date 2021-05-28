@@ -43,6 +43,10 @@
         }
     ],
     "local_site": "LON",
+    "site_coordinator": true,
+    "site_coordinators_address": [
+      "CacheManagerResourceTest-NodeA-49696"
+    ],
     "sites_view": [
         "LON",
         "NYC"

@@ -32,6 +32,8 @@ For possible values, check the https://docs.jboss.org/infinispan/9.4/apidocs/org
 * `defined_caches` A list of all caches defined in the cache manager, excluding private caches but including internal caches that are accessible
 * `local_site` The name of the local site. +
 If cross-site replication is not configured, {brandname} returns "local".
+* `site_coordinator` is true if the cache manager is a site coordinator.
+* `site_coordinators_address` is an array of logical addresses of site coordinators.
 * `sites_view` The list of sites that participate in cross-site replication. +
 If cross-site replication is not configured, {brandname} returns an empty list.
 

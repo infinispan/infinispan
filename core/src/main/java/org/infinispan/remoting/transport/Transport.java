@@ -307,6 +307,16 @@ public interface Transport extends Lifecycle {
    Set<String> getSitesView();
 
    /**
+    * @return {@code true} if this node is a cross-site replication coordinator.
+    */
+   boolean isSiteCoordinator();
+
+   /**
+    * @return The current site coordinators {@link Address}.
+    */
+   Collection<Address> getSiteCoordinatorsAddress();
+
+   /**
     * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.
     * <p>
     * If the target is the local node, the command is never executed and {@link ResponseCollector#finish()} is called directly.
