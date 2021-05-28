@@ -2206,4 +2206,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache '%s' is non empty, cannot add store.", id = 648)
    PersistenceException cannotAddStore(String cacheName);
+
+   @Message(value = "SingleFileStore does not support max-entries when segmented", id = 649)
+   CacheConfigurationException segmentedSingleFileStoreDoesNotSupportMaxEntries();
 }

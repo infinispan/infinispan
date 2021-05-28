@@ -222,8 +222,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    }
 
    private AdvancedLoadWriteStore getFileStoreFromDCM() {
-      Class<? extends AdvancedLoadWriteStore> storeClass = segmented ? ComposedSegmentedLoadWriteStore.class : SingleFileStore.class;
       PersistenceManager persistenceManager = TestingUtil.extractComponent(dcm.getCache(), PersistenceManager.class);
-      return persistenceManager.getStores(storeClass).iterator().next();
+      return persistenceManager.getStores(SingleFileStore.class).iterator().next();
    }
 }
