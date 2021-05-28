@@ -19,12 +19,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -33,6 +36,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -40,28 +45,31 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.TopologyIracVersion;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import net.jcip.annotations.GuardedBy;
 
 /**
- * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}. This file store
- * stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
+ * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore}.
+ * This file store stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
  * keys and file positions are kept in memory.
  * <p/>
  * Note: this CacheStore implementation keeps keys and file positions in memory!
@@ -89,7 +97,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 @Store
 @ConfiguredBy(SingleFileStoreConfiguration.class)
-public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
+public class SingleFileStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
 
    public static final byte[] MAGIC_BEFORE_11 = new byte[]{'F', 'C', 'S', '1'}; //<11
@@ -127,7 +135,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    protected InitializationContext ctx;
 
    private FileChannel channel;
-   private Map<K, FileEntry> entries;
+   @GuardedBy("resizeLock")
+   private List<Map<K, FileEntry>> entries;
    private SortedSet<FileEntry> freeList;
    private long filePos = MAGIC_LATEST.length;
    private File file;
@@ -136,6 +145,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private final StampedLock resizeLock = new StampedLock();
    private TimeService timeService;
    private MarshallableEntryFactory<K, V> entryFactory;
+   private KeyPartitioner keyPartitioner;
 
    public static File getStoreFile(GlobalConfiguration globalConfiguration, String locationPath, String cacheName) {
       Path location = PersistenceUtil.getLocation(globalConfiguration, locationPath);
@@ -148,15 +158,21 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       this.configuration = ctx.getConfiguration();
       this.timeService = ctx.getTimeService();
       this.entryFactory = ctx.getMarshallableEntryFactory();
+      if (configuration.segmented()) {
+         keyPartitioner = ctx.getKeyPartitioner();
+      } else {
+         keyPartitioner = null;
+      }
    }
 
    @Override
    public void start() {
       try {
+         entries = new ArrayList<>();
+
          file = getStoreFile(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName());
          if (!SecurityActions.fileExists(file)) {
             if (configuration.ignoreModifications()) {
-               entries = Collections.emptyMap();
                return;
             }
             File dir = file.getParentFile();
@@ -166,11 +182,14 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          channel = SecurityActions.openFileChannel(file);
 
-         // initialize data structures. Only use LinkedHashMap (LRU) for entries when cache store is bounded
-         Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
-               new LinkedHashMap<>(16, 0.75f, true) :
-               new HashMap<>();
-         entries = Collections.synchronizedMap(entryMap);
+         int numSegments;
+         if (configuration.segmented()) {
+            AdvancedCache<?, ?> cache = ctx.getCache().getAdvancedCache();
+            numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
+         } else {
+            numSegments = 1;
+         }
+         addSegments(IntSets.immutableRangeSet(numSegments));
          freeList = Collections.synchronizedSortedSet(new TreeSet<>());
 
          // check file format and read persistent state if enabled for the cache
@@ -191,10 +210,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             } else {
                shouldClear = !configuration.ignoreModifications();
             }
-         }
-         else
+         } else {
             // Store can't be configured with both purge and ignore modifications
             shouldClear = true;
+         }
          if (shouldClear) {
             clear(); // otherwise (unknown file format or no preload) just reset the file
          }
@@ -212,7 +231,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void stop() {
       try {
          if (channel != null) {
-            log.tracef("Stopping store %s, size = %d, file size = %d", ctx.getCache().getName(), entries.size(), channel.size());
+            log.tracef("Stopping store %s, size = %d, file size = %d", ctx.getCache().getName(), size(), channel.size());
 
             // reset state
             channel.close();
@@ -273,12 +292,26 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             // deserialize key and add to entries map
             // Marshaller should allow for provided type return for safety
             K key = (K) ctx.getPersistenceMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
-            entries.put(key, fe);
+            // We start by owning all the segments
+            Map<K, FileEntry> segmentEntries = addSegmentIfNeeded(getSegment(key));
+            segmentEntries.put(key, fe);
          } else {
             // add to free list
             freeList.add(fe);
          }
       }
+   }
+
+   private Map<K, FileEntry> addSegmentIfNeeded(int segment) {
+      // Does not need synchronization because it is only called during startup
+      if (entries.size() <= segment || entries.get(segment) == null) {
+         addSegments(IntSets.immutableSet(segment));
+      }
+      return entries.get(segment);
+   }
+
+   private int getSegment(Object key) {
+      return keyPartitioner != null ? keyPartitioner.getSegment(key) : 0;
    }
 
    // Initialise missing internal metadata state for corrupt data
@@ -442,7 +475,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
 
             MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, internalMeta, created, lastUsed);
-            write(me, newChannel);
+            write(getSegment(key), me, newChannel);
             entriesRecovered++;
          }
       } catch (IOException e) {
@@ -537,7 +570,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
             MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory()
                   .create(key, value, metadata, internalMeta, created, lastUsed);
-            write(me, newChannel);
+            write(getSegment(key), me, newChannel);
          }
       } catch (IOException | ClassNotFoundException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
@@ -605,9 +638,23 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     * we keep all keys in memory.
     */
    @Override
+   public boolean contains(int segment, Object key) {
+      long stamp = resizeLock.readLock();
+      try {
+         Map<K, FileEntry> segmentEntries = entries.get(segment);
+         if (segmentEntries == null) {
+            return false;
+         }
+         FileEntry entry = segmentEntries.get(key);
+         return entry != null && !entry.isExpired(timeService.wallClockTime());
+      } finally {
+         resizeLock.unlockRead(stamp);
+      }
+   }
+
+   @Override
    public boolean contains(Object key) {
-      FileEntry entry = entries.get(key);
-      return entry != null && !entry.isExpired(timeService.wallClockTime());
+      return contains(getSegment(key), key);
    }
 
    /**
@@ -616,6 +663,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     * @param len requested space
     * @return allocated file position and length as FileEntry object
     */
+   @GuardedBy("resizeLock.readLock()")
    private FileEntry allocate(int len) {
       synchronized (freeList) {
          // lookup a free entry of sufficient size
@@ -692,6 +740,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    private void free(FileEntry fe) throws IOException {
       if (fe != null) {
+         // Wait for any reader to finish
+         fe.waitUnlocked();
+
          // Invalidate entry on disk (by setting keyLen field to 0)
          // No need to wait for readers to unlock here, the FileEntry instance is not modified,
          // and allocate() won't return an entry as long as it has a reader.
@@ -704,11 +755,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry) {
-      write(marshalledEntry, channel);
+   public void write(int segment, MarshallableEntry<? extends K, ? extends V> marshalledEntry) {
+      write(segment, marshalledEntry, channel);
    }
 
-   private void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry, FileChannel channel) {
+   private void write(int segment, MarshallableEntry<? extends K, ? extends V> marshalledEntry, FileChannel channel) {
       try {
          // serialize cache value
          org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();
@@ -724,6 +775,12 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          FileEntry oldEntry = null;
          long stamp = resizeLock.readLock();
          try {
+            Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
+            if (segmentEntries == null) {
+               // We don't own the segment
+               return;
+            }
+
             newEntry = allocate(len);
             newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), data.getLength(), metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
 
@@ -748,7 +805,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (log.isTraceEnabled()) log.tracef("Wrote entry %s:%d at %d:%d", marshalledEntry.getKey(), len, newEntry.offset, newEntry.size);
 
             // add the new entry to in-memory index
-            oldEntry = entries.put(marshalledEntry.getKey(), newEntry);
+            oldEntry = segmentEntries.put(marshalledEntry.getKey(), newEntry);
 
             // if we added an entry, check if we need to evict something
             if (oldEntry == null)
@@ -766,16 +823,23 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
+   @Override
+   public void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry) {
+      write(getSegment(marshalledEntry.getKey()), marshalledEntry);
+   }
+
    /**
     * Try to evict an entry if the capacity of the cache store is reached.
     *
     * @return FileEntry to evict, or null (if unbounded or capacity is not yet reached)
     */
+   @GuardedBy("resizeLock#readLock")
    private FileEntry evict() {
       if (configuration.maxEntries() > 0) {
-         synchronized (entries) {
-            if (entries.size() > configuration.maxEntries()) {
-               Iterator<FileEntry> it = entries.values().iterator();
+         Map<K, FileEntry> segment0Entries = entries.get(0);
+         synchronized (segment0Entries) {
+            if (segment0Entries.size() > configuration.maxEntries()) {
+               Iterator<FileEntry> it = segment0Entries.values().iterator();
                FileEntry fe = it.next();
                it.remove();
                return fe;
@@ -786,28 +850,62 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
+   public void clear(IntSet segments) {
+      long stamp = resizeLock.readLock();
+      try {
+         for (int segment = 0; segment < entries.size(); segment++) {
+            Map<K, FileEntry> segmentEntries = entries.get(segment);
+            if (segmentEntries == null || !segments.contains(segment))
+               continue;
+
+            for (FileEntry fileEntry : segmentEntries.values()) {
+               free(fileEntry);
+            }
+         }
+      } catch (IOException e) {
+         throw new PersistenceException(e);
+      } finally {
+         resizeLock.unlockRead(stamp);
+      }
+
+      // Disk space optimizations
+      synchronized (freeList) {
+         processFreeEntries();
+      }
+   }
+
+   @Override
    public void clear() {
       long stamp = resizeLock.writeLock();
       try {
-         synchronized (entries) {
-            synchronized (freeList) {
-               // wait until all readers are done reading file entries
-               for (FileEntry fe : entries.values())
-                  fe.waitUnlocked();
-               for (FileEntry fe : freeList)
+         // Wait until all readers are done reading all file entries
+         // First, used entries
+         for (Map<K, FileEntry> segmentEntries : entries) {
+            if (segmentEntries == null)
+               continue;
+
+            synchronized (segmentEntries) {
+               for (FileEntry fe : segmentEntries.values())
                   fe.waitUnlocked();
 
-               // clear in-memory state
-               entries.clear();
-               freeList.clear();
-
-               // reset file
-               if (log.isTraceEnabled()) log.tracef("Truncating file, current size is %d", filePos);
-               channel.truncate(0);
-               channel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
-               filePos = MAGIC_LATEST.length;
+               segmentEntries.clear();
             }
          }
+
+         // Then free entries that others might still be reading
+         synchronized (freeList) {
+            for (FileEntry fe : freeList)
+               fe.waitUnlocked();
+
+            // clear in-memory state
+            freeList.clear();
+         }
+
+         // All readers are done, reset file
+         if (log.isTraceEnabled()) log.tracef("Truncating file, current size is %d", filePos);
+         channel.truncate(0);
+         channel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+         filePos = MAGIC_LATEST.length;
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
@@ -816,10 +914,16 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public boolean delete(Object key) {
+   public boolean delete(int segment, Object key) {
       long stamp = resizeLock.readLock();
       try {
-         FileEntry fe = entries.remove(key);
+         Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
+         if (segmentEntries == null) {
+            // We don't own the segment
+            return false;
+         }
+
+         FileEntry fe = segmentEntries.remove(key);
          free(fe);
          return fe != null;
       } catch (Exception e) {
@@ -830,17 +934,31 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public MarshallableEntry<K, V> loadEntry(Object key) {
-      return _load(key, true, true);
+   public boolean delete(Object key) {
+      return delete(getSegment(key), key);
    }
 
-   private MarshallableEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
+   @Override
+   public MarshallableEntry<K, V> get(int segment, Object key) {
+      return _load(segment, key, true, true);
+   }
+
+   @Override
+   public MarshallableEntry<K, V> loadEntry(Object key) {
+      return _load(getSegment(key), key, true, true);
+   }
+
+   private MarshallableEntry<K, V> _load(int segment, Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
       long stamp = resizeLock.readLock();
       try {
-         synchronized (entries) {
+         Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
+         if (segmentEntries == null)
+            return null;
+
+         synchronized (segmentEntries) {
             // lookup FileEntry of the key
-            fe = entries.get(key);
+            fe = segmentEntries.get(key);
             if (fe == null)
                return null;
 
@@ -918,16 +1036,33 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       return entryFactory.create(keyBb, valueBb);
    }
 
+   /**
+    * @return The entries of a segment, or {@code null} if the segment is not owned
+    */
+   @GuardedBy("resizeLock.readLock()")
+   private Map<K, FileEntry> getSegmentEntries(int segment) {
+      if (entries.size() <= segment) {
+         return null;
+      }
+      return entries.get(segment);
+   }
+
    @Override
-   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+   public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
       return Flowable.fromIterable(() -> {
          List<K> keys = new ArrayList<>(entries.size());
          long now = ctx.getTimeService().wallClockTime();
-         synchronized (entries) {
-            for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
-               K key = e.getKey();
-               if (!e.getValue().isExpired(now)  && (filter == null || filter.test(key))) {
-                  keys.add(key);
+         for (int segment = 0; segment < entries.size(); segment++) {
+            Map<K, FileEntry> segmentEntries = entries.get(segment);
+            if (segmentEntries == null || !segments.contains(segment))
+               continue;
+
+            synchronized (segmentEntries) {
+               for (Map.Entry<K, FileEntry> e : segmentEntries.entrySet()) {
+                  K key = e.getKey();
+                  if (!e.getValue().isExpired(now) && (filter == null || filter.test(key))) {
+                     keys.add(key);
+                  }
                }
             }
          }
@@ -937,24 +1072,40 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+      return Flowable.fromPublisher(publishKeys(IntSets.immutableRangeSet(Integer.MAX_VALUE), filter));
+   }
+
+   @Override
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       if (fetchMetadata || fetchValue) {
          return Flowable.fromIterable(() -> {
             // This way the sorting of entries is lazily done on each invocation of the publisher
-            List<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>(entries.size());
+            List<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>();
             long now = ctx.getTimeService().wallClockTime();
-            synchronized (entries) {
-               for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
-                  if ((filter == null || filter.test(e.getKey())) && !e.getValue().isExpired(now)) {
-                     keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
+            long stamp = resizeLock.readLock();
+            try {
+               for (int segment = 0; segment < entries.size(); segment++) {
+                  Map<K, FileEntry> segmentEntries = entries.get(segment);
+                  if (segmentEntries == null || !segments.contains(segment))
+                     continue;
+
+                  synchronized (segmentEntries) {
+                     for (Map.Entry<K, FileEntry> e : segmentEntries.entrySet()) {
+                        if ((filter == null || filter.test(e.getKey())) && !e.getValue().isExpired(now)) {
+                           keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
+                        }
+                     }
                   }
                }
-            }
 
-            keysToLoad.sort(Comparator.comparingLong(o -> o.getValue().offset));
+               keysToLoad.sort(Comparator.comparingLong(o -> o.getValue().offset));
+            } finally {
+               resizeLock.unlockRead(stamp);
+            }
             return keysToLoad.iterator();
          }).map(kvp -> {
-            MarshallableEntry<K, V> entry = _load(kvp.getKey(), fetchValue, fetchMetadata);
+            MarshallableEntry<K, V> entry = _load(getSegment(kvp.getKey()), kvp.getKey(), fetchValue, fetchMetadata);
             if (entry == null) {
                // Rxjava2 doesn't allow nulls
                entry = entryFactory.getEmpty();
@@ -962,8 +1113,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             return entry;
          }).filter(me -> me != entryFactory.getEmpty());
       } else {
-         return publishKeys(filter).map(k -> entryFactory.create(k));
+         return Flowable.fromPublisher(publishKeys(segments, filter)).map(k -> entryFactory.create(k));
       }
+   }
+
+   @Override
+   public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      return Flowable.fromPublisher(entryPublisher(IntSets.immutableRangeSet(Integer.MAX_VALUE), filter, fetchValue, fetchMetadata));
    }
 
    /**
@@ -972,7 +1128,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private void processFreeEntries() {
       // Get a reverse sorted list of free entries based on file offset (bigger entries will be ahead of smaller entries)
       // This helps to work backwards with free entries at end of the file
-      List<FileEntry> l  = new ArrayList<>(freeList);
+      List<FileEntry> l = new ArrayList<>(freeList);
       l.sort((o1, o2) -> {
          long diff = o1.offset - o2.offset;
          return (diff == 0) ? 0 : ((diff > 0) ? -1 : 1);
@@ -992,7 +1148,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       int reclaimedSpace = 0;
       int removedEntries = 0;
       long truncateOffset = -1;
-      for (Iterator<FileEntry> it = entries.iterator() ; it.hasNext(); ) {
+      for (ListIterator<FileEntry> it = entries.listIterator(); it.hasNext(); ) {
          FileEntry fe = it.next();
          // Till we have free entries at the end of the file,
          // we can remove them and contract the file to release disk
@@ -1001,7 +1157,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             truncateOffset = fe.offset;
             filePos = fe.offset;
             freeList.remove(fe);
-            it.remove();
+            // Removing the entry would require moving all the elements, which is expensive
+            it.set(null);
             reclaimedSpace += fe.size;
             removedEntries++;
          } else {
@@ -1033,7 +1190,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       FileEntry newEntry = null;
       int mergeCounter = 0;
       for (FileEntry fe : entries) {
-         if (fe.isLocked())
+         // truncateFile sets entries to null instead of removing them
+         if (fe == null || fe.isLocked())
             continue;
 
          // Merge any holes created (consecutive free entries) in the file
@@ -1071,53 +1229,81 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          throw new PersistenceException("Could not add new merged entry", e);
       }
    }
+
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
       long now = timeService.wallClockTime();
-      List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<>();
-      synchronized (entries) {
-         for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<K, FileEntry> next = it.next();
-            FileEntry fe = next.getValue();
-            if (fe.isExpired(now)) {
-               it.remove();
-               entriesToPurge.add(new KeyValuePair<>(next.getKey(), fe));
+      for (Map<K, FileEntry> segmentEntries : entries) {
+         if (segmentEntries == null)
+               continue;
+
+            List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<>();
+            synchronized (segmentEntries) {
+               for (Iterator<Map.Entry<K, FileEntry>> it = segmentEntries.entrySet().iterator(); it.hasNext(); ) {
+                  Map.Entry<K, FileEntry> next = it.next();
+                  FileEntry fe = next.getValue();
+                  if (fe.isExpired(now)) {
+                     it.remove();
+                     entriesToPurge.add(new KeyValuePair<>(next.getKey(), fe));
+                  }
+               }
             }
+
+         long stamp = resizeLock.readLock();
+         try {
+            for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
+               KeyValuePair<Object, FileEntry> next = it.next();
+               FileEntry fe = next.getValue();
+               if (fe.isExpired(now)) {
+                  it.remove();
+                  try {
+                     free(fe);
+                  } catch (Exception e) {
+                     throw new PersistenceException(e);
+                  }
+                  if (task != null) task.entryPurged(next.getKey());
+               }
+            }
+
+            // Disk space optimizations
+            synchronized (freeList) {
+               processFreeEntries();
+            }
+         } finally {
+            resizeLock.unlockRead(stamp);
          }
       }
+   }
 
+   @Override
+   public int size(IntSet segments) {
       long stamp = resizeLock.readLock();
+      int size = 0;
       try {
-         for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
-            KeyValuePair<Object, FileEntry> next = it.next();
-            FileEntry fe = next.getValue();
-            if (fe.isExpired(now)) {
-               it.remove();
-               try {
-                  free(fe);
-               } catch (Exception e) {
-                  throw new PersistenceException(e);
-               }
-               if (task != null) task.entryPurged(next.getKey());
+         for (int segment = 0; segment < entries.size(); segment++) {
+            Map<K, FileEntry> segmentEntries = entries.get(segment);
+            if (segmentEntries != null && segments.contains(segment)) {
+               size += segmentEntries.size();
             }
-         }
-
-         // Disk space optimizations
-         synchronized (freeList) {
-           processFreeEntries();
          }
       } finally {
          resizeLock.unlockRead(stamp);
       }
+      return size;
    }
 
    @Override
    public int size() {
-      return entries.size();
+      // We don't know the number of segments, but our implementation does not need it
+      return size(IntSets.immutableRangeSet(Integer.MAX_VALUE));
    }
 
    Map<K, FileEntry> getEntries() {
-      return entries;
+      return entries.stream()
+                    .flatMap(segmentEntries -> segmentEntries != null ?
+                                               segmentEntries.entrySet().stream() :
+                                               Stream.empty())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
    }
 
    SortedSet<FileEntry> getFreeList() {
@@ -1130,6 +1316,60 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    public SingleFileStoreConfiguration getConfiguration() {
       return configuration;
+   }
+
+   @Override
+   public void addSegments(IntSet segments) {
+      long stamp = resizeLock.writeLock();
+      try {
+         for (int segment : segments) {
+            while (entries.size() <= segment) {
+               entries.add(null);
+            }
+            if (entries.get(segment) != null)
+               continue;
+
+            // Only use LinkedHashMap (LRU) for entries when cache store is bounded
+            Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
+                                         new LinkedHashMap<>(16, 0.75f, true) :
+                                         new HashMap<>();
+            entries.set(segment, Collections.synchronizedMap(entryMap));
+         }
+      } finally {
+         resizeLock.unlockWrite(stamp);
+      }
+   }
+
+   @Override
+   public void removeSegments(IntSet segments) {
+      List<Map<K, FileEntry>> removedSegments = new ArrayList<>(segments.size());
+      long stamp = resizeLock.writeLock();
+      try {
+         for (int segment : segments) {
+            Map<K, FileEntry> removed = entries.set(segment, null);
+            if (removed == null)
+               continue;
+
+            removedSegments.add(removed);
+         }
+      } finally {
+         resizeLock.unlockWrite(stamp);
+      }
+
+      try {
+         for (Map<K, FileEntry> removedSegment : removedSegments) {
+            for (FileEntry fileEntry : removedSegment.values()) {
+               free(fileEntry);
+            }
+         }
+      } catch (IOException e) {
+         throw new PersistenceException(e);
+      }
+
+      // Disk space optimizations
+      synchronized (freeList) {
+         processFreeEntries();
+      }
    }
 
    /**

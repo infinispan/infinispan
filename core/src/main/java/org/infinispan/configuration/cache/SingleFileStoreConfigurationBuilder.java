@@ -22,8 +22,6 @@ import org.infinispan.util.logging.Log;
 public class SingleFileStoreConfigurationBuilder
       extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> {
 
-   private static boolean NOTIFIED_SEGMENTED;
-
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       this(builder, SingleFileStoreConfiguration.attributeDefinitionSet());
    }
@@ -86,9 +84,9 @@ public class SingleFileStoreConfigurationBuilder
    @Override
    public void validate() {
       Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
-      if ((!segmentedAttribute.isModified() || segmentedAttribute.get()) && !NOTIFIED_SEGMENTED) {
-         NOTIFIED_SEGMENTED = true;
-         Log.CONFIG.segmentedStoreUsesManyFileDescriptors(SingleFileStore.class.getSimpleName());
+      Attribute<Integer> maxEntriesAttribute = attributes.attribute(MAX_ENTRIES);
+      if (segmentedAttribute.get() && maxEntriesAttribute.get() > 0) {
+         throw Log.CONFIG.segmentedSingleFileStoreDoesNotSupportMaxEntries();
       }
       super.validate();
    }
