@@ -14,7 +14,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.file.SingleFileStore;
-import org.infinispan.persistence.spi.InitializationContext;
 
 /**
  * Defines the configuration for the single file cache store.
@@ -24,7 +23,7 @@ import org.infinispan.persistence.spi.InitializationContext;
  */
 @BuiltBy(SingleFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SingleFileStore.class)
-public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SingleFileStoreConfiguration> implements ConfigurationInfo {
+public class SingleFileStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", null, String.class).immutable().xmlName("path").global(false).build();
    /**
     * @deprecated Since 13.0, will be removed in 16.0
@@ -59,18 +58,6 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
    @Override
    public List<ConfigurationInfo> subElements() {
       return Arrays.asList(async());
-   }
-
-   @Override
-   public SingleFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
-      AttributeSet set = SingleFileStoreConfiguration.attributeDefinitionSet();
-      set.read(attributes);
-      String location = set.attribute(LOCATION).get();
-      if (location == null) {
-         location = ctx.getGlobalConfiguration().globalState().persistentLocation();
-      }
-      set.attribute(LOCATION).set(fileLocationTransform(location, segment));
-      return new SingleFileStoreConfiguration(set.protect(), async());
    }
 
    public String location() {

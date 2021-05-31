@@ -50,6 +50,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
             .persistence()
                .addStore(SingleFileStoreConfigurationBuilder.class)
                   .location(this.tmpDirectory)
+                  .segmented(false)
                   .maxEntries(1);
 
       marshaller = new TestObjectStreamMarshaller();
