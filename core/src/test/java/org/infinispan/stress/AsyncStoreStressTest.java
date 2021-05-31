@@ -15,7 +15,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.time.DefaultTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
@@ -38,7 +39,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -48,7 +49,6 @@ import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -90,6 +90,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    private TestObjectStreamMarshaller marshaller;
    private ExecutorService nonBlockingExecutor;
    private ExecutorService blockingExecutor;
+   private TimeService timeService;
 
    protected String location;
 
@@ -106,6 +107,9 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(),
             getTestThreadFactory("Blocking"));
+
+      timeService = new DefaultTimeService();
+      TestingUtil.inject(locks, timeService, nonBlockingExecutor);
    }
 
    @AfterClass(alwaysRun = true)
@@ -156,7 +160,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             .segmented(false)
             .create();
 
-      return createAsyncStore(new NonBlockingStoreAdapter<>(new SingleFileStore<>()), singleFileStoreConfiguration);
+      return createAsyncStore(new SingleFileStore<>(), singleFileStoreConfiguration);
    }
 
    private AsyncNonBlockingStore<Object, Object> createAsyncStore(NonBlockingStore backendStore, StoreConfiguration storeConfiguration) throws PersistenceException {
@@ -167,10 +171,10 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, nonBlockingExecutor),
             new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, blockingExecutor));
       TestingUtil.startComponent(blockingManager);
-      CompletionStages.join(store.start(new DummyInitializationContext(storeConfiguration, Mockito.mock(Cache.class, Mockito.RETURNS_DEEP_STUBS), marshaller, new ByteBufferFactoryImpl(),
-            new MarshalledEntryFactoryImpl(marshaller),
-            Executors.newScheduledThreadPool(1, getTestThreadFactory("PersistenceExecutorThreadFactory")),
-            new GlobalConfigurationBuilder().globalState().persistentLocation(location).build(), blockingManager)));
+      CompletionStages.join(store.start(new InitializationContextImpl(storeConfiguration, Mockito.mock(Cache.class, Mockito.RETURNS_DEEP_STUBS),
+              null, marshaller, timeService, new ByteBufferFactoryImpl(),
+            new MarshalledEntryFactoryImpl(marshaller), nonBlockingExecutor,
+            new GlobalConfigurationBuilder().globalState().enable().persistentLocation(location).build(), blockingManager)));
       return store;
    }
 

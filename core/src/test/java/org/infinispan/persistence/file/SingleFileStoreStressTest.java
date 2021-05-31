@@ -2,12 +2,14 @@ package org.infinispan.persistence.file;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -18,9 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -30,6 +32,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -74,8 +77,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int readerThreads = 2;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
       final List<String> keys = populateStore(5, 0, store, cache);
 
@@ -107,8 +110,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int numberOfKeys = 5;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
       for (int j = 0; j < numberOfKeys; j++) {
@@ -144,8 +147,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int times = 10;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
       long [] fileSizesWithoutPurge = new long [times];
       long [] fileSizesWithPurge = new long [times];
@@ -171,9 +174,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
             // Call purge so that the entries are coalesced
             // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
             // This should prove that the file size increases slowly
-            store.purge(executor, null);
-            // Give some time for the purge thread to finish
-            MILLISECONDS.sleep(200);
+            Flowable.fromPublisher(store.purgeExpired()).blockingSubscribe();
             fileSizesWithPurge[i] = file.length();
          }
       } finally {
@@ -192,8 +193,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int numberOfKeys = 5;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
       // Write a few entries into the cache
       final List<String> keys = populateStore(5, 0, store, cache);
@@ -222,30 +223,32 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       File file = getFileStore();
       long length1 = file.length();
-      store.purge(null, null);
+      Flowable.fromPublisher(store.purgeExpired()).blockingSubscribe();
       long length2 = file.length();
       assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 <= length1);
 
       // Write entry with size larger than any previous to ensure that it is placed at the end of the file
       String key = "key" + numberOfKeys;
       byte[] bytes = new byte[(int) store.getFileSize()];
-      store.write(MarshalledEntryUtil.create(key, new WrappedByteArray(bytes), cache));
+      Arrays.fill(bytes, (byte) 'a');
+      join(store.write(0, MarshalledEntryUtil.create(key, new String(bytes), cache)));
       length1 = file.length();
 
       // Delete entry in order to guarantee that there will be space available at the end of the file to truncate
-      store.delete(key);
-      store.purge(null, null);
+      join(store.delete(0, key));
+      Flowable.fromPublisher(store.purgeExpired()).blockingSubscribe();
       length2 = file.length();
       assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 < length1);
    }
 
-   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, Cache cache) {
+   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore<String, String> store,
+                                     Cache<String, String> cache) {
       final List<String> keys = new ArrayList<>(numKeys);
       for (int j = 0; j < numKeys; j++) {
          String key = "key" + j;
          String value = key + "_value_" + j + times(numPadding);
          keys.add(key);
-         store.write(MarshalledEntryUtil.create(key, value, cache));
+         join(store.write(0, MarshalledEntryUtil.create(key, value, cache)));
       }
       return keys;
    }
@@ -255,8 +258,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int numberOfKeys = 2000;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
       populateStoreRandomValues(numberOfKeys, store, cache, keys);
@@ -283,8 +286,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final int numberOfKeys = 2000;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
-      final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      assertEquals(0, store.size());
+      SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
+      assertEquals(0, (long) CompletionStages.join(store.size(IntSets.immutableSet(0))));
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
       populateStoreRandomValues(numberOfKeys, store, cache, keys);
@@ -306,12 +309,12 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
-   private void populateStoreRandomValues(int numberOfKeys, SingleFileStore store, Cache cache, List<String> keys) {
+   private void populateStoreRandomValues(int numberOfKeys, SingleFileStore<String, String> store, Cache<String, String> cache, List<String> keys) {
       for (int j = 0; j < numberOfKeys; j++) {
          String key = "key" + j;
          String value = key + "_value_" + j + times(new Random().nextInt(10));
          keys.add(key);
-         store.write(MarshalledEntryUtil.create(key, value, cache));
+         join(store.write(0, MarshalledEntryUtil.create(key, value, cache)));
       }
    }
 
@@ -331,7 +334,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private class WriteTask implements Callable<Object> {
-      final SingleFileStore store;
+      SingleFileStore<String, String> store;
       final Cache cache;
       final List<String> keys;
       final CountDownLatch stopLatch;
@@ -351,21 +354,21 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
             String value = key + "_value_" + i + "_" + times(random.nextInt(1000) / 10);
-            MarshallableEntry entry = MarshalledEntryUtil.create(key, value, cache);
-            store.write(entry);
+            MarshallableEntry<String, String> entry = MarshalledEntryUtil.create(key, value, cache);
+            join(store.write(0, entry));
             i++;
          }
          return null;
       }
    }
 
-   private class ReadTask implements Callable<Object> {
+   private static class ReadTask implements Callable<Object> {
       final boolean allowNulls;
       final CountDownLatch stopLatch;
       final List<String> keys;
-      final SingleFileStore store;
+      SingleFileStore<String, String> store;
 
-      ReadTask(SingleFileStore store, List<String> keys, boolean allowNulls, CountDownLatch stopLatch) {
+      ReadTask(SingleFileStore<String, String> store, List<String> keys, boolean allowNulls, CountDownLatch stopLatch) {
          this.allowNulls = allowNulls;
          this.stopLatch = stopLatch;
          this.keys = keys;
@@ -377,7 +380,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          Random random = new Random();
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
-            MarshallableEntry entryFromStore = store.loadEntry(key);
+            MarshallableEntry<String, String> entryFromStore = join(store.load(0, key));
             if (entryFromStore == null) {
                assertTrue(allowNulls);
             } else {
@@ -392,7 +395,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    private class ClearTask implements Callable<Object> {
       final CountDownLatch stopLatch;
-      final SingleFileStore store;
+      SingleFileStore<String, String> store;
 
       ClearTask(SingleFileStore store, CountDownLatch stopLatch) {
          this.stopLatch = stopLatch;
@@ -423,7 +426,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private class ProcessTask implements Callable<Object> {
-      final SingleFileStore<String, String> store;
+      SingleFileStore<String, String> store;
 
       ProcessTask(SingleFileStore<String, String> store) {
          this.store = store;
@@ -434,7 +437,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = getFileStore();
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.entryPublisher(null, true, true))
+         Long sum = Flowable.fromPublisher(store.publishEntries(null, null, true))
                .doOnNext(me -> {
                   String key = me.getKey();
                   String value = me.getValue();
@@ -457,7 +460,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = getFileStore();
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.entryPublisher(null, false, false))
+         Long sum = Flowable.fromPublisher(store.publishEntries(null, null, false))
                .doOnNext(me -> {
                   Object key = me.getKey();
                   assertNotNull(key);

@@ -1,5 +1,6 @@
 package org.infinispan.persistence.support;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -12,7 +13,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -123,21 +123,21 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      AdvancedLoadWriteStore store = getFileStoreFromDCM();
+      SingleFileStore<Object, Object> store = getFileStoreFromDCM();
 
-      MarshallableEntry[] entries = new MarshallableEntry[number];
+      MarshallableEntry<Object, Object>[] entries = new MarshallableEntry[number];
       for (int i = 0; i < number; i++) {
-         entries[i] = store.loadEntry(key + i);
+         entries[i] = join(store.load(getSegment(key + i, cache), key + i));
       }
 
       for (int i = 0; i < number; i++) {
-         MarshallableEntry entry = entries[i];
+         MarshallableEntry<Object, Object> entry = entries[i];
 
          if (entry != null) {
             assertEquals(value + i, entry.getValue());
          } else {
             while (entry == null) {
-               entry = store.loadEntry(key + i);
+               entry = join(store.load(getSegment(key + i, cache), key + i));
                if (entry != null) {
                   assertEquals(value + i, entry.getValue());
                } else {
@@ -148,6 +148,10 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       }
    }
 
+   private int getSegment(String s, Cache<?, ?> cache) {
+      return TestingUtil.getSegmentForKey(s, cache);
+   }
+
    private void doTestSameKeyPut(Cache<Object, Object> cache, int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++) {
          cache.put(key, value + i);
@@ -155,12 +159,12 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      AdvancedLoadWriteStore store = getFileStoreFromDCM();
-      MarshallableEntry entry;
+      SingleFileStore<Object, Object> store = getFileStoreFromDCM();
+      MarshallableEntry<Object, Object> entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
          TestingUtil.sleepThread(20, null);
-         entry = store.loadEntry(key);
+         entry = join(store.load(getSegment(key, cache), key));
          success = entry.getValue().equals(value + (number - 1));
          if (success)
             break;
@@ -169,12 +173,12 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    }
 
    private void doTestSameKeyRemove(Cache<Object, Object> cache, String key) throws Exception {
-      AdvancedLoadWriteStore store = getFileStoreFromDCM();
+      SingleFileStore<Object, Object> store = getFileStoreFromDCM();
       cache.remove(key);
-      MarshallableEntry entry;
+      MarshallableEntry<Object, Object> entry;
       do {
          TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key);
-         entry = store.loadEntry(key);
+         entry = join(store.load(getSegment(key, cache), key));
       } while (entry != null);
    }
 
@@ -184,44 +188,44 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      AdvancedLoadWriteStore store = getFileStoreFromDCM();
+      SingleFileStore<Object, Object> store = getFileStoreFromDCM();
 
-      MarshallableEntry[] entries = new MarshallableEntry[number];
+      MarshallableEntry<Object, Object>[] entries = new MarshallableEntry[number];
       for (int i = 0; i < number; i++) {
-         entries[i] = store.loadEntry(key + i);
+         entries[i] = join(store.load(getSegment(key + i, cache), key + i));
       }
 
       for (int i = 0; i < number; i++) {
-         MarshallableEntry entry = entries[i];
+         MarshallableEntry<Object, Object> entry = entries[i];
          while (entry != null) {
             TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
-            entry = store.loadEntry(key + i);
+            entry = join(store.load(getSegment(key + i, cache), key + i));
          }
       }
    }
 
    private void doTestClear(Cache<Object, Object> cache, int number, String key) throws Exception {
-      AdvancedLoadWriteStore store = getFileStoreFromDCM();
+      SingleFileStore<Object, Object> store = getFileStoreFromDCM();
       store.clear();
       cache.stop();
       cache.start();
       store = getFileStoreFromDCM();
 
-      MarshallableEntry[] entries = new MarshallableEntry[number];
+      MarshallableEntry<Object, Object>[] entries = new MarshallableEntry[number];
       for (int i = 0; i < number; i++) {
-         entries[i] = store.loadEntry(key + i);
+         entries[i] = join(store.load(getSegment(key + i, cache), key + i));
       }
 
       for (int i = 0; i < number; i++) {
-         MarshallableEntry entry = entries[i];
+         MarshallableEntry<Object, Object> entry = entries[i];
          while (entry != null) {
             TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
-            entry = store.loadEntry(key + i);
+            entry = join(store.load(getSegment(key + i, cache), key + i));
          }
       }
    }
 
-   private AdvancedLoadWriteStore getFileStoreFromDCM() {
+   private SingleFileStore<Object, Object> getFileStoreFromDCM() {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(dcm.getCache(), PersistenceManager.class);
       return persistenceManager.getStores(SingleFileStore.class).iterator().next();
    }

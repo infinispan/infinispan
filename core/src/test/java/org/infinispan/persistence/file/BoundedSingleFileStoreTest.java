@@ -12,6 +12,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.PersistenceMockUtil;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -27,7 +28,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.file.BoundedSingleFileStoreTest")
 public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
 
-   SingleFileStore store;
+   SingleFileStore<Object, Object> store;
    String tmpDirectory;
    private TestObjectStreamMarshaller marshaller;
 
@@ -44,7 +45,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() throws Exception {
       clearTempDir();
-      store = new SingleFileStore();
+      store = new SingleFileStore<>();
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder
             .persistence()
@@ -54,8 +55,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
                   .maxEntries(1);
 
       marshaller = new TestObjectStreamMarshaller();
-      store.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller));
-      store.start();
+      CompletionStages.join(store.start(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller)));
    }
 
    @AfterMethod
@@ -75,8 +75,8 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
       assertStoreSize(0, 0);
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       try {
-         store.write(MarshalledEntryUtil.create(1, "v1", sm));
-         store.write(MarshalledEntryUtil.create(1, "v2", sm));
+         store.write(0, MarshalledEntryUtil.create(1, "v1", sm));
+         store.write(0, MarshalledEntryUtil.create(1, "v2", sm));
          assertStoreSize(1, 1);
       } finally {
          sm.stop();

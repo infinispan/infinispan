@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Predicate;
 
+import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -37,7 +38,6 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -45,8 +45,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
-
-import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * A Dummy cache store which stores objects in memory. Instance of the store can be shared
@@ -95,17 +93,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       if (configuration.startFailures() > startAttempts.incrementAndGet())
          throw new PersistenceException();
 
-      ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
-      segmentCount = clusteringConfiguration.hash().numSegments();
-
-      int segmentsToInitialize;
       if (configuration.segmented()) {
-         segmentsToInitialize = segmentCount;
+         ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
+         segmentCount = clusteringConfiguration.hash().numSegments();
       } else {
-         segmentsToInitialize = 1;
+         segmentCount = 1;
       }
 
-      store = new AtomicReferenceArray<>(segmentsToInitialize);
+      store = new AtomicReferenceArray<>(segmentCount);
       stats = newStatsMap();
 
       boolean shouldStartSegments = true;
@@ -134,7 +129,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       }
 
       if (shouldStartSegments) {
-         for (int i = 0; i < segmentsToInitialize; ++i) {
+         for (int i = 0; i < segmentCount; ++i) {
             store.set(i, new ConcurrentHashMap<>());
          }
       }
@@ -282,22 +277,19 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    public Flowable<MarshallableEntry> publishEntries(IntSet segments, Predicate filter, boolean fetchValue) {
       assertRunning();
       record("publishEntries");
-      log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
+      log.tracef("Publishing entries in store %s segments %s with filter %s", storeName, segments, filter);
       Flowable<Map.Entry<Object, byte[]>> flowable;
       if (configuration.segmented()) {
-         flowable = Flowable.fromStream(segments.intStream().mapToObj(segment -> {
-            Map<Object, byte[]> map = store.get(segment);
-            if (map == null) {
-               return Flowable.<Map.Entry<Object, byte[]>>empty();
-            }
-            return Flowable.fromIterable(map.entrySet());
-         })).flatMap(RxJavaInterop.identityFunction());
+         flowable = Flowable.fromIterable(segments)
+                 .concatMap(segment -> {
+                    Map<Object, byte[]> map = store.get(segment);
+                    if (map == null) {
+                       return Flowable.<Map.Entry<Object, byte[]>>empty();
+                    }
+                    return Flowable.fromIterable(map.entrySet());
+                 });
       } else {
-         flowable = Flowable.fromIterable(store.get(0).entrySet())
-               .filter(e -> {
-                  int segment = keyPartitioner.getSegment(e.getKey());
-                  return segments.contains(segment);
-               });
+         flowable = Flowable.fromIterable(store.get(0).entrySet());
       }
 
       if (filter != null) {
@@ -394,7 +386,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    }
 
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
-      Map<Object, byte[]> map = mapForSegment(keyPartitioner.getSegment(key));
+      Map<Object, byte[]> map = mapForSegment(getSegment(key));
       AssertJUnit.assertNotNull("Map for key " + key + " was not present", map);
       long killTime = timeService.wallClockTime() + timeout;
       while (timeService.wallClockTime() < killTime) {
@@ -405,6 +397,10 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       throw new RuntimeException(String.format(
             "Timed out waiting (%d ms) for cache store to contain key=%s with value=%s",
             timeout, key, expectedValue));
+   }
+
+   private int getSegment(Object key) {
+      return keyPartitioner.getSegment(key);
    }
 
    public void blockUntilCacheStoreContains(Set<Object> expectedState, long timeout) {

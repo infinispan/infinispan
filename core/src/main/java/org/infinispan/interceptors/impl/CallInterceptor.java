@@ -536,6 +536,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          Long lifespan = command.getLifespan();
          ValueMatcher valueMatcher = command.getValueMatcher();
          // If the provided lifespan is null, that means it is a store removal command, so we can't compare lifespan
+         // FIXME This fails if a store does provide the lifespan because the context entry is null:
+         //  stores remove the expired entry before invoking cache.removeLifespanExpired()
          if (lifespan == null) {
             if (valueMatcher.matches(prevValue, optionalValue, null)) {
                e.setExpired(true);
