@@ -207,16 +207,16 @@ public abstract class AbstractInfinispanTest {
             () -> Objects.equals(expected, supplier.get()));
    }
 
-   protected <T> void eventuallyEquals(String message, T expected, Supplier<T> supplier) {
+   protected static <T> void eventuallyEquals(String message, T expected, Supplier<T> supplier) {
       eventually(() -> message + " expected:<" + expected + ">, got:<" + supplier.get() + ">",
                  () -> Objects.equals(expected, supplier.get()));
    }
 
-   protected void eventually(Supplier<String> messageSupplier, Condition condition) {
+   protected static void eventually(Supplier<String> messageSupplier, Condition condition) {
       eventually(messageSupplier, condition, 30, TimeUnit.SECONDS);
    }
 
-   protected void eventually(Supplier<String> messageSupplier, Condition condition, long timeout,
+   protected static void eventually(Supplier<String> messageSupplier, Condition condition, long timeout,
          TimeUnit timeUnit) {
       try {
          long timeoutNanos = timeUnit.toNanos(timeout);
