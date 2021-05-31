@@ -17,18 +17,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.test.TestDataSCI;
@@ -61,16 +65,17 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private final List<ManualIracManager> iracManagerList;
    private final List<ManualRpcManager> rpcManagerList;
+   private final List<BlockingInterceptor<IracPutKeyValueCommand>> blockingInterceptorList;
 
    public XSiteMBeanTest() {
       this.iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
       this.rpcManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
+      this.blockingInterceptorList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
    }
 
    private static void assertSameAttributeAndOperation(MBeanServer mBeanServer, ObjectName objectName,
          Attribute attribute, String site) throws Exception {
       long val1 = invokeLongAttribute(mBeanServer, objectName, attribute);
-      log.debugf("%s attr(%s) = %d", objectName, attribute, val1);
       long val2 = invokeLongOperation(mBeanServer, objectName, attribute, site);
       log.debugf("%s op(%s) = %d", objectName, attribute, val2);
       assertEquals("Wrong value for " + attribute, val1, val2);
@@ -79,8 +84,20 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    private static void assertAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute,
          long expected) throws Exception {
       long val = invokeLongAttribute(mBeanServer, objectName, attribute);
-      log.debugf("%s attr(%s) = %d", objectName, attribute, val);
       assertEquals("Wrong attribute value for " + attribute, expected, val);
+   }
+
+   private static void eventuallyAssertAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute) {
+      Supplier<Long> s = () -> {
+         try {
+            return invokeLongAttribute(mBeanServer, objectName, attribute);
+         } catch (RuntimeException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      };
+      eventuallyEquals("Wrong attribute " + attribute, 1L, s);
    }
 
    private static void assertHasAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute)
@@ -107,9 +124,10 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       return ((Number) val).longValue();
    }
 
-   private static long invokeLongAttribute(MBeanServer mBeanServer, ObjectName rpcManager, Attribute attribute)
+   private static long invokeLongAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute)
          throws Exception {
-      Object val = mBeanServer.getAttribute(rpcManager, attribute.attributeName);
+      Object val = mBeanServer.getAttribute(objectName, attribute.attributeName);
+      log.debugf("%s attr(%s) = %d", objectName, attribute, val);
       assertTrue(val instanceof Number);
       return ((Number) val).longValue();
    }
@@ -225,8 +243,9 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       createConflict(false);
 
-      assertAttribute(mBeanServer, iracManager1, Attribute.CONFLICTS, 1);
-      assertAttribute(mBeanServer, iracManager2, Attribute.CONFLICTS, 1);
+      // make sure the conflict is seen
+      eventuallyAssertAttribute(mBeanServer, iracManager1, Attribute.CONFLICTS);
+      eventuallyAssertAttribute(mBeanServer, iracManager2, Attribute.CONFLICTS);
 
       assertAttribute(mBeanServer, iracManager1, Attribute.CONFLICT_LOCAL, 1);
       assertAttribute(mBeanServer, iracManager2, Attribute.CONFLICT_LOCAL, 0);
@@ -264,8 +283,9 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       createConflict(true);
 
-      assertAttribute(mBeanServer, iracManager1, Attribute.CONFLICT_MERGED, 1);
-      assertAttribute(mBeanServer, iracManager2, Attribute.CONFLICT_MERGED, 1);
+      // make sure the conflict is seen
+      eventuallyAssertAttribute(mBeanServer, iracManager1, Attribute.CONFLICT_MERGED);
+      eventuallyAssertAttribute(mBeanServer, iracManager2, Attribute.CONFLICT_MERGED);
 
       // put back the default merge policy
       replaceComponent(cache(0, 0), XSiteEntryMergePolicy.class, DefaultXSiteEntryMergePolicy.getInstance(), true);
@@ -341,6 +361,11 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
          for (Cache<?, ?> cache : caches(siteName(i))) {
             rpcManagerList.add(wrapRpcManager(cache));
             iracManagerList.add(ManualIracManager.wrapCache(cache));
+            BlockingInterceptor<IracPutKeyValueCommand> interceptor = new BlockingInterceptor<>(new CyclicBarrier(2), IracPutKeyValueCommand.class, false, false);
+            interceptor.suspend(true);
+            blockingInterceptorList.add(interceptor);
+            //noinspection deprecation
+            cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(interceptor, 0);
          }
       }
    }
@@ -349,7 +374,8 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    @Override
    protected void clearContent() throws Throwable {
       rpcManagerList.forEach(ManualRpcManager::unblock);
-      iracManagerList.forEach(iracmanger -> iracmanger.disable(ManualIracManager.DisableMode.DROP));
+      iracManagerList.forEach(m -> m.disable(ManualIracManager.DisableMode.DROP));
+      blockingInterceptorList.forEach(i -> i.suspend(true));
       super.clearContent();
    }
 
@@ -368,12 +394,35 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       // disable xsite so each site won't send anything to the others
       iracManagerList.forEach(ManualIracManager::enable);
+      blockingInterceptorList.forEach(i -> i.suspend(false));
 
       cache(0, 0).put(key, "v-2");
       cache(1, 0).put(key, "v-3");
 
       // enable xsite. this will send the keys!
       iracManagerList.forEach(manualIracManager -> manualIracManager.disable(ManualIracManager.DisableMode.SEND));
+
+      // wait until command is received.
+      blockingInterceptorList.forEach(i -> {
+         try {
+            i.proceed();
+         } catch (RuntimeException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      });
+      blockingInterceptorList.forEach(i -> i.suspend(true));
+      // let the command go
+      blockingInterceptorList.forEach(i -> {
+         try {
+            i.proceed();
+         } catch (RuntimeException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      });
 
       if (isConflictMerged) {
          eventuallyAssertInAllSitesAndCaches(cache -> Objects.isNull(cache.get(key)));

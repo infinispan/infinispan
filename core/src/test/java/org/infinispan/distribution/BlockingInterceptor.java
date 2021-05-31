@@ -50,6 +50,10 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
       this.suspended.set(s);
    }
 
+   public void proceed() throws Exception {
+      barrier.await(30, TimeUnit.SECONDS);
+   }
+
    private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws Exception {
       if (suspended.get()) {
          log.tracef("Suspended, not blocking command %s", command);
