@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-testdriver-parent-pom</artifactId>
-      <version>12.1.4-SNAPSHOT</version>
+      <version>12.1.4.Final</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
