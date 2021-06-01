@@ -722,6 +722,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param block {@code true} when we need all the global components to be running.
     */
    private void internalStart(boolean block) {
+      if (status == ComponentStatus.RUNNING)
+         return;
+
       final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
       lifecycleLock.lock();
       try {
