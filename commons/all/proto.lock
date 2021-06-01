@@ -169,6 +169,19 @@
           "name": "org.infinispan.persistence.commons"
         }
       }
+    },
+    {
+      "protopath": "generated:/:user.commons.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "NullValue"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.commons"
+        }
+      }
     }
   ]
 }
