@@ -39,11 +39,11 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          assertEquals(JdbcStringBasedStoreConfiguration.class, firstCacheLoaderConfig.getClass());
          assertEquals(JdbcStringBasedStoreConfiguration.class, secondCacheLoaderConfig.getClass());
 
-         WaitDelegatingNonBlockingStore firstCs = TestingUtil.getFirstStore(first);
-         WaitDelegatingNonBlockingStore secondCs = TestingUtil.getFirstStore(second);
+         WaitDelegatingNonBlockingStore<String, String>  firstCs = TestingUtil.getFirstStoreWait(first);
+         WaitDelegatingNonBlockingStore<String, String>  secondCs = TestingUtil.getFirstStoreWait(second);
 
 
-         JdbcStringBasedStore firstJdbcS = (JdbcStringBasedStore) firstCs.delegate();
+         JdbcStringBasedStore<String, String>  firstJdbcS = (JdbcStringBasedStore<String, String> ) firstCs.delegate();
 
          assertTableExistence(firstJdbcS.getConnectionFactory().getConnection(), firstJdbcS.getTableManager().getIdentifierQuoteString(),
                               "second", "first", "ISPN_STRING_TABLE");
@@ -92,7 +92,9 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       connection.close();
    }
 
-   private void assertNoOverlapingState(Cache first, Cache second, WaitNonBlockingStore firstCs, WaitNonBlockingStore secondCs) throws PersistenceException {
+   private void assertNoOverlapingState(Cache<String, String> first, Cache<String, String> second,
+                                        WaitNonBlockingStore<String, String> firstCs,
+                                        WaitNonBlockingStore<String, String> secondCs) throws PersistenceException {
       first.put("k", "v");
       assert firstCs.contains("k");
       assert !secondCs.contains("k");

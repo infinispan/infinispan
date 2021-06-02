@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -159,7 +160,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
 
          // Check the data hit the store
          int expected = cache.getCacheConfiguration().persistence().passivation() ? 1 : 2;
-         assertEquals(expected, getDummyStoreSize(persistenceManager));
+         assertEquals(expected, getDummyStoreSize(persistenceManager, cache.getCacheConfiguration().clustering().hash().numSegments()));
 
          // Disable the store
          join(persistenceManager.disableStore(DummyInMemoryStore.class.getName()));
@@ -184,7 +185,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   private long getDummyStoreSize(PersistenceManager persistenceManager) {
+   private long getDummyStoreSize(PersistenceManager persistenceManager, int numSegments) {
       return persistenceManager.getStoresAsString().stream()
             .filter(s -> s.equals(DummyInMemoryStore.class.getName()))
             .map(this::loadClass)
@@ -195,7 +196,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
                   return dummyInMemoryStore.size();
                } else if (store instanceof SingleFileStore) {
                   SingleFileStore<?, ?> singleFileStore = (SingleFileStore<?, ?>) store;
-                  return (long) singleFileStore.size();
+                  return join(singleFileStore.size(IntSets.immutableRangeSet(numSegments)));
                }
                return -1L;
             }).findFirst().orElse(-1L);

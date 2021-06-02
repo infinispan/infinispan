@@ -25,8 +25,8 @@ import org.testng.annotations.Test;
 public class StringStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
    @Override
-   protected JdbcStringBasedStore createStore() throws Exception {
-      return new JdbcStringBasedStore();
+   protected JdbcStringBasedStore<Object, Object> createStore() throws Exception {
+      return new JdbcStringBasedStore<>();
    }
 
    @Override
@@ -54,7 +54,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
             StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
             assertNotNull(secondCacheLoaderConfig);
             assertTrue(secondCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration);
-            WaitDelegatingNonBlockingStore loader = TestingUtil.getFirstStore(first);
+            WaitDelegatingNonBlockingStore loader = TestingUtil.getFirstStoreWait(first);
             assertTrue(((JdbcStringBasedStore) loader.delegate()).getConnectionFactory() instanceof ManagedConnectionFactory);
          }
       });
