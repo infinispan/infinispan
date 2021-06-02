@@ -175,10 +175,10 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.peek(key);
-      WaitNonBlockingStore loader = TestingUtil.getFirstStore(cache);
+      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
+      MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
       assertNull("Key " + key + " exists in cache loader.", entryLoaded);
    }
 
@@ -186,7 +186,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      WaitNonBlockingStore loader = TestingUtil.getFirstStore(cache);
+      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       eventually(() -> loader.loadEntry(key) == null);
@@ -196,7 +196,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      WaitNonBlockingStore loader = TestingUtil.getFirstStore(cache);
+      WaitNonBlockingStore<Object, Object> loader = TestingUtil.getFirstStoreWait(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);

@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.management.JMException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
@@ -58,7 +59,6 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
-import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
@@ -117,6 +117,8 @@ import org.infinispan.persistence.support.DelegatingPersistenceManager;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -149,6 +151,8 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1615,12 +1619,25 @@ public class TestingUtil {
       return (T) nonBlockingStore;
    }
 
+   public static <K, V> WaitNonBlockingStore<K, V> getFirstStoreWait(Cache<K, V> cache) {
+      return getStoreWait(cache, 0, true);
+   }
+
+   @SuppressWarnings({"cast"})
+   public static <K, V> WaitNonBlockingStore<K, V> getStoreWait(Cache<K, V> cache, int position, boolean unwrapped) {
+      NonBlockingStore<K, V> nonBlockingStore = getStore(cache, position, unwrapped);
+      if (nonBlockingStore instanceof WaitNonBlockingStore)
+         return (WaitNonBlockingStore<K, V>) nonBlockingStore;
+
+      return new WaitDelegatingNonBlockingStore<>(nonBlockingStore, extractComponent(cache, KeyPartitioner.class));
+   }
+
    public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      //noinspection unchecked
       NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
             ! characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(0);
       // TODO: Once stores convert to non blocking implementations this will change
+      //noinspection unchecked
       return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).loader();
    }
 

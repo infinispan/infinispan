@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -46,6 +47,8 @@ import io.reactivex.rxjava3.core.Flowable;
 public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    private static final String CACHE_NAME = "testCache";
    private static final String TIMES_STRING = "123456789_";
+   public static final int NUM_SEGMENTS = 256;
+   public static final IntSet ALL_SEGMENTS = IntSets.immutableRangeSet(NUM_SEGMENTS);
    private String location;
 
 
@@ -62,6 +65,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       globalBuilder.globalState().enable().persistentLocation(location);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash().numSegments(NUM_SEGMENTS);
       builder.persistence().addSingleFileStore().purgeOnStartup(true).segmented(false);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
@@ -437,7 +441,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = getFileStore();
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.publishEntries(null, null, true))
+         Long sum = Flowable.fromPublisher(store.publishEntries(ALL_SEGMENTS, null, true))
                .doOnNext(me -> {
                   String key = me.getKey();
                   String value = me.getValue();
@@ -460,7 +464,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = getFileStore();
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.publishEntries(null, null, false))
+         Long sum = Flowable.fromPublisher(store.publishEntries(ALL_SEGMENTS, null, false))
                .doOnNext(me -> {
                   Object key = me.getKey();
                   assertNotNull(key);

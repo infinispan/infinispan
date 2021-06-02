@@ -81,7 +81,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
       ConfigurationBuilder cBuilder = new ConfigurationBuilder();
       configure(cBuilder);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gBuilder, cBuilder);
-      cacheStore = TestingUtil.getFirstStore(cm.getCache());
+      cacheStore = TestingUtil.getFirstStoreWait(cm.getCache());
       segmentCount = cm.getCache().getCacheConfiguration().clustering().hash().numSegments();
       //noinspection unchecked
       entryFactory = TestingUtil.extractComponent(cm.getCache(), MarshallableEntryFactory.class);

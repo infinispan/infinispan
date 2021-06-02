@@ -338,7 +338,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          if (isNotWriteOwner(cache, key)) {
             continue;
          }
-         WaitNonBlockingStore<String, Object> cl = TestingUtil.getFirstStore(cache);
+         WaitNonBlockingStore<String, Object> cl = TestingUtil.getFirstStoreWait(cache);
          MarshallableEntry<String, Object> mEntry = cl.loadEntry(key);
          log.debugf("Checking CacheLoader in %s. entry=%s", DistributionTestHelper.addressOf(cache), mEntry);
          assertNotNull(String.format("CacheLoader entry is null for key %s", key), mEntry);
