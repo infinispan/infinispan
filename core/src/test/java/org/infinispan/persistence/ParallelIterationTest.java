@@ -56,7 +56,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(global, cb);
-      store = TestingUtil.getFirstStore(manager.getCache());
+      store = TestingUtil.getFirstStoreWait(manager.getCache());
       executor = testExecutor();
       allSegments = IntSets.immutableRangeSet(manager.getCache().getCacheConfiguration().clustering().hash().numSegments());
       return manager;

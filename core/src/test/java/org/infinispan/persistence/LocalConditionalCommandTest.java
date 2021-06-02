@@ -75,7 +75,8 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    private static <K, V> void writeToStore(Cache<K, V> cache, K key, V value) {
       MarshallableEntry entry = MarshalledEntryUtil.create(key, value, cache);
-      ((DummyInMemoryStore) TestingUtil.getFirstStore(cache)).write(entry);
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
+      store.write(entry);
    }
 
    private static CacheLoaderInterceptor cacheLoaderInterceptor(Cache<?, ?> cache) {
@@ -117,7 +118,8 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    private void initStore(Cache<String, String> cache) {
       writeToStore(cache, key, value1);
-      assertTrue(((DummyInMemoryStore) TestingUtil.getFirstStore(cache)).contains(key));
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
+      assertTrue(store.contains(key));
       cacheLoaderInterceptor(cache).resetStatistics();
    }
 

@@ -19,13 +19,14 @@ import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.test.CacheManagerCallable;
@@ -171,8 +172,9 @@ public class ServerEventLoggerTest {
          Cache<UUID, ServerEventImpl> cache = cm.getCache(ServerEventLogger.EVENT_LOG_CACHE);
          PassivationManager passivationManager = TestingUtil.extractComponent(cache, PassivationManager.class);
          CompletionStages.join(passivationManager.passivateAllAsync());
-         SingleFileStore<UUID, ServerEventImpl> sfs = TestingUtil.getFirstWriter(cache);
-         assertEquals(1, sfs.size());
+         WaitNonBlockingStore<UUID, ServerEventImpl> sfs = TestingUtil.getFirstStoreWait(cache);
+         int numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
+         assertEquals(1, sfs.sizeWait(IntSets.immutableRangeSet(numSegments)));
       });
    }
 

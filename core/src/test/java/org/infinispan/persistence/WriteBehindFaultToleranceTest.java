@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -27,9 +28,8 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.StoreUnavailableException;
-import org.infinispan.persistence.support.DelegatingNonBlockingStore;
-import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -56,7 +56,7 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       PollingPersistenceManager pm = new PollingPersistenceManager();
       PersistenceManager oldPersistenceManager = TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
       oldPersistenceManager.stop();
-      WaitNonBlockingStore<?, ?> asyncStore = TestingUtil.getStore(cache, 0, false);
+      NonBlockingStore<?, ?> asyncStore = TestingUtil.getStore(cache, 0, false);
       DummyInMemoryStore dims = TestingUtil.getStore(cache, 0, true);
       dims.setAvailable(true);
       cache.put(1, 1);
@@ -70,9 +70,8 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       // Wait until the store's availability has been checked before asserting that the pm is still available
       eventually(() -> pm.pollCount.get() > pollCount);
       // PM & AsyncWriter should still be available as the async modification queue is not full
-      assertTrue(asyncStore.checkAvailable());
-      // The asyncStore is a WaitNonBlockingStore delegate wrapping the actual async store
-      assertNotNull(TestingUtil.extractField(((DelegatingNonBlockingStore) asyncStore).delegate(), "delegateAvailableFuture"));
+      assertTrue(join(asyncStore.isAvailable()));
+      assertNotNull(TestingUtil.extractField((asyncStore), "delegateAvailableFuture"));
       assertTrue(pm.isAvailable());
 
       Future<Void> f = fork(() -> {
@@ -94,7 +93,7 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
 
       // Make the delegate available and ensure that the initially queued modifications exist in the store
       dims.setAvailable(true);
-      assertTrue(asyncStore.checkAvailable());
+      assertTrue(join(asyncStore.isAvailable()));
       eventually(pm::isAvailable);
       f.get(10, TimeUnit.SECONDS);
 

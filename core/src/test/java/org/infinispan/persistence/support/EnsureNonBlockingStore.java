@@ -7,6 +7,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -15,7 +16,11 @@ import org.reactivestreams.Publisher;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public abstract class EnsureNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V> implements WaitNonBlockingStore<K, V> {
+public class EnsureNonBlockingStore<K, V> extends WaitDelegatingNonBlockingStore<K, V> {
+   public EnsureNonBlockingStore(NonBlockingStore<K, V> delegate, KeyPartitioner keyPartitioner) {
+      super(delegate, keyPartitioner);
+   }
+
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
       return BlockHoundHelper.ensureNonBlocking(() -> delegate().start(ctx));

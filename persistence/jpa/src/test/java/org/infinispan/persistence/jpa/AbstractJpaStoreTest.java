@@ -12,6 +12,7 @@ import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -46,7 +47,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    }
 
    protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(JpaSCI.INSTANCE);
+      return TestCacheManagerFactory.createCacheManager(JpaSCI.INSTANCE, new ConfigurationBuilder());
    }
 
    protected JpaStore createCacheStore(GlobalConfiguration gc) {
@@ -73,9 +74,9 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       try {
          cm = createCacheManager();
-         marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
+         marshaller = TestingUtil.extractPersistenceMarshaller(cm);
          entryFactory = new MarshalledEntryFactoryImpl(marshaller);
-         blockingManager = cm.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+         blockingManager = TestingUtil.extractGlobalComponent(cm, BlockingManager.class);
          cs = createCacheStore(cm.getCacheManagerConfiguration());
          cs.clear();
       } catch (Exception e) {
