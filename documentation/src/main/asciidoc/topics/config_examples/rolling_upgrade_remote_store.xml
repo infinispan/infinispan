@@ -6,7 +6,6 @@
    <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
                  cache="myDistCache"
                  protocol-version="2.5"
-                 hotrod-wrapping="true"
                  raw-values="true"
                  segmented="false">
       <!-- Points to the location of the source cluster. -->

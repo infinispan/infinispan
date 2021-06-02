@@ -44,7 +44,6 @@ import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.SslConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -106,8 +105,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       final Marshaller marshaller;
       if (configuration.marshaller() != null) {
          marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getAdvancedCache().getClassLoader());
-      } else if (configuration.hotRodWrapping()) {
-         marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else {
          // If rawValues are required, then it's necessary to utilise the user marshaller directly to prevent objects being wrapped with a MarshallableUserObject
          marshaller = configuration.rawValues() ? ctx.getPersistenceMarshaller().getUserMarshaller() : ctx.getPersistenceMarshaller();
@@ -165,6 +162,17 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                      .getComponent(StorageConfigurationManager.class);
 
                MediaType localKeyStorageType = storageConfigurationManager.getKeyStorageMediaType();
+               // When it isn't raw values we store as a Marshalled entry, so we have object storage for the value
+               MediaType localValueStorageType = configuration.rawValues() ?
+                     storageConfigurationManager.getValueStorageMediaType() : MediaType.APPLICATION_OBJECT;
+
+               // Older servers don't provide media type information
+               if (serverKeyStorageType == null && localKeyStorageType.isBinary()) {
+                  dataFormatBuilder.keyMarshaller(IdentityMarshaller.INSTANCE);
+               }
+               if (serverValueStorageType == null && localValueStorageType.isBinary()) {
+                  dataFormatBuilder.valueMarshaller(IdentityMarshaller.INSTANCE);
+               }
                supportsSegmentation = localKeyStorageType.equals(serverKeyStorageType);
                if (supportsSegmentation) {
                   dataFormatBuilder.keyType(localKeyStorageType.isBinary() ? localKeyStorageType : marshaller.mediaType());
@@ -172,9 +180,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                } else if (configuration.segmented()) {
                   throw log.segmentationRequiresEqualMediaTypes(localKeyStorageType, serverKeyStorageType);
                }
-               // When it isn't raw values we store as a Marshalled entry, so we have object storage for the value
-               MediaType localValueStorageType = configuration.rawValues() ?
-                     storageConfigurationManager.getValueStorageMediaType() : MediaType.APPLICATION_OBJECT;
                if (localValueStorageType.equals(serverValueStorageType)) {
                   dataFormatBuilder.valueType(localValueStorageType.isBinary() ? localValueStorageType : marshaller.mediaType());
                   dataFormatBuilder.valueMarshaller(localValueStorageType.isBinary() ? IdentityMarshaller.INSTANCE : marshaller);
@@ -185,14 +190,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                }
                remoteCache = remoteCache.withDataFormat(dataFormat);
             });
-   }
-
-   private MediaType getMediaType(MediaType local, Marshaller marshaller) {
-      return local.isBinary() ? local : marshaller.mediaType();
-   }
-
-   private Marshaller getMarshaller(MediaType local, Marshaller marshaller) {
-      return local.isBinary() ? IdentityMarshaller.INSTANCE : marshaller;
    }
 
    @Override
