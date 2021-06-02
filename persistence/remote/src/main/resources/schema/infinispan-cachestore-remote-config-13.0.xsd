@@ -53,6 +53,7 @@
         <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotRodWrapping}">
           <xs:annotation>
             <xs:documentation>
+              Deprecated since 12.0. Since 13.0, use only 'raw-values' if the remote server will be accessed by Hot Rod clients.
               Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade.
             </xs:documentation>
           </xs:annotation>
