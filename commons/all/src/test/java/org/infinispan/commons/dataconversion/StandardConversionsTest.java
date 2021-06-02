@@ -142,7 +142,7 @@ public class StandardConversionsTest {
 
       MediaType stringType = APPLICATION_OBJECT.withParameter("type", "java.lang.String");
       byte[] result = StandardConversions.convertJavaToOctetStream(string, stringType, marshaller);
-      assertArrayEquals(string.getBytes(UTF_8), result);
+      assertArrayEquals(marshaller.objectToByteBuffer(string), result);
 
       MediaType doubleType = APPLICATION_OBJECT.withParameter("type", "java.lang.Double");
       result = StandardConversions.convertJavaToOctetStream(number, doubleType, marshaller);
@@ -154,7 +154,7 @@ public class StandardConversionsTest {
 
       MediaType byteArrayType = APPLICATION_OBJECT.withParameter("type", "ByteArray");
       result = StandardConversions.convertJavaToOctetStream(binary, byteArrayType, marshaller);
-      assertArrayEquals(result, binary);
+      assertArrayEquals(marshaller.objectToByteBuffer(binary), result);
    }
 
    @Test

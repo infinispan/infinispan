@@ -112,7 +112,10 @@ public final class DefaultTranscoder implements Transcoder {
          return StandardConversions.decodeOctetStream(content, contentType);
       }
       if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.convertJavaToOctetStream(content, contentType, marshaller);
+         Object decoded = StandardConversions.decodeObjectContent(content, contentType);
+         if (decoded instanceof byte[]) return decoded;
+
+         return marshaller.objectToByteBuffer(decoded);
       }
       if (contentType.match(TEXT_PLAIN)) {
          return StandardConversions.convertTextToOctetStream(content, destinationType);

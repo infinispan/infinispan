@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 /**
@@ -134,6 +135,18 @@ public interface RestCacheClient {
     * PUT a key/value to the cache with custom media types for keys and values
     */
    CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value);
+
+   /**
+    * PUT an entry with metadata.
+    *
+    * @param key The key
+    * @param keyContentType The {@link MediaType} of the key
+    * @param value a {@link RestEntity} containing the value and its MediaType
+    * @param ttl The time to live value
+    * @param maxIdle The max idle value
+    * @return
+    */
+   CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value, long ttl, long maxIdle);
 
    /**
     * PUTs a key/value to the cache as text/plain with the specified expiration

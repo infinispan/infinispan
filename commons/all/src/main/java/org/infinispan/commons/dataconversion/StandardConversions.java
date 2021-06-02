@@ -159,12 +159,7 @@ public final class StandardConversions {
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
          throw new EncodingException("sourceMediaType not conforming to application/x-java-object!");
       }
-
-      Object decoded = decodeObjectContent(source, sourceMediaType);
-      if (decoded instanceof byte[]) return (byte[]) decoded;
-      if (decoded instanceof String && isJavaString(sourceMediaType))
-         return ((String) decoded).getBytes(StandardCharsets.UTF_8);
-      return marshaller.objectToByteBuffer(source);
+      return marshaller.objectToByteBuffer(decodeObjectContent(source, sourceMediaType));
    }
 
    /**

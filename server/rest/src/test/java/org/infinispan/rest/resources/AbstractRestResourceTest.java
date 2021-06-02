@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.helper.RestServerHelper.CLIENT_KEY_STORE;
 import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
@@ -194,6 +195,10 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    void putStringValueInCache(String cacheName, String key, String value) {
       putInCache(cacheName, key, value, "text/plain; charset=utf-8");
+   }
+
+   void putTextEntryInCache(String cacheName, String key, String value) {
+      putInCache(cacheName, key, TEXT_PLAIN_TYPE, value, TEXT_PLAIN_TYPE);
    }
 
    void putJsonValueInCache(String cacheName, String key, String value) {

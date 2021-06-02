@@ -93,9 +93,7 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
 
       String key = "someKey";
 
-      byte[] marshalledKey = client0.getMarshaller().objectToByteBuffer(key);
-
-      Object keyStorage = cache(0).getAdvancedCache().getValueDataConversion().toStorage(marshalledKey);
+      Object keyStorage = cache(0).getAdvancedCache().getValueDataConversion().toStorage(key);
 
       assertNull(remoteCache0.put(key, "value1", -1, TimeUnit.MILLISECONDS, 100, TimeUnit.MILLISECONDS));
 
