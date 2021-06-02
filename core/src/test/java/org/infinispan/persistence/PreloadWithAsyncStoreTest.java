@@ -78,7 +78,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertTrue("Preload should be enabled.", cache.getCacheConfiguration().persistence().preload());
       assertTrue("Async Store should be enabled.", cache.getCacheConfiguration().persistence().usingAsyncStore());
 
-      WaitNonBlockingStore store = TestingUtil.getStore(cache, 0, false);
+      WaitNonBlockingStore<Object, Object> store =  TestingUtil.getFirstStoreWait(cache);
 
       assertNotInCacheAndStore(cache, store, KEYS);
 
@@ -90,7 +90,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
          assertInCacheAndStore(cache, store, KEYS[i], VALUES[i]);
       }
 
-      DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
+      DataContainer<Object, Object> dataContainer = cache.getAdvancedCache().getDataContainer();
 
       assertEquals("Wrong number of keys in data container after puts.", KEYS.length, dataContainer.size());
       assertEquals("Some exceptions has been caught during the puts.", 0, interceptor.exceptionsCaught.get());
@@ -107,16 +107,16 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertEquals("Some exceptions has been caught during the preload.", 0, interceptor.exceptionsCaught.get());
 
       // Re-retrieve since the old reference might not be usable
-      store = TestingUtil.getStore(cache, 0, false);
+      store = TestingUtil.getStoreWait(cache, 0, false);
       for (int i = 1; i < KEYS.length; i++) {
          assertInCacheAndStore(cache, store, KEYS[i], VALUES[i]);
       }
    }
 
-   private void assertInCacheAndStore(Cache cache, WaitNonBlockingStore loader, Object key, Object value) throws PersistenceException {
-      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+   private void assertInCacheAndStore(Cache<Object, Object> cache, WaitNonBlockingStore<Object, Object> loader, Object key, Object value) throws PersistenceException {
+      InternalCacheValue<Object> se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(se.getValue(), value, "Cache", key);
-      MarshallableEntry me = loader.loadEntry(key);
+      MarshallableEntry<Object, Object> me = loader.loadEntry(key);
       assertStoredEntry(me.getValue(), value, "Store", key);
    }
 
@@ -125,14 +125,14 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertEquals(src + " should contain value " + expectedValue + " under key " + key + " but was " + value, expectedValue, value);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, WaitNonBlockingStore store, T... keys) throws PersistenceException {
+   private <T> void assertNotInCacheAndStore(Cache<Object, Object> cache, WaitNonBlockingStore<Object, Object> store, T... keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));
       }
    }
 
-   private ExceptionTrackerInterceptor getInterceptor(Cache cache) {
+   private ExceptionTrackerInterceptor getInterceptor(Cache<Object, Object> cache) {
       return cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorWithClass(ExceptionTrackerInterceptor.class);
    }

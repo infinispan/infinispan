@@ -15,20 +15,20 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -52,7 +52,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cacheManager;
    private Cache<String, String> cache;
-   private WaitDelegatingNonBlockingStore store;
+   private WaitDelegatingNonBlockingStore<String, String> store;
 
    @BeforeMethod
    public void beforeClass() {
@@ -70,7 +70,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager(cc);
       cache = cacheManager.getCache();
-      store = TestingUtil.getFirstStore(cache);
+      store = TestingUtil.getFirstStoreWait(cache);
    }
 
    @AfterMethod(alwaysRun = true)
