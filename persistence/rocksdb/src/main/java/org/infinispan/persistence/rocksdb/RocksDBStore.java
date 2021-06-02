@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -30,9 +29,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -312,37 +309,36 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    private Flowable<MarshallableEntry<K, V>> actualPurgeExpired(long now) {
       // The following flowable is responsible for emitting entries that have expired from expiredDb and removing the
       // given entries
-      Flowable<byte[]> expiredFlowable = Flowable.using(() -> {
+      Flowable<byte[]> expiredFlowable = Flowable.generate(() -> {
          ReadOptions readOptions = new ReadOptions().setFillCache(false);
-         return new AbstractMap.SimpleImmutableEntry<>(readOptions, expiredDb.newIterator(readOptions));
-      }, entry -> {
-         if (entry.getValue() == null) {
-            return Flowable.empty();
-         }
-         RocksIterator iterator = entry.getValue();
+         RocksIterator iterator = expiredDb.newIterator(readOptions);
          iterator.seekToFirst();
+         return new AbstractMap.SimpleImmutableEntry<>(readOptions, iterator);
+      }, (state, emitter) -> {
+         RocksIterator iterator = state.getValue();
+         while (iterator.isValid()) {
+            byte[] keyBytes = iterator.key();
+            Long time = unmarshall(keyBytes);
+            if (time <= now) {
+               // Found an expired entry
+               // Delete the timestamp from the expiration DB
+               try {
+                  expiredDb.delete(keyBytes);
+               } catch (RocksDBException e) {
+                  throw new PersistenceException(e);
+               }
+               // Emit the bucket of expired keys and return
+               byte[] value = iterator.value();
+               emitter.onNext(value);
+               iterator.next();
+               return;
+            }
 
-         return Flowable.fromIterable(() ->
-               new AbstractIterator<byte[]>() {
-                  @Override
-                  protected byte[] getNext() {
-                     if (!iterator.isValid()) {
-                        return null;
-                     }
-                     byte[] keyBytes = iterator.key();
-                     Long time = unmarshall(keyBytes);
-                     if (time > now)
-                        return null;
-                     try {
-                        expiredDb.delete(keyBytes);
-                     } catch (RocksDBException e) {
-                        throw new PersistenceException(e);
-                     }
-                     byte[] value = iterator.value();
-                     iterator.next();
-                     return value;
-                  }
-               });
+            iterator.next();
+         }
+
+         // Got to the end of the iteration
+         emitter.onComplete();
       }, entry -> {
          entry.getKey().close();
          RocksIterator rocksIterator = entry.getValue();
@@ -494,34 +490,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
-   private class RocksEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
-      private final RocksIterator it;
-      private final Predicate<? super K> filter;
-      private final long now;
-
-      RocksEntryIterator(RocksIterator it, Predicate<? super K> filter, long now) {
-         this.it = it;
-         this.filter = filter;
-         this.now = now;
-      }
-
-      @Override
-      protected MarshallableEntry<K, V> getNext() {
-         MarshallableEntry<K, V> entry = null;
-         while (entry == null && it.isValid()) {
-            K key = unmarshall(it.key());
-            if (filter == null || filter.test(key)) {
-               MarshallableEntry<K, V> me = unmarshallEntry(key, it.value());
-               if (me != null && !me.isExpired(now)) {
-                  entry = me;
-               }
-            }
-            it.next();
-         }
-         return entry;
-      }
-   }
-
    private abstract class RocksDBHandler {
 
       abstract RocksDB open(Path location, DBOptions options) throws RocksDBException;
@@ -633,20 +601,42 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       abstract CompletionStage<Long> approximateSize(IntSet segments);
 
-      <P> Publisher<P> publish(int segment, Function<RocksIterator, Flowable<P>> function) {
+      Publisher<MarshallableEntry<K, V>> publish(int segment, Predicate<? super K> filter) {
+         long now = timeService.wallClockTime();
          ReadOptions readOptions = new ReadOptions().setFillCache(false);
-         return blockingManager.blockingPublisher(Flowable.using(() -> wrapIterator(db, readOptions, segment), iterator -> {
-            if (iterator == null) {
-               return Flowable.empty();
+         return blockingManager.blockingPublisher(Flowable.generate(() -> {
+                    RocksIterator iterator = wrapIterator(db, readOptions, segment);
+                    iterator.seekToFirst();
+                    return iterator;
+                 },
+                 (iterator, emitter) -> {
+                    MarshallableEntry<K, V> entry = nextEntry(filter, now, iterator);
+                    if (entry != null) {
+                       emitter.onNext(entry);
+                    }
+                    if (!iterator.isValid()) {
+                       emitter.onComplete();
+                    }
+                 },
+                 iterator -> {
+                    iterator.close();
+                    readOptions.close();
+                 }));
+      }
+
+      private MarshallableEntry<K, V> nextEntry(Predicate<? super K> filter, long now, RocksIterator iterator) {
+         MarshallableEntry<K, V> entry = null;
+         while (entry == null && iterator.isValid()) {
+            K key = unmarshall(iterator.key());
+            if (filter == null || filter.test(key)) {
+               MarshallableEntry<K, V> me = unmarshallEntry(key, iterator.value());
+               if (me != null && !me.isExpired(now)) {
+                  entry = me;
+               }
             }
-            iterator.seekToFirst();
-            return function.apply(iterator);
-         }, iterator -> {
-            if (iterator != null) {
-               iterator.close();
-            }
-            readOptions.close();
-         }));
+            iterator.next();
+         }
+         return entry;
       }
 
       abstract RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment);
@@ -782,11 +772,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       @Override
       Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue) {
          Predicate<? super K> combinedFilter = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
-         return publish(-1, it -> Flowable.fromIterable(() -> {
-            // Make sure this is taken when the iterator is created
-            long now = timeService.wallClockTime();
-            return new RocksEntryIterator(it, combinedFilter, now);
-         }));
+         return publish(-1, combinedFilter);
       }
 
       @Override
@@ -938,11 +924,13 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       @Override
       Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue) {
-         Function<RocksIterator, Flowable<MarshallableEntry<K, V>>> function = it -> Flowable.fromIterable(() -> {
-            long now = timeService.wallClockTime();
-            return new RocksEntryIterator(it, filter, now);
-         });
-         return handleIteratorFunction(function, segments);
+         // Short circuit if only a single segment - assumed to be invoked from persistence thread
+         if (segments != null && segments.size() == 1) {
+            return publish(segments.iterator().nextInt(), filter);
+         }
+         IntSet segmentsToUse = segments == null ? IntSets.immutableRangeSet(handles.length()) : segments;
+         return Flowable.fromIterable(segmentsToUse)
+                 .concatMap(i -> publish(i, filter));
       }
 
       @Override
@@ -955,16 +943,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                throw new PersistenceException(e);
             }
          }), "rocksdb-approximateSize");
-      }
-
-      <R> Publisher<R> handleIteratorFunction(Function<RocksIterator, Flowable<R>> function, IntSet segments) {
-         // Short circuit if only a single segment - assumed to be invoked from persistence thread
-         if (segments != null && segments.size() == 1) {
-            return publish(segments.iterator().nextInt(), function);
-         }
-         IntSet segmentsToUse = segments == null ? IntSets.immutableRangeSet(handles.length()) : segments;
-         return Flowable.fromStream(segmentsToUse.intStream().mapToObj(i -> publish(i, function)))
-               .concatMap(RxJavaInterop.identityFunction());
       }
 
       @Override
