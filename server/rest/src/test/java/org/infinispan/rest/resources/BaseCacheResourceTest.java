@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -10,6 +11,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIAL
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.IF_NONE_MATCH;
@@ -102,10 +104,17 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
 
+   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, Object key) {
+      return getCacheEntry(cacheName, key, TEXT_PLAIN);
+   }
+
    @SuppressWarnings("unchecked")
-   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, byte[] key) {
-      AdvancedCache<String, byte[]> cache = getCache(cacheName).withStorageMediaType();
-      CacheEntry<String, byte[]> cacheEntry = cache.getCacheEntry(key);
+   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, Object key, MediaType accept) {
+      // Caches accessed over REST assume keys are java.lang.String by default
+      final MediaType stringKeyType = APPLICATION_OBJECT.withClassType(String.class);
+      AdvancedCache<String, byte[]> restCache = getCache(cacheName).withMediaType(stringKeyType, accept);
+
+      CacheEntry<String, byte[]> cacheEntry = restCache.getCacheEntry(key);
       return (InternalCacheEntry<String, byte[]>) cacheEntry;
    }
 
@@ -470,7 +479,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("default").post("test", restEntity);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -496,7 +505,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("unknown").post("test", restEntity);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -514,7 +523,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
             .post("test", RestEntity.create(APPLICATION_SERIALIZED_OBJECT, convertToBytes(testClass)));
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test", APPLICATION_SERIALIZED_OBJECT);
       TestClass valueFromCache = convertFromBytes(cacheEntry.getValue());
 
       ResponseAssertion.assertThat(response).hasEtag();
@@ -544,7 +553,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(client.cache("default")
             .put("test", RestEntity.create(MediaType.fromString("text/plain;charset=UTF-8"), "Hey!")));
 
-      String valueFromCache = new String(getCacheEntry("default", "test".getBytes()).getValue());
+      String valueFromCache = new String(getCacheEntry("default", "test").getValue());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -557,7 +566,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test");
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
 
       Metadata metadata = cacheEntry.getMetadata();
 
@@ -573,7 +582,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("expiration").put("test", "test", -1, -1);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -588,7 +597,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 0, 0);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -613,7 +622,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 50, 50);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -630,7 +639,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasEtag();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test".getBytes());
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test");
       Assertions.assertThat(cacheEntry.getValue().length).isEqualTo(1_000_000);
    }
 

@@ -13,9 +13,7 @@ import java.io.IOException;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
-import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,7 +59,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
-            return StandardConversions.convertJavaToOctetStream(unmarshalled, MediaType.APPLICATION_OBJECT, marshaller);
+            return marshaller.objectToByteBuffer(decodeObjectContent(unmarshalled, MediaType.APPLICATION_OBJECT));
          } catch (IOException | InterruptedException e) {
             throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
          }
@@ -74,13 +72,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          return unmarshall(content);
       }
       if (destinationType.equals(APPLICATION_UNKNOWN)) {
-         try {
-            //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
-            if (content instanceof WrappedByteArray) return content;
-            return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT, marshaller);
-         } catch (IOException | InterruptedException e) {
-            throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
-         }
+         return content;
       }
 
       throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);

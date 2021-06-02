@@ -8,6 +8,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
@@ -480,14 +481,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
       assertEquals(0, emptyKeys.size());
 
-      putStringValueInCache("default", "1", "value");
+      putTextEntryInCache("default", "1", "value");
       response = join(client.cache("default").keys());
       Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
       assertEquals(1, singleSet.size());
 
       int entries = 10;
       for (int i = 0; i < entries; i++) {
-         putStringValueInCache("default", String.valueOf(i), "value");
+         putTextEntryInCache("default", String.valueOf(i), "value");
       }
       response = join(client.cache("default").keys());
       Set<?> keys = Json.read(response.getBody()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
@@ -504,12 +505,12 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(client.cache("default").entries());
       Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
       assertEquals(0, emptyEntries.size());
-      putStringValueInCache("default", "key_0", "value_0");
+      putTextEntryInCache("default", "key_0", "value_0");
       response = join(client.cache("default").entries());
       Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
       assertEquals(1, singleSet.size());
       for (int i = 0; i < 20; i++) {
-         putStringValueInCache("default", "key_" + i, "value_" + i);
+         putTextEntryInCache("default", "key_" + i, "value_" + i);
       }
       response = join(client.cache("default").entries());
       List<Json> jsons = Json.read(response.getBody()).asJsonList();
@@ -534,12 +535,12 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(client.cache("default").entries(-1, true));
       Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
       assertEquals(0, emptyEntries.size());
-      putStringValueInCache("default", "key_0", "value_0");
+      putTextEntryInCache("default", "key_0", "value_0");
       response = join(client.cache("default").entries(-1, true));
       Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
       assertEquals(1, singleSet.size());
       for (int i = 0; i < 20; i++) {
-         putStringValueInCache("default", "key_" + i, "value_" + i);
+         putTextEntryInCache("default", "key_" + i, "value_" + i);
       }
       response = join(client.cache("default").entries(-1, true));
       List<Json> jsons = Json.read(response.getBody()).asJsonList();
@@ -561,8 +562,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testStreamEntriesWithMetadataAndExpirationTimesConvertedToSeconds() {
-      RestResponse response = join(client.cache("default").put("key1", "value1", 1000, 5000));
-      response = join(client.cache("default").entries(1, true));
+      RestEntity textValue = RestEntity.create(TEXT_PLAIN, "value1");
+      join(client.cache("default").put("key1", TEXT_PLAIN_TYPE, textValue, 1000, 5000));
+      RestResponse response = join(client.cache("default").entries(1, true));
       List<Json> jsons = Json.read(response.getBody()).asJsonList();
 
       assertEquals(1, jsons.size());

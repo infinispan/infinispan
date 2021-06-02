@@ -124,7 +124,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("objectCache", "test".getBytes(), testClass);
+      putValueInCache("objectCache", "test", testClass);
 
       //when
       CompletionStage<RestResponse> response = client.cache("objectCache").get("test", APPLICATION_JSON_TYPE);
@@ -300,7 +300,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
    @Test
    public void shouldDeleteExistingValueEvenWithoutMetadata() {
-      putValueInCache("default", "test".getBytes(), "test");
+      putValueInCache("default", "test", "test");
 
       //when
       CompletionStage<RestResponse> response = client.cache("default").remove("test");

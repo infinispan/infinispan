@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.commons.dataconversion.StandardConversions.decodeObjectContent;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
@@ -56,13 +57,13 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
             return content;
          }
          if (destinationType.match(TEXT_PLAIN)) {
-            return StandardConversions.convertJavaToOctetStream(content, APPLICATION_OBJECT, getMashaller());
+            return StandardConversions.convertTextToOctetStream(content, contentType);
          }
          if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             return convertToUrlEncoded(content, contentType);
          }
          throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
-      } catch (InterruptedException | IOException | EncodingException | ClassNotFoundException e) {
+      } catch (IOException | EncodingException | ClassNotFoundException e) {
          throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
    }
@@ -78,7 +79,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          if (contentType.match(TEXT_PLAIN)) {
             return StandardConversions.convertTextToOctetStream(content, contentType);
          }
-         return StandardConversions.convertJavaToOctetStream(content, contentType, getMashaller());
+         return getMashaller().objectToByteBuffer(decodeObjectContent(content, contentType));
       } catch (EncodingException | InterruptedException | IOException e) {
          throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, APPLICATION_UNKNOWN, e);
       }

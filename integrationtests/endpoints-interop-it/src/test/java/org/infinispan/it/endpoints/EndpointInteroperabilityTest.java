@@ -342,9 +342,6 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    @Test
    public void testCustomKeysAndByteValues() throws Exception {
-
-      String customKeyType = "application/x-java-object; type=ByteArray";
-
       CustomKey objectKey = new CustomKey("a", 1.0d, 1.0f, true);
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
       marshaller.register(EndpointITSCI.INSTANCE);
@@ -359,7 +356,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read via Rest
       Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
-            .key(restKey, customKeyType).accept(APPLICATION_OCTET_STREAM)
+            .key(restKey, APPLICATION_OCTET_STREAM_TYPE).accept(APPLICATION_OCTET_STREAM)
             .read();
 
       assertArrayEquals((byte[]) bytesFromRest, value);
