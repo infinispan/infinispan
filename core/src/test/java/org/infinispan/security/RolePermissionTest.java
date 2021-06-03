@@ -53,106 +53,71 @@ public class RolePermissionTest extends SingleCacheManagerTest {
    }
 
    public void testPermissionAndRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.EXEC, "role1");
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.EXEC, "role1");
+         return null;
       });
    }
 
    public void testPermissionAndNoRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.EXEC);
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.EXEC);
+         return null;
       });
    }
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndNoRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.LISTEN);
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.LISTEN);
+         return null;
       });
    }
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.LISTEN, "role1");
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.LISTEN, "role1");
+         return null;
       });
    }
 
    @Test(expectedExceptions=SecurityException.class)
    public void testPermissionAndWrongRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.EXEC, "role2");
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.EXEC, "role2");
+         return null;
       });
    }
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndWrongRole() {
-      Security.doAs(SUBJECT_A, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.LISTEN, "role2");
-            return null;
-         }
+      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.LISTEN, "role2");
+         return null;
       });
    }
 
-   @Test(expectedExceptions=SecurityException.class)
    public void testNoPrincipalInSubject() {
-      Security.doAs(SUBJECT_WITHOUT_PRINCIPAL, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            authzManager.checkPermission(AuthorizationPermission.NONE);
-            return null;
-         }
+      Security.doAs(SUBJECT_WITHOUT_PRINCIPAL, (PrivilegedAction<Void>) () -> {
+         authzManager.checkPermission(AuthorizationPermission.NONE);
+         return null;
       });
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            RolePermissionTest.super.teardown();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         RolePermissionTest.super.teardown();
+         return null;
       });
    }
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         cacheManager.getCache().clear();
+         return null;
       });
    }
 }

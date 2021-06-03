@@ -27,7 +27,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @Scope(Scopes.GLOBAL)
 public class GlobalSecurityManagerImpl implements GlobalSecurityManager {
    private boolean cacheEnabled;
-   private com.github.benmanes.caffeine.cache.Cache<CachePrincipalPair, SubjectACL> cache;
+   private com.github.benmanes.caffeine.cache.Cache<CacheSubjectPair, SubjectACL> cache;
    private EmbeddedCacheManager embeddedCacheManager;
 
    @Inject

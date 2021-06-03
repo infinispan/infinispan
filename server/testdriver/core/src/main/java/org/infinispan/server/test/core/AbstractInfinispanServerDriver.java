@@ -34,6 +34,7 @@ import javax.security.auth.x500.X500Principal;
 import org.infinispan.cli.user.UserTool;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
@@ -217,7 +218,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       }
       // Create users with composite roles
       for(TestUser user : TestUser.values()) {
-         userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+         if (user != TestUser.ANONYMOUS) {
+            userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+         }
       }
    }
 
@@ -285,10 +288,12 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          trustStore.setCertificateEntry("ca", ca.getSelfSignedCertificate());
          createSignedCertificate(signingKey, publicKey, ca, CA_DN, "server", trustStore);
 
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "admin", trustStore);
+         for (TestUser user : TestUser.values()) {
+            if (user != TestUser.ANONYMOUS) {
+               createSignedCertificate(signingKey, publicKey, ca, CA_DN, user.getUser(), trustStore);
+            }
+         }
          createSignedCertificate(signingKey, publicKey, ca, CA_DN, "supervisor", trustStore);
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "writer", trustStore);
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "reader", trustStore);
 
          try (FileOutputStream os = new FileOutputStream(getCertificateFile("trust"))) {
             trustStore.store(os, KEY_PASSWORD.toCharArray());
@@ -377,8 +382,24 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    @Override
+   public void applyKeyStore(RestClientConfigurationBuilder builder, String certificateName) {
+      builder.security().ssl()
+            .keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+            .keyStorePassword(KEY_PASSWORD.toCharArray())
+            .keyStoreType("pkcs12");
+   }
+
+   @Override
    public void applyTrustStore(ConfigurationBuilder builder, String certificateName) {
       builder.security().ssl().trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath()).trustStorePassword(KEY_PASSWORD.toCharArray());
+   }
+
+   @Override
+   public void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName) {
+      builder.security().ssl()
+            .trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+            .trustStorePassword(KEY_PASSWORD.toCharArray())
+            .trustStoreType("pkcs12");
    }
 
    /**
