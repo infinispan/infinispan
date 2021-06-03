@@ -1,12 +1,27 @@
-# The Infinispan project #
+[![Infinispan](https://design.jboss.org/infinispan/logo/final/PNG/infinispan_logo_rgb_lightbluewhite_darkblue_600px.png)](https://infinispan.org/)
 
-Infinispan is an open source (under the [Apache License, v2.0](http://www.apache.org/licenses/LICENSE-2.0.html "The Apache License, v2.0")) data grid platform.  For more information on Infinispan,
-including HOWTOs, getting started guides, build instructions and downloading binaries, visit the project's website on
-[http://www.infinispan.org](http://www.infinispan.org "The Infinispan project page")
+[![Version](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/org.infinispan/infinispan-core)
+[![License](https://img.shields.io/github/license/quarkusio/quarkus?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Project Chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
-## Version
+# Infinispan, In-Memory Distributed Data Store #
 
-![Version](https://maven-badges.herokuapp.com/maven-central/org.infinispan/infinispan-core/badge.svg "Version")
+Infinispan is an open-source in-memory data grid that offers flexible deployment options and 
+robust capabilities for storing, managing, and processing data. 
+
+Infinispan provides a key/value data store that can hold all types of data, 
+from Java objects to plain text. 
+
+Infinispan distributes your data across elastically 
+scalable clusters to guarantee high availability and fault tolerance,
+whether you use Infinispan as a volatile cache or a persistent data store.
+
+
+## Getting Started
+
+* [Documentation](https://infinispan.org/)
+* [5 Minutes Getting Started](https://infinispan.org/get-started/)
+* [Simple Tutorials](https://github.com/infinispan/infinispan-simple-tutorials)
 
 ## Contributing
 
