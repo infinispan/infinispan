@@ -17,13 +17,18 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
@@ -94,13 +99,6 @@ import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Function;
-import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
 public class PersistenceManagerImpl implements PersistenceManager {
@@ -662,7 +660,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          checkStoreAvailability();
          if (trace) {
-            log.tracef("Purging entries from stores");
+            log.tracef("Purging entries from stores on cache %s", cache.getName());
          }
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
@@ -770,58 +768,82 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate) {
       return Flowable.using(this::acquireReadLock,
-            ignore -> {
-               checkStoreAvailability();
-               if (trace) {
-                  log.tracef("Publishing keys for segments %s", segments);
-               }
-               for (StoreStatus storeStatus : stores) {
-                  Set<Characteristic> characteristics = storeStatus.characteristics;
-                  if (characteristics.contains(Characteristic.BULK_READ) &&  predicate.test(storeStatus.config)) {
-                     Predicate<? super K> filterToUse;
-                     if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
-                        filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
-                     } else {
-                        filterToUse = filter;
-                     }
-                     return storeStatus.<K, Object>store().publishKeys(segments, filterToUse);
-                  }
-               }
-               return Flowable.empty();
-            },
-            this::releaseReadLock);
+                            ignore -> {
+                               checkStoreAvailability();
+                               if (trace) {
+                                  log.tracef("Publishing keys for segments %s", segments);
+                               }
+                               for (StoreStatus storeStatus : stores) {
+                                  Set<Characteristic> characteristics = storeStatus.characteristics;
+                                  if (characteristics.contains(Characteristic.BULK_READ) && predicate.test(storeStatus.config)) {
+                                     Predicate<? super K> filterToUse;
+                                     if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
+                                        filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
+                                     } else {
+                                        filterToUse = filter;
+                                     }
+                                     return storeStatus.<K, Object>store().publishKeys(segments, filterToUse);
+                                  }
+                               }
+                               return Flowable.empty();
+                            },
+                            this::releaseReadLock);
    }
 
    @Override
    public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation,
-         boolean includeStores) {
+                                                                            boolean includeStores) {
       return loadFromAllStores(key, keyPartitioner.getSegment(key), localInvocation, includeStores);
    }
 
    @Override
-   public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment,
-         boolean localInvocation, boolean includeStores) {
-      return Maybe.using(
-            this::acquireReadLock,
-            ignore -> {
-               checkStoreAvailability();
-               if (trace) {
-                  log.tracef("Loading entry for key %s with segment %d", key, segment);
-               }
-               return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> allowLoad(storeStatus, localInvocation, includeStores))
-                     // Only do 1 request at a time
-                     .concatMapMaybe(storeStatus -> Maybe.fromCompletionStage(
-                           storeStatus.<K, V>store().load(segmentOrZero(storeStatus, segment), key)), 1)
-                     .firstElement();
-            },
-            this::releaseReadLock
-      ).toCompletionStage(null);
+   public <K, V> CompletionStage<MarshallableEntry<K, V>>
+   loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      long stamp = acquireReadLock();
+      boolean done = true;
+      try {
+         checkStoreAvailability();
+         if (trace) {
+            log.tracef("Loading entry for key %s with segment %d", key, segment);
+         }
+         Iterator<StoreStatus> iterator = stores.iterator();
+         CompletionStage<MarshallableEntry<K, V>> stage = loadFromStoresIterator(key, segment, iterator, localInvocation, includeStores);
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            return stage;
+         } else {
+            done = false;
+            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
+         }
+      } finally {
+         if (done) {
+            releaseReadLock(stamp);
+         }
+      }
+   }
+
+   private <K, V> CompletionStage<MarshallableEntry<K, V>>
+   loadFromStoresIterator(Object key, int segment, Iterator<StoreStatus> iterator, boolean localInvocation, boolean includeStores) {
+      while (iterator.hasNext()) {
+         StoreStatus storeStatus = iterator.next();
+         NonBlockingStore<K, V> store = storeStatus.store();
+         if (!allowLoad(storeStatus, localInvocation, includeStores)) {
+            continue;
+         }
+         CompletionStage<MarshallableEntry<K, V>> loadStage = store.load(segmentOrZero(storeStatus, segment), key);
+         return loadStage.thenCompose(e -> {
+            if (e != null) {
+               return CompletableFuture.completedFuture(e);
+            } else {
+               return loadFromStoresIterator(key, segment, iterator, localInvocation, includeStores);
+            }
+         });
+      }
+      return CompletableFutures.completedNull();
    }
 
    private boolean allowLoad(StoreStatus storeStatus, boolean localInvocation, boolean includeStores) {
       return !storeStatus.characteristics.contains(Characteristic.WRITE_ONLY) && (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
-            (includeStores || storeStatus.characteristics.contains(Characteristic.READ_ONLY) || storeStatus.config.ignoreModifications());
+             (includeStores || storeStatus.characteristics.contains(Characteristic.READ_ONLY) || storeStatus.config.ignoreModifications());
    }
 
    private boolean isLocalOnlyLoader(NonBlockingStore store) {
@@ -1243,7 +1265,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       CompletionStage<Void> handleFlowables(NonBlockingStore<K, V> store, int publisherCount,
             Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable,
             Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> putFlowable);
-   };
+   }
 
    /**
     * Provides a function that groups entries by their segments (via keyPartitioner).
