@@ -691,12 +691,32 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
+      // Avoid switching threads if there is nothing to load
+      long stamp = resizeLock.tryReadLock();
+      if (stamp != 0) {
+         FileEntry fe = getFileEntryWithReadLock(segment, key, stamp);
+         if (fe == null) {
+            return CompletableFutures.completedNull();
+         }
+
+         // Perform the actual read holding only the FileEntry lock
+         return blockingManager.supplyBlocking(() -> readFileEntry(fe, key, true, true), "sfs-load");
+      }
       return blockingManager.supplyBlocking(() -> blockingLoad(segment, key, true, true), "sfs-load");
    }
 
    private MarshallableEntry<K, V> blockingLoad(int segment, Object key, boolean loadValue, boolean loadMetadata) {
-      final FileEntry fe;
       long stamp = resizeLock.readLock();
+      FileEntry fe = getFileEntryWithReadLock(segment, key, stamp);
+      if (fe == null)
+         return null;
+
+      // Perform the actual read holding only the FileEntry lock
+      return readFileEntry(fe, key, loadValue, loadMetadata);
+   }
+
+   private FileEntry getFileEntryWithReadLock(int segment, Object key, long stamp) {
+      final FileEntry fe;
       try {
          Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
          if (segmentEntries == null)
@@ -719,9 +739,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       } finally {
          resizeLock.unlockRead(stamp);
       }
-
-      // Perform the actual read holding only the FileEntry lock
-      return readFileEntry(fe, key, loadValue, loadMetadata);
+      return fe;
    }
 
    private MarshallableEntry<K, V> readFileEntry(FileEntry fe, Object key, boolean loadValue, boolean loadMetadata) {
