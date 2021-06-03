@@ -639,19 +639,21 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
     */
    @Override
    public CompletionStage<Boolean> containsKey(int segment, Object key) {
-      // Pretend this never blocks
-      long stamp = resizeLock.readLock();
-      try {
-         Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
-         if (segmentEntries == null) {
-            return CompletableFutures.completedFalse();
-         }
-         FileEntry entry = segmentEntries.get(key);
-         boolean exists = entry != null && !entry.isExpired(timeService.wallClockTime());
-         return CompletableFutures.booleanStage(exists);
-      } finally {
-         resizeLock.unlockRead(stamp);
+      // Avoid switching threads if there is nothing to load
+      long stamp = resizeLock.tryReadLock();
+      if (stamp != 0) {
+         // Acquires the FileEntry lock and releases the read lock
+         FileEntry fe = getFileEntryWithReadLock(segment, key, stamp, false);
+         return CompletableFutures.booleanStage(fe != null);
       }
+      // Someone is holding the write lock
+      return blockingManager.supplyBlocking(() -> blockingContainsKey(segment, key), "sfs-containsKey");
+   }
+
+   private boolean blockingContainsKey(int segment, Object key) {
+      long stamp = resizeLock.readLock();
+      FileEntry fe = getFileEntryWithReadLock(segment, key, stamp, false);
+      return fe != null;
    }
 
    /**
@@ -761,66 +763,62 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private void write(int segment, MarshallableEntry<? extends K, ? extends V> marshalledEntry, FileChannel channel) {
+      // serialize cache value
+      org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();
+      org.infinispan.commons.io.ByteBuffer data = marshalledEntry.getValueBytes();
+      org.infinispan.commons.io.ByteBuffer metadata = marshalledEntry.getMetadataBytes();
+      org.infinispan.commons.io.ByteBuffer internalMetadata = marshalledEntry.getInternalMetadataBytes();
+
+      // allocate file entry and store in cache file
+      int metadataLength = metadata == null ? 0 : metadata.getLength() + TIMESTAMP_BYTES;
+      int internalMetadataLength = internalMetadata == null ? 0 : internalMetadata.getLength();
+      int len = KEY_POS_LATEST + key.getLength() + data.getLength() + metadataLength + internalMetadataLength;
+
+      long stamp = resizeLock.readLock();
       try {
-         // serialize cache value
-         org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();
-         org.infinispan.commons.io.ByteBuffer data = marshalledEntry.getValueBytes();
-         org.infinispan.commons.io.ByteBuffer metadata = marshalledEntry.getMetadataBytes();
-         org.infinispan.commons.io.ByteBuffer internalMetadata = marshalledEntry.getInternalMetadataBytes();
+         Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
+         if (segmentEntries == null) {
+            // We don't own the segment
+            return;
+         }
 
-         // allocate file entry and store in cache file
-         int metadataLength = metadata == null ? 0 : metadata.getLength() + TIMESTAMP_BYTES;
-         int internalMetadataLength = internalMetadata == null ? 0 : internalMetadata.getLength();
-         int len = KEY_POS_LATEST + key.getLength() + data.getLength() + metadataLength + internalMetadataLength;
-         FileEntry newEntry;
-         FileEntry oldEntry = null;
-         long stamp = resizeLock.readLock();
-         try {
-            Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
-            if (segmentEntries == null) {
-               // We don't own the segment
-               return;
-            }
+         FileEntry newEntry = allocate(len);
+         newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), data.getLength(), metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
 
-            newEntry = allocate(len);
-            newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), data.getLength(), metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
+         ByteBuffer buf = ByteBuffer.allocate(len);
+         newEntry.writeToBuf(buf);
+         buf.put(key.getBuf(), key.getOffset(), key.getLength());
+         buf.put(data.getBuf(), data.getOffset(), data.getLength());
+         if (metadata != null) {
+            buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
 
-            ByteBuffer buf = ByteBuffer.allocate(len);
-            newEntry.writeToBuf(buf);
-            buf.put(key.getBuf(), key.getOffset(), key.getLength());
-            buf.put(data.getBuf(), data.getOffset(), data.getLength());
-            if (metadata != null) {
-               buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
-
-               // Only write created & lastUsed if expiryTime is set
-               if (newEntry.expiryTime > 0) {
-                  buf.putLong(marshalledEntry.created());
-                  buf.putLong(marshalledEntry.lastUsed());
-               }
-            }
-            if (internalMetadata != null) {
-               buf.put(internalMetadata.getBuf(), internalMetadata.getOffset(), internalMetadata.getLength());
-            }
-            buf.flip();
-            channel.write(buf, newEntry.offset);
-            if (log.isTraceEnabled()) log.tracef("Wrote entry %s:%d at %d:%d", marshalledEntry.getKey(), len, newEntry.offset, newEntry.size);
-
-            // add the new entry to in-memory index
-            oldEntry = segmentEntries.put(marshalledEntry.getKey(), newEntry);
-
-            // if we added an entry, check if we need to evict something
-            if (oldEntry == null)
-               oldEntry = evict();
-         } finally {
-            // in case we replaced or evicted an entry, add to freeList
-            try {
-               free(oldEntry);
-            } finally {
-               resizeLock.unlockRead(stamp);
+            // Only write created & lastUsed if expiryTime is set
+            if (newEntry.expiryTime > 0) {
+               buf.putLong(marshalledEntry.created());
+               buf.putLong(marshalledEntry.lastUsed());
             }
          }
+         if (internalMetadata != null) {
+            buf.put(internalMetadata.getBuf(), internalMetadata.getOffset(), internalMetadata.getLength());
+         }
+         buf.flip();
+         channel.write(buf, newEntry.offset);
+         if (log.isTraceEnabled())
+            log.tracef("Wrote entry %s:%d at %d:%d", marshalledEntry.getKey(), len, newEntry.offset, newEntry.size);
+
+         // add the new entry to in-memory index
+         FileEntry oldEntry = segmentEntries.put(marshalledEntry.getKey(), newEntry);
+
+         // if we added an entry, check if we need to evict something
+         if (oldEntry == null)
+            oldEntry = evict();
+
+         // in case we replaced or evicted an entry, add to freeList
+         free(oldEntry);
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         resizeLock.unlockRead(stamp);
       }
    }
 
@@ -891,19 +889,31 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
-      return blockingManager.supplyBlocking(() -> blockingDelete(segment, key), "delete");
+      long stamp = resizeLock.tryReadLock();
+      if (stamp != 0) {
+         FileEntry fe = deleteWithReadLock(segment, key);
+         if (fe == null) {
+            resizeLock.unlockRead(stamp);
+            return CompletableFutures.completedFalse();
+         }
+
+         return blockingManager.supplyBlocking(() -> deleteInFile(stamp, fe), "sfs-delete");
+      }
+
+      return blockingManager.supplyBlocking(() -> blockingDelete(segment, key), "sfs-delete");
    }
 
    private boolean blockingDelete(int segment, Object key) {
       long stamp = resizeLock.readLock();
-      try {
-         Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
-         if (segmentEntries == null) {
-            // We don't own the segment
-            return false;
-         }
+      FileEntry fe = deleteWithReadLock(segment, key);
+      return deleteInFile(stamp, fe);
+   }
 
-         FileEntry fe = segmentEntries.remove(key);
+   /**
+    * Mark the entry as deleted on disk and release the read lock.
+    */
+   private boolean deleteInFile(long stamp, FileEntry fe) {
+      try {
          free(fe);
          return fe != null;
       } catch (Exception e) {
@@ -913,14 +923,49 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
+   private FileEntry deleteWithReadLock(int segment, Object key) {
+      Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
+      if (segmentEntries == null) {
+         // We don't own the segment
+         return null;
+      }
+
+      return segmentEntries.remove(key);
+   }
+
    @Override
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
+      // Avoid switching threads if there is nothing to load
+      long stamp = resizeLock.tryReadLock();
+      if (stamp != 0) {
+         // Acquires the FileEntry lock and releases the read lock
+         FileEntry fe = getFileEntryWithReadLock(segment, key, stamp, true);
+         if (fe == null) {
+            return CompletableFutures.completedNull();
+         }
+
+         // Perform the actual read holding only the FileEntry lock
+         return blockingManager.supplyBlocking(() -> readFromDisk(fe, key, true, true), "sfs-load");
+      }
+      // Someone is holding the write lock
       return blockingManager.supplyBlocking(() -> blockingLoad(segment, key, true, true), "sfs-load");
    }
 
    private MarshallableEntry<K, V> blockingLoad(int segment, Object key, boolean loadValue, boolean loadMetadata) {
-      final FileEntry fe;
       long stamp = resizeLock.readLock();
+      FileEntry fe = getFileEntryWithReadLock(segment, key, stamp, true);
+      if (fe == null)
+         return null;
+
+      // Perform the actual read holding only the FileEntry lock
+      return readFromDisk(fe, key, loadValue, loadMetadata);
+   }
+
+   /**
+    * Get the file entry from the segment map and release the read lock
+    */
+   private FileEntry getFileEntryWithReadLock(int segment, Object key, long stamp, boolean lockFileEntry) {
+      final FileEntry fe;
       try {
          Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
          if (segmentEntries == null)
@@ -935,7 +980,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             // Entries are removed due to expiration from {@link SingleFileStore#purge}
             if (fe.isExpired(timeService.wallClockTime())) {
                return null;
-            } else {
+            } else if (lockFileEntry) {
                // lock entry for reading before releasing entries monitor
                fe.lock();
             }
@@ -943,12 +988,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       } finally {
          resizeLock.unlockRead(stamp);
       }
-
-      // Perform the actual read holding only the FileEntry lock
-      return readFileEntry(fe, key, loadValue, loadMetadata);
+      return fe;
    }
 
-   private MarshallableEntry<K, V> readFileEntry(FileEntry fe, Object key, boolean loadValue, boolean loadMetadata) {
+   private MarshallableEntry<K, V> readFromDisk(FileEntry fe, Object key, boolean loadValue, boolean loadMetadata) {
       org.infinispan.commons.io.ByteBuffer valueBb = null;
 
       // If we only require the key, then no need to read disk
@@ -1299,7 +1342,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
             // Already "locked" by being removed from the segmentEntries map
             // FIXME We cannot load the metadata here or the lifespan check in CallInterceptor will fail
-            MarshallableEntry<K, V> entry = readFileEntry(fe, next.getKey(), false, false);
+            MarshallableEntry<K, V> entry = readFromDisk(fe, next.getKey(), false, false);
             processor.onNext(entry);
 
             try {
@@ -1334,7 +1377,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
-      if (!segmented) {
+      if (!segmented && segments.size() < ctx.getCache().getCacheConfiguration().clustering().hash().numSegments()) {
          return Flowable.fromPublisher(publishKeys(segments, null)).count().toCompletionStage();
       }
       return blockingManager.supplyBlocking(() -> blockingApproximateSize(segments), "sfs-approximateSize");
@@ -1570,7 +1613,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          // We compare the size first, as the entries in the free list must be sorted by size
          int diff = size - fe.size;
          if (diff != 0) return diff;
-         return (offset < fe.offset) ? -1 : ((offset == fe.offset) ? 0 : 1);
+         return Long.compare(offset, fe.offset);
       }
 
       @Override
