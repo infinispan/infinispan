@@ -17,9 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -188,7 +186,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    private Object visitManyDataCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) {
       AggregateCompletionStage<Void> stage = null;
       for (Object key : keys) {
-         CompletionStage<Void> innerStage = loadIfNeeded(ctx, key, command);
+         CompletionStage<?> innerStage = loadIfNeeded(ctx, key, command);
          if (innerStage != null && !CompletionStages.isCompletedSuccessfully(innerStage)) {
             if (stage == null) {
                stage = CompletionStages.aggregateCompletionStage();
@@ -204,7 +202,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command) {
       Object key;
-      CompletionStage<Void> stage = null;
+      CompletionStage<?> stage = null;
       if ((key = command.getKey()) != null) {
          stage = loadIfNeeded(ctx, key, command);
       }
@@ -335,7 +333,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     * @return null or a CompletionStage that when complete all listeners will be notified
     * @throws Throwable
     */
-   protected final CompletionStage<Void> loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
+   protected final CompletionStage<?> loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
       if (skipLoad(cmd, key, ctx)) {
          return null;
       }
@@ -352,43 +350,49 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     * @param cmd the command that initiated this load
     * @return a stage that when complete will have the entry loaded into the provided context
     */
-   protected CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
-
+   protected CompletionStage<?> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       CompletableFuture<InternalCacheEntry<K, V>> cf = new CompletableFuture<>();
 
       CompletionStage<InternalCacheEntry<K, V>> otherCF = pendingLoads.putIfAbsent(key, cf);
-
-      Consumer<? super InternalCacheEntry<K, V>> action = entry -> {
-         if (entry != null) {
-            entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
-         }
-         CacheEntry contextEntry = ctx.lookupEntry(key);
-         if (contextEntry instanceof MVCCEntry) {
-            ((MVCCEntry) contextEntry).setLoaded(true);
-         }
-      };
-
-      // If another thread is completing the request, then resume on a different CPU thread so we don't have to
-      // wait until the other command completes
       if (otherCF != null) {
+         // Nothing to clean up, just put the entry from the other load in the context
          if (log.isTraceEnabled()) {
-            log.tracef("Piggybacking on concurrent cache loader for key %s", key);
+            log.tracef("Piggybacking on concurrent load for key %s", key);
          }
-         return otherCF.thenAcceptAsync(action, nonBlockingExecutor);
+         // Resume on a different CPU thread so we don't have to wait until the other command completes
+         return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingExecutor);
       }
 
       int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
       CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
-      result.whenComplete((value, throwable) -> {
-         // Make sure we clean up our pendingLoads properly and before completing any responses
-         pendingLoads.remove(key);
-         if (throwable != null) {
-            cf.completeExceptionally(throwable);
-         } else {
-            cf.complete(value);
-         }
-      });
-      return cf.thenAccept(action);
+      if (CompletionStages.isCompletedSuccessfully(result)) {
+         finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
+      } else {
+         result.whenComplete((value, throwable) -> finishLoadInContext(ctx, key, cmd, cf, value, throwable));
+      }
+      return cf;
+   }
+
+   private void finishLoadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd, CompletableFuture<InternalCacheEntry<K, V>> cf, InternalCacheEntry<K, V> value, Throwable throwable) {
+      // Make sure we clean up our pendingLoads properly and before completing any responses
+      pendingLoads.remove(key);
+      if (throwable != null) {
+         cf.completeExceptionally(throwable);
+      } else {
+         putInContext(ctx, key, cmd, value);
+
+         cf.complete(value);
+      }
+   }
+
+   private void putInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd, InternalCacheEntry<K, V> entry) {
+      if (entry != null) {
+         entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
+      }
+      CacheEntry contextEntry = ctx.lookupEntry(key);
+      if (contextEntry instanceof MVCCEntry) {
+         ((MVCCEntry) contextEntry).setLoaded(true);
+      }
    }
 
    public CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
@@ -577,10 +581,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       persistenceManager.disableStore(storeType);
    }
 
-   private ToIntFunction<Object> getSegmentMapper(Cache<?, ?> cache) {
-      return partitioner::getSegment;
-   }
-
    private abstract class AbstractLoaderSet<R> extends AbstractSet<R> implements CacheSet<R> {
       protected final CacheSet<R> cacheSet;
       protected final long commandFlagBitSet;
@@ -699,8 +699,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
       @Override
       protected AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> supplier() {
-         return new EntryStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(),
-               false));
+         return new EntryStreamSupplier<>(cache, partitioner, () -> StreamSupport.stream(spliterator(),
+                                                                                         false));
       }
 
       @Override
@@ -796,7 +796,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
       @Override
       protected AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> supplier() {
-         return new KeyStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(), false));
+         return new KeyStreamSupplier<>(cache, partitioner, () -> StreamSupport.stream(spliterator(), false));
       }
 
       @Override
