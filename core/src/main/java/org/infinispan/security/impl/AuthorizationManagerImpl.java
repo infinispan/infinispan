@@ -37,7 +37,7 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
                     GlobalConfiguration globalConfiguration, Configuration configuration,
                     GlobalSecurityManager globalSecurityManager) {
       this.configuration = configuration.security().authorization();
-      Map<CachePrincipalPair, SubjectACL> globalACLCache = globalSecurityManager.globalACLCache();
+      Map<CacheSubjectPair, SubjectACL> globalACLCache = globalSecurityManager.globalACLCache();
       this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHE, cacheName, globalACLCache);
       this.writePermission = configuration.module(CreatePermissionConfiguration.class) != null ?
             AuthorizationPermission.CREATE : AuthorizationPermission.WRITE;

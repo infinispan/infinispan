@@ -1,0 +1,27 @@
+<cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-fragment-13.0.xsd"
+                 xmlns="urn:infinispan:config:13.0"
+                 name="default">
+   <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
+   <security>
+      <authorization>
+         <common-name-role-mapper/>
+         <roles>
+            <role name="admin" permissions="ALL"/>
+            <role name="application" permissions="ALL_READ ALL_WRITE LISTEN EXEC"/>
+            <role name="deployer" permissions="ALL_READ ALL_WRITE LISTEN EXEC CREATE"/>
+            <role name="observer" permissions="ALL_READ"/>
+            <role name="writer" permissions="WRITE"/>
+            <role name="reader" permissions="READ"/>
+         </roles>
+      </authorization>
+   </security>
+
+   <distributed-cache name="predefined"/>
+
+   <distributed-cache name="xsite">
+      <backups>
+         <backup site="NYC"/>
+      </backups>
+   </distributed-cache>
+</cache-container>
