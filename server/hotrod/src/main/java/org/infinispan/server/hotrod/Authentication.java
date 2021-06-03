@@ -128,7 +128,6 @@ public class Authentication extends BaseRequestProcessor {
    private SaslServer createSaslServer(String mech) throws Throwable {
       ServerAuthenticationProvider sap = authenticationConfig.serverAuthenticationProvider();
       List<Principal> principals = new ArrayList<>(2);
-      principals.add(new InetAddressPrincipal(((InetSocketAddress) channel.remoteAddress()).getAddress()));
       SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
       if (sslHandler != null) {
          try {
@@ -140,6 +139,7 @@ public class Authentication extends BaseRequestProcessor {
             }
          }
       }
+      principals.add(new InetAddressPrincipal(((InetSocketAddress) channel.remoteAddress()).getAddress()));
       if (authenticationConfig.serverSubject() != null) {
          try {
             // We must use Subject.doAs() here instead of Security.doAs()

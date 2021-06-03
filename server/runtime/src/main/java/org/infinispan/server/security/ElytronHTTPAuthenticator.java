@@ -70,6 +70,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                for (String name : configuration.authentication().mechanisms()) {
                   HttpServerAuthenticationMechanism mechanism = factory.createMechanism(name);
                   mechanism.evaluateRequest(requestAdapter);
+                  extractSubject(request, mechanism);
                }
             } else {
                String mechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
@@ -83,19 +84,23 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                   throw Server.log.unsupportedMechanism(mechName);
                }
                mechanism.evaluateRequest(requestAdapter);
-               SecurityIdentity securityIdentity = (SecurityIdentity) mechanism.getNegotiatedProperty(SECURITY_IDENTITY);
-               if (securityIdentity != null) {
-                  Subject subject = new Subject();
-                  subject.getPrincipals().add(securityIdentity.getPrincipal());
-                  securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
-                  request.setSubject(subject);
-               }
+               extractSubject(request, mechanism);
             }
             return requestAdapter.getResponse();
          } catch (Exception e) {
             throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
          }
       }, executor);
+   }
+
+   private void extractSubject(RestRequest request, HttpServerAuthenticationMechanism mechanism) {
+      SecurityIdentity securityIdentity = (SecurityIdentity) mechanism.getNegotiatedProperty(SECURITY_IDENTITY);
+      if (securityIdentity != null) {
+         Subject subject = new Subject();
+         subject.getPrincipals().add(securityIdentity.getPrincipal());
+         securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
+         request.setSubject(subject);
+      }
    }
 
    public void init(RestServer restServer) {

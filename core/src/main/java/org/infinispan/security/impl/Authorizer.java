@@ -37,9 +37,9 @@ public class Authorizer {
    private final AuditLogger audit;
    private final AuditContext context;
    private final String name;
-   private Map<CachePrincipalPair, SubjectACL> aclCache;
+   private Map<CacheSubjectPair, SubjectACL> aclCache;
 
-   public Authorizer(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, Map<CachePrincipalPair, SubjectACL> aclCache) {
+   public Authorizer(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, Map<CacheSubjectPair, SubjectACL> aclCache) {
       this.globalConfiguration = globalConfiguration;
       this.audit = globalConfiguration.authorization().auditLogger();
       this.context = context;
@@ -47,7 +47,7 @@ public class Authorizer {
       this.aclCache = aclCache;
    }
 
-   public void setAclCache(Map<CachePrincipalPair, SubjectACL> aclCache) {
+   public void setAclCache(Map<CacheSubjectPair, SubjectACL> aclCache) {
       this.aclCache = aclCache;
    }
 
@@ -125,12 +125,11 @@ public class Authorizer {
 
    private boolean checkSubjectPermissionAndRole(Subject subject, AuthorizationConfiguration configuration,
                                                  AuthorizationPermission requiredPermission, String requestedRole) {
-      Principal userPrincipal = Security.getSubjectUserPrincipal(subject);
-      if (userPrincipal != null) {
-         CachePrincipalPair cpp = new CachePrincipalPair(userPrincipal, name);
+      if (subject != null) {
+         CacheSubjectPair csp = new CacheSubjectPair(subject, name);
          SubjectACL subjectACL;
          if (aclCache != null)
-            subjectACL = aclCache.computeIfAbsent(cpp, s -> computeSubjectACL(subject, configuration));
+            subjectACL = aclCache.computeIfAbsent(csp, s -> computeSubjectACL(subject, configuration));
          else
             subjectACL = computeSubjectACL(subject, configuration);
 

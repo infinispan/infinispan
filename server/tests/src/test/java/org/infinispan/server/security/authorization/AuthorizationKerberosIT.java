@@ -66,18 +66,20 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
    @Override
    protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
-      Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
-      hotRodBuilder.security().authentication()
-            .saslMechanism("GSSAPI")
-            .serverName("datagrid")
-            .realm("default")
-            .callbackHandler(new VoidCallbackHandler())
-            .clientSubject(subject);
-      hotRodBuilders.put(user, hotRodBuilder);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
-      restBuilder.security().authentication()
-            .mechanism("SPNEGO")
-            .clientSubject(subject);
+      if (user != TestUser.ANONYMOUS) {
+         Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
+         hotRodBuilder.security().authentication()
+               .saslMechanism("GSSAPI")
+               .serverName("datagrid")
+               .realm("default")
+               .callbackHandler(new VoidCallbackHandler())
+               .clientSubject(subject);
+         restBuilder.security().authentication()
+               .mechanism("SPNEGO")
+               .clientSubject(subject);
+      }
+      hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
    }
 }
