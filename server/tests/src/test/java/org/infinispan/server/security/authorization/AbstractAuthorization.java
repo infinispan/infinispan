@@ -152,7 +152,7 @@ public abstract class AbstractAuthorization {
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> writerCache.get("k1")
       );
-      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER, TestUser.MONITOR))) {
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER, TestUser.MONITOR, TestUser.ANONYMOUS))) {
          RemoteCache<String, String> userCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          assertEquals("v1", userCache.get("k1"));
       }
@@ -358,7 +358,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testAnonymousHealthPredefinedCache() {
-      RestClient client = getServerTest().rest().get();
+      RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ANONYMOUS)).get();
       assertEquals("HEALTHY", sync(client.cacheManager("default").healthStatus()).getBody());
    }
 
@@ -401,7 +401,7 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testRestAdminsShoudleBeAbleToAdminServer() {
+   public void testRestAdminsShouldBeAbleToAdminServer() {
       RestClientConfigurationBuilder adminConfig = restBuilders.get(TestUser.ADMIN);
       RestClient client = getServerTest().rest().withClientConfiguration(adminConfig).get();
       assertStatus(NO_CONTENT, client.server().connectorStop("endpoint-alternate-1"));

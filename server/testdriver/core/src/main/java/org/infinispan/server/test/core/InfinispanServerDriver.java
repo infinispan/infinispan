@@ -8,6 +8,7 @@ import javax.management.MBeanServerConnection;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,7 +75,11 @@ public interface InfinispanServerDriver {
 
    void applyKeyStore(ConfigurationBuilder builder, String certificateName);
 
+   void applyKeyStore(RestClientConfigurationBuilder builder, String certificateName);
+
    void applyTrustStore(ConfigurationBuilder builder, String certificateName);
+
+   void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName);
 
    /**
     * Pauses a server. Equivalent to kill -SIGSTOP

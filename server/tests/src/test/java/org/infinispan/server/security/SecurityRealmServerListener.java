@@ -30,7 +30,9 @@ public class SecurityRealmServerListener implements InfinispanServerListener {
       }
       // Create users with composite roles
       for (TestUser user : TestUser.values()) {
-         userTool.createUser(username(user.getUser()), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+         if (user != TestUser.ANONYMOUS) {
+            userTool.createUser(username(user.getUser()), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+         }
       }
    }
 

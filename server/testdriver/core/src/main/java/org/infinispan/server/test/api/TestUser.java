@@ -20,9 +20,10 @@ public enum TestUser {
    DEPLOYER("deployer", "lessStrongPassword", Collections.singletonList("deployer")),
    MONITOR("monitor", "weakPassword", Collections.singletonList("monitor")),
    READER("reader", "readerPassword", Collections.singletonList("reader")),
-   WRITER("writer", "writerPassword", Collections.singletonList("writer"));
+   WRITER("writer", "writerPassword", Collections.singletonList("writer")),
+   ANONYMOUS(null, null, null);
 
-   public static final EnumSet<TestUser> NON_ADMINS = EnumSet.complementOf(EnumSet.of(TestUser.ADMIN));
+   public static final EnumSet<TestUser> NON_ADMINS = EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS));
 
    private final String user;
    private final String password;

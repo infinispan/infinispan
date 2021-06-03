@@ -28,10 +28,10 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthorizationKerberosTest.xml")
-                                    .numServers(1)
-                                    .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-                                    .addListener(new LdapServerListener("ldif/infinispan-kerberos.ldif", true))
-                                    .build();
+               .numServers(1)
+               .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+               .addListener(new LdapServerListener("ldif/infinispan-kerberos.ldif", true))
+               .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -64,18 +64,20 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
    @Override
    protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
-      Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
-      hotRodBuilder.security().authentication()
-            .saslMechanism("GSSAPI")
-            .serverName("datagrid")
-            .realm("default")
-            .callbackHandler(new VoidCallbackHandler())
-            .clientSubject(subject);
-      hotRodBuilders.put(user, hotRodBuilder);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
-      restBuilder.security().authentication()
-            .mechanism("SPNEGO")
-            .clientSubject(subject);
+      if (user != TestUser.ANONYMOUS) {
+         Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
+         hotRodBuilder.security().authentication()
+               .saslMechanism("GSSAPI")
+               .serverName("datagrid")
+               .realm("default")
+               .callbackHandler(new VoidCallbackHandler())
+               .clientSubject(subject);
+         restBuilder.security().authentication()
+               .mechanism("SPNEGO")
+               .clientSubject(subject);
+      }
+      hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
    }
 }
