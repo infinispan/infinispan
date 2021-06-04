@@ -95,7 +95,9 @@
       <module name="org.wildfly.security.elytron" services="import"/>
       <module name="org.hibernate"/>
 
+      <!-- jgroups-azure dependency -->
       <module name="com.microsoft.azure:azure-storage" optional="true"/>
+      <!-- jgroups native-s3 dependency -->
       <module name="com.amazonaws.aws-java-sdk" slot="@infinispan.module.slot@" optional="true"/>
    </dependencies>
 </module>

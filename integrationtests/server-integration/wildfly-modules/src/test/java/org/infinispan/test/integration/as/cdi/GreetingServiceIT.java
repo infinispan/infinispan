@@ -30,7 +30,7 @@ public class GreetingServiceIT extends AbstractGreetingServiceIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services meta-inf").exportAsString();
       return new StringAsset(manifest);
    }
 }

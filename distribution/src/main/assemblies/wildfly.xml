@@ -6,10 +6,23 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
+    <files>
+        <!-- add README -->
+        <file>
+            <source>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}/README.txt</source>
+            <outputDirectory/>
+        </file>
+    </files>
     <fileSets>
         <fileSet>
-            <directory>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</directory>
-            <outputDirectory/>
+            <!-- add licenses -->
+            <directory>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}/docs/licenses</directory>
+            <outputDirectory>docs/licenses</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <!-- add addons -->
+            <directory>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}/modules/system/add-ons/</directory>
+            <outputDirectory>modules/system/add-ons/</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

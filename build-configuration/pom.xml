@@ -114,7 +114,7 @@
 
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>18.0.0.Final</appserver.version>
+      <appserver.version>23.0.2.Final</appserver.version>
 
       <!-- Java source/target version -->
       <version.java>11</version.java>
@@ -182,8 +182,8 @@
       <version.okhttp>3.14.8</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.core>10.0.3.Final</version.org.wildfly.core>
-      <version.org.wildfly.elytron>1.15.1.Final</version.org.wildfly.elytron>
+      <version.org.wildfly.core>15.0.1.Final</version.org.wildfly.core>
+      <version.org.wildfly.elytron>1.15.3.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.1.4.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.1.0.Final</version.org.wildfly.openssl.natives>
       <version.picketbox>5.0.3.Final</version.picketbox>
@@ -222,7 +222,8 @@
       <version.maven.shade>3.2.4</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0-M5</version.maven.surefire>
-      <version.org.wildfly.build-tools>1.2.13.Final</version.org.wildfly.build-tools>
+      <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
+      <version.org.wildfly.galleon-plugins>5.1.3.Final</version.org.wildfly.galleon-plugins>
       <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
 
       <!-- versionx -->
