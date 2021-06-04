@@ -154,18 +154,36 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.wildfly.build</groupId>
-            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <groupId>org.jboss.galleon</groupId>
+            <artifactId>galleon-maven-plugin</artifactId>
             <executions>
                <execution>
                   <id>provision-modules</id>
                   <goals>
-                     <goal>build</goal>
+                     <goal>provision</goal>
                   </goals>
                   <phase>compile</phase>
                   <configuration>
-                     <config-file>wildfly-provisioning.xml</config-file>
-                     <server-name>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</server-name>
+                     <install-dir>${project.build.directory}/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</install-dir>
+                     <record-state>false</record-state>
+                     <!-- true: uses local m2 cache only -->
+                     <offline>false</offline>
+                     <feature-packs>
+                        <!-- Infinispan modules -->
+                        <feature-pack>
+                           <groupId>${project.groupId}</groupId>
+                           <artifactId>infinispan-feature-pack</artifactId>
+                           <version>${project.version}</version>
+                           <inherit-configs>false</inherit-configs>
+                        </feature-pack>
+                     </feature-packs>
+                     <plugin-options>
+                        <!--
+                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                        when false, the plugin downloads the jars at build time
+                         -->
+                        <jboss-maven-dist>false</jboss-maven-dist>
+                     </plugin-options>
                   </configuration>
                </execution>
             </executions>

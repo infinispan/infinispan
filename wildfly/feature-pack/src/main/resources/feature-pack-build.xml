@@ -1,6 +1,31 @@
-<build xmlns="urn:wildfly:feature-pack-build:1.1">
-    <dependencies>
-        <!-- Modules required: javax.transaction.api, org.jboss.logging, javax.api-->
-        <artifact name="${appserver.groupId}:wildfly-feature-pack" />
-    </dependencies>
+<build xmlns="urn:wildfly:feature-pack-build:3.1" producer="org.infinispan:infinispan-feature-pack">
+   <transitive>
+      <!-- without this, we do not have javax.* modules -->
+      <dependency group-id="${appserver.groupId}" artifact-id="wildfly-ee-galleon-pack">
+         <name>${appserver.groupId}:wildfly-ee-galleon-pack</name>
+         <packages inherit="false">
+            <exclude name="product.conf"/>
+         </packages>
+         <default-configs inherit="false"/>
+      </dependency>
+   </transitive>
+   <dependencies>
+      <dependency group-id="${appserver.groupId}" artifact-id="wildfly-galleon-pack">
+         <name>${appserver.groupId}:wildfly-galleon-pack</name>
+         <packages inherit="false" />
+         <default-configs inherit="false"/>
+      </dependency>
+   </dependencies>
+   <default-packages>
+      <!-- include all our packages: aws & infinispan -->
+      <package name="modules.all"/>
+      <package name="docs.schema"/>
+   </default-packages>
+   <!-- extract schemas -->
+   <package-schemas>
+      <group name="org.jboss.as"/>
+      <group name="org.wildfly"/>
+      <group name="org.wildfly.core"/>
+      <group name="org.infinispan"/>
+   </package-schemas>
 </build>

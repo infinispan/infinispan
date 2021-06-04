@@ -134,40 +134,109 @@
          </plugin>
 
          <plugin>
-            <groupId>org.wildfly.build</groupId>
-            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <groupId>org.jboss.galleon</groupId>
+            <artifactId>galleon-maven-plugin</artifactId>
             <executions>
                <execution>
                   <id>server-provisioning-node0</id>
                   <goals>
-                     <goal>build</goal>
+                     <goal>provision</goal>
                   </goals>
                   <phase>compile</phase>
                   <configuration>
-                     <config-file>server-provisioning.xml</config-file>
-                     <server-name>node0</server-name>
+                     <install-dir>${project.build.directory}/node0</install-dir>
+                     <record-state>false</record-state>
+                     <!-- true: uses local m2 cache only -->
+                     <offline>false</offline>
+                     <feature-packs>
+                        <!-- full server -->
+                        <feature-pack>
+                           <groupId>${appserver.groupId}</groupId>
+                           <artifactId>wildfly-galleon-pack</artifactId>
+                           <version>${appserver.version}</version>
+                        </feature-pack>
+                     </feature-packs>
+                     <configurations>
+                        <config>
+                           <model>standalone</model>
+                           <name>standalone.xml</name>
+                        </config>
+                     </configurations>
+                     <plugin-options>
+                        <!--
+                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                        when false, the plugin downloads the jars at build time
+                         -->
+                        <jboss-maven-dist>true</jboss-maven-dist>
+                     </plugin-options>
                   </configuration>
                </execution>
                <execution>
                   <id>server-provisioning-node1</id>
                   <goals>
-                     <goal>build</goal>
+                     <goal>provision</goal>
                   </goals>
                   <phase>compile</phase>
                   <configuration>
-                     <config-file>server-provisioning.xml</config-file>
-                     <server-name>node1</server-name>
+                     <install-dir>${project.build.directory}/node1</install-dir>
+                     <record-state>false</record-state>
+                     <!-- true: uses local m2 cache only -->
+                     <offline>false</offline>
+                     <feature-packs>
+                        <!-- full server -->
+                        <feature-pack>
+                           <groupId>${appserver.groupId}</groupId>
+                           <artifactId>wildfly-galleon-pack</artifactId>
+                           <version>${appserver.version}</version>
+                        </feature-pack>
+                     </feature-packs>
+                     <configurations>
+                        <config>
+                           <model>standalone</model>
+                           <name>standalone.xml</name>
+                        </config>
+                     </configurations>
+                     <plugin-options>
+                        <!--
+                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                        when false, the plugin downloads the jars at build time
+                         -->
+                        <jboss-maven-dist>true</jboss-maven-dist>
+                     </plugin-options>
                   </configuration>
                </execution>
                <execution>
                   <id>server-provisioning-testnode</id>
                   <goals>
-                     <goal>build</goal>
+                     <goal>provision</goal>
                   </goals>
                   <phase>compile</phase>
                   <configuration>
-                     <config-file>server-provisioning.xml</config-file>
-                     <server-name>testnode</server-name>
+                     <install-dir>${project.build.directory}/testnode</install-dir>
+                     <record-state>false</record-state>
+                     <!-- true: uses local m2 cache only -->
+                     <offline>false</offline>
+                     <feature-packs>
+                        <!-- full server -->
+                        <feature-pack>
+                           <groupId>${appserver.groupId}</groupId>
+                           <artifactId>wildfly-galleon-pack</artifactId>
+                           <version>${appserver.version}</version>
+                        </feature-pack>
+                     </feature-packs>
+                     <configurations>
+                        <config>
+                           <model>standalone</model>
+                           <name>standalone.xml</name>
+                        </config>
+                     </configurations>
+                     <plugin-options>
+                        <!--
+                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                        when false, the plugin downloads the jars at build time
+                         -->
+                        <jboss-maven-dist>true</jboss-maven-dist>
+                     </plugin-options>
                   </configuration>
                </execution>
             </executions>

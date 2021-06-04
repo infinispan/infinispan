@@ -242,7 +242,7 @@
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.com.amazonaws>1.11.368</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.11.708</versionx.com.amazonaws>
       <versionx.com.bouncycastle>${version.bouncycastle}</versionx.com.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
@@ -257,7 +257,7 @@
       <versionx.com.h2database.h2>1.4.200</versionx.com.h2database.h2>
       <versionx.com.mysqldatabase.mysql>8.0.16</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.2.5</versionx.com.postgresqldatabase.postgresql>
-      <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
+      <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
       <versionx.com.thoughtworks.xstream.xstream>1.4.17</versionx.com.thoughtworks.xstream.xstream>
@@ -368,10 +368,10 @@
       <versionx.org.jboss.weld.weld-api>3.1.SP1</versionx.org.jboss.weld.weld-api>
       <versionx.org.jboss.xnio.xnio-api>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-api>
       <versionx.org.jboss.xnio.xnio-nio>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-nio>
-      <versionx.org.jgroups.aws.s3.native-s3-ping>0.9.5.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
-      <versionx.org.jgroups.azure.jgroups-azure>1.2.1.Final</versionx.org.jgroups.azure.jgroups-azure>
+      <versionx.org.jgroups.aws.s3.native-s3-ping>1.0.0.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
+      <versionx.org.jgroups.azure.jgroups-azure>1.3.0.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
-      <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.13.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
+      <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.15.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.jsoup>1.9.2</versionx.org.jsoup>
       <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
       <versionx.org.latencyutils.LatencyUtils>2.0.2</versionx.org.latencyutils.LatencyUtils>
@@ -407,9 +407,9 @@
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.3.1</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
-      <versionx.org.wildfly.common.wildfly-common>1.5.1.Final</versionx.org.wildfly.common.wildfly-common>
+      <versionx.org.wildfly.common.wildfly-common>1.5.4.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
-      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.1.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.2.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
@@ -1841,9 +1841,14 @@
                <version>${version.maven-plugin-plugin}</version>
             </plugin>
             <plugin>
-               <groupId>org.wildfly.build</groupId>
-               <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
-               <version>${version.org.wildfly.build-tools}</version>
+               <groupId>org.wildfly.galleon-plugins</groupId>
+               <artifactId>wildfly-galleon-maven-plugin</artifactId>
+               <version>${version.org.wildfly.galleon-plugins}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.jboss.galleon</groupId>
+               <artifactId>galleon-maven-plugin</artifactId>
+               <version>${version.org.jboss.galleon}</version>
             </plugin>
             <plugin>
                <groupId>org.antlr</groupId>
