@@ -77,10 +77,10 @@ public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderIntercepto
    }
 
    @Override
-   protected boolean canLoad(Object key) {
+   protected boolean canLoad(Object key, int segment) {
       // Don't load the value if we are using distributed mode and aren't in the read CH
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      return cacheTopology != null && cacheTopology.isReadOwner(key);
+      return cacheTopology != null && cacheTopology.isSegmentReadOwner(segment);
    }
 
 }
