@@ -24,6 +24,18 @@ import org.junit.Test;
 public class GrammarTest extends TestBase {
 
    @Test
+   public void testDelete1() {
+      expectParserSuccess("delete from example.legacy.Category",
+            "(delete (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF example.legacy.Category <gen:0>))))");
+   }
+
+   @Test
+   public void testDelete2() {
+      expectParserSuccess("delete from example.legacy.Category c where c.id = 46",
+            "(delete (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF example.legacy.Category c))) (where (= (PATH (. c id)) 46)))");
+   }
+
+   @Test
    public void testFT1() {
       String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) ";
 

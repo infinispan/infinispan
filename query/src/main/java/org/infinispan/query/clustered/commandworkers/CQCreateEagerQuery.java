@@ -20,10 +20,10 @@ final class CQCreateEagerQuery extends CQWorker {
 
    @Override
    CompletionStage<QueryResponse> perform(BitSet segments) {
-      SearchQueryBuilder query = queryDefinition.getSearchQuery();
+      SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       setFilter(segments);
 
-      CompletionStage<NodeTopDocs> nodeTopDocs = (query.hasEntityProjection()) ? collectKeys(query) : collectProjections(query);
+      CompletionStage<NodeTopDocs> nodeTopDocs = query.hasEntityProjection() ? collectKeys(query) : collectProjections(query);
 
       return nodeTopDocs.thenApply(QueryResponse::new);
    }

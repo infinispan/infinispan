@@ -16,7 +16,7 @@ final class CQGetResultSize extends CQWorker {
 
    @Override
    CompletionStage<QueryResponse> perform(BitSet segments) {
-      SearchQueryBuilder query = queryDefinition.getSearchQuery();
+      SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       setFilter(segments);
       return blockingManager.supplyBlocking(() -> query.build().fetchTotalHitCount(), this)
             .thenApply(hitCount -> new QueryResponse(Math.toIntExact(hitCount)));

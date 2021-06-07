@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.objectfilter.ObjectFilter.FilterResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
@@ -40,15 +41,20 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
     */
    private static final int INITIAL_CAPACITY = 1000;
 
+   protected final IckleParsingResult.StatementType statementType;
+
    protected final AdvancedCache<?, ?> cache;
 
    protected final PartitionHandlingSupport partitionHandlingSupport;
+
    protected final LocalQueryStatistics queryStatistics;
 
    protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+                               IckleParsingResult.StatementType statementType,
                                Map<String, Object> namedParameters, String[] projection, long startOffset,
                                int maxResults, LocalQueryStatistics queryStatistics, boolean local) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
+      this.statementType = statementType;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
       this.queryStatistics = queryStatistics;
@@ -63,13 +69,13 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       return execute().list();
    }
 
-   protected abstract void recordQuery(Long time);
+   protected abstract void recordQuery(long time);
 
    @Override
    public QueryResult<T> execute() {
       partitionHandlingSupport.checkCacheAvailable();
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
+
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       QueryResult<T> result = executeInternal(getComparator());
 
@@ -86,7 +92,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
          MappingIterator<FilterResult, Object> iterator = new MappingIterator<>(getInternalIterator(), this::mapFilterResult);
          return (CloseableIterator<T>) iterator;
       }
-      final QueryResult<T> result = executeInternal(comparator);
+      QueryResult<T> result = executeInternal(comparator);
       return Closeables.iterator(result.list().iterator());
    }
 
@@ -170,10 +176,15 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       return projection != null ? result.getProjection() : result.getInstance();
    }
 
+   protected boolean isSelectStatement() {
+      return statementType == IckleParsingResult.StatementType.SELECT;
+   }
+
    @Override
    public String toString() {
       return "BaseEmbeddedQuery{" +
             "queryString=" + queryString +
+            ", statementType=" + statementType +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

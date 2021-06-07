@@ -38,15 +38,15 @@ abstract class CQWorker {
          this.queryDefinition = queryDefinition;
          this.queryDefinition.initialize(cache);
       }
-      this.queryId = queryId;
       this.blockingManager = queryInterceptor.getBlockingManager();
+      this.queryId = queryId;
       this.docIndex = docIndex;
    }
 
    abstract CompletionStage<QueryResponse> perform(BitSet segments);
 
    void setFilter(BitSet segments) {
-      SearchQueryBuilder searchQuery = queryDefinition.getSearchQuery();
+      SearchQueryBuilder searchQuery = queryDefinition.getSearchQueryBuilder();
       if (segments.cardinality() != cache.getCacheConfiguration().clustering().hash().numSegments()) {
          searchQuery.routeOnSegments(segments);
       } else {

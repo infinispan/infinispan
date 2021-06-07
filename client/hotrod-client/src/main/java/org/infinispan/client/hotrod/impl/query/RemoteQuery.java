@@ -58,7 +58,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public QueryResult<T> execute() {
-      BaseQueryResponse<T> response = executeQuery();
+      BaseQueryResponse<T> response = executeRemotely();
       return new QueryResult<T>() {
          @Override
          public OptionalLong hitCount() {
@@ -78,6 +78,12 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    }
 
    @Override
+   public int executeStatement() {
+      BaseQueryResponse<?> response = executeRemotely();
+      return (int) response.getTotalResults();
+   }
+
+   @Override
    public CloseableIterator<T> iterator() {
       if (maxResults == -1 && startOffset == 0) {
          log.warnPerfRemoteIterationWithoutPagination(queryString);
@@ -87,11 +93,11 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public int getResultSize() {
-      BaseQueryResponse<?> response = executeQuery();
+      BaseQueryResponse<?> response = executeRemotely();
       return (int) response.getTotalResults();
    }
 
-   private BaseQueryResponse<T> executeQuery() {
+   private BaseQueryResponse<T> executeRemotely() {
       validateNamedParameters();
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
       return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) : await(op.execute()));

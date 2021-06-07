@@ -49,6 +49,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     */
    private Phase phase;
 
+   private IckleParsingResult.StatementType statementType;
+
    private String targetTypeName;
 
    private TypeMetadata targetEntityMetadata;
@@ -118,10 +120,11 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       havingBuilder.setEntityType(targetEntityMetadata);
    }
 
-   public void registerEmbeddedAlias(String alias, PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath) {
-      PropertyPath<TypeDescriptor<TypeMetadata>> previous = aliasToPropertyPath.put(alias, propertyPath);
+   // TODO [anistor] unused ??
+   public void registerEmbeddedAlias(String aliasText, PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath) {
+      PropertyPath<TypeDescriptor<TypeMetadata>> previous = aliasToPropertyPath.put(aliasText, propertyPath);
       if (previous != null) {
-         throw new UnsupportedOperationException("Alias reuse currently not supported: alias " + alias + " already assigned to type " + previous);
+         throw new UnsupportedOperationException("Alias reuse currently not supported: alias " + aliasText + " already assigned to type " + previous);
       }
    }
 
@@ -144,6 +147,13 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    @Override
    public void activateSelectStrategy() {
       phase = Phase.SELECT;
+      statementType = IckleParsingResult.StatementType.SELECT;
+   }
+
+   @Override
+   public void activateDeleteStrategy() {
+      phase = Phase.SELECT;  // Not a mistake, DELETE is parsed similarly to a SELECT
+      statementType = IckleParsingResult.StatementType.DELETE;
    }
 
    @Override
@@ -635,6 +645,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    public IckleParsingResult<TypeMetadata> getResult() {
       return new IckleParsingResult<>(
             queryString,
+            statementType,
             Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())),
             whereBuilder.build(),
             havingBuilder.build(),

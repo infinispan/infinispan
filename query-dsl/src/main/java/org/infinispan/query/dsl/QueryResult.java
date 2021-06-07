@@ -17,7 +17,7 @@ public interface QueryResult<E> {
     * @return The number of hits from the query, ignoring pagination. When the query is non-indexed, for performance
     * reasons, the hit count is not calculated and will return {@link OptionalLong#empty()}.
     */
-   OptionalLong hitCount();
+   OptionalLong hitCount();   // todo [anistor] if cache size is an int, how can hit count be a wider type?
 
    /**
     * @return The results of the query as a list, respecting the bounds specified in {@link Query#startOffset(long)} and

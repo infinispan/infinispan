@@ -53,6 +53,26 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
+   public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
+      return new CloseableIterator<Map.Entry<K, T>>() {
+
+         @Override
+         public void close() {
+         }
+
+         @Override
+         public boolean hasNext() {
+            return false;
+         }
+
+         @Override
+         public Map.Entry<K, T> next() {
+            throw new NoSuchElementException();
+         }
+      };
+   }
+
+   @Override
    public Query<T> timeout(long timeout, TimeUnit timeUnit) {
       return this;
    }
@@ -85,6 +105,11 @@ class DummyQuery<T> implements Query<T> {
             return Collections.emptyList();
          }
       };
+   }
+
+   @Override
+   public int executeStatement() {
+      return 0;
    }
 
    @Override

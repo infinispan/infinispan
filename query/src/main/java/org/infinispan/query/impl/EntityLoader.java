@@ -22,13 +22,11 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
 
    private final LocalQueryStatistics queryStatistics;
    private final AdvancedCache<?, E> cache;
-   private final KeyTransformationHandler keyTransformationHandler;
    private final DataConversion keyDataConversion;
 
    public EntityLoader(LocalQueryStatistics queryStatistics, AdvancedCache<?, E> cache,
-                       KeyTransformationHandler keyTransformationHandler) {
+                       KeyTransformationHandler keyTransformationHandler) {   //TODO [anistor] KeyTransformationHandler no longer used?
       this.cache = cache;
-      this.keyTransformationHandler = keyTransformationHandler;
       this.keyDataConversion = cache.getKeyDataConversion();
       this.queryStatistics = queryStatistics;
    }
@@ -52,15 +50,14 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
          keys.add(decodeKey(entityReference));
       }
 
-      // getAll instead of multiple gets to get all the results in the same call
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
+      // getAll instead of multiple gets to get all the results in the same call
       Map<?, E> values = cache.getAll(keys);
 
       if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
 
-      ArrayList<E> result = new ArrayList<>(entityReferences.size());
+      ArrayList<E> result = new ArrayList<>(entitiesSize);
       for (Object key : keys) {
          // if the entity was present at indexing time and
          // it is not present anymore now at searching time,

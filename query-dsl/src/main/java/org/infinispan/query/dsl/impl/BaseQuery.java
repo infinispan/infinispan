@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
@@ -178,7 +179,7 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    @Override
    public Query<T> startOffset(long startOffset) {
-      this.startOffset = (int) startOffset;    //todo [anistor] why int?
+      this.startOffset = (int) startOffset;    //todo [anistor] why accept a long if cache size is int?
       resetQuery();
       return this;
    }
@@ -205,5 +206,15 @@ public abstract class BaseQuery<T> implements Query<T> {
    public Query<T> timeout(long timeout, TimeUnit timeUnit) {
       this.timeout = timeUnit.toNanos(timeout);
       return this;
+   }
+
+   @Override
+   public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public int executeStatement() {
+      throw new UnsupportedOperationException("Not implemented!");
    }
 }

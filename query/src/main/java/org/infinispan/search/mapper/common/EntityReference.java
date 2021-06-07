@@ -22,5 +22,4 @@ public interface EntityReference {
     * @return The key of the referenced entity.
     */
    Object key();
-
 }

@@ -21,9 +21,9 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  */
 public final class ClusteredQueryOperation {
 
-   private CQCommandType commandType;
+   private final CQCommandType commandType;
 
-   private QueryDefinition queryDefinition;
+   private final QueryDefinition queryDefinition;
 
    // identifies the query
    private UUID queryId;
@@ -31,8 +31,9 @@ public final class ClusteredQueryOperation {
    // for retrieve keys on a lazy query
    private int docIndex = 0;
 
-   private ClusteredQueryOperation(CQCommandType commandType) {
+   private ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition) {
       this.commandType = commandType;
+      this.queryDefinition = queryDefinition;
    }
 
    public QueryDefinition getQueryDefinition() {
@@ -40,15 +41,15 @@ public final class ClusteredQueryOperation {
    }
 
    static ClusteredQueryOperation getResultSize(QueryDefinition queryDefinition) {
-      ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.GET_RESULT_SIZE);
-      cmd.queryDefinition = queryDefinition;
-      return cmd;
+      return new ClusteredQueryOperation(CQCommandType.GET_RESULT_SIZE, queryDefinition);
+   }
+
+   static ClusteredQueryOperation delete(QueryDefinition queryDefinition) {
+      return new ClusteredQueryOperation(CQCommandType.DELETE, queryDefinition);
    }
 
    static ClusteredQueryOperation createEagerIterator(QueryDefinition queryDefinition) {
-      ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.CREATE_EAGER_ITERATOR);
-      cmd.queryDefinition = queryDefinition;
-      return cmd;
+      return new ClusteredQueryOperation(CQCommandType.CREATE_EAGER_ITERATOR, queryDefinition);
    }
 
    public CompletionStage<QueryResponse> perform(Cache<?, ?> cache, BitSet segments) {
@@ -81,8 +82,7 @@ public final class ClusteredQueryOperation {
          QueryDefinition queryDefinition = (QueryDefinition) input.readObject();
          UUID queryId = MarshallUtil.unmarshallUUID(input, true);
          int docIndex = input.readInt();
-         ClusteredQueryOperation clusteredQueryOperation = new ClusteredQueryOperation(commandType);
-         clusteredQueryOperation.queryDefinition = queryDefinition;
+         ClusteredQueryOperation clusteredQueryOperation = new ClusteredQueryOperation(commandType, queryDefinition);
          clusteredQueryOperation.queryId = queryId;
          clusteredQueryOperation.docIndex = docIndex;
          return clusteredQueryOperation;

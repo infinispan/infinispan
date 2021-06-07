@@ -5,6 +5,8 @@ import java.util.function.Function;
 
 import org.infinispan.commons.util.CloseableIterator;
 
+// TODO [anistor] Unused ??
+
 /**
  * A {@link CloseableIterator} decorator that filters and transforms its elements.
  */

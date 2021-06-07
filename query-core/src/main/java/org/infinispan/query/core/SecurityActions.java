@@ -4,12 +4,9 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetClusterExecutorAction;
 
 /**
  * SecurityActions for the org.infinispan.query.core package.
@@ -36,10 +33,5 @@ final class SecurityActions {
 
    static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {
       return doPrivileged(cache::getComponentRegistry);
-   }
-
-   static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
-      GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
-      return doPrivileged(action);
    }
 }

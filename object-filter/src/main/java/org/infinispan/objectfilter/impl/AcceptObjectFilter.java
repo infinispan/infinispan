@@ -35,14 +35,14 @@ final class AcceptObjectFilter<TypeMetadata, AttributeMetadata, AttributeId exte
    }
 
    @Override
-   public FilterResult filter(Object instance) {
+   public FilterResult filter(Object key, Object instance) {
       if (instance == null) {
          throw new IllegalArgumentException("instance cannot be null");
       }
       MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, instance, metadataAdapter);
       if (matcherEvalContext != null) {
          // once we have a successfully created context we already have a match as there are no filter conditions except for entity type
-         return new FilterResultImpl(matcher.convert(instance), null, null);
+         return new FilterResultImpl(key, matcher.convert(instance), null, null);
       }
       return null;
    }

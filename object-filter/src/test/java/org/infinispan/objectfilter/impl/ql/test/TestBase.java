@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -72,23 +71,26 @@ abstract class TestBase {
       CommonTokenStream tokens = new CommonTokenStream(lexer);
 
       try {
-         Object[] pair;
+         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+         Token token = null;
+         CommonTree tree = null;
          if (lexerOnly) {
-            pair = executeAndCaptureErrOut(() -> lexer.nextToken());
+            lexer.setErrStream(new PrintStream(errorStream));
+            token = lexer.nextToken();
          } else {
-            pair = executeAndCaptureErrOut(() -> {
-               IckleParser parser = new IckleParser(tokens);
-               IckleParser.statement_return statement = parser.statement();
-               return statement.getTree();
-            });
+            IckleParser parser = new IckleParser(tokens);
+            parser.setErrStream(new PrintStream(errorStream));
+            IckleParser.statement_return statement = parser.statement();
+            tree = (CommonTree) statement.getTree();
          }
+         String errMsg = errorStream.size() > 0 ? errorStream.toString() : null;
 
-         if (pair[1] != null) {
+         if (errMsg != null) {
             // we have an error message
             if (expectFailure) {
                return;
             } else {
-               fail((String) pair[1]);
+               fail(errMsg);
             }
          }
 
@@ -103,10 +105,8 @@ abstract class TestBase {
                   throw new RuntimeException("Could not determine the type of token: " + expectedTreeOut, e);
                }
 
-               Token token = (Token) pair[0];
                assertEquals("Token type", expectedTokenType, token.getType());
             } else {
-               CommonTree tree = (CommonTree) pair[0];
                assertEquals(expectedTreeOut, tree.toStringTree());
             }
          }
@@ -129,20 +129,6 @@ abstract class TestBase {
 
       if (expectFailure) {
          fail("Parsing was expected to fail but it actually succeeded.");
-      }
-   }
-
-   private Object[] executeAndCaptureErrOut(Callable<?> callable) throws Exception {
-      PrintStream oldErrStream = System.err;
-      try {
-         // no way to register an error handler so we capture any output written to System.err by the lexer/parser
-         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-         System.setErr(new PrintStream(errorStream));
-         Object retVal = callable.call();
-         String errMsg = errorStream.size() > 0 ? errorStream.toString() : null;
-         return new Object[]{retVal, errMsg};
-      } finally {
-         System.setErr(oldErrStream);
       }
    }
 

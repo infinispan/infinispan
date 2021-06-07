@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
 
@@ -20,13 +21,15 @@ import org.infinispan.query.dsl.QueryFactory;
 public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
    public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+                           IckleParsingResult.StatementType statementType,
                            Map<String, Object> namedParameters, long startOffset, int maxResults,
                            LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults, queryStatistics, false);
+      super(queryFactory, cache, queryString, statementType, namedParameters, null, startOffset, maxResults, queryStatistics, false);
    }
 
    @Override
-   protected void recordQuery(Long time) {
+   protected void recordQuery(long time) {
+      // this never got executed, we could record 0 but that would just pollute the stats
    }
 
    @Override
@@ -55,9 +58,18 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
+   public int executeStatement() {
+      if (isSelectStatement()) {
+         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+      }
+      return 0;
+   }
+
+   @Override
    public String toString() {
       return "EmptyResultQuery{" +
             "queryString=" + queryString +
+            ", statementType=" + statementType +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

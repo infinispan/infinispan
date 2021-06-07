@@ -29,59 +29,22 @@ import java.util.ArrayList;
 import java.util.List;
 }
 
-@parser::members {
-   private Tree generatePersisterSpacesTree(List persisterSpaces) {
-      List<Tree> persisterSpaceList = new ArrayList<>();
-      for (Tree persistenceSpaceData : (List<Tree>) persisterSpaces) {
-         if (persistenceSpaceData.getType() == PERSISTER_JOIN || persistenceSpaceData.getType() == PROPERTY_JOIN) {
-            adaptor.addChild(persisterSpaceList.get(persisterSpaceList.size() - 1), persistenceSpaceData);
-         } else {
-            Tree persistenceSpaceTree = (Tree) adaptor.becomeRoot(adaptor.create(PERSISTER_SPACE, "PERSISTER_SPACE"), adaptor.nil());
-            adaptor.addChild(persistenceSpaceTree, persistenceSpaceData);
-            persisterSpaceList.add(persistenceSpaceTree);
-         }
-      }
-      Tree resultTree = (Tree) adaptor.nil();
-      for (Tree persistenceElement : persisterSpaceList) {
-         adaptor.addChild(resultTree, persistenceElement);
-      }
-      return resultTree;
-   }
-
-   /**
-    * Provides a tree representing the SELECT clause. Will be the given SELECT clause if it is not {@code null},
-    * otherwise a clause will be derived from the given FROM clause and aliases.
-    */
-   private Tree generateSelectFromTree(Tree selectClause, Tree fromClause, List<String> aliasList) {
-      Tree result = new CommonTree(new CommonToken(SELECT_FROM, "SELECT_FROM"));
-      result.addChild(fromClause);
-      Tree selectTree;
-      if (selectClause == null && aliasList != null && aliasList.size() > 0) {
-         selectTree = new CommonTree(new CommonToken(SELECT, "SELECT"));
-         Tree selectList = new CommonTree(new CommonToken(SELECT_LIST, "SELECT_LIST"));
-         for (String aliasName : aliasList) {
-            Tree selectElement = new CommonTree(new CommonToken(SELECT_ITEM, "SELECT_ITEM"));
-            Tree aliasElement = new CommonTree(new CommonToken(ALIAS_REF, aliasName));
-            selectElement.addChild(aliasElement);
-            selectList.addChild(selectElement);
-         }
-         selectTree.addChild(selectList);
-      } else {
-         selectTree = selectClause;
-      }
-      result.addChild(selectTree);
-      return result;
-   }
-}
-
 statement
 @init { if (state.backtracking == 0) pushEnableParameterUsage(true); }
 @after { popEnableParameterUsage(); }
-   :  selectStatement EOF!
+   :  (selectStatement | deleteStatement) EOF!
    ;
 
 selectStatement
    :  querySpec orderByClause? -> ^(QUERY querySpec orderByClause?)
+   ;
+
+deleteStatement
+   :  deleteClause^ whereClause?
+   ;
+
+deleteClause
+   :  delete_key^ fromClause
    ;
 
 querySpec
@@ -111,7 +74,7 @@ whereClause
 	;
 
 selectFrom
-   :  sc=selectClause? fc=fromClause -> { generateSelectFromTree((Tree) $sc.tree, (Tree) $fc.tree, $fc.aliasList) }
+   :  sc=selectClause? fc=fromClause -> { generateImplicitSelectFrom((Tree) $sc.tree, (Tree) $fc.tree, $fc.aliasList) }
    ;
 
 fromClause returns [List aliasList]
@@ -643,6 +606,10 @@ where_key
 select_key
    :   {validateSoftKeyword("select")}?=> IDENTIFIER -> SELECT[$IDENTIFIER]
 	;
+
+delete_key
+   :   {validateSoftKeyword("delete")}?=> IDENTIFIER -> DELETE[$IDENTIFIER]
+   ;
 
 distinct_key
    :   {validateSoftKeyword("distinct")}?=> IDENTIFIER -> DISTINCT[$IDENTIFIER]

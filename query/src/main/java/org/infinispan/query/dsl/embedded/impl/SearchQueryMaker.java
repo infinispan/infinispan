@@ -99,7 +99,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    }
 
    public SearchQueryParsingResult transform(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters,
-                                             Class<?> targetedType, String targetedNamedType) {
+                                             Class<?> targetedType, String targetedTypeName) {
       if (searchMapping == null) {
          throw log.noTypeIsIndexed(parsingResult.getQueryString());
       }
@@ -107,20 +107,20 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       this.namedParameters = namedParameters;
 
       SearchSession querySession = searchMapping.getMappingSession();
-      SearchScope<?> scope = (targetedNamedType == null) ? querySession.scope(targetedType) :
-            querySession.scope(targetedType, targetedNamedType);
+      SearchScope<?> scope = targetedTypeName == null ? querySession.scope(targetedType) :
+            querySession.scope(targetedType, targetedTypeName);
 
       predicateFactory = scope.predicate().extension(LuceneExtension.get());
 
-      indexedEntity = (targetedNamedType == null) ? searchMapping.indexedEntity(targetedType) :
-            searchMapping.indexedEntity(targetedNamedType);
+      indexedEntity = targetedTypeName == null ? searchMapping.indexedEntity(targetedType) :
+            searchMapping.indexedEntity(targetedTypeName);
 
       SearchPredicate predicate = makePredicate(parsingResult.getWhereClause()).toPredicate();
       SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjections(),
             parsingResult.getProjectedTypes());
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
-      return new SearchQueryParsingResult(targetedType, targetedNamedType, projection, predicate, sort);
+      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, predicate, sort);
    }
 
    private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,
