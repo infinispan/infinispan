@@ -791,7 +791,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   Set<Characteristic> characteristics = storeStatus.characteristics;
                   if (characteristics.contains(Characteristic.BULK_READ) &&  predicate.test(storeStatus.config)) {
                      Predicate<? super K> filterToUse;
-                     if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
+                     if (!characteristics.contains(Characteristic.SEGMENTABLE) &&
+                         !segments.containsAll(IntSets.immutableRangeSet(segmentCount))) {
                         filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
                      } else {
                         filterToUse = filter;
@@ -822,8 +823,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                   if (characteristics.contains(Characteristic.BULK_READ) &&
                                       predicate.test(storeStatus.config)) {
                                      Predicate<? super K> filterToUse;
-                                     if (!characteristics.contains(Characteristic.SEGMENTABLE) ) {
-
+                                     if (!characteristics.contains(Characteristic.SEGMENTABLE) &&
+                                         !segments.containsAll(IntSets.immutableRangeSet(segmentCount))) {
                                         filterToUse =
                                               PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
                                      } else {

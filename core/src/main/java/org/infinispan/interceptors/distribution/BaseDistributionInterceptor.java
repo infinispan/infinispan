@@ -256,7 +256,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return localResult;
       }
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      DistributionInfo distributionInfo = cacheTopology.getDistribution(command.getKey());
+      int segment = SegmentSpecificCommand.extractSegment(command, command.getKey(), keyPartitioner);
+      DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(segment);
       Collection<Address> owners = distributionInfo.writeOwners();
       if (owners.size() == 1) {
          // There are no backups, skip the replication part.

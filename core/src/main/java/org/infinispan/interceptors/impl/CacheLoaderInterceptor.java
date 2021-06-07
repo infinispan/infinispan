@@ -320,7 +320,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
    }
 
-   protected boolean canLoad(Object key) {
+   protected boolean canLoad(Object key, int segment) {
       return true;
    }
 
@@ -334,11 +334,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     * @throws Throwable
     */
    protected final CompletionStage<?> loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
-      if (skipLoad(cmd, key, ctx)) {
+      int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
+      if (skipLoad(ctx, key, segment, cmd)) {
          return null;
       }
 
-      return loadInContext(ctx, key, cmd);
+      return loadInContext(ctx, key, segment, cmd);
    }
 
    /**
@@ -347,10 +348,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     * first completes, which provides minimal hits to the backing store(s).
     * @param ctx context for this invocation
     * @param key key to find the entry for
+    * @param segment the segment of the key
     * @param cmd the command that initiated this load
     * @return a stage that when complete will have the entry loaded into the provided context
     */
-   protected CompletionStage<?> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
+   protected CompletionStage<?> loadInContext(InvocationContext ctx, Object key, int segment, FlagAffectedCommand cmd) {
       CompletableFuture<InternalCacheEntry<K, V>> cf = new CompletableFuture<>();
 
       CompletionStage<InternalCacheEntry<K, V>> otherCF = pendingLoads.putIfAbsent(key, cf);
@@ -363,7 +365,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingExecutor);
       }
 
-      int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
       CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
       if (CompletionStages.isCompletedSuccessfully(result)) {
          finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
@@ -457,7 +458,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       return resultStage;
    }
 
-   private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
+   private boolean skipLoad(InvocationContext ctx, Object key, int segment, FlagAffectedCommand cmd) {
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null) {
          if (log.isTraceEnabled()) {
@@ -478,7 +479,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return true;
       }
 
-      if (!cmd.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK) && !canLoad(key)) {
+      if (!cmd.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK) && !canLoad(key, segment)) {
          if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Cannot load the key.", cmd);
          }
