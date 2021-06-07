@@ -454,7 +454,12 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    @Override
    protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment, long currentTime) {
-      return attemptTouchAndReturnIfExpired(ice, segment, currentTime)
+      CompletionStage<Boolean> stage = attemptTouchAndReturnIfExpired(ice, segment, currentTime);
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         return CompletableFutures.booleanStage(CompletionStages.join(stage));
+      }
+
+      return stage
             .handle((expired, t) -> {
                if (t != null) {
                   Throwable innerT = CompletableFutures.extractException(t);
@@ -466,7 +471,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   }
                   return CompletableFutures.<Boolean>completedExceptionFuture(t);
                } else {
-                  return CompletableFuture.completedFuture(expired);
+                  return CompletableFutures.booleanStage(expired);
                }
             })
             .thenCompose(Function.identity());
