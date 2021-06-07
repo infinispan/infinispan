@@ -21,12 +21,12 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    private static final Log log = LogFactory.getLog(KeyStreamSupplier.class);
 
    private final Cache<K, V> cache;
-   private final ToIntFunction<Object> toIntFunction;
+   private final ToIntFunction<Object> segmentFunction;
    private final Supplier<Stream<K>> supplier;
 
-   public KeyStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction, Supplier<Stream<K>> supplier) {
+   public KeyStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> segmentFunction, Supplier<Stream<K>> supplier) {
       this.cache = cache;
-      this.toIntFunction = toIntFunction;
+      this.segmentFunction = segmentFunction;
       this.supplier = supplier;
    }
 
@@ -53,11 +53,11 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
             stream = stream.parallel();
          }
       }
-      if (segmentsToFilter != null && toIntFunction != null) {
+      if (segmentsToFilter != null && segmentFunction != null) {
          if (log.isTraceEnabled()) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         stream = stream.filter(k -> segmentsToFilter.contains(toIntFunction.applyAsInt(k)));
+         stream = stream.filter(k -> segmentsToFilter.contains(segmentFunction.applyAsInt(k)));
       }
       return stream;
    }
