@@ -15,18 +15,18 @@ import org.infinispan.search.mapper.session.SearchSession;
  *
  * @author Fabio Massimo Ercoli
  */
-public class SearchQueryParsingResult {
+public final class SearchQueryParsingResult {
 
    private final Class<?> targetedType;
-   private final String targetedNamedType;
+   private final String targetedTypeName;
    private final SearchProjectionInfo projectionInfo;
    private final SearchPredicate predicate;
    private final SearchSort sort;
 
-   public SearchQueryParsingResult(Class<?> targetedType, String targetedNamedType, SearchProjectionInfo projectionInfo,
+   public SearchQueryParsingResult(Class<?> targetedType, String targetedTypeName, SearchProjectionInfo projectionInfo,
                                    SearchPredicate predicate, SearchSort sort) {
       this.targetedType = targetedType;
-      this.targetedNamedType = targetedNamedType;
+      this.targetedTypeName = targetedTypeName;
       this.projectionInfo = projectionInfo;
       this.predicate = predicate;
       this.sort = sort;
@@ -38,7 +38,7 @@ public class SearchQueryParsingResult {
    }
 
    private SearchScope<?> getScope(SearchSession querySession) {
-      return (targetedNamedType == null) ? querySession.scope(targetedType) :
-            querySession.scope(targetedType, targetedNamedType);
+      return targetedTypeName == null ? querySession.scope(targetedType) :
+            querySession.scope(targetedType, targetedTypeName);
    }
 }

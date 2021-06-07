@@ -1,14 +1,12 @@
 package org.infinispan.query.dsl.embedded;
 
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
@@ -21,6 +19,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test string-based queries.
@@ -406,7 +407,79 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, q.execute().list().size());
    }
 
-   protected <T> Query<T> createQueryFromString(String queryString) {
+   public void testDeleteByQueryOnNonIndexedType() {
+      getCacheForWrite().put("notIndexedToBeDeleted", new NotIndexed("testing delete"));
+
+      Query<NotIndexed> select = createQueryFromString("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing delete'");
+      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing delete'");
+      assertEquals(1, delete.executeStatement());
+
+      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+   }
+
+   public void testDeleteByQueryOnIndexedField() throws Exception {
+      Transaction tx = getModelFactory().makeTransaction();
+      tx.setId(9999);
+      tx.setDescription("Holiday booking");
+      tx.setAccountId(1);
+      tx.setAmount(1800);
+      tx.setDate(makeDate("2021-09-07"));
+      tx.setDebit(false);
+      tx.setNotes("will be cancelled because of COVID");
+      tx.setValid(true);
+      getCacheForWrite().put("transaction_" + tx.getId(), tx);
+
+      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      assertEquals(1, delete.executeStatement());
+
+      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+   }
+
+   public void testDeleteByHybridQuery() throws Exception {
+      Transaction tx = getModelFactory().makeTransaction();
+      tx.setId(9999);
+      tx.setDescription("Holiday booking");
+      tx.setAccountId(1);
+      tx.setAmount(1800);
+      tx.setDate(makeDate("2021-09-07"));
+      tx.setDebit(false);
+      tx.setNotes("will be cancelled because of COVID");
+      tx.setValid(false);
+      getCacheForWrite().put("transaction_" + tx.getId(), tx);
+
+      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      assertEquals(1, delete.executeStatement());
+
+      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testDeleteWithProjections() {
+      Query<Transaction> delete = createQueryFromString("DELETE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t WHERE t.description = 'bogus' ORDER BY amount");
+      delete.executeStatement();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testDeleteWithOrderBy() {
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus' ORDER BY amount");
+      delete.executeStatement();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testDeleteWithGroupBy() {
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus' GROUP BY accountId");
+      delete.executeStatement();
+   }
+
+   protected final <T> Query<T> createQueryFromString(String queryString) {
       return getQueryFactory().create(queryString);
    }
 }

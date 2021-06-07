@@ -78,20 +78,31 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public QueryResult<T> execute() {
-      QueryResult<T> execute = createIndexedQuery().execute();
-      List<Object> collect = execute.list().stream().map(this::convertResult).collect(Collectors.toList());
-      return new QueryResultImpl<>(execute.hitCount().orElse(-1), (List<T>) collect);
+      IndexedQuery<?> indexedQuery = createIndexedQuery();
+      QueryResult<?> result = indexedQuery.execute();
+      List<Object> collect = result.list().stream().map(this::convertResult).collect(Collectors.toList());
+      return new QueryResultImpl<>(result.hitCount().orElse(-1), (List<T>) collect);
+   }
+
+   @Override
+   public int executeStatement() {
+      IndexedQuery<T> indexedQuery = createIndexedQuery();
+      return indexedQuery.executeStatement();
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      IndexedQuery<T> indexedQuery = createIndexedQuery();
-      return new MappingIterator(indexedQuery.iterator(), this::convertResult);
+      return new MappingIterator(createIndexedQuery().iterator(), this::convertResult);
+   }
+
+   @Override
+   public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
+      return new MappingIterator(createIndexedQuery().entryIterator(), null);
    }
 
    @Override
    public int getResultSize() {
-      return Math.toIntExact(createIndexedQuery().getResultSize());
+      return createIndexedQuery().getResultSize();
    }
 
    @Override
@@ -101,7 +112,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
             ", timeout=" + timeout +
-            +'}';
+            '}';
    }
 
    private Object convertResult(Object result) {
@@ -119,6 +130,6 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
          array = new Object[]{result};
       }
 
-      return (rowProcessor == null) ? array : rowProcessor.apply(array);
+      return rowProcessor == null ? array : rowProcessor.apply(array);
    }
 }

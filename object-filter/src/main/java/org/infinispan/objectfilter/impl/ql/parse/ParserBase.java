@@ -15,11 +15,14 @@
  */
 package org.infinispan.objectfilter.impl.ql.parse;
 
+import java.io.PrintStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.EarlyExitException;
 import org.antlr.runtime.FailedPredicateException;
 import org.antlr.runtime.MismatchedNotSetException;
@@ -32,6 +35,9 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.RecognizerSharedState;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.TokenStream;
+import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.tree.Tree;
+import org.antlr.runtime.tree.TreeAdaptor;
 
 /**
  * Base class for the generated parser. This class is stateful, so it should not be reused for parsing multiple
@@ -42,6 +48,8 @@ import org.antlr.runtime.TokenStream;
  */
 abstract class ParserBase extends Parser {
 
+   private PrintStream errStream;
+
    private final Deque<Boolean> enableParameterUsage = new ArrayDeque<>();
 
    private final List<String> errorMessages = new LinkedList<>();
@@ -50,6 +58,52 @@ abstract class ParserBase extends Parser {
 
    protected ParserBase(TokenStream input, RecognizerSharedState state) {
       super(input, state);
+   }
+
+   protected abstract TreeAdaptor getTreeAdaptor();
+
+   protected final Tree generatePersisterSpacesTree(List<?> persisterSpaces) {
+      TreeAdaptor adaptor = getTreeAdaptor();
+      List<Tree> persisterSpaceList = new ArrayList<>();
+      for (Tree persistenceSpaceData : (List<Tree>) persisterSpaces) {
+         if (persistenceSpaceData.getType() == IckleLexer.PERSISTER_JOIN || persistenceSpaceData.getType() == IckleLexer.PROPERTY_JOIN) {
+            adaptor.addChild(persisterSpaceList.get(persisterSpaceList.size() - 1), persistenceSpaceData);
+         } else {
+            Tree persistenceSpaceTree = (Tree) adaptor.becomeRoot(adaptor.create(IckleLexer.PERSISTER_SPACE, "PERSISTER_SPACE"), adaptor.nil());
+            adaptor.addChild(persistenceSpaceTree, persistenceSpaceData);
+            persisterSpaceList.add(persistenceSpaceTree);
+         }
+      }
+      Tree resultTree = (Tree) adaptor.nil();
+      for (Tree persistenceElement : persisterSpaceList) {
+         adaptor.addChild(resultTree, persistenceElement);
+      }
+      return resultTree;
+   }
+
+   /**
+    * Provides a tree representing the SELECT clause. Will be the given SELECT clause if it is not null,
+    * otherwise a clause will be derived from the given FROM clause and aliases.
+    */
+   protected final Tree generateImplicitSelectFrom(Tree selectClause, Tree fromClause, List<String> aliasList) {
+      Tree result = new CommonTree(new CommonToken(IckleLexer.SELECT_FROM, "SELECT_FROM"));
+      result.addChild(fromClause);
+      Tree selectTree;
+      if (selectClause == null && aliasList != null && aliasList.size() > 0) {
+         selectTree = new CommonTree(new CommonToken(IckleLexer.SELECT, "SELECT"));
+         Tree selectList = new CommonTree(new CommonToken(IckleLexer.SELECT_LIST, "SELECT_LIST"));
+         for (String aliasName : aliasList) {
+            Tree selectElement = new CommonTree(new CommonToken(IckleLexer.SELECT_ITEM, "SELECT_ITEM"));
+            Tree aliasElement = new CommonTree(new CommonToken(IckleLexer.ALIAS_REF, aliasName));
+            selectElement.addChild(aliasElement);
+            selectList.addChild(selectElement);
+         }
+         selectTree.addChild(selectList);
+      } else {
+         selectTree = selectClause;
+      }
+      result.addChild(selectTree);
+      return result;
    }
 
    protected final String buildUniqueImplicitAlias() {
@@ -88,17 +142,29 @@ abstract class ParserBase extends Parser {
       return errorMessages;
    }
 
+   @Override
    public final void reportError(RecognitionException e) {
-      errorMessages.add(generateError(getRuleInvocationStack(e, getClass().getName()), getTokenNames(), e));
+      errorMessages.add(generateErrorMessage(getRuleInvocationStack(e, getClass().getName()), getTokenNames(), e));
       super.reportError(e);
    }
 
-   private String generateError(List invocationStack, String[] tokenNames, RecognitionException e) {
-      String localization = invocationStack + ": line " + e.line + ":" + e.charPositionInLine + " ";
-      return generateError(localization, tokenNames, e);
+   public void setErrStream(PrintStream errStream) {
+      this.errStream = errStream;
    }
 
-   private String generateError(String localization, String[] tokenNames, RecognitionException e) {
+   @Override
+   public final void emitErrorMessage(String msg) {
+      if (errStream != null) {
+         errStream.println(msg);
+      }
+   }
+
+   private String generateErrorMessage(List<?> invocationStack, String[] tokenNames, RecognitionException e) {
+      String localization = invocationStack + ": line " + e.line + ":" + e.charPositionInLine + " ";
+      return generateErrorMessage(localization, tokenNames, e);
+   }
+
+   private String generateErrorMessage(String localization, String[] tokenNames, RecognitionException e) {
       String message = "";
       if (e instanceof MismatchedTokenException) {
          MismatchedTokenException mte = (MismatchedTokenException) e;

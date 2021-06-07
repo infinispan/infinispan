@@ -49,7 +49,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       String aliasText = aliasTree.getText();
       String prevAlias = aliasToEntityType.put(aliasText, entityName);
       if (prevAlias != null && !prevAlias.equalsIgnoreCase(entityName)) {
-         throw new UnsupportedOperationException("Alias reuse currently not supported: aliasText " + aliasText + " already assigned to type " + prevAlias);
+         throw new UnsupportedOperationException("Alias reuse currently not supported: alias " + aliasText + " already assigned to type " + prevAlias);
       }
       if (targetType != null) {
          throw new IllegalStateException("Can't target multiple types: " + targetType + " already selected before " + entityName);
@@ -209,6 +209,10 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
    @Override
    public void activateSelectStrategy() {
       phase = Phase.SELECT;
+   }
+
+   @Override
+   public void activateDeleteStrategy() {
    }
 
    @Override

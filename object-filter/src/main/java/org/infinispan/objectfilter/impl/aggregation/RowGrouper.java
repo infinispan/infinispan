@@ -85,7 +85,7 @@ public final class RowGrouper {
       }
       outRowLength = noOfGroupingColumns + (accumulators != null ? accumulators.length : 0);
       if (noOfGroupingColumns > 0) {
-         groups = new LinkedHashMap<GroupRowKey, Object[]>();
+         groups = new LinkedHashMap<>();
          globalGroup = null;
       } else {
          groups = null;

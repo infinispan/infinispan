@@ -54,8 +54,7 @@ final class ClusteredQueryInvoker {
     * @return the responses
     */
    List<QueryResponse> broadcast(ClusteredQueryOperation operation) {
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
@@ -95,5 +94,4 @@ final class ClusteredQueryInvoker {
    private CompletionStage<QueryResponse> localInvoke(SegmentsClusteredQueryCommand cmd) {
       return cmd.perform(cache);
    }
-
 }

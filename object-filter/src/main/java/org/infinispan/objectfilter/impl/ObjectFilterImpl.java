@@ -190,7 +190,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    }
 
    @Override
-   public FilterResult filter(Object instance) {
+   public FilterResult filter(Object key, Object instance) {
       if (filterSubscription == null) {
          throw new IllegalStateException("Parameter values were not bound yet.");
       }
@@ -214,7 +214,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
          if (filterEvalContext.isMatching()) {
             Object o = filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
-            return new FilterResultImpl(o, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+            return new FilterResultImpl(key, o, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
       }
 

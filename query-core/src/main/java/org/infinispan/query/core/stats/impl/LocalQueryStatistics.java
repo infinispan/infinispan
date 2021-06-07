@@ -46,7 +46,6 @@ public class LocalQueryStatistics implements QueryStatisticsSnapshot {
    @Inject
    Authorizer authorizer;
 
-
    public LocalQueryStatistics() {
    }
 

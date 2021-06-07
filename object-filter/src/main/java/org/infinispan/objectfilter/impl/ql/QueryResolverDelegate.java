@@ -54,6 +54,8 @@ public interface QueryResolverDelegate<TypeDescriptor> {
 
    void activateSelectStrategy();
 
+   void activateDeleteStrategy();
+
    void deactivateStrategy();
 
    /**

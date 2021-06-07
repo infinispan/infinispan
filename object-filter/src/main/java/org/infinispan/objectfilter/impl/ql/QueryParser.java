@@ -52,7 +52,7 @@ public final class QueryParser {
     * @return the result of the parsing after being transformed by the processors
     * @throws ParsingException in case any exception occurs during parsing
     */
-   public CommonTree parseQuery(String queryString, QueryResolverDelegate resolverDelegate, QueryRendererDelegate rendererDelegate) throws ParsingException {
+   public CommonTree parseQuery(String queryString, QueryResolverDelegate<?> resolverDelegate, QueryRendererDelegate<?> rendererDelegate) throws ParsingException {
       IckleLexer lexer = new IckleLexer(new ANTLRStringStream(queryString));
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       IckleParser parser = new IckleParser(tokens);
@@ -75,16 +75,16 @@ public final class QueryParser {
    }
 
    // resolves the elements in given source query into an output query, by invoking {@link QueryResolverDelegate} while traversing the given query tree
-   private CommonTree resolve(TokenStream tokens, CommonTree tree, QueryResolverDelegate resolverDelegate) throws RecognitionException {
+   private CommonTree resolve(TokenStream tokens, CommonTree tree, QueryResolverDelegate<?> resolverDelegate) throws RecognitionException {
       CommonTreeNodeStream treeNodeStream = new CommonTreeNodeStream(tree);
       treeNodeStream.setTokenStream(tokens);
-      return (CommonTree) new QueryResolver(treeNodeStream, resolverDelegate).statement().getTree();
+      return new QueryResolver(treeNodeStream, resolverDelegate).statement().getTree();
    }
 
    // render a given source query into an output query, by invoking {@link QueryRendererDelegate} while traversing the given query tree
-   private CommonTree render(TokenStream tokens, CommonTree tree, QueryRendererDelegate rendererDelegate) throws RecognitionException {
+   private CommonTree render(TokenStream tokens, CommonTree tree, QueryRendererDelegate<?> rendererDelegate) throws RecognitionException {
       CommonTreeNodeStream treeNodeStream = new CommonTreeNodeStream(tree);
       treeNodeStream.setTokenStream(tokens);
-      return (CommonTree) new QueryRenderer(treeNodeStream, rendererDelegate).statement().getTree();
+      return new QueryRenderer(treeNodeStream, rendererDelegate).statement().getTree();
    }
 }

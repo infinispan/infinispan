@@ -25,18 +25,18 @@ public interface ObjectFilter {
    String[] getProjection();
 
    /**
-    * The types of the projects paths (see {@link #getProjection()} or {@code null} if there are not projections.
+    * The types of the projects paths (see {@link #getProjection()} or {@code null} if there are no projections.
     */
    Class<?>[] getProjectionTypes();
 
    /**
-    * Returns the parameter names or an empty Set if there are no parameters.
+    * Returns the filter parameter names or an empty {@link Set} if there are no parameters.
     */
    Set<String> getParameterNames();
 
    /**
     * The parameter values. Please do not mutate this map. Obtain a new filter instance with new parameter values using
-    * {@link #withParameters(Map)}.
+    * {@link #withParameters(Map)} if you have to.
     */
    Map<String, Object> getParameters();
 
@@ -59,17 +59,34 @@ public interface ObjectFilter {
    Comparator<Comparable<?>[]> getComparator();
 
    /**
-    * Tests if an object instance matches the filter.
+    * Tests if an object matches the filter. A shorthand for {@code filter(null, value)}.
     *
-    * @param instance the instance to test; this is never {@code null}
-    * @return a {@code FilterResult} if there is a match or {@code null} otherwise
+    * @param value the instance to test; this is never {@code null}
+    * @return a {@link FilterResult} if there is a match or {@code null} otherwise
     */
-   FilterResult filter(Object instance);
+   default FilterResult filter(Object value) {
+      return filter(null, value);
+   }
+
+   /**
+    * Tests if an object matches the filter. The given key is optional (can be null) and will be returned to
+    * the user in the {@link FilterResult}.
+    *
+    * @param key   the (optional) key; this can be {@code null} if it is of no interest
+    * @param value the instance to test; this is never {@code null}
+    * @return a {@link FilterResult} if there is a match or {@code null} otherwise
+    */
+   FilterResult filter(Object key, Object value);
 
    /**
     * The output of the {@link ObjectFilter#filter} method.
     */
    interface FilterResult {
+
+      /**
+       * Returns the key of the matched object. This is optional.
+       */
+      Object getKey();
 
       /**
        * Returns the matched object. This is non-null unless projections are present.
@@ -84,6 +101,6 @@ public interface ObjectFilter {
       /**
        * Returns the projection of fields used for sorting, if sorting was requested or {@code null} otherwise.
        */
-      Comparable[] getSortProjection();
+      Comparable<?>[] getSortProjection();
    }
 }

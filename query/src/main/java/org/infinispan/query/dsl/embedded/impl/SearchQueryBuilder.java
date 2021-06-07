@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -10,8 +11,10 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.backend.lucene.search.query.dsl.LuceneSearchQueryOptionsStep;
+import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.projection.SearchProjection;
+import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
@@ -19,8 +22,10 @@ import org.infinispan.search.mapper.session.SearchSession;
 
 /**
  * Mutable builder for {@link LuceneSearchQuery}.
+ *
+ * @author Fabio Massimo Ercoli
  */
-public class SearchQueryBuilder {
+public final class SearchQueryBuilder {
 
    private final SearchSession querySession;
    private final SearchScope<?> scope;
@@ -49,6 +54,19 @@ public class SearchQueryBuilder {
 
    public LuceneSearchQuery<EntityReference> entityReference() {
       return build(scope.projection().entityReference().toProjection());
+   }
+
+   public LuceneSearchQuery<List<Object>> keyAndEntity() {
+      SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
+      SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
+            projectionFactory.entityReference().toProjection(),
+            projectionFactory.entity().toProjection()
+      };
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+   }
+
+   public LuceneSearchQuery<DocumentReference> documentReference() {
+      return build(scope.projection().documentReference().toProjection());
    }
 
    public void routeOnSegments(BitSet segments) {

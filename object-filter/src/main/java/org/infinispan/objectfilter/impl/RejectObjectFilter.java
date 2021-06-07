@@ -6,7 +6,7 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**
- * A filter that rejects all inputs. Does not support sorting and projections.
+ * A filter that rejects all input. Ignores sorting and projection.
  *
  * @author anistor@redhat.com
  * @since 9.0
@@ -24,8 +24,8 @@ final class RejectObjectFilter<TypeMetadata> extends ObjectFilterBase<TypeMetada
    }
 
    @Override
-   public FilterResult filter(Object instance) {
-      if (instance == null) {
+   public FilterResult filter(Object key, Object value) {
+      if (value == null) {
          throw new IllegalArgumentException("instance cannot be null");
       }
       return null;

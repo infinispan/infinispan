@@ -34,7 +34,7 @@ public final class QueryResponse {
       return nodeTopDocs;
    }
 
-   public Long getResultSize() {
+   public long getResultSize() {
       return resultSize;
    }
 

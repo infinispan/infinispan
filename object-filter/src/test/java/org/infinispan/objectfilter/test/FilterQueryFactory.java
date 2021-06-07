@@ -92,6 +92,11 @@ final class FilterQueryFactory extends BaseQueryFactory {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public int executeStatement() {
+         throw new UnsupportedOperationException();
+      }
+
       // TODO [anistor] need to rethink the dsl Query/QueryBuilder interfaces to accommodate the filtering scenario ...
       @Override
       public List<T> list() {
