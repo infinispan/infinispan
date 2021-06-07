@@ -35,12 +35,24 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    List<T> list();
 
    /**
-    *  Executes the query. Subsequent invocations cause the query to be re-executed.
+    *  Executes the query (a SELECT statement). Subsequent invocations cause the query to be re-executed.
+    *  <p>
+    *  Executing a DELETE is also allowed. No results will be returned in this case but the number of affected entries
+    *  will be returned as the hit count in the {@link QueryResult}.
     *
     * @return {@link QueryResult} with the results.
     * @since 11.0
     */
    QueryResult<T> execute();
+
+   // TODO [anistor] disallow pagination params if any for non-SELECT statements
+   /**
+    * Executes a data modifying statement (typically a DELETE) that does not return results; instead it returns an
+    * affected entries count. This method cannot be used to execute a SELECT.
+    *
+    * @return the number of affected (deleted) entries
+    */
+   int executeStatement();
 
    /**
     * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
@@ -109,9 +121,17 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    CloseableIterator<T> iterator();
 
    /**
-    *  Set the timeout for this query. If the query hasn't finished processing before the timeout,
-    *  a {@link SearchTimeoutException} will be thrown. For queries that use the index, the timeout
-    *  is handled on a best effort basis, and the supplied time is rounded to the nearest millisecond.
+    * Returns a {@link CloseableIterator} over the results, including both key and value. Please close the iterator when
+    * you are done with processing the results. The query cannot use projections.
+    *
+    * @return the results of the query as an iterator.
+    */
+   <K> CloseableIterator<Map.Entry<K, T>> entryIterator();
+
+   /**
+    * Set the timeout for this query. If the query hasn't finished processing before the timeout,
+    * a {@link SearchTimeoutException} will be thrown. For queries that use the index, the timeout
+    * is handled on a best effort basis, and the supplied time is rounded to the nearest millisecond.
     */
    Query<T> timeout(long timeout, TimeUnit timeUnit);
 

@@ -11,9 +11,9 @@ import org.infinispan.query.dsl.QueryResult;
  */
 public final class QueryResultImpl<E> implements QueryResult<E> {
 
-   private final OptionalLong hitCount;
-
    public static final QueryResult<?> EMPTY = new QueryResultImpl<>(0, Collections.emptyList());
+
+   private final OptionalLong hitCount;
 
    private final List<E> list;
 
@@ -27,6 +27,7 @@ public final class QueryResultImpl<E> implements QueryResult<E> {
       this.list = list;
    }
 
+   //todo [anistor] why not int? cache size is not a long!
    @Override
    public OptionalLong hitCount() {
       return hitCount;

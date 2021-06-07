@@ -14,6 +14,17 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
  */
 public final class IckleParsingResult<TypeMetadata> {
 
+   public enum StatementType {
+      SELECT,
+      DELETE;
+
+      private static final StatementType[] CACHED_VALUES = StatementType.values();
+
+      public static StatementType valueOf(int index) {
+         return CACHED_VALUES[index];
+      }
+   }
+
    static final class SortFieldImpl<TypeMetadata> implements SortField {
 
       public final PropertyPath<TypeDescriptor<TypeMetadata>> path;
@@ -40,6 +51,7 @@ public final class IckleParsingResult<TypeMetadata> {
    }
 
    private final String queryString;
+   private final StatementType statementType;
    private final Set<String> parameterNames;
    private final BooleanExpr whereClause;
    private final BooleanExpr havingClause;
@@ -53,6 +65,7 @@ public final class IckleParsingResult<TypeMetadata> {
 
    //todo [anistor] make package local
    public IckleParsingResult(String queryString,
+                             StatementType statementType,
                              Set<String> parameterNames,
                              BooleanExpr whereClause,
                              BooleanExpr havingClause,
@@ -61,6 +74,7 @@ public final class IckleParsingResult<TypeMetadata> {
                              PropertyPath[] groupBy,
                              SortField[] sortFields) {
       this.queryString = queryString;
+      this.statementType = statementType;
       this.parameterNames = parameterNames;
       this.whereClause = whereClause;
       this.havingClause = havingClause;
@@ -78,6 +92,10 @@ public final class IckleParsingResult<TypeMetadata> {
 
    public String getQueryString() {
       return queryString;
+   }
+
+   public StatementType getStatementType() {
+      return statementType;
    }
 
    public Set<String> getParameterNames() {
@@ -177,6 +195,7 @@ public final class IckleParsingResult<TypeMetadata> {
    public String toString() {
       return "FilterParsingResult [" +
             " queryString=" + queryString
+            + ", statementType=" + statementType
             + ", targetEntityName=" + targetEntityName
             + ", parameterNames=" + parameterNames
             + ", whereClause=" + whereClause

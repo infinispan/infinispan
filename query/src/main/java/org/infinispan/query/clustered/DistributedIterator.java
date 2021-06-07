@@ -16,16 +16,18 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Iterates on a distributed query.
+ * Iterates on the results of a distributed query returning the values. Subclasses can customize this by overriding the
+ * {@link #decorate} method.
  *
+ * @param <T> The return type of the iterator
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  * @author Sanne Grinovero
  * @since 5.1
  */
-class DistributedIterator<E> implements CloseableIterator<E> {
+class DistributedIterator<T> implements CloseableIterator<T> {
 
-   protected final AdvancedCache<?, ?> cache;
+   private final AdvancedCache<?, ?> cache;
    private final DataConversion keyDataConversion;
 
    private int currentIndex = -1;
@@ -77,47 +79,53 @@ class DistributedIterator<E> implements CloseableIterator<E> {
 
    @Override
    public void close() {
-      // Nothing to do (extension point)
+      // Nothing to do
    }
 
    @Override
-   public E next() {
+   public final T next() {
       if (!hasNext()) {
          throw new NoSuchElementException();
       }
 
       currentIndex++;
-      // fetch and return the value
+
       ScoreDoc scoreDoc = mergedResults.scoreDocs[currentIndex];
       int index = scoreDoc.shardIndex;
+      NodeTopDocs nodeTopDocs = partialResults[index];
       if (partialPositionNext[index] == 0) {
-         partialPositionNext[index] = findSpecificPosition(scoreDoc.doc, partialResults[index].topDocs);
+         int docId = scoreDoc.doc;
+         ScoreDoc[] scoreDocs = nodeTopDocs.topDocs.scoreDocs;
+         for (int i = 0; i < scoreDocs.length; i++) {
+            if (scoreDocs[i].doc == docId) {
+               partialPositionNext[index] = i;
+               break;
+            }
+         }
       }
-      int specificPosition = partialPositionNext[index];
-      partialPositionNext[index]++;
-      return fetchValue(specificPosition, partialResults[index]);
-   }
 
-   private int findSpecificPosition(int docId, TopDocs topDocs) {
-      for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-         if (topDocs.scoreDocs[i].doc == docId) return i;
-      }
-      return 0;
-   }
+      int pos = partialPositionNext[index]++;
 
-   protected E fetchValue(int scoreIndex, NodeTopDocs nodeTopDocs) {
       Object[] keys = nodeTopDocs.keys;
-      if (keys != null && keys.length > 0) {
-         long start = 0;
-         if (queryStatistics.isEnabled()) start = System.nanoTime();
-
-         E value = (E) cache.get(keyDataConversion.fromStorage(keys[scoreIndex]));
-
-         if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
-
-         return value;
+      if (keys == null || keys.length == 0) {
+         return (T) nodeTopDocs.projections[pos];
       }
-      return (E) nodeTopDocs.projections[scoreIndex];
+
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
+
+      Object key = keyDataConversion.fromStorage(keys[pos]);
+      T value = (T) cache.get(key);
+
+      if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
+
+      return decorate(key, value);
+   }
+
+   /**
+    * Extension point for subclasses.
+    */
+   protected T decorate(Object key, Object value) {
+      return (T) value;
    }
 
    @Override

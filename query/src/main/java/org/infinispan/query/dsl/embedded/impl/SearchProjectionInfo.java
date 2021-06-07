@@ -4,7 +4,7 @@ import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.infinispan.search.mapper.common.EntityReference;
 
-class SearchProjectionInfo {
+final class SearchProjectionInfo {
 
    static SearchProjectionInfo entity(SearchProjectionFactory<EntityReference, ?> factory) {
       return new SearchProjectionInfo(factory.entity().toProjection(), true);

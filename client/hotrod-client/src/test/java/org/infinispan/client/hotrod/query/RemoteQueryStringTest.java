@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.OptionalLong;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -30,6 +31,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
@@ -206,5 +208,36 @@ public class RemoteQueryStringTest extends QueryStringTest {
       List<NotIndexed> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals("testing 123", list.get(0).notIndexedField);
+   }
+
+   @Override
+   public void testDeleteByQueryOnNonIndexedType() {
+      getCacheForWrite().put("notIndexedToBeDeleted", new NotIndexed("testing delete"));
+
+      Query<NotIndexed> select = createQueryFromString("FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
+      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+
+      Query<Transaction> delete = createQueryFromString("DELETE FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
+      assertEquals(1, delete.executeStatement());
+
+      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testDeleteWithProjections() {
+      super.testDeleteWithProjections();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testDeleteWithOrderBy() {
+      super.testDeleteWithOrderBy();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testDeleteWithGroupBy() {
+      super.testDeleteWithGroupBy();
    }
 }

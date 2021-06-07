@@ -111,7 +111,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       if (value == null) {
          return null;
       }
-      return getObjectFilter().filter(value);
+      return getObjectFilter().filter(key, value);
    }
 
    @Override
@@ -175,11 +175,12 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       @Override
       public void writeObject(ObjectOutput output, FilterResultImpl filterResult) throws IOException {
          if (filterResult.getProjection() != null) {
-            // skip serializing the instance if there is a projection
+            // skip serializing the key and instance if there is a projection
             output.writeObject(null);
             output.writeObject(filterResult.getProjection());
          } else {
             output.writeObject(filterResult.getInstance());
+            output.writeObject(filterResult.getKey());
          }
          output.writeObject(filterResult.getSortProjection());
       }
@@ -187,9 +188,10 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       @Override
       public FilterResultImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object instance = input.readObject();
+         Object key = instance == null ? null : input.readObject();
          Object[] projection = instance == null ? (Object[]) input.readObject() : null;
          Comparable[] sortProjection = (Comparable[]) input.readObject();
-         return new FilterResultImpl(instance, projection, sortProjection);
+         return new FilterResultImpl(key, instance, projection, sortProjection);
       }
 
       @Override

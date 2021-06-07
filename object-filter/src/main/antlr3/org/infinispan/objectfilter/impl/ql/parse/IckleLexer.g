@@ -16,6 +16,10 @@
 
 lexer grammar IckleLexer;
 
+options {
+    superClass=LexerBase;
+}
+
 tokens {
 //VIRTUAL TOKENS
   ALIAS_NAME;
@@ -72,6 +76,7 @@ tokens {
   COUNT;
   CROSS;
   DISTINCT;
+  DELETE;
   ELEMENTS;
   EMPTY;
   ESCAPE;

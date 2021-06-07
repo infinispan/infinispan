@@ -47,9 +47,9 @@ public class StatsTest extends MultipleCacheManagersTest {
    private QueryStatistics queryStatistics0;
    private QueryStatistics queryStatistics1;
    private QueryStatistics queryStatistics2;
-   private String indexedQuery;
-   private String nonIndexedQuery;
-   private String hybridQuery;
+   private final String indexedQuery = String.format("From %s where name : 'Donald'", Person.class.getName());
+   private final String nonIndexedQuery = String.format("From %s where nonIndexedField = 'first'", Person.class.getName());
+   private final String hybridQuery = String.format("From %s where nonIndexedField = 'first' and age > 50", Person.class.getName());
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -62,15 +62,13 @@ public class StatsTest extends MultipleCacheManagersTest {
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       createClusteredCaches(3, QueryTestSCI.INSTANCE, cacheCfg);
+
       cache0 = cache(0);
       cache1 = cache(1);
       cache2 = cache(2);
       queryStatistics0 = Search.getSearchStatistics(cache0).getQueryStatistics();
       queryStatistics1 = Search.getSearchStatistics(cache1).getQueryStatistics();
       queryStatistics2 = Search.getSearchStatistics(cache2).getQueryStatistics();
-      indexedQuery = String.format("From %s where name : 'Donald'", Person.class.getName());
-      nonIndexedQuery = String.format("From %s where nonIndexedField = 'first'", Person.class.getName());
-      hybridQuery = String.format("From %s where nonIndexedField = 'first' and age > 50", Person.class.getName());
    }
 
    @BeforeMethod
@@ -324,5 +322,4 @@ public class StatsTest extends MultipleCacheManagersTest {
       }
       return totalSize;
    }
-
 }

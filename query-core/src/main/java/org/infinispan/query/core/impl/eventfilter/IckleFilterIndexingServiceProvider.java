@@ -53,6 +53,6 @@ public class IckleFilterIndexingServiceProvider extends BaseIckleFilterIndexingS
    }
 
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      return new FilterResultImpl(instance, projection, sortProjection);
+      return new FilterResultImpl(key, instance, projection, sortProjection);
    }
 }

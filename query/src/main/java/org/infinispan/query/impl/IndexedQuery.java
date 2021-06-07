@@ -1,22 +1,25 @@
 package org.infinispan.query.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.QueryResult;
 
 /**
- * A distributed Lucene query.
+ * A query that uses indexing.
  *
  * @since 11.0
  */
 public interface IndexedQuery<E> {
 
-   /***
+   /**
     * @return the results of a search as a list.
     */
-   List<E> list();
+   default List<E> list() {
+      return (List<E>) execute().list();
+   }
 
    /**
     * Sets the index of the first result, skipping the previous ones. Used for pagination.
@@ -35,7 +38,12 @@ public interface IndexedQuery<E> {
 
    CloseableIterator<E> iterator();
 
-   QueryResult<E> execute();
+   // TODO [anistor] works for queries without projections only, should throw exception for projections
+   <K> CloseableIterator<Map.Entry<K, E>> entryIterator();
+
+   QueryResult<?> execute();
+
+   int executeStatement();
 
    int getResultSize();
 

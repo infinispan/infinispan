@@ -6,8 +6,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * A QueryEngine for remote, dealing with entries stored as objects rather than marshalled.
@@ -23,8 +23,8 @@ class ObjectRemoteQueryEngine extends QueryEngine<Descriptor> {
       super(cache.getAdvancedCache(), isIndexed, matcherImplClass);
    }
 
-   BaseQuery<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
-      BaseQuery<Object> query = queryFactory.create(queryString);
+   Query<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
+      Query<Object> query = queryFactory.create(queryString);
       query.startOffset(startOffset);
       query.maxResults(maxResults);
       query.local(local);

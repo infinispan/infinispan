@@ -40,17 +40,18 @@ import org.infinispan.objectfilter.impl.ql.*;
 }
 
 statement
-	:
-	queryStatementSet
-	;
-
-queryStatementSet
-	:	queryStatement+
+	: queryStatement
+	| deleteStatement
 	;
 
 queryStatement
 	:	^(QUERY querySpec orderByClause?)
 	;
+
+deleteStatement
+@init { if (state.backtracking == 0) delegate.activateDeleteStrategy(); }
+    :   ^(DELETE fromClause whereClause?)
+    ;
 
 querySpec
 	:	^(QUERY_SPEC selectFrom whereClause? groupByClause? havingClause?)

@@ -79,7 +79,8 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private SearchMapping searchMapping;
 
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(QueryEngine.class);
-   private final boolean broadCastQuery;
+
+   private final boolean broadcastQuery;
 
    public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this(cache, isIndexed, ObjectReflectionMatcher.class);
@@ -88,7 +89,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
       super(cache, matcherImplClass);
       CacheMode cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
-      this.broadCastQuery = cacheMode.isClustered() && !cacheMode.isReplicated();
+      this.broadcastQuery = cacheMode.isClustered() && !cacheMode.isReplicated();
       this.isIndexed = isIndexed;
    }
 
@@ -171,7 +172,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (parsingResult.getHavingClause() != null) {
          BooleanExpr normalizedHavingClause = booleanFilterNormalizer.normalize(parsingResult.getHavingClause());
          if (normalizedHavingClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(),
@@ -224,7 +225,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
@@ -367,7 +368,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, startOffset, maxResults, queryStatistics);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
@@ -409,7 +410,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       String secondPhaseQueryStr = secondPhaseQuery.toString();
 
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
-            secondPhaseQueryStr, namedParameters,
+            secondPhaseQueryStr, parsingResult.getStatementType(), namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
             startOffset, maxResults, baseQuery, queryStatistics, local);
 
@@ -482,11 +483,11 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
          // the query is a contradiction, there are no matches
-         return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults, queryStatistics);
+         return new EmptyResultQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, startOffset, maxResults, queryStatistics);
       }
 
       if (!isIndexed) {
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -585,26 +586,26 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
                Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, local);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
-               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
+               return new HybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(), null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
             IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
             Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, sortFields);
-            return new HybridQuery<>(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
+            return new HybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(), null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
          }
       }
 
       if (expansion == ConstantBooleanExpr.TRUE) {
          // expansion leads to a full non-indexed query or the expansion is too long/complex
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
       }
 
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
-      return new HybridQuery<>(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery, queryStatistics, local);
+      return new HybridQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery, queryStatistics, local);
    }
 
    /**
@@ -615,7 +616,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                                                                     PropertyPath[] projection, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                                                                     SortField[] sortFields) {
       String queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
-      return new IckleParsingResult<>(queryString, parsingResult.getParameterNames(),
+      return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null,
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
             projection, projectedTypes, projectedNullMarkers, null, sortFields);
@@ -630,12 +631,12 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    public SearchQueryBuilder buildSearchQuery(String queryString, Map<String, Object> namedParameters) {
-      if (!isIndexed) {
-         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+      if (log.isDebugEnabled()) {
+         log.debugf("Building Lucene query for Ickle query: %s", queryString);
       }
 
-      if (log.isDebugEnabled()) {
-         log.debugf("Building Lucene query for : %s", queryString);
+      if (!isIndexed) {
+         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
       IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
@@ -646,19 +647,19 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return transformParsingResult(parsingResult, namedParameters);
    }
 
-   public <E> IndexedQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult,
+   public <E> IndexedQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> parsingResult,
                                                Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
       if (log.isDebugEnabled()) {
-         log.debugf("Building Lucene query for : %s", ickleParsingResult.getQueryString());
+         log.debugf("Building Lucene query for Ickle query: %s", parsingResult.getQueryString());
       }
 
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
-      SearchQueryBuilder searchQuery = transformParsingResult(ickleParsingResult, namedParameters);
+      SearchQueryBuilder searchQuery = transformParsingResult(parsingResult, namedParameters);
 
-      IndexedQuery<?> cacheQuery = makeCacheQuery(ickleParsingResult, searchQuery, namedParameters, local);
+      IndexedQuery<?> cacheQuery = makeCacheQuery(parsingResult, searchQuery, namedParameters, local);
       if (startOffset >= 0) {
          cacheQuery = cacheQuery.firstResult((int) startOffset);
       }
@@ -682,8 +683,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    private SearchQueryParsingResult transformToSearchQueryParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
       SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper);
-      return queryMaker
-            .transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
+      return queryMaker.transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
    }
 
    @Override
@@ -706,16 +706,16 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       String queryString = ickleParsingResult.getQueryString();
-      if (broadCastQuery && !local) {
-         QueryDefinition queryDefinition = buildQueryDefinition(queryString);
+      if (broadcastQuery && !local) {
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(), getQueryEngineProvider());
          queryDefinition.setNamedParameters(namedParameters);
          return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics);
       }
-      return new IndexedQueryImpl<>(queryString, searchQuery, cache, queryStatistics);
+      return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache, queryStatistics);
    }
 
-   protected QueryDefinition buildQueryDefinition(String q) {
-      return new QueryDefinition(q, queryEngineProvider);
+   protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
+      return queryEngineProvider;
    }
 
    /**

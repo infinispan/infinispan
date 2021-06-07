@@ -40,6 +40,8 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void activateSelectStrategy();
 
+   void activateDeleteStrategy();
+
    void activateWhereStrategy();
 
    void activateGroupByStrategy();

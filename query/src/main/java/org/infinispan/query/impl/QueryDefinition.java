@@ -12,14 +12,15 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
- * Wraps the query to be executed in a cache represented either as a String or as a {@link SearchQuery} form together with
- * pagination and sort information.
+ * Wraps the query to be executed in a cache represented either as an Ickle query String or as a {@link SearchQuery}
+ * together with parameters and pagination and sort information.
  *
  * @since 9.2
  */
@@ -27,32 +28,43 @@ public final class QueryDefinition {
 
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
-   private SearchQueryBuilder searchQuery;
+   private final IckleParsingResult.StatementType statementType;
+   private SearchQueryBuilder searchQueryBuilder;
    private int maxResults = -1;
    private int firstResult = 0;
    private long timeout = -1;
-   private Set<String> sortableFields;
-   private Class<?> indexedType;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
 
-   public QueryDefinition(String queryString, SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
+   public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
+                          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
+      }
+      if (statementType == null) {
+         throw new IllegalArgumentException("statementType cannot be null");
       }
       if (queryEngineProvider == null) {
          throw new IllegalArgumentException("queryEngineProvider cannot be null");
       }
       this.queryString = queryString;
+      this.statementType = statementType;
       this.queryEngineProvider = queryEngineProvider;
    }
 
-   public QueryDefinition(String queryString, SearchQueryBuilder searchQuery) {
-      if (searchQuery == null) {
-         throw new IllegalArgumentException("query cannot be null");
+   public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType, SearchQueryBuilder searchQueryBuilder) {
+      if (queryString == null) {
+         throw new IllegalArgumentException("queryString cannot be null");
       }
-      this.searchQuery = searchQuery;
+      if (statementType == null) {
+         throw new IllegalArgumentException("statementType cannot be null");
+      }
+      if (searchQueryBuilder == null) {
+         throw new IllegalArgumentException("searchQueryBuilder cannot be null");
+      }
+      this.searchQueryBuilder = searchQueryBuilder;
       this.queryString = queryString;
+      this.statementType = statementType;
       this.queryEngineProvider = null;
    }
 
@@ -60,32 +72,36 @@ public final class QueryDefinition {
       return queryString;
    }
 
-   private QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
+   public IckleParsingResult.StatementType getStatementType() {
+      return statementType;
+   }
+
+   private QueryEngine<?> getQueryEngine(AdvancedCache<?, ?> cache) {
       if (queryEngineProvider == null) {
          throw new IllegalStateException("No query engine provider specified");
       }
-      QueryEngine queryEngine = queryEngineProvider.apply(cache);
+      QueryEngine<?> queryEngine = queryEngineProvider.apply(cache);
       if (queryEngine == null) {
-         throw new IllegalStateException("The provider could not locate a suitable query engine");
+         throw new IllegalStateException("The query engine provider could not locate a suitable query engine");
       }
       return queryEngine;
    }
 
    public void initialize(AdvancedCache<?, ?> cache) {
-      if (searchQuery == null) {
+      if (searchQueryBuilder == null) {
          QueryEngine<?> queryEngine = getQueryEngine(cache);
-         searchQuery = queryEngine.buildSearchQuery(queryString, namedParameters);
+         searchQueryBuilder = queryEngine.buildSearchQuery(queryString, namedParameters);
          if (timeout > 0) {
-            searchQuery.failAfter(timeout, TimeUnit.NANOSECONDS);
+            searchQueryBuilder.failAfter(timeout, TimeUnit.NANOSECONDS);
          }
       }
    }
 
-   public SearchQueryBuilder getSearchQuery() {
-      if (searchQuery == null) {
+   public SearchQueryBuilder getSearchQueryBuilder() {
+      if (searchQueryBuilder == null) {
          throw new IllegalStateException("The QueryDefinition has not been initialized, make sure to call initialize(...) first");
       }
-      return searchQuery;
+      return searchQueryBuilder;
    }
 
    public int getMaxResults() {
@@ -106,6 +122,9 @@ public final class QueryDefinition {
 
    public void setTimeout(long timeout, TimeUnit timeUnit) {
       this.timeout = timeUnit.toNanos(timeout);
+      if (this.timeout > 0 && searchQueryBuilder != null) {
+         searchQueryBuilder.failAfter(this.timeout, TimeUnit.NANOSECONDS);
+      }
    }
 
    public Map<String, Object> getNamedParameters() {
@@ -120,24 +139,8 @@ public final class QueryDefinition {
       this.firstResult = firstResult;
    }
 
-   public Set<String> getSortableFields() {
-      return sortableFields;
-   }
-
-   public void setSortableField(Set<String> sortableField) {
-      this.sortableFields = sortableField;
-   }
-
-   public Class<?> getIndexedType() {
-      return indexedType;
-   }
-
-   public void setIndexedType(Class<?> indexedType) {
-      this.indexedType = indexedType;
-   }
-
    public void failAfter(long timeout, TimeUnit timeUnit) {
-      getSearchQuery().failAfter(timeout, timeUnit);
+      getSearchQueryBuilder().failAfter(timeout, timeUnit);
    }
 
    public static final class Externalizer implements AdvancedExternalizer<QueryDefinition> {
@@ -155,11 +158,10 @@ public final class QueryDefinition {
       @Override
       public void writeObject(ObjectOutput output, QueryDefinition queryDefinition) throws IOException {
          output.writeUTF(queryDefinition.queryString);
+         output.writeByte(queryDefinition.statementType.ordinal());
          output.writeObject(queryDefinition.queryEngineProvider);
          output.writeInt(queryDefinition.firstResult);
          output.writeInt(queryDefinition.maxResults);
-         output.writeObject(queryDefinition.sortableFields);
-         output.writeObject(queryDefinition.indexedType);
          output.writeLong(queryDefinition.timeout);
          Map<String, Object> namedParameters = queryDefinition.namedParameters;
          int paramSize = namedParameters.size();
@@ -175,14 +177,11 @@ public final class QueryDefinition {
       @Override
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
+         IckleParsingResult.StatementType statementType = IckleParsingResult.StatementType.valueOf(input.readByte());
          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-         QueryDefinition queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, queryEngineProvider);
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());
-         Set<String> sortableField = (Set<String>) input.readObject();
-         queryDefinition.setSortableField(sortableField);
-         Class<?> indexedType = (Class<?>) input.readObject();
-         queryDefinition.setIndexedType(indexedType);
          queryDefinition.timeout = input.readLong();
          short paramSize = input.readShort();
          if (paramSize != 0) {
