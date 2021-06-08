@@ -430,7 +430,7 @@ public interface ClusteringDependentLogic {
                expired = false;
             }
 
-            if (stage == null) {
+            if (stage == null || CompletionStages.isCompletedSuccessfully(stage)) {
                return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                      entry, ctx, command, previousValue, previousMetadata, evictionManager);
             } else {
