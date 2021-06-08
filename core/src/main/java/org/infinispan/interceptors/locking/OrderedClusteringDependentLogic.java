@@ -26,6 +26,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
 import org.infinispan.util.logging.Log;
@@ -127,7 +129,12 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
          chainedStage = activateKey(key, segment, entry, command, ctx, trackFlag, l1Invalidation);
       }
       // After everything is done we have to make sure to complete our future
-      return chainedStage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, ourFuture, operation(entry)));
+      if (CompletionStages.isCompletedSuccessfully(chainedStage)) {
+         orderer.completeOperation(key, ourFuture, operation(entry));
+         return CompletableFutures.completedNull();
+      } else {
+         return chainedStage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, ourFuture, operation(entry)));
+      }
    }
 
    private CompletionStage<Void> activateKey(Object key, int segment, CacheEntry entry, FlagAffectedCommand command,
