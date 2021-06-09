@@ -22,10 +22,14 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
       try {
          return exec(invocation);
       } catch (CommandException e) {
-         invocation.getShell().writeln(ANSI.YELLOW_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         Throwable cause = Util.getRootCause(e);
+         invocation.getShell().writeln(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         if (cause != e) {
+            invocation.getShell().writeln(ANSI.RED_TEXT + cause.getClass().getSimpleName() +": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         }
          return CommandResult.FAILURE;
       } catch (Throwable e) {
-         // These are unhandled, show them in red
+         // These are unhandled
          Throwable cause = Util.getRootCause(e);
          invocation.getShell().writeln(ANSI.RED_TEXT + cause.getClass().getSimpleName() +": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
          return CommandResult.FAILURE;
