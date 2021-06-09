@@ -7,6 +7,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
+import org.aesh.command.CommandException;
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
 import org.infinispan.cli.user.UserTool;
@@ -204,7 +205,6 @@ public interface Messages {
    @Message(value = "Wrong argument count: %d.")
    IllegalArgumentException wrongArgumentCount(int size);
 
-
    @Message(value = "Backup path on the server must be absolute")
    IllegalArgumentException backupAbsolutePathRequired();
 
@@ -240,4 +240,7 @@ public interface Messages {
 
    @Message(value = "Filter rule '%s' is not in the format [ACCEPT|REJECT]/{CIDR}")
    IllegalArgumentException illegalFilterRule(String rule);
+
+   @Message(value = "Error executing line %d: '%s'")
+   CommandException batchError(int lineNumber, String line, @Cause Throwable t);
 }
