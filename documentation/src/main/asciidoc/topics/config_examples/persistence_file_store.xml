@@ -3,8 +3,9 @@
                preload="true"
                fetch-state="true"
                read-only="false"
-               purge="true"
-               path="${java.io.tmpdir}">
+               purge="true">
+      <data path="${java.io.tmpdir}/data"/>
+      <index path="${java.io.tmpdir}/index"/>
       <write-behind modification-queue-size="123" />
    </file-store>
 </persistence>

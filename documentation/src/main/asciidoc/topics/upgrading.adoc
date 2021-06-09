@@ -12,6 +12,12 @@ Use ```reindex``` instead:
 
   /v2/caches/{cacheName}/search/indexes?action=reindex
 
+== XML Configured File Store implementation has changed to be SoftIndexFileStore
+
+The `file-store` element will now install a SoftIndexFileStore instead of the prior SingleFileStore
+implementation. Any configuration with a schema of 12 or older will automatically migrate the old
+data storage to the new automatically.
+
 = Upgrading from 12.0 to 12.1
 
 == JGroups configuration changes
