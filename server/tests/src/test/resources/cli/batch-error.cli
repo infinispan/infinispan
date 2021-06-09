@@ -1,0 +1,2 @@
+echo Hi CLI running on ${os.arch}
+supercalifragilisticexpialidocious

@@ -133,6 +133,15 @@ public class CliIT {
    }
 
    @Test
+   public void testCliBatchError() {
+      System.setProperty("serverAddress", hostAddress());
+      AeshTestShell shell = new AeshTestShell();
+      CLI.main(shell, new String[]{"-f", getCliResource("batch-error.cli").getPath()}, properties);
+      shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
+      shell.assertContains("Error executing line 2");
+   }
+
+   @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
       CLI.main(shell, new String[]{connectionString(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
