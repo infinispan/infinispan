@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Arguments;
@@ -13,6 +14,7 @@ import org.aesh.command.option.Option;
 import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
+import org.infinispan.cli.logging.Messages;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.kohsuke.MetaInfServices;
 
@@ -36,17 +38,20 @@ public class Run extends CliCommand {
    }
 
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+   public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       if (arguments != null && arguments.size() > 0) {
          for (Resource resource : arguments) {
+            int lineCount = 0;
+            String line = null;
             try (BufferedReader br = new BufferedReader("-".equals(resource.getName()) ? new InputStreamReader(System.in) : new InputStreamReader(resource.read()))) {
-               for (String line = br.readLine(); line != null; line = br.readLine()) {
+               for (line = br.readLine(); line != null; line = br.readLine()) {
+                  lineCount++;
                   if (!line.startsWith("#")) {
                      invocation.executeCommand("batch " + StringPropertyReplacer.replaceProperties(line));
                   }
                }
             } catch (Exception e) {
-               throw new RuntimeException(e);
+               throw Messages.MSG.batchError(lineCount, line, e);
             }
          }
       }
