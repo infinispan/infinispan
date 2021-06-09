@@ -1,5 +1,8 @@
 [id='sfs_cache_store']
 = Single File Cache Stores
+
+WARNING: Single File Store has been deprecated as of 13.0.x
+
 Single File cache stores, `SingleFileStore`, persist data to file. {brandname}
 also maintains an in-memory index of keys while keys and values are stored in
 the file. By default, Single File cache stores are segmented, which means that

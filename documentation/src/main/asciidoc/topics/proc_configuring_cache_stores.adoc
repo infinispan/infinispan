@@ -41,11 +41,11 @@ include::config_examples/persistence_file_store.xml[]
 include::config_examples/persistence_custom_file_store.xml[]
 ----
 
-.Single file store
+.SoftIndex file store
 
 [source,java]
 ----
-include::code_examples/SingleFileStore.java[]
+include::code_examples/SoftIndexFileStore.java[]
 ----
 
 .Reference

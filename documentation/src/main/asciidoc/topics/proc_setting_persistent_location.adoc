@@ -49,15 +49,18 @@ For example, you configure your global persistent location as follows:
 </global-state>
 ----
 
-You then configure a Single File cache store that uses a path named
+You then configure a Soft Index File cache store that uses a path named
 `myDataStore` as follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<file-store path="myDataStore"/>
+<file-store path="myDataStore">
+   <data path="data"/>
+   <index path="index"/>
+</file-store>
 ----
 
-In this case, the configuration results in a Single File cache store in `/tmp/example/myDataStore/myCache.dat`
+In this case, the configuration results in a Soft Index File cache store data in `/tmp/example/data` and index in `/tmp/example/index'
 
 If you attempt to set an absolute path that resides outside the global
 persistent location and global-state is enabled, {brandname} throws the following exception:
