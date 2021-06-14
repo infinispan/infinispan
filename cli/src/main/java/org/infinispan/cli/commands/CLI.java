@@ -1,18 +1,11 @@
 package org.infinispan.cli.commands;
 
-import static org.infinispan.cli.logging.Messages.MSG;
-
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.KeyStore;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
@@ -63,15 +56,10 @@ import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.impl.DefaultShell;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
 import org.infinispan.cli.impl.KubernetesContextImpl;
-import org.infinispan.cli.impl.SSLContextSettings;
-import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
-import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
-import org.wildfly.security.keystore.KeyStoreUtil;
-import org.wildfly.security.provider.util.ProviderUtil;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -122,23 +110,11 @@ public class CLI extends CliCommand {
 
    private Context context;
 
-   @Option(completer = FileOptionCompleter.class, shortName = 't', name = "truststore", description = "A truststore to use when connecting to SSL/TLS-enabled servers")
-   Resource truststore;
-
-   @Option(shortName = 's', name = "truststore-password", description = "The password for the truststore")
-   String truststorePassword;
-
    @Option(shortName = 'v', hasValue = false, description = "Shows version information")
    boolean version;
 
-   @Option(hasValue = false, description = "Whether to trust all certificates", name = "trustall")
-   boolean trustAll;
-
    @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "File for batch mode")
    Resource file;
-
-   @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
-   String connect;
 
    @Option(shortName = 'P', description = "Sets system properties from the specified file.")
    String properties;
@@ -181,30 +157,6 @@ public class CLI extends CliCommand {
          } catch (IOException e) {
             throw new IllegalArgumentException(e);
          }
-      }
-
-      String sslTrustStore = truststore != null ? truststore.getAbsolutePath() : context.getProperty(Context.Property.TRUSTSTORE);
-      if (sslTrustStore != null) {
-         String sslTrustStorePassword = truststorePassword != null ? truststorePassword : context.getProperty(Context.Property.TRUSTSTORE_PASSWORD);
-         try (FileInputStream f = new FileInputStream(sslTrustStore)) {
-            KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, sslTrustStore, sslTrustStorePassword != null ? sslTrustStorePassword.toCharArray() : null);
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(keyStore);
-            SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, trustManagerFactory.getTrustManagers(), null, null);
-            context.setSslContext(sslContext);
-         } catch (Exception e) {
-            invocation.getShell().writeln(MSG.keyStoreError(sslTrustStore, e));
-            return CommandResult.FAILURE;
-         }
-      } else if (trustAll || Boolean.parseBoolean(context.getProperty(Context.Property.TRUSTALL))) {
-         SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, new TrustManager[]{new ZeroSecurityTrustManager()}, null, new ZeroSecurityHostnameVerifier());
-         context.setSslContext(sslContext);
-      }
-
-      String connectionString = connect != null ? connect : context.getProperty(Context.Property.AUTOCONNECT_URL);
-
-      if (connectionString != null) {
-         context.connect(null, connectionString);
       }
 
       if (file != null) {
