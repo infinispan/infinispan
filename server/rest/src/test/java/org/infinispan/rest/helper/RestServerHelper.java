@@ -132,11 +132,11 @@ public class RestServerHelper {
    }
 
    public void ignoreCache(String cacheName) {
-      restServer.getServerStateManager().ignoreCache(cacheName);
+      restServer.getServerStateManager().ignoreCache(cacheName).join();
    }
 
    public void unignoreCache(String cacheName) {
-      restServer.getServerStateManager().unignoreCache(cacheName);
+      restServer.getServerStateManager().unignoreCache(cacheName).join();
    }
 
    public RestClient createClient() {
