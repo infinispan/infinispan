@@ -250,6 +250,11 @@ public final class ServerStateManagerImpl implements ServerStateManager {
          this.caches = ConcurrentHashMap.newKeySet(caches.size());
          this.caches.addAll(caches);
       }
+
+      @Override
+      public String toString() {
+         return "IgnoredCaches" + caches;
+      }
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IP_FILTER_RULE)

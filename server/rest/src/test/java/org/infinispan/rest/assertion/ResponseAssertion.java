@@ -95,12 +95,12 @@ public class ResponseAssertion {
       String body = response.getBody();
       Assertions.assertThat(body).matches(s -> {
          for (String possible : textPossibilities) {
-            if (s.equals(possible)) {
+            if (s != null && s.equals(possible)) {
                return true;
             }
          }
          return false;
-      }, "Content: " + body + " doesn't match any of " + textPossibilities);
+      }, "Content: " + body + " doesn't match any of " + Arrays.toString(textPossibilities));
       return this;
    }
 
