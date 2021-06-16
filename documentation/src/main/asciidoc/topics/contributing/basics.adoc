@@ -103,9 +103,9 @@ image::import_maven2.png[]
 +
 image::ann_proc_eclipse.png[]
 
-. Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml[formatter.xml]
+. Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:https://raw.github.com/infinispan/infinispan/main/ide-settings/eclipse/formatter.xml[formatter.xml]
 
-. Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml[codetemplates.xml]
+. Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:https://raw.github.com/infinispan/infinispan/main/ide-settings/eclipse/codetemplates.xml[codetemplates.xml]
 
 ==== IntelliJ IDEA
 ===== Importing
@@ -139,7 +139,7 @@ If these issues do crop up then simply run `mvn clean install -DskipTests` on th
 TIP: If you are running a multi-core environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/[here] .
 
 ===== Code Style
-Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
+Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/main/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
 
 == Builds
 {brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
@@ -165,7 +165,7 @@ Visit link:http://infinispan.org/community/[this page] to learn more.
 
 In addition, sure all link:http://en.wikipedia.org/wiki/Newline[new line characters] used must be LF (UNIX style line feeds). Most good IDEs allow you to set this, regardless of operating system used.
 
-All patches or code committed must adhere to this style. Code style settings which can be imported into IntelliJ IDEA and Eclipse are committed in the project sources, in link:https://github.com/infinispan/infinispan/blob/master/ide-settings/[ide-settings] .
+All patches or code committed must adhere to this style. Code style settings which can be imported into IntelliJ IDEA and Eclipse are committed in the project sources, in link:https://github.com/infinispan/infinispan/blob/main/ide-settings/[ide-settings] .
 
 === Spelling
 Ensure correct spelling in code, comments, Javadocs, etc. (use _American English_ spelling).
