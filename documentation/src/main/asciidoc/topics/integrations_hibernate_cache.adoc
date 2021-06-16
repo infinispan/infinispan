@@ -122,7 +122,7 @@ To enable that configuration, set `hibernate.cache.infinispan.cfg` to `org/infin
 You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
 A simple tutorial showing how to use {brandname} as Hibernate cache provider in a standalone application can be found
-link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/local[here].
+link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/local[here].
 
 === Single-Node Standalone Spring Application
 
@@ -145,7 +145,7 @@ To enable that configuration, set `spring.jpa.properties.hibernate.cache.infinis
 You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
 A simple tutorial showing how to use {brandname} as Hibernate cache provider in a Spring application can be found
-link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/spring-local[here].
+link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/spring-local[here].
 
 === Single-Node WildFly Application
 
@@ -165,7 +165,7 @@ So, to enable Hibernate to use {brandname} as second-level cache, all you need t
 This is explained in detail in the introduction of this chapter.
 
 A simple tutorial showing how to use {brandname} as Hibernate cache provider in a WildFly application can be found
-link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/wildfly-local[here].
+link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/wildfly-local[here].
 
 === Multi-Node Standalone Hibernate Application
 
@@ -414,7 +414,7 @@ include::config_examples/hibernate_cache_eviction.xml[]
 
 Inside of WildFly, same as with the entity/collection configuration override, eviction/expiration settings would also require deployment name and persistence unit information
 (a working example can be found
-link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/wildfly-local[here]
+link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/wildfly-local[here]
 ):
 
 [source,xml,options="nowrap",subs=attributes+]

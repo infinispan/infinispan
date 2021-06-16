@@ -11,8 +11,7 @@ All you need to do is fork {brandname} to edit the documentation source files.
 You can then submit your changes in a _pull request_ as you would any other
 contribution to the project.
 
-See the `README` file in the _documentation/src/main/asciidoc_ directory for
-information on what you need to edit and build the documentation.
+See the link:https://github.com/infinispan/infinispan/blob/main/documentation/README.md[Documentation README] for information on what you need to edit and build documentation.
 
 [[documentation_guidelines_style_guide]]
 == Style Guide

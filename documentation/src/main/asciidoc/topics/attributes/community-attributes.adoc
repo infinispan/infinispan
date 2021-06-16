@@ -75,10 +75,10 @@
 :hotrod_docs: ../hotrod_java/hotrod_java.html
 
 //Operator Getting Started
-:k8s_start: https://infinispan.org/infinispan-operator/master/operator.html#start_operator
+:k8s_start: https://infinispan.org/infinispan-operator/2.0.x/operator.html#start_operator
 
 //Operator
-:k8s_docs: https://infinispan.org/infinispan-operator/master/operator.html
+:k8s_docs: https://infinispan.org/infinispan-operator/2.0.x/operator.html
 
 //Library
 :library_docs: ../embedding/embedding.html

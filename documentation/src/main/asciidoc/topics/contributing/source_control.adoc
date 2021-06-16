@@ -14,7 +14,7 @@ At very least, we recommend that you read link:http://progit.org/book/ch2-0.html
 link:http://progit.org/book/ch3-0.html[Chapter 3] and link:http://progit.org/book/ch5-0.html[Chapter 5] of _Pro Git_ before proceeding.
 
 == Repositories
-{brandname} uses link:http://github.com/infinispan/infinispan[] as its canonical repository, and this repository contains the stable code on master as well as the maintenance branches for previous minor versions (e.g., 5.0.x, 4.2.x, 4.1.x, etc)
+{brandname} uses link:http://github.com/infinispan/infinispan[] as its canonical repository, and this repository contains the stable code on main as well as the maintenance branches for previous minor versions (e.g., 5.0.x, 4.2.x, 4.1.x, etc)
 
 Typically, only _Project Admins_ would be able to push to this repository while all else may clone or fork the repository.
 
@@ -56,15 +56,15 @@ however different changes should always be identified by different commits. 
 Before you push your work onto your fork of the repository on GitHub (your _origin_), it is often a good idea to review your commits.
 Consolidating them (squashing) or breaking them up as necessary and cleaning up commit messages should all be done while still working off your local clone.
 Also, prior to issuing a pull request, you should make sure you rebase your branch against the upstream branch you expect it to be merged into. 
-Also, only submit pull requests for your topic branch - not for your master!
+Also, only submit pull requests for your topic branch - not for your main!
 
 TIP: The section on _Public Small Project_ in link:http://progit.org/book/ch5-2.html[Chapter 5, Section 2] of Pro Git has more information on this style of workflow.
 
 ===== A worked example
-. Make sure your master is synced up with upstream. See <<link_ifyouhaveforkedupstream,this section>> for how to do this
+. Make sure your main branch is synced up with upstream. See <<link_ifyouhaveforkedupstream,this section>> for how to do this
 . Create new branch for your topic and switch to it. For the example issue, ISPN-1234:
 
- git checkout -b t_ISPN-12345 master
+ git checkout -b t_ISPN-12345 main
 
 . Do your work. Test. Repeat
 . Commit your work on your topic branch
@@ -77,22 +77,22 @@ TIP: The section on _Public Small Project_ in link:http://progit.org/book/ch5-2.
 
  git branch -d t_ISPN-12345 && git push origin :t_ISPN-12345
 
-. Sync with upstream again so that your changes now appear in your master branch
+. Sync with upstream again so that your changes now appear in your main branch
 
 If your topic branch has been open for a while and you are afraid changes upstream may clash with your changes, it makes sense to rebase your topic branch before you issue a pull request. To do this:
 
-. Sync your master branch with upstream
+. Sync your main branch with upstream
 
- git checkout master
- git pull upstream master
+ git checkout main
+ git pull upstream main
 
 . Switch to your topic branch. For example:
 
  git checkout t_ISPN-12345
 
-. Rebase your topic branch against master:
+. Rebase your topic branch against main:
 
- git rebase master
+ git rebase main
 
 . During the rebase process you might need to fix conflicts
 . When you're done test your code again.
@@ -181,7 +181,7 @@ TIP: More information on pulling changes from remote, forked repos can be found 
 . If you have warnings about "Merge made by recursive" you have to fix it rebasing.
 . If you have warnings about "non-fast-forward" you have to rebase.
 . If you see "non-fast-forward updates were rejected" you *must never* use `--force` on upstream!
-It means that another patch was merged before you and you have to update your master again, and rebase again.
+It means that another patch was merged before you and you have to update your main again, and rebase again.
 . `--force` is allowed only in special maintenance circumstances.
 If you find you're needing it to handle a pull request, then you're doing it wrong, and the mistake might be a dangerous one!
 It's like the good rule of never commit when you're drunk (drunk coding, however, is allowed).
@@ -195,7 +195,7 @@ Releases can only be cut by Project Admins, and must be done off a recently upda
 {brandname}'s `bin/release.py` script takes care of the rest.
 
 === Release branches
-{brandname} has several main release branches. These are master (ongoing work on the current unstable release),
+{brandname} has several main release branches. These are main (ongoing work on the current unstable release),
 and maintenance branches for previous minor releases (e.g., `5.0.x`, `4.2.x`, `4.1.x`).
 Work should never be committed directly to any of these release branches directly; topic branches should always be used for work, and these topic branches should be merged in using the process outlined above.
 
@@ -208,24 +208,24 @@ link:http://progit.org/book/ch3-4.html[Chapter 3, Section 4] of Pro Git has a de
 For {brandname}, it makes sense to create a topic branch and name it after the JIRA it corresponds to. (if it doesn't correspond to a JIRA, a simple but descriptive name should be used).
 
 ==== Topic Branches Affecting More Than One Release Branch
-Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the master release branch.
-So a topic branch should be created based off master.
-However, occasionally, fixes may apply to both release branches 4.2.x as well as master. In this case, the following workflow should apply:
+Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the main release branch.
+So a topic branch should be created based off main.
+However, occasionally, fixes may apply to both release branches 4.2.x as well as main. In this case, the following workflow should apply:
 
 . Create topic branch off 4.2.x. For example:
 
  git checkout -b <topic>_4.2.x 4.2.x
 
-. Create topic branch off master. For example:
+. Create topic branch off main. For example:
 
- git checkout -b <topic>_master master
+ git checkout -b <topic>_main main
 
-. Do your work on `<topic>_master`, test and commit your fixes
+. Do your work on `<topic>_main`, test and commit your fixes
 . Switch to `<topic>_4.2.x`. For example:
 
  git checkout <topic>_4.2.x
 
-.  Cherry-pick your commit from `<topic>_master` onto `<topic>_4.2.x`. For example:
+.  Cherry-pick your commit from `<topic>_main` onto `<topic>_4.2.x`. For example:
 
  git cherry-pick <commit_id>
 
@@ -276,16 +276,16 @@ If you have a clone of the upstream, you may want to update it from time to time
 
 will often do the trick. You could then pull the specific branches you would need to update:
 
- $ git checkout master
- $ git pull origin master
+ $ git checkout main
+ $ git pull origin main
  $ git checkout 4.2.x
  $ git pull origin 4.2.x
 
 ==== Updating topic branches
 You should rebase your topic branches at this point so that they are up-to-date and when pulled by upstream, upstream can fast-forward the release branches:
 
- $ git checkout <topic>_master
- $ git rebase master
+ $ git checkout <topic>_main
+ $ git rebase main
 
 and/or
 
@@ -303,9 +303,9 @@ You should now be able to fetch and pull changes from upstream into your local r
 
  $ git fetch upstream
  $ git fetch upstream --tags
- $ git checkout master
- $ git pull upstream master
- $ git push origin master
+ $ git checkout main
+ $ git pull upstream main
+ $ git push origin main
  $ git checkout 4.2.x
  $ git pull upstream 4.2.x
  $ git push origin 4.2.x
@@ -315,8 +315,8 @@ TIP: A script can do this for you - have a look at link:https://github.com/manik
 ==== Updating topic branches
 Again, you should rebase your topic branches at this point so that they are up-to-date and when pulled by upstream, upstream can fast-forward the release branches:
 
- $ git checkout topic_master
- $ git rebase master
+ $ git checkout topic_main
+ $ git rebase main
 
 and/or
 
@@ -377,7 +377,7 @@ Again, For example, add the following to `~/.gitconfig`:
      lg = log --decorate --abbrev-commit
      last = log --decorate -1 -p --abbrev-commit
      ci = commit -a
-     pom = push origin master
+     pom = push origin main
      graph = log --pretty=oneline --graph --abbrev-commit
      dt = difftool
 ----
@@ -430,6 +430,6 @@ If you're a zsh user, you can get even more interesting branch information thank
 * whether it diverges with the remote (↕)
 * whether it's behind (↓)
 
-For example, the following prompt indicates that the current branch is 't_ispn775_master' and that it is behind remote:
+For example, the following prompt indicates that the current branch is 't_ispn775_main' and that it is behind remote:
 
-  [~/Go/code/infinispan.git]% (t_ispn775_master ↓)
+  [~/Go/code/infinispan.git]% (t_ispn775_main ↓)

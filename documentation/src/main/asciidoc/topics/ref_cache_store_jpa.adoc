@@ -54,6 +54,6 @@ include::code_examples/ConfigJpaStore.java[]
 * link:{javadocroot}/org/infinispan/persistence/jpa/configuration/JpaStoreConfiguration.html[JpaStoreConfiguration]
 //Community only
 ifdef::community[]
-* link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/configuration/JpaConfigurationTest.java[JPA Cache Store test]
-* link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml[JPA Cache Store test configuration]
+* link:https://github.com/infinispan/infinispan/blob/main/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/configuration/JpaConfigurationTest.java[JPA Cache Store test]
+* link:https://github.com/infinispan/infinispan/blob/main/persistence/jpa/src/test/resources/config/jpa-config.xml[JPA Cache Store test configuration]
 endif::community[]
