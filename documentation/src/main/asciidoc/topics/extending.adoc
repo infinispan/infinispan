@@ -11,14 +11,14 @@ While the core commands - and their corresponding visitors - are hard-coded as
 a part of {brandname}'s core module, module authors can extend and enhance {brandname}
 by creating new custom commands.
 
-As a module author (such as link:https://github.com/infinispan/infinispan/tree/master/query[infinispan-query], etc.) you can define your own commands.
+As a module author (such as link:https://github.com/infinispan/infinispan/tree/main/query[infinispan-query], etc.) you can define your own commands.
 
 You do so by:
 
 . Create a `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file and ensure this is packaged in your jar.
-. Implementing link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java[`ModuleCommandFactory`] and
-link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
-. Specifying the fully-qualified class name of the  link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
+. Implementing link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java[`ModuleCommandFactory`] and
+link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
+. Specifying the fully-qualified class name of the  link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
 implementation in `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions`.
 . Implement your custom commands and visitors for these commands
 
@@ -44,5 +44,5 @@ Being this a single byte, ranges can't be too large.
 
 == Extending the configuration builders and parsers
 If your custom module requires configuration, it is possible to enhance {brandname}'s configuration builders and
-parsers. Look at the link:https://github.com/infinispan/infinispan/blob/master/core/src/test/java/org/infinispan/configuration/module[custom module tests]
+parsers. Look at the link:https://github.com/infinispan/infinispan/blob/main/core/src/test/java/org/infinispan/configuration/module[custom module tests]
 for a detail example on how to implement this.
