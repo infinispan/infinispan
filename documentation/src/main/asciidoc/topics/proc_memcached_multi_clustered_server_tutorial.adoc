@@ -25,7 +25,7 @@ $ ./bin/domain.sh
 Which automatically starts two nodes.
 +
 
-. Execute the link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_write.py[test_memcached_write.py] script. This basically executes several write operations against the {brandname} Memcached server bound to port `11211`. If the script is executed successfully, you should see an output similar to this:
+. Execute the link:https://github.com/infinispan/infinispan/tree/main/server/memcached/src/test/resources/test_memcached_write.py[test_memcached_write.py] script. This basically executes several write operations against the {brandname} Memcached server bound to port `11211`. If the script is executed successfully, you should see an output similar to this:
 +
 [source,options=nowrap]
 ----
@@ -46,7 +46,7 @@ Which automatically starts two nodes.
 ----
 +
 
-. Execute the link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_read.py[test_memcached_read.py] script which connects to server bound to `127.0.0.1:11311` and verifies that it can read the data that was written by the writer script to the first server. If the script is executed successfully, you should see an output similar to this:
+. Execute the link:https://github.com/infinispan/infinispan/tree/main/server/memcached/src/test/resources/test_memcached_read.py[test_memcached_read.py] script which connects to server bound to `127.0.0.1:11311` and verifies that it can read the data that was written by the writer script to the first server. If the script is executed successfully, you should see an output similar to this:
 +
 [source,options=nowrap]
 ----
