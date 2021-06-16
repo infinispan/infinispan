@@ -417,9 +417,6 @@ To solve this issue, you should try any of these options:
 ==== Can I bind Cache or CacheManager to JNDI?
 Cache or CacheManager can be bound to JNDI, but only to the java: namespace because they are not designed to be exported outside the Java Virtual Machine. In other words, you shouldn't expect that you'll be able to access them remotely by binding them to JNDI and downloading a remote proxy to them because neither Cache nor CacheManager are serializable.
 
-To find an example on how to bind Cache or CacheManager to the java: namespace, simply check link:https://github.com/infinispan/infinispan/blob/master/core/src/test/java/org/infinispan/jndi/BindingTest.java[this unit test case] .
-
-
 === Hibernate 2nd Level Cache questions
 ==== Can I use {brandname} as a remote JPA or Hibernate second level cache?
 See link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan-remote[Remote {brandname} Caching] section in Hibernate documentation.

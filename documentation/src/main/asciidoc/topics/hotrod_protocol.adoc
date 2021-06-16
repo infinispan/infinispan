@@ -1132,7 +1132,7 @@ Response (0x20):
 |==============================================================================
 
 As of Infinispan 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
-defined in link:https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
+defined in link:https://github.com/infinispan/infinispan/blob/main/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
 These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
 compatible (according to the rules defined link:https://developers.google.com/protocol-buffers/docs/proto#updating[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
@@ -2694,7 +2694,7 @@ The data formats are described using a _MediaType_ object, that is represented a
 +0x00+ = No MediaType supplied +
 +0x01+ = Pre-defined MediaType supplied +
 +0x02+ = Custom MediaType supplied +
-| id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
+| id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/main/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
 | customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. E.g.: _text/plain_, _application/json_, etc.
 | paramSize | vInt | The size of the parameters for the MediaType
 | paramKey1 | string | (Optional) The first parameter's key
@@ -3021,7 +3021,7 @@ as the hash function version parameter.
 
 .  Version 1 (single byte, 0x01) The initial version of the hash function in
 use is based on
-link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:http://sites.google.com/site/murmurhash/[Austin Appleby's MurmurHash 2.0 page].
+link:https://github.com/infinispan/infinispan/blob/main/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:http://sites.google.com/site/murmurhash/[Austin Appleby's MurmurHash 2.0 page].
 Other implementations are detailed on
 link:http://en.wikipedia.org/wiki/MurmurHash[Wikipedia] .
 This hash function was the default one used by the Hot Rod server until Infinispan 4.2.1.
@@ -3030,7 +3030,7 @@ Since Infinispan 9.0, the client ignores hash version 1.
 
 .  Version 2 (single byte, 0x02) Since Infinispan 5.0, a new hash function is
 used by default which is based on
-link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java[Austin Appleby's MurmurHash 3.0 algorithm].
+link:https://github.com/infinispan/infinispan/blob/main/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java[Austin Appleby's MurmurHash 3.0 algorithm].
 Detailed information about the hash function can be found in this
 link:http://code.google.com/p/smhasher/wiki/MurmurHash3[wiki].
 Compared to 2.0, it provides better performance and spread.
@@ -3040,7 +3040,7 @@ Since Infinispan 7.0, the server only uses version 2 for HotRod 1.x clients.
 The function is still based on
 link:http://code.google.com/p/smhasher/wiki/MurmurHash3[wiki],
 but is also aware of the hash segments used in the server's
-link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].
+link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].
 
 == Hot Rod Admin Tasks
 Admin operations are handled by the Exec operation with a set of well known tasks. Admin tasks are named according to the following rules:
