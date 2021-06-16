@@ -47,7 +47,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          if (t instanceof OutdatedTopologyException)
             throw t;
 
-         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
+         releaseLockOnTxCompletion(((TxInvocationContext<?>) rCtx));
       });
    }
 
@@ -134,7 +134,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       PendingLockPromise pendingLockPromise =
          pendingLockManager.checkPendingTransactionsForKey(ctx, key, lockTimeout, TimeUnit.MILLISECONDS);
       if (pendingLockPromise.isReady()) {
-         return lockAndRecord(ctx, command, key, lockTimeout);
+         //if it has already timed-out, do not try to acquire the lock
+         return pendingLockPromise.hasTimedOut() ?
+               pendingLockPromise.toInvocationStage() :
+               lockAndRecord(ctx, command, key, lockTimeout);
       }
 
       return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
@@ -148,7 +151,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       PendingLockPromise pendingLockPromise =
          pendingLockManager.checkPendingTransactionsForKeys(ctx, keys, lockTimeout, TimeUnit.MILLISECONDS);
       if (pendingLockPromise.isReady()) {
-         return lockAllAndRecord(ctx, command, keys, lockTimeout);
+         //if it has already timed-out, do not try to acquire the lock
+         return pendingLockPromise.hasTimedOut() ?
+               pendingLockPromise.toInvocationStage() :
+               lockAllAndRecord(ctx, command, keys, lockTimeout);
       }
 
       return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, ((rCtx, rCommand, rv) -> {
@@ -157,7 +163,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }));
    }
 
-   void releaseLockOnTxCompletion(TxInvocationContext ctx) {
+   void releaseLockOnTxCompletion(TxInvocationContext<?> ctx) {
       boolean shouldReleaseLocks = ctx.isOriginLocal() &&
             !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction());
       if (shouldReleaseLocks) {
