@@ -404,7 +404,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       return getOrCreateRemoteTransaction(globalTx, modifications, currentTopologyId);
    }
 
-   private RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
+   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
       RemoteTransaction existingTransaction = remoteTransactions.get(globalTx);
       if (existingTransaction != null)
          return existingTransaction;
