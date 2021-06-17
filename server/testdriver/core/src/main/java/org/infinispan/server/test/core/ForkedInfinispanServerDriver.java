@@ -9,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -19,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 
+import org.apache.commons.io.FileUtils;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -40,6 +40,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    private static final int SHUTDOWN_TIMEOUT_SECONDS = 15;
    private final List<ForkedServer> forkedServers = new ArrayList<>();
    private final List<Path> serverHomes;
+   private final String serverDataPath;
 
    protected ForkedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
@@ -47,9 +48,17 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       if (globalServerHome == null || globalServerHome.isEmpty()) {
          throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR + " property.");
       }
+      serverDataPath = System.getProperty(Server.INFINISPAN_SERVER_ROOT_PATH);
+      if (serverDataPath != null && !serverDataPath.trim().isEmpty() && !serverDataPath.contains("%d")) {
+         throw new IllegalStateException("Server root path should have the index. Add the %d regex to the path. Example: /path/to/server_%d");
+      }
       this.serverHomes = new ArrayList<>();
       Path src = Paths.get(globalServerHome).normalize();
-      for (int i = 0; i < configuration.numServers(); i++) {
+      copyServer(src, serverDataPath != null ? 1 : configuration.numServers());
+   }
+
+   private void copyServer(Path src, int maxServers) {
+      for (int i = 0; i < maxServers; i++) {
          Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), UUID.randomUUID().toString());
          try {
             Files.createDirectory(dest);
@@ -73,15 +82,27 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
       for (int i = 0; i < configuration.numServers(); i++) {
-         String dest = serverHomes.get(i).toString();
-         ForkedServer server = new ForkedServer(dest)
+         ForkedServer server;
+         Path destConfDir;
+         if (serverDataPath != null) {
+            String serverHome = serverHomes.get(0).toString();
+            File serverRootPath = new File(String.format(serverDataPath, i));
+            createServerStructure(serverHome, serverRootPath);
+            destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
+            server = new ForkedServer(serverHome);
+            server.addVmArgument(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
+         } else {
+            String serverHome = serverHomes.get(i).toString();
+            destConfDir = getServerConfDir(serverHome);
+            server = new ForkedServer(serverHome);
+         }
+         server
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
          server.addVmArgument(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
          try {
-            Path source = Paths.get(server.getServerConfiguration());
-            Path destination = getServerConfDir(dest).resolve(source.getFileName());
-            Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+            File sourceServerConfiguration = new File(server.getServerConfiguration());
+            FileUtils.copyFile(sourceServerConfiguration, destConfDir.resolve(sourceServerConfiguration.getName()).toFile());
          } catch (IOException e) {
             throw new UncheckedIOException("Cannot copy the server to temp directory", e);
          }
@@ -94,33 +115,49 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       }
    }
 
+   private void createServerStructure(String serverHome, File serverRootPath) {
+      // copy required files
+      try {
+         FileUtils.deleteDirectory(serverRootPath);
+         FileUtils.copyDirectory(getServerConfDir(serverHome).getParent().toFile(), serverRootPath,
+               p -> !p.isDirectory() || !p.getName().equals("data") || !p.getName().equals("log"));
+      } catch (IOException e) {
+         throw new UncheckedIOException("Cannot copy the default values", e);
+      }
+   }
+
    /**
     * Stop whole cluster.
     */
    @Override
    protected void stop() {
       try {
-         RestResponse response = sync(getRestClient(0).cluster().stop());
-         // Ensure non-error response code from the REST endpoint.
-         if (response.getStatus() >= 400) {
-            throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
-         } else {
-            // Ensure that the server process has really quit
-            // - if it has; the getPid will throw an exception
-            boolean javaProcessQuit = false;
-            long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(SHUTDOWN_TIMEOUT_SECONDS);
-            while (!(javaProcessQuit || endTime < System.currentTimeMillis())) {
-               try {
-                  forkedServers.get(0).getPid();
-                  Thread.sleep(500);
-               } catch (IllegalStateException ignore) {
-                  // The process has quit.
-                  javaProcessQuit = true;
+         // check if the server is running
+         try {
+            RestResponse response = sync(getRestClient(0).cluster().stop());
+            // Ensure non-error response code from the REST endpoint.
+            if (response.getStatus() >= 400) {
+               throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
+            } else {
+               // Ensure that the server process has really quit
+               // - if it has; the getPid will throw an exception
+               boolean javaProcessQuit = false;
+               long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(SHUTDOWN_TIMEOUT_SECONDS);
+               while (!(javaProcessQuit || endTime < System.currentTimeMillis())) {
+                  try {
+                     forkedServers.get(0).getPid();
+                     Thread.sleep(500);
+                  } catch (IllegalStateException ignore) {
+                     // The process has quit.
+                     javaProcessQuit = true;
+                  }
+               }
+               if (!javaProcessQuit) {
+                  throw new IllegalStateException("Server Java process has not gracefully quit within " + SHUTDOWN_TIMEOUT_SECONDS + " seconds.");
                }
             }
-            if (!javaProcessQuit) {
-               throw new IllegalStateException("Server Java process has not gracefully quit within " + SHUTDOWN_TIMEOUT_SECONDS + " seconds.");
-            }
+         } catch (RuntimeException e) {
+            log.warn("Server is not running", e);
          }
       } catch (Exception e) {
          // kill the servers
@@ -135,7 +172,9 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       } finally {
          for (int i = 0; i < configuration.numServers(); i++) {
             // Do an internal stop - e.g. stops the log monitoring process.
-            forkedServers.get(i).stopInternal();
+            if (i < forkedServers.size()) {
+               forkedServers.get(i).stopInternal();
+            }
          }
       }
    }
