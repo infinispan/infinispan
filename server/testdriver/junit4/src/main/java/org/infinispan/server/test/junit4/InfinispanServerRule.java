@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
@@ -28,6 +30,7 @@ import org.junit.runners.model.Statement;
  * @since 10.0
  **/
 public class InfinispanServerRule implements TestRule {
+   private static final Log log = LogFactory.getLog(InfinispanServerRule.class);
    private final TestServer testServer;
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
 
@@ -75,6 +78,8 @@ public class InfinispanServerRule implements TestRule {
                InfinispanServerRule.this.before(testName);
 
                base.evaluate();
+            } catch (Throwable e) {
+               log.error("Problem during the server initialization", e);
             } finally {
                InfinispanServerRule.this.after(testName);
                if (manageServer && testServer.isDriverInitialized()) {
