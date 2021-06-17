@@ -21,6 +21,7 @@
       <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}
       </server.output.dir>
       <server.test.lib.dir>${project.build.directory}/testlibs</server.test.lib.dir>
+      <testjvm.extraArgs>--illegal-access=deny</testjvm.extraArgs>
    </properties>
 
    <dependencies>
