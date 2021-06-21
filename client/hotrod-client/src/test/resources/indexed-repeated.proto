@@ -44,4 +44,16 @@ message Parent {
     * @Field(store = Store.YES)
     */
     repeated FieldLessChild fieldLessChildren = 5;
+
+    message NotIndexedWithFieldChild {
+      /**
+        * @Field(store = Store.YES)
+        */
+      optional string id = 1;
+    }
+
+    /**
+      * @Field(store = Store.YES)
+      */
+    optional NotIndexedWithFieldChild notIndexedWithFieldChild = 6;
 }
