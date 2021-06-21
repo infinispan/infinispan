@@ -148,7 +148,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          return invokeNext(ctx, command);
       }
       // Make sure the searchMapping is ready to accept requests before allowing the invocation to proceed further
-      assert !searchMapping.isClose();
+      if (searchMapping.isClose()) {
+         throw log.searchMappingUnavailable();
+      }
+
       return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
          if (!cmd.isSuccessful()) {
             return rv;
