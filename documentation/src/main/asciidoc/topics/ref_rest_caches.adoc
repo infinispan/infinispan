@@ -657,3 +657,21 @@ GET /rest/v2/caches/{name}?action=listen
 |OPTIONAL
 |Sets the required format to return content. Supported formats are `text/plain` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
 |===
+
+[id='rest_v2_caches_enable_rebalancing']
+= Enabling rebalancing
+Turn on automatic rebalancing for a specific cache.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}?action=enable-rebalancing
+----
+
+[id='rest_v2_caches_disable_rebalancing']
+= Disabling rebalancing
+Turn off automatic rebalancing for a specific cache.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}?action=disable-rebalancing
+----

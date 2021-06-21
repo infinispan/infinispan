@@ -23,6 +23,7 @@ import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -64,6 +65,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.ResponseHeader;
+import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
@@ -696,6 +700,34 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    public void testGetProtoCacheConfig() {
       testGetProtoCacheConfig(APPLICATION_XML_TYPE);
       testGetProtoCacheConfig(APPLICATION_JSON_TYPE);
+   }
+
+   @Test
+   public void testRebalancingActions() {
+      String cacheName = "default";
+      assertRebalancingStatus(cacheName, true);
+
+      RestCacheClient cacheClient = client.cache(cacheName);
+      RestResponse response = join(cacheClient.disableRebalancing());
+      ResponseAssertion.assertThat(response).isOk();
+      assertRebalancingStatus(cacheName, false);
+
+      response = join(cacheClient.enableRebalancing());
+      ResponseAssertion.assertThat(response).isOk();
+      assertRebalancingStatus(cacheName, true);
+   }
+
+   private void assertRebalancingStatus(String cacheName, boolean enabled) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         eventuallyEquals(enabled, () -> {
+            try {
+               return TestingUtil.extractGlobalComponent(cm, LocalTopologyManager.class).isCacheRebalancingEnabled(cacheName);
+            } catch (Exception e) {
+               fail("Unexpected exception", e);
+               return !enabled;
+            }
+         });
+      }
    }
 
    private void testGetProtoCacheConfig(String accept) {
