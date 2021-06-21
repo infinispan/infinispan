@@ -25,7 +25,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.testng.annotations.Test;
 
 /**
- * Tests protobuf mapping with indexed fields and non-indexed repeated field.
+ * Tests protobuf mapping with nested indexed and non-indexed messages
  *
  * @since 12.1
  */
@@ -62,10 +62,12 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
       Query<Object> querySlowChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.slowChildren.id = 0");
       Query<Object> queryFastChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.fastChildren.id = 10");
       Query<Object> queryFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.fieldLessChildren.id = 0");
+      Query<Object> queryNotIndexedWithFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.notIndexedWithFieldChild.id = 37");
 
       assertEquals(1, querySlowChildren.execute().hitCount().orElse(-1));
       assertEquals(1, queryFastChildren.execute().hitCount().orElse(-1));
       assertEquals(1, queryFieldChildren.execute().hitCount().orElse(-1));
+      assertEquals(1, queryNotIndexedWithFieldChildren.execute().hitCount().orElse(-1));
    }
 
    private byte[] keyAsJson() {
@@ -79,7 +81,8 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
             .set("name", "Kim")
             .set("slowChildren", Json.array(Json.object().set("id", "0")))
             .set("fastChildren", Json.array(Json.object().set("id", "10")))
-            .set("fieldLessChildren", Json.array(Json.object().set("id", "0")));
+            .set("fieldLessChildren", Json.array(Json.object().set("id", "0")))
+            .set("notIndexedWithFieldChild", Json.array(Json.object().set("id", "37")));
       return parent.toString().getBytes(UTF_8);
    }
 
