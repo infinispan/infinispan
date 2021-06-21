@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.internal.Util;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -507,5 +508,24 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       Request.Builder builder = new Request.Builder();
       builder.post(EMPTY_BODY).url(cacheUrl + "/search/stats?action=clear");
       return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> enableRebalancing() {
+      return setRebalancing(true);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> disableRebalancing() {
+      return setRebalancing(false);
+   }
+
+   private CompletionStage<RestResponse> setRebalancing(boolean enable) {
+      String action = enable ? "enable-rebalancing" : "disable-rebalancing";
+      return client.execute(
+            new Request.Builder()
+                  .post(Util.EMPTY_REQUEST)
+                  .url(cacheUrl + "?action=" + action)
+      );
    }
 }

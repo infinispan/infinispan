@@ -447,4 +447,13 @@ public interface RestCacheClient {
     */
    CompletionStage<RestResponse> clearSearchStats();
 
+   /**
+    * Enables automatic rebalancing for the cache.
+    */
+   CompletionStage<RestResponse> enableRebalancing();
+
+   /**
+    * Disables automatic rebalancing for the cache.
+    */
+   CompletionStage<RestResponse> disableRebalancing();
 }
