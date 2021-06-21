@@ -1,6 +1,8 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
@@ -28,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -123,6 +126,16 @@ public class ContainerResource implements ResourceHandler {
             // Cache Manager info
             .invocation().methods(GET).path("/v2/cache-managers/{name}").handleWith(this::getInfo)
 
+            // Enable Rebalance
+            .invocation().methods(POST).path("/v2/cache-managers/{name}").withAction("enable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("ENABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
+            .handleWith(r -> setRebalancing(true, r))
+
+            // Disable Rebalance
+            .invocation().methods(POST).path("/v2/cache-managers/{name}").withAction("disable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("DISABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
+            .handleWith(r -> setRebalancing(false, r))
+
             // Stats
             .invocation().methods(GET).path("/v2/cache-managers/{name}/stats").handleWith(this::getStats)
 
@@ -148,6 +161,22 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       return asJsonResponseFuture(cacheManager.getCacheManagerInfo().toJson(), responseBuilder);
+   }
+
+   private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      if (responseBuilder.getHttpStatus() == NOT_FOUND)
+         return completedFuture(responseBuilder.build());
+
+      return CompletableFuture.supplyAsync(()-> {
+         try {
+            SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager().setRebalancingEnabled(enable);
+            responseBuilder.status(NO_CONTENT);
+         } catch (Exception e) {
+            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         }
+         return responseBuilder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getConfig(RestRequest request) {

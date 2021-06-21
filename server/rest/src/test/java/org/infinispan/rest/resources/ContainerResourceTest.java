@@ -13,6 +13,7 @@ import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
@@ -51,6 +52,7 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledTimeService;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -334,6 +336,32 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
       CompletionStage<RestResponse> response = client.cache(name).createWithConfiguration(jsonEntity);
       assertThat(response).isOk();
+   }
+
+   @Test
+   public void testRebalancingActions() {
+      assertRebalancingStatus(true);
+
+      RestResponse response = join(cacheManagerClient.disableRebalancing());
+      ResponseAssertion.assertThat(response).isOk();
+      assertRebalancingStatus(false);
+
+      response = join(cacheManagerClient.enableRebalancing());
+      ResponseAssertion.assertThat(response).isOk();
+      assertRebalancingStatus(true);
+   }
+
+   private void assertRebalancingStatus(boolean enabled) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         eventuallyEquals(enabled, () -> {
+            try {
+               return TestingUtil.extractGlobalComponent(cm, LocalTopologyManager.class).isRebalancingEnabled();
+            } catch (Exception e) {
+               fail("Unexpected exception", e);
+               return !enabled;
+            }
+         });
+      }
    }
 
    private Map<String, String> cacheAndConfig(Json list) {
