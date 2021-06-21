@@ -213,6 +213,24 @@ include::json_examples/rest_cache_stats_response.json[]
 * `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
 * `retrievals` shows the total number of `get()` operations.
 
+[id='rest_v2_cache_manager_enable_rebalancing']
+= Enabling rebalancing for all caches
+Turn on automatic rebalancing for all caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/cache-managers/{cacheManagerName}?action=enable-rebalancing
+----
+
+[id='rest_v2_cache_manager_disable_rebalancing']
+= Disabling rebalancing for all caches
+Turn off automatic rebalancing for all caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/cache-managers/{cacheManagerName}?action=disable-rebalancing
+----
+
 [id='rest_v2_backup_manager_create']
 = Backing Up {brandname} Cache Managers
 Create backup archives, `application/zip`, that contain resources (caches, cache

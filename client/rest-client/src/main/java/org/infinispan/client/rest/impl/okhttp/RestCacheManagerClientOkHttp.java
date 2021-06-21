@@ -16,6 +16,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.internal.Util;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -204,6 +205,25 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    @Override
    public CompletionStage<RestResponse> deleteRestore(String name) {
       return client.execute(restore(name).delete());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> enableRebalancing() {
+      return setRebalancing(true);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> disableRebalancing() {
+      return setRebalancing(false);
+   }
+
+   private CompletionStage<RestResponse> setRebalancing(boolean enable) {
+      String action = enable ? "enable-rebalancing" : "disable-rebalancing";
+      return client.execute(
+            new Request.Builder()
+                  .post(Util.EMPTY_REQUEST)
+                  .url(baseCacheManagerUrl + "?action=" + action)
+      );
    }
 
    private Request.Builder backup(String name) {

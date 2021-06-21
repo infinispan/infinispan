@@ -150,4 +150,14 @@ public interface RestCacheManagerClient {
     * @param name the name of the restore.
     */
    CompletionStage<RestResponse> deleteRestore(String name);
+
+   /**
+    * Globally enables automatic rebalancing.
+    */
+   CompletionStage<RestResponse> enableRebalancing();
+
+   /**
+    * Globally disables automatic rebalancing.
+    */
+   CompletionStage<RestResponse> disableRebalancing();
 }
