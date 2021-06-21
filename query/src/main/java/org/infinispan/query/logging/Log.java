@@ -179,4 +179,7 @@ public interface Log extends org.infinispan.query.core.impl.Log {
 
    @Message(value = "Trying to execute query `%1$s`, but no type is indexed on cache.", id = 14054)
    CacheException noTypeIsIndexed(String ickle);
+
+   @Message(value = "Cannot index entry since the search mapping failed to initialize.", id = 14055)
+   CacheException searchMappingUnavailable();
 }
