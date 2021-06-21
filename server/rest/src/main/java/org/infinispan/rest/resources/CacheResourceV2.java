@@ -76,8 +76,10 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.stats.Stats;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -134,8 +136,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
             // All details
             .invocation().methods(GET).path("/v2/caches/{cacheName}").handleWith(this::getAllDetails)
-            .create();
 
+             // Enable Rebalance
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("enable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("ENABLE REBALANCE").auditContext(AuditContext.CACHE)
+            .handleWith(r -> setRebalancing(true, r))
+
+            // Disable Rebalance
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("disable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("DISABLE REBALANCE").auditContext(AuditContext.CACHE)
+            .handleWith(r -> setRebalancing(false, r))
+
+            .create();
    }
 
    private CompletionStage<RestResponse> disconnectSource(RestRequest request) {
@@ -479,6 +491,25 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
       Collection<String> cacheNames = invocationHelper.getRestCacheManager().getCacheNames();
       return asJsonResponseFuture(Json.make(cacheNames));
+   }
+
+   private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
+      if (!restCacheManager.cacheExists(cacheName))
+         return notFoundResponseFuture();
+
+      return CompletableFuture.supplyAsync(() -> {
+         NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+         LocalTopologyManager ltm = SecurityActions.getGlobalComponentRegistry(restCacheManager.getInstance()).getLocalTopologyManager();
+         try {
+            ltm.setCacheRebalancingEnabled(cacheName, enable);
+            builder.status(NO_CONTENT);
+         } catch (Exception e) {
+            builder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         }
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private static class CacheFullDetail implements JsonSerialization {
