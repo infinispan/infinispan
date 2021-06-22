@@ -84,8 +84,7 @@ public class BiasManagerImpl implements BiasManager {
    public void onTopologyChange(TopologyChangedEvent event) {
       // Forget about remote nodes if we're no longer the primary owner
       ConsistentHash ch = event.getWriteConsistentHashAtEnd();
-      IntSet localSegments = ch.getMembers().contains(rpcManager.getAddress()) ?
-            IntSets.from(ch.getSegmentsForOwner(rpcManager.getAddress())) : IntSets.immutableEmptySet();
+      IntSet localSegments = IntSets.from(ch.getSegmentsForOwner(rpcManager.getAddress()));
       remoteBias.keySet().removeIf(key -> !localSegments.contains(keyPartitioner.getSegment(key)));
       // If we haven't been members of the last topology, then we probably had a split brain and we should just forget
       // all local biasses.

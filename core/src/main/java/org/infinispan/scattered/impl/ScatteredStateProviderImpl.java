@@ -66,14 +66,13 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          otherMembers.remove(localAddress);
          otherMembers.remove(nextMember);
 
-         IntSet oldSegments;
-         if (cacheTopology.getCurrentCH().getMembers().contains(localAddress)) {
-            oldSegments = IntSets.from(cacheTopology.getCurrentCH().getSegmentsForOwner(localAddress));
-            oldSegments.retainAll(cacheTopology.getPendingCH().getSegmentsForOwner(localAddress));
-         } else {
+         if (!cacheTopology.getCurrentCH().getMembers().contains(localAddress)) {
             log.trace("Local address is not a member of currentCH, returning");
             return CompletableFutures.completedNull();
          }
+
+         IntSet oldSegments = IntSets.from(cacheTopology.getCurrentCH().getSegmentsForOwner(localAddress));
+         oldSegments.retainAll(cacheTopology.getPendingCH().getSegmentsForOwner(localAddress));
 
          log.trace("Segments to replicate and invalidate: " + oldSegments);
          if (oldSegments.isEmpty()) {
