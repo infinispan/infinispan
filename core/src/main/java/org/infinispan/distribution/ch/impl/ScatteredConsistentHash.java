@@ -108,7 +108,7 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("owner cannot be null");
       }
       if (!members.contains(owner)) {
-         throw new IllegalArgumentException("Node " + owner + " is not a member");
+         return IntSets.immutableEmptySet();
       }
 
       IntSet segments = IntSets.mutableEmptySet(segmentOwners.length);

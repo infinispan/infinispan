@@ -209,17 +209,14 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (membersWithStateSet.contains(owner))
          return segments;
 
-      if (members.contains(owner))
-         return IntSets.immutableEmptySet();
-
-      throw new IllegalArgumentException("The node is not a member : " + owner);
+      return IntSets.immutableEmptySet();
    }
 
    @Override
    public Set<Integer> getPrimarySegmentsForOwner(Address owner) {
       int index = members.indexOf(owner);
       if (index == -1) {
-         throw new IllegalArgumentException("The node is not a member : " + owner);
+         return IntSets.immutableEmptySet();
       }
       IntSet primarySegments = IntSets.mutableEmptySet(primaryOwners.length);
       for (int i = 0; i < primaryOwners.length; ++i) {

@@ -89,14 +89,16 @@ public interface ConsistentHash {
     * Returns the segments owned by a cache member.
     *
     * @param owner the address of the member
-    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller
+    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
+    * The set is empty if {@code owner} is not a member of the consistent hash.
     */
    Set<Integer> getSegmentsForOwner(Address owner);
 
    /**
     * Returns the segments that this cache member is the primary owner for.
     * @param owner the address of the member
-    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller
+    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
+    * The set is empty if {@code owner} is not a member of the consistent hash.
     */
    Set<Integer> getPrimarySegmentsForOwner(Address owner);
 
