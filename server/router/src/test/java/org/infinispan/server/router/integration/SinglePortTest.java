@@ -178,7 +178,7 @@ public class SinglePortTest {
     }
 
     @Test
-    public void shouldUpgradeThroughALPN() throws Exception {
+    public void shouldUpgradeThroughALPN() {
         checkForOpenSSL();
 
         //given

@@ -15,12 +15,14 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.ssl.SslContextName;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.netty.util.CharsetUtil;
@@ -47,31 +49,37 @@ public final class Http2Test extends AbstractInfinispanTest {
       Util.close(client);
    }
 
-   @Test
-   public void shouldUseHTTP1WithALPN() {
-      secureUpgradeTest(HTTP_11);
+   @DataProvider(name = "ssl-provider")
+   public Object[][] opensslItemProvider() {
+      return SslContextName.PROVIDER;
    }
 
-   @Test
-   public void shouldUseHTTP2WithALPN() {
-      secureUpgradeTest(Protocol.HTTP_20);
+   @Test(dataProvider = "ssl-provider")
+   public void shouldUseHTTP1WithALPN(String sslProvider) {
+      secureUpgradeTest(HTTP_11, sslProvider);
    }
 
-   @Test
-   public void shouldUseHTTP2WithUpgrade() {
-      clearTextUpgrade(false);
+   @Test(dataProvider = "ssl-provider")
+   public void shouldUseHTTP2WithALPN(String sslProvider) {
+      secureUpgradeTest(Protocol.HTTP_20, sslProvider);
    }
 
-   @Test
-   public void shouldUseHTTP2WithPriorKnowledge() {
-      clearTextUpgrade(true);
+   @Test(dataProvider = "ssl-provider")
+   public void shouldUseHTTP2WithUpgrade(String sslProvider) {
+      clearTextUpgrade(false, sslProvider);
    }
 
-   @Test
-   public void shouldReportErrorCorrectly() {
+   @Test(dataProvider = "ssl-provider")
+   public void shouldUseHTTP2WithPriorKnowledge(String sslProvider) {
+      clearTextUpgrade(true, sslProvider);
+   }
+
+   @Test(dataProvider = "ssl-provider")
+   public void shouldReportErrorCorrectly(String sslProvider) {
       restServer = RestServerHelper.defaultRestServer()
             .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
             .withTrustStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
+            .withSslProvider(sslProvider)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
@@ -89,9 +97,11 @@ public final class Http2Test extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
-   @Test
-   public void shouldUseHTTP1() {
-      restServer = RestServerHelper.defaultRestServer().start(TestResourceTracker.getCurrentTestShortName());
+   @Test(dataProvider = "ssl-provider")
+   public void shouldUseHTTP1(String sslProvider) {
+      restServer = RestServerHelper.defaultRestServer()
+            .withSslProvider(sslProvider)
+            .start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(HTTP_11);
       client = RestClient.forConfiguration(builder.build());
@@ -106,8 +116,10 @@ public final class Http2Test extends AbstractInfinispanTest {
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
-   private void clearTextUpgrade(boolean previousKnowledge) {
-      restServer = RestServerHelper.defaultRestServer().start(TestResourceTracker.getCurrentTestShortName());
+   private void clearTextUpgrade(boolean previousKnowledge, String sslProvider) {
+      restServer = RestServerHelper.defaultRestServer()
+            .withSslProvider(sslProvider)
+            .start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort())
             .priorKnowledge(previousKnowledge).protocol(Protocol.HTTP_20);
@@ -124,10 +136,11 @@ public final class Http2Test extends AbstractInfinispanTest {
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
-   private void secureUpgradeTest(Protocol choice) {
+   private void secureUpgradeTest(Protocol choice, String sslProvider) {
       //given
       restServer = RestServerHelper.defaultRestServer()
             .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
+            .withSslProvider(sslProvider)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();

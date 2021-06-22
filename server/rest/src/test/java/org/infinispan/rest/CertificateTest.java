@@ -13,12 +13,14 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.ssl.SslContextName;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.CertificateTest")
@@ -40,10 +42,16 @@ public class CertificateTest extends AbstractInfinispanTest {
       client.close();
    }
 
-   @Test
-   public void shouldAllowProperCertificate() throws Exception {
+   @DataProvider(name = "ssl-provider")
+   public Object[][] opensslItemProvider() {
+      return SslContextName.PROVIDER;
+   }
+
+   @Test(dataProvider = "ssl-provider")
+   public void shouldAllowProperCertificate(String sslProvider) throws Exception {
       restServer = RestServerHelper.defaultRestServer()
             .withAuthenticator(new ClientCertAuthenticator())
+            .withSslProvider(sslProvider)
             .withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
             .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
             .withClientAuth()

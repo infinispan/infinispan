@@ -9,6 +9,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodSer
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
+import org.infinispan.commons.ssl.SslContextName;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -27,6 +29,7 @@ import org.infinispan.server.hotrod.test.Op;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -50,6 +53,26 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
          getClass().getClassLoader().getResource("default_client_truststore.p12").getPath();
    private final String sniTrustedClientTruststore =
          getClass().getClassLoader().getResource("sni_client_truststore.p12").getPath();
+
+   private final String sslProvider;
+
+   public HotRodSniFunctionalTest(String sslProvider) {
+      this.sslProvider = sslProvider;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[sslProvider=" + sslProvider + "]";
+   }
+
+   @Factory
+   public Object[] defaultFactory() {
+      List<Object> instances = new ArrayList<>();
+      for (Object[] sslProviderParam : SslContextName.PROVIDER) {
+         instances.add(new HotRodSniFunctionalTest(sslProviderParam[0].toString()));
+      }
+      return instances.toArray();
+   }
 
    @AfterMethod(alwaysRun = true)
    public void afterMethod() {
@@ -180,6 +203,7 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
       public HotrodServerBuilder addSniDomain(String domain, String keystoreFileName, String keystorePassword,
                                               String truststoreFileName, String truststorePassword) {
          builder.ssl().enable()
+                .provider(sslProvider)
                 .sniHostName(domain)
                 .keyStoreFileName(keystoreFileName)
                 .keyStorePassword(keystorePassword.toCharArray())

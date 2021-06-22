@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
@@ -10,6 +11,7 @@ import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
 import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
 import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.ssl.SslContextName;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -77,12 +80,17 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    protected boolean security;
    protected Protocol protocol = HTTP_11;
    protected boolean ssl;
+   protected String sslProvider;
 
    protected ServerStateManager serverStateManager;
 
    @Override
    protected String parameters() {
-      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + "]";
+      if (ssl) {
+         return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", sslProvider=" + sslProvider + "]";
+      } else {
+         return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + "]";
+      }
    }
 
    protected AbstractRestResourceTest withSecurity(boolean security) {
@@ -97,6 +105,11 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected AbstractRestResourceTest ssl(boolean ssl) {
       this.ssl = ssl;
+      return this;
+   }
+
+   protected AbstractRestResourceTest sslProvider(String sslProvider) {
+      this.sslProvider = sslProvider;
       return this;
    }
 
@@ -152,7 +165,9 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                restServerHelper.withAuthenticator(basicAuthenticator);
             }
             if (ssl) {
-               restServerHelper.withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
+               restServerHelper
+                     .withSslProvider(sslProvider)
+                     .withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
                      .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE);
             }
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
@@ -248,6 +263,45 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       }
       restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
       return clientConfigurationBuilder;
+   }
+
+   protected Object[] testFactory(Class<? extends AbstractRestResourceTest> instanceClazz) {
+      List<Object> instances = new ArrayList<>();
+      for (boolean securiyParam : new Boolean[]{true, false}) {
+         for (boolean sslParam: new Boolean[]{true, false}) {
+            for (Protocol protocolParam : new Protocol[]{HTTP_11, HTTP_20}) {
+               if (sslParam) {
+                  for (Object[] sslProviderParam : SslContextName.PROVIDER) {
+                     AbstractRestResourceTest instance = newInstance(instanceClazz, securiyParam, sslParam, protocolParam, sslProviderParam[0].toString());
+                     instances.add(instance);
+                  }
+               } else {
+                  AbstractRestResourceTest instance = newInstance(instanceClazz, securiyParam, sslParam, protocolParam);
+                  instances.add(instance);
+               }
+            }
+         }
+      }
+      return instances.toArray();
+   }
+
+   private AbstractRestResourceTest newInstance(Class<? extends AbstractRestResourceTest> instanceClazz,
+                                                boolean securiyParam, boolean sslParam, Protocol protocolParam) {
+      try {
+         AbstractRestResourceTest instance = instanceClazz.getDeclaredConstructor().newInstance();
+         instance.withSecurity(securiyParam).ssl(sslParam).protocol(protocolParam);
+         return instance;
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+         throw new IllegalStateException("Cannot create instance for: " + instanceClazz);
+      }
+   }
+
+   private AbstractRestResourceTest newInstance(Class<? extends AbstractRestResourceTest> instanceClazz,
+                                                boolean securiyParam, boolean sslParam, Protocol protocolParam,
+                                                String sslProvider) {
+      AbstractRestResourceTest instance = newInstance(instanceClazz, securiyParam, sslParam, protocolParam);
+      instance.sslProvider(sslProvider);
+      return instance;
    }
 
    public static String cacheConfigToJson(String name, Configuration configuration) {

@@ -6,9 +6,14 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.infinispan.commons.ssl.SslContextName;
 import org.infinispan.server.core.test.Stoppable;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -23,6 +28,26 @@ public class HotRodSslWithCertPasswdTest extends AbstractInfinispanTest {
    private String keyStoreFileName = getClass().getClassLoader().getResource("password_server_keystore.p12").getPath();
    private String trustStoreFileName =
          getClass().getClassLoader().getResource("password_client_truststore.p12").getPath();
+
+   private final String sslProvider;
+
+   public HotRodSslWithCertPasswdTest(String sslProvider) {
+      this.sslProvider = sslProvider;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[sslProvider=" + sslProvider + "]";
+   }
+
+   @Factory
+   public Object[] defaultFactory() {
+      List<Object> instances = new ArrayList<>();
+      for (Object[] sslProviderParam : SslContextName.PROVIDER) {
+         instances.add(new HotRodSslWithCertPasswdTest(sslProviderParam[0].toString()));
+      }
+      return instances.toArray();
+   }
 
    public void testServerStartWithSslAndCertPasswd() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();

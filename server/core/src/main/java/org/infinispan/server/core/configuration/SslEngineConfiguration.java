@@ -15,6 +15,7 @@ public class SslEngineConfiguration {
    private final char[] keyStorePassword;
    private final String keyAlias;
    private final String protocol;
+   private final String provider;
    private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final String trustStoreType;
@@ -22,7 +23,7 @@ public class SslEngineConfiguration {
    private final char[] keyStoreCertificatePassword;
 
    SslEngineConfiguration(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
-                          SSLContext sslContext, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String protocol) {
+                          SSLContext sslContext, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String protocol, String provider) {
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
       this.keyStorePassword = keyStorePassword;
@@ -33,6 +34,7 @@ public class SslEngineConfiguration {
       this.trustStoreType = trustStoreType;
       this.trustStorePassword = trustStorePassword;
       this.protocol = protocol;
+      this.provider = provider;
    }
 
    public String keyStoreFileName() {
@@ -75,6 +77,10 @@ public class SslEngineConfiguration {
       return protocol;
    }
 
+   public String provider() {
+      return provider;
+   }
+
    public String[] protocols() {
       if (protocol != null) {
          return new String[]{protocol};
@@ -90,6 +96,7 @@ public class SslEngineConfiguration {
             ", keyStoreType='" + keyStoreType + '\'' +
             ", keyAlias='" + keyAlias + '\'' +
             ", protocol='" + protocol + '\'' +
+            ", provider='" + provider + '\'' +
             ", sslContext=" + sslContext +
             ", trustStoreFileName='" + trustStoreFileName + '\'' +
             ", trustStoreType='" + trustStoreType + '\'' +

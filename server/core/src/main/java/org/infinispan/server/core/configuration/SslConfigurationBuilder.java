@@ -124,7 +124,6 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
       return this;
    }
 
-
    /**
     * Selects a specific key to choose from the keystore
     */
@@ -169,6 +168,17 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
     */
    public SslConfigurationBuilder protocol(String protocol) {
       defaultDomainConfigurationBuilder.protocol(protocol);
+      return this;
+   }
+
+   /**
+    * Configures the secure socket protocol provider.
+    *
+    * @see javax.net.ssl.SSLContext#getInstance(String, String)
+    * @param provider a Java security provider to use to construct the SSLContext
+    */
+   public SslConfigurationBuilder provider(String provider) {
+      defaultDomainConfigurationBuilder.provider(provider);
       return this;
    }
 

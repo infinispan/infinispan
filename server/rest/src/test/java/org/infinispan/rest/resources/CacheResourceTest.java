@@ -9,8 +9,6 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_REQUEST
 import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
 import static io.netty.handler.codec.http.HttpHeaderNames.ORIGIN;
 import static java.util.Collections.singletonMap;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
@@ -89,12 +87,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new CacheResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
-      };
+      return testFactory(CacheResourceTest.class);
    }
 
    @Test

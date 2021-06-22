@@ -1,7 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
@@ -47,12 +45,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new MultiResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
-      };
+      return testFactory(MultiResourceTest.class);
    }
 
    @BeforeMethod

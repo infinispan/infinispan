@@ -26,13 +26,14 @@ import org.wildfly.openssl.SSL;
  * @since 5.3
  */
 public class SslContextFactory {
+   public static final String FALLBACK_SSL_PROVIDER = "";
    private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
    private static final String SSL_PROVIDER;
 
    static {
-      String sslProvider = null;
+      String sslProvider = FALLBACK_SSL_PROVIDER;
       if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl", "true"))) {
          try {
             OpenSSLProvider.register();
@@ -57,8 +58,15 @@ public class SslContextFactory {
    private String sslProtocol = DEFAULT_SSL_PROTOCOL;
    private boolean useNativeIfAvailable = true;
    private ClassLoader classLoader;
+   private String provider = SSL_PROVIDER;
 
    public SslContextFactory() {
+
+   }
+
+   public SslContextFactory provider(String provider) {
+      this.provider = provider;
+      return this;
    }
 
    public SslContextFactory keyStoreFileName(String keyStoreFileName) {
@@ -135,8 +143,8 @@ public class SslContextFactory {
             trustManagers = tmf.getTrustManagers();
          }
          SSLContext sslContext;
-         if (useNativeIfAvailable && SSL_PROVIDER != null) {
-            sslContext = SSLContext.getInstance(sslProtocol, SSL_PROVIDER);
+         if (useNativeIfAvailable && provider != null && !FALLBACK_SSL_PROVIDER.equals(provider)) {
+            sslContext = SSLContext.getInstance(sslProtocol, provider);
          } else {
             sslContext = SSLContext.getInstance(sslProtocol);
          }
@@ -176,7 +184,7 @@ public class SslContextFactory {
       return tmf;
    }
 
-   public static String getSslProvider() {
+   public static String getDefaultSslProvider() {
       return SSL_PROVIDER;
    }
 

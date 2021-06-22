@@ -19,6 +19,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    private char[] keyStorePassword;
    private String keyAlias;
    private String protocol;
+   private String provider;
    private SSLContext sslContext;
    private String trustStoreFileName;
    private char[] trustStorePassword;
@@ -120,6 +121,17 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
       return this;
    }
 
+   /**
+    * Configures the secure socket protocol provider.
+    *
+    * @see javax.net.ssl.SSLContext#getInstance(String, String)
+    * @param provider a Java security provider to use to construct the SSLContext
+    */
+   public SslEngineConfigurationBuilder provider(String provider) {
+      this.provider = provider;
+      return this;
+   }
+
    @Override
    public void validate() {
       if(domain == null) {
@@ -144,7 +156,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public SslEngineConfiguration create() {
-      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, sslContext, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
+      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, sslContext, trustStoreFileName, trustStoreType, trustStorePassword, protocol, provider);
    }
 
    @Override
@@ -158,6 +170,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
       this.trustStoreType  = template.trustStoreType();
       this.trustStorePassword = template.trustStorePassword();
       this.protocol = template.protocol();
+      this.provider = template.provider();
       return this;
    }
 

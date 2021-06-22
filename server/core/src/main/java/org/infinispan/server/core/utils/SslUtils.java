@@ -41,6 +41,7 @@ public class SslUtils {
             .trustStoreType(sslEngineConfiguration.trustStoreType())
             .trustStorePassword(sslEngineConfiguration.trustStorePassword())
             .sslProtocol(sslEngineConfiguration.protocol())
+            .provider(sslEngineConfiguration.provider())
             .getContext();
    }
 

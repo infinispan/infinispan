@@ -2,8 +2,6 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT_ENCODING;
 import static java.util.Collections.singletonMap;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
@@ -76,12 +74,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new StaticResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new StaticResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new StaticResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new StaticResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
-      };
+      return testFactory(StaticResourceTest.class);
    }
 
    @Test
