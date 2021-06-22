@@ -41,7 +41,7 @@ public class MessageReferenceProvider {
             // If a protobuf field is a Message reference, only take it into account
             // if the Message is @Indexed and has at least one @Field annotation
             if (fieldDescriptor.getAnnotations().containsKey(FIELD_ANNOTATION)) {
-               if (hasFieldAnnotation(fieldDescriptor.getMessageType())) {
+               if (isIndexable(fieldDescriptor.getMessageType())) {
                   // Hibernate Search can handle the @Field regardless of its attributes
                   embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
                }
@@ -62,8 +62,12 @@ public class MessageReferenceProvider {
       }
    }
 
-   private boolean hasFieldAnnotation(Descriptor descriptor) {
-      return descriptor.getFields().stream().anyMatch(f -> f.getAnnotations().containsKey(FIELD_ANNOTATION));
+   /**
+    * Checks if a Descriptor has the @Indexed annotation and at least one @Field
+    */
+   private boolean isIndexable(Descriptor descriptor) {
+      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(INDEXED_ANNOTATION);
+      return indexingMetadata != null && descriptor.getFields().stream().anyMatch(f -> f.getAnnotations().containsKey(FIELD_ANNOTATION));
    }
 
    public boolean isEmpty() {
