@@ -561,8 +561,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    protected IntSet getOwnedSegments(ConsistentHash consistentHash) {
       Address address = rpcManager.getAddress();
-      return consistentHash.getMembers().contains(address) ? IntSets.from(consistentHash.getSegmentsForOwner(address))
-            : IntSets.immutableEmptySet();
+      return IntSets.from(consistentHash.getSegmentsForOwner(address));
    }
 
    @Override
