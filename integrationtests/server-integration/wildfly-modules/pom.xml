@@ -148,6 +148,9 @@
          <plugin>
             <groupId>org.jboss.galleon</groupId>
             <artifactId>galleon-maven-plugin</artifactId>
+            <configuration>
+               <skip>${skipTests}</skip>
+            </configuration>
             <executions>
                <execution>
                   <id>server-provisioning-node1</id>
@@ -235,6 +238,9 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
+            <configuration>
+               <skip>${skipTests}</skip>
+            </configuration>
             <executions>
                <!-- Copy the AS configuration files so we can use our custom configurations -->
                <execution>
