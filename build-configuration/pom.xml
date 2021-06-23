@@ -193,10 +193,10 @@
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>6.19.3</version.rocksdb>
       <version.rxjava>3.0.4</version.rxjava>
-      <version.smallrye-config>1.6.2</version.smallrye-config>
-      <version.smallrye-metrics>2.4.0</version.smallrye-metrics>
-      <version.microprofile-config-api>1.4</version.microprofile-config-api>
-      <version.microprofile-metrics-api>2.3</version.microprofile-metrics-api>
+      <version.smallrye-config>2.0.2</version.smallrye-config>
+      <version.smallrye-metrics>3.0.1</version.smallrye-metrics>
+      <version.microprofile-config-api>2.0</version.microprofile-config-api>
+      <version.microprofile-metrics-api>3.0</version.microprofile-metrics-api>
       <version.spring.boot>2.4.3</version.spring.boot>
       <version.spring5>5.3.4</version.spring5>
       <version.spring.session>2.4.2</version.spring.session>
