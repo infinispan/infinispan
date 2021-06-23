@@ -150,6 +150,9 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <configuration>
+                            <skip>${skipTests}</skip>
+                        </configuration>
                         <executions>
                             <execution>
                                 <phase>pre-integration-test</phase>
@@ -157,7 +160,6 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <skip>${skipTests}</skip>
                                     <target>
                                         <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${catalinaHome}/conf" overwrite="true" />
                                         <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${catalinaHome}/conf" overwrite="true" />
@@ -195,6 +197,9 @@
                     <plugin>
                         <groupId>org.jboss.galleon</groupId>
                         <artifactId>galleon-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>${skipTests}</skip>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>server-provisioning-node1</id>

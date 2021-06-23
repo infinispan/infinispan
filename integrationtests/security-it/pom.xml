@@ -136,6 +136,9 @@
          <plugin>
             <groupId>org.jboss.galleon</groupId>
             <artifactId>galleon-maven-plugin</artifactId>
+            <configuration>
+               <skip>${skipTests}</skip>
+            </configuration>
             <executions>
                <execution>
                   <id>server-provisioning-node0</id>
