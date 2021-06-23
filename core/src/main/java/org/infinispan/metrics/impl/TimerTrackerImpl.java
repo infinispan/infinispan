@@ -1,5 +1,6 @@
 package org.infinispan.metrics.impl;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -22,6 +23,6 @@ public class TimerTrackerImpl implements TimerTracker {
 
    @Override
    public void update(long value, TimeUnit timeUnit) {
-      timer.update(value, timeUnit);
+      timer.update(Duration.ofNanos(timeUnit.toNanos(value)));
    }
 }
