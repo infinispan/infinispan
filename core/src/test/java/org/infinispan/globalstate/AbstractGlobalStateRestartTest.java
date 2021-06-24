@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,9 +28,9 @@ import org.infinispan.topology.PersistentUUIDManager;
 
 public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManagersTest {
 
-   public static int DATA_SIZE = 100;
+   public static final int DATA_SIZE = 100;
 
-   private static final String CACHE_NAME = "testCache";
+   public static final String CACHE_NAME = "testCache";
 
    protected abstract int getClusterSize();
 
@@ -90,9 +91,11 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
       TestingUtil.killCacheManagers(this.cacheManagers);
 
-      // We should have some data here
+      // Verify that the cache state file exists
       for (int i = 0; i < getClusterSize(); i++) {
-         checkStateDirNotEmpty(manager(i).getCacheManagerConfiguration().globalState().persistentLocation());
+         String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
+         File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
+         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
       }
       this.cacheManagers.clear();
 
@@ -141,6 +144,27 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
                // Ignore
             }
          }
+      }
+   }
+
+   protected void restartWithoutGracefulShutdown() {
+      // Verify that the state file was removed
+      for (int i = 0; i < getClusterSize(); i++) {
+         String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
+         File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
+         assertEquals(Arrays.toString(listFiles), 0, listFiles.length);
+      }
+
+      // Stop the cluster without graceful shutdown
+      for (int i = getClusterSize() - 1; i >= 0; i--) {
+         killMember(i, CACHE_NAME, false);
+      }
+
+      // Start a coordinator without state and then make the nodes with state join
+      createStatefulCacheManagers(false, 0, false);
+
+      for (int i = 0; i <= getClusterSize(); i++) {
+         cache(i, CACHE_NAME);
       }
    }
 
