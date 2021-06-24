@@ -2,6 +2,7 @@ package org.infinispan.tx.locking;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractLockManager;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -31,7 +32,6 @@ import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -165,10 +165,10 @@ public class RollbackDuringLockAcquisitionTest extends SingleCacheManagerTest {
       TransactionTable txTable = extractComponent(cache, TransactionTable.class);
       eventually(() -> !txTable.getLocalGlobalTransaction().isEmpty());
 
-      AssertJUnit.assertEquals(1, txTable.getLocalGlobalTransaction().size());
+      assertEquals(1, txTable.getLocalGlobalTransaction().size());
       GlobalTransaction gtx = txTable.getLocalGlobalTransaction().iterator().next();
 
-      AssertJUnit.assertTrue(lockManager.getLock(key).containsLockOwner(gtx));
+      eventually(() -> lockManager.getLock(key).containsLockOwner(gtx));
 
       //abort the transaction, simulates the TM's reaper aborting a long running transaction
       tx.get().rollback();
