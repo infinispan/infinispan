@@ -34,4 +34,10 @@ public class ThreeNodeScatteredGlobalStateRestartTest extends AbstractGlobalStat
    public void testFailedRestartWithExtraneousNode() throws Throwable {
       shutdownAndRestart(1, false);
    }
+
+   public void testPersistentStateIsDeletedAfterRestart() throws Throwable {
+      shutdownAndRestart(-1, false);
+
+      restartWithoutGracefulShutdown();
+   }
 }
