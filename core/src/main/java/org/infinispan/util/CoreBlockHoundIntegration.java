@@ -17,6 +17,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
+import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.jgroups.JChannel;
@@ -133,10 +134,13 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          throw new CacheException(e);
       }
 
-      // This method calls readScopedState which reads scope from a file that
-      // can block the current thread while doing I/O
+      // Can wait on lock
+      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "updateState");
+
+      // These methods to I/O via GlobalStateManager
       builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "initCacheStatusIfAbsent");
-      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "updateClusterState");
+      builder.allowBlockingCallsInside(LocalTopologyManagerImpl.class.getName(), "writeCHState");
+      builder.allowBlockingCallsInside(LocalTopologyManagerImpl.class.getName(), "deleteCHState");
 
       // This can block if there is a store otherwise it won't block
       builder.allowBlockingCallsInside(CacheMgmtInterceptor.class.getName(), "getNumberOfEntries");

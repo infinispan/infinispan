@@ -57,6 +57,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.ActionSequencer;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -73,12 +74,14 @@ import net.jcip.annotations.GuardedBy;
 @MBean(objectName = "LocalTopologyManager", description = "Controls the cache membership and state transfer")
 @Scope(Scopes.GLOBAL)
 public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
-   private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
+   private static final Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
 
    @Inject Transport transport;
    @Inject
    @ComponentName(NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
+   @Inject
+   BlockingManager blockingManager;
    @Inject
    @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -224,6 +227,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                       if (!applied) {
                          throw new IllegalStateException(
                                "We already had a newer topology by the time we received the join response");
+                      }
+
+                      if (cacheStatus.getJoinInfo().getPersistentUUID() != null) {
+                         // Don't use the current CH state for the next restart
+                         deleteCHState(cacheName);
                       }
 
                       return doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
@@ -701,7 +709,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                              .remapAddresses(persistentUUIDManager.addressToPersistentUUID());
       remappedCH.toScopedState(cacheState);
       globalStateManager.writeScopedState(cacheState);
-      if (log.isTraceEnabled()) log.tracef("Written CH state, checksum=%s: %s", cacheState.getChecksum(), remappedCH);
+      if (log.isTraceEnabled()) log.tracef("Written CH state for cache %s, checksum=%s: %s", cacheName, cacheState.getChecksum(), remappedCH);
+   }
+
+   private void deleteCHState(String cacheName) {
+      globalStateManager.deleteScopedState(cacheName);
+      if (log.isTraceEnabled()) log.tracef("Removed CH state for cache %s", cacheName);
    }
 
    private int getGlobalTimeout() {

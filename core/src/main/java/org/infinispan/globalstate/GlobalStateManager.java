@@ -31,6 +31,11 @@ public interface GlobalStateManager {
    void writeScopedState(ScopedPersistentState state);
 
    /**
+    * Delete the persistent state for the given scope
+    */
+   void deleteScopedState(String scope);
+
+   /**
     * Persists the global state by contacting all registered scope providers
     */
    void writeGlobalState();
