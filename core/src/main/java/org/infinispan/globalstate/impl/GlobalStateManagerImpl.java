@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -147,6 +148,18 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
             state.forEach((key, value) -> {
                w.printf("%s=%s%n", Util.unicodeEscapeString(key), Util.unicodeEscapeString(value));
             });
+         } catch (IOException e) {
+            throw CONTAINER.failedWritingGlobalState(e, stateFile);
+         }
+      }
+   }
+
+   @Override
+   public void deleteScopedState(String scope) {
+      if (persistentState) {
+         File stateFile = getStateFile(scope);
+         try {
+            Files.deleteIfExists(stateFile.toPath());
          } catch (IOException e) {
             throw CONTAINER.failedWritingGlobalState(e, stateFile);
          }
