@@ -44,7 +44,7 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
    }
 
    protected static final int NUMBER_KEYS = 10;
-   private final KeyValueWrapper<String, Value, T> valueWrapper;
+   protected final KeyValueWrapper<String, Value, T> valueWrapper;
    protected String tmpDirectory;
 
    protected PersistenceCompatibilityTest(KeyValueWrapper<String, Value, T> valueWrapper) {
@@ -56,7 +56,7 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       return "key-" + index;
    }
 
-   private Value value(int index) {
+   protected Value value(int index) {
       String i = Integer.toString(index);
       return new Value(i, i);
    }
