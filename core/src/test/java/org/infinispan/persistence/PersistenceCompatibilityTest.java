@@ -44,7 +44,7 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
    }
 
    protected static final int NUMBER_KEYS = 10;
-   private final KeyValueWrapper<String, Value, T> valueWrapper;
+   protected final KeyValueWrapper<String, Value, T> valueWrapper;
    protected String tmpDirectory;
 
    protected PersistenceCompatibilityTest(KeyValueWrapper<String, Value, T> valueWrapper) {
@@ -56,7 +56,7 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       return "key-" + index;
    }
 
-   private Value value(int index) {
+   protected Value value(int index) {
       String i = Integer.toString(index);
       return new Value(i, i);
    }
@@ -127,6 +127,17 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       for (int i = 0; i < NUMBER_KEYS; ++i) {
          String key = key(i);
          assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
+      }
+
+      // Restart the CacheManager to ensure that the entries are still readable on restart
+      cacheManager.stop();
+
+      try (EmbeddedCacheManager cm = createCacheManager()) {
+         cache = cm.getCache(cacheName());
+         for (int i = 0; i < NUMBER_KEYS; ++i) {
+            String key = key(i);
+            assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
+         }
       }
    }
 
