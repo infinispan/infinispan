@@ -6,8 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.commons.dataconversion.StandardConversions.convertTextToObject;
-import static org.infinispan.commons.dataconversion.StandardConversions.decodeOctetStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,20 +57,9 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.match(MediaType.APPLICATION_PROTOSTREAM)) {
-            Object decoded = content;
-            if (contentType.match(APPLICATION_OBJECT)) {
-               decoded = StandardConversions.decodeObjectContent(content, contentType);
-               return marshall(decoded, destinationType);
-            }
-            if (contentType.match(APPLICATION_OCTET_STREAM)) {
-               decoded = decodeOctetStream(content, destinationType);
-            }
-            if (contentType.match(TEXT_PLAIN)) {
-               decoded = convertTextToObject(content, contentType);
-            }
             if (contentType.match(APPLICATION_JSON)) {
                content = addTypeIfNeeded(content);
                return fromJsonCascading(content);
@@ -80,7 +67,10 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_PROTOSTREAM)) {
                return content;
             }
-            return marshall(decoded, destinationType);
+            if (contentType.match(TEXT_PLAIN)) {
+               content = StandardConversions.convertTextToObject(content, contentType);
+            }
+            return marshall(content, destinationType);
          }
          if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
             Object unmarshalled = content instanceof byte[] ? unmarshall((byte[]) content, contentType, destinationType) : content;
@@ -101,10 +91,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          if (destinationType.match(MediaType.APPLICATION_JSON)) {
             String converted = toJsonCascading((byte[]) content);
             String convertType = destinationType.getClassType();
-            if (convertType == null)
-               return StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset());
-            if (destinationType.hasStringType())
-               return converted;
+            return convertType == null ? StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset()) : converted;
          }
          if (destinationType.equals(APPLICATION_UNKNOWN)) {
             //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.

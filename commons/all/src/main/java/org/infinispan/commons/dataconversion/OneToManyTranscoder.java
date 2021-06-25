@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Base class for {@link Transcoder} that converts between a single format and multiple other formats and back.
  */
-public abstract class OneToManyTranscoder implements Transcoder {
+public abstract class OneToManyTranscoder extends AbstractTranscoder {
 
    protected final MediaType mainType;
 

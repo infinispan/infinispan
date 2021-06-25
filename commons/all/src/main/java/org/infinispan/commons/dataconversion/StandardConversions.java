@@ -40,7 +40,8 @@ public final class StandardConversions {
    public static Object convertTextToText(Object source, MediaType sourceType, MediaType destinationType) {
       if (source == null) return null;
       if (sourceType == null) throw new NullPointerException("MediaType cannot be null!");
-      if (!sourceType.match(MediaType.TEXT_PLAIN)) throw CONTAINER.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
+      if (!sourceType.match(MediaType.TEXT_PLAIN))
+         throw CONTAINER.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
 
       boolean asString = destinationType.hasStringType();
 
@@ -65,7 +66,10 @@ public final class StandardConversions {
     * @param sourceType MediaType for the source content.
     * @return content converted as octet-stream represented as byte[].
     * @throws EncodingException if the source cannot be interpreted as plain text.
+    *
+    * @deprecated Since 13.0, without replacement.
     */
+   @Deprecated
    public static byte[] convertTextToOctetStream(Object source, MediaType sourceType) {
       if (source == null) return null;
       if (sourceType == null) {
@@ -100,7 +104,10 @@ public final class StandardConversions {
     * @param sourceType the MediaType of the source content.
     * @return a String with the content URLEncoded.
     * @throws EncodingException if the source format cannot be interpreted as plain/text.
+    *
+    * @deprecated Since 13.0, without replacement.
     */
+   @Deprecated
    public static String convertTextToUrlEncoded(Object source, MediaType sourceType) {
       return urlEncode(source, sourceType);
    }
@@ -111,7 +118,10 @@ public final class StandardConversions {
     * @param source byte[] to convert.
     * @param destination MediaType of the desired text conversion.
     * @return byte[] content interpreted as text, in the encoding specified by the destination MediaType.
+    *
+    * @deprecated Since 13.0, without replacment.
     */
+   @Deprecated
    public static byte[] convertOctetStreamToText(byte[] source, MediaType destination) {
       if (source == null) return null;
       return convertCharset(source, UTF_8, destination.getCharset());
@@ -123,7 +133,10 @@ public final class StandardConversions {
     * @param source The source to convert
     * @param destination The type of the converted object.
     * @return an instance of a java object compatible with the supplied destination type.
+    *
+    * @deprecated Since 13.0, without replacement.
     */
+   @Deprecated
    public static Object convertOctetStreamToJava(byte[] source, MediaType destination, Marshaller marshaller) {
       if (source == null) return null;
       if (!destination.match(MediaType.APPLICATION_OBJECT)) {
@@ -153,7 +166,10 @@ public final class StandardConversions {
     * @return byte[] representation of the java object.
     * @throws EncodingException if the sourceMediaType is not a application/x-java-object or if the conversion is
     * not supported.
+    *
+    * @deprecated Since 13.0, with no replacement.
     */
+   @Deprecated
    public static byte[] convertJavaToOctetStream(Object source, MediaType sourceMediaType, Marshaller marshaller) throws IOException, InterruptedException {
       if (source == null) return null;
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
@@ -194,7 +210,10 @@ public final class StandardConversions {
     * @param sourceMediaType The MediaType for the source object.
     * @param destinationMediaType The required text/plain specification.
     * @return byte[] with the text/plain representation of the object with the requested charset.
+    *
+    * @deprecated Since 13.0 without replacement.
     */
+   @Deprecated
    public static byte[] convertJavaToText(Object source, MediaType sourceMediaType, MediaType destinationMediaType) {
       if (source == null) return null;
       if (sourceMediaType == null || destinationMediaType == null) {
@@ -220,7 +239,10 @@ public final class StandardConversions {
     * @return instance of Object according to the supplied MediaType "type" parameter, or if no type is present,
     *         the object itself.
     * @throws EncodingException if the provided type is not supported.
+    *
+    * @deprecated Since 13.0, without replacement.
     */
+   @Deprecated
    public static Object decodeObjectContent(Object content, MediaType contentMediaType) {
       if (content == null) return null;
       if (contentMediaType == null) {
@@ -302,7 +324,10 @@ public final class StandardConversions {
     * @param input Object representing the binary content.
     * @param octetStream The MediaType describing the input.
     * @return a byte[] with the decoded content.
+    *
+    * @deprecated Since 13.0, without replacement.
     */
+   @Deprecated
    public static byte[] decodeOctetStream(Object input, MediaType octetStream) {
       if (input == null) {
          throw new NullPointerException("input must not be null");
@@ -318,6 +343,10 @@ public final class StandardConversions {
 
    private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
 
+   /**
+    * @deprecated Use {@link Base16Codec#encode(byte[])}
+    */
+   @Deprecated
    public static String bytesToHex(byte[] bytes) {
       if (bytes == null) return null;
       if (bytes.length == 0) return "";
@@ -340,6 +369,10 @@ public final class StandardConversions {
       throw new EncodingException("Invalid digit found in hex format!");
    }
 
+   /**
+    * @deprecated Use {@link Base16Codec#decode(String)} instead.
+    */
+   @Deprecated
    public static byte[] hexToBytes(String hex) {
       if (hex == null) return null;
       if (hex.isEmpty()) return new byte[]{};
@@ -360,20 +393,35 @@ public final class StandardConversions {
    /**
     * Handle x-www-form-urlencoded as single values for now.
     * Ideally it should generate a Map&lt;String, String&gt;
+    *
+    * @deprecated since 13.0 without replacement.
     */
+   @Deprecated
    public static Object convertUrlEncodedToObject(Object content) {
       Object decoded = urlDecode(content);
       return convertTextToObject(decoded, TEXT_PLAIN);
    }
 
+   /**
+    * @deprecated Since 13.0 without replacement.
+    */
+   @Deprecated
    public static Object convertUrlEncodedToText(Object content, MediaType destinationType) {
       return convertTextToText(urlDecode(content), TEXT_PLAIN, destinationType);
    }
 
+   /**
+    * @deprecated Since 13.0 without replacement.
+    */
+   @Deprecated
    public static Object convertUrlEncodedToOctetStream(Object content) {
       return convertTextToOctetStream(urlDecode(content), TEXT_PLAIN);
    }
 
+   /**
+    * @deprecated Since 13.0 without replacement.
+    */
+   @Deprecated
    public static String urlEncode(Object content, MediaType mediaType) {
       if (content == null) return null;
       try {
@@ -389,6 +437,10 @@ public final class StandardConversions {
       }
    }
 
+   /**
+    * @deprecated Since 13.0, without replacement.
+    */
+   @Deprecated
    public static Object urlDecode(Object content) {
       try {
          if (content == null) return null;
@@ -402,6 +454,10 @@ public final class StandardConversions {
       }
    }
 
+   /**
+    * @deprecated Since 13.0 without replacement.
+    */
+   @Deprecated
    public static Object convertOctetStreamToUrlEncoded(Object content, MediaType contentType) {
       byte[] decoded = decodeOctetStream(content, contentType);
       return urlEncode(decoded, MediaType.TEXT_PLAIN);

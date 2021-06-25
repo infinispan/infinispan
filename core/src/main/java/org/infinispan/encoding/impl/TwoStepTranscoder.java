@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.commons.dataconversion.AbstractTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.util.logging.Log;
@@ -21,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 11.0
  */
-public class TwoStepTranscoder implements Transcoder {
+public class TwoStepTranscoder extends AbstractTranscoder {
 
    private static final Log logger = LogFactory.getLog(TwoStepTranscoder.class, Log.class);
    private final Transcoder transcoder1;
@@ -37,14 +38,14 @@ public class TwoStepTranscoder implements Transcoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       if (transcoder1.supportsConversion(contentType, APPLICATION_OBJECT)
-          && transcoder2.supportsConversion(APPLICATION_OBJECT, destinationType)) {
+            && transcoder2.supportsConversion(APPLICATION_OBJECT, destinationType)) {
          Object object = transcoder1.transcode(content, contentType, APPLICATION_OBJECT);
          return transcoder2.transcode(object, APPLICATION_OBJECT, destinationType);
       }
       if (transcoder2.supportsConversion(contentType, APPLICATION_OBJECT)
-          && transcoder1.supportsConversion(APPLICATION_OBJECT, destinationType)) {
+            && transcoder1.supportsConversion(APPLICATION_OBJECT, destinationType)) {
          Object object = transcoder2.transcode(content, contentType, APPLICATION_OBJECT);
          return transcoder1.transcode(object, APPLICATION_OBJECT, destinationType);
       }
@@ -60,8 +61,8 @@ public class TwoStepTranscoder implements Transcoder {
    @Override
    public boolean supportsConversion(MediaType mediaType, MediaType other) {
       return (transcoder1.supportsConversion(mediaType, APPLICATION_OBJECT) &&
-              transcoder2.supportsConversion(APPLICATION_OBJECT, other)) ||
-             (transcoder2.supportsConversion(mediaType, APPLICATION_OBJECT) &&
-              transcoder1.supportsConversion(APPLICATION_OBJECT, other));
+            transcoder2.supportsConversion(APPLICATION_OBJECT, other)) ||
+            (transcoder2.supportsConversion(mediaType, APPLICATION_OBJECT) &&
+                  transcoder1.supportsConversion(APPLICATION_OBJECT, other));
    }
 }

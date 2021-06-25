@@ -2,10 +2,12 @@ package org.infinispan.test.data;
 
 import java.io.Serializable;
 
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class Person implements Serializable {
+public class Person implements Serializable, JsonSerialization {
 
    String name;
    Address address;
@@ -67,5 +69,12 @@ public class Person implements Serializable {
       result = (name != null ? name.hashCode() : 0);
       result = 29 * result + (address != null ? address.hashCode() : 0);
       return result;
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("name", name)
+            .set("address", Json.make(address));
    }
 }

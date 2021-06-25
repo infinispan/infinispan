@@ -6,8 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.StandardConversions.convertTextToObject;
-import static org.infinispan.commons.dataconversion.StandardConversions.decodeObjectContent;
-import static org.infinispan.commons.dataconversion.StandardConversions.decodeOctetStream;
 
 import java.io.IOException;
 
@@ -36,22 +34,15 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       if (destinationType.match(MediaType.APPLICATION_JBOSS_MARSHALLING)) {
-         Object decoded = content;
-         if (contentType.match(APPLICATION_OBJECT)) {
-            decoded = decodeObjectContent(content, contentType);
-         }
-         if (contentType.match(APPLICATION_OCTET_STREAM)) {
-            decoded = decodeOctetStream(content, destinationType);
-         }
          if (contentType.match(TEXT_PLAIN)) {
-            decoded = convertTextToObject(content, contentType);
+            content = convertTextToObject(content, contentType);
          }
          if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_JBOSS_MARSHALLING)) {
             return content;
          }
-         return marshall(decoded);
+         return marshall(content);
       }
       if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
          try {
@@ -59,7 +50,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
-            return marshaller.objectToByteBuffer(decodeObjectContent(unmarshalled, MediaType.APPLICATION_OBJECT));
+            return marshaller.objectToByteBuffer(unmarshalled);
          } catch (IOException | InterruptedException e) {
             throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
          }
