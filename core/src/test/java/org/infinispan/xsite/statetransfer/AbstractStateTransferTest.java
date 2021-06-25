@@ -36,8 +36,12 @@ public abstract class AbstractStateTransferTest extends AbstractTwoSitesTest {
       assertEventuallyInSite(LON, this::isNotSendingStateForCache, 30, TimeUnit.SECONDS);
    }
 
-   void assertEventuallyStateTransferNotRunning() {
-      eventually(() -> adminOperations().getRunningStateTransfer().isEmpty(), 30,
+   protected void assertEventuallyStateTransferNotRunning() {
+     assertEventuallyStateTransferNotRunning(cache(LON, 0));
+   }
+
+   protected void assertEventuallyStateTransferNotRunning(Cache<?,?> cache) {
+      eventually(() -> adminOperations(cache).getRunningStateTransfer().isEmpty(), 30,
             TimeUnit.SECONDS);
    }
 
@@ -74,7 +78,11 @@ public abstract class AbstractStateTransferTest extends AbstractTwoSitesTest {
    }
 
    protected XSiteAdminOperations adminOperations() {
-      return extractComponent(cache(LON, 0), XSiteAdminOperations.class);
+      return adminOperations(cache(LON, 0));
+   }
+
+   protected XSiteAdminOperations adminOperations(Cache<?,?> cache) {
+      return extractComponent(cache, XSiteAdminOperations.class);
    }
 
    private void assertNotReceivingStateForCache(Cache<?, ?> cache) {
