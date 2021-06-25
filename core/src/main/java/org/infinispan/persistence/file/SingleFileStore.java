@@ -249,7 +249,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       buf.flip();
       fe = new FileEntry(pos, buf);
       channel.position(filePos);
-      return fe.size == 0;
+      return fe.size != fe.keyLen + fe.dataLen + fe.metadataLen + fe.internalMetadataLen + 28 + (fe.expiryTime != -1 ? TIMESTAMP_BYTES : 0);
    }
 
    private void migrateCorruptData() throws IOException {
@@ -271,10 +271,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (buf.remaining() > 0)
                break;
 
-            oldFilePos += KEY_POS_LATEST;
             buf.flip();
 
             FileEntry fe = new FileEntry(oldFilePos, buf);
+            oldFilePos += KEY_POS_LATEST;
             // Explicitly calculate the correct size as incorrect value stored in fe.size
             // Meta length incorrectly added 16 bytes, regardless of whether fe.expiryTime > 0
             int metaLen = fe.metadataLen > 0 ? fe.metadataLen - TIMESTAMP_BYTES : 0;
@@ -291,19 +291,16 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             buf = readChannelUpdateOffset(buf, offset, metaLen);
             org.infinispan.commons.io.ByteBuffer metadata = readIntoByteBuffer(buf);
 
-            buf = readChannelUpdateOffset(buf, offset, fe.internalMetadataLen);
-            org.infinispan.commons.io.ByteBuffer internalMetadata = readIntoByteBuffer(buf);
+            // internalMetadata was ALWAYS lost - so don't read it
 
             oldFilePos = offset.get();
 
             // LastUsed and Created timestamps were lost, set creation time to current time if fe.expiryTime has been set
             long currentTS = fe.expiryTime > 0 ? timeService.wallClockTime() : -1;
-            MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, internalMetadata, currentTS, currentTS);
+            MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, null, currentTS, currentTS);
             write(me, newChannel);
 
-            // TODO take into account create and Last used bytes if fe.expiryTime > 0
-            // TODO handle when internal metadata was present?
-            int corruptEntrySize = fe.keyLen + fe.dataLen + fe.metadataLen + fe.internalMetadataLen;
+            int corruptEntrySize = fe.keyLen + fe.dataLen + fe.metadataLen;
             oldFilePos += corruptEntrySize;
          }
       }
