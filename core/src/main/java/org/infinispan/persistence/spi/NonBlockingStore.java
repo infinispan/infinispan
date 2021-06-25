@@ -260,7 +260,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segment} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
@@ -291,7 +293,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segment} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
@@ -332,7 +336,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When set, this method must ensure the segment is stored with the entry.</td>
+    *       <td valign="top">When set and segmentation is not disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       this method must ensure the segment is stored with the entry.</td>
     *    </tr>
     * </table>
     * <p>
@@ -360,7 +366,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segment} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
@@ -392,8 +400,8 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic and configured to be
-    *          {@link StoreConfiguration#segmented()}.</td>
+    *       <td valign="top">This method is invoked only if the store has this characteristic and is configured to be
+    *          {@link StoreConfiguration#segmented() segmented}.</td>
     *    </tr>
     * </table>
     * <p>
@@ -419,13 +427,13 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SHAREABLE}</td>
-    *       <td valign="top">If the store has this characteristic and is configured to be {@link StoreConfiguration#shared()},
-    *          this method will never be invoked.</td>
+    *       <td valign="top">If the store has this characteristic and is configured to be
+    *       {@link StoreConfiguration#shared() shared}, this method will never be invoked.</td>
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic and configured to be
-    *          {@link StoreConfiguration#segmented()}.</td>
+    *       <td valign="top">This method is invoked only if the store has this characteristic and is configured to be
+    *          {@link StoreConfiguration#segmented() segmented}.</td>
     *    </tr>
     * </table>
     * <p>
@@ -485,8 +493,10 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">If not set, the provided {@code publisherCount} parameter has a value of 1,
-    *          which means there is only be one {@code SegmentedPublisher} to subscribe to.</td>
+    *       <td valign="top">If not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code publisherCount} parameter has a value of 1,
+    *       which means there is only be one {@code SegmentedPublisher} to subscribe to.</td>
     *    </tr>
     * </table>
     * <p>
@@ -538,7 +548,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segments} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segments} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
@@ -568,7 +580,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segments} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
@@ -616,7 +630,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segments} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * @param segments a set of segments to filter entries by. This will always be non null.
@@ -656,7 +672,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set the provided {@code segments} parameter may be ignored.</td>
+    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       {@link StoreConfiguration#segmented() configuration},
+    *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
