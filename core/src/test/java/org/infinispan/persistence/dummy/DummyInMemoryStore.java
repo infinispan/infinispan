@@ -22,7 +22,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
@@ -92,17 +91,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       if (configuration.startFailures() > startAttempts.incrementAndGet())
          throw new PersistenceException();
 
-      ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
-      segmentCount = clusteringConfiguration.hash().numSegments();
-
-      int segmentsToInitialize;
       if (configuration.segmented()) {
-         segmentsToInitialize = segmentCount;
+         ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
+         segmentCount = clusteringConfiguration.hash().numSegments();
       } else {
-         segmentsToInitialize = 1;
+         segmentCount = 1;
       }
 
-      store = new AtomicReferenceArray<>(segmentsToInitialize);
+      store = new AtomicReferenceArray<>(segmentCount);
       stats = newStatsMap();
 
       boolean shouldStartSegments = true;
@@ -131,7 +127,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       }
 
       if (shouldStartSegments) {
-         for (int i = 0; i < segmentsToInitialize; ++i) {
+         for (int i = 0; i < segmentCount; ++i) {
             store.set(i, new ConcurrentHashMap<>());
          }
       }
@@ -277,22 +273,19 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    public Flowable<MarshallableEntry> publishEntries(IntSet segments, Predicate filter, boolean fetchValue) {
       assertRunning();
       record("publishEntries");
-      log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
+      log.tracef("Publishing entries in store %s segments %s with filter %s", storeName, segments, filter);
       Flowable<Map.Entry<Object, byte[]>> flowable;
       if (configuration.segmented()) {
-         flowable = Flowable.fromStream(segments.intStream().mapToObj(segment -> {
-            Map<Object, byte[]> map = store.get(segment);
-            if (map == null) {
-               return Flowable.<Map.Entry<Object, byte[]>>empty();
-            }
-            return Flowable.fromIterable(map.entrySet());
-         })).flatMap(RxJavaInterop.identityFunction());
+         flowable = Flowable.fromIterable(segments)
+                 .concatMap(segment -> {
+                    Map<Object, byte[]> map = store.get(segment);
+                    if (map == null) {
+                       return Flowable.<Map.Entry<Object, byte[]>>empty();
+                    }
+                    return Flowable.fromIterable(map.entrySet());
+                 });
       } else {
-         flowable = Flowable.fromIterable(store.get(0).entrySet())
-               .filter(e -> {
-                  int segment = keyPartitioner.getSegment(e.getKey());
-                  return segments.contains(segment);
-               });
+         flowable = Flowable.fromIterable(store.get(0).entrySet());
       }
 
       if (filter != null) {

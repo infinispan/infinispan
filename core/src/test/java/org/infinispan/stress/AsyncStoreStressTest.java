@@ -24,6 +24,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.DefaultTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
@@ -55,7 +56,6 @@ import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -90,12 +90,13 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    static final Random RANDOM = new Random(12345);
 
    private volatile CountDownLatch latch;
-   private List<String> keys = new ArrayList<String>();
+   private List<String> keys = new ArrayList<>();
    private InternalEntryFactory entryFactory = new InternalEntryFactoryImpl();
    private Map<Object, InternalCacheEntry> expectedState = new ConcurrentHashMap<Object, InternalCacheEntry>();
    private TestObjectStreamMarshaller marshaller;
    private ExecutorService nonBlockingExecutor;
    private ExecutorService blockingExecutor;
+   private TimeService timeService;
 
    protected String location;
 
@@ -119,6 +120,9 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       TestingUtil.inject(lockContainer, new DefaultTimeService());
       locks = lockContainer;
+
+      timeService = new DefaultTimeService();
+      TestingUtil.inject(locks, timeService, nonBlockingExecutor);
    }
 
    @AfterClass(alwaysRun = true)
@@ -170,7 +174,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             .segmented(false)
             .create();
 
-      return createAsyncStore(new NonBlockingStoreAdapter<>(new SingleFileStore<>()), singleFileStoreConfiguration);
+      return createAsyncStore(new SingleFileStore<>(), singleFileStoreConfiguration);
    }
 
    private AsyncNonBlockingStore<Object, Object> createAsyncStore(NonBlockingStore backendStore, StoreConfiguration storeConfiguration) throws PersistenceException {
