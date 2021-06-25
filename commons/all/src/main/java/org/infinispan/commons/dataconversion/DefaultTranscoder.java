@@ -1,13 +1,15 @@
 package org.infinispan.commons.dataconversion;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,7 +21,7 @@ import org.infinispan.commons.util.Util;
  *
  * @since 9.2
  */
-public final class DefaultTranscoder implements Transcoder {
+public final class DefaultTranscoder extends AbstractTranscoder {
 
    private static final Set<MediaType> supportedTypes = new HashSet<>();
 
@@ -37,7 +39,7 @@ public final class DefaultTranscoder implements Transcoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.match(APPLICATION_OCTET_STREAM)) {
             return convertToOctetStream(content, contentType, destinationType);
@@ -49,81 +51,67 @@ public final class DefaultTranscoder implements Transcoder {
             return convertToTextPlain(content, contentType, destinationType);
          }
          if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-            return convertToUrlEncoded(content, contentType);
+            return content;
          }
          throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
-      } catch (EncodingException | InterruptedException | IOException e) {
+      } catch (EncodingException | InterruptedException | IOException | ClassNotFoundException e) {
          throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
    }
 
-   private Object convertToUrlEncoded(Object content, MediaType contentType) {
-      if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         return StandardConversions.convertOctetStreamToUrlEncoded(content, contentType);
-      }
-      if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.convertUrlEncodedToObject(content);
-      }
-      if (contentType.match(TEXT_PLAIN)) {
-         return StandardConversions.convertTextToUrlEncoded(content, contentType);
-      }
-      if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-         return content;
-      }
-      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, APPLICATION_WWW_FORM_URLENCODED);
-   }
-
    private Object convertToTextPlain(Object content, MediaType contentType, MediaType destinationType) {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         byte[] decoded = StandardConversions.decodeOctetStream(content, destinationType);
-         return StandardConversions.convertOctetStreamToText(decoded, destinationType);
+         return StandardConversions.convertCharset(content, UTF_8, destinationType.getCharset());
       }
       if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.convertJavaToText(content, contentType, destinationType);
+         if (content instanceof byte[]) {
+            return StandardConversions.convertCharset(content, StandardCharsets.UTF_8, destinationType.getCharset());
+         } else {
+            return content.toString().getBytes(destinationType.getCharset());
+         }
       }
       if (contentType.match(TEXT_PLAIN)) {
          return StandardConversions.convertTextToText(content, contentType, destinationType);
       }
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-         return StandardConversions.convertUrlEncodedToText(content, destinationType);
+         return content;
       }
       throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
-   private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) {
+   private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) throws IOException, ClassNotFoundException {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         byte[] decoded = StandardConversions.decodeOctetStream(content, destinationType);
-         return StandardConversions.convertOctetStreamToJava(decoded, destinationType, marshaller);
+         String classType = destinationType.getClassType();
+         if (classType != null && !(classType.startsWith("java.lang") || classType.equals(BYTE_ARRAY.getName()))) {
+            Object unmarshalled = marshaller.objectFromByteBuffer((byte[]) content);
+            if (unmarshalled.getClass().getName().equals(classType)) {
+               return unmarshalled;
+            }
+         } else {
+            return content;
+         }
       }
       if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.decodeObjectContent(content, contentType);
+         return content;
       }
       if (contentType.match(TEXT_PLAIN)) {
          return StandardConversions.convertTextToObject(content, contentType);
       }
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-         return StandardConversions.convertUrlEncodedToObject(content);
+         return content instanceof byte[] ? new String((byte[]) content, destinationType.getCharset()) : content.toString();
       }
       throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
    public Object convertToOctetStream(Object content, MediaType contentType, MediaType destinationType) throws IOException, InterruptedException {
-      if (contentType.match(APPLICATION_OCTET_STREAM) || contentType.match(APPLICATION_UNKNOWN)) {
-         return StandardConversions.decodeOctetStream(content, contentType);
-      }
       if (contentType.match(APPLICATION_OBJECT)) {
-         Object decoded = StandardConversions.decodeObjectContent(content, contentType);
-         if (decoded instanceof byte[]) return decoded;
-
-         return marshaller.objectToByteBuffer(decoded);
+         if (content instanceof byte[]) return content;
+         if (content instanceof String) {
+            return content.toString().getBytes(UTF_8);
+         }
+         return marshaller.objectToByteBuffer(content);
       }
-      if (contentType.match(TEXT_PLAIN)) {
-         return StandardConversions.convertTextToOctetStream(content, destinationType);
-      }
-      if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-         return StandardConversions.convertUrlEncodedToOctetStream(content);
-      }
-      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
+      return content;
    }
 
    @Override

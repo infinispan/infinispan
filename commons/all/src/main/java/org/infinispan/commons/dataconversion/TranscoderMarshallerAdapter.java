@@ -28,7 +28,7 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.equals(MediaType.APPLICATION_UNKNOWN) || contentType.equals(MediaType.APPLICATION_UNKNOWN)) {
             return content;

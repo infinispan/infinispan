@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -59,6 +58,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional", "smoke"}, testName = "it.endpoints.EndpointInteroperabilityTest")
 public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
+
+   private static final String OCTET_STREAM_HEX = APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString();
 
    /**
     * Cache with no MediaType configuration, assumes K and V are application/unknown.
@@ -282,7 +283,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read via Rest
       Object bytesFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
-            .key("0x7418", APPLICATION_OCTET_STREAM_TYPE)
+            .key("0x7418", OCTET_STREAM_HEX)
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
@@ -290,7 +291,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read marshalled content directly
       Object marshalledContent = new RestRequest().cache(MARSHALLED_CACHE_NAME)
-            .key("0x7418", APPLICATION_OCTET_STREAM_TYPE)
+            .key("0x7418", OCTET_STREAM_HEX)
             .accept(APPLICATION_PROTOSTREAM)
             .read();
 
@@ -301,7 +302,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write via rest
       new RestRequest().cache(MARSHALLED_CACHE_NAME)
-            .key("0x23", APPLICATION_OCTET_STREAM_TYPE)
+            .key("0x23", OCTET_STREAM_HEX)
             .value(value)
             .write();
 
@@ -321,7 +322,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read via Rest
       Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
-            .key("0x1326", APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
+            .key("0x1326", OCTET_STREAM_HEX)
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
@@ -332,7 +333,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write via rest
       new RestRequest().cache(DEFAULT_CACHE_NAME)
-            .key("0x00000001", APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
+            .key("0x00000001", OCTET_STREAM_HEX)
             .value(value)
             .write();
 
@@ -356,7 +357,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read via Rest
       Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
-            .key(restKey, APPLICATION_OCTET_STREAM_TYPE).accept(APPLICATION_OCTET_STREAM)
+            .key(restKey, OCTET_STREAM_HEX).accept(APPLICATION_OCTET_STREAM)
             .read();
 
       assertArrayEquals((byte[]) bytesFromRest, value);

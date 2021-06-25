@@ -53,11 +53,10 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       if (destinationType.match(APPLICATION_XML)) {
          if (contentType.match(APPLICATION_OBJECT)) {
-            Object decoded = StandardConversions.decodeObjectContent(content, contentType);
-            String xmlString = xstream.toXML(decoded);
+            String xmlString = xstream.toXML(content);
             return xmlString.getBytes(destinationType.getCharset());
          }
          if (contentType.match(TEXT_PLAIN)) {

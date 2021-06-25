@@ -171,7 +171,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid media type list '%s': type expected after comma", id = 933)
    EncodingException invalidMediaTypeListCommaAtEnd(String mediaType);
-//
+
+   //
    @Message(value = "Errors converting '%s' from '%s' to '%s'", id = 934)
    EncodingException errorTranscoding(String content, MediaType contentType, MediaType requestType, @Cause Throwable t);
 
@@ -223,6 +224,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unsupported conversion of '%s' to '%s'", id = 949)
    EncodingException unsupportedConversion(String content, MediaType requestType);
+
+   @Message(value = "Encoding '%s' is not supported", id = 950)
+   EncodingException encodingNotSupported(String enc);
 
    //----- counters exceptions // don't use the same id range ------
 

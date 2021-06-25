@@ -2,9 +2,11 @@ package org.infinispan.test.data;
 
 import java.io.Serializable;
 
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.protostream.annotations.ProtoField;
 
-public class Address implements Serializable {
+public class Address implements Serializable, JsonSerialization {
    private static final long serialVersionUID = 5943073369866339615L;
 
    @ProtoField(1)
@@ -16,7 +18,8 @@ public class Address implements Serializable {
    @ProtoField(number = 3, defaultValue = "0")
    int zip = 0;
 
-   public Address() {}
+   public Address() {
+   }
 
    public Address(String street, String city, int zip) {
       this.street = street;
@@ -71,5 +74,13 @@ public class Address implements Serializable {
       result = 29 * result + (city != null ? city.hashCode() : 0);
       result = 29 * result + zip;
       return result;
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("street", street)
+            .set("city", city)
+            .set("zip", zip);
    }
 }

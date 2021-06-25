@@ -5,21 +5,24 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.commons.dataconversion.StandardConversions.decodeObjectContent;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 
 /**
  * Handle conversions for the generic binary format 'application/unknown' that is assumed when no MediaType is specified.
  *
+ * This transcoder will not perform any conversion in the data, except those performed by {@link MediaTypeCodec} and
+ * for {@link MediaType#APPLICATION_OBJECT} it will use the default marshaller present in the server.
+ *
  * @since 10.0
+ * @deprecated since 13.0. Will be removed in a future version together with {@link MediaType#APPLICATION_UNKNOWN}.
  */
+@Deprecated
 public final class BinaryTranscoder extends OneToManyTranscoder {
 
    private final AtomicReference<Marshaller> marshallerRef;
@@ -33,72 +36,24 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
       marshallerRef.set(marshaller);
    }
 
-   private Marshaller getMashaller() {
+   private Marshaller getMarshaller() {
       return marshallerRef.get();
    }
 
    @Override
-   public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
+   public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
-         if (destinationType.equals(APPLICATION_UNKNOWN)) {
-            if (contentType.match(APPLICATION_UNKNOWN)) return content;
-            return convertToByteArray(content, contentType);
-         }
-         if (destinationType.match(APPLICATION_OCTET_STREAM)) {
-            return StandardConversions.decodeOctetStream(content, contentType);
-         }
          if (destinationType.match(APPLICATION_OBJECT)) {
-            if (content instanceof byte[]) {
-               return getMashaller().objectFromByteBuffer((byte[]) content);
-            }
-            if (content instanceof WrappedByteArray) {
-               return getMashaller().objectFromByteBuffer(((WrappedByteArray) content).getBytes());
-            }
-            return content;
+            return getMarshaller().objectFromByteBuffer((byte[]) content);
          }
-         if (destinationType.match(TEXT_PLAIN)) {
-            return StandardConversions.convertTextToOctetStream(content, contentType);
+
+         if (contentType.match(APPLICATION_OBJECT)) {
+            content = getMarshaller().objectToByteBuffer(content);
          }
-         if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-            return convertToUrlEncoded(content, contentType);
-         }
-         throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
-      } catch (IOException | EncodingException | ClassNotFoundException e) {
+         return content;
+      } catch (ClassCastException | IOException | EncodingException | ClassNotFoundException | InterruptedException e) {
          throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
-   }
-
-   private Object convertToByteArray(Object content, MediaType contentType) {
-      try {
-         if (contentType.match(APPLICATION_OCTET_STREAM)) {
-            return StandardConversions.decodeOctetStream(content, contentType);
-         }
-         if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-            return StandardConversions.convertUrlEncodedToOctetStream(content);
-         }
-         if (contentType.match(TEXT_PLAIN)) {
-            return StandardConversions.convertTextToOctetStream(content, contentType);
-         }
-         return getMashaller().objectToByteBuffer(decodeObjectContent(content, contentType));
-      } catch (EncodingException | InterruptedException | IOException e) {
-         throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, APPLICATION_UNKNOWN, e);
-      }
-   }
-
-   private Object convertToUrlEncoded(Object content, MediaType contentType) {
-      if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         return StandardConversions.convertOctetStreamToUrlEncoded(content, contentType);
-      }
-      if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.convertUrlEncodedToObject(content);
-      }
-      if (contentType.match(TEXT_PLAIN)) {
-         return StandardConversions.convertTextToUrlEncoded(content, contentType);
-      }
-      if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
-         return content;
-      }
-      throw CONTAINER.unsupportedConversion(Util.toStr(content), APPLICATION_UNKNOWN, contentType);
    }
 
 }

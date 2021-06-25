@@ -3,6 +3,7 @@ package org.infinispan.commons.dataconversion;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
+import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
@@ -150,13 +151,16 @@ public final class MediaType {
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
-   public static final String BYTE_ARRAY_TYPE = "ByteArray";
-   private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";
+   @Deprecated
+   public static final String BYTE_ARRAY_TYPE = BYTE_ARRAY.getName();
    private static final String WEIGHT_PARAM_NAME = "q";
    private static final String CHARSET_PARAM_NAME = "charset";
    private static final String CLASS_TYPE_PARAM_NAME = "type";
+   private static final String ENCODING_PARAM_NAME = "encoding";
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
+   public static final String HEX = "hex";
+   public static final String BASE_64 = "base64";
 
    private final Map<String, String> params;
    private final String typeSubtype;
@@ -248,7 +252,7 @@ public final class MediaType {
          if (paramName == null) {
             // The comma alternative matched
             if (!isList) {
-              throw CONTAINER.invalidMediaTypeSubtype(input);
+               throw CONTAINER.invalidMediaTypeSubtype(input);
             } else if (matcher.end() < input.length()) {
                // parseSingleMediaType will be called again
                break;
@@ -359,6 +363,14 @@ public final class MediaType {
       return withParameter(CLASS_TYPE_PARAM_NAME, clazz.getName());
    }
 
+   public MediaType withEncoding(String enc) {
+      return withParameter(ENCODING_PARAM_NAME, enc);
+   }
+
+   public String getEncoding() {
+      return getParameter(ENCODING_PARAM_NAME).orElse(null);
+   }
+
    public boolean hasStringType() {
       String classType = getClassType();
       return classType != null && classType.equals(String.class.getName());
@@ -445,7 +457,7 @@ public final class MediaType {
    public boolean isBinary() {
       String customType = getClassType();
       if (customType == null) return !this.match(MediaType.APPLICATION_OBJECT);
-      return BYTE_ARRAY_TYPE.equals(customType);
+      return BYTE_ARRAY.getName().equals(customType);
    }
 
    @Override
