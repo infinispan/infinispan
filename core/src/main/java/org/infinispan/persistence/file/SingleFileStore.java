@@ -9,6 +9,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,14 +27,24 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
+import org.infinispan.container.versioning.irac.TopologyIracVersion;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -40,6 +52,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -82,7 +96,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public static final byte[] MAGIC_BEFORE_11 = new byte[]{'F', 'C', 'S', '1'}; //<11
    public static final byte[] MAGIC_11_0 = new byte[]{'F', 'C', 'S', '2'};
    public static final byte[] MAGIC_12_0 = new byte[]{'F', 'C', 'S', '3'};
-   public static final byte[] MAGIC_LATEST = MAGIC_12_0;
+   public static final byte[] MAGIC_12_1 = new byte[]{'F', 'C', 'S', '4'};
+   public static final byte[] MAGIC_LATEST = MAGIC_12_1;
    private static final byte[] ZERO_INT = {0, 0, 0, 0};
    private static final int KEYLEN_POS = 4;
    /*
@@ -161,6 +176,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (Arrays.equals(MAGIC_LATEST, header)) {
                rebuildIndex();
                processFreeEntries();
+            } else if (Arrays.equals(MAGIC_12_0, header)) {
+               migrateFromV12_0();
+               processFreeEntries();
             } else if (Arrays.equals(MAGIC_11_0, header)) {
                migrateFromV11();
                processFreeEntries();
@@ -222,7 +240,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
       for (; ; ) {
          // read FileEntry fields from file (size, keyLen etc.)
-         buf = readChannel(buf, filePos, KEY_POS_11_0);
+         buf = readChannel(buf, filePos, KEY_POS_LATEST);
          // return if end of file is reached
          if (buf.remaining() > 0)
             break;
@@ -255,6 +273,175 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
+   // Initialise missing internal metadata state for corrupt data
+   private PrivateMetadata generateMissingInternalMetadata() {
+      // Optimistic Transactions
+      AdvancedCache<?, ?> cache = ctx.getCache().getAdvancedCache();
+      Configuration config = cache.getCacheConfiguration();
+      TransactionConfiguration txConfig = config.transaction();
+      PrivateMetadata.Builder builder = new PrivateMetadata.Builder();
+      if (txConfig.transactionMode() == TransactionMode.TRANSACTIONAL && txConfig.lockingMode() == LockingMode.OPTIMISTIC) {
+         builder.entryVersion(new SimpleClusteredVersion(1, 1));
+      }
+
+      // Async XSite
+      if (config.sites().hasAsyncEnabledBackups()) {
+         String siteName = cache.getCacheManager().getTransport().localSiteName();
+         IracEntryVersion version = new IracEntryVersion(Collections.singletonMap(siteName, TopologyIracVersion.newVersion(1)));
+         builder.iracMetadata(new IracMetadata(siteName, version));
+      }
+      return builder.build();
+   }
+
+   private void migrateFromV12_0()  throws Exception {
+      // ISPN-13128 Corrupt migration data can only be created with default marshaller
+      if (ctx.getGlobalConfiguration().serialization().marshaller() == null) {
+         migrateCorruptDataV12_0();
+         return;
+      }
+
+      // Data is not corrupt, so simply update file magic
+      String cacheName = ctx.getCache().getName();
+      PERSISTENCE.startMigratingPersistenceData(cacheName);
+      try {
+         channel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+      } catch (IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+      }
+      rebuildIndex();
+   }
+
+   private void migrateCorruptDataV12_0() {
+      String cacheName = ctx.getCache().getName();
+      PERSISTENCE.startRecoveringCorruptPersistenceData(cacheName);
+      File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
+
+      // Day before the release of Infinispan 10.0.0.Final
+      // This was the first release that SFS migrations on startup could be migrated from via ISPN 10 -> 11 -> 12
+      long sanityEpoch = LocalDate.of(2019, 10, 26)
+            .atStartOfDay()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
+      long currentTs = timeService.wallClockTime();
+
+      ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
+      ByRef<ByteBuffer> bufRef = ByRef.create(buf);
+      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
+         //Write Magic
+         newChannel.truncate(0);
+         newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+
+         long oldFilePos = MAGIC_12_0.length;
+         while (true) {
+            buf = readChannel(buf, oldFilePos, KEY_POS_LATEST);
+            // EOF reached
+            if (buf.remaining() > 0)
+               break;
+
+            buf.flip();
+            FileEntry fe = new FileEntry(oldFilePos, buf);
+            // Semantic check to find valid FileEntry
+            // fe.keyLen = 0 is valid, however it means we should skip the entry
+            if (fe.size <= 0 || fe.expiryTime < -1 ||
+                  fe.keyLen <= 0 || fe.keyLen > fe.size ||
+                  fe.dataLen <= 0 || fe.dataLen > fe.size ||
+                  fe.metadataLen < 0 || fe.metadataLen > fe.size ||
+                  fe.internalMetadataLen < 0 || fe.internalMetadataLen > fe.size) {
+               // Check failed, try to read FileEntry from the next byte
+               oldFilePos++;
+               continue;
+            }
+
+            K key;
+            V value;
+            Metadata metadata = null;
+            ByRef.Long offset = new ByRef.Long(oldFilePos + KEY_POS_LATEST);
+            bufRef.set(buf);
+            try {
+               // Read old entry content and then write
+               key = unmarshallObject(bufRef, offset, fe.keyLen);
+               value = unmarshallObject(bufRef, offset, fe.dataLen);
+
+               int metaLen = fe.metadataLen > 0 ? fe.metadataLen - TIMESTAMP_BYTES : 0;
+               if (metaLen > 0)
+                  metadata = unmarshallObject(bufRef, offset, metaLen);
+
+               // Entries successfully unmarshalled so it's safe to increment oldFilePos to FileEntry+offset so brute-force can resume on next iteration
+               oldFilePos = offset.get();
+            } catch(Throwable t) {
+               // Must have been a false positive FileEntry. Increment oldFilePos by 1 bytes and retry
+               oldFilePos++;
+               continue;
+            } finally {
+               buf = bufRef.get();
+            }
+
+
+            long created = -1;
+            long lastUsed = -1;
+            if (fe.metadataLen > 0 && fe.expiryTime > 0) {
+               buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES);
+               buf.flip();
+               // Try to read timestamps. If corrupt data then this could be nonsense
+               created = buf.getLong();
+               lastUsed = buf.getLong();
+
+               // If the Timestamps are in the future or < sanityEpoch, then we're migrating corrupt data so set the value to current wallClockTime
+               if (created != -1 && (created > currentTs || created < sanityEpoch)) {
+                  long lifespan = metadata.lifespan();
+                  created = lifespan > 0 ? fe.expiryTime - lifespan : currentTs;
+               }
+
+               if (lastUsed != -1 && (lastUsed > currentTs || lastUsed < sanityEpoch)) {
+                  long maxIdle = metadata.maxIdle();
+                  lastUsed = maxIdle > 0 ? fe.expiryTime - maxIdle : currentTs;
+               }
+
+               oldFilePos = offset.get();
+            }
+
+            PrivateMetadata internalMeta = null;
+            if (fe.internalMetadataLen > 0) {
+               try {
+                  bufRef.set(buf);
+                  internalMeta = unmarshallObject(bufRef, offset, fe.internalMetadataLen);
+                  oldFilePos = offset.get();
+               } catch (Throwable t) {
+                  // Will fail if data is corrupt as PrivateMetadata doesn't exist
+                  internalMeta = generateMissingInternalMetadata();
+               } finally {
+                  buf = bufRef.get();
+               }
+            }
+
+            // Last expiration check before writing as expiryTime is considered good now
+            // This check is required as write below doesn't verify expiration or not and
+            // just creates a new expiryTime.
+            if (fe.expiryTime > 0 && fe.expiryTime < currentTs) {
+               continue;
+            }
+
+            MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, internalMeta, created, lastUsed);
+            write(me, newChannel);
+         }
+      } catch (IOException e) {
+         throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
+      }
+
+      try {
+         //close old file
+         channel.close();
+         //replace old file with the new file
+         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         //reopen the file
+         channel = SecurityActions.openFileChannel(file);
+         PERSISTENCE.corruptDataSuccessfulMigrated(cacheName);
+      } catch (IOException e) {
+         throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
+      }
+   }
+
    private void migrateFromV11() {
       String cacheName = ctx.getCache().getName();
       PERSISTENCE.startMigratingPersistenceData(cacheName);
@@ -262,17 +449,18 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (newFile.exists()) {
          newFile.delete();
       }
-      long newFilePos = MAGIC_LATEST.length;
       long oldFilePos = MAGIC_11_0.length;
       // Only update the key/value/meta bytes if the default marshaller is configured
-      boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
+      boolean wrapperMissing = ctx.getGlobalConfiguration().serialization().marshaller() == null;
 
       try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
          //Write Magic
          newChannel.truncate(0);
          newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
 
+         long currentTs = timeService.wallClockTime();
          ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
+         ByRef<ByteBuffer> bufRef = ByRef.create(buf);
          for (; ; ) {
             // read FileEntry fields from file (size, keyLen etc.)
             buf = readChannelUpdateOffset(buf, new ByRef.Long(oldFilePos), KEY_POS_11_0);
@@ -297,60 +485,41 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (oldFe.keyLen < 1)
                continue;
 
-            int remainingLength;
+            // The entry has already expired, so avoid writing to the new file
+            if (oldFe.expiryTime > 0 && oldFe.expiryTime < currentTs)
+               continue;
+
             ByRef.Long offset = new ByRef.Long(oldFe.offset + KEY_POS_11_0);
-            K key = loadLegacyObject(buf, offset, oldFe.keyLen);
-            if (transformationRequired) {
-               ByteBuffer newKey = transformLegacyObject(key);
-               ByteBuffer newValue = loadAndTransformLegacy(buf, offset, oldFe.dataLen);
 
-               ByteBuffer newMeta = null;
-               if (oldFe.metadataLen > 0) {
-                  newMeta = loadAndTransformLegacy(buf, offset, oldFe.metadataLen - TIMESTAMP_BYTES);
+            long created = -1;
+            long lastUsed = -1;
+            bufRef.set(buf);
+            K key = unmarshallObject(bufRef, offset, oldFe.keyLen, wrapperMissing);
+            V value = unmarshallObject(bufRef, offset, oldFe.dataLen, wrapperMissing);
+            Metadata metadata = null;
+            if (oldFe.metadataLen > 0) {
+               metadata = unmarshallObject(bufRef, offset, oldFe.metadataLen - TIMESTAMP_BYTES, wrapperMissing);
+
+               if (oldFe.expiryTime > 0) {
+                  buf = bufRef.get();
+                  buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES);
+                  buf.flip();
+                  created = buf.getLong();
+                  lastUsed = buf.getLong();
+                  bufRef.set(buf);
                }
-
-               int newMetaSize = newMeta != null ? newMeta.limit() + TIMESTAMP_BYTES : 0;
-               FileEntry newFe = new FileEntry(newFilePos, oldFe.size, newKey.limit(), newValue.limit(), newMetaSize,
-                     oldFe.internalMetadataLen, oldFe.expiryTime);
-
-               // write the FileEntry to new file
-               buf = allocate(buf, KEY_POS_LATEST);
-               newFe.writeToBuf(buf);
-               buf.flip();
-               newChannel.write(buf, newFilePos);
-               newFilePos += KEY_POS_LATEST; //size written
-               entries.put(key, newFe);
-
-               //write the updated content to the new file
-               newFilePos += newChannel.write(newKey, newFilePos);
-               newFilePos += newChannel.write(newValue, newFilePos);
-               if (newMeta != null) {
-                  newFilePos += newChannel.write(newMeta, newFilePos);
-               }
-               newChannel.write(newKey, newFilePos);
-               newFilePos += newFe.keyLen;
-               newChannel.write(newValue, newFilePos);
-               newFilePos += newFe.dataLen;
-               if (newMeta != null) {
-                  newChannel.write(newMeta, newFilePos);
-                  newFilePos += newFe.metadataLen;
-               }
-
-               remainingLength = (newFe.expiryTime > 0 ? TIMESTAMP_BYTES : 0) + oldFe.internalMetadataLen + 8;
-            } else {
-               // Simply use the old FileEntry as only the magic bytes are updated
-               entries.put(key, oldFe);
-               remainingLength = oldFe.size - oldFe.keyLen - KEY_POS_11_0;
             }
 
-            // Read and write the remaining data from old file
-            buf = readChannelUpdateOffset(buf, offset, remainingLength);
-            newFilePos += newChannel.write(buf, newFilePos);
+            PrivateMetadata internalMeta = null;
+            if (oldFe.internalMetadataLen > 0) {
+               internalMeta = unmarshallObject(bufRef, offset, oldFe.internalMetadataLen, wrapperMissing);
+               buf = bufRef.get();
+            }
+            MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory()
+                  .create(key, value, metadata, internalMeta, created, lastUsed);
+            write(me, newChannel);
          }
       } catch (IOException | ClassNotFoundException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
 
@@ -361,37 +530,35 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
          channel = SecurityActions.openFileChannel(file);
-         //update file position
-         filePos = newFilePos;
          PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
       } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
    }
 
-   private ByteBuffer loadAndTransformLegacy(ByteBuffer buf, ByRef.Long offset, int length)
-         throws ClassNotFoundException, InterruptedException, IOException {
-      Object obj = loadLegacyObject(buf, offset, length);
-      return transformLegacyObject(obj);
-   }
-
-   private <T> ByteBuffer transformLegacyObject(T object) throws InterruptedException, IOException {
-      byte[] bytes = ctx.getPersistenceMarshaller().objectToByteBuffer(object);
-      return ByteBuffer.wrap(bytes);
+   private <T> T unmarshallObject(ByRef<ByteBuffer> buf, ByRef.Long offset, int length) throws ClassNotFoundException, IOException {
+      return unmarshallObject(buf, offset, length, false);
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T loadLegacyObject(ByteBuffer buf, ByRef.Long offset, int length) throws ClassNotFoundException, IOException {
+   private <T> T unmarshallObject(ByRef<ByteBuffer> bufRef, ByRef.Long offset, int length, boolean legacyWrapperMissing) throws ClassNotFoundException, IOException {
+      ByteBuffer buf = bufRef.get();
       buf = readChannelUpdateOffset(buf, offset, length);
-      // Read using raw user marshaller without MarshallUserObject wrapping
       byte[] bytes = buf.array();
-      Marshaller marshaller = ctx.getPersistenceMarshaller().getUserMarshaller();
-      try {
-         return (T) marshaller.objectFromByteBuffer(bytes, 0, length);
-      } catch (IllegalArgumentException e) {
-         // For internal cache key/values and custom metadata we need to use the persistence marshaller
-         return (T) ctx.getPersistenceMarshaller().objectFromByteBuffer(bytes, 0, length);
+      bufRef.set(buf);
+
+      PersistenceMarshaller persistenceMarshaller = ctx.getPersistenceMarshaller();
+      if (legacyWrapperMissing) {
+         // Read using raw user marshaller without MarshallUserObject wrapping
+         Marshaller marshaller = persistenceMarshaller.getUserMarshaller();
+         try {
+            return (T) marshaller.objectFromByteBuffer(bytes, 0, length);
+         } catch (IllegalArgumentException e) {
+            // For internal cache key/values and custom metadata we need to use the persistence marshaller
+            return (T) persistenceMarshaller.objectFromByteBuffer(bytes, 0, length);
+         }
       }
+      return(T) persistenceMarshaller.objectFromByteBuffer(bytes, 0, length);
    }
 
    private ByteBuffer readChannelUpdateOffset(ByteBuffer buf, ByRef.Long offset, int length) throws IOException {
@@ -518,6 +685,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry) {
+      write(marshalledEntry, channel);
+   }
+
+   private void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry, FileChannel channel) {
       try {
          // serialize cache value
          org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();

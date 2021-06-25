@@ -2182,4 +2182,14 @@ public interface Log extends BasicLogger {
    @Message(value = "The transaction %s is already rolled back", id = 641)
    InvalidTransactionException transactionAlreadyRolledBack(GlobalTransaction gtx);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Attempting to recover '%s' corrupt data ...", id = 642)
+   void startRecoveringCorruptPersistenceData(String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "'%s' persisted data successfully recovered.", id = 643)
+   void corruptDataSuccessfulMigrated(String cacheName);
+
+   @Message(value = "Failed to recover '%s' persisted data.", id = 644)
+   PersistenceException corruptDataMigrationFailed(String cacheName, @Cause Throwable cause);
 }
