@@ -44,7 +44,7 @@ public class RestResponseOkHttp implements RestResponse {
       try {
          return response.body().string();
       } catch (IOException e) {
-         return null;
+         throw new RuntimeException(e);
       }
    }
 
