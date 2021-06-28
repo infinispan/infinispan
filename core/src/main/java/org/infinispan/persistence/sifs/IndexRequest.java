@@ -2,7 +2,6 @@ package org.infinispan.persistence.sifs;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.util.Util;
 
@@ -32,8 +31,6 @@ class IndexRequest extends CompletableFuture<Object> {
    private final int prevOffset;
    private final byte[] serializedKey;
    private final int size;
-   private volatile Object result;
-   private AtomicInteger countDown;
 
    private IndexRequest(Type type, int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
       this.type = type;
