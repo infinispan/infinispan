@@ -375,6 +375,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          // Write latest Magic and copy old content
          newChannel.truncate(0);
          newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+         channel.position(MAGIC_12_0.length);
          newChannel.transferFrom(channel, MAGIC_12_0.length, channel.size());
       } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
