@@ -254,8 +254,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    private void migrateCorruptData() throws IOException {
       String cacheName = ctx.getCache().getName();
-      // TODO different log message?
-      PERSISTENCE.startMigratingPersistenceData(cacheName);
+      PERSISTENCE.startRecoveringCorruptPersistenceData(cacheName);
       File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
 
       long oldFilePos = MAGIC_LATEST.length;
@@ -311,9 +310,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
          channel = SecurityActions.openFileChannel(file);
-         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
+         PERSISTENCE.corruptDataSuccessfulMigrated(cacheName);
       } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+         throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
       }
    }
 
