@@ -366,7 +366,10 @@ class Index {
             request.completeExceptionally(e);
          }
          temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
-         nonBlockingManager.complete(request, null);
+         if (request.getType() != IndexRequest.Type.UPDATE) {
+            // The update type will complete it in the switch statement above
+            nonBlockingManager.complete(request, null);
+         }
       }
 
       // This is ran when the flowable ends either via normal termination or error
