@@ -170,6 +170,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                if (isCorruptData()) {
                   migrateCorruptData();
                } else {
+                  migrateFromV12_0();
                   rebuildIndex();
                }
                processFreeEntries();
@@ -360,6 +361,35 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             // add to free list
             freeList.add(fe);
          }
+      }
+   }
+
+   private void migrateFromV12_0() {
+      String cacheName = ctx.getCache().getName();
+      PERSISTENCE.startMigratingPersistenceData(cacheName);
+      File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
+      if (newFile.exists()) {
+         newFile.delete();
+      }
+      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
+         // Write latest Magic and copy old content
+         newChannel.truncate(0);
+         newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+         newChannel.transferFrom(channel, MAGIC_12_0.length, channel.size());
+      } catch (IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+      }
+
+      try {
+         //close old file
+         channel.close();
+         //replace old file with the new file
+         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         //reopen the file
+         channel = SecurityActions.openFileChannel(file);
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
+      } catch (IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
       }
    }
 
