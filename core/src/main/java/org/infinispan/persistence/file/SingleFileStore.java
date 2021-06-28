@@ -253,7 +253,6 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private void migrateCorruptData() throws IOException {
-      // TODO barf if !protostream marshaller as data can't be recovered
       String cacheName = ctx.getCache().getName();
       // TODO different log message?
       PERSISTENCE.startMigratingPersistenceData(cacheName);
