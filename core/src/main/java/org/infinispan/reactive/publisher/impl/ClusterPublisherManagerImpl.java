@@ -891,17 +891,18 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                   // Store the current topology in case if we have to retry
                   int currentTopology = topology.getTopologyId();
                   this.currentTopology = currentTopology;
-                  if (previousTopology != -1 && previousTopology == currentTopology) {
+                  Address localAddress = rpcManager.getAddress();
+                  Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);
+                  if (previousTopology != -1 && previousTopology == currentTopology ||
+                      targets.isEmpty()) {
                      int nextTopology = currentTopology + 1;
                      if (log.isTraceEnabled()) {
-                        log.tracef("Retrying segments %s after %d is installed for %s", segmentsToComplete,
-                              nextTopology, requestId);
+                        log.tracef("Request id %s needs a new topology to retry segments %s. Current topology is %d, with targets %s",
+                                   requestId, segmentsToComplete, currentTopology, targets);
                      }
                      // When this is complete - the retry below will kick in again and we will have a new topology
                      return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
                   }
-                  Address localAddress = rpcManager.getAddress();
-                  Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);
                   IntSet localSegments = targets.remove(localAddress);
                   Iterator<Map.Entry<Address, IntSet>> iterator = targets.entrySet().iterator();
                   Supplier<Map.Entry<Address, IntSet>> targetSupplier = () -> {
@@ -924,7 +925,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
                   int concurrentPublishers = Math.min(MAX_INNER_SUBSCRIBERS, targets.size() + (localSegments != null ? 1 : 0));
 
-                  int targetBatchSize = publisher.batchSize / concurrentPublishers + 3;
+                  int targetBatchSize = (publisher.batchSize + concurrentPublishers - 1) / concurrentPublishers;
 
                   Publisher<R>[] publisherArray = new Publisher[concurrentPublishers];
                   for (int i = 0; i < concurrentPublishers - 1; ++i) {
