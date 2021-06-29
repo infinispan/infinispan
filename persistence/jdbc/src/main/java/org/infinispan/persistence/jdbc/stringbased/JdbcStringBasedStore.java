@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
 
@@ -32,6 +34,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
@@ -133,8 +136,14 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
             if (tableManager.metaTableExists(connection)) {
                TableManager.Metadata meta = tableManager.getMetadata(connection);
                int storedSegments = meta.getSegments();
-               if (!configuration.segmented() && storedSegments != -1)
-                  throw log.existingStoreNoSegmentation();
+               if (!configuration.segmented()) {
+                  // ISPN-13135 number of segments was previously written incorrectly, so don't validate number for older versions
+                  String versionStr = Version.decodeVersion(meta.getVersion());
+                  List<Integer> versionParts = Arrays.stream(versionStr.split("\\.")).map(Integer::parseInt).collect(Collectors.toList());
+                  // Ignore check if version < 12.1.5. Meta table only created since 12.0.0
+                  if ((versionParts.get(0) > 12 || versionParts.get(2) > 4) && storedSegments != -1)
+                     throw log.existingStoreNoSegmentation();
+               }
 
                int configuredSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
                if (configuration.segmented() && storedSegments != configuredSegments)
