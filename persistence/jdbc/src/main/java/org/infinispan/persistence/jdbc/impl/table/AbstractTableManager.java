@@ -162,7 +162,7 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public void updateMetaTable(Connection conn) throws PersistenceException {
       short version = Version.getVersionShort();
-      int segments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      int segments = ctx.getConfiguration().segmented() ? ctx.getCache().getCacheConfiguration().clustering().hash().numSegments() : -1;
       this.metadata = new MetadataImpl(version, segments);
       ByteBuffer buffer = marshall(metadata, ctx.getPersistenceMarshaller());
 

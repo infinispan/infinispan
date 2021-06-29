@@ -12,6 +12,7 @@ import java.util.Random;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
@@ -73,7 +74,10 @@ public class TableManagerTest extends AbstractInfinispanTest {
       Cache<?, ?> cache = mock(Cache.class);
       when(cache.getCacheConfiguration()).thenReturn(new ConfigurationBuilder().build());
 
-      ctx = new DummyInitializationContext(null, cache, new TestObjectStreamMarshaller(), null, null, null, null, null, null, null);
+      StoreConfiguration storeConfig = mock(StoreConfiguration.class);
+      when(storeConfig.segmented()).thenReturn(false);
+
+      ctx = new DummyInitializationContext(storeConfig, cache, new TestObjectStreamMarshaller(), null, null, null, null, null, null, null);
       tableManager = TableManagerFactory.getManager(ctx, connectionFactory, storeBuilder.create(), "aName");
    }
 
