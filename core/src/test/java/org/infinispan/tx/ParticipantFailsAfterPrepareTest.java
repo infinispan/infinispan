@@ -75,7 +75,6 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       killMember(toKillIndex);
       log.debugf("Killed %s, key owners are %s", toKill, dm0.getCacheTopology().getWriteOwners(key));
 
-      Address newPrimaryOwner = dm0.getCacheTopology().getDistribution(key).primary();
       for (Cache<Object, Object> c : caches()) {
          if (!address(c).equals(originator)) {
             TransactionTable nonOwnerTxTable = TestingUtil.extractComponent(c, TransactionTable.class);
@@ -83,7 +82,8 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
          }
 
          // If the primary owner changes, the lock is not re-acquired on the new primary owner
-         boolean expectLocked = newPrimaryOwner.equals(primaryOwner) && address(c).equals(newPrimaryOwner);
+         // However, the old primary owner doesn't release the lock - it's just ignored by new transactions
+         boolean expectLocked = address(c).equals(primaryOwner);
          boolean locked = extractLockManager(c).isLocked(key);
          log.tracef("On %s, locked = %s", address(c), locked);
          assertEquals(expectLocked, locked);
