@@ -344,10 +344,14 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // we must not remove the transfer before the requests for values are sent
       // as we could notify the end of rebalance too soon
       removeTransfer(inboundTransfer);
-      if (log.isTraceEnabled())
-         log.tracef("Inbound transfer removed, chunk counter is %s", chunkCounter.get());
-      if (chunkCounter.get() == 0) {
-         notifyEndOfStateTransferIfNeeded();
+
+      if (lastTransfer) {
+         if (log.isTraceEnabled())
+            log.tracef("Inbound transfer removed, chunk counter is %s", chunkCounter.get());
+         if (chunkCounter.get() == 0) {
+            // No values to transfer after all the keys were received, we can end state transfer immediately
+            notifyEndOfStateTransferIfNeeded();
+         }
       }
    }
 
