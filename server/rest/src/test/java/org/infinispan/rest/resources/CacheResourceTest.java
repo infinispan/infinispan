@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -124,10 +125,11 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("objectCache", "test", testClass);
+      RestCacheClient objectCache = client.cache("objectCache");
+      join(objectCache.put("test", RestEntity.create(APPLICATION_JSON, testClass.toJson().toString())));
 
       //when
-      CompletionStage<RestResponse> response = client.cache("objectCache").get("test", APPLICATION_JSON_TYPE);
+      CompletionStage<RestResponse> response = objectCache.get("test", APPLICATION_JSON_TYPE);
 
       //then
       assertThat(response).isOk();
@@ -140,30 +142,31 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("objectCache", "test".getBytes(), testClass);
+      RestCacheClient objectCache = client.cache("objectCache");
+      String xml = "<org.infinispan.rest.TestClass><name>test</name></org.infinispan.rest.TestClass>";
+      join(objectCache.put("test", RestEntity.create(APPLICATION_XML, xml)));
 
       //when
-      CompletionStage<RestResponse> response = client.cache("objectCache").get("test", APPLICATION_XML_TYPE);
+      CompletionStage<RestResponse> response = objectCache.get("test", APPLICATION_XML_TYPE);
 
       //then
       assertThat(response).isOk();
       assertThat(response).hasContentType("application/xml");
-      assertThat(response).hasReturnedText(
-            "<org.infinispan.rest.TestClass><name>test</name></org.infinispan.rest.TestClass>");
+      assertThat(response).hasReturnedText(xml);
    }
 
    @Test
    public void shouldReadAsBinaryWithPojoCache() {
       //given
-      String cacheName = "pojoCache";
+      RestCacheClient pojoCache = client.cache("pojoCache");
       String key = "test";
       TestClass value = new TestClass();
       value.setName("test");
 
-      putValueInCache(cacheName, key, value);
+      join(pojoCache.put(key, value.toJson().toString()));
 
       //when
-      RestResponse response = get(cacheName, key, APPLICATION_OCTET_STREAM_TYPE);
+      RestResponse response = join(pojoCache.get(key, APPLICATION_OCTET_STREAM_TYPE));
 
       //then
       assertThat(response).isOk();
@@ -173,14 +176,14 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    @Test
    public void shouldReadTextWithPojoCache() {
       //given
-      String cacheName = "pojoCache";
+      RestCacheClient pojoCache = client.cache("pojoCache");
       String key = "k1";
       String value = "v1";
 
-      putValueInCache(cacheName, key, value);
+      join(pojoCache.put(key, value));
 
       //when
-      RestResponse response = get(cacheName, key, TEXT_PLAIN_TYPE);
+      RestResponse response = join(pojoCache.get(key));
 
       //then
       assertThat(response).isOk();
@@ -208,10 +211,11 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("pojoCache", "test", testClass);
+      RestCacheClient pojoCache = client.cache("pojoCache");
+      join(pojoCache.put("test", RestEntity.create(APPLICATION_JSON, testClass.toJson().toString())));
 
       //when
-      CompletionStage<RestResponse> response = client.cache("pojoCache").get("test", APPLICATION_JSON_TYPE);
+      CompletionStage<RestResponse> response = pojoCache.get("test", APPLICATION_JSON_TYPE);
 
       //then
       assertThat(response).isOk();
@@ -224,18 +228,19 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      String cacheName = "pojoCache";
+      String json = testClass.toJson().toString();
+      RestCacheClient pojoCache = client.cache("pojoCache");
       String key = "k1";
 
-      putValueInCache(cacheName, key, testClass);
+      join(pojoCache.put("k1", json));
 
       //when
-      RestResponse response = get(cacheName, key, null);
+      RestResponse response = join(pojoCache.get(key, Collections.emptyMap()));
 
       //then
       assertThat(response).isOk();
       assertThat(response).hasContentType(MediaType.TEXT_PLAIN_TYPE);
-      assertThat(response).hasReturnedText(testClass.toString());
+      assertThat(response).hasReturnedText(json);
    }
 
    @Test
@@ -300,13 +305,14 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
    @Test
    public void shouldDeleteExistingValueEvenWithoutMetadata() {
-      putValueInCache("default", "test", "test");
+      RestCacheClient defaultCache = client.cache("default");
+      join(defaultCache.put("test", "test"));
 
       //when
-      CompletionStage<RestResponse> response = client.cache("default").remove("test");
+      CompletionStage<RestResponse> response = defaultCache.remove("test");
       //then
       assertThat(response).isOk();
-      Assertions.assertThat(restServer().getCacheManager().getCache("default")).isEmpty();
+      Assertions.assertThat(join(defaultCache.size()).getBody()).isEqualTo("0");
    }
 
    @Test
@@ -314,7 +320,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       String url = String.format("/rest/v2/caches/%s/%s", "default", "key");
       RestRawClient rawClient = client.raw();
 
-      putValueInCache("default", "key", "value");
+      join(client.cache("default").put("key", "value"));
 
       Map<String, String> headers = new HashMap<>();
       headers.put(HOST.toString(), "localhost");
