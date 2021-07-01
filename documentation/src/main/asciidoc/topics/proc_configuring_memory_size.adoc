@@ -9,30 +9,28 @@ entries.
 . Specify the total number of entries that caches can contain before
 {brandname} performs eviction.
 +
-* Declaratively: Set the `max-count` attribute.
-* Programmatically: Call the `maxCount()` method.
+* Declarative: Set the `max-count` attribute.
+* Programmatic: Call the `maxCount()` method.
 +
 . Configure an eviction strategy to control how {brandname} removes entries.
 +
-* Declaratively: Set the `when-full` attribute.
-* Programmatically: Call the `whenFull()` method.
+* Declarative: Set the `when-full` attribute.
+* Programmatic: Call the `whenFull()` method.
 
 
-.Declarative example
-
-[source,xml,options="nowrap"]
+.Declarative configuration
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/max_count_memory.xml[]
 ----
 
-.Programmatic example
-
-[source,java,options="nowrap"]
+.Programmatic configuration
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/MaxCountMemory.java[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}[{brandname} Configuration Schema Reference]
 * link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

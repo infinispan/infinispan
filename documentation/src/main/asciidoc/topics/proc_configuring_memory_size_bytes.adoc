@@ -13,32 +13,30 @@ amount of memory.
 . Configure the maximum amount of memory, in bytes, that caches can use before
 {brandname} performs eviction.
 +
-* Declaratively: Set the `max-size` attribute.
-* Programmatically: Use the `maxSize()` method.
+* Declarative: Set the `max-size` attribute.
+* Programmatic: Use the `maxSize()` method.
 +
 . Optionally specify a byte unit of measurement. The default is B (bytes). Refer to the configuration schema for supported units.
 . Configure an eviction strategy to control how {brandname} removes entries.
 +
-* Declaratively: Set the `when-full` attribute.
-* Programmatically: Use the `whenFull()` method.
+* Declarative: Set the `when-full` attribute.
+* Programmatic: Use the `whenFull()` method.
 
 
-.Declarative example
-
-[source,xml,options="nowrap"]
+.Declarative configuration
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/max_memory.xml[]
 ----
 
-.Programmatic example
-
-[source,java,options="nowrap"]
+.Programmatic configuration
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/MaxSizeMemory.java[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}[{brandname} Configuration Schema Reference]
 * link:{javadocroot}/org/infinispan/configuration/cache/EncodingConfiguration.html[org.infinispan.configuration.cache.EncodingConfiguration]
 * link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

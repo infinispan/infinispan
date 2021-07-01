@@ -5,29 +5,44 @@ heap space.
 
 .Procedure
 
-. Create a configuration for any type of cache.
-. Store cache entries in off-heap memory.
+. Modify your cache configuration to use off-heap memory.
 +
-* Declaratively: Add the `storage="OFF_HEAP"` attribute to the `memory` element.
-* Programmatically: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
+* Declarative: Add the `storage="OFF_HEAP"` attribute to the `memory` element.
+* Programmatic: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
 +
-. Configure eviction to limit the amount of off-heap memory that the cache can use. You can use eviction based on total number of entries (`max-count`) or maximum amount of memory (`max-size`).
-. Configure any binary encoding for cache entries. For optimal results, use the `application/x-protostream` MediaType to store entries in Protobuf format.
-. Create caches that use the configuration.
+. Limit the amount of off-heap memory that the cache can use by configuring either `max-count` or `max-size` eviction.
 
-.Declarative cache configuration
+[discrete]
+== Off-heap memory bounded by size
 
-[source,xml,options="nowrap"]
+.Declarative configuration
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/max_size_offheap.xml[]
 ----
 
-.Programmatic cache configuration
+.Programmatic configuration
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/MaxSizeOffHeap.java[]
+----
 
-[source,java,options="nowrap"]
+[discrete]
+== Off-heap memory bounded by total number of entries
+
+.Declarative configuration
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/max_count_offheap.xml[]
+----
+
+.Programmatic configuration
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/MaxCountOffHeap.java[]
 ----
 
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}[{brandname} Configuration Schema Reference]
 * link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

@@ -36,7 +36,7 @@ include::config_examples/hotrod-client-tls.properties[]
 
 .Next steps
 
-Add a client trust store to the `${server_home}/server/conf` directory and configure {brandname} Server to use it, if necessary.
+Add a client trust store to the `{server_home}/server/conf` directory and configure {brandname} Server to use it, if necessary.
 
 [role="_additional-resources"]
 .Additional resources
