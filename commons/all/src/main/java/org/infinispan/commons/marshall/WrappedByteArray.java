@@ -94,7 +94,7 @@ public class WrappedByteArray implements WrappedBytes {
    public String toString() {
       return "WrappedByteArray{" +
             "bytes=" + Util.hexDump(bytes) +
-            ", hashCode=" + hashCode +
+            ", hashCode=" + hashCode() +
             '}';
    }
 
