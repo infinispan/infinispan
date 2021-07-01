@@ -1,6 +1,6 @@
-[id='server_health']
-:context: server
-= Retrieving Server Health Statistics
+[id='server-health']
+:context: server-health
+= Retrieving Health Statistics
 Monitor the health of your {brandname} clusters in the following ways:
 
 * Programmatically with `embeddedCacheManager.getHealth()` method calls.

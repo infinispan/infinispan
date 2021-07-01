@@ -1,4 +1,4 @@
-[id='jmx_mbeans-{context}']
+[id='jmx-mbeans_{context}']
 = {brandname} MBeans
 {brandname} exposes JMX MBeans that represent manageable resources.
 
@@ -9,6 +9,6 @@ For a complete list of available JMX MBeans along with descriptions and
 available operations and attributes, see the _{brandname} JMX Components_
 documentation.
 
-.Reference
-
-link:{javadocroot}/jmxComponents.html[{brandname} JMX Components]
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/jmxComponents.html[{brandname} JMX Components]

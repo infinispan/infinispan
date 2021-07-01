@@ -1,14 +1,14 @@
 [id='statistics']
 :context: server
-= Configuring Statistics, Metrics, and JMX
-Enable statistics that {brandname} exports to a MicroProfile Metrics endpoint
-or via JMX MBeans. You can also register JMX MBeans to perform management
-operations.
+= Configuring {brandname} Server Statistics
+Enable statistics that {brandname} exports to a `metrics` endpoint or via JMX MBeans.
+Registering JMX MBeans also exposes management operations that you can perform remotely.
 
 include::{topics}/proc_enabling_statistics.adoc[leveloffset=+1]
-include::{topics}/proc_enabling_metrics.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_metrics.adoc[leveloffset=+1]
 include::{topics}/proc_collecting_metrics.adoc[leveloffset=+1]
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_jmx_port.adoc[leveloffset=+2]
 include::{topics}/ref_jmx_mbeans.adoc[leveloffset=+2]
 
 // Restore the parent context.

@@ -8,20 +8,25 @@ Written and maintained by the {brandname} community
 ++++
 
 [discrete]
-== Get Started
+== Get Up and Running
 
 [unstyled]
 * link:titles/getting_started/getting_started.html[Getting Started with {brandname}]
 
 [discrete]
-== Administrator
+== {brandname} Server
 
 [unstyled]
 * link:titles/server/server.html[{brandname} Server Guide]
 * link:titles/cli/cli.html[Command Line Interface]
-* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
-* link:titles/security/security.html[Security]
-* link:titles/tuning/tuning.html[Performance Tuning]
+* link:titles/rest/rest.html[REST API]
+
+[discrete]
+== Hot Rod
+
+[unstyled]
+* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
+* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
 
 [discrete]
 == Developer
@@ -32,22 +37,20 @@ Written and maintained by the {brandname} community
 * link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
 * link:titles/developing/developing.html[Developer's Guide]
 * link:titles/xsite/xsite.html[Using Cross-Site Replication]
-* link:titles/developing/developing.html#search_api[Index and Search API]
-* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
-* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-* link:titles/rest/rest.html[REST API]
 * link:titles/integrating/integrating.html[Integrations]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
 
 [discrete]
+== Administrator
+
+[unstyled]
+* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
+* link:titles/security/security.html[Security]
+* link:titles/tuning/tuning.html[Performance Tuning]
+
+[discrete]
 == Additional Resources
 
-Our link:titles/overview/overview.html[Technical Overview] illustrates different deployment scenarios and provides an FAQ. Although it is worth noting that the _Technical Overview_ is not always updated between releases so you might find details that do not apply to the version of {brandname} that you're using.
+Check out our link:titles/contributing/contributing.html[Contributor's Guide] if you want to join our community.
 
-The link:titles/memcached/memcached.html[Memcached Client Guide] is also
-available. However, {brandname} does not recommend using Memcached for security
-reasons and the Memcached API is planned for removal. See the link:titles/server/server.html[Server Guide] for details.
-
-If you're interested in getting involved with {brandname}, then take a look at our link:titles/contributing/contributing.html[Contributor's Guide].
-
-Visit the link:http://www.infinispan.org/documentation[{brandname} Documentation] home page to find guides for other versions.
+Find the full documentation set for each {brandname} version at link:http://www.infinispan.org/documentation[infinispan.org/documentation].

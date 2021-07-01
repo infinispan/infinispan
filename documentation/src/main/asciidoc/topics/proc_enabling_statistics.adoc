@@ -1,28 +1,28 @@
-[id='enable_statistics-{context}']
+[id='enabling-statistics_{context}']
 = Enabling {brandname} Statistics
-{brandname} lets you enable statistics for Cache Managers and caches. However,
-enabling statistics for a Cache Manager does not enable statistics for the
-caches that it controls. You must explicitly enable statistics for your caches.
+Configure {brandname} to export statistics for Cache Managers and caches.
 
-[NOTE]
-====
-{brandname} server enables statistics for Cache Managers by default.
-====
+//Server Guide
+ifdef::remote_caches[]
+{brandname} Server enables Cache Manager statistics by default.
+You must explicitly enable statistics for your caches.
+endif::remote_caches[]
 
 .Procedure
 
-* Enable statistics declaratively or programmatically.
+Modify your configuration to enable {brandname} statistics in one of the following ways:
 
-.Declaratively
+* Declarative: Add the `statistics="true"` attribute.
+* Programmatic: Call the `.statistics()` method.
 
-[source,xml,options="nowrap",subs=attributes+]
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::config_examples/statistics.xml[]
 ----
 
-.Programmatically
-
-[source,java]
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/StatisticsGlobalConfigurationBuilder.java[]
 ----
