@@ -8,6 +8,14 @@
                  protocol-version="2.5"
                  raw-values="true"
                  segmented="false">
+      <!-- Configures authentication and encryption according to the security realm of the source cluster. -->
+      <security>
+        <authentication server-name="infinispan">
+          <digest username="admin"
+                  password="changeme"
+                  realm="default"/>
+        </authentication>
+      </security>
       <!-- Points to the location of the source cluster. -->
       <remote-server host="127.0.0.1" port="11222"/>
    </remote-store>

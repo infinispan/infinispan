@@ -4,8 +4,8 @@ Configure {brandname} Server to use mutual TLS to secure client connections.
 
 You can configure {brandname} to verify client identities from certificates in a trust store in two ways:
 
-Validate:: Requires a trust store that contains only the signing certificate, which is typically a Certificate Authority (CA). Any client that presents a certificate signed by the CA can connect to {brandname}.
-Authenticate:: Requires a trust store that contains all client certificates in addition to the signing certificate. Only clients that present a signed certificate that is present in the trust store can connect to {brandname}.
+* Require a trust store that contains only the signing certificate, which is typically a Certificate Authority (CA). Any client that presents a certificate signed by the CA can connect to {brandname}.
+* Require a trust store that contains all client certificates in addition to the signing certificate. Only clients that present a signed certificate that is present in the trust store can connect to {brandname}.
 
 [TIP]
 ====
