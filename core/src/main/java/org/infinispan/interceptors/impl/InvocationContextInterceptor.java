@@ -77,7 +77,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (log.isTraceEnabled())
-         log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
+         log.tracef("Invoked %s with command %s and InvocationContext [%s]", componentRegistry.getCacheName(), command, ctx);
       if (ctx == null)
          throw new IllegalStateException("Null context not allowed!!");
 
