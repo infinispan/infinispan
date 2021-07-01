@@ -2,7 +2,6 @@ package org.infinispan.rest.resources;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -11,11 +10,12 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIAL
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.IF_NONE_MATCH;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.ResponseHeader.MAX_IDLE_TIME_HEADER;
+import static org.infinispan.rest.ResponseHeader.TIME_TO_LIVE_HEADER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.io.ByteArrayInputStream;
@@ -30,22 +30,20 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
-import org.infinispan.AdvancedCache;
+import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.RequestHeader;
+import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -63,6 +61,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    private static final long DEFAULT_LIFESPAN = 45190;
    private static final long DEFAULT_MAX_IDLE = 1859446;
+
+   private static final long DEFAULT_LIFESPAN_SECONDS = DEFAULT_LIFESPAN / 1000;
+   private static final long DEFAULT_MAX_IDLE_SECONDS = DEFAULT_MAX_IDLE / 1000;
 
    protected void defineCaches(EmbeddedCacheManager cm) {
       defineCounters(cm);
@@ -103,25 +104,6 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       cm.defineConfiguration("pojoCache", pojoCache.build());
    }
 
-
-   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, Object key) {
-      return getCacheEntry(cacheName, key, TEXT_PLAIN);
-   }
-
-   @SuppressWarnings("unchecked")
-   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, Object key, MediaType accept) {
-      // Caches accessed over REST assume keys are java.lang.String by default
-      final MediaType stringKeyType = APPLICATION_OBJECT.withClassType(String.class);
-      AdvancedCache<String, byte[]> restCache = getCache(cacheName).withMediaType(stringKeyType, accept);
-
-      CacheEntry<String, byte[]> cacheEntry = restCache.getCacheEntry(key);
-      return (InternalCacheEntry<String, byte[]>) cacheEntry;
-   }
-
-   public AdvancedCache getCache(String cacheName) {
-      return restServer().getCacheManager().getCache(cacheName, false).getAdvancedCache();
-   }
-
    @Test
    public void shouldGetNonExistingValue() {
       CompletionStage<RestResponse> response = client.cache("default").get("nonExisting");
@@ -130,7 +112,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldReturnNotExistingOnWrongContext() throws Exception {
+   public void shouldReturnNotExistingOnWrongContext() {
       putStringValueInCache("default", "test", "test");
 
       RestRawClient rawClient = client.raw();
@@ -143,7 +125,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetAsciiValueStoredInSpecificFormat() throws Exception {
+   public void shouldGetAsciiValueStoredInSpecificFormat() {
       putStringValueInCache("default", "test", "test");
 
       CompletionStage<RestResponse> response = client.cache("default").get("test", TEXT_PLAIN_TYPE);
@@ -155,7 +137,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldHaveProperEtagWhenGettingValue() throws Exception {
+   public void shouldHaveProperEtagWhenGettingValue() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -167,7 +149,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldReturnExtendedHeaders() throws Exception {
+   public void shouldReturnExtendedHeaders() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -179,7 +161,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetUtf8ValueStoredInSpecificFormat() throws Exception {
+   public void shouldGetUtf8ValueStoredInSpecificFormat() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -193,7 +175,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetJsonValueStoredInSpecificFormat() throws Exception {
+   public void shouldGetJsonValueStoredInSpecificFormat() {
       //given
       putJsonValueInCache("json", "test", "{\"name\": \"test\"}");
 
@@ -207,7 +189,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetXmlValueStoredInSpecificFormat() throws Exception {
+   public void shouldGetXmlValueStoredInSpecificFormat() {
       //given
       putStringValueInCache("xml", "test", "<xml><name>test</name></xml>");
 
@@ -221,7 +203,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetValueStoredInUnknownFormat() throws Exception {
+   public void shouldGetValueStoredInUnknownFormat() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -254,7 +236,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldConvertExistingObjectToText() throws Exception {
+   public void shouldConvertExistingObjectToText() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -268,7 +250,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldConvertExistingObjectToTextUtf8() throws Exception {
+   public void shouldConvertExistingObjectToTextUtf8() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -281,12 +263,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).hasReturnedText("test");
    }
 
-   void putValueInCache(String cacheName, Object key, Object testValue) {
-      restServer().getCacheManager().getCache(cacheName).getAdvancedCache().put(key, testValue);
-   }
-
    @Test
-   public void shouldGetExistingValueWithoutOutputUsingHEAD() throws Exception {
+   public void shouldGetExistingValueWithoutOutputUsingHEAD() {
       //given
       putStringValueInCache("default", "test", "test");
 
@@ -479,12 +457,12 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("default").post("test", restEntity);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test");
+      RestResponse getResponse = join(client.cache("default").get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasEtag();
-      Assertions.assertThat(new String(cacheEntry.getValue())).isEqualTo("Hey!");
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasEtag();
+      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
    }
 
    @Test
@@ -505,12 +483,12 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("unknown").post("test", restEntity);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test");
+      RestResponse getResponse = join(client.cache("unknown").get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasEtag();
-      Assertions.assertThat(new String(cacheEntry.getValue())).isEqualTo("Hey!");
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasEtag();
+      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
    }
 
    @Test
@@ -523,10 +501,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
             .post("test", RestEntity.create(APPLICATION_SERIALIZED_OBJECT, convertToBytes(testClass)));
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test", APPLICATION_SERIALIZED_OBJECT);
-      TestClass valueFromCache = convertFromBytes(cacheEntry.getValue());
+      RestResponse getResponse = join(client.cache("serialized").get("test", APPLICATION_SERIALIZED_OBJECT_TYPE));
+      TestClass valueFromCache = convertFromBytes(getResponse.getBodyAsByteArray());
 
-      ResponseAssertion.assertThat(response).hasEtag();
+      ResponseAssertion.assertThat(getResponse).hasEtag();
       Assertions.assertThat(valueFromCache.getName()).isEqualTo("test");
    }
 
@@ -550,14 +528,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      RestResponse response = join(client.cache("default")
-            .put("test", RestEntity.create(MediaType.fromString("text/plain;charset=UTF-8"), "Hey!")));
+      join(client.cache("default").put("test", "Hey!"));
 
-      String valueFromCache = new String(getCacheEntry("default", "test").getValue());
+      RestResponse getResponse = join(client.cache("default").get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(valueFromCache).isEqualTo("Hey!");
+      ResponseAssertion.assertThat(getResponse).isOk();
+      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
    }
 
    @Test
@@ -566,44 +543,60 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test");
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
-
-      Metadata metadata = cacheEntry.getMetadata();
+      RestResponse getResponse = join(client.cache("expiration").get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(DEFAULT_LIFESPAN);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(DEFAULT_MAX_IDLE);
+      ResponseAssertion.assertThat(getResponse).isOk();
+      Assertions.assertThat(getLifespan(getResponse)).isEqualTo(DEFAULT_LIFESPAN_SECONDS);
+      Assertions.assertThat(getMaxIdle(getResponse)).isEqualTo(DEFAULT_MAX_IDLE_SECONDS);
+   }
+
+   private Long getLifespan(RestResponse response) {
+      return getLongHeader(response, TIME_TO_LIVE_HEADER);
+   }
+
+   private Long getMaxIdle(RestResponse response) {
+      return getLongHeader(response, MAX_IDLE_TIME_HEADER);
+   }
+
+   private Long getLongHeader(RestResponse response, ResponseHeader responseHeader) {
+      String header = response.getHeader(responseHeader.getValue());
+      if (header == null) {
+         return null;
+      }
+      return Long.parseLong(header);
    }
 
    @Test
    public void shouldPutImmortalEntryWithMinusOneTtlAndIdleTime() {
+      RestCacheClient expirationCache = client.cache("expiration");
+
       //when
-      CompletionStage<RestResponse> response = client.cache("expiration").put("test", "test", -1, -1);
+      CompletionStage<RestResponse> response = expirationCache.put("test", "test", -1, -1);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
-      Metadata metadata = cacheEntry.getMetadata();
+      RestResponse getResponse = join(expirationCache.get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(-1);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(-1);
+      ResponseAssertion.assertThat(getResponse).isOk();
+      Assertions.assertThat(getLifespan(getResponse)).isNull();
+      Assertions.assertThat(getMaxIdle(getResponse)).isNull();
    }
 
    @Test
    public void shouldPutImmortalEntryWithZeroTtlAndIdleTime() {
+      RestCacheClient expirationCache = client.cache("expiration");
+
       //when
-      CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 0, 0);
+      CompletionStage<RestResponse> response = expirationCache.post("test", "test", 0, 0);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
-      Metadata metadata = cacheEntry.getMetadata();
+      RestResponse getResponse = join(expirationCache.get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(DEFAULT_LIFESPAN);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(DEFAULT_MAX_IDLE);
+      ResponseAssertion.assertThat(getResponse).isOk();
+      Assertions.assertThat(getLifespan(getResponse)).isEqualTo(DEFAULT_LIFESPAN_SECONDS);
+      Assertions.assertThat(getMaxIdle(getResponse)).isEqualTo(DEFAULT_MAX_IDLE_SECONDS);
    }
 
    @Test
@@ -618,29 +611,30 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldPutEntryWithTtlAndIdleTime() {
+      final RestCacheClient expirationCache = client.cache("expiration");
+
       //when
-      CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 50, 50);
+      CompletionStage<RestResponse> response = expirationCache.post("test", "test", 50, 50);
       ResponseAssertion.assertThat(response).isOk();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
-      Metadata metadata = cacheEntry.getMetadata();
+      RestResponse getResponse = join(expirationCache.get("test"));
 
       //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(50 * 1000);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(50 * 1000);
+      ResponseAssertion.assertThat(getResponse).isOk();
+      Assertions.assertThat(getLifespan(getResponse)).isEqualTo(50);
+      Assertions.assertThat(getMaxIdle(getResponse)).isEqualTo(50);
    }
 
    @Test
    public void shouldPutLargeObject() {
       byte[] payload = new byte[1_000_000];
-      CompletionStage<RestResponse> response = client.cache("binary")
-            .post("test", RestEntity.create(APPLICATION_OCTET_STREAM, payload));
+      final RestCacheClient binaryCache = client.cache("binary");
+      CompletionStage<RestResponse> response = binaryCache.post("test", RestEntity.create(APPLICATION_OCTET_STREAM, payload));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasEtag();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test");
-      Assertions.assertThat(cacheEntry.getValue().length).isEqualTo(1_000_000);
+      RestResponse getResponse = join(binaryCache.get("test"));
+      Assertions.assertThat(getResponse.getBodyAsByteArray().length).isEqualTo(1_000_000);
    }
 
    @Test
