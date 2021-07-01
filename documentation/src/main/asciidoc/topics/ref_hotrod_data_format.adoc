@@ -78,7 +78,7 @@ The following code snippet returns values as XML:
 ----
 Object xmlValue = remoteCache
       .withDataFormat(DataFormat.builder()
-      .valueType(APPLICATION_XML)
+      .valueType(MediaType.APPLICATION_XML)
       .valueMarshaller(new UTF8StringMarshaller())
       .build())
       .get(key);

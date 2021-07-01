@@ -1,0 +1,19 @@
+[id='configuring-metrics_{context}']
+= Configuring {brandname} Metrics
+Configure {brandname} to export gauges and histograms via the `metrics` endpoint.
+
+.Procedure
+
+* Turn gauges and histograms on or off in the `metrics` configuration as appropriate.
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/metrics_cache_container.xml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/MetricsGlobalConfigurationBuilder.java[]
+----

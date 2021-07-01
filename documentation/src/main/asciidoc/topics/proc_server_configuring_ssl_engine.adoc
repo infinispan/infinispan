@@ -1,21 +1,33 @@
-[id='ssl_engine-{context}']
-= Tuning SSL Protocols and Cipher Suites
-You can configure the SSL engine, via the {brandname} server SSL identity, to
-use specific protocols and ciphers.
-
-[IMPORTANT]
-====
-You must ensure that you set the correct ciphers for the protocol features you
-want to use; for example HTTP/2 ALPN.
-====
+[id='configuring-ssl-engine_{context}']
+= Configuring TLS versions and cipher suites
+When using SSL/TLS encryption to secure your deployment, you can configure {brandname} Server to use specific versions of the TLS protocol as well as specific cipher suites within the protocol.
 
 .Procedure
 
-. Add the `engine` element to your {brandname} server SSL identity.
-. Configure the SSL engine with the `enabled-protocols` and `enabled-ciphersuites` attributes.
+. Add the `engine` element to the SSL configuration for {brandname} Server.
+. Configure {brandname} to use one or more TLS versions with the `enabled-protocols` attribute.
++
+{brandname} Server supports TLS version 1.2 and 1.3 by default.
+If appropriate you can set `TLSv1.3` only to restrict the security protocol for client connections.
+{brandname} does not recommend enabling `TLSv1.1` because it is an older protocol with limited support and provides weak security.
+You should never enable any version of TLS older than 1.1.
++
+[WARNING]
+====
+If you modify the SSL `engine` configuration for {brandname} Server you must explicitly configure TLS versions with the `enabled-protocols` attribute.
+Omitting the `enabled-protocols` attribute allows any TLS version.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<engine enabled-protocols="TLSv1.3 TLSv1.2" />
+----
+====
++
+. Configure {brandname} to use one or more cipher suites with the `enabled-ciphersuites` attribute.
++
+You must ensure that you set a cipher suite that supports any protocol features you plan to use; for example `HTTP/2 ALPN`.
 
 .SSL engine configuration
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/server_ssl_identity_engine.xml[]
