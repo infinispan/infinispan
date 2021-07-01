@@ -38,7 +38,7 @@ public class NettyRestRequest implements RestRequest {
 
    private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
-   private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("application/x-java-object;type=java.lang.String");
+   private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("text/plain; charset=utf-8");
 
    private final FullHttpRequest request;
    private final Map<String, List<String>> parameters;

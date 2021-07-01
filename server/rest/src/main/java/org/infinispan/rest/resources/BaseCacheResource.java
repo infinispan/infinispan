@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.rest.RequestHeader.EXTENDED_HEADER;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
@@ -54,8 +55,7 @@ public class BaseCacheResource {
    CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
 
-      Object key = request.variables().get("cacheKey");
-      if (key == null) throw new NoKeyException();
+      Object key = getKey(request);
 
       MediaType keyContentType = request.keyContentType();
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
@@ -89,8 +89,9 @@ public class BaseCacheResource {
       MediaType keyContentType = request.keyContentType();
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request);
-      Object key = request.variables().get("cacheKey");
-      if (key == null) throw new NoKeyException();
+
+      Object key = getKey(request);
+
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(HttpResponseStatus.NO_CONTENT);
 
       ContentSource contents = request.contents();
@@ -140,8 +141,7 @@ public class BaseCacheResource {
 
       MediaType requestedMediaType = negotiateMediaType(cache, request);
 
-      Object key = request.variables().get("cacheKey");
-      if (key == null) throw new NoKeyException();
+      Object key = getKey(request);
 
       String cacheControl = request.getCacheControlHeader();
       boolean returnBody = request.method() == GET;
@@ -200,6 +200,14 @@ public class BaseCacheResource {
          }
          return responseBuilder.build();
       });
+   }
+
+   private Object getKey(RestRequest request) {
+      Object keyRequest = request.variables().get("cacheKey");
+
+      if (keyRequest == null) throw new NoKeyException();
+
+      return keyRequest.toString().getBytes(UTF_8);
    }
 
    private void writeValue(Object value, MediaType requested, MediaType configuredMediaType, NettyRestResponse.Builder
