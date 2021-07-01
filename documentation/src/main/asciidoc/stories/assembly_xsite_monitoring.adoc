@@ -9,11 +9,11 @@ explicitly enable statistics for your caches. Likewise, if you want to collect
 statistics via JMX you must configure {brandname} to register MBeans.
 
 {brandname} also includes an `org.infinispan.XSITE` logging category so you can
-monitor and troubleshoot common issues with networking and state transfer 
+monitor and troubleshoot common issues with networking and state transfer
 operations.
 
 include::{topics}/proc_enabling_statistics.adoc[leveloffset=+1]
-include::{topics}/proc_enabling_metrics.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_metrics.adoc[leveloffset=+1]
 include::{topics}/proc_collecting_metrics.adoc[leveloffset=+2]
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
 include::{topics}/ref_jmx_xsite_components.adoc[leveloffset=+2]

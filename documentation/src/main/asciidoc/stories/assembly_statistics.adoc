@@ -5,7 +5,7 @@ Enable statistics that {brandname} exports to a metrics endpoint or via JMX
 MBeans. You can also register JMX MBeans to perform management operations.
 
 include::{topics}/proc_enabling_statistics.adoc[leveloffset=+1]
-include::{topics}/proc_enabling_metrics.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_metrics.adoc[leveloffset=+1]
 include::{topics}/ref_metrics.adoc[leveloffset=+2]
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
 include::{topics}/proc_naming_cache_managers.adoc[leveloffset=+2]
