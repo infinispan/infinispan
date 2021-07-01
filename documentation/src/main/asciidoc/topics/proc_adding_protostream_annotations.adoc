@@ -7,6 +7,11 @@ Declare ProtoStream metadata by adding annotations to a Java class and its membe
 .Procedure
 
 . Annotate the Java fields that you want to marshall with `@ProtoField`, either directly on the field or on the getter or setter method.
++
+Any non-annotated fields in your Java class are transient.
+For example, you have a Java class with 15 fields and annotate five of them.
+The resulting schema contains only those five fields and only those five fields are marshalled when storing a class instance in {brandname}.
++
 . Use `@ProtoFactory` to annotate constructors for immutable objects. The annotated constructors must initialize all fields annotated with `@ProtoField`.
 . Annotate members of any Java enum with `@ProtoEnumValue`.
 
