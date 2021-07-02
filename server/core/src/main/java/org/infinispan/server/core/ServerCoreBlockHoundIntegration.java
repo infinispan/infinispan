@@ -6,12 +6,17 @@ import org.kohsuke.MetaInfServices;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
+@SuppressWarnings("unused")
 @MetaInfServices
 public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
       // The xerces parser when it finds a parsing error will print to possibly a file output - ignore
       builder.allowBlockingCallsInside("com.sun.org.apache.xerces.internal.util.DefaultErrorHandler", "printError");
+
+      // XStream uses reflection that can incur in illegal access being logged to disk due to modules isolation
+      builder.allowBlockingCallsInside("com.thoughtworks.xstream.converters.reflection.SerializableConverter", "isSerializable");
+
       // Nashorn prints to stderr in its constructor
       builder.allowBlockingCallsInside("jdk.nashorn.api.scripting.NashornScriptEngineFactory", "getScriptEngine");
 
