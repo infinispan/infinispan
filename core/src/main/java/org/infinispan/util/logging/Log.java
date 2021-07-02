@@ -2187,8 +2187,8 @@ public interface Log extends BasicLogger {
    void startRecoveringCorruptPersistenceData(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "'%s' persisted data successfully recovered.", id = 643)
-   void corruptDataSuccessfulMigrated(String cacheName);
+   @Message(value = "'%s' persisted data successfully recovered %d entries.", id = 643)
+   void corruptDataSuccessfulMigrated(String cacheName, int entries);
 
    @Message(value = "Failed to recover '%s' persisted data.", id = 644)
    PersistenceException corruptDataMigrationFailed(String cacheName, @Cause Throwable cause);

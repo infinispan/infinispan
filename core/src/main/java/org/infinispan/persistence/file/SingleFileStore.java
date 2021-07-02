@@ -325,6 +325,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             .toEpochMilli();
       long currentTs = timeService.wallClockTime();
 
+      int entriesRecovered = 0;
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
       ByRef<ByteBuffer> bufRef = ByRef.create(buf);
       try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
@@ -332,6 +333,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          newChannel.truncate(0);
          newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
 
+         long fileSize = channel.size();
          long oldFilePos = MAGIC_12_0.length;
          while (true) {
             buf = readChannel(buf, oldFilePos, KEY_POS_LATEST);
@@ -349,6 +351,15 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   fe.metadataLen < 0 || fe.metadataLen > fe.size ||
                   fe.internalMetadataLen < 0 || fe.internalMetadataLen > fe.size) {
                // Check failed, try to read FileEntry from the next byte
+               oldFilePos++;
+               continue;
+            }
+
+            // Extra check to prevent buffers being created that exceed the remaining number of bytes in the file
+            long estimateSizeExcludingInternal = fe.keyLen;
+            estimateSizeExcludingInternal += fe.dataLen;
+            estimateSizeExcludingInternal += fe.metadataLen;
+            if (estimateSizeExcludingInternal > fileSize - oldFilePos) {
                oldFilePos++;
                continue;
             }
@@ -424,6 +435,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
             MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, internalMeta, created, lastUsed);
             write(me, newChannel);
+            entriesRecovered++;
          }
       } catch (IOException e) {
          throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
@@ -436,7 +448,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
          channel = SecurityActions.openFileChannel(file);
-         PERSISTENCE.corruptDataSuccessfulMigrated(cacheName);
+         PERSISTENCE.corruptDataSuccessfulMigrated(cacheName, entriesRecovered);
       } catch (IOException e) {
          throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
       }
