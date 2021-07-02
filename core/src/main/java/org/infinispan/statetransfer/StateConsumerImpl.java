@@ -253,8 +253,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public CompletionStage<CompletionStage<Void>> onTopologyUpdate(final CacheTopology cacheTopology,
-                                                                  final boolean isRebalance) {
+   public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final CacheTopology previousCacheTopology = this.cacheTopology;
       final ConsistentHash previousReadCh =
@@ -284,12 +283,12 @@ public class StateConsumerImpl implements StateConsumer {
                                previousCacheTopology.getPendingCH() == null;
       boolean startConflictResolution =
             !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
-      boolean startRebalance = isRebalance || (addedPendingCH && !startConflictResolution);
-      if (startRebalance && !isRebalance) {
+      boolean startStateTransfer = isRebalance || (addedPendingCH && !startConflictResolution);
+      if (startStateTransfer && !isRebalance) {
          if (log.isTraceEnabled()) log.tracef("Forcing startRebalance = true");
       }
       CompletionStage<Void> stage = CompletableFutures.completedNull();
-      if (startRebalance) {
+      if (startStateTransfer) {
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_STATE_TRANSFER_IN_PROGRESS, cacheTopology.getTopologyId());
@@ -310,7 +309,7 @@ public class StateConsumerImpl implements StateConsumer {
          waitingForState.set(false);
          stateTransferFuture = new CompletableFuture<>();
 
-         beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
+         beforeTopologyInstalled(cacheTopology.getTopologyId(), previousWriteCh, newWriteCh);
 
          if (!configuration.clustering().cacheMode().isInvalidation()) {
             // Owned segments
@@ -323,11 +322,14 @@ public class StateConsumerImpl implements StateConsumer {
       stage = stage.thenCompose(ignored -> {
          // We need to track changes so that user puts during conflict resolution are prioritised over
          // state transfer or conflict resolution updates
-         // Tracking is stopped once the subsequent rebalance completes
-         if (startRebalance || startConflictResolution) {
-            if (log.isTraceEnabled()) log.tracef("Start keeping track of keys for rebalance");
-            commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
-            commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
+         // Tracking is stopped once the state transfer completes (i.e. all the entries have been inserted)
+         if (startStateTransfer || startConflictResolution) {
+            if (commitManager.isTracking(PUT_FOR_STATE_TRANSFER)) {
+               log.debug("Starting state transfer but key tracking is already enabled");
+            } else {
+               if (log.isTraceEnabled()) log.tracef("Start keeping track of keys for state transfer");
+               commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
+            }
          }
 
          // Ensures writes to the data container use the right consistent hash
@@ -391,7 +393,7 @@ public class StateConsumerImpl implements StateConsumer {
             cancelTransfers(removedSegments);
 
             // Scattered cache gets added segments on the first CH_UPDATE, and we want to keep these
-            if (!startRebalance && !addedSegments.isEmpty() &&
+            if (!startStateTransfer && !addedSegments.isEmpty() &&
                 !configuration.clustering().cacheMode().isScattered()) {
                // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
                // but the new owners should not try to retrieve the segment from each other.
@@ -407,14 +409,14 @@ public class StateConsumerImpl implements StateConsumer {
             restartBrokenTransfers(cacheTopology, addedSegments);
          }
 
-         return handleSegments(startRebalance, addedSegments, removedSegments);
+         return handleSegments(startStateTransfer, addedSegments, removedSegments);
       });
       stage = stage.thenCompose(ignored -> {
          int stateTransferTopologyId = this.stateTransferTopologyId.get();
          if (log.isTraceEnabled())
             log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
-                       (Object) stateTransferTopologyId, startRebalance, cacheTopology.getPendingCH());
-         if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startRebalance &&
+                       (Object) stateTransferTopologyId, startStateTransfer, cacheTopology.getPendingCH());
+         if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startStateTransfer &&
              !cacheTopology.getPhase().isRebalance()) {
             // we have received a topology update without a pending CH, signalling the end of the rebalance
             boolean changed = this.stateTransferTopologyId.compareAndSet(stateTransferTopologyId,
@@ -523,18 +525,8 @@ public class StateConsumerImpl implements StateConsumer {
       });
    }
 
-   protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh,
+   protected void beforeTopologyInstalled(int topologyId, ConsistentHash previousWriteCh,
                                           ConsistentHash newWriteCh) {
-   }
-
-   protected CompletionStage<Void> handleSegments(boolean startRebalance, IntSet addedSegments,
-                                                  IntSet removedSegments) {
-      if (addedSegments.isEmpty()) {
-         return CompletableFutures.completedNull();
-      }
-
-      // add transfers for new or restarted segments
-      return addTransfers(addedSegments);
    }
 
    protected boolean notifyEndOfStateTransferIfNeeded() {
@@ -831,9 +823,13 @@ public class StateConsumerImpl implements StateConsumer {
       this.keyInvalidationListener = keyInvalidationListener;
    }
 
-   // not used in scattered cache
-   private CompletionStage<Void> addTransfers(IntSet segments) {
-      log.debugf("Adding inbound state transfer for segments %s", segments);
+   protected CompletionStage<Void> handleSegments(boolean isRebalance, IntSet addedSegments, IntSet removedSegments) {
+      if (addedSegments.isEmpty()) {
+         return CompletableFutures.completedNull();
+      }
+
+      // add transfers for new or restarted segments
+      log.debugf("Adding inbound state transfer for segments %s", addedSegments);
 
       // the set of nodes that reported errors when fetching data from them - these will not be retried in this topology
       Set<Address> excludedSources = new HashSet<>();
@@ -843,11 +839,11 @@ public class StateConsumerImpl implements StateConsumer {
 
       CompletionStage<Void> stage = CompletableFutures.completedNull();
       if (isTransactional) {
-         stage = requestTransactions(segments, sources, excludedSources);
+         stage = requestTransactions(addedSegments, sources, excludedSources);
       }
 
       if (isFetchEnabled) {
-         stage = stage.thenRun(() -> requestSegments(segments, sources, excludedSources));
+         stage = stage.thenRun(() -> requestSegments(addedSegments, sources, excludedSources));
       }
 
       return stage;
