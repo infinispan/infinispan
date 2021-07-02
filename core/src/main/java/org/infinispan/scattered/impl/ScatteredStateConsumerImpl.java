@@ -100,7 +100,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh, ConsistentHash newWriteCh) {
+   protected void beforeTopologyInstalled(int topologyId, ConsistentHash previousWriteCh, ConsistentHash newWriteCh) {
       // We have to block access to segments before the topology is installed, as otherwise
       // during remote reads PrefetchInvalidationInterceptor would not retrieve remote value
       // and ScatteringInterceptor would check according to the new CH.
@@ -133,8 +133,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected CompletionStage<Void> handleSegments(boolean startRebalance, IntSet addedSegments, IntSet removedSegments) {
-      if (!startRebalance) {
+   protected CompletionStage<Void> handleSegments(boolean isRebalance, IntSet addedSegments, IntSet removedSegments) {
+      if (!isRebalance) {
          log.trace("This is not a rebalance, not doing anything...");
          return CompletableFutures.completedNull();
       }
