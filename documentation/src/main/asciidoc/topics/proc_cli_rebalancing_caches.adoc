@@ -1,0 +1,29 @@
+[id='cli-rebalancing-caches_{context}']
+= Configuring Automatic Cache Rebalancing
+By default, {brandname} automatically rebalances caches as nodes join and leave the cluster.
+You can configure automatic cache rebalancing by disabling or enabling it at the Cache Manager level or on a per-cache basis.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Disable automatic rebalancing for all caches with the [command]`rebalance disable` command.
++
+----
+[//containers/default]> rebalance disable
+----
++
+. Enable automatic rebalancing for a specific cache with the [command]`rebalance enable` command.
++
+The following example enables rebalancing for the cache named "mycache" only.
++
+----
+[//containers/default]> rebalance enable caches/mycache
+----
++
+. Re-enable automatic rebalancing for all caches.
++
+----
+[//containers/default]> rebalance enable
+----
+
+For more information about the [command]`rebalance` command, run [command]`help rebalance`.
