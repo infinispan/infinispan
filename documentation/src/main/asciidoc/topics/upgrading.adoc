@@ -1,4 +1,31 @@
-= Upgrading from 12.0 to 12.1
+= Upgrading from 11.x or 12.0 to 12.1
+
+  If you are upgrading from 11.x to 12.1, you should also review the 11.0 to 12.0 upgrade notes.
+
+== Upgrading Deployments with Single File Cache Store Persistence
+
+When upgrading Infinispan to 12.1, caches that include a `SingleFileStore` persistence configuration can encounter an issue that leads to data corruption.
+
+This issue affects upgrades to Infinispan 12.1.0.Final through 12.1.4.Final only.
+As of Infinispan 12.1.5.Final this issue no longer occurs during upgrade.
+
+If you have already upgraded from 11.x to 12.1, you should do the following as soon as possible:
+
+. Back up any `$ISPN_HOME/server/data/*.dat` files.
+. Upgrade to Infinispan 12.1.5.Final or later.
+
+After successful upgrade, Infinispan recovers any corrupted data and restores the Single File Store on first start.
+
+.Cross-site replication state transfer
+
+For caches that backup to other clusters via cross-site replication, you should perform a state transfer after upgrading to 12.1.
+
+From the Infinispan CLI use the `site push-site-state` command as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> site push-site-state --cache=cacheName --site=NYC
+----
 
 == Encoding
 
