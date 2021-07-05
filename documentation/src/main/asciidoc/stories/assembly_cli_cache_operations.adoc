@@ -1,14 +1,14 @@
-[id='cache_operations']
-:context: cli
+[id='cache-operations']
+:context: cache-operations
 = Performing Cache Operations with the {brandname} CLI
-The command line interface (CLI) lets you remotely connect to {brandname}
-servers to access data and perform administrative functions.
+Use the command line interface (CLI) to perform operations on remote caches such as creating caches, manipulating data, and rebalancing.
 
 include::{topics}/proc_creating_caches_cli.adoc[leveloffset=+1]
 include::{topics}/ref_infinispan_caches.adoc[leveloffset=+2]
 include::{topics}/proc_cli_adding_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_deleting_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_dropping_caches.adoc[leveloffset=+1]
+include::{topics}/proc_cli_rebalancing_caches.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
