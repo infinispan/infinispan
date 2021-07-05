@@ -20,7 +20,7 @@ data storage to the new automatically.
 
 = Upgrading from 11.x or 12.0 to 12.1
 
-  If you are upgrading from 11.x to 12.1, you should also review the 12.0 to 12.1 upgrade notes.
+  If you are upgrading from 11.x to 12.1, you should also review the 11.0 to 12.0 upgrade notes.
 
 == Upgrading Deployments with Single File Cache Store Persistence
 
