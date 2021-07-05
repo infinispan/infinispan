@@ -1,0 +1,30 @@
+REBALANCE(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+rebalance - manages automatic rebalancing for caches
+
+
+SYNOPSIS
+--------
+*rebalance enable* ['PATH']
+
+*rebalance disable* ['PATH']
+
+
+EXAMPLES
+--------
+`rebalance enable` +
+Enables automatic rebalancing in the current context. Running this command in the root context enables rebalancing for all caches.
+
+`rebalance enable caches/mycache` +
+Enables automatic rebalancing for the cache named `mycache`.
+
+`rebalance disable` +
+Disables automatic rebalancing in the current context. Running this command in the root context disables rebalancing for all caches.
+
+`rebalance disable caches/mycache` +
+Disables automatic rebalancing for the cache named `mycache`.
