@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -46,6 +47,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -59,6 +62,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
@@ -72,6 +76,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -659,53 +664,86 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
-   private void checkTopology(InvocationContext ctx, WriteCommand command) {
+   private boolean needTopologyCheck(WriteCommand command) {
+      // No retry in local or invalidation caches
+      if (isInvalidation || distributionManager == null || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
+         return false;
+
+      // Async commands cannot be retried
+      return isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
+             command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
+   }
+
+   private LocalizedCacheTopology checkTopology(WriteCommand command,
+                                                LocalizedCacheTopology commandTopology) {
+      int commandTopologyId = command.getTopologyId();
+      LocalizedCacheTopology currentTopology = distributionManager.getCacheTopology();
+      int currentTopologyId = currentTopology.getTopologyId();
       // Can't perform the check during preload or if the cache isn't clustered
-      boolean syncRpc = isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
-            command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
-      if (command.isSuccessful() && distributionManager != null) {
-         int commandTopologyId = command.getTopologyId();
-         int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
-         // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-         if (syncRpc && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-            // If we were the originator of a data command which we didn't own the key at the time means it
-            // was already committed, so there is no need to throw the OutdatedTopologyException
-            // This will happen if we submit a command to the primary owner and it responds and then a topology
-            // change happens before we get here
-            if (!ctx.isOriginLocal() || !(command instanceof DataCommand) ||
-                  ctx.hasLockedKey(((DataCommand)command).getKey())) {
-               if (log.isTraceEnabled()) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-                     commandTopologyId, currentTopologyId);
-               // This shouldn't be necessary, as we'll have a fresh command instance when retrying
-               command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+      if (currentTopologyId == commandTopologyId || commandTopologyId == -1)
+         return currentTopology;
+
+      if (commandTopology != null) {
+         // commandTopology != null means the modification is already committed to the data container
+         // We want to retry the command if new owners were added since the command's topology,
+         // but if there are no new owners retrying won't help.
+         IntSet segments;
+         boolean ownersAdded;
+         if (command instanceof DataCommand) {
+            int segment = ((DataCommand) command).getSegment();
+            ownersAdded = segmentAddedOwners(commandTopology, currentTopology, segment);
+         } else {
+            segments = IntSets.mutableEmptySet();
+            for (Object key : command.getAffectedKeys()) {
+               int segment = keyPartitioner.getSegment(key);
+               segments.add(segment);
+            }
+            ownersAdded = false;
+            for (int segment : segments) {
+               if (segmentAddedOwners(commandTopology, currentTopology, segment)) {
+                  ownersAdded = true;
+                  break;
+               }
             }
          }
+         if (!ownersAdded) {
+            if (log.isTraceEnabled())
+               log.tracef("Cache topology changed but no owners were added for keys %s", command.getAffectedKeys());
+            return null;
+         }
       }
+
+      if (log.isTraceEnabled()) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                                           commandTopologyId, currentTopologyId);
+      // This shouldn't be necessary, as we'll have a fresh command instance when retrying
+      command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+      throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+   }
+
+   private boolean segmentAddedOwners(LocalizedCacheTopology commandTopology, LocalizedCacheTopology currentTopology,
+                                      int segment) {
+      List<Address> commandTopologyOwners = commandTopology.getSegmentDistribution(segment).writeOwners();
+      List<Address> currentOwners = currentTopology.getDistribution(segment).writeOwners();
+      return !commandTopologyOwners.containsAll(currentOwners);
    }
 
    private CompletionStage<Void> applyChanges(InvocationContext ctx, WriteCommand command) {
-      stateTransferLock.acquireSharedTopologyLock();
-      try {
-         // We only retry non-tx write commands
-         if (!isInvalidation) {
-            checkTopology(ctx, command);
-         }
+      // Unsuccessful commands do not modify anything so they don't need to be retried either
+      if (!command.isSuccessful())
+         return CompletableFutures.completedNull();
 
-         CompletionStage<Void> cs = commitContextEntries(ctx, command);
-         if (!isInvalidation) {
-            // If it was completed successfully, we don't need to check topology as we held the lock during the
-            // entire invocation. If however this is not yet complete we have to double check the topology
-            // after it is complete as we would have no longer held the lock
-            // NOTE: we do not reacquire the lock in the extra check as it only reads the topology id
-            if (!CompletionStages.isCompletedSuccessfully(cs)) {
-               return cs.thenRun(() -> checkTopology(ctx, command));
-            }
+      boolean needTopologyCheck = needTopologyCheck(command);
+      LocalizedCacheTopology commandTopology = needTopologyCheck ? checkTopology(command, null) : null;
+
+      CompletionStage<Void> cs = commitContextEntries(ctx, command);
+      if (needTopologyCheck) {
+         if (CompletionStages.isCompletedSuccessfully(cs)) {
+            checkTopology(command, commandTopology);
+         } else {
+            return cs.thenRun(() -> checkTopology(command, commandTopology));
          }
-         return cs;
-      } finally {
-         stateTransferLock.releaseSharedTopologyLock();
       }
+      return cs;
    }
 
    /**
