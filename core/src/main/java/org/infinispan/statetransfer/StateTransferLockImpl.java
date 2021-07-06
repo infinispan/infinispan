@@ -72,11 +72,13 @@ public class StateTransferLockImpl implements StateTransferLock {
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireExclusiveTopologyLock() {
+      if (log.isTraceEnabled()) log.tracef("Acquire exclusive state transfer lock, readers = %d", ownershipLock.getReadLockCount());
       writeLock.lock();
    }
 
    @Override
    public void releaseExclusiveTopologyLock() {
+      if (log.isTraceEnabled()) log.tracef("Release exclusive state transfer lock");
       writeLock.unlock();
    }
 
