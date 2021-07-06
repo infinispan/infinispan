@@ -125,6 +125,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
             eventuallyEquals(3, () -> cache.getRpcManager().getMembers().size()));
 
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(cacheName);
+      assertEquals(CacheTopology.Phase.READ_OLD_WRITE_ALL, duringJoinTopology.getPhase());
       assertEquals(joinTopologyId, duringJoinTopology.getTopologyId());
       assertNotNull(duringJoinTopology.getPendingCH());
       int keySegment = TestingUtil.getSegmentForKey(key, cache0);
@@ -144,10 +145,10 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       beforeCache0Barrier.await(10, TimeUnit.SECONDS);
 
       // Allow the topology update to proceed on cache0
-      final int postJoinTopologyId = joinTopologyId + 1;
-      checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
-      eventuallyEquals(postJoinTopologyId,
+      checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(0));
+      eventuallyEquals(stateReceivedTopologyId,
             () -> cache0.getDistributionManager().getCacheTopology().getTopologyId());
+      assertEquals(CacheTopology.Phase.READ_ALL_WRITE_ALL, cache0.getDistributionManager().getCacheTopology().getPhase());
 
       // Allow the command to proceed
       log.tracef("Unblocking the write command on node " + address(1));
@@ -160,7 +161,6 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       beforeCache0Barrier.await(10, TimeUnit.SECONDS);
 
       // Allow the topology update to proceed on the other caches
-      checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(0));
       checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(1));
       checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(2));
 
