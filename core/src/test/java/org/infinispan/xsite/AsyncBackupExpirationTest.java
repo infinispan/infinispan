@@ -137,7 +137,7 @@ public class AsyncBackupExpirationTest extends AbstractTwoSitesTest {
    }
 
    private ControlledTimeService replaceTimeService() {
-      ControlledTimeService timeService = new ControlledTimeService(0);
+      ControlledTimeService timeService = new ControlledTimeService();
       // Max idle requires all caches to show it as expired to be removed.
       for (Cache<?, ?> c : caches(LON)) {
          replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);

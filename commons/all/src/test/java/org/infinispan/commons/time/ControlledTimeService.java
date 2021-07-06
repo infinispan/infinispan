@@ -3,17 +3,32 @@ package org.infinispan.commons.time;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * TimeService that allows for wall clock time to be adjust manually.
  */
 public class ControlledTimeService extends DefaultTimeService {
+   private static final Log log = LogFactory.getLog(ControlledTimeService.class);
+
+   private final Object id;
    protected volatile long currentMillis;
 
    public ControlledTimeService() {
-      this(System.currentTimeMillis());
+      this(null);
    }
 
-   public ControlledTimeService(long currentMillis) {
+   public ControlledTimeService(Object id) {
+      this(id, 1_000_000L);
+   }
+
+   public ControlledTimeService(Object id, ControlledTimeService other) {
+      this(id, other.currentMillis);
+   }
+
+   private ControlledTimeService(Object id, long currentMillis) {
+      this.id = id;
       this.currentMillis = currentMillis;
    }
 
@@ -32,10 +47,15 @@ public class ControlledTimeService extends DefaultTimeService {
       return Instant.ofEpochMilli(currentMillis);
    }
 
-   public synchronized void advance(long time) {
-      if (time <= 0) {
+   public void advance(long delta, TimeUnit timeUnit) {
+      advance(timeUnit.toMillis(delta));
+   }
+
+   public synchronized void advance(long deltaMillis) {
+      if (deltaMillis <= 0) {
          throw new IllegalArgumentException("Argument must be greater than 0");
       }
-      currentMillis += time;
+      currentMillis += deltaMillis;
+      log.tracef("Current time for %s is now %d", id, currentMillis);
    }
 }
