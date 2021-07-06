@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 public class IracMaxIdleTest extends AbstractMultipleSitesTest {
 
    private static final long MAX_IDLE = 1000; //milliseconds
-   private final ControlledTimeService timeService = new ControlledTimeService(0);
+   private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected int defaultNumberOfSites() {

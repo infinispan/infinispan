@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -10,26 +12,25 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -96,21 +97,17 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    }
 
    protected void injectTimeServices() {
-      ts0 = new ControlledTimeService();
+      ts0 = new ControlledTimeService(address(0));
       TestingUtil.replaceComponent(manager(0), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService();
+      ts1 = new ControlledTimeService(address(1));
       TestingUtil.replaceComponent(manager(1), TimeService.class, ts1, true);
-      ts2 = new ControlledTimeService();
+      ts2 = new ControlledTimeService(address(2));
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
    }
 
    private Object createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
       if (storageType == StorageType.OBJECT) {
-         if (cacheMode.isScattered()) {
-            return new MagicKey(primaryOwner);
-         } else {
-            return new MagicKey(primaryOwner, backupOwner);
-         }
+         return getKeyForCache(primaryOwner, backupOwner);
       } else {
          // BINARY and OFF heap can't use MagicKey as they are serialized
          LocalizedCacheTopology primaryLct = primaryOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
@@ -138,15 +135,16 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
 
    public void testMaxIdleExpiredOnBoth() throws Exception {
       Object key = createKey(cache0, cache1);
-      cache0.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
+      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
+      cache1.put(key, key.toString(), -1, null, 10, MINUTES);
 
-      incrementAllTimeServices(1, TimeUnit.MINUTES);
+      incrementAllTimeServices(1, MINUTES);
       assertEquals(key.toString(), cache0.get(key));
 
       assertLastUsedUpdate(key, ts0.wallClockTime(), cache0, cache1);
 
       // It should be expired on all
-      incrementAllTimeServices(11, TimeUnit.MINUTES);
+      incrementAllTimeServices(11, MINUTES);
 
       // Both should be null
       assertNull(cache0.get(key));
@@ -171,12 +169,8 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       AdvancedCache<Object, String> primaryOwner = cache0.getAdvancedCache();
       AdvancedCache<Object, String> backupOwner = cache1.getAdvancedCache();
       Object key = createKey(primaryOwner, backupOwner);
-      primaryOwner.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
-
-      // Scattered can pick backup at random - so make sure we know it
-      if (cacheMode == CacheMode.SCATTERED_SYNC) {
-         backupOwner = findScatteredBackup(primaryOwner, key);
-      }
+      // Inserting from cache1 makes it a backup in scattered caches
+      backupOwner.put(key, key.toString(), -1, null, 10, MINUTES);
 
       assertEquals(key.toString(), primaryOwner.get(key));
       assertEquals(key.toString(), backupOwner.get(key));
@@ -193,14 +187,14 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       }
 
       // Now we increment it a bit and force an access on the node that it doesn't expire on
-      incrementAllTimeServices(5, TimeUnit.MINUTES);
+      incrementAllTimeServices(5, MINUTES);
       assertNotNull(otherCache.get(key));
 
       // TODO The comment above says "we don't want to go remote on accident", but the touch command does go remotely
       assertLastUsedUpdate(key, ts1.wallClockTime(), otherCache, expiredCache);
 
       // Now increment enough to cause it to be expired on the other node that didn't access it
-      incrementAllTimeServices(6, TimeUnit.MINUTES);
+      incrementAllTimeServices(6, MINUTES);
 
       if (cacheMode == CacheMode.SCATTERED_SYNC) {
          // Scattered cache doesn't report last access time via getCacheEntry so we just verify the entry
@@ -230,23 +224,11 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       return expiredCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
    }
 
-   private AdvancedCache<Object, String> findScatteredBackup(AdvancedCache<Object, String> primaryOwner, Object key) {
-      AdvancedCache<Object, String> backupOwner = null;
-      for (Cache cache : caches()) {
-         if (cache == primaryOwner) {
-            continue;
-         }
-         if (localModeCache(cache.getAdvancedCache()).containsKey(key)) {
-            backupOwner = cache.getAdvancedCache();
-         }
-      }
-      return backupOwner;
-   }
-
    private void testMaxIdleExpireExpireIteration(boolean expireOnPrimary, boolean iterateOnPrimary) {
       // Cache0 is always the primary and cache1 is backup
       Object key = createKey(cache0, cache1);
-      cache1.put(key, key.toString(), -1, null, 10, TimeUnit.SECONDS);
+      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
+      cache1.put(key, key.toString(), -1, null, 10, SECONDS);
 
       ControlledTimeService expiredTimeService;
       if (expireOnPrimary) {
@@ -254,7 +236,7 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       } else {
          expiredTimeService = ts1;
       }
-      expiredTimeService.advance(TimeUnit.SECONDS.toMillis(11));
+      expiredTimeService.advance(11, SECONDS);
 
       Cache<Object, String> cacheToIterate;
       if (iterateOnPrimary) {
@@ -272,7 +254,7 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       } finally {
          for (ControlledTimeService cts : Arrays.asList(ts0, ts1, ts2)) {
             if (cts != expiredTimeService) {
-               cts.advance(TimeUnit.SECONDS.toMillis(11));
+               cts.advance(SECONDS.toMillis(11));
             }
          }
       }
@@ -301,10 +283,11 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    public void testMaxIdleAccessSuspectedExpiredEntryRefreshesProperly() {
       Object key = createKey(cache0, cache1);
       String value = key.toString();
-      cache0.put(key, value, -1, null, 10, TimeUnit.SECONDS);
+      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
+      cache1.put(key, value, -1, null, 10, SECONDS);
 
       // Now proceed half way in the max idle period before we access it on backup node
-      incrementAllTimeServices(5, TimeUnit.SECONDS);
+      incrementAllTimeServices(5, SECONDS);
 
       // Access it on the backup to update the last access time (primary still has old access time only)
       assertEquals(value, cache1.get(key));
@@ -313,14 +296,14 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       assertLastUsedUpdate(key, ts1.wallClockTime(), cache1, cache0);
 
       // Note now the entry would have been expired, if not for access above
-      incrementAllTimeServices(5, TimeUnit.SECONDS);
+      incrementAllTimeServices(5, SECONDS);
 
       assertEquals(value, cache0.get(key));
 
       assertLastUsedUpdate(key, ts1.wallClockTime(), cache0, cache1);
 
       // Now we try to access just before it expires, but it still should be available
-      incrementAllTimeServices(9, TimeUnit.SECONDS);
+      incrementAllTimeServices(9, SECONDS);
 
       assertEquals(value, cache0.get(key));
    }
@@ -328,50 +311,61 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    private void assertLastUsedUpdate(Object key, long expectedLastUsed, Cache<Object, String> readCache,
                                      Cache<Object, String> otherCache) {
       Object storageKey = readCache.getAdvancedCache().getKeyDataConversion().toStorage(key);
-      assertEquals(expectedLastUsed, readCache.getAdvancedCache().getDataContainer().peek(storageKey).getLastUsed());
-      if (touchMode == TouchMode.ASYNC) {
-         eventuallyEquals(expectedLastUsed,
-                          () -> otherCache.getAdvancedCache().getDataContainer().peek(storageKey).getLastUsed());
+      if (touchMode == TouchMode.SYNC) {
+         assertEquals(expectedLastUsed, getLastUsed(readCache, storageKey));
+         assertEquals(expectedLastUsed, getLastUsed(otherCache, storageKey));
       } else {
-         assertEquals(expectedLastUsed, otherCache.getAdvancedCache().getDataContainer().peek(storageKey).getLastUsed());
+         // Normally the touch command is executed synchronously on the reader.
+         // In scattered caches, the touch command is executed synchronously on the primary owner.
+         eventuallyEquals(expectedLastUsed, () -> getLastUsed(readCache, storageKey));
+         eventuallyEquals(expectedLastUsed, () -> getLastUsed(otherCache, storageKey));
       }
+   }
+
+   private long getLastUsed(Cache<Object, String> cache, Object storageKey) {
+      InternalCacheEntry<Object, String> entry = cache.getAdvancedCache().getDataContainer().peek(storageKey);
+      assertNotNull(entry);
+      return entry.getLastUsed();
    }
 
    public void testMaxIdleReadNodeDiesPrimary() {
       // Scattered cache does not support replicating expiration metadata
       // This is to be fixed in https://issues.redhat.com/browse/ISPN-11208
       if (!cacheMode.isScattered()) {
-         testMaxIdleNodeDies(c -> createKey(c, cache0));
+         testMaxIdleNodeDies(true);
       }
    }
 
    public void testMaxIdleReadNodeDiesBackup() {
-      testMaxIdleNodeDies(c -> createKey(cache0, c));
+      testMaxIdleNodeDies(false);
    }
 
-   private void testMaxIdleNodeDies(Function<Cache<Object, String>, Object> keyToUseFunction) {
+   private void testMaxIdleNodeDies(boolean isPrimary) {
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, configurationBuilder);
       waitForClusterToForm();
 
       Cache<Object, String> cache3 = cache(3);
 
-      ControlledTimeService ts4 = new ControlledTimeService();
-      TestingUtil.replaceComponent(manager(3), TimeService.class, ts4, true);
+      ControlledTimeService ts3 = new ControlledTimeService(address(3), ts2);
+      TestingUtil.replaceComponent(manager(3), TimeService.class, ts3, true);
 
-      Object key = keyToUseFunction.apply(cache3);
+      Cache<Object, String> primary = isPrimary ? cache3 : cache0;
+      Cache<Object, String> backup = isPrimary ? cache0 : cache3;
+      Object key = createKey(primary, backup);
 
-      // We always write to cache3 so that scattered uses it as a backup if the key isn't owned by it
-      cache3.put(key, "max-idle", -1, TimeUnit.MILLISECONDS, 100, TimeUnit.MILLISECONDS);
+      // We write to backup node so that scattered uses it as a backup if the key isn't owned by it
+      backup.put(key, "max-idle", -1, SECONDS, 100, SECONDS);
 
-      long justbeforeExpiration = 99;
-      incrementAllTimeServices(justbeforeExpiration, TimeUnit.MILLISECONDS);
-      ts4.advance(justbeforeExpiration);
+      // Advance the clock so the entry is expired everywhere ("all time services" does not include ts3)
+      incrementAllTimeServices(99, SECONDS);
+      ts3.advance(99, SECONDS);
 
       assertNotNull(cache3.get(key));
+      assertLastUsedUpdate(key, ts3.wallClockTime(), cache3, cache0);
 
       killMember(3);
 
-      incrementAllTimeServices(2, TimeUnit.MILLISECONDS);
+      incrementAllTimeServices(2, SECONDS);
 
       assertNotNull(cache1.get(key));
    }
