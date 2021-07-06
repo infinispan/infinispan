@@ -1,5 +1,15 @@
 package org.infinispan.server.persistence;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
@@ -11,19 +21,6 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Only H2 is running by default
@@ -39,12 +36,11 @@ import java.util.stream.Stream;
 })
 public class PersistenceIT {
 
-   private static final String DATABASES = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
    private static final String DATABASE_LIBS = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LIBS);
    private static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
    private static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "src/test/resources/database/jdbc-drivers.txt");
 
-   public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener(getDatabases());
+   public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mysql", "postgres");
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
@@ -66,18 +62,7 @@ public class PersistenceIT {
          Arrays.stream(DATABASE_LIBS.split(",")).forEach(it -> jdbcDrivers.put(getArtifactId(it), it));
       }
 
-      return jdbcDrivers.values().toArray(new String[jdbcDrivers.size()]);
-   }
-
-   private static String[] getDatabases() {
-
-      Set<String> dbCollection = Stream.of("h2").collect(Collectors.toCollection(HashSet::new));
-
-      //Another databases can be added
-      if(DATABASES != null) {
-         dbCollection.addAll(Arrays.asList(DATABASES.split(",")));
-      }
-      return dbCollection.toArray(new String[dbCollection.size()]);
+      return jdbcDrivers.values().toArray(new String[0]);
    }
 
    private static String getArtifactId(String gav) {
@@ -95,6 +80,6 @@ public class PersistenceIT {
                  .map(File::new)
                  .forEach( it -> externalJdbcDriver.add(ShrinkWrap.createFromZipFile(JavaArchive.class, it)));
       }
-      return externalJdbcDriver.toArray(new JavaArchive[externalJdbcDriver.size()]);
+      return externalJdbcDriver.toArray(new JavaArchive[0]);
    }
 }
