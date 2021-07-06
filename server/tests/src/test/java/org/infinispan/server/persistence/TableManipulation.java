@@ -107,9 +107,11 @@ public class TableManipulation implements AutoCloseable {
 
    @Override
    public void close() throws Exception {
-      JdbcUtil.safeClose(connection);
-      connectionFactory.stop();
-      connectionFactory.releaseConnection(connection);
+      if(connection != null) {
+         JdbcUtil.safeClose(connection);
+         connectionFactory.stop();
+         connectionFactory.releaseConnection(connection);
+      }
       deregisterDrivers();
    }
 }
