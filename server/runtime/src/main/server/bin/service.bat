@@ -81,8 +81,8 @@ if "%DEBUG%" == "1" (
 echo(
 
 rem defaults
-set SHORTNAME=JDG82
-set DISPLAYNAME=JDG82
+set SHORTNAME=ISPN
+set DISPLAYNAME=ISPN
 rem NO quotes around the description here !
 set DESCRIPTION=Redhat data grid 8
 set CONTROLLER=localhost:11222
