@@ -1,5 +1,9 @@
-[id='configuring_cache_stores-{context}']
+[id='configuring-cache-stores_{context}']
 = Configuring Cache Stores
+
+Cache stores connect {brandname} to persistent data sources and implement the
+`NonBlockingStore` interface.
+
 Add cache stores to {brandname} caches in a chain either declaratively or
 programmatically. Cache read operations check each cache store in the
 configured order until they locate a valid non-null element of data. Write
@@ -14,7 +18,7 @@ only.
 Use either the `shared` attribute declaratively or the `shared(false)` method programmatically.
 +
 . Configure other cache stores properties as appropriate. Custom cache stores can also include `property` parameters.
-+
+
 [NOTE]
 ====
 Configuring cache stores as shared or not shared (local only) determines which
@@ -27,29 +31,20 @@ state and purge on startup. However, if the cache store is shared, then you
 should not fetch state or purge on startup.
 ====
 
-.Local (non-shared) file store
+.Local, non-shared file store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/persistence_file_store.xml[]
 ----
 
-.Shared custom cache store
+.Custom, shared cache store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/persistence_custom_file_store.xml[]
 ----
 
-.SoftIndex file store
-
-[source,java]
-----
-include::code_examples/SoftIndexFileStore.java[]
-----
-
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}[{brandname} Configuration Schema]
-* link:#cache_store_implementations[{brandname} Cache Store Implementations]
-* link:#create_custom_cache_store[Creating Custom Cache Stores]

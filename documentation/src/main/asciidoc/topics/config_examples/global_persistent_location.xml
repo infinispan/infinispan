@@ -1,0 +1,5 @@
+<cache-container default-cache="myCache">
+   <global-state>
+      <persistent-location path="example" relative-to="my.data"/>
+   </global-state>
+</cache-container>

@@ -1,0 +1,24 @@
+[id='configuring-single-file-stores_{context}']
+= Configuring Single File Cache Stores
+Single file stores are deprecated and replaced by soft-index file stores.
+Soft-index file stores provide better performance and data consistency in comparison with single file stores.
+However, if you still want to configure {brandname} to create single file stores for persistence, you can complete the following procedure.
+
+.Prerequisites
+
+* Install {brandname} Server if you use remote caches.
+* Enable global state and configure a global persistent location if you use embedded caches.
+
+.Procedure
+
+. Add the `persistence` element to your cache configuration.
+. Optionally specify `true` as the value for the `passivation` attribute to write to the file-based cache store only when data is evicted from memory.
+. Include the `single-file-store` element.
+. Specify `false` as the value for the `shared` attribute.
+. Configure any other attributes as appropriate.
+. Include the `write-behind` element to configure the cache store as write behind instead of as write through.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_file_store.xml[]
+----

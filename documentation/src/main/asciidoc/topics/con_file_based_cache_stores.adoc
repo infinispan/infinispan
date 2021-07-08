@@ -1,0 +1,76 @@
+[id='file-stores_{context}']
+= File-Based Cache Stores
+
+File-based cache stores provide persistent storage on the local host filesystem where {brandname} is running.
+For clustered caches, file-based cache stores are unique to each {brandname} node.
+
+[WARNING]
+====
+Never use filesystem-based cache stores on shared file systems, such as an NFS or Samba share, because they do not provide file locking capabilities and data corruption can occur.
+
+Additionally if you attempt to use transactional caches with shared file systems, unrecoverable failures can happen when writing to files during the commit phase.
+====
+
+[discrete]
+== Soft-Index File Stores
+
+`SoftIndexFileStore` is the default implementation for file-based cache stores and stores data in a set of append-only files.
+
+When append-only files:
+
+* Reach their maximum size, {brandname} creates a new file and starts writing to it.
+* Reach the compaction threshold of less than 50% usage, {brandname} overwrites the entries to a new file and then deletes the old file.
+
+.B+ trees
+
+To improve performance, append-only files in a `SoftIndexFileStore` are indexed using a **B+ Tree** that can be stored both on disk and in memory.
+The in-memory index uses Java soft references to ensure it can be rebuilt if removed by Garbage Collection (GC) then requested again.
+
+Because `SoftIndexFileStore` uses Java soft references to keep indexes in memory, it helps prevent out-of-memory exceptions.
+GC removes indexes before they consume too much memory while still falling back to disk.
+
+You can configure any number of B+ trees.
+By default {brandname} creates up to 16 B+ trees, which means there can be up to 16 indexes.
+Having multiple indexes prevents bottlenecks from concurrent writes to an index.
+It also minimizes the number of entries that can be read at the same time because {brandname} reads all entries at the same time when it iterates over a soft-index file store.
+
+Each entry in the B+ tree is a node.
+By default, the size of each node is limited to 4096 bytes.
+`SoftIndexFileStore` throws an exception if keys are longer after serialization occurs.
+
+.Expired entries
+
+`SoftIndexFileStore` cannot detect expired entries, which can lead to excessive usage of space on the file system.
+
+.Segmentation
+
+Soft-index file stores are always segmented.
+
+[NOTE]
+====
+The `AdvancedStore.purgeExpired()` method is not implemented in `SoftIndexFileStore`.
+====
+
+[discrete]
+== Single File Cache Stores
+
+[NOTE]
+====
+Single file cache stores are now deprecated and planned for removal.
+====
+
+Single File cache stores, `SingleFileStore`, persist data to file.
+{brandname} also maintains an in-memory index of keys while keys and values are stored in the file.
+
+Because `SingleFileStore` keeps an in-memory index of keys and the location of values, it requires additional memory, depending on the key size and the number of keys.
+For this reason, `SingleFileStore` is not recommended for use cases where the keys are larger or there can be a larger number of them.
+
+In some cases, `SingleFileStore` can also become fragmented.
+If the size of values continually increases, available space in the single file is not used but the entry is appended to the end of the file.
+Available space in the file is used only if an entry can fit within it.
+Likewise, if you remove all entries from memory, the single file store does not decrease in size or become defragmented.
+
+.Segmentation
+
+Single file cache stores are segmented by default with a separate instance per segment, which results in multiple directories.
+Each directory is a number that represents the segment to which the data maps.

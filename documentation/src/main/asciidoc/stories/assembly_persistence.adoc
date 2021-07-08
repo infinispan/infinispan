@@ -1,5 +1,5 @@
 [id='persistence']
-:context: configure
+:context: persistence
 = Setting Up Persistent Storage
 {brandname} can persist in-memory data to external storage, giving you
 additional capabilities to manage your data such as:
@@ -15,10 +15,28 @@ Data overflow::
 Using eviction and passivation techniques ensures that {brandname} keeps only
 frequently used data in-memory and writes older entries to persistent storage.
 
-include::assembly_cache_stores.adoc[leveloffset=+1]
-include::assembly_cache_store_implementations.adoc[leveloffset=+1]
-include::assembly_migrating_cache_stores.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_global_persistent_location.adoc[leveloffset=+1]
 
+include::{topics}/proc_configuring_cache_stores.adoc[leveloffset=+1]
+include::{topics}/con_passivation.adoc[leveloffset=+2]
+include::{topics}/ref_passivation_behavior.adoc[leveloffset=+3]
+include::{topics}/con_cache_loaders_transactional.adoc[leveloffset=+2]
+include::{topics}/con_segmented_cache_stores.adoc[leveloffset=+2]
+include::{topics}/con_write_through.adoc[leveloffset=+2]
+include::{topics}/con_write_behind.adoc[leveloffset=+2]
+
+include::{topics}/con_file_based_cache_stores.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_file_stores.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_single_file_stores.adoc[leveloffset=+2]
+
+include::{topics}/ref_cache_store_cluster.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_jdbc.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_jdbc_connection.adoc[leveloffset=+2]
+include::{topics}/ref_cache_store_jdbc_configuration.adoc[leveloffset=+2]
+include::{topics}/ref_cache_store_jpa.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_jpa_example.adoc[leveloffset=+2]
+include::{topics}/ref_cache_store_remote.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_rocksdb.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

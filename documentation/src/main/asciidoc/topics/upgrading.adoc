@@ -12,11 +12,99 @@ Use ```reindex``` instead:
 
   /v2/caches/{cacheName}/search/indexes?action=reindex
 
-== XML Configured File Store implementation has changed to be SoftIndexFileStore
+== File-Based Cache Store (`file-store`) Configuration Defaults to SoftIndexFileStore
 
-The `file-store` element will now install a SoftIndexFileStore instead of the prior SingleFileStore
-implementation. Any configuration with a schema of 12 or older will automatically migrate the old
-data storage to the new automatically.
+Including `file-store` persistence in cache configuration now creates a soft index file-based cache store, `SoftIndexFileStore`, instead of a single-file cache store, `SingleFileStore`.
+In previous versions `SingleFileStore` was the default for file-based cache stores.
+
+Any `file-store` configuration with a schema version of 13 is automatically migrated to a `SoftIndexFileStore` after upgrading to Infinispan 13.
+
+=== Schema changes
+
+The following changes apply to the Infinispan 13 configuration schemas:
+
+* The `urn:infinispan:config:store:soft-index` namespace is no longer available.
+* The `file-store` element in the `urn:infinispan:config` namespace now defaults to soft-index file stores.
+* The `single-file-store` element is added to the `urn:infinispan:config` namespace if you want to configure a single file store, which is deprecated.
+
+=== Migrating Soft-Index File Stores
+
+==== Declarative
+
+If you are upgrading to Infinispan 13 from a previous version and your caches include any configuration with the `soft-index-file-store` element, you should convert that configuration to use the `file-store` element instead.
+
+.Infinispan 12.1 and earlier
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<persistence>
+  <soft-index-file-store xmlns="urn:infinispan:config:soft-index:12.1">
+    <index path="testCache/index" />
+    <data path="testCache/data" />
+  </soft-index-file-store>
+</persistence>
+----
+
+.Infinispan 13 and later
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+----
+<persistence>
+  <file-store>
+    <index path="testCache/index" />
+    <data path="testCache/data" />
+  </file-store>
+</persistence>
+----
+
+==== Programmatic
+
+.Infinispan 12.1 and earlier
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence()
+    .addStore(SoftIndexFileStoreConfigurationBuilder.class)
+        .indexLocation("testCache/index");
+        .dataLocation("testCache/data")
+----
+
+.Infinispan 13 and later
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+----
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence()
+    .addSoftIndexFileStore()
+        .indexLocation("testCache/index")
+        .dataLocation("testCache/data");
+----
+
+=== Migrating Single File Stores
+
+To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later, do one of the following:
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<persistence passivation="false">
+  <single-file-store shared="false"
+                     preload="true"
+                     fetch-state="true"
+                     read-only="false"/>
+</persistence>
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence()
+    .addSingleFileStore()
+    .maxEntries(5000);
+----
+
+However, Infinispan does not recommend using `SingleFileStore`.
+Instead you should use `SoftIndexFileStore` for file-based cache stores because it offers better scalability.
+
+Find out more details about configuring file-based cache stores in the _Configuration Guide_.
 
 = Upgrading from 11.x or 12.0 to 12.1
 

@@ -1,0 +1,6 @@
+<persistence passivation="false">
+  <single-file-store shared="false"
+                     preload="true"
+                     fetch-state="true"
+                     read-only="false"/>
+</persistence>
