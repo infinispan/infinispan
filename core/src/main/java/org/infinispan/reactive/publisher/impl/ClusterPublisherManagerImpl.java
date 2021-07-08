@@ -45,9 +45,12 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
@@ -99,6 +102,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    @Inject KeyPartitioner keyPartitioner;
    @Inject Configuration cacheConfiguration;
    @Inject ComponentRegistry componentRegistry;
+   @Inject PersistenceManager persistenceManager;
 
    // Make sure we don't create one per invocation
    private final KeyComposedType KEY_COMPOSED = new KeyComposedType<>();
@@ -113,7 +117,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private int maxSegment;
-   private boolean writeBehindShared;
+   private volatile boolean writeBehindShared;
+   private final StoreChangeListener storeChangeListener = pm -> writeBehindShared = pm.usingSharedAsyncStore();
 
    protected RpcOptions rpcOptions;
 
@@ -121,6 +126,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    public void start() {
       maxSegment = cacheConfiguration.clustering().hash().numSegments();
       writeBehindShared = hasWriteBehindSharedStore(cacheConfiguration.persistence());
+      persistenceManager.addStoreListener(storeChangeListener);
 
       // Note we use a little extra wiggle room for the timeout of the remote invocation by increasing it by 3 times
       // normal. This is due to our responses requiring additional processing time (iteration serialization and normally
@@ -132,6 +138,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                    .addListener((a, ignored) -> {
                       rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get() * 3, TimeUnit.MILLISECONDS);
                    });
+   }
+
+   @Stop
+   public void stop() {
+      persistenceManager.removeStoreListener(storeChangeListener);
    }
 
    @Override

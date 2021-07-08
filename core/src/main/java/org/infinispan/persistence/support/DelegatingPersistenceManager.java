@@ -80,6 +80,21 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
+   public CompletionStage<Void> addStore(StoreConfiguration persistenceConfiguration) {
+      return persistenceManager.addStore(persistenceConfiguration);
+   }
+
+   @Override
+   public void addStoreListener(StoreChangeListener listener) {
+      persistenceManager.addStoreListener(listener);
+   }
+
+   @Override
+   public void removeStoreListener(StoreChangeListener listener) {
+      persistenceManager.removeStoreListener(listener);
+   }
+
+   @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
       return persistenceManager.getStores(storeClass);
    }

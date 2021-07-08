@@ -7,8 +7,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -18,7 +20,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -82,6 +83,16 @@ public class RollingUpgradeManager {
    public void disconnectSource(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.disconnectSource(cache);
+   }
+
+   @ManagedOperation(
+         description = "Connects target clusters to source clusters.",
+         displayName = "Connects target clusters from source clusters."
+   )
+   public void connectSource(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName,
+                             @Parameter(name = "configuration", description = "Specifies the configuration of the remote store to add, in JSON format.") StoreConfiguration configuration) throws Exception {
+      TargetMigrator migrator = getMigrator(migratorName);
+      migrator.connectSource(cache, configuration);
    }
 
    private TargetMigrator getMigrator(String name) throws Exception {

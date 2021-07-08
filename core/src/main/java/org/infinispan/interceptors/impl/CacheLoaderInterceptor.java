@@ -84,6 +84,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
+import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
@@ -109,7 +111,7 @@ import io.reactivex.rxjava3.core.Single;
  * @since 9.0
  */
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
-public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor implements EntryLoader<K, V> {
+public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor implements EntryLoader<K, V>, StoreChangeListener {
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
    protected final AtomicLong cacheLoads = new AtomicLong(0);
@@ -128,12 +130,19 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    protected ExecutorService nonBlockingExecutor;
 
    protected boolean activation;
+   private volatile boolean usingStores;
 
    private final ConcurrentMap<Object, CompletionStage<InternalCacheEntry<K, V>>> pendingLoads = new ConcurrentHashMap<>();
 
    @Start
    public void start() {
       this.activation = cacheConfiguration.persistence().passivation();
+      this.usingStores = cacheConfiguration.persistence().usingStores();
+   }
+
+   @Override
+   public void storeChanged(PersistenceStatus persistenceStatus) {
+      usingStores = persistenceStatus.isEnabled();
    }
 
    @Override
@@ -559,7 +568,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          description = "Returns a collection of cache loader types which are configured and enabled",
          displayName = "Returns a collection of cache loader types which are configured and enabled")
    public Collection<String> getStores() {
-      if (cacheConfiguration.persistence().usingStores()) {
+      if (usingStores) {
          return persistenceManager.getStoresAsString();
       } else {
          return Collections.emptySet();
