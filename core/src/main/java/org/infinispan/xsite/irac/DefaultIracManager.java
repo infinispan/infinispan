@@ -148,7 +148,11 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (log.isTraceEnabled()) {
          log.tracef("Tracking key for %s: %s", lockOwner, key);
       }
-      updatedKeys.put(key, new State(segment, key, lockOwner));
+      State old = updatedKeys.put(key, new State(segment, key, lockOwner));
+      if (old != null) {
+         //avoid sending the cleanup command to the cluster members
+         old.discard();
+      }
       iracExecutor.run();
    }
 
@@ -157,7 +161,11 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (log.isTraceEnabled()) {
          log.tracef("Tracking expired key for %s: %s", lockOwner, key);
       }
-      updatedKeys.put(key, new ExpirationState(segment, key, lockOwner));
+      State old = updatedKeys.put(key, new ExpirationState(segment, key, lockOwner));
+      if (old != null) {
+         //avoid sending the cleanup command to the cluster members
+         old.discard();
+      }
       iracExecutor.run();
    }
 
@@ -427,7 +435,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       boolean removed = updatedKeys.remove(state.key, state);
       iracVersionGenerator.removeTombstone(state.key, state.tombstone);
       if (log.isTraceEnabled()) {
-         log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.tombstone, removed);
+         log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.owner, removed);
       }
    }
 
@@ -538,6 +546,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
                   log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
                }
                if (stateStatus != StateStatus.SENDING) {
+                  // discarded or overwritten by another write operation
+                  // do not send the cleanup command.
                   return;
                }
                stateStatus = StateStatus.COMPLETED;
