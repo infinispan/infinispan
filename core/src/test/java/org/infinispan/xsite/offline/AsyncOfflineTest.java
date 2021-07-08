@@ -102,6 +102,10 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
       defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
 
+      for (int i = 0; i < NUM_NODES; ++i) {
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+      }
+
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
 
@@ -116,18 +120,27 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       List<DiscardInboundHandler> handlers = replaceSFOInboundHandler();
       handlers.forEach(h -> h.discard = true);
 
-      //SFO request should timeout
+      //SFO request should timeout (timeout=1 sec) and it retries (max retries = 6)
       lonCache.put(key, "value2");
       eventuallyEquals(1, lonStatus::getFailureCount);
       assertEquals("value", sfoCache.get(key));
 
       handlers.forEach(h -> h.discard = false);
 
+      // make sure the key is flushed. we don't want to receive timeouts after this point
+      eventually(() -> {
+         for (int i = 0; i < NUM_NODES; ++i) {
+            if (!iracManager(LON, cacheName, i).isEmpty()) {
+               return false;
+            }
+         }
+         return true;
+      });
+
       //SFO request will succeed and reset the take offline status
       lonCache.put(key, "value3");
       eventuallyEquals("value3", () -> sfoCache.get(key));
       eventuallyEquals(0, lonStatus::getFailureCount);
-
    }
 
    @AfterMethod(alwaysRun = true)
