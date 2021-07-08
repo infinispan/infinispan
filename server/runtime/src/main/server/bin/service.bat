@@ -1,16 +1,17 @@
 @echo off
 
 REM -------------------------------------------------------------------------
-REM  Red Hat Data Grid Service Script for Windows
-REM    It has to reside in %JDG_HOME%\bin
+REM  ISPN Service Script for Windows
+REM    It has to reside in %SERVER_HOME%\bin
 REM    It is expecting that prunsrv.exe reside in one of:
-REM      %JDG_HOME%\bin
-REM      %JDG_HOME%\..\..\jbcs-jsvc-*\sbin
+REM      %SERVER_HOME%\bin
+REM      %SERVER_HOME%\..\..\jbcs-jsvc-*\sbin
 REM     example command for installation:
-REM     service.bat install /jdguser admin /jdgpass admin 
+REM     service.bat install /user admin /pass admin 
 REM      /controller localhost:11222 /shutdown-file-name shutdown-command.txt 
-REM      /node-name doc /name JDG82 /desc "JDG 82" /loglevel DEBUG
+REM      /node-name doc /name ISPNService /desc "ISPN service" /loglevel DEBUG
 REM
+REM  v2 2021-07-08 Generalised the script for upstream ISPN
 REM  v1	2021-06-11 initial edit
 REM
 REM Author: Lei Yu
@@ -28,33 +29,33 @@ if "%DEBUG%" == "1" (
 	echo DIRNAME "%DIRNAME%x"
 )
 
-set TEMP_JDG_HOME=%DIRNAME%..\
+set TEMP_SERVER_HOME=%DIRNAME%..\
 
-pushd %TEMP_JDG_HOME%
-set "RESOLVED_JDG_HOME=%CD%"
+pushd %TEMP_SERVER_HOME%
+set "RESOLVED_SERVER_HOME=%CD%"
 popd
 
-rem echo %RESOLVED_JDG_HOME%
+rem echo %RESOLVED_SERVER_HOME%
 
 set DIRNAME=
 
-if "x%JDG_HOME%" == "x" (
-  set "JDG_HOME=%RESOLVED_JDG_HOME%"
+if "x%SERVER_HOME%" == "x" (
+  set "SERVER_HOME=%RESOLVED_SERVER_HOME%"
 )
-rem echo %JDG_HOME%
+rem echo %SERVER_HOME%
 
 if "%DEBUG%" == "1" (
-	echo JDG_HOME="%JDG_HOME%"
+	echo SERVER_HOME="%SERVER_HOME%"
 )
 
-rem echo "jdg home" %JDG_HOME%
+rem echo "server home" %SERVER_HOME%
 
 
 set PRUNSRV=
-rem Attempt to find prunsrv.exe under the same root directory that contains JDG_HOME.
+rem Attempt to find prunsrv.exe under the same root directory that contains SERVER_HOME.
 rem Note that only the last match will be used. This *typically* means the most recent version will be matched.
 rem Also note that only jbcs-jsvc-* will be used as a pattern, so jbcs-jsvc-1.0 and jbcs-jsvc-1.1 will match.
-for /d %%a in ( "%JDG_HOME%\..\jbcs-jsvc-*" ) do (
+for /d %%a in ( "%SERVER_HOME%\..\jbcs-jsvc-*" ) do (
   if "%DEBUG%" == "1" (
     echo FOUND "%%~fa"
   )
@@ -64,12 +65,12 @@ for /d %%a in ( "%JDG_HOME%\..\jbcs-jsvc-*" ) do (
   )
 )
 
-rem prunsrv.exe was not found above, so try to find it under JDG_HOME\bin.
+rem prunsrv.exe was not found above, so try to find it under SERVER_HOME\bin.
 if "%PRUNSRV%" == "" (
-  if exist "%JDG_HOME%\bin\prunsrv.exe" (
-    set PRUNSRV="%JDG_HOME%\bin\prunsrv.exe"
+  if exist "%SERVER_HOME%\bin\prunsrv.exe" (
+    set PRUNSRV="%SERVER_HOME%\bin\prunsrv.exe"
   ) else (
-    echo Please install native utilities into expected location %JDG_HOME%\..\jbcs-jsvc-1.1
+    echo Please install native utilities into expected location %SERVER_HOME%\..\jbcs-jsvc-1.1
     goto cmdEnd
   )
 )
@@ -84,12 +85,12 @@ rem defaults
 set SHORTNAME=ISPN
 set DISPLAYNAME=ISPN
 rem NO quotes around the description here !
-set DESCRIPTION=Redhat data grid 8
+set DESCRIPTION=Windows service for ISPN server
 set CONTROLLER=localhost:11222
 set LOGLEVEL=INFO
 set LOGPATH=
-set JDGUSER=
-set JDGPASS=
+set ISPNUSER=
+set ISPNPASS=
 set SERVICE_USER=
 set SERVICE_PASS=
 set STARTUP_MODE=manual
@@ -109,7 +110,7 @@ if /I "%COMMAND%" == "restart"   goto cmdRestart
 echo ERROR: invalid command
 
 :cmdUsage
-echo Red Hat Data Grid Service Script for Windows
+echo ISPN Server Service Script for Windows
 echo Usage:
 echo(
 echo   service install ^<options^>  , where the options are:
@@ -117,19 +118,19 @@ echo(
 echo     /startup                  : Set the service to auto start
 echo                                 Not specifying sets the service to manual
 echo(
-echo     /jdguser ^<username^>     : jdg username to use for the shutdown command.
+echo     /user ^<username^>     : ISPN username to use for the shutdown command.
 echo(
-echo     /jdgpass ^<password^>     : Password for /jdguser
+echo     /pass ^<password^>     : Password for /user
 echo(
 echo     /controller ^<host:port^>   : The host:port of the cli interface.
 echo                                 default: localhost:11222
 echo(
 echo     /shutdown-file-name ^<filename^>   : The file contains the shutdown command, it is 
-echo                                        expected to be in the %JDG_HOME%\bin directory.
+echo                                        expected to be in the %SERVER_HOME%\bin directory.
 echo                                        The content can be, for example
 echo                                        shutdown server server1
 echo(
-echo     /node-name ^<node-name^>      : The name for RHDG server
+echo     /node-name ^<node-name^>      : The name for ISPN server
 echo
 echo(
 echo Options to use when multiple services or different accounts are needed:
@@ -198,7 +199,7 @@ if /I "%~1"== "/config" (
     )
   )
   if "!CONFIG!" == "" (
-    echo ERROR: You need to specify a host-config name
+    echo ERROR: You need to specify a server-config name
     goto endBatch
   )
   shift
@@ -215,7 +216,7 @@ if /I "%~1"== "/controller" (
     )
   )
   if "!CONTROLLER!" == "" (
-    echo ERROR: The Redhat Data Grid server URL should be specified in the format host:port, example:  127.0.0.1:11222
+    echo ERROR: The ISPN server URL should be specified in the format host:port, example:  127.0.0.1:11222
     goto endBatch
   )
   shift
@@ -232,7 +233,7 @@ if /I "%~1"== "/node-name" (
     )
   )
   if "!NODE-NAME!" == "" (
-    echo ERROR: The Redhat Data Grid server server name must be specified 
+    echo ERROR: The ISPN server server name must be specified 
     goto endBatch
   )
   shift
@@ -251,7 +252,7 @@ if /I "%~1"== "/shutdown-file-name" (
   )
 
   if "!SHUTDOWN-FILE-NAME!" == "" (
-    echo ERROR: The shutdown command file name must be specified, the file can contain the command for shutting down RHDG server, e.g shutdown server ^<server-name^>
+    echo ERROR: The shutdown command file name must be specified, the file can contain the command for shutting down ISPN server, e.g shutdown server ^<server-name^>
     goto endBatch
   )
 
@@ -295,15 +296,15 @@ if /I "%~1"== "/desc" (
   goto LoopArgs
 )
 
-if /I "%~1"== "/jdguser" (
-  set JDGUSER=
+if /I "%~1"== "/user" (
+  set ISPNUSER=
   if not "%~2"=="" (
     set T=%~2
     if not "!T:~0,1!"=="/" (
-      set JDGUSER=%~2
+      set ISPNUSER=%~2
     )
   )
-  if "!JDGUSER!" == "" (
+  if "!ISPNUSER!" == "" (
     echo ERROR: You need to specify a username
     goto endBatch
   )
@@ -312,16 +313,16 @@ if /I "%~1"== "/jdguser" (
   goto LoopArgs
 )
 
-if /I "%~1"== "/jdgpass" (
-  set JDGPASS=
+if /I "%~1"== "/pass" (
+  set ISPNPASS=
   if not "%~2"=="" (
     set T=%~2
     if not "!T:~0,1!"=="/" (
-      set JDGPASS=%~2
+      set ISPNPASS=%~2
     )
   )
-  if "!JDGPASS!" == "" (
-    echo ERROR: You need to specify a password for /jdgpass
+  if "!ISPNPASS!" == "" (
+    echo ERROR: You need to specify a password for /pass
     goto endBatch
   )
   shift
@@ -338,7 +339,7 @@ if /I "%~1"== "/serviceuser" (
     )
   )
   if "!SERVICE_USER!" == "" (
-    echo ERROR: You need to specify a username in the format DOMAIN\USER, or .\USER for the local domain
+    echo ERROR: You need to specify a username in the format DOMAIN\USER, or .\USER for the local domain for the Windows service
     goto endBatch
   )
   shift
@@ -395,8 +396,8 @@ goto cmdUsage
 
 :doInstall
 
-if not "%JDGUSER%" == "" (
-  if "%JDGPASS%" == "" (
+if not "%ISPNUSER%" == "" (
+  if "%ISPNPASS%" == "" (
     echo When specifying a user, you need to specify the password
     goto endBatch
   )
@@ -411,19 +412,19 @@ if not "%SERVICE_USER%" == "" (
   set RUNAS=--ServiceUser="%SERVICE_USER%" --ServicePassword="%SERVICE_PASS%"
 )
 
-set JDG_URL="http://"%JDGUSER%":"%JDGPASS%"@"%CONTROLLER%
+set ISPN_URL="http://"%ISPNUSER%":"%ISPNPASS%"@"%CONTROLLER%
 
 if "%CONFIG%"=="" set CONFIG=infinispan.xml
 
-set FINAL-SHUTDOWN-FILE-NAME=%JDG_HOME%\bin\%SHUTDOWN-FILE-NAME%
+set FINAL-SHUTDOWN-FILE-NAME=%SERVER_HOME%\bin\%SHUTDOWN-FILE-NAME%
 
 if "%STDOUT%"=="" set STDOUT=auto
 if "%STDERR%"=="" set STDERR=auto
 
-if "%START_PATH%"=="" set START_PATH="%JDG_HOME%\bin"
-if "%STOP_PATH%"=="" set STOP_PATH="%JDG_HOME%\bin"
+if "%START_PATH%"=="" set START_PATH="%SERVER_HOME%\bin"
+if "%STOP_PATH%"=="" set STOP_PATH="%SERVER_HOME%\bin"
 
-if "%STOP_SCRIPT%"=="" set STOP_SCRIPT=cli.bat -c %JDG_URL% -f %FINAL-SHUTDOWN-FILE-NAME%
+if "%STOP_SCRIPT%"=="" set STOP_SCRIPT=cli.bat -c %ISPN_URL% -f %FINAL-SHUTDOWN-FILE-NAME%
 
 if "%START_SCRIPT%"=="" set START_SCRIPT=server.bat
  rem  set STARTPARAM="/c#set#NOPAUSE=Y#&&#!START_SCRIPT!#-Dinfinispan.server.home.path=!BASE!#--server-config=!CONFIG!"
@@ -431,12 +432,12 @@ if "%START_SCRIPT%"=="" set START_SCRIPT=server.bat
   set STOPPARAM="/c !STOP_SCRIPT! "
 
 
-if "%LOGPATH%"=="" set LOGPATH="%JDG_HOME%\server\log"
+if "%LOGPATH%"=="" set LOGPATH="%SERVER_HOME%\server\log"
 
 
 
 if /I "%ISDEBUG%" == "true" (
-  echo JDG_HOME="%JDG_HOME%"
+  echo SERVER_HOME="%SERVER_HOME%"
   echo RUNAS=%RUNAS%
   echo SHORTNAME="%SHORTNAME%"
   echo DESCRIPTION="%DESCRIPTION%"
