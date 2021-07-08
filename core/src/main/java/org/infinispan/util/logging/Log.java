@@ -2203,4 +2203,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The configuration for internal cache '%s' cannot be modified", id = 647)
    IllegalArgumentException cannotUpdateInternalCache(String name);
+
+   @Message(value = "Cache '%s' is non empty, cannot add store.", id = 648)
+   PersistenceException cannotAddStore(String cacheName);
 }

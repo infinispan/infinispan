@@ -19,10 +19,12 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -48,13 +50,25 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    private volatile boolean skipOnStop = false;
 
    boolean statsEnabled = false;
-   boolean enabled = false;
+   volatile boolean enabled = false;
 
    private final AtomicLong passivations = new AtomicLong(0);
 
+   private final StoreChangeListener listener = pm -> updateEnabledStatus(pm.isEnabled(), pm.usingReadOnly());
+
    @Start(priority = 12)
    public void start() {
-      enabled = !persistenceManager.isReadOnly() && cfg.persistence().passivation() && cfg.persistence().usingStores();
+      updateEnabledStatus(cfg.persistence().usingStores(), persistenceManager.isReadOnly());
+      persistenceManager.addStoreListener(listener);
+   }
+
+   @Stop
+   public void stop() {
+      persistenceManager.removeStoreListener(listener);
+   }
+
+   private void updateEnabledStatus(boolean usingStores, boolean readOnly) {
+      enabled = !readOnly && cfg.persistence().passivation() && usingStores;
       if (enabled) {
          passivationPersistenceManager = (PassivationPersistenceManager) persistenceManager;
          statsEnabled = cfg.statistics().enabled();

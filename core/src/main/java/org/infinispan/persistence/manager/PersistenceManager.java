@@ -51,6 +51,35 @@ public interface PersistenceManager extends Lifecycle {
     */
    CompletionStage<Void> disableStore(String storeType);
 
+   /**
+    * Adds a new store to the cache.
+    *
+    * @param storeConfiguration the configuration for the store
+    * @throws org.infinispan.commons.CacheException if the cache is was not empty
+    */
+   CompletionStage<Void> addStore(StoreConfiguration storeConfiguration);
+
+   /**
+    * Add a {@link StoreChangeListener} to be notified when a store is added or removed dynamically.
+    */
+   void addStoreListener(StoreChangeListener listener);
+
+   /**
+    * Remote a registered {@link StoreChangeListener}
+    */
+   void removeStoreListener(StoreChangeListener listener);
+
+   interface StoreChangeListener {
+
+      /**
+       * Notifies when a store was added or removed dynamically.
+       *
+       * This method is always invoked with mutual access to any other method in {@link PersistenceManager}.
+       * Implementations must only ensure visibility or atomicity of their own variables and operations.
+       */
+      void storeChanged(PersistenceStatus persistenceStatus);
+   }
+
    <T> Set<T> getStores(Class<T> storeClass);
 
    Collection<String> getStoresAsString();

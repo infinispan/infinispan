@@ -69,6 +69,19 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
+   public CompletionStage<Void> addStore(StoreConfiguration Configuration) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public void addStoreListener(StoreChangeListener listener) {
+   }
+
+   @Override
+   public void removeStoreListener(StoreChangeListener listener) {
+   }
+
+   @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
       return Collections.emptySet();
    }
