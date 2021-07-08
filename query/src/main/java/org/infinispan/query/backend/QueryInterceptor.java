@@ -47,8 +47,11 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -81,15 +84,20 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   @Inject DistributionManager distributionManager;
-   @Inject BlockingManager blockingManager;
-   @Inject protected KeyPartitioner keyPartitioner;
+   @Inject
+   DistributionManager distributionManager;
+   @Inject
+   BlockingManager blockingManager;
+   @Inject
+   protected KeyPartitioner keyPartitioner;
+   @Inject
+   protected PersistenceManager persistenceManager;
 
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
    private final DataConversion valueDataConversion;
    private final DataConversion keyDataConversion;
-   private final boolean isPersistenceEnabled;
+   private volatile boolean isPersistenceEnabled;
 
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
@@ -98,6 +106,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private SearchMapping searchMapping;
    private SegmentListener segmentListener;
+   private final StoreChangeListener storeChangeListener = pm -> isPersistenceEnabled = pm.isEnabled();
 
    public QueryInterceptor(boolean isManualIndexing, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
                            AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses) {
@@ -119,6 +128,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          this.cache.addListener(segmentListener);
       }
       searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+      persistenceManager.addStoreListener(storeChangeListener);
+   }
+
+   @Stop
+   protected void stop() {
+      persistenceManager.removeStoreListener(storeChangeListener);
    }
 
    public void prepareForStopping() {

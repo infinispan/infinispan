@@ -2197,4 +2197,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Asynchronous cache modes, such as %s, cannot use SYNC touch mode for maximum idle expiration.", id = 645)
    CacheConfigurationException invalidTouchMode(CacheMode cacheMode);
+
+   @Message(value = "Cache '%s' is non empty, cannot add store.", id = 646)
+   PersistenceException cannotAddStore(String cacheName);
 }

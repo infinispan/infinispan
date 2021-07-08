@@ -1,6 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
@@ -33,17 +32,13 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
 
    @Override
    public Object construct(String componentName) {
-      if (Configurations.needSegments(configuration)) {
-         KeyPartitioner partitioner = getConfiguredPartitioner();
-         if (groupManager == null)
-            return partitioner;
+      KeyPartitioner partitioner = getConfiguredPartitioner();
+      if (groupManager == null)
+         return new KeyPartitionerDelegate(partitioner, configuration);
 
-         // Grouping is enabled. Since the configured partitioner will not be registered in the component
-         // registry, we need to inject dependencies explicitly.
-         basicComponentRegistry.wireDependencies(partitioner, false);
-         return new GroupingPartitioner(partitioner, groupManager);
-      } else {
-         return SingleSegmentKeyPartitioner.getInstance();
-      }
+      // Grouping is enabled. Since the configured partitioner will not be registered in the component
+      // registry, we need to inject dependencies explicitly.
+      basicComponentRegistry.wireDependencies(partitioner, false);
+      return new KeyPartitionerDelegate(new GroupingPartitioner(partitioner, groupManager), configuration);
    }
 }

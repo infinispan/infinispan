@@ -85,6 +85,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
+   /**
+    * Stores the position of the persistence related interceptors so stores can be added at runtime
+    */
+   private int persistenceSlot;
+
    private AsyncInterceptor createInterceptor(AsyncInterceptor interceptor,
          Class<? extends AsyncInterceptor> interceptorType) {
       ComponentRef<? extends AsyncInterceptor> chainedInterceptor = basicComponentRegistry.getComponent(interceptorType);
@@ -224,39 +229,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
+      persistenceSlot = interceptorChain.size();
       if (configuration.persistence().usingStores()) {
-         if (configuration.persistence().passivation()) {
-            if (cacheMode.isClustered()) {
-               interceptorChain.appendInterceptor(createInterceptor(new PassivationClusteredCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
-            } else {
-               interceptorChain.appendInterceptor(createInterceptor(new PassivationCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
-            }
-            interceptorChain.appendInterceptor(createInterceptor(new PassivationWriterInterceptor(), PassivationWriterInterceptor.class), false);
-         } else {
-            if (cacheMode.isClustered()) {
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
-            } else {
-               interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
-            }
-            boolean transactionalStore = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional);
-            if (transactionalStore && transactionMode.isTransactional())
-               interceptorChain.appendInterceptor(createInterceptor(new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class), false);
-
-            switch (cacheMode) {
-               case DIST_SYNC:
-               case DIST_ASYNC:
-               case REPL_SYNC:
-               case REPL_ASYNC:
-                  interceptorChain.appendInterceptor(createInterceptor(new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class), false);
-                  break;
-               case SCATTERED_SYNC:
-                  interceptorChain.appendInterceptor(createInterceptor(new ScatteredCacheWriterInterceptor(), ScatteredCacheWriterInterceptor.class), false);
-                  break;
-               default:
-                  interceptorChain.appendInterceptor(createInterceptor(new CacheWriterInterceptor(), CacheWriterInterceptor.class), false);
-                  break;
-            }
-         }
+         addPersistenceInterceptors(interceptorChain, configuration, configuration.persistence().stores());
       }
 
       if (configuration.clustering().l1().enabled()) {
@@ -326,6 +301,58 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       log.trace("Finished building default interceptor chain.");
       buildCustomInterceptors(interceptorChain, configuration.customInterceptors());
       return interceptorChain;
+   }
+
+   private void addInterceptor(AsyncInterceptorChain interceptorChain, AsyncInterceptor interceptor,
+                               Class<? extends AsyncInterceptor> interceptorClass, int position) {
+      if (!interceptorChain.containsInterceptorType(interceptorClass, true))
+         interceptorChain.addInterceptor(createInterceptor(interceptor, interceptorClass), position);
+   }
+
+   /**
+    * Adds all the interceptors related to persistence to the stack.
+    *
+    * @param interceptorChain The chain
+    * @param cacheConfiguration The configuration of the cache that owns the interceptor
+    * @param stores A list of {@link StoreConfiguration} possibly not present in the cacheConfiguration
+    */
+   public void addPersistenceInterceptors(AsyncInterceptorChain interceptorChain, Configuration cacheConfiguration, List<StoreConfiguration> stores) {
+      TransactionMode transactionMode = cacheConfiguration.transaction().transactionMode();
+      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
+      int position = persistenceSlot;
+      if (cacheConfiguration.persistence().passivation()) {
+         if (cacheMode.isClustered()) {
+            addInterceptor(interceptorChain, new PassivationClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+         } else {
+            addInterceptor(interceptorChain, new PassivationCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+         }
+         addInterceptor(interceptorChain, new PassivationWriterInterceptor(), PassivationWriterInterceptor.class, position);
+      } else {
+         if (cacheMode.isClustered()) {
+            addInterceptor(interceptorChain, new ClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+         } else {
+            addInterceptor(interceptorChain, new CacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+         }
+         boolean transactionalStore = cacheConfiguration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional) ||
+               stores.stream().anyMatch(StoreConfiguration::transactional);
+         if (transactionalStore && transactionMode.isTransactional())
+            addInterceptor(interceptorChain, new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class, position++);
+
+         switch (cacheMode) {
+            case DIST_SYNC:
+            case DIST_ASYNC:
+            case REPL_SYNC:
+            case REPL_ASYNC:
+               addInterceptor(interceptorChain, new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class, position);
+               break;
+            case SCATTERED_SYNC:
+               addInterceptor(interceptorChain, new ScatteredCacheWriterInterceptor(), ScatteredCacheWriterInterceptor.class, position);
+               break;
+            default:
+               addInterceptor(interceptorChain, new CacheWriterInterceptor(), CacheWriterInterceptor.class, position);
+               break;
+         }
+      }
    }
 
    private void buildCustomInterceptors(AsyncInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {

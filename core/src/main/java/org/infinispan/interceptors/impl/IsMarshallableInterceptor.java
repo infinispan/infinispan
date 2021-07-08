@@ -19,7 +19,10 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables
@@ -36,11 +39,21 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
    StreamAwareMarshaller marshaller;
-   private boolean usingAsyncStore;
+   @Inject PersistenceManager persistenceManager;
+
+   private volatile boolean usingAsyncStore;
+   private StoreChangeListener storeChangeListener = pm -> usingAsyncStore = pm.usingAsyncStore();
 
    @Start
    protected void start() {
       usingAsyncStore = cacheConfiguration.persistence().usingAsyncStore();
+      storeChangeListener = status -> usingAsyncStore = status.usingAsyncStore();
+      persistenceManager.addStoreListener(storeChangeListener);
+   }
+
+   @Stop
+   protected void stop() {
+      persistenceManager.removeStoreListener(storeChangeListener);
    }
 
    @Override

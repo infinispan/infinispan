@@ -19,6 +19,9 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
+import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
@@ -39,12 +42,14 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
  */
 @ConfiguredBy(ClusterLoaderConfiguration.class)
 @Deprecated
-public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
+public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader, StoreChangeListener {
 
    private RpcManager rpcManager;
    private AdvancedCache<?, ?> cache;
    private CommandsFactory commandsFactory;
    private KeyPartitioner keyPartitioner;
+   private PersistenceManager persistenceManager;
+   private volatile boolean needsSegments;
 
    private InitializationContext ctx;
 
@@ -55,6 +60,8 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       commandsFactory = cache.getComponentRegistry().getCommandsFactory();
       rpcManager = cache.getRpcManager();
       keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
+      persistenceManager = cache.getComponentRegistry().getComponent(PersistenceManager.class);
+      needsSegments = Configurations.needSegments(cache.getCacheConfiguration());
    }
 
    @Override
@@ -62,7 +69,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = commandsFactory.buildClusteredGetCommand(key,
-            Configurations.needSegments(cache.getCacheConfiguration()) ? keyPartitioner.getSegment(key) : null,
+            needsSegments ? keyPartitioner.getSegment(key) : null,
             EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK));
 
       Collection<Response> responses;
@@ -108,12 +115,19 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
 
    @Override
    public void start() {
-      //nothing to do here
+      persistenceManager.addStoreListener(this);
+   }
+
+   @Override
+   public void storeChanged(PersistenceStatus status) {
+      synchronized (this) {
+         needsSegments = needsSegments || status.usingSegmentedStore();
+      }
    }
 
    @Override
    public void stop() {
-      //nothing to do here
+      persistenceManager.removeStoreListener(this);
    }
 
    /**
