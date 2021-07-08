@@ -2,10 +2,9 @@
    <file-store shared="false"
                preload="true"
                fetch-state="true"
-               read-only="false"
-               purge="true">
-      <data path="${java.io.tmpdir}/data"/>
-      <index path="${java.io.tmpdir}/index"/>
+               read-only="false">
+      <data path="data"/>
+      <index path="index"/>
       <write-behind modification-queue-size="123" />
    </file-store>
 </persistence>

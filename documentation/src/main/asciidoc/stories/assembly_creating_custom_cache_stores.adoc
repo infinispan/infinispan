@@ -1,5 +1,5 @@
-[id='creating_stores']
-:context: custom
+[id='creating-custom-cache-stores']
+:context: custom-cache-stores
 = Implementing Custom Cache Stores
 You can create custom cache stores through the {brandname} persistent SPI.
 
