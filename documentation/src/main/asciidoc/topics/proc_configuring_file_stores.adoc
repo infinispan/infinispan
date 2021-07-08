@@ -1,0 +1,40 @@
+[id='configuring-file-stores_{context}']
+= Configuring File-Based Cache Stores
+Add file-based cache stores to {brandname} to persist data on the host filesystem.
+
+.Prerequisites
+
+* Install {brandname} Server if you use remote caches.
+* Enable global state and configure a global persistent location if you use embedded caches.
+
+.Procedure
+
+. Add the `persistence` element to your cache configuration.
+. Optionally specify `true` as the value for the `passivation` attribute to write to the file-based cache store only when data is evicted from memory.
+. Include the `file-store` element and configure attributes as appropriate.
+. Specify `false` as the value for the `shared` attribute.
++
+File-based cache stores should always be unique to each {brandname} instance.
+If you want to use the same persistent across a cluster, configure shared storage such as a JDBC string-based cache store .
++
+. Configure the `index` and `data` elements to specify the location where {brandname} creates indexes and stores data.
+. Include the `write-behind` element to configure the cache store as write behind instead of as write through.
+
+.Directory location
+
+{brandname} creates file-based cache stores in the directory that you configure, relative to the global persistent location.
+For {brandname} this is the `{server_home}/server/data` directory.
+For embedded caches, {brandname} defaults to the `user.dir` system property.
+
+You should never configure an absolute path for a file-based cache store that is outside the global persistent location.
+If you do, {brandname} writes the following exception to logs:
+
+----
+ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"
+----
+
+.File-based cache store configuration
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_file_store.xml[]
+----
