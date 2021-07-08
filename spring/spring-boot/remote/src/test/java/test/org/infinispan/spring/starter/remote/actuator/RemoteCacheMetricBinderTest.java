@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
@@ -20,7 +21,7 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
    @RegisterExtension
    static InfinispanServerExtension infinispanServerExtension =
-         InfinispanServerExtensionBuilder.server("infinispan.xml");
+         InfinispanServerExtensionBuilder.server();
 
    private RemoteCache<String, String> cache;
 
@@ -34,6 +35,11 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.statistics().enable();
+      clientBuilder.security()
+            .authentication()
+            .username(TestUser.ADMIN.getUser())
+            .password(TestUser.ADMIN.getPassword());
+
       RemoteCacheManager remoteCacheManager =
             infinispanServerExtension.hotrod().withClientConfiguration(clientBuilder)
                                      .createRemoteCacheManager();
