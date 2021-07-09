@@ -29,8 +29,6 @@ import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -184,23 +182,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
 
          Throwable t = CompletableFutures.extractException(throwable);
-         if (t instanceof MarshallingException || t instanceof NotSerializableException) {
-            // There's no point in retrying if the cache join info is not serializable
-            throw new CacheJoinException(t);
-         } else if (t instanceof SuspectException) {
+         if (t instanceof SuspectException) {
             // Either the coordinator is shutting down
             // Or the JGroups stack includes FORK and the coordinator hasn't connected its ForkChannel yet.
             log.debugf("Join request received CacheNotFoundResponse for cache %s, retrying", cacheName);
          } else {
-            if (t.getCause() != null && t.getCause() instanceof CacheJoinException) {
-               log.debugf(t, "Join request failed for cache %s", cacheName);
-               throw (CacheJoinException) t.getCause();
-            }
-            if (timeService.isTimeExpired(endTime)) {
-               log.debugf(t, "Join request timed out for cache %s", cacheName);
-               throw CompletableFutures.asCompletionException(t);
-            }
-            log.debugf(t, "Join request got an error for cache %s, retrying", cacheName);
+            log.debugf(t, "Join request failed for cache %s", cacheName);
+            throw (CacheJoinException) t.getCause();
          }
 
          // Can't use a value based on the state transfer timeout because cache org.infinispan.CONFIG
