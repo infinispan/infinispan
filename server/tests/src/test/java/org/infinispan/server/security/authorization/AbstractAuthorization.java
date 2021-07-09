@@ -203,9 +203,9 @@ public abstract class AbstractAuthorization {
       }
 
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
+         RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
                  () -> {
-                    RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
                     cacheExec.execute(scriptName, params);
                  }
          );
