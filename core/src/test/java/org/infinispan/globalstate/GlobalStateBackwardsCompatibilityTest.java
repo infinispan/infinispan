@@ -32,9 +32,6 @@ public class GlobalStateBackwardsCompatibilityTest extends MultipleCacheManagers
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCacheManagerWithGlobalState(MEMBER_0, tmpDirectory(this.getClass().getSimpleName(), "0"));
-      createCacheManagerWithGlobalState(MEMBER_1, tmpDirectory(this.getClass().getSimpleName(), "1"));
-      waitForClusterToForm(CACHE_NAME);
    }
 
    @AfterClass(alwaysRun = true)
@@ -42,6 +39,12 @@ public class GlobalStateBackwardsCompatibilityTest extends MultipleCacheManagers
    protected void destroy() {
       super.destroy();
       Util.recursiveFileRemove(tmpDirectory(this.getClass().getSimpleName()));
+   }
+
+   public void testCreateClusterWithGlobalState11() throws Exception {
+      createCacheManagerWithGlobalState(MEMBER_0, tmpDirectory(this.getClass().getSimpleName(), "0"));
+      createCacheManagerWithGlobalState(MEMBER_1, tmpDirectory(this.getClass().getSimpleName(), "1"));
+      waitForClusterToForm(CACHE_NAME);
    }
 
    private void createCacheManagerWithGlobalState(String uuid, String stateDirectory) throws Exception {
@@ -74,15 +77,8 @@ public class GlobalStateBackwardsCompatibilityTest extends MultipleCacheManagers
       cacheState.put("members", "2");
       cacheState.put("member.0", MEMBER_0);
       cacheState.put("member.1", MEMBER_1);
-      cacheState.put("capacityFactors", "2");
-      cacheState.put("capacityFactor.0", "1.0");
-      cacheState.put("capacityFactor.1", "1.0");
       cacheState.put("primaryOwners", "256");
       IntStream.range(0, 256).forEach(i -> cacheState.put("primaryOwners." + i, Integer.toString(i % 2)));
       cacheState.store(new FileOutputStream(new File(stateDirectory, CACHE_NAME + ".state")), null);
-   }
-
-   @Test
-   public void compatibilityTest() {
    }
 }
