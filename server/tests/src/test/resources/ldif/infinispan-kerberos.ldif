@@ -1,8 +1,3 @@
-dn: ou=People,dc=infinispan,dc=org
-objectClass: organizationalUnit
-objectClass: top
-ou: People
-
 dn: uid=krbtgt,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
