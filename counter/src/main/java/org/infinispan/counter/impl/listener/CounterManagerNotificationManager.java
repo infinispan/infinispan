@@ -1,17 +1,14 @@
 package org.infinispan.counter.impl.listener;
 
-import static org.infinispan.counter.logging.Log.CONTAINER;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
@@ -101,25 +98,42 @@ public class CounterManagerNotificationManager {
     * @return The {@link Handle} for the {@link CounterListener}.
     */
    public <T extends CounterListener> Handle<T> registerUserListener(ByteString counterName, T userListener) {
+      // make sure that the counter's value listener is set
+      registerCounterValueListener();
       ByRef<Handle<T>> handleByRef = new ByRef<>(null);
       counters.computeIfPresent(counterName, (name, holder) -> holder.addListener(userListener, handleByRef));
       return handleByRef.get();
    }
 
+   public synchronized void setCache(Cache<CounterKey, CounterValue> cache) {
+      if (this.cache != null) {
+         return;
+      }
+      this.cache = cache;
+   }
+
    /**
-    * It registers the cache listeners if they aren't already registered.
-    *
-    * @param cache The {@link Cache} to register the listener.
+    * It registers the clustered cache listener if they aren't already registered.
+    * <p>
+    * This listener receives notification when a counter's value is updated.
     */
-   public synchronized void listenOn(Cache<CounterKey, CounterValue> cache) throws InterruptedException {
-      if (!topologyListener.registered) {
-         this.cache = cache;
-         topologyListener.register(cache);
+   public synchronized void registerCounterValueListener() {
+      assert cache != null;
+      if (listenersRegistered) {
+         return;
       }
-      if (!listenersRegistered) {
-         this.cache.addListener(valueListener);
-         listenersRegistered = true;
+      cache.addListener(valueListener);
+   }
+
+   /**
+    * It registers the topology cache listener if they aren't already registered.
+    */
+   public synchronized void registerTopologyListener() {
+      assert cache != null;
+      if (topologyListener.registered) {
+         return;
       }
+      topologyListener.register(cache);
    }
 
    public synchronized void stop() {
@@ -207,6 +221,11 @@ public class CounterManagerNotificationManager {
       }
 
       @Override
+      public int hashCode() {
+         return listener.hashCode();
+      }
+
+      @Override
       public boolean equals(Object o) {
          if (this == o) {
             return true;
@@ -217,11 +236,6 @@ public class CounterManagerNotificationManager {
 
          CounterListenerResponse<?> that = (CounterListenerResponse<?>) o;
          return listener.equals(that.listener);
-      }
-
-      @Override
-      public int hashCode() {
-         return listener.hashCode();
       }
    }
 
@@ -262,39 +276,27 @@ public class CounterManagerNotificationManager {
    private class TopologyListener {
 
       private volatile boolean registered = false;
-      private volatile CountDownLatch topologyReceived;
-
-      private void register(Cache<?, ?> cache) throws InterruptedException {
-         topologyReceived = new CountDownLatch(1);
-         cache.addListener(this);
-         if (!cache.getCacheConfiguration().clustering().cacheMode().isClustered() ||
-               SecurityActions.getComponentRegistry(cache).getStateTransferManager().isJoinComplete()) {
-            topologyReceived.countDown();
-         }
-         if (!topologyReceived.await(cache.getCacheConfiguration().clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS)) {
-            throw CONTAINER.unableToFetchCaches();
-         }
-         registered = true;
-      }
-
-      private void unregister(Cache<?, ?> cache) {
-         if (topologyReceived != null) {
-            topologyReceived.countDown();
-         }
-         cache.removeListener(this);
-         registered = false;
-         topologyReceived = null;
-      }
 
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<?, ?> event) {
-         if (topologyReceived != null) {
-            topologyReceived.countDown();
-         }
          counters.values().parallelStream()
-               .map(Holder::getTopologyChangeListener)
-               .filter(Objects::nonNull)
-               .forEach(TopologyChangeListener::topologyChanged);
+                 .map(Holder::getTopologyChangeListener)
+                 .filter(Objects::nonNull)
+                 .forEach(TopologyChangeListener::topologyChanged);
+      }
+
+      private void register(Cache<?, ?> cache) {
+         registered = true;
+         ClusteringConfiguration config = cache.getCacheConfiguration().clustering();
+         if (!config.cacheMode().isClustered()) {
+            return;
+         }
+         cache.addListener(this);
+      }
+
+      private void unregister(Cache<?, ?> cache) {
+         cache.removeListener(this);
+         registered = false;
       }
    }
 }

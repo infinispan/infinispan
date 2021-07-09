@@ -20,7 +20,6 @@ import org.infinispan.counter.api.PropertyFormatter;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
-import org.infinispan.counter.exception.CounterException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
@@ -320,18 +319,15 @@ public class EmbeddedCounterManager implements CounterManager {
          throw CONTAINER.undefinedCounter(counterName);
       }
 
-      //puts the listeners in there (topology and for counter's event)
-      //this method only registers only once
-      //cache() ensures the cache is started!
-      try {
-         notificationManager.listenOn(cache());
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CounterException(e);
-      }
+      notificationManager.setCache(cache());
 
       switch (configuration.type()) {
          case WEAK:
+            // topology listener is used to compute the keys where this node is the primary owner
+            // adds are made on these keys to avoid contention and improve performance
+            notificationManager.registerTopologyListener();
+            // the weak counter keeps a local value and, on each event, the local value is updated (reads are always local)
+            notificationManager.registerCounterValueListener();
             return createWeakCounter(counterName, configuration);
          case BOUNDED_STRONG:
             return createBoundedStrongCounter(counterName, configuration);
