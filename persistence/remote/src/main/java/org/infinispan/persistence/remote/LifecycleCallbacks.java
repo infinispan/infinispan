@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.persistence.remote.upgrade.AddSourceRemoteStoreTask;
 import org.infinispan.persistence.remote.upgrade.DisconnectRemoteStoreTask;
 import org.infinispan.persistence.remote.upgrade.MigrationTask;
 import org.infinispan.persistence.remote.upgrade.RemovedFilter;
@@ -25,6 +26,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.REMOVED_FILTER, new RemovedFilter.Externalizer());
       externalizerMap.put(ExternalizerIds.DISCONNECT_REMOTE_STORE, new DisconnectRemoteStoreTask.Externalizer());
       externalizerMap.put(ExternalizerIds.ENTRY_WRITER, new MigrationTask.EntryWriterExternalizer());
+      externalizerMap.put(ExternalizerIds.ADD_REMOTE_STORE, new AddSourceRemoteStoreTask.Externalizer());
    }
 
 }

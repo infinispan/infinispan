@@ -115,8 +115,12 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
             writer.writeStartElement(Element.KEYSTORE);
             writer.writeAttribute(Attribute.FILENAME, ssl.keyStoreFileName());
             writer.writeAttribute(Attribute.PASSWORD, new String(ssl.keyStorePassword()));
-            writer.writeAttribute(Attribute.CERTIFICATE_PASSWORD, new String(ssl.keyStoreCertificatePassword()));
-            writer.writeAttribute(Attribute.KEY_ALIAS, ssl.keyAlias());
+            if (ssl.keyStoreCertificatePassword() != null) {
+               writer.writeAttribute(Attribute.CERTIFICATE_PASSWORD, new String(ssl.keyStoreCertificatePassword()));
+            }
+            if (ssl.keyAlias() != null) {
+               writer.writeAttribute(Attribute.KEY_ALIAS, ssl.keyAlias());
+            }
             writer.writeAttribute(Attribute.TYPE, ssl.keyStoreType());
             writer.writeEndElement();
          }

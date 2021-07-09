@@ -23,11 +23,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "upgrade.hotrod.HotRodUpgradeEncodingsTest")
 public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
 
-   private static final String CACHE_NAME = "encoded";
+   protected static final String CACHE_NAME = "encoded";
 
-   private TestCluster sourceCluster, targetCluster;
+   protected TestCluster sourceCluster, targetCluster;
 
-   private StorageType storageType;
+   protected StorageType storageType;
 
    @Factory
    public Object[] factory() {
@@ -49,18 +49,26 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() {
-      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      configurationBuilder.clustering().hash().numSegments(2);
-      configurationBuilder.memory().storage(storageType);
+      ConfigurationBuilder configurationBuilder = getConfigurationBuilder();
       sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
             .cache().name(CACHE_NAME)
             .configuredWith(configurationBuilder)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+      targetCluster = configureTargetCluster();
+   }
+
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      configurationBuilder.clustering().hash().numSegments(2);
+      configurationBuilder.memory().storage(storageType);
+      return configurationBuilder;
+   }
+
+   protected TestCluster configureTargetCluster() {
+      return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
-            .configuredWith(configurationBuilder)
-            .build();
+            .configuredWith(getConfigurationBuilder()).build();
    }
 
    @AfterClass
@@ -75,8 +83,14 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
       range(0, entries).boxed().map(String::valueOf).forEach(k -> remoteCache.put(k, "value" + k));
    }
 
+   protected void connectTargetCluster() {
+      // No op, target cluster is already connected to the source (static remote store added).
+   }
+
    @Test
    public void testMigrate() throws Exception {
+      connectTargetCluster();
+
       int entries = 1000;
       loadSourceCluster(entries);
 

@@ -12,4 +12,5 @@ public interface ExternalizerIds {
    Integer REMOVED_FILTER = 1901;
    Integer DISCONNECT_REMOTE_STORE = 1902;
    Integer ENTRY_WRITER = 1903;
+   Integer ADD_REMOTE_STORE = 1904;
 }

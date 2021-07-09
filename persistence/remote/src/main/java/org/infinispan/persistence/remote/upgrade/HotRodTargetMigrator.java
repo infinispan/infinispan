@@ -18,11 +18,13 @@ import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.upgrade.TargetMigrator;
@@ -104,8 +106,20 @@ public class HotRodTargetMigrator implements TargetMigrator {
    @Override
    public void disconnectSource(Cache<Object, Object> cache) throws CacheException {
       DisconnectRemoteStoreTask disconnectRemoteStoreTask = new DisconnectRemoteStoreTask(cache.getName());
-      ClusterExecutor executor = cache.getCacheManager().executor();
+      ClusterExecutor executor = SecurityActions.getClusterExecutor(cache.getCacheManager());
       CompletableFuture<Void> future = executor.submitConsumer(disconnectRemoteStoreTask, (address, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+      });
+      CompletableFuture.allOf(future).join();
+   }
+
+   @Override
+   public void connectSource(Cache<Object, Object> cache, StoreConfiguration configuration) {
+      AddSourceRemoteStoreTask addStoreTask = new AddSourceRemoteStoreTask(cache.getName(), (RemoteStoreConfiguration) configuration);
+      ClusterExecutor executor = SecurityActions.getClusterExecutor(cache.getCacheManager());
+      CompletableFuture<Void> future = executor.submitConsumer(addStoreTask, (address, v, t) -> {
          if (t != null) {
             throw new CacheException(t);
          }
