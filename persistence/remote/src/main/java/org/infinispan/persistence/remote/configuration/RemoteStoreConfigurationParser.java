@@ -248,7 +248,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    private void parseTruststore(ConfigurationReader reader, SslConfigurationBuilder ssl) {
       String[] attributes = ParseUtils.requireAttributes(reader, true,
             Attribute.FILENAME.getLocalName(),
-            Attribute.PASSWORD.getLocalName());
+            Attribute.TYPE.getLocalName());
       ssl.trustStoreFileName(attributes[0]);
       ssl.trustStorePassword(attributes[1].toCharArray());
 
@@ -259,7 +259,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
          switch (attribute) {
             case FILENAME:
             case PASSWORD:
-               // already processed
+               ssl.trustStorePassword(value.toCharArray());
                break;
             case TYPE: {
                ssl.trustStoreType(value);

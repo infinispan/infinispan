@@ -37,7 +37,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    protected TestCluster sourceCluster, targetCluster;
 
    protected static final String OLD_CACHE = "old-cache";
-   protected static final String TEST_CACHE = HotRodUpgradeSynchronizerTest.class.getName();
+   protected String TEST_CACHE = this.getClass().getName();
 
    protected static final ProtocolVersion OLD_PROTOCOL_VERSION = ProtocolVersion.PROTOCOL_VERSION_20;
    protected static final ProtocolVersion NEW_PROTOCOL_VERSION = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
@@ -49,10 +49,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
             .cache().name(TEST_CACHE)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
-            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
-            .build();
+      targetCluster = configureTargetCluster();
    }
 
    private void fillCluster(TestCluster cluster, String cacheName) {
@@ -62,7 +59,19 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       }
    }
 
+   protected TestCluster configureTargetCluster() {
+      return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
+            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
+            .build();
+   }
+
+   protected void connectTargetCluster() {
+      // No op, target cluster is already connected to the source (static remote store added).
+   }
+
    public void testSynchronization() throws Exception {
+      connectTargetCluster();
       RemoteCache<String, String> sourceRemoteCache = sourceCluster.getRemoteCache(TEST_CACHE);
       RemoteCache<String, String> targetRemoteCache = targetCluster.getRemoteCache(TEST_CACHE);
 
@@ -89,6 +98,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronizationWithClientDeleteBefore() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
@@ -110,6 +120,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronizationWithClientWriteBefore() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
@@ -132,6 +143,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronizationWithClientReadsBefore() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
@@ -150,6 +162,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSynchronizationWithInFlightUpdates() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
@@ -167,6 +180,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSynchronizationWithInFlightDeletes() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 
@@ -185,6 +199,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronizationWithInFlightReads() throws Exception {
+      connectTargetCluster();
       // fill source cluster with data
       fillCluster(sourceCluster, TEST_CACHE);
 

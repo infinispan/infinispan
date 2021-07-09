@@ -80,7 +80,7 @@ public class RollingUpgradeManager {
          description = "Disconnects target clusters from source clusters.",
          displayName = "Disconnects target clusters from source clusters."
    )
-   public void disconnectSource(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
+   public void disconnectSource(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.disconnectSource(cache);
    }

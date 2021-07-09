@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 @Test(testName = "upgrade.hotrod.HotRodUpgradeWithStoreTest", groups = "functional")
 public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
 
-   private TestCluster sourceCluster, targetCluster;
-   private static final String CACHE_NAME = HotRodUpgradeWithStoreTest.class.getName();
+   protected TestCluster sourceCluster, targetCluster;
+   protected String CACHE_NAME = this.getClass().getName();
    private static final int INITIAL_NUM_ENTRIES = 10;
 
    @BeforeClass
@@ -35,21 +35,31 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("sourceStore");
 
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+            .cache().name(CACHE_NAME).configuredWith(sourceStoreBuilder)
+            .build();
+
+      targetCluster = configureTargetCluster();
+   }
+
+   protected TestCluster configureTargetCluster() {
       ConfigurationBuilder targetStoreBuilder = new ConfigurationBuilder();
       targetStoreBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("targetStore");
 
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).configuredWith(sourceStoreBuilder)
-            .build();
-
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+      return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).configuredWith(targetStoreBuilder)
             .build();
    }
 
+   protected void connectTargetCluster() {
+      // No op, target cluster is already connected to the source (static remote store added).
+   }
+
    public void testSynchronization() throws Exception {
+      connectTargetCluster();
+
       RemoteCache<String, String> sourceRemoteCache = sourceCluster.getRemoteCache(CACHE_NAME);
       RemoteCache<String, String> targetRemoteCache = targetCluster.getRemoteCache(CACHE_NAME);
 

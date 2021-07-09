@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
@@ -102,6 +103,16 @@ class TestCluster {
       sb.append("Servers: ").append(addresses);
       sb.append(addresses);
       return sb.toString();
+   }
+
+   public void connectSource(String cacheName, StoreConfiguration configuration) {
+      EmbeddedCacheManager cacheManager = embeddedCacheManagers.iterator().next();
+      RollingUpgradeManager rum = cacheManager.getCache(cacheName).getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      try {
+         rum.connectSource("hotrod", configuration);
+      } catch (Exception e) {
+         Assert.fail("Failed to connect target!", e);
+      }
    }
 
    public void disconnectSource(String cacheName) {
@@ -232,7 +243,7 @@ class TestCluster {
                } else {
                   store.segmented(false);
                }
-               if(marshaller != null) {
+               if (marshaller != null) {
                   store.marshaller(marshaller);
                }
             }
