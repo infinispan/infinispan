@@ -3,12 +3,13 @@
           xmlns="urn:infinispan:server:14.0">
    <security-realms>
       <security-realm name="default">
-         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
-                     principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
-            <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
+         <ldap-realm name="ldap" url="${org.infinispan.test.ldap.url}"
+                     principal="${org.infinispan.test.ldap.principal}" credential="strongPassword">
+            <identity-mapping rdn-identifier="uid" search-dn="${org.infinispan.test.ldap.search-dn}" search-recursive="true">
                <attribute-mapping>
-                  <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
-                             filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+                  <attribute from="cn" to="${org.infinispan.test.ldap.identity-mapping.attribute.to}"
+                             filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                             filter-dn="${org.infinispan.test.ldap.filter-dn}"/>
                </attribute-mapping>
                <user-password-mapper from="userPassword"/>
             </identity-mapping>

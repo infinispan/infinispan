@@ -32,7 +32,7 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
          InfinispanServerRuleBuilder.config("configuration/AuthorizationKerberosTest.xml")
                .numServers(1)
                .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-               .addListener(new LdapServerListener("ldif/infinispan-kerberos.ldif", true))
+               .addListener(new LdapServerListener(new String[]{"ldif/infinispan-dn.ldif", "ldif/infinispan-kerberos.ldif"}, true))
                .build();
 
    @Rule
