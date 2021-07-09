@@ -19,7 +19,6 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -43,7 +42,6 @@ public class AuthenticationImplicitIT {
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationServerImplicitTest.xml")
                                     .addListener(new SecurityRealmServerListener("alternate"))
-                                    .addListener(new LdapServerListener())
                                     .build();
 
    @Rule
