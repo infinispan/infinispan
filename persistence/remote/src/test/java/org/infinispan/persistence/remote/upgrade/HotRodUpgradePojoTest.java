@@ -53,12 +53,12 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       return "[" + transactionMode + ", autoCommit=" + autoCommit + "]";
    }
 
-   private HotRodUpgradePojoTest transaction(TransactionMode transactionMode) {
+   protected HotRodUpgradePojoTest transaction(TransactionMode transactionMode) {
       this.transactionMode = transactionMode;
       return this;
    }
 
-   private HotRodUpgradePojoTest autoCommit(boolean autoCommit) {
+   protected HotRodUpgradePojoTest autoCommit(boolean autoCommit) {
       this.autoCommit = autoCommit;
       return this;
    }
@@ -82,15 +82,26 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
             .cache().name(CACHE_NAME).configuredWith(config)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+      targetCluster = configureTargetCluster(config);
+
+   }
+
+   protected TestCluster configureTargetCluster(ConfigurationBuilder cacheConfig) {
+      return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .marshaller(GenericJBossMarshaller.class)
-            .cache().name(CACHE_NAME).configuredWith(config)
+            .cache().name(CACHE_NAME).configuredWith(cacheConfig)
             .remotePort(sourceCluster.getHotRodPort()).remoteStoreWrapping(false).remoteStoreRawValues(false)
             .remoteStoreMarshaller(GenericJBossMarshaller.class)
             .build();
    }
 
+   protected void connectTargetCluster() {
+      // No op, target cluster is already connected to the source (static remote store added).
+   }
+
    public void testSynchronization() throws Exception {
+      connectTargetCluster();
+
       RemoteCache<Object, Object> sourceRemoteCache = sourceCluster.getRemoteCache(CACHE_NAME, transactionMode.equals(TRANSACTIONAL));
       RemoteCache<Object, Object> targetRemoteCache = targetCluster.getRemoteCache(CACHE_NAME);
 
@@ -123,6 +134,8 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
    }
 
    public void testSynchronizationBetweenEmbedded() throws Exception {
+      connectTargetCluster();
+
       sourceCluster.cleanAllCaches();
       targetCluster.cleanAllCaches();
 
