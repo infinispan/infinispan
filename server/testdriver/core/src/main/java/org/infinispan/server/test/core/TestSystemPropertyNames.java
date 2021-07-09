@@ -97,5 +97,9 @@ public class TestSystemPropertyNames {
     * Specifies the name of the Jaeger image
     */
    public static final String JAEGER_IMAGE = "org.infinispan.test.jaegerImage";
+   /**
+    * Specifies the name of the keycloak base image
+    */
+   public static final String LDAP_SERVER = "org.infinispan.test.ldapServer";
 
 }
