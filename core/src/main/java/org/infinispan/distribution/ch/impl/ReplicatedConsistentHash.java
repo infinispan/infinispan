@@ -140,7 +140,17 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    private static Map<Address, Float> parseCapacityFactors(ScopedPersistentState state,
                                                            List<Address> members) {
-      int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
+      String numCapacityFactorsString = state.getProperty(STATE_CAPACITY_FACTORS);
+      if (numCapacityFactorsString == null) {
+         // Cache state version 11 did not have capacity factors
+         Map<Address, Float> map = new HashMap<>();
+         for (Address a : members) {
+            map.put(a, 1f);
+         }
+         return map;
+      }
+
+      int numCapacityFactors = Integer.parseInt(numCapacityFactorsString);
       Map<Address, Float> capacityFactors = new HashMap<>(numCapacityFactors * 2);
       for (int i = 0; i < numCapacityFactors; i++) {
          float capacityFactor = Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i)));
