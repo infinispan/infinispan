@@ -94,9 +94,15 @@ public class ServerTaskEngine implements TaskEngine {
          if (context.getCache().isPresent()) {
             AuthorizationManager authorizationManager = context.getCache().get().getAdvancedCache().getAuthorizationManager();
             if (authorizationManager != null) {
+               // when the cache is secured
                authorizationManager.checkPermission(AuthorizationPermission.EXEC, role);
                return;
             }
+         }
+         if (context.getSubject().isPresent()) {
+            // if the subject is present, then use the subject
+            globalauthorizer.checkPermission(context.getSubject().get(), AuthorizationPermission.EXEC);
+            return;
          }
          globalauthorizer.checkPermission(null, null, AuthorizationPermission.EXEC, role);
       }
