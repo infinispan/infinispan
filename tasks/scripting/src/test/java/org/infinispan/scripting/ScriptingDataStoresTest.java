@@ -2,6 +2,7 @@ package org.infinispan.scripting;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -61,6 +62,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory().storageType(this.storageType);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
+      cacheManager.getCache(CACHE_NAME);
    }
 
    @Override
@@ -69,7 +71,9 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    }
 
    public void testScriptWithParam() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
+      CompletionStage<String> scriptStage =
+            scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a"));
+      String result = scriptStage.toCompletableFuture().get(10, TimeUnit.SECONDS);
       assertEquals("a", result);
       assertEquals("a", cacheManager.getCache(CACHE_NAME).get("a"));
    }
@@ -79,7 +83,9 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
       String key = "processValue";
       cacheManager.getCache(CACHE_NAME).put(key, value);
 
-      scriptingManager.runScript("testExecWithoutProp.js").toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
+      CompletionStage<String> scriptStage = scriptingManager.runScript("testExecWithoutProp.js");
+      String result = scriptStage.toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertEquals("javaValue", result);
       assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
    }
 }
