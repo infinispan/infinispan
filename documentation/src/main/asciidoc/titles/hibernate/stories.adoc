@@ -1,0 +1,4 @@
+//Reference user stories or topics.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::{stories}/assembly_hibernate_cache.adoc[leveloffset=+1]
