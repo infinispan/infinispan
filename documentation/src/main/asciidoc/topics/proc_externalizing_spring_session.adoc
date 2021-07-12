@@ -1,0 +1,39 @@
+[id='externalizing-spring-session_{context}']
+= Externalizing Sessions with Spring Session
+Use the Spring Session API to externalize session data to {brandname}.
+
+.Procedure
+
+. Add dependencies to your `pom.xml`.
++
+* Embedded caches: `infinispan-spring5-embedded`
+* Remote caches: `infinispan-spring5-remote`
++
+The following example is for remote caches:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/spring5_session_dependencies.xml[]
+----
++
+. Specify the appropriate `FactoryBean` to expose a `CacheManager` instance.
++
+* Embedded caches: `SpringEmbeddedCacheManagerFactoryBean`
+* Remote caches: `SpringRemoteCacheManagerFactoryBean`
++
+. Enable Spring Session with the appropriate annotation.
++
+* Embedded caches: `@EnableInfinispanEmbeddedHttpSession`
+* Remote caches: `@EnableInfinispanRemoteHttpSession`
++
+These annotations have optional parameters:
++
+- `maxInactiveIntervalInSeconds` sets session expiration time in seconds. The default is `1800`.
+- `cacheName` specifies the name of the cache that stores sessions. The default is `sessions`.
+
+The following example shows a complete, annotation-based configuration:
+
+[source,java,options=nowrap]
+----
+include::code_examples/SpringExternalizeSessions.java[]
+----

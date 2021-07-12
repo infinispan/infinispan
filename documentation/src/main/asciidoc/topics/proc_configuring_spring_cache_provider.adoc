@@ -1,0 +1,21 @@
+[id='configuring-spring-cache-provider_{context}']
+== Configuring {brandname} as the Spring Cache Provider
+The Spring cache provider SPI has two interfaces through which it interacts with {brandname}: `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache`.
+The `CacheManager` interface acts as a factory for named `Cache` instances.
+
+At runtime Spring looks for a `CacheManager` implementation that has a bean named `cacheManager` in the application context.
+
+.Procedure
+
+* Configure {brandname} with the `cacheManager` bean in one of the following ways:
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/spring_cache_manager_bean.xml[]
+----
+.Programmatic
+[source,java,options=nowrap,subs=attributes+,role="secondary"]
+----
+include::code_examples/SpringCacheManager.java[]
+----

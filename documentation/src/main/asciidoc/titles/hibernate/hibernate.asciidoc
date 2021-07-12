@@ -1,0 +1,23 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+
+//Title
+= Hibernate Second-Level Caching
+
+You can use {brandname} as a second-level cache (2LC) with Hibernate to store all sessions from applications using the same session factory.
+
+//User stories
+include::stories.adoc[]
