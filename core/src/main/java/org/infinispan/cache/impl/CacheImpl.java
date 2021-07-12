@@ -65,7 +65,6 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -1017,7 +1016,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (stateTransferManager != null) {
          stateTransferManager.waitForInitialStateTransferToComplete();
       }
-      if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
+      log.debugf("Started cache %s on %s", getName(), managerIdentifier());
    }
 
    @Override
@@ -1035,8 +1034,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          displayName = "Clustered cache shutdown"
    )
    public void shutdown() {
-      if (log.isDebugEnabled())
-         log.debugf("Shutting down cache %s on %s", getName(), getCacheManager().getAddress());
+      log.debugf("Shutting down cache %s on %s", getName(), managerIdentifier());
 
       synchronized (this) {
          if (!stopping && componentRegistry.getStatus() == ComponentStatus.RUNNING) {
@@ -1059,8 +1057,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private void performImmediateShutdown() {
-      if (log.isDebugEnabled())
-         log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
+      log.debugf("Stopping cache %s on %s", getName(), managerIdentifier());
       componentRegistry.stop();
    }
 
@@ -1223,7 +1220,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config != null && config.clustering().cacheMode().isClustered() ? getRpcManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
+      return "Cache '" + name + "'@" + managerIdentifier();
+   }
+
+   private String managerIdentifier() {
+      if (rpcManager != null) {
+         return rpcManager.getAddress().toString();
+      } else if (globalCfg.transport().nodeName() != null){
+         return globalCfg.transport().nodeName();
+      } else {
+         return globalCfg.cacheManagerName();
+      }
    }
 
    @Override
