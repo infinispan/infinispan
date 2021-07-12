@@ -11,12 +11,13 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :icons: font
 :toclevels: 3
 :numbered:
+:sectanchors:
 :stem: asciimath
 
 //Title
-= Integrating {brandname} {infinispanversion}
+= Using {brandname} with Spring
 
-Find out how to integrate {brandname} with other projects.
+{brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
 
 //User stories
 include::stories.adoc[]
