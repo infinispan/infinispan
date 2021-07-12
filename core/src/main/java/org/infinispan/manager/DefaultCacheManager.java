@@ -558,7 +558,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       final AtomicReference<RuntimeException> exception = new AtomicReference<>(null);
       for (final String cacheName : cacheNames) {
          if (!threads.containsKey(cacheName)) {
-            String threadName = "CacheStartThread," + configurationManager.getGlobalConfiguration().transport().nodeName() + "," + cacheName;
+            String threadName = "CacheStartThread," + identifierString() + "," + cacheName;
             Thread thread = new Thread(threadName) {
                @Override
                public void run() {
@@ -683,7 +683,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
 
       try {
-         log.tracef("About to wire and start cache %s", cacheName);
+         log.debugf("Creating cache %s on %s", cacheName, identifierString());
          if (cache == null) {
             cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
             if (cache.getAdvancedCache().getAuthorizationManager() != null) {
@@ -701,7 +701,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (needToNotifyCacheStarted) {
             globalComponentRegistry.notifyCacheStarted(cacheName);
          }
-         log.tracef("Cache %s started", cacheName);
+         log.tracef("Cache %s is ready", cacheName);
          return cache;
       } catch (CacheException e) {
          cacheFuture.completeExceptionally(e);
@@ -735,7 +735,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             return;
          }
 
-         log.debugf("Starting cache manager %s", configurationManager.getGlobalConfiguration().transport().nodeName());
+         log.debugf("Starting cache manager %s", identifierString());
          initializeSecurity(globalConfiguration);
 
          updateStatus(ComponentStatus.INITIALIZING);
@@ -749,8 +749,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
          globalComponentRegistry.start();
 
-         String nodeName = globalConfiguration.transport().nodeName();
-         log.debugf("Started cache manager %s on %s", nodeName, getAddress());
+         log.debugf("Started cache manager %s", identifierString());
       } catch (Exception e) {
          throw new EmbeddedCacheManagerStartupException(e);
       } finally {
@@ -799,6 +798,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void internalStop() {
       lifecycleLock.lock();
+      String identifierString = identifierString();
       try {
          while (status == ComponentStatus.STOPPING) {
             lifecycleCondition.await();
@@ -809,7 +809,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
 
          // We can stop the manager
-         log.infof("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().nodeName(), getAddress());
+         log.debugf("Stopping cache manager %s", identifierString);
          updateStatus(ComponentStatus.STOPPING);
       } catch (InterruptedException e) {
          throw new CacheException("Interrupted waiting for the cache manager to stop");
@@ -821,7 +821,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          stopCaches();
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
          globalComponentRegistry.stop();
-         log.debugf("Stopped cache manager %s", configurationManager.getGlobalConfiguration().transport().nodeName());
+         log.debugf("Stopped cache manager %s", identifierString);
       } finally {
          updateStatus(ComponentStatus.TERMINATED);
       }
@@ -1109,7 +1109,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public String toString() {
-      return super.toString() + "@Address:" + getAddress();
+      return getClass().getSimpleName() + " " + identifierString();
+   }
+
+   private String identifierString() {
+      if (getAddress() != null) {
+         return getAddress().toString();
+      } else if (configurationManager.getGlobalConfiguration().transport().nodeName() != null){
+         return configurationManager.getGlobalConfiguration().transport().nodeName();
+      } else {
+         return configurationManager.getGlobalConfiguration().cacheManagerName();
+      }
    }
 
    /**
