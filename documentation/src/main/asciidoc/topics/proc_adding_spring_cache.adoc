@@ -1,0 +1,35 @@
+[id='adding-spring-cache_{context}']
+= Adding Spring Cache support
+
+To add caching support to your application, with the following annotations:
+
+* `@Cacheable` adds entries to the cache.
+* `@CacheEvict` removes entries from the cache.
+
+.Procedure
+
+. Enable cache annotations in your application context in one of the following ways:
++
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/spring_annotation_driven.xml[]
+----
++
+.Programmatic
+[source,java,options=nowrap,subs=attributes+,role="secondary"]
+----
+include::code_examples/SpringEnableCaching.java[]
+----
+
+. Add {brandname} and the Spring integration module to your `pom.xml`.
++
+* Embedded caches: `infinispan-spring5-embedded`
+* Remote caches: `infinispan-spring5-remote`
++
+The following example is for embedded caches:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/spring_integration.xml[]
+----

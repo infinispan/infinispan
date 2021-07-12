@@ -1,4 +1,4 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{stories}/assembly_integrating.adoc[leveloffset=+1]
+include::{stories}/assembly_spring_cache_sessions.adoc[leveloffset=+1]
