@@ -1,0 +1,36 @@
+[id='spring-cache-annotations_{context}']
+= Spring Cache annotations
+Annotation application code with the `@Cacheable` and `@CacheEvict` annotations.
+
+.`@Cacheable`
+
+The `@Cacheable` annotation adds returned values to a defined cache.
+
+For instance, you have a data access object (DAO) for books. You want book instances to be cached after they have been loaded from the underlying database using `BookDao#findBook(Integer bookId)`.
+
+Annotate the `findBook(Integer bookId)` method with `@Cacheable` as follows:
+
+[source,java,options=nowrap]
+----
+include::code_examples/SpringCachableExample.java[]
+----
+
+Any `Book` instances returned from `findBook(Integer bookId)` are stored in a cache named `books`, using `bookId` as the key.
+
+Note that "#bookId" is an expression in the link:http://static.springsource.org/spring/docs/current/spring-framework-reference/html/expressions.html[Spring Expression Language] that evaluates the `bookId` argument.
+
+[IMPORTANT]
+====
+If your application needs to reference entries in the cache directly, you should include the `key` attribute.
+For more information, see link:https://docs.spring.io/spring-framework/docs/current/reference/html/integration.html#cache-annotations-cacheable-default-key[Default Key Generation] in the Spring documentation.
+====
+
+.`@CacheEvict`
+The `@CacheEvict` annotation deletes entries from a defined cache.
+
+Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` as follows:
+
+[source,java,options=nowrap]
+----
+include::code_examples/SpringCacheEvictExample.java[]
+----

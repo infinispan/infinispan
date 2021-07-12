@@ -1,0 +1,15 @@
+[id='hibernate-cache']
+:context: hibernate-cache
+= Using {brandname} as a second-level cache
+
+{brandname} implements the SPI that Hibernate exposes to allow integration with the second-level cache (2LC).
+This means you can use {brandname} to store data from `Session` or `EntityManager` (JPA) operations.
+
+The link:https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching[Caching] chapter in the Hibernate ORM User Guide contains complete information about 2LC.
+This guide provides details about using {brandname} as second-level cache provider with Hibernate.
+
+include::{topics}/ref_hibernate_second_level_cache.adoc[leveloffset=+0]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

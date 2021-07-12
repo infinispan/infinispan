@@ -37,7 +37,11 @@ Written and maintained by the {brandname} community
 * link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
 * link:titles/developing/developing.html[Developer's Guide]
 * link:titles/xsite/xsite.html[Using Cross-Site Replication]
-* link:titles/integrating/integrating.html[Integrations]
+* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
+* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
+* link:titles/rest/rest.html[REST API]
+* link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]
+* link:titles/spring/spring.html[Spring Cache and Spring Sessions]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
 
 [discrete]
