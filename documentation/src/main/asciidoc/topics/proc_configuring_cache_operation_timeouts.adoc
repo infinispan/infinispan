@@ -1,0 +1,33 @@
+[id='configuring-cache-operation-timeouts_{context}']
+= Configuring Timeouts for Cache Operations
+
+The {brandname} Spring cache provider defaults to blocking behaviour when performing read and write operations.
+Cache operations are synchronous and do not time out.
+
+If necessary you can configure a maximum time to wait for operations to complete before they time out.
+
+.Procedure
+
+* Configure the following timeout properties in the context XML for your application on either `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
++
+For remote caches, you can also add these properties to the `hotrod-client.properties` file.
+
+[%header,cols=2*]
+|===
+|Property
+|Description
+
+|`infinispan.spring.operation.read.timeout`
+|Specifies the time, in milliseconds, to wait for read operations to complete. The default is `0` which means unlimited wait time.
+
+|`infinispan.spring.operation.write.timeout`
+|Specifies the time, in milliseconds, to wait for write operations to complete. The default is `0` which means unlimited wait time.
+
+|===
+
+The following example shows the timeout properties in the context XML for `SpringRemoteCacheManagerFactoryBean`:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/spring_remote_cache_manager_factory_bean.xml[]
+----
