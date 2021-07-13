@@ -3,11 +3,6 @@ package org.infinispan.distribution.ch.impl;
 import static org.infinispan.distribution.ch.impl.SyncConsistentHashFactory.Builder.fudgeExpectedSegments;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +30,7 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       if (expectedOwned >= averageOwned) {
          maxDiff = .10f * expectedOwned;
       } else {
-         maxDiff = .25f * expectedOwned;
+         maxDiff = .10f * (expectedOwned + averageOwned);
       }
       return expectedOwned + Math.max(maxDiff, 1);
    }
@@ -49,7 +44,7 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       if (expectedOwned >= averageOwned) {
          maxDiff = .15f * expectedOwned;
       } else {
-         maxDiff = .10f * expectedOwned;
+         maxDiff = .05f * (expectedOwned + averageOwned);
       }
       return expectedOwned - Math.max(maxDiff, 1);
    }
@@ -60,20 +55,7 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       int oldSize = nodesWithLoad(oldCH.getMembers(), oldCH.getCapacityFactors());
       int newSize = nodesWithLoad(newCH.getMembers(), newCH.getCapacityFactors());
       int maxSize = Math.max(oldSize, newSize);
-      return Math.max(maxSize, 0.10f * newCH.getNumOwners() * newCH.getNumSegments());
-   }
-
-   public void test2() {
-      int ns = 500;
-      int no = 5;
-      int nn = 3;
-      List<Address> nodes = new ArrayList<>(nn);
-      for (int n = 0; n < nn; n++) {
-         nodes.add(new TestAddress(n, "TA"));
-      }
-      SyncConsistentHashFactory chf = createConsistentHashFactory();
-      DefaultConsistentHash ch = chf.create(no, ns, nodes, null);
-      checkDistribution(ch, null);
+      return Math.max(maxSize, 0.15f * newCH.getNumOwners() * newCH.getNumSegments());
    }
 
    public void testFudgeExpectedSegments() {

@@ -223,7 +223,6 @@ public class CacheTopology {
       if (log.isTraceEnabled()) {
          log.tracef("Current consistent hash's routing table: %s", currentCH.getRoutingTableAsString());
          if (pendingCH != null) log.tracef("Pending consistent hash's routing table: %s", pendingCH.getRoutingTableAsString());
-         if (unionCH != null) log.tracef("Union consistent hash's routing table: %s", unionCH.getRoutingTableAsString());
       }
    }
 

@@ -1,8 +1,9 @@
 package org.infinispan.distribution.ch.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertSame;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,15 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "distribution.ch.DefaultConsistentHashFactoryTest")
 public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
+   public static final int[] NUM_SEGMENTS = new int[]{1, 2, 4, 8, 16, 60, 256, 512};
+   public static final int[] NUM_NODES = new int[]{1, 2, 3, 4, 7, 10, 100};
+   public static final int[] NUM_OWNERS = new int[]{1, 2, 3, 5};
+   // Since the number of nodes changes, the capacity factors are repeated
+   public static final float[][] CAPACITY_FACTORS = new float[][]{{1}, {2}, {1, 100}, {2, 0, 1}};
+   // each element in the array is a pair of numbers: the first is the number of nodes to add
+   // the second is the number of nodes to remove (the index of the removed nodes are pseudo-random)
+   public static final int[][] NODE_CHANGES =
+         {{1, 0}, {2, 0}, {0, 1}, {0, 2}, {2, 1}, {1, 2}, {10, 0}, {0, 10}};
 
    private int iterationCount = 0;
 
@@ -39,24 +49,18 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    public void testConsistentHashDistribution() {
-      int[] numSegments = {1, 2, 4, 8, 16, 50, 100, 500};
-      int[] numNodes = {1, 2, 3, 4, 5, 7, 10, 100};
-      int[] numOwners = {1, 2, 3, 5};
-      // Since the number of nodes changes, the capacity factors are repeated
-      float[][] capacityFactors = {null, {1}, {2}, {1, 100}, {2, 0, 1}};
-
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
 
-      for (int nn : numNodes) {
+      for (int nn : NUM_NODES) {
          List<Address> nodes = new ArrayList<>(nn);
          for (int j = 0; j < nn; j++) {
             nodes.add(new TestAddress(j, "TA"));
          }
 
-         for (int ns : numSegments) {
+         for (int ns : NUM_SEGMENTS) {
             if (nn < ns) {
-               for (int no : numOwners) {
-                  for (float[] lf : capacityFactors) {
+               for (int no : NUM_OWNERS) {
+                  for (float[] lf : CAPACITY_FACTORS) {
                      Map<Address, Float> lfMap = null;
                      if (lf != null) {
                         lfMap = new HashMap<>();
@@ -73,35 +77,31 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf,
-                                                List<Address> nodes, int ns, int no, Map<Address, Float> lfMap) {
+                                                List<Address> nodes, int ns, int no, Map<Address, Float> capacityFactors) {
       log.tracef("Creating consistent hash with ns=%d, no=%d, members=(%d)%s",
-                 ns, no, nodes.size(), membersString(nodes, lfMap));
-      DefaultConsistentHash baseCH = chf.create(no, ns, nodes, lfMap);
-      assertEquals(lfMap, baseCH.getCapacityFactors());
-      checkDistribution(baseCH, lfMap);
-
-      // each element in the array is a pair of numbers: the first is the number of nodes to add
-      // the second is the number of nodes to remove (the index of the removed nodes are pseudo-random)
-      int[][] nodeChanges = {{1, 0}, {2, 0}, {0, 1}, {0, 2}, {1, 1}, {1, 2}, {2, 1}, {10, 0}, {0, 10}};
+                 ns, no, nodes.size(), membersString(nodes, capacityFactors));
+      DefaultConsistentHash baseCH = chf.create(no, ns, nodes, capacityFactors);
+      assertEquals(baseCH.getCapacityFactors(), capacityFactors);
+      checkDistribution(baseCH, capacityFactors);
 
       // check that the base CH is already balanced
       List<Address> baseMembers = baseCH.getMembers();
-      assertSame(baseCH, chf.updateMembers(baseCH, baseMembers, lfMap));
+      assertSame(baseCH, chf.updateMembers(baseCH, baseMembers, capacityFactors));
       assertSame(baseCH, chf.rebalance(baseCH));
 
       // starting point, so that we don't confuse nodes
       int nodeIndex = baseMembers.size();
 
-      for (int i = 0; i < nodeChanges.length; i++) {
-         int nodesToAdd = nodeChanges[i][0];
-         int nodesToRemove = nodeChanges[i][1];
+      for (int[] nodeChange : NODE_CHANGES) {
+         int nodesToAdd = nodeChange[0];
+         int nodesToRemove = nodeChange[1];
          if (nodesToRemove > baseMembers.size())
             break;
          if (nodesToRemove == baseMembers.size() && nodesToAdd == 0)
             break;
 
          List<Address> newMembers = new ArrayList<>(baseMembers);
-         HashMap<Address, Float> newCapacityFactors = lfMap != null ? new HashMap<>(lfMap) : null;
+         HashMap<Address, Float> newCapacityFactors = capacityFactors != null ? new HashMap<>(capacityFactors) : null;
          for (int k = 0; k < nodesToRemove; k++) {
             int indexToRemove = Math.abs(MurmurHash3.getInstance().hash(k) % newMembers.size());
             if (newCapacityFactors != null) {
@@ -113,13 +113,15 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             TestAddress address = new TestAddress(nodeIndex++, "TA");
             newMembers.add(address);
             if (newCapacityFactors != null) {
-               newCapacityFactors.put(address, lfMap.get(baseMembers.get(k % baseMembers.size())));
+               newCapacityFactors.put(address, capacityFactors.get(baseMembers.get(k % baseMembers.size())));
             }
          }
 
-         log.tracef("Testing consistent hash modifications iteration %d, members=(%d)%s",
+         log.tracef("Rebalance iteration %d, members=(%d)%s",
                     iterationCount, newMembers.size(), membersString(newMembers, newCapacityFactors));
-         baseCH = checkModificationsIteration(chf, baseCH, nodesToAdd, nodesToRemove, newMembers, newCapacityFactors);
+         baseCH = rebalanceIteration(chf, baseCH, nodesToAdd, nodesToRemove, newMembers, newCapacityFactors);
+         baseMembers = baseCH.getMembers();
+         capacityFactors = newCapacityFactors;
 
          iterationCount++;
       }
@@ -135,10 +137,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return capacityFactors != null ? capacityFactors.get(a) : 1f;
    }
 
-   private DefaultConsistentHash checkModificationsIteration(ConsistentHashFactory<DefaultConsistentHash> chf,
-                                                             DefaultConsistentHash baseCH, int nodesToAdd,
-                                                             int nodesToRemove, List<Address> newMembers,
-                                                             Map<Address, Float> lfMap) {
+   private DefaultConsistentHash rebalanceIteration(ConsistentHashFactory<DefaultConsistentHash> chf,
+                                                    DefaultConsistentHash baseCH, int nodesToAdd,
+                                                    int nodesToRemove, List<Address> newMembers,
+                                                    Map<Address, Float> lfMap) {
       int actualNumOwners = computeActualNumOwners(baseCH.getNumOwners(), newMembers, lfMap);
 
       // first phase: just update the members list, removing the leavers
@@ -156,7 +158,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       long startNanos = System.nanoTime();
       DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
       long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
-      if (durationMillis > 1) {
+      if (durationMillis >= 5) {
          log.tracef("Rebalance took %dms", durationMillis);
       }
       checkDistribution(rebalancedCH, lfMap);
@@ -175,9 +177,9 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
 
       // switch to the new CH in the next iteration
-      assertEquals(rebalancedCH.getNumSegments(), baseCH.getNumSegments());
-      assertEquals(rebalancedCH.getNumOwners(), baseCH.getNumOwners());
-      assertEquals(rebalancedCH.getMembers(), newMembers);
+      assertEquals(baseCH.getNumSegments(), rebalancedCH.getNumSegments());
+      assertEquals(baseCH.getNumOwners(), rebalancedCH.getNumOwners());
+      assertEquals(newMembers, rebalancedCH.getMembers());
       baseCH = rebalancedCH;
       return baseCH;
    }
@@ -191,10 +193,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       OwnershipStatistics stats = new OwnershipStatistics(ch, nodes);
       for (int s = 0; s < numSegments; s++) {
          List<Address> owners = ch.locateOwnersForSegment(s);
-         assertEquals(owners.size(), actualNumOwners);
+         assertEquals(actualNumOwners, owners.size());
          for (int i = 1; i < owners.size(); i++) {
             Address owner = owners.get(i);
-            assertEquals(owners.indexOf(owner), i, "Found the same owner twice in the owners list");
+            assertEquals("Found the same owner twice in the owners list", i, owners.indexOf(owner));
          }
       }
 
@@ -207,16 +209,17 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          int minPrimaryOwned = (int) Math.floor(minOwned(numSegments, 1, numNodesWithLoad, expectedPrimaryOwned));
          int maxPrimaryOwned = (int) Math.ceil(maxOwned(numSegments, 1, numNodesWithLoad, expectedPrimaryOwned));
          int primaryOwned = stats.getPrimaryOwned(node);
-         assertTrue(minPrimaryOwned <= primaryOwned && primaryOwned <= maxPrimaryOwned,
-                    String.format("Primary owned (%d) should have been between %d and %d",
-                                  primaryOwned, minPrimaryOwned, maxPrimaryOwned));
+         if (primaryOwned < minPrimaryOwned || maxPrimaryOwned < primaryOwned) {
+           fail(String.format("Primary owned (%d) should have been between %d and %d", primaryOwned, minPrimaryOwned, maxPrimaryOwned));
+         }
 
          float expectedOwned = expectedOwnedMap.get(node);
          int minOwned = (int) Math.floor(minOwned(numSegments, actualNumOwners, numNodesWithLoad, expectedOwned));
          int maxOwned = (int) Math.ceil(maxOwned(numSegments, actualNumOwners, numNodesWithLoad, expectedOwned));
          int owned = stats.getOwned(node);
-         assertTrue(minOwned <= owned && owned <= maxOwned,
-                    String.format("Owned (%d) should have been between %d and %d", owned, minOwned, maxOwned));
+         if (owned < minOwned || maxOwned < owned) {
+           fail(String.format("Owned (%d) should have been between %d and %d", owned, minOwned, maxOwned));
+         }
       }
    }
 
@@ -278,7 +281,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    protected float maxOwned(int numSegments, int actualNumOwners, int numNodes, float expectedOwned) {
-      return expectedOwned + Math.min(.10f * expectedOwned, numNodes - 1);
+      return expectedOwned + (numNodes - 1) + .01f * expectedOwned;
    }
 
    protected float minOwned(int numSegments, int actualNumOwners, int numNodes, float expectedOwned) {
@@ -298,52 +301,119 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    protected float allowedExtraMoves(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
                                      int joinerSegments, int leaverSegments) {
-      return Math.max(1, 0.05f * oldCH.getNumOwners() * oldCH.getNumSegments());
+      return Math.max(1, 0.1f * oldCH.getNumOwners() * oldCH.getNumSegments());
    }
 
    private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
                                    int nodesAdded, int nodesRemoved) {
       int numSegments = oldCH.getNumSegments();
       int numOwners = oldCH.getNumOwners();
-      Set<Address> oldMembers = new HashSet<>(oldCH.getMembers());
-      Set<Address> newMembers = new HashSet<>(newCH.getMembers());
+      List<Address> oldMembers = oldCH.getMembers();
+      List<Address> newMembers = newCH.getMembers();
+      Set<Address> commonMembers = new HashSet<>(oldMembers);
+      commonMembers.retainAll(newMembers);
 
-      // Compute the number of segments owned by members that left
+      // Compute the number of segments owned by members that left or joined
       int leaverSegments = 0;
       for (Address node : oldMembers) {
-         if (!newMembers.contains(node)) {
+         if (!commonMembers.contains(node)) {
             leaverSegments += oldCH.getSegmentsForOwner(node).size();
          }
       }
       int joinerSegments = 0;
       for (Address node : newMembers) {
-         if (!oldMembers.contains(node)) {
+         if (!commonMembers.contains(node)) {
             joinerSegments += newCH.getSegmentsForOwner(node).size();
          }
       }
 
-      // Compute the number of segments where an old node became an owner
-      int oldMembersAddedSegments = 0;
+      // Compute the number of segments where a common member added/removed segments
+      int commonMembersAddedSegments = 0;
+      int commonMembersRemovedSegments = 0;
+      int primarySwitchedWithBackup = 0;
       for (int segment = 0; segment < numSegments; segment++) {
-         ArrayList<Address> oldMembersAdded = new ArrayList<>(newCH.locateOwnersForSegment(segment));
-         oldMembersAdded.removeAll(oldCH.locateOwnersForSegment(segment));
-         oldMembersAdded.retainAll(oldMembers);
-         oldMembersAddedSegments += oldMembersAdded.size();
+         List<Address> oldOwners = oldCH.locateOwnersForSegment(segment);
+         List<Address> newOwners = newCH.locateOwnersForSegment(segment);
+         for (Address newOwner : newOwners) {
+            if (commonMembers.contains(newOwner) && !oldOwners.contains(newOwner)) {
+               commonMembersAddedSegments++;
+            }
+         }
+
+         for (Address oldOwner : oldOwners) {
+            if (commonMembers.contains(oldOwner) && !newOwners.contains(oldOwner)) {
+               commonMembersRemovedSegments++;
+            }
+         }
+
+         Address oldPrimary = oldOwners.get(0);
+         Address newPrimary = newOwners.get(0);
+         if (!newPrimary.equals(oldPrimary) && newOwners.contains(oldPrimary) && oldOwners.contains(newPrimary)) {
+            primarySwitchedWithBackup++;
+         }
       }
 
-      int movedSegments = oldMembersAddedSegments - leaverSegments;
+      // When we have both joiners and leavers, leaverSegments may be > commonMembersAddedSegments
+      int movedSegments = Math.max(0, commonMembersAddedSegments - leaverSegments);
+      // When nodes with load < numOwners, commonMembersLostSegments is 0 but joinerSegments > 0
+      int movedSegments2 = Math.max(0, commonMembersRemovedSegments - joinerSegments);
+      assertEquals(movedSegments, movedSegments2);
       int expectedExtraMoves = (int) Math.ceil(allowedExtraMoves(oldCH, newCH, joinerSegments, leaverSegments));
       if (movedSegments > expectedExtraMoves / 2) {
          log.tracef("%d of %d*%d extra segments moved, %fx of allowed (%d), %d leavers had %d, %d joiners have %d",
                     movedSegments, numOwners, numSegments, (float) movedSegments / expectedExtraMoves,
                     expectedExtraMoves, nodesRemoved, leaverSegments, nodesAdded, joinerSegments);
       }
-      assert movedSegments <= expectedExtraMoves
-            : String.format("Two many moved segments between %s and %s: expected %d, got %d",
-                            oldCH, newCH, expectedExtraMoves, oldMembersAddedSegments);
+      if (movedSegments > expectedExtraMoves) {
+        fail(String.format("Two many moved segments between %s and %s: expected %d, got %d",
+                           oldCH, newCH, expectedExtraMoves, movedSegments));
+      }
+
+      if (primarySwitchedWithBackup > Math.ceil(0.05 * numSegments)) {
+         log.tracef("Primary owner switched with backup for %d segments of %d", primarySwitchedWithBackup, numSegments);
+      }
+      double acceptablePrimarySwitchedWithBackup = Math.ceil(0.5 * (joinerSegments + leaverSegments) / numOwners * numSegments);
+      if (primarySwitchedWithBackup > acceptablePrimarySwitchedWithBackup) {
+        fail(String.format("Primary owner switched with backup owner for too many segments: %d of %d", primarySwitchedWithBackup, numSegments));
+      }
    }
 
-   public void test1() {
+   public void testNullCapacityFactors() {
+      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
+      TestAddress A = new TestAddress(0, "A");
+      TestAddress B = new TestAddress(1, "B");
+      TestAddress C = new TestAddress(2, "C");
+      TestAddress D = new TestAddress(3, "D");
+      Map<Address, Float> cf = new HashMap<>();
+      cf.put(A, 1f);
+      cf.put(B, 1f);
+      cf.put(C, 1f);
+      cf.put(D, 1f);
+
+      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), cf);
+      DefaultConsistentHash ch1NoCF = chf.create(2, 60, Arrays.asList(A), null);
+      assertEquals(ch1, ch1NoCF);
+
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), cf);
+      ch2 = chf.rebalance(ch2);
+      DefaultConsistentHash ch2NoCF = chf.updateMembers(ch1, Arrays.asList(A, B), null);
+      ch2NoCF = chf.rebalance(ch2NoCF);
+      assertEquals(ch2, ch2NoCF);
+
+      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), cf);
+      ch3 = chf.rebalance(ch3);
+      DefaultConsistentHash ch3NoCF = chf.updateMembers(ch2, Arrays.asList(A, B, C), null);
+      ch3NoCF = chf.rebalance(ch3NoCF);
+      assertEquals(ch3, ch3NoCF);
+
+      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), cf);
+      ch4 = chf.rebalance(ch4);
+      DefaultConsistentHash ch4NoCF = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), null);
+      ch4NoCF = chf.rebalance(ch4NoCF);
+      assertEquals(ch4, ch4NoCF);
+   }
+
+   public void testDifferentCapacityFactors() {
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
       TestAddress A = new TestAddress(0, "A");
       TestAddress B = new TestAddress(1, "B");
