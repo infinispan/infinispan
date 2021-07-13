@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -27,38 +26,23 @@ import org.infinispan.topology.PersistentUUID;
 import org.jgroups.util.UUID;
 
 /**
- * One of the assumptions people made on consistent hashing involves thinking
- * that given a particular key and same topology, it would produce the same
- * consistent hash value no matter which cache it was stored in. However,
- * that's not exactly the case in Infinispan.
+ * {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
+ * that guarantees that multiple caches with the same members will
+ * have the same consistent hash (unlike {@link DefaultConsistentHashFactory}).
  *
- * In order to the optimise the number of segments moved on join/leave,
- * Infinispan uses a consistent hash that depends on the previous consistent
- * hash. Given two caches, even if they contain exactly the same keyset, it's
- * very easy for the consistent hash history to differ, e.g. if 2 nodes join
- * you might see two separate topology change in one cache and a single
- * topology change in the other. The reason for that each node has to send a
- * {@link CacheJoinCommand} for each cache
- * it wants to join and Infinispan can and does batch cache topology changes.
- * For example, if a rebalance is in progress, joins are queued and send in
- * one go when the rebalance has finished.
- *
- * This {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation avoids any of the issues
- * mentioned and guarantees that multiple caches with the same members will
- * have the same consistent hash.
- *
- * It has a drawback compared to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory} though:
+ * <p>It has a drawback compared to {@link DefaultConsistentHashFactory} though:
  * it can potentially move a lot more segments during a rebalance than
- * strictly necessary because it's not taking advantage of the optimisation
- * mentioned above.
+ * strictly necessary.
+ * E.g. {0:AB, 1:BA, 2:CD, 3:DA} could turn into {0:BC, 1:CA, 2:CB, 3:AB} when D leaves,
+ * even though {0:AB, 1:BA, 2:CB, 3:AC} would require fewer segment ownership changes.
+ *
+ * <p>It may also reorder the owners of a segments, e.g. AB -> BA
+ * (same as {@linkplain DefaultConsistentHashFactory}).
  *
  * @author Dan Berindei
  * @since 5.2
  */
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
-
-   public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
-   public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.05f;
 
    @Override
    public DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
@@ -449,10 +433,10 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return assigned;
       }
 
-      private void populateQueues(int currentNumOwners, int[] nodeSegmentsToAdd, int queueSize,
+      private void populateQueues(int currentNumOwners, int[] nodeSegmentsToAdd, int queueCount,
                                   PriorityQueue<SegmentInfo>[] segmentQueues,
-                                  PriorityQueue<SegmentInfo> priorityQueue) {
-         // Optimization for queue size 1
+                                  PriorityQueue<SegmentInfo> temporaryQueue) {
+         // Bypass the temporary queue if the queue count is 1
          SegmentInfo best = null;
          for (int s = 0; s < numSegments; s++) {
             if (!segmentIsAvailable(s, currentNumOwners))
@@ -461,9 +445,9 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
             for (int n = 0; n < numNodes; n++) {
                if (nodeSegmentsToAdd[n] > 0 && nodeCanOwnSegment(s, segmentOwners[s].size(), n)) {
                   long scaledDistance = nodeSegmentDistance(n, segmentHashes[s]);
-                  if (queueSize > 1) {
+                  if (queueCount > 1) {
                      SegmentInfo si = new SegmentInfo(s, n, scaledDistance);
-                     priorityQueue.add(si);
+                     temporaryQueue.add(si);
                   } else {
                      if (best == null) {
                         best = new SegmentInfo(s, n, scaledDistance);
@@ -474,11 +458,11 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
                }
             }
 
-            if (queueSize > 1) {
-               for (int i = 0; i < queueSize && !priorityQueue.isEmpty(); i++) {
-                  segmentQueues[i].add(priorityQueue.remove());
+            if (queueCount > 1) {
+               for (int i = 0; i < queueCount && !temporaryQueue.isEmpty(); i++) {
+                  segmentQueues[i].add(temporaryQueue.remove());
                }
-               priorityQueue.clear();
+               temporaryQueue.clear();
             } else {
                if (best != null) {
                   segmentQueues[0].add(best);
