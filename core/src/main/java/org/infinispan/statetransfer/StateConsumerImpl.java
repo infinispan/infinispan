@@ -94,6 +94,8 @@ import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -208,6 +210,7 @@ public class StateConsumerImpl implements StateConsumer {
    // Use the state transfer timeout for RPCs instead of the regular remote timeout
    protected RpcOptions rpcOptions;
    private volatile boolean running;
+   private int numSegments;
 
    public StateConsumerImpl() {
    }
@@ -256,15 +259,14 @@ public class StateConsumerImpl implements StateConsumer {
    public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final CacheTopology previousCacheTopology = this.cacheTopology;
-      final ConsistentHash previousReadCh =
-            previousCacheTopology != null ? previousCacheTopology.getCurrentCH() : null;
       final ConsistentHash previousWriteCh =
             previousCacheTopology != null ? previousCacheTopology.getWriteConsistentHash() : null;
       IntSet newWriteSegments = getOwnedSegments(newWriteCh);
 
-      final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
+      Address address = rpcManager.getAddress();
+      final boolean isMember = cacheTopology.getMembers().contains(address);
       final boolean wasMember = previousWriteCh != null &&
-                                previousWriteCh.getMembers().contains(rpcManager.getAddress());
+                                previousWriteCh.getMembers().contains(address);
 
       if (log.isTraceEnabled())
          log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName,
@@ -370,7 +372,7 @@ public class StateConsumerImpl implements StateConsumer {
          } else {
             IntSet previousSegments = getOwnedSegments(previousWriteCh);
 
-            if (newWriteSegments.size() == newWriteCh.getNumSegments()) {
+            if (newWriteSegments.size() == numSegments) {
                // Optimization for replicated caches
                removedSegments = IntSets.immutableEmptySet();
             } else {
@@ -409,7 +411,8 @@ public class StateConsumerImpl implements StateConsumer {
             restartBrokenTransfers(cacheTopology, addedSegments);
          }
 
-         return handleSegments(startStateTransfer, addedSegments, removedSegments);
+         IntSet transactionOnlySegments = computeTransactionOnlySegments(cacheTopology, address);
+         return handleSegments(startStateTransfer, addedSegments, removedSegments, transactionOnlySegments);
       });
       stage = stage.thenCompose(ignored -> {
          int stateTransferTopologyId = this.stateTransferTopologyId.get();
@@ -421,18 +424,15 @@ public class StateConsumerImpl implements StateConsumer {
             // we have received a topology update without a pending CH, signalling the end of the rebalance
             boolean changed = this.stateTransferTopologyId.compareAndSet(stateTransferTopologyId,
                                                                          NO_STATE_TRANSFER_IN_PROGRESS);
+            // if the coordinator changed, we might get two concurrent topology updates,
+            // but we only want to notify the @DataRehashed listeners once
             if (changed) {
                stopApplyingState(stateTransferTopologyId);
 
-               // if the coordinator changed, we might get two concurrent topology updates,
-               // but we only want to notify the @DataRehashed listeners once
-               ConsistentHash nextConsistentHash = cacheTopology.getPendingCH();
-               if (nextConsistentHash == null) {
-                  nextConsistentHash = cacheTopology.getCurrentCH();
-               }
-
                if (cacheNotifier.hasListener(DataRehashed.class)) {
-                  return cacheNotifier.notifyDataRehashed(previousReadCh, nextConsistentHash, previousWriteCh,
+                  return cacheNotifier.notifyDataRehashed(previousCacheTopology.getCurrentCH(),
+                                                          previousCacheTopology.getPendingCH(),
+                                                          previousCacheTopology.getUnionCH(),
                                                           cacheTopology.getTopologyId(), false);
                }
             }
@@ -502,6 +502,37 @@ public class StateConsumerImpl implements StateConsumer {
          CompletableFutures.rethrowExceptionIfPresent(throwable);
          return CompletableFuture.completedFuture(stateTransferFuture);
       });
+   }
+
+   private IntSet computeTransactionOnlySegments(CacheTopology cacheTopology, Address address) {
+      if (configuration.transaction().transactionMode() != TransactionMode.TRANSACTIONAL ||
+          configuration.transaction().lockingMode() != LockingMode.PESSIMISTIC ||
+          cacheTopology.getPhase() != CacheTopology.Phase.READ_OLD_WRITE_ALL ||
+          !cacheTopology.getCurrentCH().getMembers().contains(address)) {
+         return IntSets.immutableEmptySet();
+      }
+
+      // In pessimistic caches, the originator does not send the lock command to backups
+      // if it is the primary owner for all the keys.
+      // The idea is that the locks can only be lost completely if the originator crashes (rolling back the tx)
+      // But this means when the owners of a segment change from AB -> BA or AB -> BC,
+      // B needs to request the transactions affecting that segment from A,
+      // even though B already has the entries of that segment
+      IntSet transactionOnlySegments = IntSets.mutableEmptySet(numSegments);
+      Set<Integer> pendingPrimarySegments = cacheTopology.getPendingCH().getPrimarySegmentsForOwner(address);
+      for (Integer segment : pendingPrimarySegments) {
+         List<Address> currentOwners = cacheTopology.getCurrentCH().locateOwnersForSegment(segment);
+         if (currentOwners.get(0).equals(address)) {
+            // Already primary
+            continue;
+         }
+         if (!currentOwners.contains(address)) {
+            // Not a backup, will receive transactions the normal way
+            continue;
+         }
+         transactionOnlySegments.add(segment);
+      }
+      return transactionOnlySegments;
    }
 
    private CompletionStage<Void> fetchClusterListeners(CacheTopology cacheTopology) {
@@ -781,6 +812,7 @@ public class StateConsumerImpl implements StateConsumer {
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       timeout = configuration.clustering().stateTransfer().timeout();
+      numSegments = configuration.clustering().hash().numSegments();
 
       CacheMode mode = configuration.clustering().cacheMode();
       isFetchEnabled = mode.needsStateTransfer() &&
@@ -822,8 +854,9 @@ public class StateConsumerImpl implements StateConsumer {
       this.keyInvalidationListener = keyInvalidationListener;
    }
 
-   protected CompletionStage<Void> handleSegments(boolean isRebalance, IntSet addedSegments, IntSet removedSegments) {
-      if (addedSegments.isEmpty()) {
+   protected CompletionStage<Void> handleSegments(boolean startRebalance, IntSet addedSegments,
+                                                  IntSet removedSegments, IntSet transactionOnlySegments) {
+      if (addedSegments.isEmpty() && transactionOnlySegments.isEmpty()) {
          return CompletableFutures.completedNull();
       }
 
@@ -838,7 +871,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       CompletionStage<Void> stage = CompletableFutures.completedNull();
       if (isTransactional) {
-         stage = requestTransactions(addedSegments, sources, excludedSources);
+         stage = requestTransactions(addedSegments, transactionOnlySegments, sources, excludedSources);
       }
 
       if (isFetchEnabled) {
@@ -848,15 +881,15 @@ public class StateConsumerImpl implements StateConsumer {
       return stage;
    }
 
-   private void findSources(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
+   private void findSources(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources,
+                            boolean ignoreOwnedSegments) {
       if (cache.wired().getStatus().isTerminated())
          return;
 
-      int numSegments = configuration.clustering().hash().numSegments();
       IntSet segmentsWithoutSource = IntSets.mutableEmptySet(numSegments);
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
          int segmentId = iter.nextInt();
-         Address source = findSource(segmentId, excludedSources);
+         Address source = findSource(segmentId, excludedSources, ignoreOwnedSegments);
          // ignore all segments for which there are no other owners to pull data from.
          // these segments are considered empty (or lost) and do not require a state transfer
          if (source != null) {
@@ -871,9 +904,9 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private Address findSource(int segmentId, Set<Address> excludedSources) {
+   private Address findSource(int segmentId, Set<Address> excludedSources, boolean ignoreOwnedSegment) {
       List<Address> owners = cacheTopology.getReadConsistentHash().locateOwnersForSegment(segmentId);
-      if (!owners.contains(rpcManager.getAddress())) {
+      if (!ignoreOwnedSegment || !owners.contains(rpcManager.getAddress())) {
          // We prefer that transactions are sourced from primary owners.
          // Needed in pessimistic mode, if the originator is the primary owner of the key than the lock
          // command is not replicated to the backup owners. See PessimisticDistributionInterceptor
@@ -887,23 +920,28 @@ public class StateConsumerImpl implements StateConsumer {
       return null;
    }
 
-   private CompletionStage<Void> requestTransactions(IntSet segments, Map<Address, IntSet> sources,
+   private CompletionStage<Void> requestTransactions(IntSet dataSegments, IntSet transactionOnlySegments,
+                                                     Map<Address, IntSet> sources,
                                                      Set<Address> excludedSources) {
       // TODO Remove excludedSources and always only for transactions/segments from the primary owner
-      findSources(segments, sources, excludedSources);
+      findSources(dataSegments, sources, excludedSources, true);
 
       AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
-      IntSet failedSegments = IntSets.concurrentSet(configuration.clustering().hash().numSegments());
+      IntSet failedSegments = IntSets.concurrentSet(numSegments);
       Set<Address> sourcesToExclude = ConcurrentHashMap.newKeySet();
       int topologyId = cacheTopology.getTopologyId();
-      for (Map.Entry<Address, IntSet> sourceEntry : sources.entrySet()) {
-         Address source = sourceEntry.getKey();
-         IntSet segmentsFromSource = sourceEntry.getValue();
-         CompletionStage<Response> sourceStage = getTransactions(source, segmentsFromSource, topologyId)
-               .whenComplete((response, throwable) -> processTransactionsResponse(segments, sources, failedSegments, sourcesToExclude, topologyId,
-                                           source, segmentsFromSource, response, throwable));
+      sources.forEach((source, segmentsFromSource) -> {
+         CompletionStage<Response> sourceStage =
+               requestAndApplyTransactions(failedSegments, sourcesToExclude, topologyId, source, segmentsFromSource);
          aggregateStage.dependsOn(sourceStage);
-      }
+      });
+      Map<Address, IntSet> transactionOnlySources = new HashMap<>();
+      findSources(transactionOnlySegments, transactionOnlySources, excludedSources, false);
+      transactionOnlySources.forEach((source, segmentsFromSource) -> {
+         CompletionStage<Response> sourceStage =
+               requestAndApplyTransactions(failedSegments, sourcesToExclude, topologyId, source, segmentsFromSource);
+         aggregateStage.dependsOn(sourceStage);
+      });
 
       return aggregateStage.freeze().thenCompose(ignored -> {
          if (failedSegments.isEmpty()) {
@@ -914,12 +952,21 @@ public class StateConsumerImpl implements StateConsumer {
 
          // look for other sources for all failed segments
          sources.clear();
-         findSources(failedSegments, sources, excludedSources);
-         return requestTransactions(segments, sources, excludedSources);
+         return requestTransactions(dataSegments, transactionOnlySegments, sources, excludedSources);
       });
    }
 
-   private void processTransactionsResponse(IntSet segments, Map<Address, IntSet> sources, IntSet failedSegments,
+   private CompletionStage<Response> requestAndApplyTransactions(IntSet failedSegments, Set<Address> sourcesToExclude,
+                                                                 int topologyId, Address source,
+                                                                 IntSet segmentsFromSource) {
+      return getTransactions(source, segmentsFromSource, topologyId)
+            .whenComplete((response, throwable) -> {
+               processTransactionsResponse(failedSegments, sourcesToExclude, topologyId,
+                                           source, segmentsFromSource, response, throwable);
+            });
+   }
+
+   private void processTransactionsResponse(IntSet failedSegments,
                                             Set<Address> sourcesToExclude, int topologyId, Address source,
                                             IntSet segmentsFromSource, Response response, Throwable throwable) {
       boolean failed = false;
@@ -927,10 +974,9 @@ public class StateConsumerImpl implements StateConsumer {
       if (throwable != null) {
          if (cache.wired().getStatus().isTerminated()) {
             log.debugf("Cache %s has stopped while requesting transactions", cacheName);
-            sources.clear();
             return;
          } else {
-            log.failedToRetrieveTransactionsForSegments(cacheName, source, segments, throwable);
+            log.failedToRetrieveTransactionsForSegments(cacheName, source, segmentsFromSource, throwable);
          }
          // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
          failed = true;
@@ -1005,7 +1051,7 @@ public class StateConsumerImpl implements StateConsumer {
    // not used in scattered cache
    private void requestSegments(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
       if (sources.isEmpty()) {
-         findSources(segments, sources, excludedSources);
+         findSources(segments, sources, excludedSources, true);
       }
 
       for (Map.Entry<Address, IntSet> e : sources.entrySet()) {

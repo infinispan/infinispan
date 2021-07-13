@@ -205,15 +205,14 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    @Override
    public String getRoutingTableAsString() {
       StringBuilder sb = new StringBuilder();
-      for (Address a : members) {
-         if (sb.length() > 0) {
-            sb.append("\n  ");
+      for (int i = 0; i < segmentOwners.length; i++) {
+         if (i > 0) {
+            sb.append(", ");
          }
-         Set<Integer> primarySegments = getPrimarySegmentsForOwner(a);
-         sb.append(a).append(" primary: ").append(primarySegments);
-         Set<Integer> backupSegments = getSegmentsForOwner(a);
-         backupSegments.removeAll(primarySegments);
-         sb.append(", backup: ").append(backupSegments);
+         sb.append(i).append(':');
+         for (int j = 0; j < segmentOwners[i].size(); j++) {
+            sb.append(' ').append(members.indexOf(segmentOwners[i].get(j)));
+         }
       }
       return sb.toString();
    }

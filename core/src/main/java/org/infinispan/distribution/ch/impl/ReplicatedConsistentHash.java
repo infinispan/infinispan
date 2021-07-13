@@ -229,24 +229,17 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String getRoutingTableAsString() {
-      int[] primaryOwned = new int[members.size()];
-      for (int primaryOwner : primaryOwners) {
-         primaryOwned[primaryOwner]++;
-      }
-
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < members.size(); i++) {
-         Address a = members.get(i);
-         if (sb.length() > 0) {
-            sb.append("\n  ");
+      for (int i = 0; i < primaryOwners.length; i++) {
+         if (i > 0) {
+            sb.append(", ");
          }
-
-         sb.append(a).append(" primary: ").append(primaryOwned[i]);
-         sb.append(", backup:");
-         if (membersWithStateSet.contains(a)) {
-            sb.append(getNumSegments() - primaryOwned[i]);
-         } else {
-            sb.append("0");
+         sb.append(i).append(": ").append(primaryOwners[i]);
+      }
+      if (!membersWithoutState.isEmpty()) {
+         sb.append("none:");
+         for (Address a : membersWithoutState) {
+            sb.append(' ').append(a);
          }
       }
       return sb.toString();
