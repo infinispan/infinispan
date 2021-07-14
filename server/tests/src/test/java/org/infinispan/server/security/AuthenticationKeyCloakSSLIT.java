@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import org.infinispan.server.test.core.EmbeddedInfinispanServerDriver;
 import org.infinispan.server.test.core.KeyCloakServerRule;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -17,11 +18,11 @@ import org.junit.Rule;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
+public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak {
 
    @ClassRule
    public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationKeyCloakSSLTest.xml")
                .build();
 
    @ClassRule
@@ -47,6 +48,7 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
 
    @Override
    protected String getToken() {
-      return KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", null, null);
+      EmbeddedInfinispanServerDriver driver = (EmbeddedInfinispanServerDriver) SERVERS.getServerDriver();
+      return KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", SERVERS.getServerDriver().getCertificateFile("ca").toPath(), "secret");
    }
 }

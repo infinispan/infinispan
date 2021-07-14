@@ -1038,7 +1038,7 @@
    </xs:complexType>
    <xs:complexType name="security-realm-ssl">
       <xs:sequence>
-         <xs:element type="tns:security-realm-keystore" name="keystore"/>
+         <xs:element type="tns:security-realm-keystore" name="keystore" minOccurs="0"/>
          <xs:element type="tns:security-realm-truststore" name="truststore" minOccurs="0"/>
          <xs:element type="tns:security-realm-ssl-engine" name="engine" minOccurs="0"/>
       </xs:sequence>
@@ -1453,14 +1453,68 @@
    </xs:complexType>
 
    <xs:complexType name="jwt">
-      <xs:attribute type="tns:name-list" name="issuer"/>
-      <xs:attribute type="tns:name-list" name="audience"/>
-      <xs:attribute type="xs:string" name="public-key"/>
-      <xs:attribute type="xs:long" name="jku-timeout"/>
+      <xs:attribute type="tns:name-list" name="issuer">
+         <xs:annotation>
+            <xs:documentation>
+               Defines one or more string values representing an unique identifier for the entities that are allowed as
+               issuers of a given JWT. During validation JWT tokens must have a iss claim that contains one of the values defined here.
+               If not provided, the validator will not perform validations based on the issuer claim.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="tns:name-list" name="audience">
+         <xs:annotation>
+            <xs:documentation>
+               Defines one or more string values representing the audiences supported by this configuration.
+               During validation JWT tokens must have an aud claim that contains one of the values defined here.
+               If not provided, the validator will not perform validations based on the audience claim.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="public-key">
+         <xs:annotation>
+            <xs:documentation>
+               A default public key in its PEM format used to validate the signature of tokens without kid header parameter.
+               If not provided, the validator will not validate signatures.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:long" name="jku-timeout" default="120000">
+         <xs:annotation>
+            <xs:documentation>
+               A timeout, in milliseconds for cached jwks when using jku claim.
+               After this timeout, the keys of need to be re-cached before use. Default value is 2 minutes.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="connection-timeout" default="2000">
+         <xs:annotation>
+            <xs:documentation>
+               Sets the timeout, in milliseconds, for connections to the JKU server.
+               The default value is 2 seconds.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="read-timeout" default="2000">
+         <xs:annotation>
+            <xs:documentation>
+               Sets the read timeout, in milliseconds, for the JKU server.
+               operations. The default value is 2 seconds.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="client-ssl-context">
          <xs:annotation>
             <xs:documentation>
                The name of a realm which provides a trust store with which to validate SSL client connections.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="host-name-verification-policy">
+         <xs:annotation>
+            <xs:documentation>
+               A HostnameVerifier that will be used to validate the hostname when using SSL/TLS.
+               This configuration is mandatory if using jku claims. Can be ANY or DEFAULT.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1470,9 +1524,47 @@
       <xs:sequence>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="client-id" use="required"/>
-      <xs:attribute type="xs:string" name="client-secret"/>
-      <xs:attribute type="xs:string" name="introspection-url" use="required"/>
+      <xs:attribute type="xs:string" name="client-id" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The identifier of a client registered within the OAuth2 Authorization Server that will be used to
+               authenticate this server in order to validate bearer tokens arriving to this server.
+               Please note that the client will be usually a confidential client with both an identifier and secret
+               configured in order to authenticate against the token introspection endpoint. In this case, the endpoint
+               must support HTTP BASIC authentication using the client credentials (both id and secret).
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="client-secret">
+         <xs:annotation>
+            <xs:documentation>
+               The secret of the client identified by the given clientId.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="introspection-url" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               An URL pointing to a RFC-7662 OAuth2 Token Introspection compatible endpoint.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="connection-timeout" default="2000">
+         <xs:annotation>
+            <xs:documentation>
+               Sets the timeout, in milliseconds, for connections to the OAuth2 server.
+               The default value is 2 seconds.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="read-timeout" default="2000">
+         <xs:annotation>
+            <xs:documentation>
+               Sets the read timeout, in milliseconds, for the OAuth2 server.
+               operations. The default value is 2 seconds.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="client-ssl-context">
          <xs:annotation>
             <xs:documentation>
@@ -1480,7 +1572,14 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="host-name-verification-policy"/>
+      <xs:attribute type="xs:string" name="host-name-verification-policy">
+         <xs:annotation>
+            <xs:documentation>
+               A HostnameVerifier that will be used to validate the hostname when using SSL/TLS.
+               This configuration is mandatory if the given token introspection url is using SSL/TLS. Can be ANY or DEFAULT.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-filesystem">

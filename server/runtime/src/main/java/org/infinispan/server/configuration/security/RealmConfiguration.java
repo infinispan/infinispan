@@ -102,13 +102,9 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       }
    }
 
-   public boolean hasSslIdentity() {
-      return serverIdentitiesConfiguration.sslConfiguration() != null;
-   }
-
    void init(SecurityConfiguration security, Properties properties) {
       SSLConfiguration sslConfiguration = serverIdentitiesConfiguration.sslConfiguration();
-      SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties) : null;
+      SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;
 
       SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
       domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
@@ -143,7 +139,6 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
          if (sslContextBuilder != null) {
             serverSslContext = sslContextBuilder.setClientMode(false).build().create();
             clientSslContext = sslContextBuilder.setClientMode(true).build().create();
-            features.add(ServerSecurityRealm.Feature.ENCRYPT);
          }
       } catch (GeneralSecurityException e) {
          throw new CacheConfigurationException(e);
@@ -168,6 +163,10 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
 
    void addFeature(ServerSecurityRealm.Feature feature) {
       this.features.add(feature);
+   }
+
+   public boolean hasFeature(ServerSecurityRealm.Feature feature) {
+      return features.contains(feature);
    }
 
    void setHttpChallengeReadiness(Supplier<Boolean> httpChallengeReadiness) {

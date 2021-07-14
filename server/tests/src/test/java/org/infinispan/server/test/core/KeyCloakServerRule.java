@@ -7,11 +7,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
@@ -34,10 +37,13 @@ public class KeyCloakServerRule implements TestRule {
    public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:10.0.1");
    private final String realmJsonFile;
 
-   private FixedHostPortGenericContainer container;
+   private FixedHostPortGenericContainer<?> container;
+   private final List<Consumer<KeyCloakServerRule>> beforeListeners = new ArrayList<>();
+   private final File keycloakDirectory;
 
    public KeyCloakServerRule(String realmJsonFile) {
       this.realmJsonFile = realmJsonFile;
+      this.keycloakDirectory = new File(tmpDirectory("keycloak"));
    }
 
    @Override
@@ -56,8 +62,10 @@ public class KeyCloakServerRule implements TestRule {
    }
 
    private void before(Class<?> testClass) {
-      File keycloakDirectory = new File(tmpDirectory("keycloak"));
       keycloakDirectory.mkdirs();
+
+      beforeListeners.forEach(l -> l.accept(this));
+
       File keycloakImport = new File(keycloakDirectory, "keycloak.json");
       try (InputStream is = getClass().getClassLoader().getResourceAsStream(realmJsonFile); OutputStream os = new FileOutputStream(keycloakImport)) {
          TestingUtil.copy(is, os);
@@ -71,18 +79,29 @@ public class KeyCloakServerRule implements TestRule {
       environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_PASSWORD, "KEYCLOAK_PASSWORD"), "keycloak");
       environment.put("KEYCLOAK_IMPORT", keycloakImport.getAbsolutePath());
       environment.put("JAVA_OPTS_APPEND", "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file="+keycloakImport.getAbsolutePath());
-      container = new FixedHostPortGenericContainer(KEYCLOAK_IMAGE);
-      container.withFixedExposedPort(14567, 8080)
+      container = new FixedHostPortGenericContainer<>(KEYCLOAK_IMAGE);
+      container
+            .withFixedExposedPort(14567, 8080)
+            .withFixedExposedPort(14568, 8443)
             .withEnv(environment)
             .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), keycloakImport.getPath())
-            .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)))
-            .waitingFor(Wait.forHttp("/"));
+            .withFileSystemBind(keycloakDirectory.getPath(), "/etc/x509/https")
+            //.waitingFor(Wait.forHttp("/").forPort(14567))
+            .waitingFor(Wait.forLogMessage(".*WFLYSRV0051.*",1))
+            .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)));
       container.start();
    }
 
-   public String getAccessTokenForCredentials(String realm, String client, String secret, String username, String password) {
+   public String getAccessTokenForCredentials(String realm, String client, String secret, String username, String password, Path trustStore, String trustStorePassword) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(8080)).connectionTimeout(5000).socketTimeout(5000);
+      int port;
+      if (trustStore != null)  {
+         builder.security().ssl().trustStoreFileName(trustStore.toString()).trustStorePassword(trustStorePassword.toCharArray()).hostnameVerifier((hostname, session) -> true);
+         port = 8443;
+      } else {
+         port = 8080;
+      }
+      builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(port)).connectionTimeout(5000).socketTimeout(5000);
       try (RestClient c = RestClient.forConfiguration(builder.build())) {
          String url = String.format("/auth/realms/%s/protocol/openid-connect/token", realm);
          Map<String, List<String>> form = new HashMap<>();
@@ -101,5 +120,14 @@ public class KeyCloakServerRule implements TestRule {
 
    private void after() {
       container.close();
+   }
+
+   public KeyCloakServerRule addBeforeListener(Consumer<KeyCloakServerRule> listener) {
+      beforeListeners.add(listener);
+      return this;
+   }
+
+   public File getKeycloakDirectory() {
+      return keycloakDirectory;
    }
 }

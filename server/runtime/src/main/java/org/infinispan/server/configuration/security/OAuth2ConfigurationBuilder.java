@@ -50,6 +50,16 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
       return this;
    }
 
+   public OAuth2ConfigurationBuilder connectionTimeout(int timeout) {
+      attributes.attribute(OAuth2Configuration.CONNECTION_TIMEOUT).set(timeout);
+      return this;
+   }
+
+   public OAuth2ConfigurationBuilder readTimeout(int timeout) {
+      attributes.attribute(OAuth2Configuration.READ_TIMEOUT).set(timeout);
+      return this;
+   }
+
    @Override
    public OAuth2Configuration create() {
       return new OAuth2Configuration(attributes.protect());

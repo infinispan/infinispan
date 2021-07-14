@@ -2,6 +2,7 @@ package org.infinispan.server.test.core;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -22,6 +23,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -340,6 +342,21 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             throw new RuntimeException(e);
          }
       });
+      try (FileWriter w = new FileWriter(new File(confDir, name + ".crt"))) {
+         w.write("-----BEGIN CERTIFICATE-----\n");
+         w.write(Base64.getEncoder().encodeToString(issuerCertificate.getEncoded()));
+         w.write("\n-----END CERTIFICATE-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      try (FileWriter w = new FileWriter(new File(confDir, name + ".key"))) {
+         w.write("-----BEGIN PRIVATE KEY-----\n");
+         w.write(Base64.getEncoder().encodeToString(certificate.getSigningKey().getEncoded()));
+         w.write("\n-----END PRIVATE KEY-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+
       return certificate;
    }
 
