@@ -28,13 +28,12 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  */
 public class EndpointConfigurationBuilder implements Builder<EndpointConfiguration> {
    private final AttributeSet attributes;
-   private final ServerConfigurationBuilder serverConfigurationBuilder;
+
    private final List<ProtocolServerConfigurationBuilder<?, ?>> connectorBuilders = new ArrayList<>(2);
    private final SinglePortServerConfigurationBuilder singlePortBuilder = new SinglePortServerConfigurationBuilder();
    private boolean implicitConnectorSecurity;
 
    public EndpointConfigurationBuilder(ServerConfigurationBuilder serverConfigurationBuilder, String socketBindingName) {
-      this.serverConfigurationBuilder = serverConfigurationBuilder;
       this.attributes = EndpointConfiguration.attributeDefinitionSet();
       attributes.attribute(EndpointConfiguration.SOCKET_BINDING).set(socketBindingName);
       singlePortBuilder.socketBinding(socketBindingName);
@@ -123,7 +122,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
       if (implicitSecurity) {
          RealmConfiguration realm = securityConfiguration.realms().getRealm(securityRealm());
-         if (realm.hasSslIdentity()) {
+         if (realm.hasFeature(ServerSecurityRealm.Feature.ENCRYPT)) {
             singlePortBuilder.ssl().enable().sslContext(realm.serverSSLContext());
          }
       }

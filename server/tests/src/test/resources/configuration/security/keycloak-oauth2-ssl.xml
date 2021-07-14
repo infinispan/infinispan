@@ -3,9 +3,14 @@
           xmlns="urn:infinispan:server:13.0">
    <security-realms>
       <security-realm name="default">
-         <token-realm name="infinispan" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+         <server-identities>
+            <ssl>
+               <truststore path="ca.pfx"  relative-to="infinispan.server.config.path" password="secret"/>
+            </ssl>
+         </server-identities>
+         <token-realm name="infinispan" auth-server-url="https://${org.infinispan.test.host.address}:14568/auth/" client-id="infinispan-console">
             <oauth2-introspection
-                    introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+                    introspection-url="https://${org.infinispan.test.host.address}:14568/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                     client-id="infinispan-server" client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
          </token-realm>
       </security-realm>

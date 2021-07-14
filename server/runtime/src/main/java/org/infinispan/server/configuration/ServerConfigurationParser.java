@@ -554,6 +554,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case HOST_NAME_VERIFICATION_POLICY:
                jwtBuilder.hostNameVerificationPolicy(value);
                break;
+            case CONNECTION_TIMEOUT:
+               jwtBuilder.connectionTimeout(Integer.parseInt(value));
+               break;
+            case READ_TIMEOUT:
+               jwtBuilder.readTimeout(Integer.parseInt(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -583,6 +589,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case HOST_NAME_VERIFICATION_POLICY:
                oauthBuilder.hostVerificationPolicy(value);
+               break;
+            case CONNECTION_TIMEOUT:
+               oauthBuilder.connectionTimeout(Integer.parseInt(value));
+               break;
+            case READ_TIMEOUT:
+               oauthBuilder.readTimeout(Integer.parseInt(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

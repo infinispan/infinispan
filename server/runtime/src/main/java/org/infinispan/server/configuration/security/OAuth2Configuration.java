@@ -26,26 +26,35 @@ public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuratio
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
    static final AttributeDefinition<String> HOST_VERIFICATION_POLICY = AttributeDefinition.builder(Attribute.HOST_NAME_VERIFICATION_POLICY, null, String.class).immutable().build();
    static final AttributeDefinition<String> INTROSPECTION_URL = AttributeDefinition.builder(Attribute.INTROSPECTION_URL, null, String.class).immutable().build();
+   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, 2000, Integer.class).immutable().build();
+   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, 2000, Integer.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(KeyStoreConfiguration.class, CLIENT_ID, CLIENT_SECRET, CLIENT_SSL_CONTEXT, INTROSPECTION_URL, HOST_VERIFICATION_POLICY);
+      return new AttributeSet(OAuth2Configuration.class, CLIENT_ID, CLIENT_SECRET, CLIENT_SSL_CONTEXT, INTROSPECTION_URL, HOST_VERIFICATION_POLICY, CONNECTION_TIMEOUT, READ_TIMEOUT);
    }
 
    OAuth2Configuration(AttributeSet attributes) {
       super(Element.OAUTH2_INTROSPECTION, attributes);
    }
 
-   TokenValidator getValidator(SecurityConfiguration security) {
+   TokenValidator getValidator(SecurityConfiguration security, RealmConfiguration realm) {
       OAuth2IntrospectValidator.Builder validatorBuilder = OAuth2IntrospectValidator.builder();
       validatorBuilder.clientId(attributes.attribute(CLIENT_ID).get());
       validatorBuilder.clientSecret(new String(attributes.attribute(CLIENT_SECRET).get().get()));
+      final URL url;
       try {
-         validatorBuilder.tokenIntrospectionUrl(new URL(attributes.attribute(INTROSPECTION_URL).get()));
+         url = new URL(attributes.attribute(INTROSPECTION_URL).get());
+         validatorBuilder.tokenIntrospectionUrl(url);
       } catch (MalformedURLException e) {
-         throw Server.log.invalidUrl();
+         throw Server.log.invalidUrl(attributes.attribute(INTROSPECTION_URL).get());
       }
-      attributes.attribute(HOST_VERIFICATION_POLICY).apply(v -> validatorBuilder.useSslHostnameVerifier(HostnameVerificationPolicy.valueOf(v).getVerifier()));
-      attributes.attribute(CLIENT_SSL_CONTEXT).apply(v -> validatorBuilder.useSslContext(security.realms().getRealm(v).clientSSLContext()));
+      if ("https".equalsIgnoreCase(url.getProtocol())) {
+         RealmConfiguration sslRealm = attributes.attribute(CLIENT_SSL_CONTEXT).isNull() ? realm : security.realms().getRealm(attributes.attribute(CLIENT_SSL_CONTEXT).get());
+         validatorBuilder.useSslContext(sslRealm.clientSSLContext());
+         if (!attributes.attribute(HOST_VERIFICATION_POLICY).isNull()) {
+            validatorBuilder.useSslHostnameVerifier(HostnameVerificationPolicy.valueOf(attributes.attribute(HOST_VERIFICATION_POLICY).get()).getVerifier());
+         }
+      }
       return validatorBuilder.build();
    }
 }

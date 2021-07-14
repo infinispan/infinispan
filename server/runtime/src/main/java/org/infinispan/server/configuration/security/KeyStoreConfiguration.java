@@ -5,6 +5,7 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.EnumSet;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -22,6 +23,7 @@ import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.security.KeyStoreUtils;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.KeyStoreUtil;
@@ -49,38 +51,41 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
       super(Element.KEYSTORE, attributes);
    }
 
-   public void build(SSLContextBuilder builder, Properties properties) {
-      try {
-         String keyStoreFileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(),
-               properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
-         String generateSelfSignedHost = attributes.attribute(GENERATE_SELF_SIGNED_CERTIFICATE_HOST).get();
-         String provider = attributes.attribute(PROVIDER).get();
-         char[] keyStorePassword = attributes.attribute(KEYSTORE_PASSWORD).get().get();
-         char[] keyPassword = attributes.attribute(KEY_PASSWORD).isNull() ? null : attributes.attribute(KEY_PASSWORD).get().get();
-         String keyAlias = attributes.attribute(ALIAS).get();
-         if (!new File(keyStoreFileName).exists() && generateSelfSignedHost != null) {
-            KeyStoreUtils.generateSelfSignedCertificate(keyStoreFileName, provider, keyStorePassword,
-                  keyPassword, keyAlias, generateSelfSignedHost);
-         }
-         KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider,
-               new FileInputStream(keyStoreFileName), keyStoreFileName, keyStorePassword);
-         if (keyAlias != null) {
-            keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));
-         }
-         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-         keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
-         for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
-            if (keyManager instanceof X509ExtendedKeyManager) {
-               builder.setKeyManager((X509ExtendedKeyManager) keyManager);
-               if (provider != null) {
-                  builder.setProviderName(provider);
-               }
-               return;
+   public void build(SSLContextBuilder builder, Properties properties, EnumSet<ServerSecurityRealm.Feature> features) {
+      if (attributes.isModified()) {
+         try {
+            String keyStoreFileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(),
+                  properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
+            String generateSelfSignedHost = attributes.attribute(GENERATE_SELF_SIGNED_CERTIFICATE_HOST).get();
+            String provider = attributes.attribute(PROVIDER).get();
+            char[] keyStorePassword = attributes.attribute(KEYSTORE_PASSWORD).get().get();
+            char[] keyPassword = attributes.attribute(KEY_PASSWORD).isNull() ? null : attributes.attribute(KEY_PASSWORD).get().get();
+            String keyAlias = attributes.attribute(ALIAS).get();
+            if (!new File(keyStoreFileName).exists() && generateSelfSignedHost != null) {
+               KeyStoreUtils.generateSelfSignedCertificate(keyStoreFileName, provider, keyStorePassword,
+                     keyPassword, keyAlias, generateSelfSignedHost);
             }
+            KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider,
+                  new FileInputStream(keyStoreFileName), keyStoreFileName, keyStorePassword);
+            if (keyAlias != null) {
+               keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));
+            }
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
+            for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
+               if (keyManager instanceof X509ExtendedKeyManager) {
+                  builder.setKeyManager((X509ExtendedKeyManager) keyManager);
+                  if (provider != null) {
+                     builder.setProviderName(provider);
+                  }
+                  features.add(ServerSecurityRealm.Feature.ENCRYPT);
+                  return;
+               }
+            }
+            throw Server.log.noDefaultKeyManager();
+         } catch (Exception e) {
+            throw new CacheConfigurationException(e);
          }
-         throw Server.log.noDefaultKeyManager();
-      } catch (Exception e) {
-         throw new CacheConfigurationException(e);
       }
    }
 }
