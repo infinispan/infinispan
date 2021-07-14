@@ -35,6 +35,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -55,6 +56,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
@@ -266,9 +268,15 @@ public class ContainerResource implements ResourceHandler {
                Configuration cacheConfiguration = SecurityActions
                      .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
                cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-
+               boolean isPersistent = false;
+               try {
+                  PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
+                  isPersistent = pm.isEnabled();
+               } catch (CacheConfigurationException ignored) {
+               }
                cacheInfo.simpleCache = cacheConfiguration.simpleCache();
                cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+               cacheInfo.persistent = isPersistent;
                cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
                cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
                      cacheConfiguration.expiration().lifespan() != -1;

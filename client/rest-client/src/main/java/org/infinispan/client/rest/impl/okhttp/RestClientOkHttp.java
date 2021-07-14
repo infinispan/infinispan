@@ -63,6 +63,7 @@ import okhttp3.ResponseBody;
 public class RestClientOkHttp implements RestClient {
    static final Log log = LogFactory.getLog(RestClientOkHttp.class);
    static final MediaType TEXT_PLAIN = MediaType.parse("text/plain; charset=utf-8");
+   static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
    static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
    private final RestClientConfiguration configuration;
    private final OkHttpClient httpClient;

@@ -10,6 +10,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.security.AuthorizationPermission;
@@ -20,6 +21,7 @@ import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetCacheManagerHealthAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
+import org.infinispan.security.actions.GetPersistenceManagerAction;
 import org.infinispan.security.impl.Authorizer;
 
 /**
@@ -46,6 +48,11 @@ final class SecurityActions {
    static Configuration getCacheConfigurationFromManager(final EmbeddedCacheManager cacheManager, String cacheName) {
       GetCacheConfigurationFromManagerAction action = new GetCacheConfigurationFromManagerAction(cacheManager,
             cacheName);
+      return doPrivileged(action);
+   }
+
+   static PersistenceManager getPersistenceManager(final EmbeddedCacheManager cacheManager, String cacheName) {
+      final GetPersistenceManagerAction action = new GetPersistenceManagerAction(cacheManager, cacheName);
       return doPrivileged(action);
    }
 

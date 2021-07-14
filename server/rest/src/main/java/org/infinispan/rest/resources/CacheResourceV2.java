@@ -23,6 +23,7 @@ import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.badRequestResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
@@ -53,6 +54,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
@@ -61,6 +63,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
@@ -131,6 +136,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("size").handleWith(this::getSize)
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("sync-data").handleWith(this::syncData)
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("connect-source").handleWith(this::connectSource)
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search")
@@ -170,6 +176,44 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
       }
       return completedFuture(builder.build());
+   }
+
+   private CompletionStage<RestResponse> connectSource(RestRequest request) {
+      final NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      builder.status(NO_CONTENT);
+
+      String cacheName = request.variables().get("cacheName");
+      ContentSource contents = request.contents();
+      byte[] config = contents.rawContent();
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+
+      if (cache == null) {
+         return notFoundResponseFuture();
+      }
+
+      if (config == null || config.length == 0) {
+         return badRequestResponseFuture("A remote-store config must be provided");
+      }
+
+      String storeConfig = new String(config, UTF_8);
+      Json read = Json.read(storeConfig);
+
+      if (!read.isObject() || read.at("remote-store") == null || read.asMap().size() != 1) {
+         return badRequestResponseFuture("Invalid remote-store JSON description: a single remote-store element must be provided");
+      }
+
+      return CompletableFuture.supplyAsync(() -> {
+         RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+         try {
+            RemoteStoreConfiguration storeConfiguration = SerializationUtils.fromJson(read.toString());
+            upgradeManager.connectSource("hotrod", storeConfiguration);
+         } catch (Exception e) {
+            Throwable rootCause = Util.getRootCause(e);
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+         }
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> syncData(RestRequest request) {
@@ -427,6 +471,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private RestResponse getDetailResponse(Cache<?, ?> cache) {
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      PersistenceManager persistenceManager = SecurityActions.getPersistenceManager(cacheManager, cache.getName());
       Stats stats = null;
       Boolean rehashInProgress = null;
       Boolean indexingInProgress = null;
@@ -464,7 +510,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.size = size;
       fullDetail.rehashInProgress = rehashInProgress;
       fullDetail.indexingInProgress = indexingInProgress;
-      fullDetail.persistent = configuration.persistence().usingStores();
+      fullDetail.persistent = persistenceManager.isEnabled();
       fullDetail.bounded = configuration.memory().whenFull().isEnabled();
       fullDetail.indexed = indexed;
       fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
