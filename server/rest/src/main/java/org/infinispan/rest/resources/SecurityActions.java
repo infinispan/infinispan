@@ -63,8 +63,8 @@ final class SecurityActions {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 
-   public static EncoderRegistry getEncoderRegistry(AdvancedCache<?, ?> cache) {
-      return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
+   public static EncoderRegistry getEncoderRegistry(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(() -> cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
    }
 
    static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {

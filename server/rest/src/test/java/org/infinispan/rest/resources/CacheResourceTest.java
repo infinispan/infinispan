@@ -147,7 +147,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       join(objectCache.put("test", RestEntity.create(APPLICATION_XML, xml)));
 
       //when
-      CompletionStage<RestResponse> response = objectCache.get("test", APPLICATION_XML_TYPE);
+      RestResponse response = join(objectCache.get("test", APPLICATION_XML_TYPE));
 
       //then
       assertThat(response).isOk();

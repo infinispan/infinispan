@@ -38,7 +38,17 @@ public interface RestCacheClient {
     *
     * @return Response with InputStream to get the entries
     */
-   CompletionStage<RestResponse> entries();
+   default CompletionStage<RestResponse> entries() {
+      return entries(false);
+   }
+
+   /**
+    * Retrieves entries without metadata
+    *
+    * @param contentNegotiation if true, the server will convert keys and values to a readable format and return headers with the negotiated media type.
+    * @return Response with InputStream to get the entries
+    */
+   CompletionStage<RestResponse> entries(boolean contentNegotiation);
 
    /**
     * Retrieves entries limited by count

@@ -290,6 +290,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> entries(boolean contentNegotiation) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=entries&content-negotiation=" + contentNegotiation).get();
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> entries(int limit) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=entries&limit=" + limit).get();

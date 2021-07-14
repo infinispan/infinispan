@@ -1,13 +1,15 @@
 package org.infinispan.rest;
 
-import org.infinispan.CacheStream;
-import org.infinispan.container.entries.InternalCacheEntry;
-
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import org.infinispan.CacheStream;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.container.entries.InternalCacheEntry;
 
 /**
  * An {@link InputStream} that reads from a {@link CacheStream} of byte[] and produces a JSON output.
@@ -19,6 +21,9 @@ import java.util.stream.Stream;
  * @since 12.0
  */
 public class CacheEntryInputStream extends InputStream {
+   private final boolean keysAreJson;
+   private final boolean valuesAreJson;
+
    private enum State {BEGIN, BEGIN_ITEM, NEXT_ITEM, ITEM_KEY, ITEM_VALUE, ITEM_METADATA, SEPARATOR_KEY, SEPARATOR_VALUE, END_ITEM, SEPARATOR, END, EOF}
 
    private static final byte[] KEY_LABEL = "\"key\":".getBytes();
@@ -33,9 +38,11 @@ public class CacheEntryInputStream extends InputStream {
    private final Iterator<? extends Map.Entry<?, ?>> iterator;
    private final Stream<? extends Map.Entry<?, ?>> stream;
    private final int batchSize;
-   private boolean includeMetadata;
+   private final boolean includeMetadata;
 
    private Map.Entry<?, ?> currentEntry;
+   private byte[] currentKey;
+   private byte[] currentValue;
    private byte[] currentMetadata;
    private int cursor = 0;
    private int keyCursor = 0;
@@ -81,9 +88,11 @@ public class CacheEntryInputStream extends InputStream {
       }
    }
 
-   public CacheEntryInputStream(CacheStream<? extends Map.Entry<?, ?>> stream,
+   public CacheEntryInputStream(boolean keysAreJson, boolean valuesAreJson, CacheStream<? extends Map.Entry<?, ?>> stream,
                                 int batchSize,
                                 boolean includeMetadata) {
+      this.keysAreJson = keysAreJson;
+      this.valuesAreJson = valuesAreJson;
       this.stream = stream.distributedBatchSize(batchSize);
       this.iterator = stream.iterator();
       this.hasNext = iterator.hasNext();
@@ -97,10 +106,20 @@ public class CacheEntryInputStream extends InputStream {
          return 0;
       }
 
-      int keySize = ((byte[]) currentEntry.getKey()).length;
-      int valueSize = ((byte[]) currentEntry.getValue()).length;
+      int keySize = currentKey.length;
+      int valueSize = currentValue.length;
       int metadataSize = includeMetadata ? currentMetadata.length : 0;
       return keySize + valueSize + metadataSize - cursor * batchSize;
+   }
+
+
+   private byte[] escape(Object content, boolean json) {
+      byte[] asUTF = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(StandardCharsets.UTF_8);
+
+      if (json) return asUTF;
+
+      String escape = "\"" + Json.help.escape(new String(asUTF)) + "\"";
+      return escape.getBytes(StandardCharsets.UTF_8);
    }
 
    @Override
@@ -140,6 +159,8 @@ public class CacheEntryInputStream extends InputStream {
                if (currentEntry == null) {
                   if (hasNext) {
                      currentEntry = iterator.next();
+                     currentKey = escape(currentEntry.getKey(), keysAreJson);
+                     currentValue = escape(currentEntry.getValue(), valuesAreJson);
                      if (includeMetadata) {
                         loadMetadata();
                      }
@@ -150,7 +171,7 @@ public class CacheEntryInputStream extends InputStream {
                   return KEY_LABEL[keyLabelCursor++] & 0xff;
                }
 
-               byte[] key = (byte[]) currentEntry.getKey();
+               byte[] key = currentKey;
 
                int ck = currentEntry == null || keyCursor == key.length ? -1 : key[keyCursor++] & 0xff;
                cursor++;
@@ -165,7 +186,7 @@ public class CacheEntryInputStream extends InputStream {
                   return VALUE_LABEL[valueLabelCursor++] & 0xff;
                }
 
-               byte[] value = (byte[]) currentEntry.getValue();
+               byte[] value = escape(currentEntry.getValue(), valuesAreJson);
                int cv = valueCursor == value.length ? -1 : value[valueCursor++] & 0xff;
                cursor++;
                if (cv != -1)
@@ -196,6 +217,8 @@ public class CacheEntryInputStream extends InputStream {
 
    private void endItem() {
       currentEntry = null;
+      currentKey = null;
+      currentValue = null;
       state = State.END_ITEM;
       hasNext = iterator.hasNext();
       cursor = 0;
