@@ -392,6 +392,13 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> disconnectSource();
 
    /**
+    * Connects the target cluster to a source cluster before a Rolling Upgrade
+    *
+    * @param remoteStoreJsonConfig The remote-store config as JSON
+    */
+   CompletionStage<RestResponse> connectSource(RestEntity remoteStoreJsonConfig);
+
+   /**
     * Rebuild the search indexes of the cache based on its data.
     */
    CompletionStage<RestResponse> reindex();

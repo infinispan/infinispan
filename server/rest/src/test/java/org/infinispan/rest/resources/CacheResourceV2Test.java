@@ -981,6 +981,25 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       listen.close();
    }
 
+   @Test
+   public void testConnectStoreValidation() {
+      RestCacheClient cacheClient = client.cache("default");
+
+      assertBadResponse(cacheClient, "true");
+      assertBadResponse(cacheClient, "2");
+      assertBadResponse(cacheClient, "[1,2,3]");
+      assertBadResponse(cacheClient, "\"random text\"");
+
+      assertBadResponse(cacheClient, "{\"jdbc-store\":{\"shared\":true}}");
+      assertBadResponse(cacheClient, "{\"jdbc-store\":{\"shared\":true},\"remote-store\":{\"shared\":true}}");
+   }
+
+   private void assertBadResponse(RestCacheClient client, String config) {
+      RestResponse response = join(client.connectSource(RestEntity.create(APPLICATION_JSON, config)));
+      ResponseAssertion.assertThat(response).isBadRequest();
+      ResponseAssertion.assertThat(response).containsReturnedText("Invalid remote-store JSON description");
+   }
+
    private void assertQueryStatEmpty(Json queryTypeStats) {
       assertEquals(0, queryTypeStats.at("count").asInteger());
       assertEquals(0, queryTypeStats.at("max").asInteger());

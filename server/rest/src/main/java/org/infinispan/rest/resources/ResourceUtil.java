@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -43,6 +44,10 @@ class ResourceUtil {
 
    static CompletableFuture<RestResponse> notFoundResponseFuture() {
       return responseFuture(NOT_FOUND);
+   }
+
+   static CompletableFuture<RestResponse> badRequestResponseFuture(Object message) {
+      return responseFuture(BAD_REQUEST, message);
    }
 
    static NettyRestResponse.Builder addEntityAsJson(Json json, NettyRestResponse.Builder responseBuilder) {
