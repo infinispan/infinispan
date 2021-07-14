@@ -22,7 +22,7 @@ import org.junit.Test;
  */
 public class RollingUpgradeIT extends AbstractMultiClusterIT {
    protected static final String CACHE_NAME = "rolling";
-   private static final int ENTRIES = 50;
+   protected static final int ENTRIES = 50;
 
    public RollingUpgradeIT() {
       super("configuration/ClusteredServerTest.xml");
@@ -101,7 +101,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
       assertEquals(response.getBody(), 200, response.getStatus());
    }
 
-   private String getPersonName(String id, RestClient client) {
+   protected String getPersonName(String id, RestClient client) {
       RestResponse resp = join(client.cache(CACHE_NAME).get(id));
       String body = resp.getBody();
       assertEquals(body, 200, resp.getStatus());
@@ -122,9 +122,8 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
       return String.format("{\"_type\":\"Person\",\"name\":\"%s\"}", name);
    }
 
-   private void createTargetClusterCache() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      final RemoteStoreConfigurationBuilder storeConfigurationBuilder = builder.clustering()
+   void addRemoteStore(ConfigurationBuilder builder) {
+      RemoteStoreConfigurationBuilder storeConfigurationBuilder = builder.clustering()
             .cacheMode(CacheMode.DIST_SYNC).persistence().addStore(RemoteStoreConfigurationBuilder.class);
       storeConfigurationBuilder
             .remoteCacheName(CACHE_NAME)
@@ -142,10 +141,17 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
                .password(credentials.getValue())
                .realm("default");
       }
+   }
+
+   private void createTargetClusterCache() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      addRemoteStore(builder);
+
       createCache(CACHE_NAME, builder, target.getClient());
    }
 
-   private void createSourceClusterCache() {
+   void createSourceClusterCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       createCache(CACHE_NAME, builder, source.getClient());

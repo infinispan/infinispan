@@ -82,6 +82,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> connectSource(RestEntity value) {
+      Request.Builder builder = new Request.Builder();
+      builder.post(((RestEntityAdaptorOkHttp) value).toRequestBody()).url(cacheUrl + "?action=connect-source");
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> size() {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=size").get();

@@ -1,12 +1,13 @@
 package org.infinispan.cli.commands.rest;
 
+import java.io.File;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.activators.DisabledActivator;
@@ -14,9 +15,11 @@ import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.converters.NullableIntegerConverter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
@@ -63,13 +66,13 @@ public class Migrate extends CliCommand {
    }
 
    @CommandDefinition(name = "connect", description = "Connects to a source cluster", activator = DisabledActivator.class)
-   public static class ClusterConnect extends CliCommand {
+   public static class ClusterConnect extends RestCliCommand {
 
       @Option(completer = CacheCompleter.class, shortName = 'c', description = "The name of the cache.")
       String cache;
 
-      @Option(shortName = 'u', description = "The Hot Rod URL for the source cluster", required = true)
-      String url;
+      @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "JSON containing a 'remote-store' element with the configuration")
+      org.aesh.io.Resource file;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
@@ -80,9 +83,12 @@ public class Migrate extends CliCommand {
       }
 
       @Override
-      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-         // TODO: ISPN-11870
-         throw new UnsupportedOperationException();
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         if (file == null) {
+            throw Messages.MSG.illegalCommandArguments();
+         }
+         RestEntity restEntity = RestEntity.create(new File(file.getAbsolutePath()));
+         return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).connectSource(restEntity);
       }
    }
 
