@@ -9,6 +9,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
@@ -50,6 +51,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
@@ -64,6 +66,7 @@ import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -87,9 +90,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
+   private final EncoderRegistry encoderRegistry;
 
    public CacheResourceV2(InvocationHelper invocationHelper) {
       super(invocationHelper);
+      this.encoderRegistry = SecurityActions.getEncoderRegistry(invocationHelper.getRestCacheManager().getInstance());
    }
 
    @Override
@@ -229,24 +234,33 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String limitParam = request.getParameter("limit");
       String metadataParam = request.getParameter("metadata");
       String batchParam = request.getParameter("batch");
-      int limit = limitParam == null ? -1 : Integer.parseInt(limitParam);
-      boolean metadata = metadataParam == null ? false : Boolean.parseBoolean(metadataParam);
-      int batch = batchParam == null ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+      String negotiateMediaType = request.getParameter("content-negotiation");
 
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
-      if (cache == null)
-         return notFoundResponseFuture();
+      int limit = limitParam == null ? -1 : Integer.parseInt(limitParam);
+      boolean metadata = Boolean.parseBoolean(metadataParam);
+      int batch = batchParam == null ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+      boolean negotiate = Boolean.parseBoolean(negotiateMediaType);
+
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
+      if (cache == null) return notFoundResponseFuture();
+
+      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, encoderRegistry, true) : APPLICATION_JSON;
+      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, encoderRegistry, false) : APPLICATION_JSON;
+
+      Cache<?, ?> streamCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
 
       // Streaming over the cache is blocking
       return CompletableFuture.supplyAsync(() -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CacheStream<? extends Map.Entry<?, ?>> stream = cache.entrySet().stream();
+         CacheStream<? extends Map.Entry<?, ?>> stream = streamCache.entrySet().stream();
          if (limit > -1) {
             stream = stream.limit(limit);
          }
-         responseBuilder.entity(new CacheEntryInputStream(stream, batch, metadata));
+         responseBuilder.entity(new CacheEntryInputStream(keyMediaType.match(APPLICATION_JSON), valueMediaType.match(APPLICATION_JSON), stream, batch, metadata));
 
          responseBuilder.contentType(APPLICATION_JSON_TYPE);
+         responseBuilder.header(ResponseHeader.KEY_CONTENT_TYPE_HEADER.getValue(), keyMediaType.toString());
+         responseBuilder.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue(), valueMediaType.toString());
 
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -264,6 +278,21 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
       return cache.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
+   }
+
+   private MediaType negotiateEntryMediaType(AdvancedCache<?, ?> cache, EncoderRegistry encoderRegistry, boolean forKey) {
+      MediaType storage = forKey ? cache.getKeyDataConversion().getStorageMediaType() : cache.getValueDataConversion().getStorageMediaType();
+      boolean encodingDefined = !MediaType.APPLICATION_UNKNOWN.equals(storage);
+      boolean jsonSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, APPLICATION_JSON);
+      boolean textSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, TEXT_PLAIN);
+
+      if (jsonSupported) return APPLICATION_JSON;
+
+      if (textSupported) return TEXT_PLAIN;
+
+      if (encodingDefined) return storage.withEncoding("hex");
+
+      return APPLICATION_OCTET_STREAM.withEncoding("hex");
    }
 
    private CompletionStage<RestResponse> removeCache(RestRequest request) {

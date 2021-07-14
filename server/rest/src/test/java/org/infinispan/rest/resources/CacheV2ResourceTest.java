@@ -6,6 +6,7 @@ import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -62,6 +63,7 @@ import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.rest.ResponseHeader;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
@@ -532,6 +534,103 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertThat(entry).doesNotContain("created");
       assertThat(entry).doesNotContain("lastUsed");
       assertThat(entry).doesNotContain("expireTime");
+   }
+
+   private String asString(Json json) {
+      return json.isObject() ? json.toString() : json.asString();
+   }
+
+   private void testStreamEntriesFromCache(String cacheName, MediaType cacheMediaType, MediaType writeMediaType, Map<String, String> data) {
+      // Create the cache with the supplied encoding
+      createCache(cacheName, cacheMediaType);
+
+      // Write entries with provided data and writeMediaType
+      data.forEach((key, value) -> writeEntry(key, value, cacheName, writeMediaType));
+
+      // Get entries
+      RestCacheClient cacheClient = client.cache(cacheName);
+      RestResponse response = join(cacheClient.entries(true));
+      Map<String, String> entries = entriesAsMap(response);
+
+      // Obtain the negotiated media type of the entries
+      String contentTypeHeader = response.getHeader(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue());
+
+      // Check entries are in the required format
+      assertEquals(data.size(), entries.size());
+      entries.forEach((key, value) -> assertEquals(value, data.get(key)));
+
+      // Change an entry using the content type returned from the previous call to getEntries
+      String aKey = data.keySet().iterator().next();
+      String aValue = data.get(aKey);
+      String changedValue = aValue.replace("value", "value-changed");
+      writeEntry(aKey, changedValue, cacheName, MediaType.fromString(contentTypeHeader));
+
+      // Check changed entry
+      entries = entriesAsMap(join(cacheClient.entries(true)));
+
+      assertEquals(changedValue, entries.get(aKey));
+   }
+
+   public void testStreamFromXMLCache() {
+      Map<String, String> data = new HashMap<>();
+      data.put("<id>1</id>", "<value>value1</value>");
+      data.put("<id>2</id>", "<value>value2</value>");
+
+      testStreamEntriesFromCache("xml", APPLICATION_XML, APPLICATION_XML, data);
+   }
+
+   public void testStreamFromTextPlainCache() {
+      Map<String, String> data = new HashMap<>();
+      data.put("key-1", "value-1");
+      data.put("key-2", "value-2");
+
+      testStreamEntriesFromCache("text", TEXT_PLAIN, TEXT_PLAIN, data);
+   }
+
+   public void testStreamFromJSONCache() {
+      Map<String, String> data = new HashMap<>();
+      data.put("1", "{\"value\":1}");
+      data.put("2", "{\"value\":2}");
+
+      testStreamEntriesFromCache("json", APPLICATION_JSON, APPLICATION_JSON, data);
+   }
+
+   public void testStreamFromDefaultCache() {
+      Map<String, String> data = new HashMap<>();
+      data.put("0x01", "0x010203");
+      data.put("0x02", "0x020406");
+
+      testStreamEntriesFromCache("noEncoding", null, APPLICATION_OCTET_STREAM.withEncoding("hex"), data);
+   }
+
+   private void createCache(String cacheName, MediaType mediaType) {
+      RestCacheClient cacheClient = client.cache(cacheName);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      if (mediaType != null) builder.encoding().mediaType(mediaType.toString());
+      String jsonConfig = new JsonWriter().toJSON(builder.build());
+      RestEntity cacheConfig = RestEntity.create(APPLICATION_JSON, jsonConfig);
+      RestResponse response = join(cacheClient.createWithConfiguration(cacheConfig));
+      assertThat(response).isOk();
+   }
+
+   private void writeEntry(String key, String value, String cacheName, MediaType mediaType) {
+      RestCacheClient cacheClient = client.cache(cacheName);
+      RestResponse response;
+      if (mediaType == null) {
+         response = join(cacheClient.put(key, value));
+      } else {
+         response = join(cacheClient.put(key, mediaType.toString(), RestEntity.create(mediaType, value)));
+      }
+      assertThat(response).isOk();
+   }
+
+   private Map<String, String> entriesAsMap(RestResponse response) {
+      assertThat(response).isOk();
+      final String body = response.getBody();
+      System.out.println(body);
+      List<Json> entries = Json.read(body).asJsonList();
+      return entries.stream().collect(Collectors.toMap(j -> asString(j.at("key")), j -> asString(j.at("value"))));
    }
 
    @Test
