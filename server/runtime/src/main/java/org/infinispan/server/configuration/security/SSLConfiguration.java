@@ -1,8 +1,10 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
 import java.util.Properties;
 
 import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.ssl.SSLContextBuilder;
 
 /**
@@ -32,9 +34,9 @@ public class SSLConfiguration {
       return engine;
    }
 
-   SSLContextBuilder build(Properties properties) {
+   SSLContextBuilder build(Properties properties, EnumSet<ServerSecurityRealm.Feature> features) {
       SSLContextBuilder builder = new SSLContextBuilder().setWrap(false).setProviderName(SslContextFactory.getSslProvider());
-      keyStore.build(builder, properties);
+      keyStore.build(builder, properties, features);
       trustStore.build(builder, properties);
       engine.build(builder);
       return builder;

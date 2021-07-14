@@ -19,9 +19,7 @@ import org.infinispan.server.configuration.Element;
  */
 public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private final AttributeSet attributes;
-
    private final ServerIdentitiesConfigurationBuilder serverIdentitiesConfiguration = new ServerIdentitiesConfigurationBuilder(this);
-
    private final List<RealmProviderBuilder<?>> builders = new ArrayList<>();
 
    RealmConfigurationBuilder(String name) {
