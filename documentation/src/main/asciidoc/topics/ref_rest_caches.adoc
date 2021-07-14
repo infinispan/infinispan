@@ -346,6 +346,12 @@ GET /rest/v2/caches/{cacheName}?action=entries
 |`batch`
 |OPTIONAL
 |Specifies the internal batch size when retrieving the keys. The default value is `1000`.
+|`content-negotiation`
+|OPTIONAL
+| If `true`, will convert keys and values to a readable format.
+For caches with text encodings (e.g., text/plain, xml, json), the server returns keys and values as plain text.
+For caches with binary encodings, the server will return the entries as JSON if the conversion is supported, otherwise in a text hexadecimal format, e.g., `0xA123CF98`.
+When content-negotiation is used, the response will contain two headers: `key-content-type` and `value-content-type` to described the negotiated format.
 |===
 
 {brandname} provides a JSON response such as the following:

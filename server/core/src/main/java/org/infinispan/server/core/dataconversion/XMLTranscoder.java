@@ -55,6 +55,9 @@ public class XMLTranscoder extends OneToManyTranscoder {
    @Override
    public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       if (destinationType.match(APPLICATION_XML)) {
+         if (contentType.match(APPLICATION_XML)) {
+            return StandardConversions.convertCharset(content, contentType.getCharset(), destinationType.getCharset());
+         }
          if (contentType.match(APPLICATION_OBJECT)) {
             String xmlString = xstream.toXML(content);
             return xmlString.getBytes(destinationType.getCharset());

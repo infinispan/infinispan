@@ -17,12 +17,14 @@ public enum ResponseHeader {
    DATE_HEADER("Date"),
    ETAG_HEADER("Etag"),
    EXPIRES_HEADER("Expires"),
+   KEY_CONTENT_TYPE_HEADER("key-content-type"),
    LAST_MODIFIED_HEADER("Last-Modified"),
    LAST_USED_HEADER("lastUsed"),
    LOCATION("location"),
    MAX_IDLE_TIME_HEADER("maxIdleTimeSeconds"),
    TIME_TO_LIVE_HEADER("timeToLiveSeconds"),
    TRANSFER_ENCODING("Transfer-Encoding"),
+   VALUE_CONTENT_TYPE_HEADER("value-content-type"),
    WWW_AUTHENTICATE_HEADER("WWW-Authenticate");
 
    private static final CharSequence[] ALL_VALUES = Arrays.stream(values()).map(ResponseHeader::getValue).toArray(String[]::new);
