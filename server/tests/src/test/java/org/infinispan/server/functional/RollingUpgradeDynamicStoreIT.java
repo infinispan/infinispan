@@ -76,7 +76,7 @@ public class RollingUpgradeDynamicStoreIT extends RollingUpgradeIT {
       createCache(CACHE_NAME, builder, target.getClient());
    }
 
-   private void connectTargetCluster() {
+   protected void connectTargetCluster() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       addRemoteStore(builder);
 
