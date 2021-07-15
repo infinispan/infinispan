@@ -10,7 +10,6 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
-import org.infinispan.cli.activators.DisabledActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.converters.NullableIntegerConverter;
@@ -65,7 +64,7 @@ public class Migrate extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "connect", description = "Connects to a source cluster", activator = DisabledActivator.class)
+   @CommandDefinition(name = "connect", description = "Connects to a source cluster")
    public static class ClusterConnect extends RestCliCommand {
 
       @Option(completer = CacheCompleter.class, shortName = 'c', description = "The name of the cache.")
