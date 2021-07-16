@@ -10,6 +10,8 @@ migrate - migrates data from one version of ${infinispan.brand.name} to another.
 
 SYNOPSIS
 --------
+*migrate cluster connect*
+
 *migrate cluster synchronize*
 
 *migrate cluster disconnect*
@@ -24,6 +26,9 @@ COMMAND SYNOPSIS
 ----------------
 
 Migrate clusters
+
+*migrate cluster connect*::
+Connects the target cluster to the source cluster.
 
 *migrate cluster synchronize*::
 Synchronize data between the source cluster and the target cluster.
@@ -40,6 +45,14 @@ These options apply to all commands:
 *-h, --help*::
 Displays a help page for the command or sub-command.
 
+CLUSTER CONNECT OPTIONS
+--------------------------
+
+*-c, --cache*='name'::
+The name of the cache to connect to the source.
+
+*-f, --file*='FILE'::
+Specifies a configuration file in JSON format, containing a single 'remote-store' element.
 
 CLUSTER SYNCHRONIZE OPTIONS
 ---------------------------
