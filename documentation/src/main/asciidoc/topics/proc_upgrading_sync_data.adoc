@@ -14,8 +14,8 @@ for each cache in your {brandname} configuration.
 . Start the synchronization operation for each cache in your {brandname}
 configuration that you want to migrate to the target cluster.
 +
-Use the {brandname} REST API and invoke `POST` requests with the `?action=sync-
-data` parameter. For example, to synchronize data in a cache named "myCache"
+Use the {brandname} REST API and invoke `POST` requests with the
+`?action=sync-data` parameter. For example, to synchronize data in a cache named "myCache"
 from a source cluster to a target cluster, do the following:
 +
 [source,options="nowrap",subs=attributes+]

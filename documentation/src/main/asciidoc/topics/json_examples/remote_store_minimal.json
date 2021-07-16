@@ -1,0 +1,13 @@
+{
+  "remote-store": {
+    "cache": "myCache",
+    "shared": true,
+    "raw-values": true,
+    "remote-server": [
+      {
+        "host": "127.0.0.2",
+        "port": 12222
+      }
+    ]
+  }
+}
