@@ -6,7 +6,7 @@ versions without downtime or data loss. Rolling upgrades migrate both your
 {brandname} servers and your data to the target version over Hot Rod.
 
 include::{topics}/proc_upgrading_setup_target.adoc[leveloffset=+1]
-include::{topics}/ref_rolling_upgrade_remote_store.adoc[leveloffset=+2]
+include::{topics}/ref_rolling_upgrade_connect_source.adoc[leveloffset=+2]
 include::{topics}/proc_upgrading_sync_data.adoc[leveloffset=+1]
 
 // Restore the parent context.

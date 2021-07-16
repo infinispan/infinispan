@@ -1,7 +1,6 @@
 [id='upgrade_target']
 = Setting Up Target Clusters
-Create a cluster that runs the target {brandname} version and uses a remote
-cache store to load data from the source cluster.
+Create a cluster that runs the target {brandname} version.
 
 .Prerequisites
 
@@ -18,14 +17,9 @@ offsets to keep the target and source clusters separate.
 
 .Procedure
 
-. Add a `RemoteCacheStore` on the target cluster for each cache you want
+. Connect the target cluster to the source cluster for each cache you want
 to migrate from the source cluster.
 +
-Remote cache stores use the Hot Rod protocol to retrieve data from remote
-{brandname} clusters. When you add the remote cache store to the target
-cluster, it can lazily load data from the source cluster to handle client
-requests.
-+
-. Switch clients over to the target cluster so it starts handling all requests.
+. Switch clients over to the target cluster, so it starts handling all requests.
 .. Update client configuration with the location of the target cluster.
 .. Restart clients.

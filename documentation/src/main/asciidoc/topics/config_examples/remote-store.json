@@ -1,0 +1,51 @@
+{
+  "remote-store": {
+    "cache": "my-cache",
+    "shared": true,
+    "raw-values": true,
+    "socket-timeout": 60000,
+    "protocol-version": "2.9",
+    "remote-server": [
+      {
+        "host": "127.0.0.2",
+        "port": 12222
+      }
+    ],
+    "connection-pool": {
+      "max-active": 110,
+      "exhausted-action": "CREATE_NEW"
+    },
+    "async-executor": {
+      "properties": {
+        "name": 4
+      }
+    },
+    "security": {
+      "authentication": {
+        "server-name": "servername",
+        "digest": {
+          "username": "username",
+          "password": "password",
+          "realm": "realm",
+          "sasl-mechanism": "DIGEST-MD5"
+        }
+      },
+      "encryption": {
+        "protocol": "TLSv1.2",
+        "sni-hostname": "snihostname",
+        "keystore": {
+          "filename": "/path/to/keystore_client.jks",
+          "password": "secret",
+          "certificate-password": "secret",
+          "key-alias": "hotrod",
+          "type": "JKS"
+        },
+        "truststore": {
+          "filename": "/path/to/gca.jks",
+          "password": "secret",
+          "type": "JKS"
+        }
+      }
+    }
+  }
+}
