@@ -896,7 +896,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder, filter, converter);
       } else {
-         return super.addListenerAsync(listener);
+         return super.addListenerAsync(listener, filter, converter );
       }
    }
 
