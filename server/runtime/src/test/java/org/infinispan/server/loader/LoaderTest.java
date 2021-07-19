@@ -45,6 +45,7 @@ public class LoaderTest {
    public void testLoaderViaSystemProperty() {
       Properties properties = new Properties();
       properties.put(Loader.INFINISPAN_SERVER_LIB_PATH, String.join(File.pathSeparator, lib1.toString(), lib2.toString(), lib3.toString()));
+      properties.put("user.dir", System.getProperty("user.dir"));
       Loader.run(new String[]{LoaderTest.class.getName()}, properties);
    }
 
@@ -56,7 +57,9 @@ public class LoaderTest {
       try (Writer w = Files.newBufferedWriter(propertyFile)) {
          properties.store(w, null);
       }
-      Loader.run(new String[]{LoaderTest.class.getName(), "-P", propertyFile.toAbsolutePath().toString()}, new Properties());
+      properties = new Properties();
+      properties.put("user.dir", System.getProperty("user.dir"));
+      Loader.run(new String[]{LoaderTest.class.getName(), "-P", propertyFile.toAbsolutePath().toString()}, properties);
    }
 
    public static void main(String[] args) {

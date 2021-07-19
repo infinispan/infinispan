@@ -16,6 +16,8 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.AeshTestShell;
+import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -34,6 +36,8 @@ public class CliIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+               .mavenArtifacts(Common.NASHORN_DEPS)
+               .runMode(ServerRunMode.CONTAINER)
                .build();
 
    @Rule

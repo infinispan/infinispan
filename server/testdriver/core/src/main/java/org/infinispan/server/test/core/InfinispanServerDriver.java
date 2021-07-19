@@ -137,4 +137,14 @@ public interface InfinispanServerDriver {
     * @return the number of seconds after which a server start/stop is considered to timeout
     */
    int getTimeout();
+
+   /**
+    * Synchronizes files from the server to the local filesystem
+    * @param server the server
+    * @param dir if relative, the path relative to the server root, otherwise an absolute path
+    * @return the path where the data has been synced to
+    */
+   String syncFilesFromServer(int server, String dir);
+
+   String syncFilesToServer(int server, String path);
 }

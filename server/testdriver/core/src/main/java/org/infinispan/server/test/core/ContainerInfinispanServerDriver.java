@@ -4,18 +4,25 @@ import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +38,9 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -249,7 +259,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    public InfinispanGenericContainer getContainer(int i) {
-      if(containers.length <= i) {
+      if (containers.length <= i) {
          throw new IllegalStateException("Container " + i + " has not been initialized");
       }
       return containers[i];
@@ -282,17 +292,17 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       GenericContainer<?> container = new GenericContainer<>(image)
-         .withCreateContainerCmdModifier(cmd -> {
-            cmd.getHostConfig().withMounts(
-                  Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
-            );
-            if (IMAGE_MEMORY != null) {
-               cmd.getHostConfig().withMemory(IMAGE_MEMORY);
-            }
-            if (IMAGE_MEMORY_SWAP != null) {
-               cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
-            }
-         });
+            .withCreateContainerCmdModifier(cmd -> {
+               cmd.getHostConfig().withMounts(
+                     Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
+               );
+               if (IMAGE_MEMORY != null) {
+                  cmd.getHostConfig().withMemory(IMAGE_MEMORY);
+               }
+               if (IMAGE_MEMORY_SWAP != null) {
+                  cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
+               }
+            });
 
       // Replace 99 with index of server to debug
       if (i == 99) {
@@ -422,5 +432,82 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    private String serverPathFrom(String path) {
       return String.format("%s/%s", serverPath(), path);
+   }
+
+   @Override
+   public String syncFilesFromServer(int server, String path) {
+      String serverPath = Paths.get(path).isAbsolute() ? path : INFINISPAN_SERVER_HOME + "/server/" + path;
+      try (InputStream is = DockerClientFactory.instance().client().copyArchiveFromContainerCmd(containers[server].getContainerId(), serverPath).exec()) {
+         TarArchiveInputStream tar = new TarArchiveInputStream(is);
+         Path basePath = getRootDir().toPath().resolve(Integer.toString(server));
+         Util.recursiveFileRemove(basePath.resolve(path));
+         for (TarArchiveEntry entry = tar.getNextTarEntry(); entry != null; entry = tar.getNextTarEntry()) {
+            Path entryPath = basePath.resolve(entry.getName());
+            if (entry.isDirectory()) {
+               entryPath.toFile().mkdirs();
+            } else {
+               OutputStream os = Files.newOutputStream(entryPath);
+               for (int b = tar.read(); b >= 0; b = tar.read()) {
+                  os.write(b);
+               }
+               Util.close(os);
+            }
+         }
+         return basePath.toString();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   @Override
+   public String syncFilesToServer(int server, String path) {
+      Path local = Paths.get(path);
+      Path parent = local.getParent();
+      try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+           TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
+         Files.walkFileTree(local, new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+               Path relativize = parent.relativize(dir);
+               TarArchiveEntry entry = new TarArchiveEntry(dir.toFile(), relativize.toString());
+               entry.setMode(040777);
+               tar.putArchiveEntry(entry);
+               tar.closeArchiveEntry();
+               return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+               Path relativize = parent.relativize(file);
+               TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativize.toString());
+               entry.setMode(0100666);
+               tar.putArchiveEntry(entry);
+               try (InputStream is = Files.newInputStream(file)) {
+                  for (int b = is.read(); b >= 0; b = is.read()) {
+                     tar.write(b);
+                  }
+               }
+               tar.closeArchiveEntry();
+               return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+               return FileVisitResult.SKIP_SUBTREE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+               return FileVisitResult.CONTINUE;
+            }
+         });
+         tar.close();
+         DockerClientFactory.instance().client().copyArchiveToContainerCmd(containers[server].getContainerId())
+               .withTarInputStream(new ByteArrayInputStream(bos.toByteArray()))
+               .withRemotePath("/tmp").exec();
+         return Paths.get("/tmp").resolve(local.getFileName()).toString();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
    }
 }

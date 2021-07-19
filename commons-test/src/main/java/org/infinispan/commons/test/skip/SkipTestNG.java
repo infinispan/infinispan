@@ -64,7 +64,7 @@ public class SkipTestNG {
    }
 
    private static int getJDKVersion() {
-      String[] parts = System.getProperty("java.version").split("\\.");
+      String[] parts = System.getProperty("java.version").replaceAll("[^0-9\\.]", "").split("\\.");
       int version = Integer.parseInt(parts[0]);
       if (version == 1)
          version = Integer.parseInt(parts[1]);

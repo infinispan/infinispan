@@ -10,6 +10,7 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
@@ -27,6 +28,7 @@ import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.test.integration.security.common.config.SecurityDomain;
 import org.jboss.as.test.integration.security.common.config.SecurityModule;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 
 /**
@@ -50,6 +52,9 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
    public static final String READER_PASSWD = "password";
    public static final String UNPRIVILEGED_ROLE = "unprivileged";
    public static final String UNPRIVILEGED_PASSWD = "weakPassword";
+
+   @ClassRule
+   public static SkipJunit skip = new SkipJunit(13);
 
    @Deployment
    @TargetsContainer(DEFAULT_DEPLOY_CONTAINER)
@@ -100,7 +105,7 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
 
       @Override
       protected Collection<String> getCategories(ManagementClient managementClient, String containerId) {
-         return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox", "org.wildfly.security");
+         return Arrays.asList("javax.security", "org.jboss.security", "org.wildfly.security");
       }
    }
 

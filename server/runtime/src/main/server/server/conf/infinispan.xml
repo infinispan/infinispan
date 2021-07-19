@@ -48,6 +48,6 @@
          </security-realms>
       </security>
 
-      <endpoints socket-binding="default" security-realm="default"/>
+      <endpoints socket-binding="default" security-realm="default" />
    </server>
 </infinispan>
