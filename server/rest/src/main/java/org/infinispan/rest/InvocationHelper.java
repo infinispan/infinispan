@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ServerManagement;
@@ -23,6 +24,7 @@ public class InvocationHelper {
    private final ServerManagement server;
    private final Executor executor;
    private final RestServer protocolServer;
+   private final EncoderRegistry encoderRegistry;
 
    InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
@@ -32,6 +34,7 @@ public class InvocationHelper {
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
+      this.encoderRegistry = restCacheManager.getInstance().getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
    }
 
    public ParserRegistry getParserRegistry() {
@@ -72,5 +75,9 @@ public class InvocationHelper {
 
    public RestServer getProtocolServer() {
       return protocolServer;
+   }
+
+   public EncoderRegistry getEncoderRegistry() {
+      return encoderRegistry;
    }
 }

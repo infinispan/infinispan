@@ -10,7 +10,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.security.AuthorizationPermission;
@@ -61,10 +60,6 @@ final class SecurityActions {
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
-   }
-
-   public static EncoderRegistry getEncoderRegistry(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(() -> cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
    }
 
    static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {

@@ -90,11 +90,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
-   private final EncoderRegistry encoderRegistry;
 
    public CacheResourceV2(InvocationHelper invocationHelper) {
       super(invocationHelper);
-      this.encoderRegistry = SecurityActions.getEncoderRegistry(invocationHelper.getRestCacheManager().getInstance());
    }
 
    @Override
@@ -244,8 +242,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
       if (cache == null) return notFoundResponseFuture();
 
-      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, encoderRegistry, true) : APPLICATION_JSON;
-      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, encoderRegistry, false) : APPLICATION_JSON;
+      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, true) : APPLICATION_JSON;
+      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, false) : APPLICATION_JSON;
 
       Cache<?, ?> streamCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
 
@@ -280,8 +278,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return cache.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
    }
 
-   private MediaType negotiateEntryMediaType(AdvancedCache<?, ?> cache, EncoderRegistry encoderRegistry, boolean forKey) {
+   private MediaType negotiateEntryMediaType(AdvancedCache<?, ?> cache, boolean forKey) {
       MediaType storage = forKey ? cache.getKeyDataConversion().getStorageMediaType() : cache.getValueDataConversion().getStorageMediaType();
+      EncoderRegistry encoderRegistry = invocationHelper.getEncoderRegistry();
       boolean encodingDefined = !MediaType.APPLICATION_UNKNOWN.equals(storage);
       boolean jsonSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, APPLICATION_JSON);
       boolean textSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, TEXT_PLAIN);
