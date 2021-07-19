@@ -65,7 +65,7 @@ public class EventLoggerRecoverCorruptTest {
          @Override
          public void call() {
             Cache<Object, Object> cache = cm.createCache(CACHE_NAME, config);
-            assertEquals(37, cache.size());
+            assertEquals(43, cache.size());
          }
       });
    }
