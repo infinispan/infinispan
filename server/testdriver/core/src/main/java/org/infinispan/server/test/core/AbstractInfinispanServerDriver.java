@@ -425,5 +425,4 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
       return new RemoteCacheManager(builder.build());
    }
-
 }

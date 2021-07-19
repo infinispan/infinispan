@@ -50,6 +50,12 @@ public class Common {
 
    public static final Collection<Protocol> HTTP_PROTOCOLS = Arrays.asList(Protocol.values());
 
+   public static final String[] NASHORN_DEPS = new String[]{
+         "org.openjdk.nashorn:nashorn-core:15.3",
+         "org.ow2.asm:asm:7.3.1",
+         "org.ow2.asm:asm-util:7.3.1"
+   };
+
    static {
       USER_MAP = new HashMap<>();
       USER_MAP.put("admin", new User("admin", "adminPassword", AuthorizationPermission.ALL.name()));

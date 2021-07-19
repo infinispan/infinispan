@@ -13,6 +13,7 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.test.integration.security.tasks.AbstractKrb5ConfServerSetupTask;
@@ -34,6 +35,7 @@ import org.jboss.as.test.integration.security.common.config.SecurityModule;
 import org.jboss.security.SecurityConstants;
 import org.jboss.security.negotiation.AdvancedLdapLoginModule;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 
 /**
@@ -50,6 +52,9 @@ import org.junit.runner.RunWith;
       KrbLdapAuthenticationIT.Krb5ConfServerSetupTask.class
 })
 public class KrbLdapAuthenticationIT extends AbstractAuthentication {
+
+   @ClassRule
+   public static SkipJunit skip = new SkipJunit(13);
 
    private static final String TRUE = Boolean.TRUE.toString(); // TRUE
 
@@ -225,7 +230,7 @@ public class KrbLdapAuthenticationIT extends AbstractAuthentication {
 
       @Override
       protected Collection<String> getCategories(ManagementClient managementClient, String containerId) {
-         return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox", "org.wildfly.security");
+         return Arrays.asList("javax.security", "org.jboss.security", "org.wildfly.security");
       }
    }
 

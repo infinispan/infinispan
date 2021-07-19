@@ -53,7 +53,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    static final int NUM_ENTRIES = 10;
 
    public BackupManagerIT() {
-      super("configuration/ClusteredServerTest.xml");
+      super("configuration/ClusteredServerTest.xml", Common.NASHORN_DEPS);
    }
 
    @BeforeClass
@@ -83,7 +83,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals(202, response.getStatus());
                return awaitCreated(() -> cm.getRestore(name));
             },
-            this::assertWildcardContent
+            this::assertWildcardContent,
+            false
       );
    }
 
@@ -105,7 +106,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals(202, response.getStatus());
                return awaitCreated(() -> cm.getRestore(name));
             },
-            this::assertWildcardContent
+            this::assertWildcardContent,
+            true
       );
    }
 
@@ -140,7 +142,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals("[\"weak-volatile\"]", await(client.counters()).getBody());
                assertEquals(404, await(client.schemas().get("schema.proto")).getStatus());
                assertEquals("[]", await(client.tasks().list(RestTaskClient.ResultType.USER)).getBody());
-            }
+            },
+            false
       );
    }
 
@@ -207,7 +210,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals("[\"___protobuf_metadata\",\"memcachedCache\",\"___script_cache\"]", await(client.caches()).getBody());
                assertEquals("[]", await(client.counters()).getBody());
                assertEquals(404, await(client.schemas().get("schema.proto")).getStatus());
-            }
+            },
+            false
       );
    }
 
@@ -228,7 +232,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals(202, response.getStatus());
                return awaitCreated(() -> c.getRestore(name));
             },
-            this::assertWildcardContent
+            this::assertWildcardContent,
+            false
       );
    }
 
@@ -249,7 +254,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals(202, response.getStatus());
                return awaitCreated(() -> c.getRestore(name));
             },
-            this::assertWildcardContent
+            this::assertWildcardContent,
+            true
       );
    }
 
@@ -264,7 +270,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    private void performTest(Function<RestClient, RestResponse> backupAndDownload,
                             Function<RestClient, RestResponse> delete,
                             BiFunction<File, RestClient, RestResponse> restore,
-                            Consumer<RestClient> assertTargetContent) throws Exception {
+                            Consumer<RestClient> assertTargetContent, boolean syncToServer) throws Exception {
       // Start the source cluster
       startSourceCluster();
       RestClient client = source.getClient();
@@ -299,6 +305,10 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
          Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
       }
       getResponse.close();
+
+      if (syncToServer) {
+         backupZip = new File(target.driver.syncFilesToServer(0, backupZip.getAbsolutePath()));
+      }
 
       // Upload the backup to the target cluster
       RestResponse restoreResponse = restore.apply(backupZip, client);
@@ -402,6 +412,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void assertNoServerBackupFilesExist(Cluster cluster) {
       for (int i = 0; i < 2; i++) {
+         cluster.driver.syncFilesFromServer(i, "data");
          Path root = cluster.driver.getRootDir().toPath();
          File workingDir = root.resolve(Integer.toString(i)).resolve("data").resolve("backups").toFile();
          assertTrue(workingDir.isDirectory());

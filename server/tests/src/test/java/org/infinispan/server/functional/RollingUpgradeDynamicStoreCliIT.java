@@ -3,8 +3,10 @@ package org.infinispan.server.functional;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
 import org.infinispan.cli.commands.CLI;
@@ -48,9 +50,18 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
 
    @Override
    protected void connectTargetCluster() {
+      try {
+         String cfg = new String(Files.readAllBytes(dest), StandardCharsets.UTF_8);
+         cfg = cfg.replace("127.0.0.1", source.driver.getServerAddress(0).getHostAddress());
+         cfg = cfg.replace("11222", Integer.toString(source.getSinglePort(0)));
+         Files.write(dest, cfg.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
-         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
+         terminal.readln("connect " + target.driver.getServerAddress(0).getHostAddress() + ":" + target.getSinglePort(0));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster connect --file=" + dest + " --cache=" + CACHE_NAME);
@@ -88,7 +99,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    protected void doRollingUpgrade(RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
-         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
+         terminal.readln("connect " + target.driver.getServerAddress(0).getHostAddress() + ":" + target.getSinglePort(0));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster synchronize --cache=" + CACHE_NAME);
@@ -99,7 +110,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    protected void disconnectSource(RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
-         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
+         terminal.readln("connect " + target.driver.getServerAddress(0).getHostAddress() + ":" + target.getSinglePort(0));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster disconnect --cache=" + CACHE_NAME);

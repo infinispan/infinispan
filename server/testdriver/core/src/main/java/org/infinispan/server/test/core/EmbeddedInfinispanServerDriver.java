@@ -44,6 +44,9 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
+      if ((configuration.archives() != null && configuration.archives().length > 0) || (configuration.mavenArtifacts() != null && configuration.mavenArtifacts().length > 0)) {
+         throw new IllegalArgumentException("EmbeddedInfinispanServerDriver doesn't support server artifacts.");
+      }
       servers = new ArrayList<>();
       serverFutures = new ArrayList<>();
       for (int i = 0; i < configuration.numServers(); i++) {
@@ -223,5 +226,17 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       sb.append(')');
 
       throw new IllegalStateException(sb.toString());
+   }
+
+   @Override
+   public String syncFilesFromServer(int server, String dir) {
+      //NO-OP
+      return getRootDir().toPath().resolve(Integer.toString(server)).toString();
+   }
+
+   @Override
+   public String syncFilesToServer(int server, String path) {
+      //NO-OP
+      return path;
    }
 }
