@@ -3,7 +3,7 @@
   <parent>
     <artifactId>infinispan-spring-boot-starter-parent</artifactId>
     <groupId>org.infinispan</groupId>
-    <version>13.0.0.Dev03</version>
+    <version>13.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <name>Infinispan Spring Boot Starter Remote</name>
