@@ -205,11 +205,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-hibernate-cache-v51</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hibernate-cache-v53</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

@@ -46,6 +46,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import javax.transaction.RollbackException;
@@ -65,7 +66,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
+import org.hibernate.cache.spi.access.CachedDomainDataAccess;
 import org.hibernate.cfg.Environment;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.dialect.H2Dialect;
@@ -87,6 +88,7 @@ import org.hibernate.testing.junit4.CustomParameterized;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -97,7 +99,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
@@ -105,7 +106,6 @@ import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -166,7 +166,6 @@ public abstract class CorrectnessTestCase {
       return getClass().getName().replaceAll("\\W", "_");
    }
 
-   @Ignore
    public static class Jta extends CorrectnessTestCase {
       private final TransactionManager transactionManager  = TestingJtaPlatformImpl.transactionManager();
 
@@ -207,7 +206,6 @@ public abstract class CorrectnessTestCase {
       }
    }
 
-   @Ignore
    public static class NonJta extends CorrectnessTestCase {
       @Parameterized.Parameters(name = "{0}")
       public List<Object[]> getParameters() {
@@ -477,8 +475,8 @@ public abstract class CorrectnessTestCase {
       List<DelayedInvalidators> delayed = new LinkedList<>();
       for (int i = 0; i < sessionFactories.length; i++) {
          SessionFactoryImplementor sfi = (SessionFactoryImplementor) sessionFactories[i];
-         for (Object regionName : sfi.getAllSecondLevelCacheRegions().keySet()) {
-            PutFromLoadValidator validator = getPutFromLoadValidator(sfi, (String) regionName);
+         for (String regionName : sfi.getCache().getCacheRegionNames()) {
+            PutFromLoadValidator validator = getPutFromLoadValidator(sfi, regionName);
             if (validator == null) {
                log.warn("No validator for " + regionName);
                continue;
@@ -988,7 +986,8 @@ public abstract class CorrectnessTestCase {
    }
 
    private PutFromLoadValidator getPutFromLoadValidator(SessionFactoryImplementor sfi, String regionName) throws NoSuchFieldException, IllegalAccessException {
-      RegionAccessStrategy strategy = sfi.getSecondLevelCacheRegionAccessStrategy(regionName);
+      // TODO not sure if this is correct.
+      CachedDomainDataAccess strategy = sfi.getMetamodel().entityPersister(Family.class).getCacheAccessStrategy();
       if (strategy == null) {
          return null;
       }

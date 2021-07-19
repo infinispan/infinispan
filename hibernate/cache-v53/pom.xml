@@ -12,10 +12,6 @@
    <name>Infinispan Hibernate 5.3 Cache</name>
    <description>Infinispan Hibernate 5.3 Cache module</description>
 
-   <properties>
-      <version.hibernate.core>${version.hibernate.core_v53}</version.hibernate.core>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
