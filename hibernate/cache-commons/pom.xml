@@ -12,10 +12,6 @@
    <name>Infinispan Hibernate Cache Commons</name>
    <description>Infinispan Hibernate Cache Commons module</description>
 
-   <properties>
-      <version.hibernate.core>${version.hibernate.core_v51}</version.hibernate.core><!-- TODO remove this -->
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
