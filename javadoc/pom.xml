@@ -339,19 +339,14 @@
                      </tags>
                      <additionalDependencies>
                         <additionalDependency>
-                           <groupId>javax.enterprise</groupId>
-                           <artifactId>cdi-api</artifactId>
-                           <version>${version.cdi}</version>
+                           <groupId>jakarta.enterprise</groupId>
+                           <artifactId>jakarta.enterprise.cdi-api</artifactId>
+                           <version>${version.jakarta.enterprise.cdi}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>javax.cache</groupId>
                            <artifactId>cache-api</artifactId>
                            <version>${version.javax.cache}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                           <groupId>javax.servlet</groupId>
-                           <artifactId>servlet-api</artifactId>
-                           <version>${version.javax.servlet}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>io.agroal</groupId>
