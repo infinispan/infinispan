@@ -41,9 +41,11 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
@@ -52,7 +54,6 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.functional.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.Test;
 
@@ -174,6 +175,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testScriptUpload() {
+      SkipJunit.skipSinceJDK(16);
       InfinispanServerTestMethodRule serverTest = getServerTest();
 
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
@@ -191,6 +193,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testExecScripts() {
+      SkipJunit.skipSinceJDK(16);
       InfinispanServerTestMethodRule serverTest = getServerTest();
       RemoteCache cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
       String scriptName = serverTest.addScript(cache.getRemoteCacheManager(), "scripts/test.js");

@@ -241,7 +241,7 @@ public abstract class AbstractNodeAuthentication {
 
       @Override
       protected Collection<String> getCategories(ManagementClient managementClient, String containerId) {
-         return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox", "org.wildfly.security");
+         return Arrays.asList("javax.security", "org.jboss.security", "org.wildfly.security");
       }
    }
 

@@ -22,7 +22,6 @@ import org.junit.Test;
  * @since 13.0
  */
 public class RollingUpgradeDynamicStoreIT extends RollingUpgradeIT {
-
    public RollingUpgradeDynamicStoreIT() {
       super("configuration/ClusteredServerTest.xml");
    }

@@ -1,10 +1,10 @@
 package org.infinispan.server.functional;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -59,6 +59,7 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
          // Ensure that the backup has finished before stopping the source cluster
          t.readln("backup get --no-content " + backupName);
       }
+      source.driver.syncFilesFromServer(0, "data");
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       try (ZipFile zip = new ZipFile(createdBackup.toFile())) {
          // Ensure that only cache-configs are present
@@ -79,20 +80,27 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
    }
 
    @Test
-   public void testBackupToCustomDir() throws Exception {
+   public void testBackupToCustomDir() {
       startSourceCluster();
       String backupName = "server-backup";
       String fileName = backupName + ".zip";
-      File backupDir = new File(WORKING_DIR, "custom-dir");
-      backupDir.mkdir();
+      File localBackupDir = new File(WORKING_DIR, "custom-dir");
+      localBackupDir.mkdir();
+      localBackupDir.setWritable(true, false);
+      File serverBackupDir = new File(source.driver.syncFilesToServer(0, localBackupDir.getAbsolutePath()));
+      source.driver.syncFilesToServer(1, localBackupDir.getAbsolutePath());
 
       try (AeshTestConnection t = cli(source)) {
          t.clear();
-         t.readln(String.format("backup create -d %s -n %s", backupDir.getPath(), backupName));
+         t.readln(String.format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
          // Ensure that the backup has finished before stopping the source cluster
          t.readln("backup get --no-content " + backupName);
       }
-      assertTrue(new File(backupDir, backupName + "/" + fileName).exists());
+      localBackupDir = new File(source.driver.syncFilesFromServer(0, serverBackupDir.getAbsolutePath()));
+      if (!localBackupDir.getName().equals("custom-dir")) {
+         localBackupDir = new File(localBackupDir, "custom-dir");
+      }
+      assertTrue(new File(localBackupDir, backupName + "/" + fileName).exists());
    }
 
    @Test
@@ -112,19 +120,21 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
          t.readln("backup get --no-content " + backupName);
       }
 
+      source.driver.syncFilesFromServer(0, "data");
+
       stopSourceCluster();
       startTargetCluster();
 
-      // The location of the created .zip file that in EMBEDDED mode is available to both the source and target server
-      // TODO This won't work with CONTAINER mode, we need a way to copy the file between the container filesystems at runtime
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
+      createdBackup = Paths.get(target.driver.syncFilesToServer(0, createdBackup.toString()));
+
       try (AeshTestConnection t = cli(target)) {
-         t.readln("backup restore " + createdBackup.toString());
+         t.readln("backup restore " + createdBackup);
          Thread.sleep(1000);
          t.readln("ls caches/backupCache");
          t.assertContains("k1");
       }
-      Files.delete(createdBackup);
+      Files.deleteIfExists(createdBackup);
    }
 
    @Test

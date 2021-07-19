@@ -13,23 +13,50 @@ import org.junit.runners.model.Statement;
  */
 public class SkipJunit implements TestRule {
    private final OS[] oses;
+   private final int jdkMajorVersion;
 
    public SkipJunit(OS... oses) {
       this.oses = Objects.requireNonNull(oses);
+      this.jdkMajorVersion = -1;
+   }
+
+   public SkipJunit(int jdkMajorVersion) {
+      this.jdkMajorVersion = jdkMajorVersion;
+      this.oses = null;
    }
 
    @Override
    public Statement apply(Statement base, Description description) {
-      OS os = OS.getCurrentOs();
-      if (!Arrays.asList(oses).contains(os))
-         return base;
-
-      return new IgnoreStatement(description, os);
+      if (oses != null) {
+         OS os = OS.getCurrentOs();
+         if (!Arrays.asList(oses).contains(os)) {
+            return base;
+         } else {
+            return new Statement() {
+               @Override
+               public void evaluate() {
+                  throw new AssumptionViolatedException("Ignoring test " + description.getDisplayName() + " on OS " + os);
+               }
+            };
+         }
+      } else {
+         int version = getJDKVersion();
+         if (version >= jdkMajorVersion) {
+            return new Statement() {
+               @Override
+               public void evaluate() {
+                  throw new AssumptionViolatedException("Ignoring test " + description.getDisplayName() + " on JDK " + version);
+               }
+            };
+         } else {
+            return base;
+         }
+      }
    }
 
    /**
-    * Use within a {@code @Test} method to skip that method on some OSes.
-    * Use in a {@code @BeforeClass} method to skip all methods in a class on some OSes.
+    * Use within a {@code @Test} method to skip that method on some OSes. Use in a {@code @BeforeClass} method to skip
+    * all methods in a class on some OSes.
     */
    public static void skipOnOS(OS... oses) {
       OS os = OS.getCurrentOs();
@@ -38,8 +65,8 @@ public class SkipJunit implements TestRule {
    }
 
    /**
-    * Use within a {@code @Test} method to run this test only on certain OSes.
-    * Use in a {@code @BeforeClass} method to run all methods in a class only on some OSes.
+    * Use within a {@code @Test} method to run this test only on certain OSes. Use in a {@code @BeforeClass} method to
+    * run all methods in a class only on some OSes.
     */
    public static void onlyOnOS(OS... oses) {
       OS os = OS.getCurrentOs();
@@ -47,23 +74,18 @@ public class SkipJunit implements TestRule {
          throw new AssumptionViolatedException("Skipping test on " + os);
    }
 
-   private static class IgnoreStatement extends Statement {
-
-      private final Description method;
-
-      private final OS os;
-
-      IgnoreStatement(Description method, OS os) {
-         this.method = method;
-         this.os = os;
-      }
-
-      @Override
-      public void evaluate() {
-         String msg = "Skipping test " + method.getDisplayName() + " on " + os;
-         System.out.println(msg);
-         throw new AssumptionViolatedException(msg);
+   public static void skipSinceJDK(int major) {
+      int version = getJDKVersion();
+      if (version >= major) {
+         throw new AssumptionViolatedException("Skipping test on JDK " + version);
       }
    }
 
+   private static int getJDKVersion() {
+      String[] parts = System.getProperty("java.version").replaceAll("[^0-9\\.]", "").split("\\.");
+      int version = Integer.parseInt(parts[0]);
+      if (version == 1)
+         version = Integer.parseInt(parts[1]);
+      return version;
+   }
 }

@@ -25,6 +25,10 @@ public class InfinispanGenericContainer {
       this.genericContainer = genericContainer;
    }
 
+   public String getContainerId() {
+      return containerId;
+   }
+
    public void pause() {
       dockerClient().pauseContainerCmd(this.containerId).exec();
    }

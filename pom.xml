@@ -380,6 +380,7 @@
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.openjdk.jmh.jmh-core>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-core>
       <versionx.org.openjdk.jmh.jmh-generator-annprocess>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-generator-annprocess>
+      <versionx.org.openjdk.nashorn>${version.nashorn}</versionx.org.openjdk.nashorn>
       <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
       <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
@@ -462,6 +463,11 @@
          <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15to18</artifactId>
+            <version>${versionx.com.bouncycastle}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
             <version>${versionx.com.bouncycastle}</version>
          </dependency>
          <dependency>
@@ -1583,6 +1589,11 @@
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>${versionx.org.openjdk.jmh.jmh-generator-annprocess}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>${versionx.org.openjdk.nashorn}</version>
          </dependency>
          <dependency>
             <groupId>org.reactivestreams</groupId>

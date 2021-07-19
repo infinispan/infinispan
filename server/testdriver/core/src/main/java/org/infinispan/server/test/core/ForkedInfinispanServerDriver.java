@@ -242,4 +242,15 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       return Exceptions.unchecked(() -> stage.toCompletableFuture().get(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
+   @Override
+   public String syncFilesFromServer(int server, String dir) {
+      //NO-OP
+      return getRootDir().toPath().resolve(Integer.toString(server)).toString();
+   }
+
+   @Override
+   public String syncFilesToServer(int server, String path) {
+      //NO-OP
+      return path;
+   }
 }

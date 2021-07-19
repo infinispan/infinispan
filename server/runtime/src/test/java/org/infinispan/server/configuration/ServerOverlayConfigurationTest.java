@@ -23,6 +23,7 @@ public class ServerOverlayConfigurationTest {
    public void testOverlay() {
       Properties properties = new Properties();
       properties.put(Server.INFINISPAN_SERVER_CONFIG_PATH, getConfigPath().toString());
+      properties.put(Server.INFINISPAN_SERVER_HOME_PATH, getConfigPath().toString());
       Server server = new Server(getConfigPath().toFile(), Arrays.asList(Paths.get("Base.xml"), Paths.get("Overlay.yml")), properties);
       ConfigurationBuilderHolder holder = server.getConfigurationBuilderHolder();
       assertTrue(holder.getNamedConfigurationBuilders().containsKey("overlay"));

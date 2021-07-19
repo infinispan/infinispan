@@ -36,10 +36,12 @@ import org.junit.After;
 class AbstractMultiClusterIT {
 
    protected final String config;
+   protected final String[] mavenArtifacts;
    protected Cluster source, target;
 
-   public AbstractMultiClusterIT(String config) {
+   public AbstractMultiClusterIT(String config, String... mavenArtifacts) {
       this.config = config;
+      this.mavenArtifacts = mavenArtifacts;
    }
 
    @After
@@ -49,23 +51,23 @@ class AbstractMultiClusterIT {
    }
 
    protected void startSourceCluster() {
-      source = new Cluster(new ClusterConfiguration(config, 2, 0), getCredentials());
-      source.start("source");
+      source = new Cluster(new ClusterConfiguration(config, 2, 0, mavenArtifacts), getCredentials());
+      source.start(this.getClass().getName() + "-source");
    }
 
    protected void stopSourceCluster() throws Exception {
       if (source != null)
-         source.stop("source");
+         source.stop(this.getClass().getName() + "-source");
    }
 
    protected void startTargetCluster() {
-      target = new Cluster(new ClusterConfiguration(config, 2, 1000), getCredentials());
-      target.start("target");
+      target = new Cluster(new ClusterConfiguration(config, 2, 1000, mavenArtifacts), getCredentials());
+      target.start(this.getClass().getName() + "-target");
    }
 
    protected void stopTargetCluster() throws Exception {
       if (target != null)
-         target.stop("target");
+         target.stop(this.getClass().getName() + "-target");
    }
 
    protected int getCacheSize(String cacheName, RestClient restClient) {
@@ -93,8 +95,8 @@ class AbstractMultiClusterIT {
    }
 
    protected static class ClusterConfiguration extends InfinispanServerTestConfiguration {
-      public ClusterConfiguration(String configurationFile, int numServers, int portOffset) {
-         super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
+      public ClusterConfiguration(String configurationFile, int numServers, int portOffset, String[] mavenArtifacts) {
+         super(configurationFile, numServers, mavenArtifacts != null ? ServerRunMode.CONTAINER : ServerRunMode.EMBEDDED, new Properties(), mavenArtifacts, null,
                false, false, false, Collections.emptyList(), null, portOffset, new String[]{});
       }
    }
@@ -119,7 +121,7 @@ class AbstractMultiClusterIT {
                simpleConfiguration.properties().put(prop, sysProps.getProperty(prop));
             }
          }
-         this.driver = ServerRunMode.DEFAULT.newDriver(simpleConfiguration);
+         this.driver = simpleConfiguration.runMode().newDriver(simpleConfiguration);
       }
 
       void start(String name) {
