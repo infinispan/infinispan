@@ -47,10 +47,9 @@ final class MediaTypeUtils {
     * @return The negotiated MediaType
     * @throws UnacceptableDataFormatException if no suitable {@link MediaType} could be found.
     */
-   static MediaType negotiateMediaType(AdvancedCache<?, ?> cache, RestRequest restRequest) throws UnacceptableDataFormatException {
+   static MediaType negotiateMediaType(AdvancedCache<?, ?> cache, EncoderRegistry registry, RestRequest restRequest) throws UnacceptableDataFormatException {
       try {
          String accept = restRequest.getAcceptHeader();
-         EncoderRegistry registry = SecurityActions.getEncoderRegistry(cache.getCacheManager());
          MediaType storageMedia = cache.getValueDataConversion().getStorageMediaType();
          Optional<MediaType> negotiated = MediaType.parseList(accept)
                .filter(media -> registry.isConversionSupported(storageMedia, media))
