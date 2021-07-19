@@ -139,7 +139,7 @@ public class BaseCacheResource {
       MediaType keyContentType = request.keyContentType();
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      MediaType requestedMediaType = negotiateMediaType(cache, request);
+      MediaType requestedMediaType = negotiateMediaType(cache, invocationHelper.getEncoderRegistry(), request);
 
       Object key = getKey(request);
 
