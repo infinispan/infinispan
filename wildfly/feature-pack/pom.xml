@@ -34,7 +34,7 @@
 
         <dependency>
             <groupId>org.jboss</groupId>
-            <artifactId>jboss-transaction-spi</artifactId>
+            <artifactId>jboss-transaction-spi-jakarta</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
