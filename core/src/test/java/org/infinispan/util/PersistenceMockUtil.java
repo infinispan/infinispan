@@ -146,6 +146,7 @@ public class PersistenceMockUtil {
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
 
+      when (cache.getCacheManager().getGlobalComponentRegistry()).thenReturn(gcr);
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
       when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
       when(cache.getCacheManager().getClassAllowList()).thenReturn(allowList);

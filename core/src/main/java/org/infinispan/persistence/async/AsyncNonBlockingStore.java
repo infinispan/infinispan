@@ -113,6 +113,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       persistenceConfiguration = cacheConfiguration.persistence();
       scheduler = ctx.getCache().getCacheManager().getGlobalComponentRegistry().getComponent(
             ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+      assert scheduler != null;
       StoreConfiguration storeConfiguration = ctx.getConfiguration();
       segmentCount = storeConfiguration.segmented() ? cacheConfiguration.clustering().hash().numSegments() : 1;
       asyncConfiguration = storeConfiguration.async();
