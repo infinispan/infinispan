@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.math.FieldElement;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -34,7 +34,7 @@ public class InitialClusterSizeTest extends MultipleCacheManagersTest {
          GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
          gc.transport().initialClusterSize(CLUSTER_SIZE).initialClusterTimeout(CLUSTER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
          cacheManagers.add(TestCacheManagerFactory.createClusteredCacheManager(false, gc,
-               getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC), new TransportFlags().withPortRange(i)));
+               getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC), new TransportFlags()));
       }
    }
 

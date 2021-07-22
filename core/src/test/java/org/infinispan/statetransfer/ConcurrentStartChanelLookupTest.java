@@ -114,9 +114,8 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
    }
 
    private JChannel createChannel(String name, int portRange) throws Exception {
-      String configString = JGroupsConfigBuilder
-            .getJGroupsConfig(ConcurrentStartChanelLookupTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange));
+      String configString = JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartChanelLookupTest.class.getName(),
+                                                                  new TransportFlags());
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
       channel.connect(ConcurrentStartChanelLookupTest.class.getSimpleName());

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,7 +26,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -97,7 +97,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
                                  EmbeddedCacheManager[] managers, int i) throws Exception {
       // Create the ForkChannels
       names[i] = TestResourceTracker.getNextNodeName();
-      channels[i] = createChannel(names[i], 0);
+      channels[i] = createChannel(names[i]);
 
       // Then start the managers
       managers[i] = createCacheManager(replCfg, names[i], channels[i]);
@@ -118,10 +118,9 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
       return cm;
    }
 
-   private JChannel createChannel(String name, int portRange) throws Exception {
-      String configString =
-         JGroupsConfigBuilder.getJGroupsConfig(ForkChannelRestartTest.class.getName(),
-                                               new TransportFlags().withPortRange(portRange).withFD(true));
+   private JChannel createChannel(String name) throws Exception {
+      String configString = JGroupsConfigBuilder.getJGroupsConfig(ForkChannelRestartTest.class.getName(),
+                                                                  new TransportFlags().withFD(true));
 
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       TestResourceTracker.addResource(new TestResourceTracker.Cleaner<JChannel>(channel) {
