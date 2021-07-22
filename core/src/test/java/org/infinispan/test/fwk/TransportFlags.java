@@ -12,7 +12,7 @@ public class TransportFlags {
 
    private boolean withFD;
    private boolean withMerge;
-   private int portRange = -1;
+   private int siteIndex = -1;
    private String siteName;
    private String relayConfig;
    private boolean preserveConfig;
@@ -35,8 +35,16 @@ public class TransportFlags {
       return withMerge;
    }
 
+   /**
+    * @deprecated Since 13.0, will be removed in 16.0
+    */
+   @Deprecated
    public TransportFlags withPortRange(int portRange) {
-      this.portRange = portRange;
+      return withSiteIndex(portRange);
+   }
+
+   public TransportFlags withSiteIndex(int siteIndex) {
+      this.siteIndex = siteIndex;
       return this;
    }
 
@@ -63,8 +71,16 @@ public class TransportFlags {
       return relayConfig;
    }
 
+   /**
+    * @deprecated Since 13.0, will be removed in 16.0
+    */
+   @Deprecated
    public int portRange() {
-      return portRange;
+      return siteIndex();
+   }
+
+   public int siteIndex() {
+      return siteIndex;
    }
 
    public boolean isPortRangeSpecified() {
@@ -81,6 +97,6 @@ public class TransportFlags {
 
    public static TransportFlags minimalXsiteFlags() {
       //minimal xsite flags
-      return new TransportFlags().withPortRange(0).withSiteName("LON-1").withFD(true);
+      return new TransportFlags().withSiteIndex(0).withSiteName("LON-1").withFD(true);
    }
 }

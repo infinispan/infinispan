@@ -38,17 +38,20 @@ import org.jgroups.conf.XmlConfigurator;
  * @author Galder Zamarreño
  */
 public class JGroupsConfigBuilder {
+   public static final int BASE_TCP_PORT = 7900;
+   public static final int MAX_NODES_PER_SITE = 50;
+   private static final int MAX_SITES_PER_THREAD = 4;
+   public static final int MAX_NODES_PER_THREAD = MAX_NODES_PER_SITE * MAX_SITES_PER_THREAD;
 
    public static final String JGROUPS_STACK;
    private static final Map<String, ProtocolStackConfigurator> protocolStackConfigurator = new HashMap<>();
 
-   public static final int TCP_PORT_RANGE_PER_THREAD = 100;
-   private static final ThreadLocal<Integer> threadTcpStartPort = new ThreadLocal<Integer>() {
-      private final AtomicInteger uniqueAddr = new AtomicInteger(7900);
+   private static final ThreadLocal<Integer> threadTcpIndex = new ThreadLocal<Integer>() {
+      private final AtomicInteger counter = new AtomicInteger(BASE_TCP_PORT);
 
       @Override
       protected Integer initialValue() {
-         return uniqueAddr.getAndAdd(TCP_PORT_RANGE_PER_THREAD);
+         return counter.getAndIncrement();
       }
    };
 
@@ -97,8 +100,12 @@ public class JGroupsConfigBuilder {
          removeMerge(jgroupsCfg);
 
       replacePing(jgroupsCfg);
-      replaceTcpStartPort(jgroupsCfg, flags);
-      replaceMCastAddressAndPort(jgroupsCfg, fullTestName);
+      int siteIndex = flags.siteIndex();
+      if (siteIndex > MAX_SITES_PER_THREAD) {
+         throw new IllegalStateException("Currently we only support " + MAX_SITES_PER_THREAD + " ranges/sites!");
+      }
+      replaceTcpStartPort(jgroupsCfg, siteIndex);
+      replaceMCastAddressAndPort(jgroupsCfg, fullTestName, siteIndex);
       return jgroupsCfg.toString();
    }
 
@@ -146,35 +153,42 @@ public class JGroupsConfigBuilder {
       jgroupsCfg.removeProtocol(TEST_RELAY2);
    }
 
-   private static void replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg, String fullTestName) {
+   private static void replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg, String fullTestName, int siteIndex) {
       ProtocolConfiguration udp = jgroupsCfg.getProtocol(UDP);
       if (udp == null) return;
 
       Integer udpIndex = testUdpIndex.computeIfAbsent(fullTestName, k -> threadUdpIndex.get());
 
+      if (siteIndex < 0) {
+         siteIndex = 0;
+      }
+      int clusterOffset = udpIndex * MAX_SITES_PER_THREAD + siteIndex;
+
       Map<String, String> props = udp.getProperties();
-      props.put("mcast_addr", "228.10.10." + udpIndex);
-      props.put("mcast_port", String.valueOf(46000 + udpIndex));
+      props.put("mcast_addr", "228.10.10." + clusterOffset);
+      props.put("mcast_port", String.valueOf(46000 + clusterOffset));
       replaceProperties(jgroupsCfg, props, UDP);
    }
 
-   private static void replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg, TransportFlags transportFlags) {
+   private static void replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg, int siteIndex) {
       ProtocolType transportProtocol = jgroupsCfg.transportType;
       if (transportProtocol != TCP && transportProtocol != TCP_NIO2)
          return;
 
       Map<String, String> props = jgroupsCfg.getProtocol(transportProtocol).getProperties();
-      Integer startPort = threadTcpStartPort.get();
-      int portRange = TCP_PORT_RANGE_PER_THREAD;
-      if (transportFlags.isPortRangeSpecified()) {
-         portRange = 25;
-         int maxIndex = TCP_PORT_RANGE_PER_THREAD / portRange - 1;
-         if (transportFlags.portRange() > maxIndex) {
-            throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " ranges/sites!");
-         }
-         startPort += transportFlags.portRange() * portRange;
+      Integer threadIndex = threadTcpIndex.get();
+      int startPort;
+      int portRange;
+      if (siteIndex >= 0) {
+         // Site index set
+         startPort = BASE_TCP_PORT + threadIndex * MAX_NODES_PER_THREAD + siteIndex * MAX_NODES_PER_SITE;
+         portRange = MAX_NODES_PER_SITE;
+      } else {
+         // Site index not set, use the thread's full range
+         startPort = BASE_TCP_PORT + threadIndex * MAX_NODES_PER_THREAD;
+         portRange = MAX_NODES_PER_THREAD;
       }
-      props.put("bind_port", startPort.toString());
+      props.put("bind_port", String.valueOf(startPort));
       // In JGroups, the port_range is inclusive
       props.put("port_range", String.valueOf(portRange - 1));
       replaceProperties(jgroupsCfg, props, transportProtocol);

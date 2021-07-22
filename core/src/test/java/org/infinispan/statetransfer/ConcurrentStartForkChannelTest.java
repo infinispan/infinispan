@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,7 +19,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -64,8 +64,8 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       String name2 = TestResourceTracker.getNextNodeName();
 
       // Create and connect both channels beforehand
-      JChannel ch1 = createChannel(name1, 0);
-      JChannel ch2 = createChannel(name2, 1);
+      JChannel ch1 = createChannel(name1);
+      JChannel ch2 = createChannel(name2);
 
       // Create the cache managers, but do not start them yet
       EmbeddedCacheManager cm1 = createCacheManager(replCfg, name1, ch1);
@@ -140,10 +140,9 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       return cm;
    }
 
-   private JChannel createChannel(String name, int portRange) throws Exception {
-      String configString = JGroupsConfigBuilder
-            .getJGroupsConfig(ConcurrentStartForkChannelTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange));
+   private JChannel createChannel(String name) throws Exception {
+      String configString = JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartForkChannelTest.class.getName(),
+                                                                  new TransportFlags());
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
       channel.connect(ConcurrentStartForkChannelTest.class.getSimpleName());
