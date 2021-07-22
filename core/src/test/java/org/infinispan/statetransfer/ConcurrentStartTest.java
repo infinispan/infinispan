@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,7 +28,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -57,8 +57,8 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       TestResourceTracker.testThreadStarted(this.getTestName());
       final CheckPoint checkPoint = new CheckPoint();
 
-      EmbeddedCacheManager cm1 = createCacheManager(0);
-      EmbeddedCacheManager cm2 = createCacheManager(1);
+      EmbeddedCacheManager cm1 = createCacheManager();
+      EmbeddedCacheManager cm2 = createCacheManager();
 
       // Install the blocking invocation handlers
       assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm1).getStatus());
@@ -112,10 +112,10 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       assertEquals("value", c2s.get("key"));
    }
 
-   private EmbeddedCacheManager createCacheManager(int index) {
+   private EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().defaultTransport();
-      TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags().withPortRange(index));
+      TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags());
       ConfigurationBuilder defaultCacheConfig = new ConfigurationBuilder();
       EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, defaultCacheConfig);
       registerCacheManager(cm);

@@ -12,7 +12,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", description = "See ISPN-1123")
@@ -28,7 +27,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
       joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[NUM_JOINERS]);
 
       for (int i = 0; i < NUM_JOINERS; i++) {
-         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder(), new TransportFlags().withFD(false).withPortRange(i));
+         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder());
          joinerManager.defineConfiguration(cacheName, configuration.build());
          joinerManagers.add(joinerManager);
          joiners.set(i, null);

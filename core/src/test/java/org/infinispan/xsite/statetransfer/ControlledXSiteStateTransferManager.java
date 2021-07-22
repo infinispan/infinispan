@@ -3,6 +3,8 @@ package org.infinispan.xsite.statetransfer;
 import java.util.Collection;
 
 import org.infinispan.Cache;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A {@link XSiteStateTransferManager} implementation that intercepts and controls the {@link
@@ -12,6 +14,7 @@ import org.infinispan.Cache;
  * @since 12.1
  */
 class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTransferManager {
+   private static final Log log = LogFactory.getLog(ControlledXSiteStateTransferManager.class);
 
    private SiteUpEvent event;
 
@@ -28,7 +31,11 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
    public void startAutomaticStateTransfer(Collection<String> sites) {
       SiteUpEvent event = getEvent();
       if (event != null) {
-         event.receive(sites, () -> super.startAutomaticStateTransfer(sites));
+         log.tracef("Blocking automatic state transfer with sites %s", sites);
+         event.receive(sites, () -> {
+            log.tracef("Resuming automatic state transfer with sites %s");
+            super.startAutomaticStateTransfer(sites);
+         });
       } else {
          super.startAutomaticStateTransfer(sites);
       }
