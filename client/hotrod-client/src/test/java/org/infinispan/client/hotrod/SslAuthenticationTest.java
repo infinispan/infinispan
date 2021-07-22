@@ -112,7 +112,8 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
             .addServer()
                .host("127.0.0.1")
                .port(hotrodServer.getPort())
-            .socketTimeout(3000)
+            // 3000 is a low value for my computer
+            .socketTimeout(10000)
             .connectionPool()
                .maxActive(1)
             .security()

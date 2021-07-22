@@ -377,9 +377,9 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Invalid active count after closing channel %s", id = 4106)
-   void invalidActiveCountAfterClose(Channel channel);
+   void invalidActiveCountAfterClose(String channel);
 
    @LogMessage(level = WARN)
    @Message(value = "Invalid created count after closing channel %s", id = 4107)
-   void invalidCreatedCountAfterClose(Channel channel);
+   void invalidCreatedCountAfterClose(String channel);
 }

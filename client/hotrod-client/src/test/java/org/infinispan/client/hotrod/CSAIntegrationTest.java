@@ -18,7 +18,7 @@ import java.util.Random;
 
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelKeys;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.NoopChannelOperation;
@@ -131,7 +131,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       for (int i = 0; i < 1000; i++) {
          byte[] key = generateKey(i);
          Channel channel = channelFactory.fetchChannelAndInvoke(key, null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES, new NoopChannelOperation()).join();
-         SocketAddress serverAddress = ChannelRecord.of(channel).getUnresolvedAddress();
+         SocketAddress serverAddress = ChannelKeys.getUnresolvedAddress(channel);
          CacheContainer cacheContainer = addr2hrServer.get(serverAddress).getCacheManager();
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + addr2hrServer, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
@@ -157,7 +157,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
          Channel channel = channelFactory.fetchChannelAndInvoke(marshall(keyStr), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
-         assertHotRodEquals(addr2hrServer.get(ChannelRecord.of(channel).getUnresolvedAddress()).getCacheManager(), keyStr, "value");
+         assertHotRodEquals(addr2hrServer.get(ChannelKeys.getUnresolvedAddress(channel)).getCacheManager(), keyStr, "value");
          channelFactory.releaseChannel(channel);
       }
 
@@ -168,7 +168,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          String keyStr = new String(key);
          assert remoteCache.get(keyStr).equals("value");
          Channel channel = channelFactory.fetchChannelAndInvoke(marshall(keyStr), null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES, new NoopChannelOperation()).join();
-         assertOnlyServerHit(ChannelRecord.of(channel).getUnresolvedAddress());
+         assertOnlyServerHit(ChannelKeys.getUnresolvedAddress(channel));
          channelFactory.releaseChannel(channel);
       }
    }

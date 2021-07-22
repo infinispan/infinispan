@@ -1,67 +1,22 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import java.net.SocketAddress;
-import java.util.concurrent.CompletableFuture;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.GenericFutureListener;
 
-/**
- * This class serves multiple purposes:
- *
- * 1) Activation: this extends {@link CompletableFuture} which is completed once the connection and initial handshake
- * are completed.
- * 2) Storage for unresolved address and pool info.
- */
-public class ChannelRecord extends CompletableFuture<Channel> implements GenericFutureListener<ChannelFuture> {
+public class ChannelRecord {
    private static final Log log = LogFactory.getLog(ChannelRecord.class);
 
-   static AttributeKey<ChannelRecord> KEY = AttributeKey.newInstance("activation");
-
-   private final SocketAddress unresolvedAddress;
-   private final ChannelPool channelPool;
    private boolean closed = false;
-   private boolean acquired = true;
+   private boolean acquired = false;
 
-   ChannelRecord(SocketAddress unresolvedAddress, ChannelPool channelPool) {
-      this.unresolvedAddress = unresolvedAddress;
-      this.channelPool = channelPool;
+   ChannelRecord() {
    }
 
-   public static ChannelRecord of(Channel channel) {
-      return channel.attr(KEY).get();
-   }
-
-   public SocketAddress getUnresolvedAddress() {
-      return unresolvedAddress;
-   }
-
-   @Override
-   public boolean complete(Channel channel) {
-      // Only add the listener once (or never, if completed exceptionally)
-      boolean complete = super.complete(channel);
-      if (complete) {
-         channel.closeFuture().addListener(this);
-      }
-      return complete;
-   }
-
-   @Override
-   public void operationComplete(ChannelFuture future) throws Exception {
-      if (log.isTraceEnabled()) {
-         if (!future.isSuccess()) {
-            log.tracef(future.cause(), "Channel %s is closed, see exception for details", get());
-         }
-      }
-      channelPool.releaseClosedChannel(future.channel(), this);
-   }
-
-   synchronized void setAcquired() {
+   public synchronized void setAcquired() {
       assert !acquired;
       acquired = true;
    }
@@ -84,7 +39,17 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
       return !acquired;
    }
 
-   public void release(Channel channel) {
-      channelPool.release(channel, this);
+   public boolean release(Channel channel) {
+      // The channel can be closed when it's idle (due to idle timeout or closed connection)
+      if (this.isIdle()) {
+         HOTROD.warnf("[%s] Cannot release channel %s because it is idle", ChannelKeys.getUnresolvedAddress(channel), channel);
+         return false;
+      }
+
+      if (this.setIdleAndIsClosed()) {
+         if (log.isTraceEnabled()) log.tracef("[%s] Attempt to release already closed channel %s", ChannelKeys.getUnresolvedAddress(channel), channel);
+         return false;
+      }
+      return true;
    }
 }

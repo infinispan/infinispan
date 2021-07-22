@@ -24,16 +24,15 @@ public class InitialPingHandler extends ActivationHandler {
       if (log.isTraceEnabled()) {
          log.tracef("Activating channel %s", channel);
       }
-      ChannelRecord channelRecord = ChannelRecord.of(channel);
       ping.invoke(channel);
       ping.whenComplete((result, throwable) -> {
          if (log.isTraceEnabled()) {
             log.tracef("Initial ping completed with result %s/%s", result, throwable);
          }
          if (throwable != null) {
-            channelRecord.completeExceptionally(throwable);
+            ChannelKeys.getActivationListener(channel).completeExceptionally(throwable);
          } else {
-            channelRecord.complete(channel);
+            ChannelKeys.getActivationListener(channel).complete(channel);
          }
       });
       ctx.pipeline().remove(this);

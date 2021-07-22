@@ -17,8 +17,8 @@ import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelKeys;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -41,7 +41,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    private int retryCount = 0;
    private Set<SocketAddress> failedServers = null;
-   private String currentClusterName;
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                      byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
@@ -126,14 +125,14 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       if (isDone()) {
          return;
       }
-      SocketAddress address = ChannelRecord.of(channel).getUnresolvedAddress();
+      SocketAddress address = ChannelKeys.getUnresolvedAddress(channel);
       addFailedServer(address);
       logAndRetryOrFail(HOTROD.connectionClosed(address, address));
    }
 
    @Override
    public void exceptionCaught(Channel channel, Throwable cause) {
-      SocketAddress address = channel == null ? null : ChannelRecord.of(channel).getUnresolvedAddress();
+      SocketAddress address = channel == null ? null : ChannelKeys.getUnresolvedAddress(channel);
       cause = handleException(cause, channel, address);
       if (cause != null) {
          // ctx.close() triggers channelInactive; we want to complete this to signal that no retries are expected

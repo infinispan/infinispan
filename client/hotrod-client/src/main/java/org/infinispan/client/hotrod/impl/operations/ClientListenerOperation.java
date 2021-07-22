@@ -14,7 +14,7 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelKeys;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
@@ -71,7 +71,7 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
          channelInactive(channel);
          return;
       }
-      this.address = ChannelRecord.of(channel).getUnresolvedAddress();
+      this.address = ChannelKeys.getUnresolvedAddress(channel);
       actualExecute(channel);
    }
 

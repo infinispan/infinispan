@@ -44,7 +44,8 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool.ChannelEventType;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperationHandler.ChannelEventType;
+import org.infinispan.client.hotrod.impl.transport.netty.pool.HotRodChannelPoolHandler;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -72,8 +73,8 @@ public class ChannelFactory {
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
 
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-   private final ConcurrentMap<SocketAddress, ChannelPool> channelPoolMap = new ConcurrentHashMap<>();
-   private final Function<SocketAddress, ChannelPool> newPool = this::newPool;
+   private final ConcurrentMap<SocketAddress, ChannelOperationHandler> channelOperationMap = new ConcurrentHashMap<>();
+   private final Function<SocketAddress, ChannelOperationHandler> newChannelOperation = this::newChannelOperationHandler;
    private EventLoopGroup eventLoopGroup;
    private ExecutorService executorService;
    private OperationsFactory operationsFactory;
@@ -163,7 +164,7 @@ public class ChannelFactory {
       return marshallerRegistry;
    }
 
-   private ChannelPool newPool(SocketAddress address) {
+   private ChannelOperationHandler newChannelOperationHandler(SocketAddress address) {
       log.debugf("Creating new channel pool for %s", address);
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)
@@ -174,18 +175,17 @@ public class ChannelFactory {
             .option(ChannelOption.TCP_NODELAY, configuration.tcpNoDelay())
             .option(ChannelOption.SO_RCVBUF, 1024576);
       int maxConnections = configuration.connectionPool().maxActive();
-      if (maxConnections < 0) {
+      if (maxConnections <= 0) {
          maxConnections = Integer.MAX_VALUE;
       }
-      ChannelInitializer channelInitializer =
-            new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
-      bootstrap.handler(channelInitializer);
-      ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-                                         configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-                                         configuration.connectionPool().maxWait(), maxConnections,
-                                         configuration.connectionPool().maxPendingRequests());
-      channelInitializer.setChannelPool(pool);
-      return pool;
+      ChannelInitializer channelInitializer = new ChannelInitializer(operationsFactory, configuration, this);
+      HotRodChannelPoolHandler poolHandler = new HotRodChannelPoolHandler(channelInitializer);
+
+      ChannelOperationHandler operationHandler = new ChannelOperationHandler(bootstrap, poolHandler, address,
+            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
+            configuration.connectionPool().maxWait(), maxConnections, configuration.connectionPool().maxPendingRequests());
+      channelInitializer.setChannelOperationHandler(operationHandler);
+      return operationHandler;
    }
 
    private void pingServersIgnoreException() {
@@ -208,7 +208,7 @@ public class ChannelFactory {
 
    public void destroy() {
       try {
-         channelPoolMap.values().forEach(ChannelPool::close);
+         channelOperationMap.values().forEach(ChannelOperationHandler::close);
          eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
          executorService.shutdownNow();
       } catch (Exception e) {
@@ -258,15 +258,15 @@ public class ChannelFactory {
    }
 
    public <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress server, T operation) {
-      ChannelPool pool = channelPoolMap.computeIfAbsent(server, newPool);
-      pool.acquire(operation);
+      ChannelOperationHandler channelOperation = channelOperationMap.computeIfAbsent(server, newChannelOperation);
+      channelOperation.acquire(operation);
       return operation;
    }
 
    private void closeChannelPools(Set<? extends SocketAddress> servers) {
       for (SocketAddress server : servers) {
          HOTROD.removingServer(server);
-         ChannelPool pool = channelPoolMap.remove(server);
+         ChannelOperationHandler pool = channelOperationMap.remove(server);
          if (pool != null) {
             pool.close();
          }
@@ -307,8 +307,17 @@ public class ChannelFactory {
       // are not deemed equal, and that breaks the comparison in channelPool - had we used channel.remoteAddress()
       // we'd create another pool for this resolved address. Therefore we need to find out appropriate pool this
       // channel belongs using the attribute.
-      ChannelRecord record = ChannelRecord.of(channel);
-      record.release(channel);
+      ChannelRecord record = ChannelKeys.getChannelRecord(channel);
+      boolean canRelease = record.release(channel);
+      if (canRelease) {
+         SocketAddress unresolvedAddress = ChannelKeys.getUnresolvedAddress(channel);
+         ChannelOperationHandler channelOperation = channelOperationMap.get(unresolvedAddress);
+         if (channelOperation != null) {
+            channelOperation.release(channel);
+         } else {
+            throw new IllegalStateException(String.format("Channel %s not in the pool with unresolved address %s", channel, unresolvedAddress));
+         }
+      }
    }
 
    public void receiveTopology(byte[] cacheName, int responseTopologyAge, int responseTopologyId,
@@ -330,7 +339,7 @@ public class ChannelFactory {
                SegmentConsistentHash consistentHash =
                      createConsistentHash(segmentOwners, hashFunctionVersion, cacheInfo.getCacheName());
                newCacheInfo = cacheInfo.withNewHash(responseTopologyAge, responseTopologyId, addressList,
-                                                       consistentHash, segmentOwners.length);
+                     consistentHash, segmentOwners.length);
             } else {
                newCacheInfo = cacheInfo.withNewServers(responseTopologyAge, responseTopologyId, addressList);
             }
@@ -338,8 +347,8 @@ public class ChannelFactory {
          } else {
             if (log.isTraceEnabled())
                log.tracef("[%s] Ignoring outdated topology: topology id = %s, topology age = %s, servers = %s",
-                          cacheInfo.getCacheName(), responseTopologyId, responseTopologyAge,
-                          Arrays.toString(addresses));
+                     cacheInfo.getCacheName(), responseTopologyId, responseTopologyAge,
+                     Arrays.toString(addresses));
          }
       } finally {
          lock.writeLock().unlock();
@@ -351,10 +360,10 @@ public class ChannelFactory {
       if (log.isTraceEnabled()) {
          if (hashFunctionVersion == 0)
             log.tracef("[%s] Not using a consistent hash function (hash function version == 0).",
-                       cacheNameString);
+                  cacheNameString);
          else
             log.tracef("[%s] Updating client hash function with %s number of segments",
-                       cacheNameString, segmentOwners.length);
+                  cacheNameString, segmentOwners.length);
       }
       return topologyInfo.createConsistentHash(segmentOwners.length, hashFunctionVersion, segmentOwners);
    }
@@ -453,17 +462,17 @@ public class ChannelFactory {
       return topologyInfo.getCacheInfo(wrapBytes(cacheName)).getTopologyId();
    }
 
-   public void onConnectionEvent(ChannelPool pool, ChannelEventType type) {
+   public void onConnectionEvent(ChannelOperationHandler channelOperationHandler, ChannelEventType type) {
       boolean allInitialServersFailed;
       lock.writeLock().lock();
       try {
          // TODO Replace with a simpler "pool healthy/unhealthy" event?
          if (type == ChannelEventType.CONNECTED) {
-            failedServers.remove(pool.getAddress());
+            failedServers.remove(channelOperationHandler.getUnresolvedAddress());
             return;
          } else if (type == ChannelEventType.CONNECT_FAILED) {
-            if (pool.getConnected() == 0) {
-               failedServers.add(pool.getAddress());
+            if (channelOperationHandler.getIdle() == 0) {
+               failedServers.add(channelOperationHandler.getUnresolvedAddress());
             }
          } else {
             // Nothing to do
@@ -472,7 +481,7 @@ public class ChannelFactory {
 
          if (log.isTraceEnabled())
             log.tracef("Connection attempt failed, we now have %d servers with no established connections: %s",
-                       failedServers.size(), failedServers);
+                  failedServers.size(), failedServers);
          allInitialServersFailed = failedServers.containsAll(topologyInfo.getCluster().getInitialServers());
          if (!allInitialServersFailed || clusters.isEmpty()) {
             resetCachesWithFailedServers();
@@ -720,21 +729,21 @@ public class ChannelFactory {
    }
 
    public int getNumActive(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelOperationHandler pool = channelOperationMap.get(address);
       return pool == null ? 0 : pool.getActive();
    }
 
    public int getNumIdle(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelOperationHandler pool = channelOperationMap.get(address);
       return pool == null ? 0 : pool.getIdle();
    }
 
    public int getNumActive() {
-      return channelPoolMap.values().stream().mapToInt(ChannelPool::getActive).sum();
+      return channelOperationMap.values().stream().mapToInt(ChannelOperationHandler::getActive).sum();
    }
 
    public int getNumIdle() {
-      return channelPoolMap.values().stream().mapToInt(ChannelPool::getIdle).sum();
+      return channelOperationMap.values().stream().mapToInt(ChannelOperationHandler::getIdle).sum();
    }
 
    public Configuration getConfiguration() {

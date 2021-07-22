@@ -1,16 +1,13 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import java.io.File;
-import java.net.SocketAddress;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Security;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLParameters;
@@ -29,10 +26,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.SslContextFactory;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
@@ -40,34 +34,22 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
-class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
+public class ChannelInitializer {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
 
-   private final Bootstrap bootstrap;
-   private final SocketAddress unresolvedAddress;
    private final OperationsFactory operationsFactory;
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
-   private ChannelPool channelPool;
+   private ChannelOperationHandler channelOperationHandler;
    private volatile boolean isFirstPing = true;
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
-      this.bootstrap = bootstrap;
-      this.unresolvedAddress = unresolvedAddress;
+   ChannelInitializer(OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
       this.operationsFactory = operationsFactory;
       this.configuration = configuration;
       this.channelFactory = channelFactory;
    }
 
-   CompletableFuture<Channel> createChannel() {
-      ChannelFuture connect = bootstrap.clone().connect();
-      ActivationFuture activationFuture = new ActivationFuture();
-      connect.addListener(activationFuture);
-      return activationFuture;
-   }
-
-   @Override
-   protected void initChannel(Channel channel) throws Exception {
+   public void initChannel(Channel channel) throws Exception {
       if (log.isTraceEnabled()) {
          log.tracef("Created channel %s", channel);
       }
@@ -84,8 +66,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          channel.pipeline().addLast("idle-state-handler",
                new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
       }
-      ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
-      channel.attr(ChannelRecord.KEY).set(channelRecord);
+      ChannelKeys.init(channel, channelOperationHandler);
       if (isFirstPing) {
          isFirstPing = false;
          channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
@@ -96,7 +77,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       if (configuration.connectionPool().minEvictableIdleTime() > 0) {
          // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
          channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
-               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
+               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelOperationHandler));
       }
    }
 
@@ -203,28 +184,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       throw new IllegalStateException("SaslClientFactory implementation not found");
    }
 
-   void setChannelPool(ChannelPool channelPool) {
-      this.channelPool = channelPool;
-   }
-
-   private static class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
-      @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
-         if (future.isSuccess()) {
-            Channel channel = future.channel();
-            ChannelRecord.of(channel).whenComplete(this);
-         } else {
-            completeExceptionally(future.cause());
-         }
-      }
-
-      @Override
-      public void accept(Channel channel, Throwable throwable) {
-         if (throwable != null) {
-            completeExceptionally(throwable);
-         } else {
-            complete(channel);
-         }
-      }
+   void setChannelOperationHandler(ChannelOperationHandler channelOperationHandler) {
+      this.channelOperationHandler = channelOperationHandler;
    }
 }

@@ -11,12 +11,12 @@ import io.netty.handler.timeout.IdleStateEvent;
 @Sharable
 public class IdleStateHandlerProvider extends ChannelInboundHandlerAdapter {
    private final int minIdle;
-   private final ChannelPool channelPool;
+   private final ChannelOperationHandler channelPool;
    private final static Log log = LogFactory.getLog(IdleStateHandlerProvider.class);
 
    static final String NAME = "idle-state-handler-provider";
 
-   public IdleStateHandlerProvider(int minIdle, ChannelPool channelPool) {
+   public IdleStateHandlerProvider(int minIdle, ChannelOperationHandler channelPool) {
       this.minIdle = minIdle;
       this.channelPool = channelPool;
    }
@@ -24,7 +24,7 @@ public class IdleStateHandlerProvider extends ChannelInboundHandlerAdapter {
    @Override
    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
       if (evt instanceof IdleStateEvent) {
-         if (channelPool.getIdle() > minIdle && ChannelRecord.of(ctx.channel()).isIdle()) {
+         if (channelPool.getIdle() > minIdle && ChannelKeys.getChannelRecord(ctx.channel()).isIdle()) {
             log.debugf("Closing idle channel %s", ctx.channel());
             ctx.close();
          }

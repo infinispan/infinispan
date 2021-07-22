@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
+import java.net.SocketAddress;
+
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -25,7 +27,8 @@ class ActivationHandler extends ChannelInboundHandlerAdapter {
       if (log.isTraceEnabled()) {
          log.tracef("Activating channel %s", ctx.channel());
       }
-      ChannelRecord.of(ctx.channel()).complete(ctx.channel());
+      Channel channel = ctx.channel();
+      ChannelKeys.getActivationListener(channel).complete(channel);
       ctx.pipeline().remove(this);
    }
 
@@ -47,9 +50,9 @@ class ActivationHandler extends ChannelInboundHandlerAdapter {
       try {
          ctx.close();
       } finally {
-         ChannelRecord channelRecord = ChannelRecord.of(channel);
          // With sync Hot Rod any failure to fetch a transport from pool was wrapped in TransportException
-         channelRecord.completeExceptionally(new TransportException(cause, channelRecord.getUnresolvedAddress()));
+         SocketAddress unresolvedAddress = ChannelKeys.getUnresolvedAddress(channel);
+         ChannelKeys.getActivationListener(channel).completeExceptionally(new TransportException(cause, unresolvedAddress));
       }
    }
 }
