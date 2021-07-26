@@ -48,8 +48,7 @@
          login_module_name="krb-node0"
          server_callback_handler_class="org.infinispan.test.integration.security.utils.SaslPropCallbackHandler" />
 
-   <pbcast.STABLE stability_delay="500"
-                  desired_avg_gossip="5000"
+   <pbcast.STABLE desired_avg_gossip="5000"
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
