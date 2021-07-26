@@ -303,7 +303,7 @@ public class StateProviderImpl implements StateProvider {
 
    protected Flowable<InternalCacheEntry<Object, Object>> publishStoreEntries(IntSet segments) {
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-         persistenceManager.publishEntries(segments, k -> !dataContainer.containsKey(k), true, true,
+         persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
                                            Configurations::isStateTransferStore);
       return Flowable.fromPublisher(loaderPublisher).map(this::defaultMapEntryFromStore);
    }

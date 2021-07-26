@@ -202,7 +202,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    private Flowable<InternalCacheEntry<Object, Object>> publishStoreKeys(IntSet segments) {
       Address localAddress = rpcManager.getAddress();
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-         persistenceManager.publishEntries(segments, k -> !dataContainer.containsKey(k), true, true,
+         persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
                                            Configurations::isStateTransferStore);
       return Flowable.fromPublisher(loaderPublisher)
                      // We rely on MarshallableEntry implementations caching the unmarshalled metadata for performance
