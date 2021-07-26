@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 
 import net.jcip.annotations.GuardedBy;
@@ -110,12 +111,15 @@ public class RemoteSiteStatus {
       return new RemoteSiteStatus(backup, configuration.isSyncBackup(), configuration.stateTransfer().mode());
    }
 
-   public XSiteStateTransferMode stateTransferMode() {
+   public synchronized XSiteStateTransferMode stateTransferMode() {
       return stateTransferMode;
    }
 
-   public boolean setStateTransferMode(XSiteStateTransferMode mode) {
+   public synchronized boolean setStateTransferMode(XSiteStateTransferMode mode) {
       if (isSync) {
+         throw Log.XSITE.autoXSiteStateTransferModeNotAvailableInSync();
+      }
+      if (stateTransferMode == mode) {
          return false;
       }
       stateTransferMode = mode;

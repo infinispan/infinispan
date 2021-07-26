@@ -3,6 +3,7 @@ package org.infinispan.server.security.authorization;
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
 import static org.infinispan.client.rest.RestResponse.CREATED;
 import static org.infinispan.client.rest.RestResponse.FORBIDDEN;
+import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
@@ -472,17 +473,17 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testAdminsAccessToPerformXSiteOps() {
-      assertXSiteOps(TestUser.ADMIN, OK, NO_CONTENT);
+      assertXSiteOps(TestUser.ADMIN, OK, NO_CONTENT, NOT_MODIFIED);
    }
 
    @Test
    public void testRestNonAdminsMustNotAccessPerformXSiteOps() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         assertXSiteOps(user, FORBIDDEN, FORBIDDEN);
+         assertXSiteOps(user, FORBIDDEN, FORBIDDEN, FORBIDDEN);
       }
    }
 
-   private void assertXSiteOps(TestUser user, int status, int noContentStatus) {
+   private void assertXSiteOps(TestUser user, int status, int noContentStatus, int notModifiedStatus) {
       RestClientConfigurationBuilder userConfig = restBuilders.get(user);
       RestClient client = getServerTest().rest().withClientConfiguration(userConfig).get();
       RestCacheClient xsiteCache = client.cache("xsite");
@@ -498,7 +499,7 @@ public abstract class AbstractAuthorization {
       assertStatus(status, xsiteCache.getXSiteTakeOfflineConfig("NYC"));
       assertStatus(noContentStatus, xsiteCache.updateXSiteTakeOfflineConfig("NYC", 10, 1000));
       assertStatus(status, xsiteCache.xSiteStateTransferMode("NYC"));
-      assertStatus(status, xsiteCache.xSiteStateTransferMode("NYC", XSiteStateTransferMode.MANUAL));
+      assertStatus(notModifiedStatus, xsiteCache.xSiteStateTransferMode("NYC", XSiteStateTransferMode.MANUAL));
       RestCacheManagerClient xsiteCacheManager = client.cacheManager("default");
       assertStatus(status, xsiteCacheManager.bringBackupOnline("NYC"));
       assertStatus(status, xsiteCacheManager.takeOffline("NYC"));
