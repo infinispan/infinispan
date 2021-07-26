@@ -10,6 +10,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -107,8 +109,10 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
          assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
       }
 
-      //sync mode doesn't allow automatic state transfer mode
-      assertFalse(admin(NYC, 0).setStateTransferMode(LON, XSiteStateTransferMode.AUTO.toString()));
+      //sync mode throws an exception
+      Exceptions.expectException(CacheConfigurationException.class,
+            "ISPN000634.*",
+            () -> admin(NYC, 0).setStateTransferMode(LON, XSiteStateTransferMode.AUTO.toString()));
 
       for (int i = 0; i < initialClusterSize; ++i) {
          assertEquals(XSiteStateTransferMode.AUTO.toString(), admin(LON, i).getStateTransferMode(NYC));
@@ -121,6 +125,9 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
          assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(LON, i).getStateTransferMode(NYC));
          assertEquals(XSiteStateTransferMode.MANUAL.toString(), admin(NYC, i).getStateTransferMode(LON));
       }
+
+      // NYC already in manual mode, should return "false"
+      assertFalse(admin(LON, 0).setStateTransferMode(NYC, XSiteStateTransferMode.MANUAL.toString()));
    }
 
    public void testSitesView() {
