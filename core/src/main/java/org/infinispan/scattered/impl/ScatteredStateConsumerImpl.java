@@ -279,7 +279,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          // With passivation, some key could be activated here and we could miss it,
          // but then it should be broadcast-loaded in PrefetchInvalidationInterceptor
          Publisher<MarshallableEntry<Object, Object>> persistencePublisher =
-            persistenceManager.publishEntries(completedSegments, k -> !dataContainer.containsKey(k), true, true,
+            persistenceManager.publishEntries(completedSegments, k -> dataContainer.peek(k) == null, true, true,
                                               Configurations::isStateTransferStore);
          try {
             blockingSubscribe(Flowable.fromPublisher(persistencePublisher)

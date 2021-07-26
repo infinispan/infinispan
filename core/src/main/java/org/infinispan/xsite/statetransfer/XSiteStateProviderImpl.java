@@ -197,6 +197,6 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    }
 
    private boolean missingInDataContainer(Object key) {
-      return !dataContainer.containsKey(key);
+      return dataContainer.peek(key) == null;
    }
 }

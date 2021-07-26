@@ -210,7 +210,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    private InvocationStage lookupLocalAndRetrieveRemote(InvocationContext ctx, Object key, DataCommand cmd, int segment) {
       // We need to lookup the dataContainer directly as GetCacheEntryCommand won't return entry with null value
-      InternalCacheEntry entry = dataContainer.get(segment, key);
+      InternalCacheEntry<K, V> entry = dataContainer.peek(segment, key);
       if (log.isTraceEnabled()) {
          log.tracef("Locally prefetched entry %s", entry);
       }
