@@ -46,8 +46,7 @@
    <SASL mech="DIGEST-MD5"
          client_callback_handler_class="org.jgroups.auth.sasl.SimpleAuthorizingCallbackHandler" />
 
-   <pbcast.STABLE stability_delay="500"
-                  desired_avg_gossip="5000"
+   <pbcast.STABLE desired_avg_gossip="5000"
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
