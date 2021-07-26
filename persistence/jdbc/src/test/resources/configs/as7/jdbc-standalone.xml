@@ -161,7 +161,6 @@
                 <protocol type="UNICAST3">
                 </protocol>
                 <protocol type="pbcast.STABLE">
-                    <property name="stability_delay">500</property>
                     <property name="desired_avg_gossip">5000</property>
                     <property name="max_bytes">1m</property>
                 </protocol>
@@ -195,7 +194,6 @@
                 <protocol type="UNICAST3">
                 </protocol>
                 <protocol type="pbcast.STABLE">
-                    <property name="stability_delay">500</property>
                     <property name="desired_avg_gossip">5000</property>
                     <property name="max_bytes">1m</property>
                 </protocol>

@@ -43,8 +43,7 @@
                  xmit_table_max_compaction_time="30000"
                  xmlns="urn:org:jgroups"
          />
-         <pbcast.STABLE stability_delay="200"
-                        desired_avg_gossip="2000"
+         <pbcast.STABLE desired_avg_gossip="2000"
                         max_bytes="1M"
                         xmlns="urn:org:jgroups"
          />
