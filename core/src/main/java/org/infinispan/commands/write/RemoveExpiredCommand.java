@@ -63,7 +63,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
               "key=" + toStr(key) +
               ", value=" + toStr(value) +
               ", lifespan=" + lifespan +
-              ", maxIde=" + maxIdle +
+              ", maxIdle=" + maxIdle +
               ", internalMetadata=" + getInternalMetadata() +
               '}';
    }
