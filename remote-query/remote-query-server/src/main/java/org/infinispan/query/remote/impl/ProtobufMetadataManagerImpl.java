@@ -117,7 +117,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    private void processSerializationContextInitializer(Iterable<SerializationContextInitializer> initializers) {
       if (initializers != null) {
          for (SerializationContextInitializer sci : initializers) {
-            log.registeringSerializationContextInitializer(sci.getClass().getName());
+            log.debugf("Registering protostream serialization context initializer: %s", sci.getClass().getName());
             try {
                sci.registerSchema(serCtx);
                sci.registerMarshallers(serCtx);
