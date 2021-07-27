@@ -234,6 +234,6 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
 
    @Override
    public String toString() {
-      return "SimpleAsyncInvocationStage(" + queueSize() + "handlers, "+ future + ')';
+      return "QueueAsyncInvocationStage(" + queueSize() + " handlers, "+ future + ')';
    }
 }
