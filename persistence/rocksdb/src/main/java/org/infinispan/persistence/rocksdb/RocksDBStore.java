@@ -768,11 +768,8 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             ColumnFamilyHandle handle = getHandle(segment);
             return blockingManager.supplyBlocking(() -> {
                try {
-                  if (db.get(handle, keyBytes) == null) {
-                     return Boolean.FALSE;
-                  }
                   db.delete(handle, keyBytes);
-                  return Boolean.TRUE;
+                  return null;
                } catch (RocksDBException e) {
                   throw new PersistenceException(e);
                }

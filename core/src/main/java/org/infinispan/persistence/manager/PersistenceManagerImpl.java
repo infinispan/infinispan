@@ -704,7 +704,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                  && predicate.test(storeStatus.config))
                      // Let the delete work in parallel across the stores
                      .flatMapSingle(storeStatus -> Single.fromCompletionStage(
-                           storeStatus.store.delete(segment, key)))
+                           storeStatus.store.delete(segment, key).thenApply(v -> v != null ? v : Boolean.TRUE)))
                      // Can't use any, as we have to reduce to ensure that all stores are updated
                      .reduce(Boolean.FALSE, (removed1, removed2) -> removed1 || removed2);
             },

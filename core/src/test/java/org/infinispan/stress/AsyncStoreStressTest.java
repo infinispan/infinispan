@@ -1,6 +1,7 @@
 package org.infinispan.stress;
 
 import static java.lang.Math.sqrt;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
@@ -359,12 +360,11 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
          public boolean call(final String key, long run) {
             // Remove acquiring locks and catching exceptions
             return withKeyLock(key, () -> {
-               boolean removed = CompletionStages.join(store.delete(0, key));
-               if (removed) {
-                  expectedState.remove(key);
-                  if (log.isTraceEnabled())
-                     log.tracef("Expected state removed key=%s", key);
-               }
+               Boolean removed = CompletionStages.join(store.delete(0, key));
+               assertNull(removed);
+               expectedState.remove(key);
+               if (log.isTraceEnabled())
+                  log.tracef("Expected state removed key=%s", key);
                return true;
             });
          }
