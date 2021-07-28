@@ -3,7 +3,6 @@ package org.infinispan.persistence.remote;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +11,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -385,11 +383,8 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
       key = unwrap(key);
-      // Less than ideal, but RemoteCache, since it extends Cache, can only
-      // know whether the operation succeeded based on whether the previous
-      // value is null or not.
-      return remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).removeAsync(key)
-            .thenApply(Objects::nonNull);
+      return remoteCache.removeAsync(key)
+            .thenApply(v -> null);
    }
 
    private long toSeconds(long millis, Object key, String desc) {
