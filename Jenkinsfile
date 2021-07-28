@@ -84,11 +84,17 @@ pipeline {
 
     post {
         always {
-            recordIssues enabledForFailure: true, tools: [mavenConsole(), java(), javaDoc()]
-            recordIssues enabledForFailure: true, tool: checkStyle()
-            recordIssues enabledForFailure: true, tool: spotBugs()
-            recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
-            recordIssues enabledForFailure: true, tool: cpd(pattern: '**/target/cpd.xml')
+            // Record any warnings before the tests log their own stuff
+            recordIssues enabledForFailure: true,
+                         forensicsDisabled: true,
+                         blameDisabled: true,
+                         tools: [
+                mavenConsole(), java(), javaDoc(),
+                checkStyle(),
+                spotBugs(),
+                pmdParser(pattern: '**/target/pmd.xml'),
+                cpd(pattern: '**/target/cpd.xml')
+            ]
         }
 
         // Deploy snapshots of successful master builds
