@@ -18,7 +18,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
    KeyPartitioner getKeyPartitioner();
 
-   default boolean delete(Object key) {
+   default Boolean delete(Object key) {
       int segment = getKeyPartitioner().getSegment(key);
       return join(delete(segment, key));
    }

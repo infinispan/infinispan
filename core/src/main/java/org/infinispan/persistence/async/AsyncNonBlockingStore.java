@@ -510,9 +510,9 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
       assertNotStopped();
-      return submitModification(new RemoveModification(segment, key))
-            // We always assume it was removed with async
-            .thenCompose(ignore -> CompletableFutures.completedTrue());
+      // Return null to signal that we don't know if the key exists in the store
+      // Use erasure to avoid calling thenApply
+      return (CompletionStage)submitModification(new RemoveModification(segment, key));
    }
 
    @Override

@@ -345,8 +345,8 @@ public interface NonBlockingStore<K, V> {
    CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry);
 
    /**
-    * Removes the entry for given key and segment from the store returning a stage that when completes normally
-    * contains whether the entry was actually removed or not.
+    * Removes the entry for given key and segment from the store
+    * and optionally report if the entry was actually removed or not.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -368,7 +368,9 @@ public interface NonBlockingStore<K, V> {
     * {@link PersistenceException} and the stage be completed exceptionally.
     * @param segment the segment for the given key if segmentation is enabled, otherwise 0.
     * @param key key of the entry to delete from the store.
-    * @return a stage that when complete contains a boolean stating if the value was removed from the store.
+    * @return a stage that completes with {@code TRUE} if the key existed in the store,
+    * {@code FALSE} if the key did not exist in the store,
+    * or {@code null} if the store does not report this information.
     */
    CompletionStage<Boolean> delete(int segment, Object key);
 

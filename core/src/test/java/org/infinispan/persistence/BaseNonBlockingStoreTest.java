@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.allEntries;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -202,7 +203,8 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertTrue("Expected an immortalEntry",
                  entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
       assertContains("k", true);
-      assertFalse(store.delete(keyToStorage("k2")));
+      // The store may return null or FALSE but not TRUE
+      assertNotSame(Boolean.TRUE, store.delete(keyToStorage("k2")));
    }
 
    public void testLoadAndStoreWithLifespan() throws Exception {
@@ -628,8 +630,11 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
                  entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
       assertTrue(store.contains(key));
 
-      assertFalse(store.delete(key2));
-      assertTrue(store.delete(key));
+      // Delete return value is optional
+      // The store may return null or FALSE but not TRUE
+      assertNotSame(Boolean.TRUE, store.delete(key2));
+      // The store may return null or TRUE but not FALSE
+      assertNotSame(Boolean.FALSE, store.delete(key));
    }
 
    public void testWriteAndDeleteBatch() {
