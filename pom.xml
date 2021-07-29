@@ -1909,6 +1909,13 @@
                <groupId>org.jboss.galleon</groupId>
                <artifactId>galleon-maven-plugin</artifactId>
                <version>${version.org.jboss.galleon}</version>
+               <dependencies>
+                  <dependency>
+                     <groupId>xom</groupId>
+                     <artifactId>xom</artifactId>
+                     <version>${version.xom}</version>
+                  </dependency>
+               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.antlr</groupId>

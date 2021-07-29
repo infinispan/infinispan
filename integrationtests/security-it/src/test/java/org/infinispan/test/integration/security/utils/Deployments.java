@@ -42,6 +42,7 @@ public final class Deployments {
             .addAsLibraries(
                   new File("target/test-libs/infinispan-core.jar"),
                   new File("target/test-libs/infinispan-commons.jar"),
+                  new File("target/test-libs/infinispan-commons-test.jar"),
                   new File("target/test-libs/caffeine.jar"),
                   new File("target/test-libs/rxjava.jar"),
                   new File("target/test-libs/reactive-streams.jar"),
