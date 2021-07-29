@@ -93,7 +93,7 @@ public class ThreadLeakChecker {
                       "|mysql-cj-abandoned-connection-cleanup" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
-      "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
+      "org.jboss.as.arquillian.container.CommonManagedDeployableContainer$ConsoleConsumer";
    private static final boolean ENABLED =
       "true".equalsIgnoreCase(System.getProperty("infinispan.test.checkThreadLeaks", "true"));
 
