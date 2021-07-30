@@ -230,27 +230,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-marshaller-kryo</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <!-- TODO should be here? -->
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-marshaller-kryo-bundle</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-marshaller-protostuff</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-marshaller-protostuff-bundle</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-multimap</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
@@ -412,4 +391,37 @@
            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>deprecated-marshallers</id>
+            <activation>
+               <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-marshaller-kryo</artifactId>
+                        <version>${version.infinispan}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-marshaller-kryo-bundle</artifactId>
+                        <version>${version.infinispan}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-marshaller-protostuff</artifactId>
+                        <version>${version.infinispan}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-marshaller-protostuff-bundle</artifactId>
+                        <version>${version.infinispan}</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+    </profiles>
 </project>

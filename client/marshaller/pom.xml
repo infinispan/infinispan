@@ -15,10 +15,6 @@
 
     <modules>
         <module>marshaller-tests</module>
-        <module>kryo/kryo-marshaller</module>
-        <module>kryo/kryo-marshaller-compatibility-bundle</module>
-        <module>protostuff/protostuff-marshaller</module>
-        <module>protostuff/protostuff-marshaller-compatibility-bundle</module>
     </modules>
 
     <dependencies>
@@ -107,4 +103,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>deprecated-marshallers</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>kryo/kryo-marshaller</module>
+                <module>kryo/kryo-marshaller-compatibility-bundle</module>
+                <module>protostuff/protostuff-marshaller</module>
+                <module>protostuff/protostuff-marshaller-compatibility-bundle</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
