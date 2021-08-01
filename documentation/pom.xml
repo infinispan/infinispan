@@ -284,7 +284,7 @@
                                 <configuration>
                                     <skip>${skipArtifactUpload}</skip>
                                     <target>
-                                        <echo message="Uploading PDF docs"/>
+                                        <echo level="info" message="Uploading PDF docs"/>
                                         <exec dir="${project.build.directory}/generated/${infinispan.base.version}" executable="rsync">
                                             <arg value="-rvm"/>
                                             <arg line="--protocol=29"/>

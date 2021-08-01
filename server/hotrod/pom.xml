@@ -131,7 +131,7 @@
                         <delete quiet="true">
                            <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                         </delete>
-                        <echo message="Generate the server certificate"/>
+                        <echo level="info" message="Generate the server certificate"/>
                         <keytool command="-genkeypair">
                            <args>
                               <arg value="-alias"/>

@@ -91,7 +91,7 @@
    </target>
 
    <target name="default">
-      <echo message="This script needs to be executed by the maven ant plugin"/>
+      <echo level="info" message="This script needs to be executed by the maven ant plugin"/>
    </target>
 
 </project>

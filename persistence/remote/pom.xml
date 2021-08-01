@@ -166,7 +166,7 @@
                         <delete quiet="true">
                            <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
                         </delete>
-                        <echo message="Generate the CA certificate"/>
+                        <echo level="info" message="Generate the CA certificate"/>
                         <keytool command="-genkeypair">
                            <args>
                               <arg value="-alias"/>
@@ -193,7 +193,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the CA certificate to the server truststore"/>
+                        <echo level="info" message="Import the CA certificate to the server truststore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
@@ -206,7 +206,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the CA certificate to the client truststore"/>
+                        <echo level="info" message="Import the CA certificate to the client truststore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
@@ -219,7 +219,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Generate the client certificate"/>
+                        <echo level="info" message="Generate the client certificate"/>
                         <keytool command="-genkeypair">
                            <args>
                               <arg value="-alias"/>
@@ -232,7 +232,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Sign the client certificate with the CA"/>
+                        <echo level="info" message="Sign the client certificate with the CA"/>
                         <keytool command="-certreq">
                            <args>
                               <arg value="-alias"/>
@@ -261,7 +261,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the CA certificate to the client keystore"/>
+                        <echo level="info" message="Import the CA certificate to the client keystore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
@@ -274,7 +274,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the client certificate to the client keystore"/>
+                        <echo level="info" message="Import the client certificate to the client keystore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
@@ -288,7 +288,7 @@
                            </args>
                         </keytool>
                         <!-- Server -->
-                        <echo message="Generate the server certificate"/>
+                        <echo level="info" message="Generate the server certificate"/>
                         <keytool command="-genkeypair">
                            <args>
                               <arg value="-alias"/>
@@ -301,7 +301,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Sign the server certificate with the CA"/>
+                        <echo level="info" message="Sign the server certificate with the CA"/>
                         <keytool command="-certreq">
                            <args>
                               <arg value="-alias"/>
@@ -330,7 +330,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the CA certificate to the server keystore"/>
+                        <echo level="info" message="Import the CA certificate to the server keystore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
@@ -343,7 +343,7 @@
                               <arg value="${default.password}"/>
                            </args>
                         </keytool>
-                        <echo message="Import the server certificate to the server keystore"/>
+                        <echo level="info" message="Import the server certificate to the server keystore"/>
                         <keytool command="-importcert">
                            <args>
                               <arg value="-alias"/>
