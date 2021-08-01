@@ -2680,7 +2680,7 @@
                            <target>
                               <available file="${project.build.outputDirectory}/schema" type="dir" property="hasSchema"/>
 
-                              <echo message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
+                              <echo level="info" message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
                               <scp todir="${upload.schemaDir}" keyfile="${upload.keyFile}" verbose="true" compressed="true" if:set="hasSchema" xmlns:if="ant:if">
                                  <fileset dir="${project.build.outputDirectory}/schema">
                                     <include name="*-${infinispan.core.schema.version}.xsd" />
@@ -3001,7 +3001,7 @@
                         <configuration>
                            <target>
                                  <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
-                                 <echo message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
+                                 <echo level="info" message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
                                  <copydir dest="${jacoco.reportPath}/classes"
                                           src="${project.build.directory}/classes"
                                           if:set="hasClasses" xmlns:if="ant:if"/>

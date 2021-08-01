@@ -217,7 +217,7 @@
                         <delete quiet="true">
                            <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                         </delete>
-                        <echo message="Generate the CA certificate"/>
+                        <echo level="info" message="Generate the CA certificate"/>
                         <keytool command="-genkeypair">
                            <args>
                               <arg value="-alias"/>
