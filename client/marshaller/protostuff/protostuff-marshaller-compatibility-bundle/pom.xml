@@ -55,6 +55,15 @@
                             </artifactSet>
                             <filters>
                                 <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/LICENSE</exclude>
+                                        <exclude>META-INF/LICENSE.txt</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/licenses.xml</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
                                     <artifact>org.infinispan:infinispan-marshaller-protostuff-bundle</artifact>
                                     <excludes>
                                         <exclude>META-INF/maven/org.infinispan/infinispan-marshaller-protostuff-bundle</exclude>
