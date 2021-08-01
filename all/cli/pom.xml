@@ -45,6 +45,11 @@
                      <artifactSet>
                         <excludes>
                            <exclude>org.infinispan:infinispan-cli</exclude>
+                           <!-- wildfly-elytron already shades these dependencies -->
+                           <exclude>org.wildfly.security:wildfly-elytron-*</exclude>
+                           <exclude>org.jboss.logging:jboss-logging</exclude>
+                           <exclude>org.apache.sshd:sshd-common</exclude>
+                           <exclude>org.slf4j:slf4j-api</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
@@ -62,6 +67,7 @@
                               <exclude>META-INF/DEPENDENCIES.txt</exclude>
                               <exclude>META-INF/LICENSE</exclude>
                               <exclude>META-INF/LICENSE.txt</exclude>
+                              <exclude>META-INF/MANIFEST.MF</exclude>
                               <exclude>META-INF/NOTICE</exclude>
                               <exclude>META-INF/NOTICE.txt</exclude>
                               <exclude>META-INF/licenses.xml</exclude>

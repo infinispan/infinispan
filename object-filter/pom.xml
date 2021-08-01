@@ -122,6 +122,15 @@
                            <exclude>org.infinispan:infinispan-component-annotations:</exclude>
                         </excludes>
                      </artifactSet>
+                     <filters>
+                        <filter>
+                           <artifact>*:*</artifact>
+                           <excludes>
+                              <exclude>META-INF/MANIFEST.MF</exclude>
+                              <exclude>META-INF/licenses.xml</exclude>
+                           </excludes>
+                        </filter>
+                     </filters>
                      <relocations>
                         <relocation>
                            <pattern>org.antlr.runtime</pattern>
