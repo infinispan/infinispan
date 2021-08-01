@@ -2329,6 +2329,7 @@
                      <goal>test-jar</goal>
                   </goals>
                   <configuration>
+                     <skipIfEmpty>true</skipIfEmpty>
                      <archive>
                         <manifest>
                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
