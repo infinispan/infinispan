@@ -202,7 +202,7 @@
                   <configuration>
                      <target>
                         <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                        <echo message="Base dir: ${basedir}" />
+                        <echo level="info" message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
                            <fileset casesensitive="yes" dir="${basedir}/..">
                               <!-- make sure core comes first -->
@@ -215,7 +215,7 @@
                            </fileset>
                         </path>
                         <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
-                        <echo message="XSDs: ${xsd.fileset}" />
+                        <echo level="info" message="XSDs: ${xsd.fileset}" />
                         <java classname="org.infinispan.tools.xsd.XSDoc">
                            <arg value="-o" />
                            <arg value="${project.build.directory}/site/configdocs" />
@@ -254,13 +254,13 @@
                   <configuration>
                      <skip>${skipArtifactUpload}</skip>
                      <target>
-                        <echo message="Creating checksums of distribution files"/>
+                        <echo level="info" message="Creating checksums of distribution files"/>
                         <checksum algorithm="SHA-1" fileext=".sha1">
                            <fileset dir="${project.build.directory}/distribution">
                               <include name="*.zip"/>
                            </fileset>
                         </checksum>
-                        <echo message="Uploading Distributions to ${upload.downloadsDir}"/>
+                        <echo level="info" message="Uploading Distributions to ${upload.downloadsDir}"/>
                         <exec dir="${project.build.directory}/distribution" executable="rsync">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>
@@ -271,7 +271,7 @@
                            <arg value="."/>
                            <arg value="${upload.downloadsDir}"/>
                         </exec>
-                        <echo message="Uploading Schema docs to ${upload.docsDir}"/>
+                        <echo level="info" message="Uploading Schema docs to ${upload.docsDir}"/>
                         <exec dir="${project.build.directory}/site" executable="rsync">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>

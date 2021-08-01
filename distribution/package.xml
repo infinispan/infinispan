@@ -99,7 +99,7 @@
          <local name="output.dir" />
          <property name="src.dir" value="${root.dir}/demos/@{demo}" />
          <property name="output.dir" value="@{target}/demos/@{demo}" />
-         <echo message="ROOT = ${root.dir}"/>
+         <echo level="info" message="ROOT = ${root.dir}"/>
          <mkdir dir="${output.dir}" />
          <copy todir="${output.dir}">
             <fileset dir="${src.dir}/target">

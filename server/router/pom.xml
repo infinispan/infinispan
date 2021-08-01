@@ -144,7 +144,7 @@
                                 <delete quiet="true">
                                     <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
                                 </delete>
-                                <echo message="Generate the default certificate"/>
+                                <echo level="info" message="Generate the default certificate"/>
                                 <keytool command="-genkeypair">
                                     <args>
                                         <arg value="-alias"/>
@@ -155,7 +155,7 @@
                                         <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
                                     </args>
                                 </keytool>
-                                <echo message="Generate the SNI certificate"/>
+                                <echo level="info" message="Generate the SNI certificate"/>
                                 <keytool command="-genkeypair">
                                     <args>
                                         <arg value="-alias"/>

@@ -215,7 +215,7 @@
          <artifactId>jdk-misc</artifactId>
          <version>2.Final</version>
       </dependency>
-      
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-scripting</artifactId>
@@ -225,12 +225,12 @@
          <groupId>io.projectreactor.tools</groupId>
          <artifactId>blockhound</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>io.mashona</groupId>
          <artifactId>mashona-logwriting</artifactId>
@@ -408,7 +408,7 @@
                         <configuration>
                            <skip>${skipArtifactUpload}</skip>
                            <target>
-                              <echo message="Uploading JavaDocs"/>
+                              <echo level="info" message="Uploading JavaDocs"/>
                               <exec dir="${project.build.directory}" executable="rsync">
                                  <arg value="-rvm"/>
                                  <arg line="--protocol=29"/>
