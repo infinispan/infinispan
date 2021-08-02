@@ -212,12 +212,12 @@ public interface Log extends BasicLogger {
 //   MarshallingException unableToMarshallRuntimeObject(String wrappedObjectClass, String wrapperClass);
 
    @LogMessage(level = INFO)
-   @Message(value = "Using OpenSSL Provider", id = 946)
-   void openSSLAvailable();
+   @Message(value = "Using OpenSSL Provider: %s", id = 946)
+   void openSSLProvider(String origin);
 
    @LogMessage(level = INFO)
    @Message(value = "Using Java SSL Provider", id = 947)
-   void openSSLNotAvailable();
+   void javaOpenSSLProvider();
 
    @Message(value = "Unsupported conversion of '%s' from '%s' to '%s'", id = 948)
    EncodingException unsupportedConversion(String content, MediaType contentType, MediaType requestType);

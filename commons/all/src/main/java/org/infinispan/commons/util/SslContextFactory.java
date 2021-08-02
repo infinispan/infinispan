@@ -3,6 +3,7 @@ package org.infinispan.commons.util;
 import static org.infinispan.commons.logging.Log.SECURITY;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,9 +40,8 @@ public class SslContextFactory {
             OpenSSLProvider.register();
             SSL.getInstance();
             sslProvider = "openssl";
-            SECURITY.openSSLAvailable();
          } catch (Throwable e) {
-            SECURITY.openSSLNotAvailable();
+            SECURITY.warn("Cannot instantiate openssl", e);
          }
       }
       SSL_PROVIDER = sslProvider;
@@ -65,7 +65,7 @@ public class SslContextFactory {
    }
 
    public SslContextFactory provider(String provider) {
-      this.provider = provider;
+      this.provider = provider == null ? FALLBACK_SSL_PROVIDER : provider;
       return this;
    }
 
@@ -120,6 +120,12 @@ public class SslContextFactory {
       return this;
    }
 
+   /**
+    * Load the sslContext from the Wildfly SSL libs
+    *
+    * @param useNativeIfAvailable it will load the sslContext from the Wildfly SSL libs. If it fail, it will load the JDK sslContext.
+    * @return factory
+    */
    public SslContextFactory useNativeIfAvailable(boolean useNativeIfAvailable) {
       this.useNativeIfAvailable = useNativeIfAvailable;
       return this;
@@ -142,16 +148,35 @@ public class SslContextFactory {
             TrustManagerFactory tmf = getTrustManagerFactory();
             trustManagers = tmf.getTrustManagers();
          }
-         SSLContext sslContext;
-         if (useNativeIfAvailable && provider != null && !FALLBACK_SSL_PROVIDER.equals(provider)) {
-            sslContext = SSLContext.getInstance(sslProtocol, provider);
-         } else {
+         SSLContext sslContext = null;
+         if (useNativeIfAvailable) {
+            try {
+               if (!FALLBACK_SSL_PROVIDER.equals(provider)) {
+                  sslContext = SSLContext.getInstance(sslProtocol, provider);
+                  logOpenSSLProvider();
+               }
+            } catch (Exception e) {
+               SECURITY.warn("Cannot get the native SSLContext instance", e);
+            }
+         }
+         if (sslContext == null) {
             sslContext = SSLContext.getInstance(sslProtocol);
+            SECURITY.javaOpenSSLProvider();
          }
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;
       } catch (Exception e) {
          throw SECURITY.sslInitializationException(e);
+      }
+   }
+
+   private void logOpenSSLProvider() {
+      if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl.retrieve.info", "false"))) {
+         // SSL.getInstance() won't be loaded twice
+         File origin = new File(SSL.getInstance().getClass().getProtectionDomain().getCodeSource().getLocation().getFile());
+         SECURITY.openSSLProvider(origin.getName());
+      } else {
+         SECURITY.openSSLProvider("***");
       }
    }
 
