@@ -200,7 +200,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
             log.tracef("Error while trying to obtain mechanism names supported by SaslClientFactory: %s", saslFactory.getClass().getName());
          }
       }
-      throw new IllegalStateException("SaslClientFactory implementation now found");
+      throw new IllegalStateException("SaslClientFactory implementation not found");
    }
 
    void setChannelPool(ChannelPool channelPool) {
