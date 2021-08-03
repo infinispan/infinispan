@@ -37,10 +37,6 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       this.value = value;
       this.metadata = metadata;
       this.internalMetadata = internalMetadata;
-      this.keyBytes = marshall(key, marshaller);
-      this.valueBytes = marshall(value, marshaller);
-      this.metadataBytes = marshall(metadata, marshaller);
-      this.internalMetadataBytes = marshall(internalMetadata, marshaller);
       this.created = created;
       this.lastUsed = lastUsed;
       this.marshaller = marshaller;
@@ -57,7 +53,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    }
 
    MarshallableEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, ByteBuffer internalMetadataBytes, long created, long lastUsed, Marshaller marshaller) {
-      this(marshall(key, marshaller), valueBytes, metadataBytes, internalMetadataBytes, created, lastUsed, marshaller);
+      this((ByteBuffer) null, valueBytes, metadataBytes, internalMetadataBytes, created, lastUsed, marshaller);
       this.key = key;
    }
 
@@ -114,16 +110,22 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
 
    @Override
    public ByteBuffer getValueBytes() {
+      if (valueBytes == null)
+         valueBytes = marshall(value, marshaller);
       return valueBytes;
    }
 
    @Override
    public ByteBuffer getMetadataBytes() {
+      if (metadataBytes == null)
+         metadataBytes = marshall(metadata, marshaller);
       return metadataBytes;
    }
 
    @Override
    public ByteBuffer getInternalMetadataBytes() {
+      if (internalMetadataBytes == null)
+         internalMetadataBytes = marshall(internalMetadata, marshaller);
       return internalMetadataBytes;
    }
 
@@ -165,7 +167,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
 
    @Override
    public MarshalledValue getMarshalledValue() {
-      return new MarshalledValueImpl(valueBytes, metadataBytes, internalMetadataBytes, created, lastUsed);
+      return new MarshalledValueImpl(getValueBytes(), getMetadataBytes(), getInternalMetadataBytes(), created, lastUsed);
    }
 
    @Override
@@ -237,7 +239,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       return unmarshall(buf, marshaller);
    }
 
-      @SuppressWarnings(value = "unchecked")
+   @SuppressWarnings(value = "unchecked")
    static <T> T unmarshall(ByteBuffer buf, Marshaller marshaller) {
       if (buf == null)
          return null;
