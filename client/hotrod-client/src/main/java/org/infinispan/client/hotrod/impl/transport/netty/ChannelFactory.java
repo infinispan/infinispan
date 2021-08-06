@@ -280,7 +280,7 @@ public class ChannelFactory {
       lock.writeLock().lock();
       try {
          if (failedServers != null && failedServers.containsAll(getServers(cacheName))) {
-            log.debug("All the servers are marked as failed. Cluster might have completely shut down, try reverting to the initial server list.");
+            log.switchToInitialServerList();
             reset(cacheName);
             closeChannelPools(failedServers);
             failedServers.clear();
