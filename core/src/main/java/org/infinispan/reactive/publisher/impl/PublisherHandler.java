@@ -331,7 +331,7 @@ public class PublisherHandler {
             if (futureResponse != null) {
                if (futureResponse.isDone()) {
                   // If future was done, that means we prefetched the response - so we may as well merge the results
-                  // together (this happens if last entry was by itself - so we will return batchSize + 1)
+                  // This happens if last entry was by itself, or if batchSize == 1
                   PublisherResponse prevResponse = futureResponse.join();
                   PublisherResponse newResponse = mergeResponses(prevResponse, response);
                   futureResponse = CompletableFuture.completedFuture(newResponse);
@@ -367,9 +367,8 @@ public class PublisherHandler {
          int offset = 0;
          offset = addToArray(response1.getResults(), newArray, offset);
          addToArray(response2.getResults(), newArray, offset);
-         // This should always be true
          boolean complete = response2.isComplete();
-         assert complete;
+         assert complete || batchSize == 1;
          return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
       }
 
@@ -580,9 +579,8 @@ public class PublisherHandler {
          offset = addToArray(response2.getResults(), newArray, offset);
          addToArray(response2.getExtraObjects(), newArray, offset);
 
-         // This should always be true
          boolean complete = response2.isComplete();
-         assert complete;
+         assert complete || batchSize == 1;
          return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
       }
 
