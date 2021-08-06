@@ -371,4 +371,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed to load and create an optional ProtoStream serialization context initializer: %s", id = 4104)
    void failedToCreatePredefinedSerializationContextInitializer(String className, @Cause Throwable throwable);
+
+   @LogMessage(level = WARN)
+   @Message(value = "All the servers are marked as failed. Cluster might have completely shut down, reverting to the initial server list.", id = 4105)
+   void switchToInitialServerList();
 }
