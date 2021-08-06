@@ -47,7 +47,7 @@ public class KeyPublisherResponse extends PublisherResponse {
 
    @Override
    public String toString() {
-      return "PublisherResponse{" +
+      return "KeyPublisherResponse{" +
             "size=" + size +
             ", extraSize=" + segmentOffset +
             ", keySize=" + keySize +
