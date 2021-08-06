@@ -313,6 +313,15 @@ public class PublisherHandler {
       }
 
       void prepareResponse(boolean complete) {
+         synchronized (this) {
+            if (!complete && futureResponse != null && futureResponse.isDone()) {
+               // This usually happens when batchSize == 1 and preloading one item is enough to fill a new batch
+               log.tracef("Response %d is already done for request id %s, not generating a new one",
+                          System.identityHashCode(futureResponse), requestId);
+               return;
+            }
+         }
+
          PublisherResponse response = generateResponse(complete);
 
          if (log.isTraceEnabled()) {
@@ -331,7 +340,7 @@ public class PublisherHandler {
             if (futureResponse != null) {
                if (futureResponse.isDone()) {
                   // If future was done, that means we prefetched the response - so we may as well merge the results
-                  // This happens if last entry was by itself, or if batchSize == 1
+                  // together (this happens if last entry was by itself - so we will return batchSize + 1)
                   PublisherResponse prevResponse = futureResponse.join();
                   PublisherResponse newResponse = mergeResponses(prevResponse, response);
                   futureResponse = CompletableFuture.completedFuture(newResponse);
@@ -367,8 +376,9 @@ public class PublisherHandler {
          int offset = 0;
          offset = addToArray(response1.getResults(), newArray, offset);
          addToArray(response2.getResults(), newArray, offset);
+         // This should always be true
          boolean complete = response2.isComplete();
-         assert complete || batchSize == 1;
+         assert complete;
          return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
       }
 
@@ -579,8 +589,9 @@ public class PublisherHandler {
          offset = addToArray(response2.getResults(), newArray, offset);
          addToArray(response2.getExtraObjects(), newArray, offset);
 
+         // This should always be true
          boolean complete = response2.isComplete();
-         assert complete || batchSize == 1;
+         assert complete;
          return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
       }
 
