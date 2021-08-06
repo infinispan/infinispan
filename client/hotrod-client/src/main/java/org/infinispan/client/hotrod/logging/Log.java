@@ -314,4 +314,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Transactions timeout must be positive", id = 4088)
    HotRodClientException invalidTransactionTimeout();
+
+   @LogMessage(level = WARN)
+   @Message(value = "All the servers are marked as failed. Cluster might have completely shut down, try reverting to the initial server list.", id = 4105)
+   void switchToInitialServerList();
 }
