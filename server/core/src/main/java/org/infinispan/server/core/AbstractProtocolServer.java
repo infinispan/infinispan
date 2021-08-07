@@ -207,6 +207,8 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       if (transport != null)
          transport.stop();
 
+      transportStatus = ComponentStatus.TERMINATED;
+
       try {
          unregisterServerMBeans();
       } catch (Exception e) {
