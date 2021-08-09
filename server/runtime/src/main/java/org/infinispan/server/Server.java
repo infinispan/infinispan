@@ -33,6 +33,7 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.io.StringBuilderWriter;
@@ -532,7 +533,13 @@ public class Server implements ServerManagement, AutoCloseable {
    public void clusterStop() {
       cacheManagers.values().forEach(cm -> {
          SecurityActions.checkPermission(cm.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
-         cm.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cm, name));
+         for (String name : cm.getCacheNames()) {
+            try {
+               SecurityActions.shutdownCache(cm, name);
+            } catch (CacheException e) {
+               log.exceptionOnCacheShutdown(name, e);
+            }
+         }
          sendExitStatusToServers(SecurityActions.getClusterExecutor(cm), ExitStatus.CLUSTER_SHUTDOWN);
       });
    }
