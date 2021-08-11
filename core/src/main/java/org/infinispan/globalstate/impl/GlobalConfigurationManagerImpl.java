@@ -129,12 +129,16 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration, persistedCaches);
+         // First create the cache locally to ensure that it's available on startup
+         createCacheLocally(name, null, configuration, adminFlags);
          // The cache configuration was permanent, it still needs to be
          CompletionStages.join(getOrCreateCache(name, configuration, adminFlags));
       });
 
       persistedTemplates.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration, persistedTemplates);
+         // First create the cache locally to ensure that it's available on startup
+         createTemplateLocally(name, configuration, adminFlags);
          // The template was permanent, it still needs to be
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
       });
@@ -144,7 +148,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       Configuration persisted = configs.get(name);
       if (persisted != null) {
          // Template value is not serialized, so buildConfiguration param is irrelevant
-         Configuration configuration = CompletionStages.join(buildConfiguration(name, state, false));
+         Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
          if (!persisted.matches(configuration)) {
             throw CONFIG.incompatibleClusterConfiguration(name, configuration, persisted);
          } else {
@@ -267,36 +271,45 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> createTemplateLocally(String name, CacheState state) {
-      log.debugf("Starting template %s from global state", name);
-      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, true);
-      return configurationStage.thenCompose(configuration -> localConfigurationManager.createTemplate(name, configuration, state.getFlags()))
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name));
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), true);
+      return createTemplateLocally(name, configuration, state.getFlags());
+   }
+
+   CompletionStage<Void> createTemplateLocally(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Creating template %s from global state", name);
+      return localConfigurationManager.createTemplate(name, configuration, flags)
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name))
+            .toCompletableFuture();
    }
 
    CompletionStage<Void> createCacheLocally(String name, CacheState state) {
-      log.debugf("Starting cache %s from global state", name);
-      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
-      return configurationStage.thenCompose(configuration -> localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags()))
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name));
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      return createCacheLocally(name, state.getTemplate(), configuration, state.getFlags());
+   }
+
+   CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Creating cache %s from global state", name);
+      return localConfigurationManager.createCache(name, template, configuration, flags)
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))
+            .toCompletableFuture();
    }
 
    CompletionStage<Void> validateConfigurationUpdateLocally(String name, CacheState state) {
       log.debugf("Validating configuration %s from global state", name);
-      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
-      return configurationStage.thenCompose(configuration -> localConfigurationManager.validateConfigurationUpdate(name, configuration, state.getFlags()));
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      return localConfigurationManager.validateConfigurationUpdate(name, configuration, state.getFlags());
    }
 
    CompletionStage<Void> updateConfigurationLocally(String name, CacheState state) {
       log.debugf("Updating configuration %s from global state", name);
-      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
-      return configurationStage.thenCompose(configuration -> localConfigurationManager.updateConfiguration(name, configuration, state.getFlags()))
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      return localConfigurationManager.updateConfiguration(name, configuration, state.getFlags())
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.UPDATE, "cache", name));
    }
 
-   private CompletionStage<Configuration> buildConfiguration(String name, CacheState state, boolean template) {
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
-      Configuration config = builderHolder.getNamedConfigurationBuilders().get(name).template(template).build(configurationManager.getGlobalConfiguration());
-      return CompletableFuture.completedFuture(config);
+   private Configuration buildConfiguration(String name, String configStr, boolean template) {
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configStr);
+      return builderHolder.getNamedConfigurationBuilders().get(name).template(template).build(configurationManager.getGlobalConfiguration());
    }
 
    @Override
