@@ -23,6 +23,6 @@ include::protobuf/person.proto[]
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> cd schemas
-[//containers/default]> ls 
+[//containers/default/schemas]> ls 
 person.proto
 ----
