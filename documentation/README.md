@@ -4,7 +4,7 @@ Tips to get started with Infinispan documentation.
 
 ## Documentation Guidelines
 
-Start by reading the [Documentation Guidelines](http://infinispan.org/docs/stable/contributing/contributing.html#documentation_guidelines) in the _Contributer's Guide_.
+Start by reading the [Documentation Guidelines](https://infinispan.org/docs/stable/titles/contributing/contributing.html#documentation_guidelines) in the _Contributer's Guide_.
 
 ## Tooling
 
