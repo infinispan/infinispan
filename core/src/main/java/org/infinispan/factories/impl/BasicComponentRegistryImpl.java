@@ -40,8 +40,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    private final ConcurrentMap<String, ComponentWrapper> components = new ConcurrentHashMap<>();
    @GuardedBy("lock")
    private final List<String> startedComponents = new ArrayList<>();
-   @GuardedBy("lock")
-   private final Map<Thread, ComponentPath> mutatorThreads;
+   private final ConcurrentMap<Thread, ComponentPath> mutatorThreads;
    // Needs to lock for updates but not for reads
    private volatile ComponentStatus status;
 
@@ -53,7 +52,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       this.scope = isGlobal ? Scopes.GLOBAL : Scopes.NAMED_CACHE;
       this.next = next;
       this.status = ComponentStatus.RUNNING;
-      this.mutatorThreads = new HashMap<>();
+      this.mutatorThreads = new ConcurrentHashMap<>();
 
       // No way to look up the next scope's BasicComponentRegistry, but that's not a problem
       registerComponent(BasicComponentRegistry.class, this, false);
@@ -190,7 +189,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          instance = factory.construct(name);
       } catch (Throwable t) {
          throw new CacheConfigurationException(
-            "Failed to construct component " + name + ", path " + getCurrentComponentPath(), t);
+               "Failed to construct component " + name + ", path " + peekMutatorPath(), t);
       }
 
       if (instance instanceof ComponentAlias) {
@@ -242,8 +241,13 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @Override
    public void wireDependencies(Object target, boolean startDependencies) {
       String componentClassName = target.getClass().getName();
-      ComponentAccessor<Object> accessor = moduleRepository.getComponentAccessor(componentClassName);
-      invokeInjection(target, accessor, startDependencies);
+      pushMutatorPath("wireDependencies", componentClassName);
+      try {
+         ComponentAccessor<Object> accessor = moduleRepository.getComponentAccessor(componentClassName);
+         invokeInjection(target, accessor, startDependencies);
+      } finally {
+         popMutatorPath();
+      }
    }
 
    private ComponentFactory findFactory(String name) {
@@ -292,12 +296,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          wrapper.accessor = accessor;
          wrapper.aliasTarget = aliasTargetRef;
          wrapper.state = newState;
-         ComponentPath currentPath = mutatorThreads.get(Thread.currentThread());
-         if (currentPath.next != null) {
-            mutatorThreads.put(Thread.currentThread(), currentPath.next);
-         } else {
-            mutatorThreads.remove(Thread.currentThread());
-         }
+         popMutatorPath();
          if (log.isTraceEnabled())
             log.tracef("Changed status of " + wrapper.name + " to " + wrapper.state);
          condition.signalAll();
@@ -350,14 +349,14 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       } catch (Exception e) {
          throw new CacheConfigurationException(
             "Unable to inject dependencies for component class " + target.getClass().getName() + ", path " +
-            getCurrentComponentPath(), e);
+            peekMutatorPath(), e);
       }
    }
 
    <T> T throwDependencyNotFound(String componentName) {
       throw new CacheConfigurationException(
          "Unable to construct dependency " + componentName + " in scope " + scope + " for " +
-         getCurrentComponentPath());
+         peekMutatorPath());
    }
 
    @Override
@@ -434,19 +433,33 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
    @Override
    public void replaceComponent(String componentName, Object newInstance, boolean manageLifecycle) {
-      boolean start;
       lock.lock();
+      ComponentWrapper newWrapper = null;
       try {
-         ComponentWrapper oldWrapper = components.remove(componentName);
-         start = oldWrapper != null && oldWrapper.isRunning();
+         ComponentAccessor<Object> accessor = getMetadataForComponent(newInstance);
+         invokeInjection(newInstance, accessor, false);
+
+         newWrapper = new ComponentWrapper(this, componentName, manageLifecycle);
+         ComponentWrapper oldWrapper = components.put(componentName, newWrapper);
+         prepareWrapperChange(newWrapper, WrapperState.EMPTY, WrapperState.INSTANTIATING);
+
+         // If the component was already started, start the replacement as well
+         // but avoid logStartedComponent in order to preserve the stop order
+         boolean wantStarted = oldWrapper != null && oldWrapper.isRunning();
+         boolean canRunStart = manageLifecycle && accessor != null;
+         if (wantStarted && canRunStart) {
+            invokeStart(newInstance, accessor);
+         }
+
+         WrapperState state = (wantStarted || !canRunStart) ? WrapperState.STARTED : WrapperState.WIRED;
+         commitWrapperInstanceChange(newWrapper, newInstance, accessor, WrapperState.INSTANTIATING, state);
+      } catch (Throwable t) {
+         if (newWrapper != null) {
+            commitWrapperStateChange(newWrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
+         }
+         throw new CacheConfigurationException("Unable to start replacement component " + newInstance, t);
       } finally {
          lock.unlock();
-      }
-
-      // This is not thread-safe, but it's good enough for testing
-      registerComponent(componentName, newInstance, manageLifecycle);
-      if (start) {
-         getComponent(componentName, newInstance.getClass()).running();
       }
    }
 
@@ -684,10 +697,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
          wrapper.state = newState;
 
-         ComponentPath currentPath = mutatorThreads.get(Thread.currentThread());
-         String name = wrapper.name;
-         String className = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
-         mutatorThreads.put(Thread.currentThread(), new ComponentPath(name, className, currentPath));
+         String componentClassName = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
+         String name = pushMutatorPath(wrapper.name, componentClassName);
          if (log.isTraceEnabled())
             log.tracef("Changed status of " + name + " to " + wrapper.state);
          return true;
@@ -706,12 +717,12 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
                   expectedState + " but it has not been instantiated yet");
          }
          if (wrapper.state.isBefore(expectedState)) {
-            ComponentPath currentComponentPath = mutatorThreads.get(Thread.currentThread());
+            ComponentPath currentComponentPath = peekMutatorPath();
             if (currentComponentPath != null && currentComponentPath.contains(name)) {
                String className = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
                throw new CacheConfigurationException(
                   "Dependency cycle detected, please use ComponentRef<T> to break the cycle in path " +
-                  new ComponentPath(name, className, getCurrentComponentPath()));
+                  new ComponentPath(name, className, peekMutatorPath()));
             }
          }
          while (status == ComponentStatus.RUNNING && wrapper.isBefore(expectedState)) {
@@ -728,13 +739,23 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
    }
 
-   private ComponentPath getCurrentComponentPath() {
-      lock.lock();
-      try {
-         return mutatorThreads.get(Thread.currentThread());
-      } finally {
-         lock.unlock();
+   private String pushMutatorPath(String name, String className) {
+      ComponentPath currentPath = mutatorThreads.get(Thread.currentThread());
+      mutatorThreads.put(Thread.currentThread(), new ComponentPath(name, className, currentPath));
+      return name;
+   }
+
+   private void popMutatorPath() {
+      ComponentPath currentPath = mutatorThreads.get(Thread.currentThread());
+      if (currentPath.next != null) {
+         mutatorThreads.put(Thread.currentThread(), currentPath.next);
+      } else {
+         mutatorThreads.remove(Thread.currentThread());
       }
+   }
+
+   private ComponentPath peekMutatorPath() {
+      return mutatorThreads.get(Thread.currentThread());
    }
 
    @Override
@@ -902,7 +923,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
                sb.append("\n  << ");
             }
             sb.append(path.name);
-            if (className != null) {
+            if (path.className != null) {
                sb.append(" (a ").append(path.className).append(")");
             }
             path = path.next;
