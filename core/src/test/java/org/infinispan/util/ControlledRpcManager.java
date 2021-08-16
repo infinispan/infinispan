@@ -1,6 +1,9 @@
 package org.infinispan.util;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -20,12 +23,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -36,6 +37,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -48,7 +51,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -65,25 +67,25 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
    private static final int TIMEOUT_SECONDS = 10;
 
-   private final AtomicInteger threadCount = new AtomicInteger(1);
-   private final Cache<?, ?> cache;
+   @Inject Cache<?, ?> cache;
+   @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
+   ScheduledExecutorService timeoutExecutor;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
 
    private volatile boolean stopped = false;
    private final Set<Class<? extends ReplicableCommand>> excludedCommands =
       Collections.synchronizedSet(new HashSet<>());
    private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
-   private final ScheduledExecutorService executor;
    private RuntimeException globalError;
 
    protected ControlledRpcManager(RpcManager realOne, Cache<?, ?> cache) {
       super(realOne);
       this.cache = cache;
-      executor = Executors.newScheduledThreadPool(
-         0, r -> new Thread(r, "ControlledRpc-" + threadCount.getAndIncrement() + "," + realOne.getAddress()));
    }
 
    public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache) {
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      RpcManager rpcManager = extractComponent(cache, RpcManager.class);
       if (rpcManager instanceof ControlledRpcManager) {
          throw new IllegalStateException("One ControlledRpcManager per cache should be enough");
       }
@@ -96,7 +98,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    public void revertRpcManager() {
       stopBlocking();
       log.tracef("Restoring regular RpcManager on %s", getAddress());
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      RpcManager rpcManager = extractComponent(cache, RpcManager.class);
       assertSame(this, rpcManager);
       TestingUtil.replaceComponent(cache, RpcManager.class, realOne, true);
    }
@@ -110,11 +112,9 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       excludedCommands.addAll(Arrays.asList(excluded));
    }
 
-   @Stop
    public void stopBlocking() {
       log.debugf("Stopping intercepting RPC calls on %s", realOne.getAddress());
       stopped = true;
-      executor.shutdownNow();
       throwGlobalError();
       if (!waiters.isEmpty()) {
          fail("Stopped intercepting RPCs on " + realOne.getAddress() + ", but there are " + waiters.size() + " waiters in the queue");
@@ -198,7 +198,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
       Address excluded = realOne.getAddress();
       ControlledRequest<T> controlledRequest =
-         new ControlledRequest<>(command, targets, collector, invoker, executor, excluded);
+         new ControlledRequest<>(command, targets, collector, invoker, nonBlockingExecutor, excluded);
       try {
          CompletableFuture<ControlledRequest<?>> waiter = waiters.poll(TIMEOUT_SECONDS, SECONDS);
          if (waiter == null) {
@@ -214,7 +214,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          throw new TestException(e);
       }
       if (collector != null) {
-         ScheduledFuture<?> cancelTask = executor.schedule(() -> {
+         ScheduledFuture<?> cancelTask = timeoutExecutor.schedule(() -> {
             TimeoutException e = new TimeoutException("Timed out waiting for test to unblock command " +
                                                       controlledRequest.getCommand());
             addGlobalError(e);
@@ -223,7 +223,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          controlledRequest.resultFuture.whenComplete((ignored, throwable) -> cancelTask.cancel(false));
       }
       // resultFuture is completed from a test thread, and we don't want to run the interceptor callbacks there
-      return controlledRequest.resultFuture.whenCompleteAsync((r, t) -> {}, executor);
+      return controlledRequest.resultFuture.whenCompleteAsync((r, t) -> {}, nonBlockingExecutor);
    }
 
    private void addGlobalError(RuntimeException t) {
@@ -238,6 +238,12 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       performRequest(targets, command, null, invoker, null);
+   }
+
+   @Stop
+   void stop() {
+      stopBlocking();
+      TestingUtil.stopComponent(realOne);
    }
 
    private boolean commandExcluded(ReplicableCommand command) {
@@ -395,7 +401,6 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
             try {
                throwIfFailed();
                assertFalse(collectedFinish);
-               CompletableFutures.await(finishFuture, 10, SECONDS);
 
                collectedFinish = true;
                result = collector.finish();
@@ -612,6 +617,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * to the original response collector (it only calls {@link ResponseCollector#finish()}).
        */
       public void finish() {
+         uncheckedGet(request.finishFuture());
          request.collectFinish();
       }
 
@@ -639,7 +645,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    public static class BlockedResponse {
-      private ControlledRequest<?> request;
+      private final ControlledRequest<?> request;
       final SentRequest sentRequest;
       final Address sender;
       final Response response;
@@ -692,7 +698,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    public static class BlockedResponseMap {
       private final ControlledRequest<?> request;
-      private Map<Address, Response> responseMap;
+      private final Map<Address, Response> responseMap;
 
       private BlockedResponseMap(ControlledRequest<?> request,
                                  Map<Address, Response> responseMap) {
@@ -706,6 +712,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          log.tracef("Unblocking responses for %s: %s", request.getCommand(), responseMap);
          responseMap.forEach(request::collectResponse);
          if (!request.isDone()) {
+            uncheckedGet(request.finishFuture());
             request.collectFinish();
          }
       }
@@ -716,6 +723,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          log.tracef("Replacing responses for %s: %s (was %s)", request.getCommand(), newResponses, responseMap);
          newResponses.forEach(request::collectResponse);
          if (!request.isDone()) {
+            uncheckedGet(request.finishFuture());
             request.collectFinish();
          }
       }
@@ -819,7 +827,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     * {@link RpcManager#invokeCommands(Collection, Function, ResponseCollector, RpcOptions)}.
     */
    public static class BlockedRequests<T extends ReplicableCommand> {
-      private Map<Address, BlockedRequest<T>> requests;
+      private final Map<Address, BlockedRequest<T>> requests;
 
       public BlockedRequests(Map<Address, BlockedRequest<T>> requests) {
          this.requests = requests;
