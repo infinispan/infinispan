@@ -11,8 +11,8 @@ import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
 import org.infinispan.anchored.impl.AnchoredStateProvider;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.conflict.MergePolicy;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -22,8 +22,8 @@ import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.statetransfer.StateProvider;
 
 /**
@@ -50,6 +50,7 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
+      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       AnchoredKeysConfiguration anchoredKeysConfiguration = configuration.module(AnchoredKeysConfiguration.class);
       if (anchoredKeysConfiguration == null || !anchoredKeysConfiguration.enabled())
          return;
@@ -62,14 +63,14 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
       if (!globalConfiguration.features().isAvailable(ANCHORED_KEYS_FEATURE))
          throw CONFIG.featureDisabled(ANCHORED_KEYS_FEATURE);
 
-      cr.registerComponent(new AnchorManager(), AnchorManager.class);
+      bcr.registerComponent(AnchorManager.class, new AnchorManager(), true);
 
-      AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
+      AsyncInterceptorChain interceptorChain = bcr.getComponent(AsyncInterceptorChain.class).wired();
 
       // Replace the clustering interceptor with our custom interceptor
       ClusteringInterceptor oldDistInterceptor = interceptorChain.findInterceptorExtending(ClusteringInterceptor.class);
       AnchoredDistributionInterceptor distInterceptor = new AnchoredDistributionInterceptor();
-      cr.registerComponent(distInterceptor, AnchoredDistributionInterceptor.class);
+      bcr.registerComponent(AnchoredDistributionInterceptor.class, distInterceptor, true);
       boolean interceptorAdded = interceptorChain.addInterceptorBefore(distInterceptor, oldDistInterceptor.getClass());
       assert interceptorAdded;
       interceptorChain.removeInterceptor(oldDistInterceptor.getClass());
@@ -77,15 +78,14 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
       // Add a separate interceptor to fetch the actual values
       // AnchoredDistributionInterceptor cannot do it because it extends NonTxDistributionInterceptor
       AnchoredFetchInterceptor<?, ?> fetchInterceptor = new AnchoredFetchInterceptor<>();
-      cr.registerComponent(fetchInterceptor, AnchoredFetchInterceptor.class);
+      bcr.registerComponent(AnchoredFetchInterceptor.class, fetchInterceptor, true);
       interceptorAdded = interceptorChain.addInterceptorAfter(fetchInterceptor, AnchoredDistributionInterceptor.class);
       assert interceptorAdded;
 
-      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       bcr.replaceComponent(StateProvider.class.getName(), new AnchoredStateProvider(), true);
       bcr.replaceComponent(EntryFactory.class.getName(), new AnchoredEntryFactory(), true);
       bcr.replaceComponent(CacheNotifier.class.getName(), new AnchoredCacheNotifier<>(), true);
 
-      cr.rewire();
+      bcr.rewire();
    }
 }

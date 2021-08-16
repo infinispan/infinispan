@@ -26,6 +26,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.BlockingRunnable;
@@ -56,6 +57,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Inject ResponseGenerator responseGenerator;
    @Inject ComponentRegistry componentRegistry;
    @Inject protected Configuration configuration;
+   // Stop after RpcManager, so we stop accepting requests before we are unable to send requests ourselves
+   @Inject RpcManager rpcManager;
 
    private volatile boolean stopped = false;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
