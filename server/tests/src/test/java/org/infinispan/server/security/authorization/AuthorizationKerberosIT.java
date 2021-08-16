@@ -18,6 +18,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.experimental.categories.Category;
 
+import java.nio.file.Paths;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.1
@@ -40,8 +42,7 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
 
    @BeforeClass
    public static void setKrb5Conf() {
-      oldKrb5Conf = System.setProperty("java.security.krb5.conf",
-            AuthorizationKerberosIT.class.getClassLoader().getResource("configuration/krb5.conf").getPath());
+      oldKrb5Conf = System.setProperty("java.security.krb5.conf", Paths.get("src/test/resources/configuration/krb5.conf").toString());
    }
 
    @AfterClass

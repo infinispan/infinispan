@@ -5,6 +5,7 @@ import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -79,7 +80,7 @@ public class AuthenticationKerberosIT {
 
    @BeforeClass
    public static void setKrb5Conf() {
-      oldKrb5Conf = System.setProperty("java.security.krb5.conf", AuthenticationKerberosIT.class.getClassLoader().getResource("configuration/krb5.conf").getPath());
+      oldKrb5Conf = System.setProperty("java.security.krb5.conf", Paths.get("src/test/resources/configuration/krb5.conf").toString());
    }
 
    @AfterClass
