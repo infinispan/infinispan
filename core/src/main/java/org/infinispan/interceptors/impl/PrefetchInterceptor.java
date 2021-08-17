@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -70,7 +69,6 @@ import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
@@ -103,18 +101,18 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    protected static final long STATE_TRANSFER_FLAGS = FlagBitSets.PUT_FOR_STATE_TRANSFER |
          FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.SKIP_REMOTE_LOOKUP |
          FlagBitSets.SKIP_SHARED_CACHE_STORE | SKIP_OWNERSHIP_CHECK | FlagBitSets.SKIP_XSITE_BACKUP;
-   @Inject protected ScatteredVersionManager svm;
+   @Inject protected ScatteredVersionManager<K> svm;
    @Inject protected DistributionManager dm;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected CommandsFactory commandsFactory;
    @Inject protected RpcManager rpcManager;
    @Inject protected ComponentRef<AdvancedCache<K, V>> cache;
    @Inject protected EntryFactory entryFactory;
-   @Inject protected InternalDataContainer dataContainer;
+   @Inject protected InternalDataContainer<K, V> dataContainer;
 
    protected int numSegments;
 
-   private final InvocationSuccessFunction handleRemotelyPrefetchedEntry = this::handleRemotelyPrefetchedEntry;
+   private final InvocationSuccessFunction<VisitableCommand> handleRemotelyPrefetchedEntry = this::handleRemotelyPrefetchedEntry;
 
    @Start
    public void start() {
@@ -248,13 +246,13 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    private Object handleRemotelyPrefetchedEntry(InvocationContext ctx, VisitableCommand command, Object rv) {
       Map<Address, Response> responseMap = (Map<Address, Response>) rv;
       EntryVersion maxVersion = null;
-      InternalCacheValue maxValue = null;
+      InternalCacheValue<V> maxValue = null;
       for (Response response : responseMap.values()) {
          if (!response.isSuccessful()) {
             throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
-         SuccessfulResponse successfulResponse = (SuccessfulResponse) response;
-         InternalCacheValue icv = (InternalCacheValue) successfulResponse.getResponseValue();
+         SuccessfulResponse<InternalCacheValue<V>> successfulResponse = (SuccessfulResponse<InternalCacheValue<V>>) response;
+         InternalCacheValue<V> icv = successfulResponse.getResponseValue();
          if (icv == null) {
             continue;
          }
@@ -295,19 +293,19 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       if (log.isTraceEnabled()) {
          log.tracef("Prefetching entries for keys %s using broadcast", keys);
       }
-      ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
+      ClusteredGetAllCommand<?, ?> command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
       command.setTopologyId(originCommand.getTopologyId());
       CompletionStage<Map<Address, Response>> rpcFuture = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       return asyncValue(rpcFuture).thenApplyMakeStage(ctx, originCommand, (rCtx, topologyAffectedCommand, rv) -> {
          Map<Address, Response> responseMap = (Map<Address, Response>) rv;
-         InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
+         InternalCacheValue<V>[] maxValues = new InternalCacheValue[keys.size()];
          for (Response response : responseMap.values()) {
             if (!response.isSuccessful()) {
                throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             }
-            InternalCacheValue[] values = (InternalCacheValue[]) ((SuccessfulResponse) response).getResponseValue();
+            InternalCacheValue<V>[] values = ((SuccessfulResponse<InternalCacheValue<V>[]>) response).getResponseValue();
             int i = 0;
-            for (InternalCacheValue icv : values) {
+            for (InternalCacheValue<V> icv : values) {
                if (icv != null) {
                   Metadata metadata = icv.getMetadata();
                   if (metadata instanceof RemoteMetadata) {
@@ -327,7 +325,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                ++i;
             }
          }
-         Map<Object, InternalCacheValue> map = new HashMap<>(keys.size());
+         Map<Object, InternalCacheValue<V>> map = new HashMap<>(keys.size());
          for (int i = 0; i < maxValues.length; ++i) {
             if (maxValues[i] != null) {
                map.put(keys.get(i), maxValues[i]);
@@ -342,7 +340,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          // The put below could fail updating the context if the data container got the updated value while we were
          // prefetching that. Also, we need to call RepeatableReadEntry.updatePreviousValue() to get return value
          // from the main command correct.
-         for (Map.Entry<Object, InternalCacheValue> entry : map.entrySet()) {
+         for (Map.Entry<Object, InternalCacheValue<V>> entry : map.entrySet()) {
             entryFactory.wrapExternalEntry(rCtx, entry.getKey(), entry.getValue().toInternalCacheEntry(entry.getKey()), true, true);
          }
          PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
@@ -484,11 +482,6 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       return handleWriteManyCommand(ctx, command);
    }
 
-   public AdvancedCache getCacheWithFlags(FlagAffectedCommand command) {
-      Set<Flag> flags = command.getFlags();
-      return cache.wired().withFlags(flags.toArray(new Flag[flags.size()]));
-   }
-
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
@@ -549,7 +542,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       }
    }
 
-   private class BackingIterator<O, K, V> implements CloseableIterator<O> {
+   private class BackingIterator<O> implements CloseableIterator<O> {
       private final Cache<K, V> cache;
       private final Supplier<Iterator<O>> supplier;
       private final Function<O, K> keyRetrieval;
