@@ -155,18 +155,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       return true;
    }
 
-   /**
-    * Same as {@link #deleteFromStoresAndNotify(Object, Object, Metadata, PrivateMetadata)} except that the store removal is done
-    * synchronously - this means this method <b>MUST</b> be invoked in the blocking thread pool
-    * @param key
-    * @param value
-    * @param metadata
-    */
-   private void deleteFromStoresAndNotifySync(K key, V value, Metadata metadata) {
-      CompletionStages.join(persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH));
-      CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
-   }
-
    @Override
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Just invoke the new method and join
@@ -263,7 +251,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * @param currentTime the current time in milliseconds
     * @return whether the entry was expired or not
     */
-   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry entry, int segment, long currentTime) {
+   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry<?, ?> entry, int segment, long currentTime) {
       CompletionStage<Boolean> future = cache.touch(entry.getKey(), segment, true);
       if (CompletionStages.isCompletedSuccessfully(future)) {
          return CompletableFutures.booleanStage(!CompletionStages.join(future));
