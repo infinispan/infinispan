@@ -227,7 +227,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          if (cacheStatus == null) {
             // We have a newer view
             // Return null so that the joiner is forced to retry
-            return null;
+            return CompletableFutures.completedNull();
          }
          return cacheStatus.nodeCanJoinFuture(joinInfo)
                            .thenApply(ignored -> cacheStatus.doJoin(joiner, joinInfo));
