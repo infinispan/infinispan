@@ -58,9 +58,9 @@ public class XmlReportWriter implements AutoCloseable {
          xmlWriter.writeEndElement();
    }
 
-   private void writeCharacters(String elementName, String elementeValue) throws XMLStreamException {
+   private void writeCharacters(String elementName, String elementValue) throws XMLStreamException {
       xmlWriter.writeStartElement(elementName);
-      xmlWriter.writeCharacters(elementeValue);
+      xmlWriter.writeCharacters(elementValue);
       xmlWriter.writeEndElement();
    }
 
