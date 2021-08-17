@@ -23,7 +23,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.expiration.TouchMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -70,18 +69,13 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private Address localAddress;
    private long timeout;
-   private TouchMode touchMode;
 
    @Override
    public void start() {
       super.start();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = configuration.clustering().remoteTimeout();
-      if (configuration.clustering().cacheMode().isSynchronous()) {
-         touchMode = configuration.expiration().touch();
-      } else {
-         touchMode = TouchMode.ASYNC;
-      }
+
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
@@ -440,20 +434,21 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // the entire value.  Unfortunately this could cause a concurrent write to be undone
             resultStage = cacheToUse.removeLifespanExpired(key, null, null);
          }
-         return CompletionStages.ignoreValue(resultStage.whenComplete((b, t) -> {
+         return resultStage.handle((b, t) -> {
             expiring.remove(key);
             if (t != null) {
                completableFuture.completeExceptionally(t);
             } else {
                completableFuture.complete(b);
             }
-         }));
+            return null;
+         });
       }
       return CompletionStages.ignoreValue(previousFuture);
    }
 
    @Override
-   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment, long currentTime) {
+   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry<?, ?> ice, int segment, long currentTime) {
       CompletionStage<Boolean> stage = attemptTouchAndReturnIfExpired(ice, segment, currentTime);
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return CompletableFutures.booleanStage(CompletionStages.join(stage));
@@ -477,7 +472,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             .thenCompose(Function.identity());
    }
 
-   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry ice, int segment, long currentTime) {
+   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry<?, ?> ice, int segment, long currentTime) {
       return cache.touch(ice.getKey(), segment, true)
             .thenApply(touched -> {
                if (touched) {
