@@ -131,7 +131,11 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // CTMI confirms availability
       transport.expectHeartBeatCommand().finish();
 
-      // Second node joins the cache, receives the initial topology
+      // Second node tries to join with old view and is rejected
+      CacheStatusResponse joinResponseB1 = CompletionStages.join(ctm.handleJoin(CACHE_NAME, B, joinInfoB, 1));
+      assertNull(joinResponseB1);
+
+      // Second node joins the cache with correct view id, receives the initial topology
       CacheStatusResponse joinResponseB = CompletionStages.join(ctm.handleJoin(CACHE_NAME, B, joinInfoB, 2));
       assertEquals(1, joinResponseB.getCacheTopology().getTopologyId());
       assertCHMembers(joinResponseB.getCacheTopology().getCurrentCH(), A);
