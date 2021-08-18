@@ -37,17 +37,6 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
    CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime, boolean isWrite);
 
    /**
-    * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long, boolean)} except that it does the
-    * bare minimum when an entry expired to guarantee if the entry is valid or not. This is important to reduce time
-    * spent per entry when iterating. This method may not actually remove the entry and may just return immediately
-    * if it is safe to do so.
-    * @param entry the entry that has expired
-    * @param currentTime the current time when it expired
-    * @return if this entry actually expired or not
-    */
-   boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime);
-
-   /**
     * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.
     * <p>
     * Note this method doesn't currently take a {@link InternalCacheEntry} and this is due to a limitation in the

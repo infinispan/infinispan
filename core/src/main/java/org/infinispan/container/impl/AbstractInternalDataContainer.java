@@ -306,7 +306,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                   now = timeService.wallClockTime();
                   initializedTime = true;
                }
-               if (!entry.isExpired(now) || !expirationManager.entryExpiredInMemoryFromIteration(entry, now)) {
+               if (!entry.isExpired(now)) {
                   if (log.isTraceEnabled()) {
                      log.tracef("Return next entry %s", entry);
                   }
@@ -492,7 +492,6 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     * @return predicate that returns true if an entry is not expired
     */
    protected Predicate<InternalCacheEntry<K, V>> expiredIterationPredicate(long accessTime) {
-      return e -> ! e.canExpire() ||
-            ! (e.isExpired(accessTime) && expirationManager.entryExpiredInMemoryFromIteration(e, accessTime));
+      return e -> !e.isExpired(accessTime);
    }
 }
