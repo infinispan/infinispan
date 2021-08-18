@@ -150,12 +150,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
-      entryExpiredInMemory(entry, currentTime, false);
-      return true;
-   }
-
-   @Override
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Just invoke the new method and join
       entryExpiredInMemory(entry, currentTime, false).join();

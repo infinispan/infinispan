@@ -3,6 +3,7 @@ package org.infinispan.expiration.impl;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -245,12 +246,17 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
          cacheToIterate = cache1;
       }
 
-      // Iteration always works with max idle expired entries
       try (CloseableIterator<Map.Entry<Object, String>> iterator = cacheToIterate.entrySet().iterator()) {
-         assertTrue(iterator.hasNext());
-         Map.Entry<Object, String> entry = iterator.next();
-         assertEquals(key, entry.getKey());
-         assertEquals(key.toString(), entry.getValue());
+         if (expireOnPrimary == (iterateOnPrimary || cacheMode.isScattered())) {
+            // Iteration only checks for expiration on the local node,
+            // but scattered caches always read the value from the primary
+            assertFalse(iterator.hasNext());
+         } else {
+            assertTrue(iterator.hasNext());
+            Map.Entry<Object, String> entry = iterator.next();
+            assertEquals(key, entry.getKey());
+            assertEquals(key.toString(), entry.getValue());
+         }
       } finally {
          for (ControlledTimeService cts : Arrays.asList(ts0, ts1, ts2)) {
             if (cts != expiredTimeService) {
