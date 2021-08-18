@@ -38,7 +38,7 @@
             <fileset dir="${project.build.directory}/docs/licenses" />
          </copy>
          <path id="jar.fileset.path">
-            <fileset casesensitive="yes" dir="@{dir}">
+            <fileset casesensitive="yes" dir="@{dir}/modules/system/add-ons">
                <include name="**/*.jar" />
             </fileset>
          </path>
