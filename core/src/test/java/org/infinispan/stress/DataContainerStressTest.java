@@ -100,12 +100,7 @@ public class DataContainerStressTest {
                     return null;
                  }
 
-                 @Override
-                 public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry entry, long currentTime) {
-                    return true;
-                 }
-
-                 @Override
+               @Override
                  public CompletionStage<Void> handleInStoreExpirationInternal(Object key) {
                     return null;
                  }

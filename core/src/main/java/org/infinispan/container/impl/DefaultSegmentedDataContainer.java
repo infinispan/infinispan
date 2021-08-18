@@ -48,9 +48,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;
    protected boolean shouldStopSegments;
 
-   protected io.reactivex.rxjava3.functions.Predicate<InternalCacheEntry<K, V>> notExpiredPredicate;
-
-
    public DefaultSegmentedDataContainer(Supplier<PeekableTouchableMap<K, V>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
@@ -67,15 +64,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
       shouldStopSegments = configuration.clustering().cacheMode().isDistributed();
-
-      notExpiredPredicate = ice -> {
-         if (!ice.canExpire()) {
-            return true;
-         }
-         // TODO: should we optimize wallClockTime per entry invocation?
-         long currentTime = timeService.wallClockTime();
-         return !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime));
-      };
    }
 
    @Stop
@@ -102,7 +90,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       if (mapForSegment == null) {
          return Flowable.empty();
       }
-      return Flowable.fromIterable(mapForSegment.values()).filter(notExpiredPredicate);
+      long accessTime = timeService.wallClockTime();
+      return Flowable.fromIterable(mapForSegment.values()).filter(e -> !e.isExpired(accessTime));
    }
 
    @Override
