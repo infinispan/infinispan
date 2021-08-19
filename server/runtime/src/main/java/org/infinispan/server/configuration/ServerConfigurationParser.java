@@ -124,12 +124,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
          holder.pushScope(ENDPOINTS_SCOPE);
          if (reader.getSchema().since(13, 0)) {
             parseEndpoints(reader, holder, builder);
+            element = nextElement(reader);
          } else {
             while (element == Element.ENDPOINTS) {
-               parseEndpoint(reader, holder, builder, Element.ENDPOINTS, null);
+               parseEndpoint(reader, holder, builder, Element.ENDPOINTS, null, null);
+               element = nextElement(reader);
             }
          }
-         element = nextElement(reader);
          holder.popScope();
       }
       if (element != null) {
@@ -1408,17 +1409,17 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEndpoints(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) {
-      String socketBinding = null;
-      String securityRealm = null;
+      String defaultSocketBinding = null;
+      String defaultSecurityRealm = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          String value = reader.getAttributeValue(i);
          switch (attribute) {
             case SOCKET_BINDING:
-               socketBinding = value;
+               defaultSocketBinding = value;
                break;
             case SECURITY_REALM:
-               securityRealm = value;
+               defaultSecurityRealm = value;
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -1427,33 +1428,49 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          if (element == Element.ENDPOINT || element == Element.ENDPOINTS) {
-            parseEndpoint(reader, holder, builder, element, socketBinding);
+            parseEndpoint(reader, holder, builder, element, defaultSocketBinding, defaultSecurityRealm);
          } else {
             throw ParseUtils.unexpectedElement(reader);
          }
       }
       if (builder.endpoints().endpoints().isEmpty()) {
-         if (socketBinding == null) {
+         if (defaultSocketBinding == null) {
             throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.SOCKET_BINDING));
          }
-         EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
-         if (securityRealm != null) {
-            endpoint.securityRealm(securityRealm).implicitConnectorSecurity(true);
+         EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(defaultSocketBinding);
+         if (defaultSecurityRealm != null) {
+            endpoint.securityRealm(defaultSecurityRealm).implicitConnectorSecurity(true);
+            if (builder.hasSSLContext(defaultSecurityRealm)) {
+               endpoint.singlePort().ssl().enable().sslContext(builder.getSSLContext(defaultSecurityRealm));
+            }
          }
-         configureDefaultEndpoint(reader, socketBinding, endpoint);
+         configureDefaultEndpoint(reader, defaultSocketBinding, endpoint);
       }
    }
 
-   private void parseEndpoint(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder, Element endpointElement, String socketBinding) {
-      if (socketBinding == null) {
+   private void parseEndpoint(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder, Element endpointElement, String defaultSocketBinding, String defaultSecurityRealm) {
+      final String socketBinding;
+      if (defaultSocketBinding == null) {
          socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
+      } else {
+         String binding = reader.getAttributeValue(Attribute.SOCKET_BINDING);
+         socketBinding = binding != null ? binding : defaultSocketBinding;
       }
       EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
+      String realm = reader.getAttributeValue(Attribute.SECURITY_REALM);
+      final String securityRealm = realm != null ? realm : defaultSecurityRealm;
+      if (securityRealm != null) {
+         endpoint.securityRealm(securityRealm).implicitConnectorSecurity(reader.getSchema().since(11, 0));
+         if (builder.hasSSLContext(securityRealm)) {
+            endpoint.singlePort().ssl().enable().sslContext(builder.getSSLContext(securityRealm));
+         }
+      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          String value = reader.getAttributeValue(i);
          switch (attribute) {
             case SOCKET_BINDING:
+            case SECURITY_REALM:
                // Already seen
                break;
             case ADMIN:
@@ -1462,9 +1479,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case METRICS_AUTH:
                endpoint.metricsAuth(Boolean.parseBoolean(value));
                break;
-            case SECURITY_REALM:
-               // Set the endpoint security realm and fall-through. Starting with 11.0 we also enable implicit authentication configuration
-               endpoint.securityRealm(value).implicitConnectorSecurity(reader.getSchema().since(11, 0));
             default:
                parseCommonConnectorAttributes(reader, i, builder, endpoint.singlePort());
                break;
