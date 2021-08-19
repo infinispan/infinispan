@@ -22,6 +22,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -37,7 +38,6 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -341,6 +341,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    }
 
    public void setAvailable(boolean available) {
+      log.debugf("Store availability change: %s -> %s", this.available, available);
       this.available = available;
    }
 

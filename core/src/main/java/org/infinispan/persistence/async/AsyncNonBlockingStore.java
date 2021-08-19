@@ -157,16 +157,10 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    }
 
    void putModification(Object key, Modification modification) {
-      if (log.isTraceEnabled()) {
-         log.tracef("Adding modification %s to %s", modification, System.identityHashCode(pendingModifications));
-      }
       pendingModifications.put(key, modification);
    }
 
    void putClearModification() {
-      if (log.isTraceEnabled()) {
-         log.tracef("Clear modification encountered for %s", System.identityHashCode(pendingModifications));
-      }
       pendingModifications.clear();
       hasPendingClear = true;
    }
@@ -217,10 +211,11 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       if (!ourModificationsToReplicate.isEmpty()) {
          asyncBatchStage = asyncBatchStage.thenCompose(ignore -> {
             if (log.isTraceEnabled()) {
-               log.tracef("Sending batch write/remove operations %s to underlying store with id %s", ourModificationsToReplicate.size(),
+               log.tracef("Sending batch of %d write/remove operations to underlying store with id %s", ourModificationsToReplicate.size(),
                      System.identityHashCode(ourModificationsToReplicate));
             }
-            return retry(() -> replicateModifications(ourModificationsToReplicate), persistenceConfiguration.connectionAttempts()).whenComplete((ignore2, t) -> {
+            return retry(() -> replicateModifications(ourModificationsToReplicate), persistenceConfiguration.connectionAttempts())
+                  .whenComplete((ignore2, t) -> {
                synchronized (this) {
                   replicatingModifications = Collections.emptyMap();
                }
@@ -469,36 +464,38 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    }
 
    CompletionStage<Void> submitModification(Modification modification) {
+      boolean isTraceEnabled = log.isTraceEnabled();
       boolean startNewBatch;
       CompletionStage<Void> submitStage;
       synchronized (this) {
+         int previousBatchId;
+         if (isTraceEnabled) {
+            previousBatchId = System.identityHashCode(replicatingModifications);
+            int currentBatchId = System.identityHashCode(pendingModifications);
+            log.tracef("Adding modification %s to batch %s", modification, currentBatchId);
+         } else {
+            previousBatchId = 0;
+         }
          modification.apply(this);
 
-         if (startNewBatch = batchFuture == null) {
+         startNewBatch = batchFuture == null;
+         if (startNewBatch) {
             batchFuture = new CompletableFuture<>();
          }
-         int replicatingSize = replicatingModifications.size();
 
-         submitStage = pendingModifications.size() + replicatingSize > modificationQueueSize
-               ? batchFuture : null;
-      }
-
-      boolean isTraceEnabled = log.isTraceEnabled();
-      if (isTraceEnabled) {
-         log.tracef("A new modification %s has been enqueued with async store", modification);
+         int queueSize = pendingModifications.size() + replicatingModifications.size();
+         submitStage = queueSize > modificationQueueSize ? batchFuture : null;
+         if (submitStage != null && isTraceEnabled) {
+            log.tracef("Too many modifications queued (%d), operation must wait until previous batch %d completes",
+                       queueSize, previousBatchId);
+         }
       }
 
       if (startNewBatch) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Requesting a new async batch operation to be ran!");
-         }
          submitTask();
       }
-      if (submitStage != null && isTraceEnabled) {
-         log.tracef("Operation will not return immediately, must wait until current batch completes");
-      }
       return submitStage == null ? CompletableFutures.completedNull() :
-            submitStage.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
+             submitStage.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
    }
 
    @Override
