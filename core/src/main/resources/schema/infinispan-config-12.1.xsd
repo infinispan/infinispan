@@ -1206,9 +1206,10 @@
     <xs:attribute name="touch" type="tns:touch-mode" default="${Expiration.touch}">
       <xs:annotation>
         <xs:documentation>
-          Control how the timestamp of read entries with max-idle are updated on all the key owners in a cluster.
-          Default is SYNC.
-          If the cache mode is ASYNC this attribute is ignored, and timestamps are updated asynchronously.
+          Controls how timestamps get updated for entries in clustered caches with maximum idle expiration.
+          The default value is SYNC.
+          This attribute applies only to caches that use synchronous mode.
+          Timestamps are updated asynchronously for caches that use asynchronous mode.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2888,18 +2889,17 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="SYNC">
         <xs:annotation>
-          <xs:documentation>Delay read operations until the other owners confirm updating the timestamp of the
-            entry.
+          <xs:documentation>Delays read operations until the other owners confirm that the timestamp for the entry is updated.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="ASYNC">
         <xs:annotation>
           <xs:documentation>
-            Send touch commands to other owners, but do not wait for their confirmation.
-            This allows read operations to return the value of a key even if another node has started
+            Sends touch commands to other owners without waiting for confirmation.
+            This mode allows read operations to return the value of a key even if another node has started
             expiring it.
-            When that happens, the read won't extend the lifespan of the key.
+            When that occurs, the read operation does not extend the lifespan of the key.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
