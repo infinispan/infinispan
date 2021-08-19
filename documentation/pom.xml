@@ -34,6 +34,7 @@
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
         <protostream.api.docs>https://www.javadoc.io/doc/org.infinispan.protostream/protostream/${version.protostream}</protostream.api.docs>
+        <logging.html.tmp>${project.build.directory}/report/tmp</logging.html.tmp>
     </properties>
 
     <dependencies>
@@ -184,7 +185,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
@@ -298,7 +298,58 @@
                                     </target>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>create-logging-report</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>install</phase>
+                                <configuration>
+                                    <target>
+                                        <ant antfile="collect-logs.xml" inheritRefs="true"/>
+                                    </target>
+                                </configuration>
+                            </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>xml-maven-plugin</artifactId>
+                        <version>1.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>generate-logging-html</id>
+                                <goals>
+                                    <goal>transform</goal>
+                                </goals>
+                                <phase>install</phase>
+                                <configuration>
+                                    <transformationSets>
+                                        <transformationSet>
+                                            <dir>.</dir>
+                                            <includes>
+                                                <include>logs.html</include>
+                                            </includes>
+                                            <stylesheet>logging-report.xsl</stylesheet>
+                                            <outputDir>${project.build.directory}/generated/${infinispan.base.version}/html/logging</outputDir>
+                                            <parameters>
+                                                <parameter>
+                                                    <name>directory</name>
+                                                    <value>${logging.html.tmp}</value>
+                                                </parameter>
+                                            </parameters>
+                                        </transformationSet>
+                                    </transformationSets>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>net.sf.saxon</groupId>
+                                <artifactId>Saxon-HE</artifactId>
+                                <version>10.5</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

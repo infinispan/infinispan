@@ -180,6 +180,17 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-logging-annotations</artifactId>
+                <version>${version.infinispan}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-logging-processor</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-core</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
