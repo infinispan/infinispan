@@ -165,7 +165,15 @@ public interface ConfigurationReader extends AutoCloseable {
 
    String getAttributeValue(String localName);
 
+   default String getAttributeValue(Enum<?> localName) {
+      return getAttributeValue(localName.toString());
+   }
+
    String getAttributeValue(String localName, NamingStrategy strategy);
+
+   default String getAttributeValue(Enum<?> localName, NamingStrategy strategy) {
+      return getAttributeValue(localName.toString(), strategy);
+   }
 
    String getAttributeValue(int index);
 
