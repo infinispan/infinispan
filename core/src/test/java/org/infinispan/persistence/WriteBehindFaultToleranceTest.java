@@ -18,6 +18,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -50,13 +51,12 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       return cacheManager.getCache();
    }
 
-   @Test
    public void testBlockingOnStoreAvailabilityChange() throws InterruptedException, ExecutionException, TimeoutException {
       Cache<Object, Object> cache = createManagerAndGetCache(false, 1);
       PollingPersistenceManager pm = new PollingPersistenceManager();
       PersistenceManager oldPersistenceManager = TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
       oldPersistenceManager.stop();
-      WaitNonBlockingStore asyncStore = TestingUtil.getStore(cache, 0, false);
+      WaitNonBlockingStore<?, ?> asyncStore = TestingUtil.getStore(cache, 0, false);
       DummyInMemoryStore dims = TestingUtil.getStore(cache, 0, true);
       dims.setAvailable(true);
       cache.put(1, 1);
@@ -67,7 +67,7 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       assertFalse(dims.checkAvailable());
 
       int pollCount = pm.pollCount.get();
-      // Wait until the stores availability has been checked before asserting that the pm is still available
+      // Wait until the store's availability has been checked before asserting that the pm is still available
       eventually(() -> pm.pollCount.get() > pollCount);
       // PM & AsyncWriter should still be available as the async modification queue is not full
       assertTrue(asyncStore.checkAvailable());
@@ -77,9 +77,13 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
 
       Future<Void> f = fork(() -> {
          // Add entries >= modification queue size so that store is no longer available
-         // This will not return as the write op is waiting on a stage to complete that can't as the store is down
+         // The async store creates 2 batches:
+         // 1. modification 1 returns immediately, but stays in the queue until DIMS becomes available again
+         // 2. modifications 2-5 block in the async store because the modification queue is full
+         // The async store waits for the DIMS to become available before completing the 1st batch
+         // After PersistenceManagerImpl sees the store is unavailable, it becomes unavailable itself
+         // and later writes never reach the async store (until PMI becomes available again).
          cache.putAll(intMap(0, 5));
-         cache.putAll(intMap(5, 10));
       });
       assertEquals(1, dims.size());
 
@@ -92,17 +96,19 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       dims.setAvailable(true);
       assertTrue(asyncStore.checkAvailable());
       eventually(pm::isAvailable);
-      eventuallyEquals(10L, dims::size);
       f.get(10, TimeUnit.SECONDS);
-      // Ensure that only the initial map entries are stored and that the second putAll operation truly failed
-      assertFalse(dims.contains(10));
+
+      // Now that PMI is available again, a new write will succeed
+      cache.putAll(intMap(5, 10));
+
+      // Ensure that the putAll(10..20) operation truly failed
+      eventuallyEquals(IntSets.immutableRangeSet(10), dims::keySet);
    }
 
    private Map<Integer, Integer> intMap(int start, int end) {
       return IntStream.range(start, end).boxed().collect(Collectors.toMap(Function.identity(), Function.identity()));
    }
 
-   @Test
    public void testWritesFailSilentlyWhenConfigured() {
       Cache<Object, Object> cache = createManagerAndGetCache(true, 1);
       DummyInMemoryStore dims = TestingUtil.getStore(cache, 0, true);
@@ -116,7 +122,7 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       cache.put(1, 2); // Should fail on the store, but complete in-memory
       TestingUtil.sleepThread(1000); // Sleep to ensure async write is attempted
       dims.setAvailable(true);
-      MarshallableEntry entry = dims.loadEntry(1);
+      MarshallableEntry<?, ?> entry = dims.loadEntry(1);
       assertNotNull(entry);
       assertEquals(1, entry.getValue());
       assertEquals(2, cache.get(1));
