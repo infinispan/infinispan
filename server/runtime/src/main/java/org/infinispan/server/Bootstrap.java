@@ -200,6 +200,8 @@ public class Bootstrap extends Main {
          for(URL url : cl.getURLs()) {
             logger.fine("JAR: " + url);
          }
+         logger.fine("Starting server with system properties:");
+         System.getProperties().forEach((k, v) -> logger.fine("\t" + k + " = " + v));
       }
    }
 }
