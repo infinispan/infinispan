@@ -15,6 +15,11 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-logging-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
       </dependency>
