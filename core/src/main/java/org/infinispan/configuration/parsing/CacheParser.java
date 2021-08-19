@@ -1012,7 +1012,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case TOUCH: {
-               if (reader.getSchema().since(13, 0)) {
+               if (reader.getSchema().since(12, 1)) {
                   builder.expiration().touch(TouchMode.valueOf(value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
