@@ -39,7 +39,7 @@ class PutModification implements Modification {
    public String toString() {
       return "PutModification{" +
             "segment=" + segment +
-            ", entry=" + entry +
+            ", key=" + entry.getKey() +
             '}';
    }
 }
