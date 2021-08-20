@@ -1,8 +1,10 @@
 package org.infinispan.persistence.manager;
 
+import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.getStore;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -18,8 +20,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.support.FailStore;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -95,10 +100,28 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       assertFalse(pmImpl.anyLocksHeld());
    }
 
+   public void testStoreExceptionInWrite() {
+      PersistenceManager pm = extractComponent(cache, PersistenceManager.class);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      DummyInMemoryStore store1 = getStore(cache, 0, true);
+      FailStore store2 = getStore(cache, 1, true);
+      store2.failModification(2);
+
+      String key = "k";
+      int segment = keyPartitioner.getSegment(key);
+      expectCompletionException(TestException.class,
+                                pm.writeToAllNonTxStores(MarshalledEntryUtil.create(key, "v", cache), segment, BOTH));
+      assertTrue(store1.contains(key));
+
+      expectCompletionException(TestException.class, pm.deleteFromAllStores(key, segment, BOTH));
+      assertFalse(store1.contains(key));
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).slow(true);
+      cfg.persistence().addStore(FailStore.ConfigurationBuilder.class);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 }
