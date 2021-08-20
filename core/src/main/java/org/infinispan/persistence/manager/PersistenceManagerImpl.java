@@ -756,9 +756,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } else {
             release = false;
             return stage.handle((removed, throwable) -> {
-                           releaseReadLock(stamp);
-                           return removed.get();
-                        });
+               releaseReadLock(stamp);
+               CompletableFutures.rethrowExceptionIfPresent(throwable);
+
+               return removed.get();
+            });
          }
       } finally {
          if (release) {
