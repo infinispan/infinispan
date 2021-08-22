@@ -692,7 +692,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
             .setTimeService(timeService)
             .setKeyPartitioner(keyPartitioner);
       modifyInitializationContext(builder);
-      initializationContext =  builder.build();
+      initializationContext = builder.build();
       return initializationContext;
    }
 

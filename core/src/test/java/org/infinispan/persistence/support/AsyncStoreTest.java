@@ -3,33 +3,30 @@ package org.infinispan.persistence.support;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -40,7 +37,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -48,17 +44,13 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "persistence.support.AsyncStoreTest", sequential=true)
+@Test(groups = "unit", testName = "persistence.support.AsyncStoreTest")
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    private AsyncNonBlockingStore<Object, Object> store;
    private TestObjectStreamMarshaller marshaller;
 
    private InitializationContext createStore() throws PersistenceException {
-      return createStore(false);
-   }
-
-   private InitializationContext createStore(boolean slow) throws PersistenceException {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       DummyInMemoryStoreConfigurationBuilder dummyCfg = builder
             .persistence()
@@ -68,7 +60,6 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       dummyCfg
          .async()
             .enable();
-      dummyCfg.slow(slow);
       InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
       DummyInMemoryStore underlying = new DummyInMemoryStore();
       store = new AsyncNonBlockingStore(underlying);
@@ -199,36 +190,6 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=30000)
-   public void testConcurrentClearAndStop() throws Exception {
-      TestResourceTracker.testThreadStarted(this.getTestName());
-      createStore(true);
-
-      // start a thread that keeps clearing the store until its stopped
-      Future<Void> f = fork(() -> {
-         try {
-            for (;;) {
-               // All of our stores don't support calling stop at the same time as other operations
-               // PersistenceManagerImpl normally ensure this, but this test does it directly
-               synchronized (AsyncStoreTest.this) {
-                  store.clear();
-               }
-            }
-         } catch (CacheException expected) {
-         }
-         return null;
-      });
-
-      // wait until thread has started
-      Thread.sleep(500);
-      synchronized (this) {
-         CompletionStages.join(store.stop());
-      }
-
-      // background thread should exit with CacheException
-      f.get(1000, TimeUnit.SECONDS);
-   }
-
    private void doTestPut(int number, String key, String value) {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry cacheEntry = TestInternalCacheEntryFactory.create(key + i, value + i);
@@ -269,106 +230,67 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   private final static ThreadLocal<DelayableStore> STORE = new ThreadLocal<>();
-
-   @BuiltBy(LockableStoreConfigurationBuilder.class)
-   @ConfigurationFor(DelayableStore.class)
-   public static class DelayableStoreConfiguration extends DummyInMemoryStoreConfiguration {
-
-      public DelayableStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-         super(attributes, async);
-      }
-   }
-
-   public static class LockableStoreConfigurationBuilder extends DummyInMemoryStoreConfigurationBuilder {
-
-      public LockableStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-         super(builder);
-      }
-
-      @Override
-      public DelayableStoreConfiguration create() {
-         return new DelayableStoreConfiguration(attributes.protect(), async.create());
-      }
-   }
-
-   public static class DelayableStore extends DummyInMemoryStore {
-      private volatile CompletableFuture<Void> delayedFuture;
-
-      public DelayableStore() {
-         super();
-         STORE.set(this);
-      }
-
-      @Override
-      public CompletionStage<Void> write(int segment, MarshallableEntry entry) {
-         CompletionStage<Void> actualStage = super.write(segment, entry);
-         if (delayedFuture != null) {
-            return actualStage.thenCompose(ignore -> delayedFuture);
-         }
-         return actualStage;
-      }
-
-      @Override
-      public CompletionStage<Boolean> delete(int segment, Object key) {
-         CompletionStage<Boolean> actualStage = super.delete(segment, key);
-         if (delayedFuture != null) {
-            return actualStage.thenCompose(removed -> delayedFuture
-                  .thenCompose(ignore -> CompletableFutures.booleanStage(removed)));
-         }
-         return actualStage;
-      }
-   }
-
-   public void testModificationQueueSize(final Method m) {
-      int queueSize = 10;
-      DelayableStore underlying = new DelayableStore();
+   public void testModificationQueueSize(final Method m) throws Exception {
+      int queueSize = 5;
+      DelayStore underlying = new DelayStore();
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
-      LockableStoreConfigurationBuilder lcscsBuilder = (LockableStoreConfigurationBuilder) builder
-            .persistence()
-            .addStore(new LockableStoreConfigurationBuilder(builder.persistence()));
-      lcscsBuilder.async()
-            .modificationQueueSize(queueSize);
+      builder.persistence()
+             .addStore(DelayStore.ConfigurationBuilder.class)
+             .async()
+             .modificationQueueSize(queueSize);
 
       store = new AsyncNonBlockingStore<>(underlying);
-      InitializationContext ctx =
-            PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
+      InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
       CompletionStages.join(store.start(ctx));
       // Delay all the underlying store completions until we complete this future
-      underlying.delayedFuture = new CompletableFuture<>();
+      underlying.delayAfterModification(queueSize + 2);
       try {
+         CountDownLatch queueFullLatch = new CountDownLatch(1);
          Future<Void> f = fork(() -> {
-            try {
-               // The first will be in the process of replicating - thus we need one additional to fill the queue
-               // so the one below will block on the join
-               for (int i = 0; i < queueSize + 1; i++)
-                  CompletionStages.join(store.write(0, MarshalledEntryUtil.create(k(m, i), v(m, i), marshaller)));
-               // This one should block as we have exhausted the queue
-               CompletionStages.join(store.write(0, MarshalledEntryUtil.create(k(m, queueSize + 1), v(m, queueSize + 1), marshaller)));
-            } catch (Exception e) {
-               log.error("Error storing entry", e);
-            }
-            return null;
+            // Fill the modifications queue
+            for (int i = 0; i < queueSize; i++)
+               CompletionStages.join(store.write(0, MarshalledEntryUtil.create(k(m, i), v(m, i), marshaller)));
+
+            // The next one should block
+            // The first modification is already replicating, but the store still counts it against the queue size
+            CompletionStage<Void> blockedWrite =
+                  store.write(0, MarshalledEntryUtil.create(k(m, queueSize + 1), v(m, queueSize + 1), marshaller));
+            assertFalse(blockedWrite.toCompletableFuture().isDone());
+
+            queueFullLatch.countDown();
+            CompletionStages.join(blockedWrite);
          });
-         Exceptions.expectException(TimeoutException.class, () -> f.get(1, TimeUnit.SECONDS));
+
+         assertTrue(queueFullLatch.await(10, TimeUnit.SECONDS));
+
+         Thread.sleep(50);
+         assertFalse(f.isDone());
 
          // Size currently doesn't look at the pending replication queue
          assertEquals(1, underlying.size());
+         assertEquals(1, (long) CompletionStages.join(store.size(IntSets.immutableSet(0))));
+
          // Let the task finish
-         underlying.delayedFuture.complete(null);
+         underlying.endDelay();
+
+         f.get(10, TimeUnit.SECONDS);
+         assertEquals(queueSize + 1, underlying.size());
       } finally {
+         underlying.endDelay();
          CompletionStages.join(store.stop());
       }
    }
 
    private static abstract class OneEntryCacheManagerCallable extends CacheManagerCallable {
       protected final Cache<String, String> cache;
-      protected final DelayableStore store;
+      protected final DelayStore store;
 
       private static ConfigurationBuilder config(boolean passivation) {
          ConfigurationBuilder config = new ConfigurationBuilder();
-         config.memory().maxCount(1).persistence().passivation(passivation).addStore(LockableStoreConfigurationBuilder.class)
+         config.memory().maxCount(1)
+               .persistence().passivation(passivation)
+               .addStore(DelayStore.ConfigurationBuilder.class)
                .async()
                   // This cannot be 1. When using passivation in doTestEndToEndPutPut we block a store write to key X.
                   // This would then mean we have a batch of 1 we would not allow any subsequent writes to complete
@@ -381,7 +303,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       OneEntryCacheManagerCallable(boolean passivation) {
          super(TestCacheManagerFactory.createCacheManager(config(passivation)));
          cache = cm.getCache();
-         store = STORE.get();
+         store = TestingUtil.getFirstStore(cache);
       }
    }
 
@@ -404,7 +326,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             eventually(() -> store.loadEntry("X") != null);
 
             // simulate slow back end store
-            store.delayedFuture = new CompletableFuture<>();
+            store.delayAfterModification(3);
             try {
                cache.put("X", "2");
                // Needs to be in other thread as non blocking store is invoked in same thread
@@ -415,14 +337,15 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                   }
                });
 
-               Exceptions.expectException(TimeoutException.class, () -> f.get(DummyInMemoryStore.SLOW_STORE_WAIT * 2 + 5, TimeUnit.MILLISECONDS));
+               Thread.sleep(50);
+               assertFalse(f.isDone());
 
                assertEquals("2", cache.get("X"));
                if (!passivation) {
                   assertEquals("1", cache.get("Z"));
                }
             } finally {
-               store.delayedFuture.complete(null);
+               store.endDelay();
             }
          }
       });
@@ -447,7 +370,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             eventually(() -> store.loadEntry("X") != null);
 
             // simulate slow back end store
-            store.delayedFuture = new CompletableFuture<>();
+            store.delayAfterModification(3);
             try {
                cache.put("replicating", "completes, but replication is stuck on delayed Future");
                if (!passivation) {
@@ -461,7 +384,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
                Exceptions.expectException(TimeoutException.class, () -> f.get(100, TimeUnit.MILLISECONDS));
             } finally {
-               store.delayedFuture.complete(null);
+               store.endDelay();
             }
          }
       });

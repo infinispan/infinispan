@@ -1,11 +1,20 @@
 package org.infinispan.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.support.DelayStore;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -17,8 +26,6 @@ import org.testng.annotations.Test;
 public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    public static final String CACHE_NAME = "AsyncStoreInMemory";
-   /** to assert the test methods are run in proper order **/
-   private boolean storeWasRun = false;
 
    public FlushingAsyncStoreTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -29,9 +36,8 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(false);
       config
          .persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .addStore(DelayStore.ConfigurationBuilder.class)
                .storeName(this.getClass().getName())
-               .slow(true)
                .async().enable()
          .build();
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(config);
@@ -39,19 +45,20 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @Test(timeOut = 10000)
-   public void writeOnStorage() {
-      TestResourceTracker.testThreadStarted(this.getTestName());
+   public void writeOnStorage() throws ExecutionException, InterruptedException, TimeoutException {
       cache = cacheManager.getCache(CACHE_NAME);
-      cache.put("key1", "value");
-      cache.stop();
-      storeWasRun = true;
-   }
+      DelayStore store = TestingUtil.getFirstStore(cache);
+      store.delayBeforeModification(1);
 
-   @Test(dependsOnMethods = "writeOnStorage")
-   public void verifyStorageContent() {
-      assert storeWasRun;
-      cache = cacheManager.getCache(CACHE_NAME);
-      assert "value".equals(cache.get("key1"));
+      cache.put("key1", "value");
+
+      Future<Void> stopFuture = fork(() -> cache.stop());
+      assertFalse(stopFuture.isDone());
+      assertEquals(0, (int) store.stats().get("write"));
+
+      store.endDelay();
+      stopFuture.get(10, TimeUnit.SECONDS);
+      assertEquals(1, (int) store.stats().get("write"));
+      assertEquals(1, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
    }
 }
