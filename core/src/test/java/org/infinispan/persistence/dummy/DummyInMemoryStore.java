@@ -25,7 +25,6 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -44,7 +43,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
-import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -68,7 +66,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    private int segmentCount;
    private AtomicInteger initCount = new AtomicInteger();
    private TimeService timeService;
-   private Cache cache;
+   private Cache<?, ?> cache;
    private PersistenceMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
    private KeyPartitioner keyPartitioner;
@@ -151,7 +149,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       return keyPartitioner;
    }
 
-   private String makeStoreName(DummyInMemoryStoreConfiguration configuration, Cache cache) {
+   private String makeStoreName(DummyInMemoryStoreConfiguration configuration, Cache<?, ?> cache) {
       String configName = configuration.storeName();
       if (configName == null)
          return null;
@@ -199,12 +197,10 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       if (configuration.slow()) {
          TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
-      if (entry!= null) {
-         Map<Object, byte[]> map = mapForSegment(segment);
-         if (log.isTraceEnabled()) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
-         map.put(entry.getKey(), serialize(entry));
-      }
 
+      if (log.isTraceEnabled()) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
+      Map<Object, byte[]> map = mapForSegment(segment);
+      map.put(entry.getKey(), serialize(entry));
       return CompletableFutures.completedNull();
    }
 
@@ -395,47 +391,6 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    public void clearStats() {
       for (AtomicInteger atomicInteger: stats.values()) atomicInteger.set(0);
-   }
-
-   public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
-      Map<Object, byte[]> map = mapForSegment(keyPartitioner.getSegment(key));
-      AssertJUnit.assertNotNull("Map for key " + key + " was not present", map);
-      long killTime = timeService.wallClockTime() + timeout;
-      while (timeService.wallClockTime() < killTime) {
-         MarshallableEntry entry = deserialize(key, map.get(key));
-         if (entry != null && entry.getValue().equals(expectedValue)) return;
-         TestingUtil.sleepThread(50);
-      }
-      throw new RuntimeException(String.format(
-            "Timed out waiting (%d ms) for cache store to contain key=%s with value=%s",
-            timeout, key, expectedValue));
-   }
-
-   public void blockUntilCacheStoreContains(Set<Object> expectedState, long timeout) {
-      long killTime = timeService.wallClockTime() + timeout;
-      // Set<? extends Map.Entry<?, InternalCacheEntry>> expectedEntries = expectedState.entrySet();
-      Set<Object> notStored = null;
-      Set<Object> notRemoved = null;
-      while (timeService.wallClockTime() < killTime) {
-         // Find out which entries might not have been removed from the store
-         notRemoved = InfinispanCollections.difference(keySet(), expectedState);
-         // Find out which entries might not have been stored
-         notStored = InfinispanCollections.difference(expectedState, keySet());
-         if (notStored.isEmpty() && notRemoved.isEmpty())
-            break;
-
-         TestingUtil.sleepThread(100);
-      }
-
-      if ((notStored != null && !notStored.isEmpty()) || (notRemoved != null && !notRemoved.isEmpty())) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Entries still not stored: %s", notStored);
-            log.tracef("Entries still not removed: %s", notRemoved);
-         }
-         throw new RuntimeException(String.format(
-               "Timed out waiting (%d ms) for cache store to be flushed. entries-not-stored=[%s], entries-not-removed=[%s]",
-               timeout, notStored, notRemoved));
-      }
    }
 
    @Override
