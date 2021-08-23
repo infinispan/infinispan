@@ -221,4 +221,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "Connector '%s': started", id = 80058)
    void connectorStarted(String connector);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "No script engines are available", id = 80059)
+   void noScriptEngines();
 }

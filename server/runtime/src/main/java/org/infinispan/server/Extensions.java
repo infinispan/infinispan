@@ -42,7 +42,9 @@ public class Extensions {
       loadNamedFactory(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
       loadNamedFactory(classLoader, ParamKeyValueFilterConverterFactory.class, paramKeyValueFilterConverterFactories);
       loadService(classLoader, Driver.class);
-      loadService(classLoader, ScriptEngineFactory.class);
+      if (loadService(classLoader, ScriptEngineFactory.class) == 0) {
+         Server.log.noScriptEngines();
+      }
       loadServerTasks(classLoader);
    }
 
@@ -76,10 +78,13 @@ public class Extensions {
       }
    }
 
-   private <T> void loadService(ClassLoader classLoader, Class<T> contract) {
+   private <T> int loadService(ClassLoader classLoader, Class<T> contract) {
+      int i = 0;
       for (T t : ServiceFinder.load(contract, classLoader)) {
          Server.log.loadedExtension(t.getClass().getName());
+         i++;
       }
+      return i;
    }
 
    private void loadServerTasks(ClassLoader classLoader) {
