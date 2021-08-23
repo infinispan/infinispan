@@ -218,7 +218,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             keyPartitioner));
 
       if (isReplicated && command.hasAnyFlag(FlagBitSets.BACKUP_WRITE) && !info.isWriteOwner()) {
-         // Replicated caches will
+         // Replicated caches receive broadcast commands even when they are not owners (e.g. zero capacity nodes)
+         // The originator will ignore the UnsuccessfulResponse
          command.fail();
          return null;
       }

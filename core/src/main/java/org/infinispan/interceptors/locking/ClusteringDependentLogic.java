@@ -10,7 +10,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -227,24 +226,12 @@ public interface ClusteringDependentLogic {
             return Commit.COMMIT_LOCAL;
          }
 
-         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ));
-         // When a command is local-mode, it does not get written by replicating origin -> primary -> backup but
-         // when origin == backup it's written right from the original context
-         // ClearCommand is also broadcast to all nodes from originator, and on originator it should remove entries
-         // for which this node is backup owner even though it did not get the removal from primary owner.
-         if (transactional || !ctx.isOriginLocal() || (command != null &&
-               (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
-            // During ST, entries whose ownership is lost are invalidated by InvalidateCommand
-            // and at that point we're no longer owners - the only information is that the origin
-            // is local and the entry is removed.
-            if (getCacheTopology().isSegmentWriteOwner(segment)) {
-               return Commit.COMMIT_LOCAL;
-            } else if (removed) {
-               return Commit.COMMIT_NON_LOCAL;
-            }
-         } else {
-            // in non-tx mode, on backup we don't commit in original context, backup command has its own context.
-            return getCacheTopology().getSegmentDistribution(segment).isPrimary() ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+         // Non-transactional caches do not write the entry on the originator when the originator is a backup owner,
+         // but that check is done in NonTx/TriangleDistributionInterceptor, so we don't check here again.
+         // We also want to allow the command to commit when the originator starts as primary but becomes a backup
+         // after the backups acked the write, so the command doesn't have to be retried.
+         if (getCacheTopology().isSegmentWriteOwner(segment)) {
+            return Commit.COMMIT_LOCAL;
          }
          return Commit.NO_COMMIT;
       }
