@@ -60,6 +60,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -128,6 +129,7 @@ public class StateConsumerImpl implements StateConsumer {
                                                                         IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                         SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
                                                                         SKIP_XSITE_BACKUP, SKIP_LOCKING, IRAC_STATE);
+   protected static final long INVALIDATE_FLAGS = STATE_TRANSFER_FLAGS & ~FlagBitSets.PUT_FOR_STATE_TRANSFER;
    public static final String NO_KEY = "N/A";
 
    @Inject protected ComponentRef<Cache<Object, Object>> cache;
@@ -1141,8 +1143,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    protected CompletionStage<Void> invalidateBatch(Collection<Object> keysToRemove) {
-      InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(
-            EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
+      InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(INVALIDATE_FLAGS, keysToRemove.toArray());
       InvocationContext ctx = icf.createNonTxInvocationContext();
       ctx.setLockOwner(invalidateCmd.getKeyLockOwner());
       return interceptorChain.invokeAsync(ctx, invalidateCmd)
