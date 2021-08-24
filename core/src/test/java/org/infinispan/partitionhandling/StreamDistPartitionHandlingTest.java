@@ -24,6 +24,7 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
@@ -160,8 +161,9 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
 
    private static <K, V> void registerBlockingCacheNotifierOnDegradedMode(final CheckPoint checkPoint,
                                                                                  Cache<K, V> cache) {
-      Mocks.blockingMock(checkPoint, CacheNotifier.class, cache, (stub, m) ->
-            stub.when(m).notifyPartitionStatusChanged(eq(AvailabilityMode.DEGRADED_MODE), eq(false)));
+      Mocks.blockingMock(checkPoint, CacheNotifier.class, cache,
+                         (stub, m) -> stub.when(m).notifyPartitionStatusChanged(eq(AvailabilityMode.DEGRADED_MODE), eq(false)),
+                         ClusterCacheNotifier.class);
    }
 
    private static void registerBlockingPublisher(final CheckPoint checkPoint, Cache<?, ?> cache) {
