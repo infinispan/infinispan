@@ -14,13 +14,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -28,6 +26,7 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.mockito.AdditionalAnswers;
+import org.mockito.MockSettings;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
@@ -135,42 +134,39 @@ public class Mocks {
     * The user must release the BEFORE_RELEASE and AFTER_RELEASE checkpoints or else these will timeout and cause
     * test instabilities.
     * @param checkPoint the check point to use to control blocking
-    * @param classToMock the actual class from the component registry to mock
+    * @param componentClass the actual class from the component registry to mock
     * @param cache the cache to replace the object on
     * @param mockStubConsumer the consumer to invoke the method on the stubber and the actual mock
     * @param <Mock> the class of objec to replace
     * @return the original object to put back into the cache
     */
-   public static <Mock> Mock blockingMock(final CheckPoint checkPoint, Class<? extends Mock> classToMock,
-         Cache<?, ?> cache, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
-      return blockingMock(checkPoint, classToMock, cache, AdditionalAnswers::delegatesTo, mockStubConsumer);
+   public static <Mock> Mock blockingMock(final CheckPoint checkPoint, Class<? extends Mock> componentClass,
+                                          Cache<?, ?> cache, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer,
+                                          Class<?>... extraInterfaces) {
+      return interceptComponent(componentClass, cache, (realObject, mock) -> {
+         mockStubConsumer.accept(doAnswer(blockingAnswer(AdditionalAnswers.delegatesTo(realObject), checkPoint)), mock);
+      }, extraInterfaces);
    }
 
-   /**
-    * The same as {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer)} except the user can also modify
-    * how the default answers are produced.
-    * @param checkPoint the check point to use to control blocking
-    * @param classToMock the actual class from the component registry to mock
-    * @param cache the cache to replace the object on
-    * @param answerFunction the function to map the real object to an answer
-    * @param mockStubConsumer the consumer to invoke the method on the stubber and the actual mock
-    * @param <Mock> the class of objec to replace
-    * @return the original object to put back into the cache
-    */
-   public static <Mock> Mock blockingMock(final CheckPoint checkPoint, Class<? extends Mock> classToMock,
-         Cache<?, ?> cache, Function<? super Mock, Answer<?>> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
-      Mock realObject = TestingUtil.extractComponent(cache, classToMock);
-      Answer<?> forwardedAnswer = answerFunction.apply(realObject);
-      Mock mock = mock(classToMock, withSettings().extraInterfaces(ClusterCacheNotifier.class).defaultAnswer(forwardedAnswer));
-      mockStubConsumer.accept(doAnswer(blockingAnswer(forwardedAnswer, checkPoint)), mock);
-      TestingUtil.replaceComponent(cache, classToMock, mock, true);
+   public static <Mock> Mock interceptComponent(Class<? extends Mock> componentClass, Cache<?, ?> cache,
+                                                 BiConsumer<? super Mock, ? super Mock> methodInterceptor,
+                                                 Class<?>... extraInterfaces) {
+      Mock realObject = TestingUtil.extractComponent(cache, componentClass);
+      Answer<?> forwardingAnswer = AdditionalAnswers.delegatesTo(realObject);
+      MockSettings mockSettings = withSettings().defaultAnswer(forwardingAnswer);
+      if (extraInterfaces != null && extraInterfaces.length > 0) {
+         mockSettings.extraInterfaces(extraInterfaces);
+      }
+      Mock mock = mock(componentClass, mockSettings);
+      methodInterceptor.accept(realObject, mock);
+      TestingUtil.replaceComponent(cache, componentClass, mock, true);
       return realObject;
    }
 
 
    /**
     * Allows for decorating an existing answer to apply before and after invocation and release checkpoints as
-    * described in {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer)}.
+    * described in {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer, Class[])}.
     * @param answer the answer to decorate with a blocking one
     * @param checkPoint the checkpoint to register with
     * @param <T> the result type of the answer
@@ -191,7 +187,7 @@ public class Mocks {
 
    /**
     * Blocks before creation of the completable future and then subsequently blocks after the completable future
-    * is completed. Uses the same checkpoint names as {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer)}.
+    * is completed. Uses the same checkpoint names as {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer, Class[])}.
     * Note this method returns another Callable as we may not want to always block the invoking thread.
     * @param completableFutureCallable callable to invoke between blocking
     * @param checkPoint the checkpoint to use

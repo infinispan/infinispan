@@ -30,10 +30,19 @@ import org.infinispan.util.logging.LogFactory;
 public class CheckPoint {
    private static final Log log = LogFactory.getLog(CheckPoint.class);
    public static final int INFINITE = 999999999;
+
+   private final String id;
    private final Lock lock = new ReentrantLock();
    private final Condition unblockCondition = lock.newCondition();
    private final Map<String, EventStatus> events = new HashMap<>();
-   private boolean released = false;
+
+   public CheckPoint() {
+      this.id = "";
+   }
+
+   public CheckPoint(String name) {
+      this.id = "[" + name + "] ";
+   }
 
    public void awaitStrict(String event, long timeout, TimeUnit unit)
          throws InterruptedException, TimeoutException {
@@ -47,21 +56,17 @@ public class CheckPoint {
    public void awaitStrict(String event, int count, long timeout, TimeUnit unit)
          throws InterruptedException, TimeoutException {
       if (!await(event, count, timeout, unit)) {
-         throw new TimeoutException("Timed out waiting for event " + event);
+         throw new TimeoutException(id + "Timed out waiting for event " + event);
       }
    }
 
    private boolean await(String event, int count, long timeout, TimeUnit unit) throws InterruptedException {
-      log.tracef("Waiting for event %s * %d", event, count);
+      log.tracef("%sWaiting for event %s * %d", id, event, count);
       lock.lock();
       try {
          EventStatus status = events.computeIfAbsent(event, k -> new EventStatus());
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
-            if (released) {
-               log.trace("Unblocked all events.");
-               return true;
-            }
             if (status.available >= count) {
                status.available -= count;
                break;
@@ -70,15 +75,15 @@ public class CheckPoint {
          }
 
          if (waitNanos <= 0) {
-            log.errorf("Timed out waiting for event %s * %d (available = %d, total = %d)",
-                       event, count, status.available, status.total);
+            log.errorf("%sTimed out waiting for event %s * %d (available = %d, total = %d)",
+                       id, event, count, status.available, status.total);
             // let the triggering thread know that we timed out
             status.available = -1;
             return false;
          }
 
-         log.tracef("Received event %s * %d (available = %d, total = %d)", event, count,
-               status.available, status.total);
+         log.tracef("%sReceived event %s * %d (available = %d, total = %d)", id, event, count,
+                    status.available, status.total);
          return true;
       } finally {
          lock.unlock();
@@ -86,15 +91,12 @@ public class CheckPoint {
    }
 
    public String peek(long timeout, TimeUnit unit, String... expectedEvents) throws InterruptedException {
-      log.tracef("Waiting for any one of events %s", Arrays.toString(expectedEvents));
+      log.tracef("%sWaiting for any one of events %s", id, Arrays.toString(expectedEvents));
       String found = null;
       lock.lock();
       try {
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
-            if (released) {
-               return null;
-            }
             for (String event : expectedEvents) {
                EventStatus status = events.get(event);
                if (status != null && status.available >= 1) {
@@ -109,12 +111,12 @@ public class CheckPoint {
          }
 
          if (waitNanos <= 0) {
-            log.tracef("Timed out waiting for events %s", Arrays.toString(expectedEvents));
+            log.tracef("%sPeek did not receive any of %s", id, Arrays.toString(expectedEvents));
             return null;
          }
 
          EventStatus status = events.get(found);
-         log.tracef("Received event %s (available = %d, total = %d)", found, status.available, status.total);
+         log.tracef("%sReceived event %s (available = %d, total = %d)", id, found, status.available, status.total);
          return found;
       } finally {
          lock.unlock();
@@ -131,13 +133,9 @@ public class CheckPoint {
    }
 
    public CompletableFuture<Void> future0(String event, int count) {
-      log.tracef("Waiting for event %s * %d", event, count);
+      log.tracef("%sWaiting for event %s * %d", id, event, count);
       lock.lock();
       try {
-         if (released) {
-            log.trace("Unblocked all events.");
-            return CompletableFutures.completedNull();
-         }
          EventStatus status = events.get(event);
          if (status == null) {
             status = new EventStatus();
@@ -174,14 +172,14 @@ public class CheckPoint {
             status = new EventStatus();
             events.put(event, status);
          } else if (status.available < 0) {
-            throw new IllegalStateException("Thread already timed out waiting for event " + event);
+            throw new IllegalStateException(id + "Thread already timed out waiting for event " + event);
          }
 
          // If triggerForever is called more than once, it will cause an overflow and the waiters will fail.
          status.available = count != INFINITE ? status.available + count : INFINITE;
          status.total = count != INFINITE ? status.total + count : INFINITE;
-         log.tracef("Triggering event %s * %d (available = %d, total = %d)", event, count,
-               status.available, status.total);
+         log.tracef("%sTriggering event %s * %d (available = %d, total = %d)", id, event, count,
+                    status.available, status.total);
          unblockCondition.signalAll();
          if (status.requests != null) {
             if (count == INFINITE) {
@@ -205,7 +203,7 @@ public class CheckPoint {
 
    @Override
    public String toString() {
-      return "CheckPoint" + events;
+      return "CheckPoint(" + id + ")" + events;
    }
 
    private static class EventStatus {

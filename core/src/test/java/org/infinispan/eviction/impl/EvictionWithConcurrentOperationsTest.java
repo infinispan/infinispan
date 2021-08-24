@@ -1,5 +1,6 @@
 package org.infinispan.eviction.impl;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.testng.AssertJUnit.assertEquals;
@@ -40,9 +41,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -53,7 +55,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.DataOperationOrderer;
-import org.mockito.AdditionalAnswers;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -66,11 +67,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "eviction.EvictionWithConcurrentOperationsTest")
 public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest {
-
+   protected boolean passivation = false;
    protected final AtomicInteger storeNamePrefix = new AtomicInteger(0);
    public final String storeName = getClass().getSimpleName();
-
-   protected final String PERSISTENT_LOCATION = CommonsTestingUtil.tmpDirectory(getClass());
+   protected final String persistentLocation = CommonsTestingUtil.tmpDirectory(getClass());
 
    public EvictionWithConcurrentOperationsTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -416,17 +416,17 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          Consumer<Object> finalResultConsumer, boolean blockOnCompletion) throws TimeoutException, InterruptedException, ExecutionException {
       // We use this checkpoint to hold the orderer lock during the write - which means the eviction will have to handle
       // it appropriately
-      CheckPoint operationCheckPoint = new CheckPoint();
+      CheckPoint operationCheckPoint = new CheckPoint("operation");
       operationCheckPoint.triggerForever(blockOnCompletion ? Mocks.AFTER_RELEASE : Mocks.BEFORE_RELEASE);
 
       DataOperationOrderer original;
       if (blockOnCompletion) {
          // Blocks just before releasing the orderer
-         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
+         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache,
                (stub, m) -> stub.when(m).completeOperation(eq(key), any(), any()));
       } else {
          // Blocks just after acquiring orderer
-         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
+         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache,
                (stub, m) -> stub.when(m).orderOn(eq(key), any()));
       }
 
@@ -440,11 +440,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       // We use this checkpoint to wait until the eviction is in process (that is that it has the caffeine lock
       // and has to wait until the prior orderer above completes
-      CheckPoint evictionCheckPoint = new CheckPoint();
+      CheckPoint evictionCheckPoint = new CheckPoint("eviction");
       evictionCheckPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
-      Mocks.blockingMock(evictionCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo, (stub, m) ->
-            stub.when(m).orderOn(eq(key), any()));
+      Mocks.blockingMock(evictionCheckPoint, DataOperationOrderer.class, cache,
+                         (stub, m) -> stub.when(m).orderOn(eq(key), any()));
 
       // Put another key, which will evict our original key
       Future<Object> evictFuture = fork(() -> cache.put("other-key", "other-value"));
@@ -476,34 +476,60 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       assertTrue("A cache store should be configured!", cache.getCacheConfiguration().persistence().usingStores());
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> entry = container.get(key);
-      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
+      InternalCacheEntry<?, ?> entry = container.peek(key);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNotNull("Key " + key + " does not exist in cache loader.", entryLoaded);
-      assertEquals("Wrong value for key " + key + " in cache loader.", value, entryLoaded.getValue());
+
+      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
+      MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
+      if (passivation) {
+         assertNull(entryLoaded);
+      } else {
+         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+      }
    }
 
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
-      assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
+
+      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
+      if (passivation) {
+         // With passivation the entry must not exist in the store
+         // but the removal is sometimes delayed
+         PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+         assertNull(join(pm.loadFromAllStores(key, true, true)));
+         eventuallyEquals(null, () -> loader.loadEntry(key));
+      } else {
+         MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
+         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+      }
    }
 
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> entry = container.get(key);
-      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
-      assertNull("Key " + key + " exists in data container", entry);
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
-      assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
+      InternalCacheEntry<?, ?> memoryEntry = container.peek(key);
+      assertNull("Key " + key + " exists in data container", memoryEntry);
+
+      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
+      if (passivation) {
+         // With passivation the store write is sometimes delayed
+         PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+         MarshallableEntry<?, ?> entryLoaded = join(pm.loadFromAllStores(key, true, true));
+         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+
+         eventuallyEquals("Wrong value for key " + key + " in cache loader",
+                          value, () -> extractValue(loader.loadEntry(key)));
+      } else {
+         MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
+         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+      }
+   }
+
+   private Object extractValue(MarshallableEntry<?, ?> entry) {
+      return entry != null ? entry.getValue() : null;
    }
 
    @Override
@@ -513,13 +539,13 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       configureEviction(builder);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(new EvictionWithConcurrentOperationsSCIImpl());
-      globalBuilder.globalState().enable().persistentLocation(PERSISTENT_LOCATION);
+      globalBuilder.globalState().enable().persistentLocation(persistentLocation);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
    }
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+      Util.recursiveFileRemove(persistentLocation);
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {
@@ -534,12 +560,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected final ControlledPassivationManager replacePassivationManager(final Latch latch) {
       PassivationManager current = TestingUtil.extractComponent(cache, PassivationManager.class);
       ControlledPassivationManager controlledPassivationManager = new ControlledPassivationManager(current);
-      controlledPassivationManager.beforePassivate = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      controlledPassivationManager.beforePassivate = latch::blockIfNeeded;
       TestingUtil.replaceComponent(cache, PassivationManager.class, controlledPassivationManager, true);
       return controlledPassivationManager;
    }
@@ -550,8 +571,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
             return;
          }
       }
-      fail("Wrong value for key " + key + ". value=" + String.valueOf(value) + ", expectedValues=" +
-                 Arrays.toString(expectedValues));
+      fail("Wrong value for key " + key + ". value=" + value + ", expectedValues=" +
+           Arrays.toString(expectedValues));
    }
 
    public static class SameHashCodeKey {
@@ -697,7 +718,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected class AfterEntryWrappingInterceptor extends ControlledCommandInterceptor {
 
       public AfterEntryWrappingInterceptor injectThis(Cache<Object, Object> injectInCache) {
-         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
+         TestingUtil.extractInterceptorChain(injectInCache).addInterceptorAfter(this, EntryWrappingInterceptor.class);
          return this;
       }
 
@@ -710,7 +731,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
                TestingUtil.extractComponent(injectInCache, AsyncInterceptorChain.class);
          AsyncInterceptor loaderInterceptor =
                chain.findInterceptorExtending(org.infinispan.interceptors.impl.CacheLoaderInterceptor.class);
-         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
+         TestingUtil.extractInterceptorChain(injectInCache).addInterceptorAfter(this, loaderInterceptor.getClass());
          return this;
       }
 

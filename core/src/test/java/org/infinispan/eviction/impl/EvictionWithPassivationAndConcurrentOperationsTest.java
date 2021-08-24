@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -15,18 +14,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.DataOperationOrderer;
-import org.mockito.AdditionalAnswers;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -38,6 +32,9 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "eviction.EvictionWithPassivationAndConcurrentOperationsTest")
 public class EvictionWithPassivationAndConcurrentOperationsTest extends EvictionWithConcurrentOperationsTest {
+   {
+      passivation = true;
+   }
 
    @Override
    public void testEvictionDuringWrite() throws InterruptedException, ExecutionException, TimeoutException {
@@ -77,8 +74,8 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
 
       // Blocks just before releasing the orderer for evicted-key
       // Note: Cannot use eq(WRITE) because eviction uses READ
-      Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
-            (stub, m) -> stub.when(m).completeOperation(eq(key), any(), any()));
+      Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache,
+                         (stub, m) -> stub.when(m).completeOperation(eq(key), any(), any()));
 
       // Put the key which will wait on releasing the orderer at the end
       Future<Object> operationFuture = fork(() -> cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put(key, "value"));
@@ -137,7 +134,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       operationCheckPoint.triggerForever(Mocks.AFTER_RELEASE);
 
       // Blocks eviction from acquiring orderer - but has entry lock
-      DataOperationOrderer original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
+      DataOperationOrderer original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache,
             (stub, m) -> stub.when(m).orderOn(eq(key), any()));
 
       // This will be stuck evicting the key until it can get the orderer
@@ -167,40 +164,6 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       eventuallyEquals(0, ppm::pendingPassivations);
 
       assertEquals(1L, TestingUtil.extractComponent(cache, PassivationManager.class).getPassivations());
-   }
-
-   @Override
-   protected void initializeKeyAndCheckData(Object key, Object value) {
-      assertTrue("A cache store should be configured!", cache.getCacheConfiguration().persistence().usingStores());
-      cache.put(key, value);
-      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> entry = container.peek(key);
-      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
-      assertNotNull("Key " + key + " does not exist in data container.", entry);
-      assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
-      MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
-      assertNull("Key " + key + " exists in cache loader.", entryLoaded);
-   }
-
-   @Override
-   protected void assertInMemory(Object key, Object value) {
-      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> entry = container.get(key);
-      WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
-      assertNotNull("Key " + key + " does not exist in data container", entry);
-      assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      eventually(() -> loader.loadEntry(key) == null);
-   }
-
-   @Override
-   protected void assertNotInMemory(Object key, Object value) {
-      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> entry = container.get(key);
-      WaitNonBlockingStore<Object, Object> loader = TestingUtil.getFirstStoreWait(cache);
-      assertNull("Key " + key + " exists in data container", entry);
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
-      assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
    }
 
    @Override

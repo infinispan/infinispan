@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.AbstractDelegatingInternalDataContainer;
@@ -26,7 +27,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
@@ -64,10 +64,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
       Cache otherCache = otherCacheManager.getCache();
       TestingUtil.waitForNoRebalance(cache, otherCache);
-   }
-
-   public boolean hasPassivation() {
-      return false;
    }
 
    @Override
@@ -139,7 +135,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       Future<Void> evict = evictWithFuture(key1);
       latch.waitToBlock(30, TimeUnit.SECONDS);
 
-      if (hasPassivation()) {
+      if (passivation) {
          Future<Object> getFuture = fork(() -> cache.get(key1));
 
          // Get will be blocked because eviction notification is not yet complete - which is holding orderer
