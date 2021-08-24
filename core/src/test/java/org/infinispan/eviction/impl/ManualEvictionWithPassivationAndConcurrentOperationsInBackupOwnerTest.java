@@ -13,10 +13,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "eviction.ManualEvictionWithPassivationAndConcurrentOperationsInBackupOwnerTest", singleThreaded = true)
 public class ManualEvictionWithPassivationAndConcurrentOperationsInBackupOwnerTest
       extends ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest {
-
-   @Override
-   public boolean hasPassivation() {
-      return true;
+   {
+      passivation = true;
    }
 
    @Override
