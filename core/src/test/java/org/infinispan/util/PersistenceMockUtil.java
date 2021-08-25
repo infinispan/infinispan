@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -39,6 +40,7 @@ import org.infinispan.util.concurrent.BlockingManagerImpl;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.mockito.Mockito;
 
 /**
  * Util class that mocks {@link org.infinispan.AdvancedCache} and {@link org.infinispan.persistence.spi.InitializationContext}
@@ -58,6 +60,7 @@ public class PersistenceMockUtil {
       private KeyPartitioner keyPartitioner = SingleSegmentKeyPartitioner.getInstance();
       private NonBlockingManager nonBlockingManager;
       private BlockingManager blockingManager;
+      private ScheduledExecutorService timeoutScheduledExecutor;
 
       public InvocationContextBuilder(Class<?> testClass, Configuration configuration, PersistenceMarshaller persistenceMarshaller) {
          this.testClass = testClass;
@@ -73,6 +76,7 @@ public class PersistenceMockUtil {
          TestingUtil.inject(nonBlockingManager,
                new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
          TestingUtil.startComponent(nonBlockingManager);
+         timeoutScheduledExecutor = Mockito.mock(ScheduledExecutorService.class);
       }
 
       public InvocationContextBuilder setTimeService(TimeService timeService) {
@@ -100,8 +104,13 @@ public class PersistenceMockUtil {
          return this;
       }
 
+      public InvocationContextBuilder setScheduledExecutor(ScheduledExecutorService timeoutScheduledExecutor) {
+         this.timeoutScheduledExecutor = timeoutScheduledExecutor;
+         return this;
+      }
+
       public InitializationContext build() {
-         Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList);
+         Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList, timeoutScheduledExecutor);
          MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
          global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
@@ -127,7 +136,8 @@ public class PersistenceMockUtil {
             .build();
    }
 
-   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassAllowList allowList) {
+   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService,
+                                  ClassAllowList allowList, ScheduledExecutorService timeoutScheduledExecutor) {
       String cacheName = "mock-cache";
       AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
 
@@ -143,6 +153,7 @@ public class PersistenceMockUtil {
                                                                 mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
       gbcr.replaceComponent(TimeService.class.getName(), timeService, true);
+      gbcr.replaceComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, timeoutScheduledExecutor, false);
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
 
