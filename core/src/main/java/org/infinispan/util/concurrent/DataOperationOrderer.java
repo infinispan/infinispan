@@ -57,4 +57,11 @@ public class DataOperationOrderer {
       objectStages.remove(key, registeredFuture);
       registeredFuture.complete(operation);
    }
+
+   /**
+    * For testing purposes only
+    */
+   public CompletionStage<Operation> getCurrentStage(Object key) {
+      return objectStages.get(key);
+   }
 }
