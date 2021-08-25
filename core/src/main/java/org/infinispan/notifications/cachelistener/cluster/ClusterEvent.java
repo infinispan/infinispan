@@ -100,8 +100,18 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    }
 
    @Override
+   public V getNewValue() {
+      return value;
+   }
+
+   @Override
    public Metadata getMetadata() {
       return metadata;
+   }
+
+   @Override
+   public Metadata getOldMetadata() {
+      throw new UnsupportedOperationException();
    }
 
    @Override
