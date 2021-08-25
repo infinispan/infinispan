@@ -36,8 +36,6 @@ public class ServerFile {
    }
 
    private static String basename(String filename) {
-      // Hack: remove os + archs
-      filename = filename.replace("-linux-x86_64", "");
       // Get the artifact name up to the version
       int l = filename.length();
       for (int i = 0; i < l; i++) {
