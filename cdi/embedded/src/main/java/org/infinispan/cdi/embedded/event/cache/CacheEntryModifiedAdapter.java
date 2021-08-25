@@ -39,6 +39,21 @@ public class CacheEntryModifiedAdapter<K, V> extends AbstractAdapter<CacheEntryM
       }
 
       @Override
+      public V getOldValue() {
+         return decoratedEvent.getOldValue();
+      }
+
+      @Override
+      public V getNewValue() {
+         return decoratedEvent.getNewValue();
+      }
+
+      @Override
+      public Metadata getOldMetadata() {
+         return decoratedEvent.getOldMetadata();
+      }
+
+      @Override
       public boolean isCreated() {
          return decoratedEvent.isCreated();
       }
@@ -121,6 +136,21 @@ public class CacheEntryModifiedAdapter<K, V> extends AbstractAdapter<CacheEntryM
 
       @Override
       public Object getValue() {
+         return null;
+      }
+
+      @Override
+      public Object getOldValue() {
+         return null;
+      }
+
+      @Override
+      public Object getNewValue() {
+         return null;
+      }
+
+      @Override
+      public Metadata getOldMetadata() {
          return null;
       }
 

@@ -59,6 +59,11 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
       }
 
       @Override
+      public Metadata getOldMetadata() {
+         return decoratedEvent.getOldMetadata();
+      }
+
+      @Override
       public GlobalTransaction getGlobalTransaction() {
          return decoratedEvent.getGlobalTransaction();
       }
@@ -126,6 +131,11 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
 
       @Override
       public Metadata getMetadata() {
+         return null;
+      }
+
+      @Override
+      public Metadata getOldMetadata() {
          return null;
       }
 

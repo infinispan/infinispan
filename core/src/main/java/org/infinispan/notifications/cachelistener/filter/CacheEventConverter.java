@@ -22,7 +22,7 @@ public interface CacheEventConverter<K, V, C> {
     * @param eventType The type of event that is being raised
     * @return The converted value to be used in the event
     */
-   public C convert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
+   C convert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
 
    default MediaType format() {
       return MediaType.APPLICATION_OBJECT;
