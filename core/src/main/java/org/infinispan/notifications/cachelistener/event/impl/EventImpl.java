@@ -51,6 +51,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private boolean transactionSuccessful;
    private Type type;
    private V value;
+   private V newValue;
    private V oldValue;
    private ConsistentHash readConsistentHashAtStart, writeConsistentHashAtStart, readConsistentHashAtEnd, writeConsistentHashAtEnd, unionConsistentHash;
    private int newTopologyId;
@@ -65,7 +66,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    public static <K, V> EventImpl<K, V> createEvent(Cache<K, V> cache, Type type) {
-      EventImpl<K, V> e = new EventImpl<K,V>();
+      EventImpl<K, V> e = new EventImpl<>();
       e.cache = cache;
       e.type = type;
       return e;
@@ -89,8 +90,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public K getKey() {
-//      if (key instanceof MarshalledValue)
-//         key = (K) ((MarshalledValue) key).get();
       return key;
    }
 
@@ -205,8 +204,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
-//      if (value instanceof MarshalledValue)
-//         value = (V) ((MarshalledValue) value).get();
       return value;
    }
 
@@ -224,6 +221,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return created;
    }
 
+   public V getNewValue() {
+      return newValue;
+   }
+
    @Override
    public V getOldValue() {
       return oldValue;
@@ -231,6 +232,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    public void setValue(V value) {
       this.value = value;
+      this.newValue = value;
    }
 
    public void setEntries(Map<? extends K, ? extends V> entries) {
@@ -239,6 +241,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    public void setCreated(boolean created) {
       this.created = created;
+   }
+
+   public void setNewValue(V newValue) {
+      this.newValue = newValue;
    }
 
    public void setOldValue(V oldValue) {
@@ -277,6 +283,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (created != event.created) return false;
       if (isCurrentState != event.isCurrentState) return false;
       if (oldValue != null ? !oldValue.equals(event.oldValue) : event.oldValue != null) return false;
+      if (newValue != null ? !newValue.equals(event.newValue) : event.newValue != null) return false;
 
       return available == event.available;
    }
@@ -299,6 +306,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + newTopologyId;
       result = 31 * result + (created ? 1 : 0) + (isCurrentState ? 2 : 0);
       result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
+      result = 31 * result + (newValue != null ? newValue.hashCode() : 0);
       result = 31 * result + (available ? 1 : 0);
       return result;
    }
@@ -323,6 +331,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
              ", cache=" + cache +
              ", key=" + key +
              ", value=" + value +
+             ", newValue=" + newValue +
              ", oldValue=" + oldValue +
              ", source=" + source +
              ", originLocal=" + originLocal +

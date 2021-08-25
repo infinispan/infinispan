@@ -533,8 +533,9 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       previousValue = convertValue(listenerInvocation, previousValue);
 
       e.setOriginLocal(ctx.isOriginLocal());
-      e.setValue(pre ? previousValue : value);
       e.setPre(pre);
+      e.setValue(pre ? previousValue : value);
+      e.setNewValue(value);
       e.setOldValue(previousValue);
       e.setOldMetadata(previousMetadata);
       e.setMetadata(metadata);
@@ -1982,11 +1983,11 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          }
          Object convertedKey = convertToRequestFormat(eventImpl.getKey(), keyFromFormat, keyDataConversion);
          Object convertedValue = convertToRequestFormat(newValue, valueFromFormat, valueDataConversion);
-         Object convertedOlfValue = convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion);
+         Object convertedOldValue = convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion);
          EventImpl<K, V> clone = eventImpl.clone();
          clone.setKey((K) convertedKey);
          clone.setValue((V) convertedValue);
-         clone.setOldValue((V) convertedOlfValue);
+         clone.setOldValue((V) convertedOldValue);
          return clone;
       }
 
