@@ -24,6 +24,7 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
@@ -31,8 +32,8 @@ import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -170,7 +171,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          barrier.await(5, TimeUnit.SECONDS);
 
          Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
-         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
+         TestingUtil.assertNotDone(futureGet);
 
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);
@@ -203,7 +204,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
 
          // The get will blocks locally on the L1WriteSynchronizer registered by the replace command
-         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
+         TestingUtil.assertNotDone(futureGet);
          controlledRpcManager.expectNoCommand();
 
          // Continue the replace
