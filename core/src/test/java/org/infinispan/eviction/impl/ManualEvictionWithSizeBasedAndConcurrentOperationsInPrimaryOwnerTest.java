@@ -6,12 +6,10 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.AbstractDelegatingInternalDataContainer;
@@ -140,7 +138,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
          // Get will be blocked because eviction notification is not yet complete - which is holding orderer
          // CacheLoader requires acquiring orderer so it can update the data container properly
-         Exceptions.expectException(TimeoutException.class, () -> getFuture.get(50, TimeUnit.MILLISECONDS));
+         TestingUtil.assertNotDone(getFuture);
 
          //let the eviction continue and wait for get to complete (which will put it back in memory)
          latch.disable();

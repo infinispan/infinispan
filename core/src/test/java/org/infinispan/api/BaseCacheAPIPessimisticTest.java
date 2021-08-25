@@ -13,7 +13,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.LockedStream;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -58,7 +57,7 @@ public abstract class BaseCacheAPIPessimisticTest extends CacheAPITest {
       Future<?> forEachFuture = fork(() -> stream.filter(e -> e.getKey().equals(key)).forEach((c, e) ->
             assertEquals("value" + key + "-new", c.put(e.getKey(), String.valueOf(e.getValue() + "-other")))));
 
-      Exceptions.expectException(TimeoutException.class, () -> forEachFuture.get(50, TimeUnit.MILLISECONDS));
+      TestingUtil.assertNotDone(forEachFuture);
 
       // Let the tx put complete
       barrier.await(10, TimeUnit.SECONDS);
