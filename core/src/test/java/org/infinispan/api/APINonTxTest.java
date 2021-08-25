@@ -40,7 +40,6 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -938,7 +937,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Future<Object> putFuture = fork(() -> cache.put(key, "value" + key + "-new"));
 
-      Exceptions.expectException(TimeoutException.class, () -> putFuture.get(50, TimeUnit.MILLISECONDS));
+      TestingUtil.assertNotDone(putFuture);
 
       // Let the forEach with lock complete
       barrier.await(10, TimeUnit.SECONDS);

@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -87,7 +86,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
 
       Future<Map<Address, InternalCacheValue<Object>>> versionFuture = fork(() -> getAllVersions(0, key));
       // Check that getAllVersions doesn't return while state transfer is in progress
-      Exceptions.expectException(TimeoutException.class, () -> versionFuture.get(100, TimeUnit.MILLISECONDS));
+      TestingUtil.assertNotDone(versionFuture);
 
       // Allow and wait for state transfer to finish
       latch.countDown();
