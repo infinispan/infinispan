@@ -205,7 +205,7 @@ public class ThreadLeakChecker {
       if (!leaks.isEmpty()) {
          // Give the threads some more time to finish, in case the stop method didn't wait
          try {
-            Thread.sleep(1000);
+            Thread.sleep(1500);
          } catch (InterruptedException e) {
             // Ignore
             Thread.currentThread().interrupt();

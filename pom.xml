@@ -301,7 +301,8 @@
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
-      <versionx.org.apache.directory.server.apacheds-all>2.0.0-M24</versionx.org.apache.directory.server.apacheds-all>
+      <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
+      <versionx.org.apache.mina.mina>2.0.17</versionx.org.apache.mina.mina>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
       <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
       <versionx.org.apache.logging.log4j.log4j-core>${version.log4j}</versionx.org.apache.logging.log4j.log4j-core>
@@ -848,8 +849,21 @@
          </dependency>
          <dependency>
             <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId>
-            <version>${versionx.org.apache.directory.server.apacheds-all}</version>
+            <artifactId>apacheds-test-framework</artifactId>
+            <version>${versionx.org.apache.directory.server.apacheds}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-interceptor-kerberos</artifactId>
+            <version>${versionx.org.apache.directory.server.apacheds}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <!-- Override the Apache Mina version to include the fixes for DIRMINA-1076 and DIRMINA-1077 -->
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>${versionx.org.apache.mina.mina}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
