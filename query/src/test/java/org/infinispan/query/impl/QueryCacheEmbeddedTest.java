@@ -62,7 +62,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       queryCache.clear();
 
       // obtain a reference to the internal query cache via reflection
-      Cache<?, ?> internalCache = (Cache<?, ?>) TestingUtil.extractField(QueryCache.class, queryCache, "lazyCache");
+      Cache<?, ?> internalCache = TestingUtil.extractField(QueryCache.class, queryCache, "lazyCache");
 
       String queryString = "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u where u.name = 'John'";
 

@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -169,6 +170,16 @@ public class TestingUtil {
       });
       executor.setRemoveOnCancelPolicy(true);
       timeoutExecutor = executor;
+   }
+
+   public static void assertNotDone(CompletionStage<?> completionStage) {
+      sleepThread(50);
+      assertFalse(completionStage.toCompletableFuture().isDone());
+   }
+
+   public static void assertNotDone(Future<?> completionStage) {
+      sleepThread(50);
+      assertFalse(completionStage.isDone());
    }
 
    public static <T> CompletableFuture<T> orTimeout(CompletableFuture<T> f, long timeout, TimeUnit timeUnit, Executor executor) {
@@ -313,8 +324,7 @@ public class TestingUtil {
     * @return field value
     */
    public static <T> T extractField(Object target, String fieldName) {
-      //noinspection unchecked
-      return (T) extractField(target.getClass(), target, fieldName);
+      return extractField(target.getClass(), target, fieldName);
    }
 
    public static void replaceField(Object newValue, String fieldName, Object owner, Class<?> baseType) {
@@ -347,13 +357,13 @@ public class TestingUtil {
       }
    }
 
-   public static Object extractField(Class<?> type, Object target, String fieldName) {
+   public static <T> T extractField(Class<?> type, Object target, String fieldName) {
       while (true) {
          Field field;
          try {
             field = type.getDeclaredField(fieldName);
             field.setAccessible(true);
-            return field.get(target);
+            return (T) field.get(target);
          }
          catch (Exception e) {
             if (type.equals(Object.class)) {
@@ -513,7 +523,7 @@ public class TestingUtil {
 
    private static Cache<?, ?> unwrapSecureCache(Cache<?, ?> c) {
       if (c instanceof SecureCacheImpl) {
-         c = (Cache<?, ?>) extractField(SecureCacheImpl.class, c, "delegate");
+         c = extractField(SecureCacheImpl.class, c, "delegate");
       }
       return c;
    }
