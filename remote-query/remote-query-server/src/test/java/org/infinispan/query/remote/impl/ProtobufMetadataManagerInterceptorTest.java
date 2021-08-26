@@ -312,6 +312,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
          Cache<Object, Object> cache = manager.getCache();
          assertEquals("import \"test.proto\";", cache.get("state.proto"));
          cache(0).remove("state.proto");
+         assertFalse(cache.containsKey("state.proto"));
       } finally {
          killMember(2);
       }

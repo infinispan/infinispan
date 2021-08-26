@@ -20,6 +20,10 @@ public class KeyValuePair<K,V> {
    private final K key;
    private final V value;
 
+   public static <K, V> KeyValuePair<K, V> of(K key, V value) {
+      return new KeyValuePair<>(key, value);
+   }
+
    public KeyValuePair(K key, V value) {
       this.key = key;
       this.value = value;
