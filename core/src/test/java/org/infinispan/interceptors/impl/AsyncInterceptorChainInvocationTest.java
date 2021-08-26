@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.commons.test.Exceptions.expectExecutionException;
-import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
@@ -18,7 +17,6 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
@@ -381,7 +379,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
    }
 
    private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
-      AsyncInterceptorChainImpl chain = new AsyncInterceptorChainImpl(mock(ComponentRegistry.class));
+      AsyncInterceptorChainImpl chain = new AsyncInterceptorChainImpl();
       for (AsyncInterceptor i : interceptors) {
          chain.appendInterceptor(i, false);
       }

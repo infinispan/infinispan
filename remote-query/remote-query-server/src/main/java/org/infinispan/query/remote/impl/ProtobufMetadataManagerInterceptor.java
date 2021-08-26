@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -58,7 +56,6 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Intercepts updates to the protobuf schema file caches and updates the SerializationContext accordingly.
@@ -241,7 +238,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          return invokeNext(ctx, command);
       }
 
-      CompletionStage<Object> stage;
+      InvocationStage stage;
       if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
          if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
             throw log.keyMustBeStringEndingWithProto(key);
@@ -249,37 +246,37 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
          // lock global errors key
          LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-         stage = invoker.running().invokeAsync(ctx, cmd);
+         stage = invoker.running().invokeStage(ctx, cmd);
       } else {
-         stage = CompletableFutures.completedNull();
+         stage = SyncInvocationStage.completedNullStage();
       }
 
       return makeStage(asyncInvokeNext(ctx, command, stage))
             .thenApply(ctx, command, this::handlePutKeyValueResult);
    }
 
-   private InvocationStage handlePutKeyValueResult(InvocationContext rCtx, PutKeyValueCommand putKeyValueCommand, Object rv) {
+   private InvocationStage handlePutKeyValueResult(InvocationContext ctx, PutKeyValueCommand putKeyValueCommand, Object rv) {
       if (putKeyValueCommand.isSuccessful()) {
          // StateConsumerImpl uses PutKeyValueCommands with InternalCacheEntry
          // values in order to preserve timestamps, so read the value from the context
          Object key = putKeyValueCommand.getKey();
-         Object value = rCtx.lookupEntry(key).getValue();
+         Object value = ctx.lookupEntry(key).getValue();
          if (!(value instanceof String)) {
             throw log.valueMustBeString(value.getClass());
          }
 
          long flagsBitSet = copyFlags(putKeyValueCommand);
-         if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+         if (ctx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             ProgressCallback progressCallback = new ProgressCallback();
             registerProtoFile((String) key, (String) value, progressCallback);
 
             List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-            CompletionStage<Object> updateStage = updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
-            return asyncValue(updateStage.thenApply(__ -> rv));
+            InvocationStage updateStage = updateSchemaErrorsIterator(ctx, flagsBitSet, errorUpdates.iterator());
+            return makeStage(updateStage.thenReturn(ctx, putKeyValueCommand, rv));
          }
          registerProtoFile((String) key, (String) value);
       }
-      return SyncInvocationStage.makeStage(rv);
+      return makeStage(rv);
    }
 
    List<KeyValuePair<String, String>> computeErrorUpdates(ProgressCallback progressCallback) {
@@ -342,7 +339,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       // lock global errors key
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, cmd);
+      InvocationStage stage = invoker.running().invokeStage(ctx, cmd);
 
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          long flagsBitSet = copyFlags(rCommand);
@@ -362,7 +359,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
          if (progressCallback != null) {
             List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-            return asyncValue(updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator()));
+            return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
          }
          return InvocationStage.completedNullStage();
       });
@@ -384,8 +381,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       long flagsBitSet = copyFlags(command);
       LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
 
-      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, lockCommand);
-      stage = stage.thenCompose(__ -> {
+      InvocationStage stage = invoker.running().invokeStage(ctx, lockCommand);
+      stage = stage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, __) -> {
          if (serializationContext.getFileDescriptors().containsKey(key)) {
             serializationContext.unregisterProtoFile(key);
          }
@@ -393,7 +390,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          // put error key for all unresolved files and remove error key for all resolved files
          // Error keys to be removed have a null value
          List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdatesAfterRemove(key);
-         return updateSchemaErrorsIterator(ctx, flagsBitSet, errorUpdates.iterator());
+         return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
       });
 
       return asyncInvokeNext(ctx, command, stage);
@@ -422,10 +419,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return errorUpdates;
    }
 
-   private CompletableFuture<Object> updateSchemaErrorsIterator(InvocationContext ctx, long flagsBitSet,
-                                                                Iterator<KeyValuePair<String, String>> iterator) {
+   private InvocationStage updateSchemaErrorsIterator(InvocationContext ctx, long flagsBitSet,
+                                                      Iterator<KeyValuePair<String, String>> iterator) {
       if (!iterator.hasNext())
-         return CompletableFutures.completedNull();
+         return InvocationStage.completedNullStage();
 
       KeyValuePair<String, String> keyErrorPair = iterator.next();
       Object errorsKey = keyErrorPair.getKey() + ERRORS_KEY_SUFFIX;
@@ -440,8 +437,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          put.setPutIfAbsent(true);
          writeCommand = put;
       }
-      CompletableFuture<Object> stage = invoker.running().invokeAsync(ctx, writeCommand);
-      return stage.thenCompose(__ -> updateSchemaErrorsIterator(ctx, flagsBitSet, iterator));
+      InvocationStage stage = invoker.running().invokeStage(ctx, writeCommand);
+      return stage.thenApplyMakeStage(ctx, writeCommand, (rCtx, rCommand, rv) -> updateSchemaErrorsIterator(rCtx, flagsBitSet, iterator));
    }
 
    @Override
@@ -468,7 +465,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       // lock global errors key
       LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(),
                                                                        null);
-      CompletionStage<Object> stage = invoker.running().invokeAsync(ctx, cmd);
+      InvocationStage stage = invoker.running().invokeStage(ctx, cmd);
 
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCommand.isSuccessful()) {
@@ -478,7 +475,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                registerProtoFile((String) key, (String) value, progressCallback);
 
                List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-               return asyncValue(updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator()));
+               return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
             }
             registerProtoFile((String) key, (String) value);
          }
