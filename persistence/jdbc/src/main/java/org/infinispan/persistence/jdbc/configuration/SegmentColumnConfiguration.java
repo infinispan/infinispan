@@ -6,8 +6,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class SegmentColumnConfiguration {
-   public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.NAME, null, String.class).immutable().build();
-   public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.TYPE, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.NAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.TYPE, null, String.class).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(SegmentColumnConfiguration.class, SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE);

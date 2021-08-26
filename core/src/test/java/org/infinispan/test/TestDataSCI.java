@@ -9,6 +9,7 @@ import org.infinispan.test.data.CountMarshallingPojo;
 import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
+import org.infinispan.test.data.Sex;
 import org.infinispan.test.data.Value;
 import org.infinispan.xsite.irac.IracCustomConflictTest;
 
@@ -22,6 +23,7 @@ import org.infinispan.xsite.irac.IracCustomConflictTest;
             MagicKey.class,
             CountMarshallingPojo.class,
             Person.class,
+            Sex.class,
             Value.class,
             IracCustomConflictTest.MySortedSet.class,
       },

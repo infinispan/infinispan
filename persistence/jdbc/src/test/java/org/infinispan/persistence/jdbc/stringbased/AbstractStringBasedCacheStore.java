@@ -22,7 +22,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -158,7 +158,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
     public Object getValueByKey(String key) throws Exception {
         Object result = null;
         Connection connection = connectionFactory.getConnection();
-        PreparedStatement ps = connection.prepareStatement(tableManager.getSelectIdRowSql());
+        PreparedStatement ps = connection.prepareStatement(tableManager.getSelectRowSql());
         ps.setString(1, key);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
@@ -189,7 +189,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
     private void deleteAllRows() throws Exception {
         Connection connection = connectionFactory.getConnection();
         Statement s = connection.createStatement();
-        s.executeUpdate(tableManager.getDeleteAllRowsSql());
+        s.executeUpdate(tableManager.getDeleteAllSql());
         connectionFactory.releaseConnection(connection);
     }
 

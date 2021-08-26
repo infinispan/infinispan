@@ -1,10 +1,11 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
-import static org.infinispan.persistence.jdbc.JdbcUtil.marshall;
-import static org.infinispan.persistence.jdbc.JdbcUtil.unmarshall;
-import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
+import static org.infinispan.persistence.jdbc.common.JdbcUtil.marshall;
+import static org.infinispan.persistence.jdbc.common.JdbcUtil.unmarshall;
+import static org.infinispan.persistence.jdbc.common.logging.Log.PERSISTENCE;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -12,16 +13,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.PrimitiveIterator;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
-import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
+import org.infinispan.persistence.jdbc.common.sql.BaseTableOperations;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.PersistenceContextInitializerImpl;
-import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.keymappers.Key2StringMapper;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -30,7 +44,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 /**
  * @author Ryan Emerson
  */
-public abstract class AbstractTableManager implements TableManager {
+public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, V> implements TableManager<K, V> {
 
    private static final String DEFAULT_IDENTIFIER_QUOTE_STRING = "\"";
    private static final String META_TABLE_SUFFIX = "_META";
@@ -39,7 +53,10 @@ public abstract class AbstractTableManager implements TableManager {
    private final Log log;
    protected final InitializationContext ctx;
    protected final ConnectionFactory connectionFactory;
+   protected final JdbcStringBasedStoreConfiguration jdbcConfig;
    protected final TableManipulationConfiguration config;
+   protected final PersistenceMarshaller marshaller;
+   protected final MarshallableEntryFactory<K, V> marshallableEntryFactory;
    protected final String timestampIndexExt = "timestamp_index";
    protected final String segmentIndexExt = "segment_index";
 
@@ -48,6 +65,7 @@ public abstract class AbstractTableManager implements TableManager {
    protected final TableName dataTableName;
    protected final TableName metaTableName;
    protected MetadataImpl metadata;
+   protected Key2StringMapper key2StringMapper;
 
    // the field order is important because we are reusing some sql
    private final String insertRowSql;
@@ -62,18 +80,24 @@ public abstract class AbstractTableManager implements TableManager {
    private final String deleteAllRows;
    private final String selectExpiredRowsSql;
 
-   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData dbMetadata, String cacheName, Log log) {
-      this(ctx, connectionFactory, config, dbMetadata, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
+   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration jdbcConfig,
+         DbMetaData dbMetadata, String cacheName, Log log) {
+      this(ctx, connectionFactory, jdbcConfig, dbMetadata, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
    }
 
-   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData dbMetadata, String cacheName, String identifierQuoteString, Log log) {
+   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration jdbcConfig,
+         DbMetaData dbMetadata, String cacheName, String identifierQuoteString, Log log) {
+      super(jdbcConfig.maxBatchSize(), jdbcConfig.writeQueryTimeout(), jdbcConfig.readQueryTimeout());
       // cacheName is required
       if (cacheName == null || cacheName.trim().length() == 0)
          throw new PersistenceException("cacheName needed in order to create table");
 
       this.ctx = ctx;
       this.connectionFactory = connectionFactory;
-      this.config = config;
+      this.jdbcConfig = jdbcConfig;
+      this.config = jdbcConfig.table();
+      this.marshaller = ctx.getPersistenceMarshaller();
+      this.marshallableEntryFactory = ctx.getMarshallableEntryFactory();
       this.dbMetadata = dbMetadata;
       this.dataTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
       this.metaTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName + META_TABLE_SUFFIX);
@@ -117,6 +141,17 @@ public abstract class AbstractTableManager implements TableManager {
             connectionFactory.releaseConnection(conn);
          }
       }
+
+      JdbcStringBasedStoreConfiguration configuration = ctx.getConfiguration();
+      try {
+         Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
+               ctx.getGlobalConfiguration().classLoader()).newInstance();
+         if (mapper instanceof Key2StringMapper) key2StringMapper = (Key2StringMapper) mapper;
+      } catch (Exception e) {
+         log.errorf("Trying to instantiate %s, however it failed due to %s", configuration.key2StringMapper(),
+               e.getClass().getName());
+         throw new IllegalStateException("This should not happen.", e);
+      }
    }
 
    @Override
@@ -132,6 +167,7 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
+   @Override
    public boolean tableExists(Connection connection, TableName tableName) {
       Objects.requireNonNull(tableName, "table name is mandatory");
       ResultSet rs = null;
@@ -181,7 +217,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public TableManager.Metadata getMetadata(Connection connection) throws PersistenceException {
+   public Metadata getMetadata(Connection connection) throws PersistenceException {
       if (metadata == null) {
          try {
             String sql = String.format("SELECT %s FROM %s", META_TABLE_DATA_COLUMN, metaTableName.toString());
@@ -196,6 +232,7 @@ public abstract class AbstractTableManager implements TableManager {
       return metadata;
    }
 
+   @Override
    public void createDataTable(Connection conn) throws PersistenceException {
       String ddl;
       if (dbMetadata.isSegmentedDisabled()) {
@@ -261,6 +298,7 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
+   @Override
    public void dropDataTable(Connection conn) throws PersistenceException {
       dropIndex(conn, timestampIndexExt);
       dropIndex(conn, segmentIndexExt);
@@ -297,6 +335,7 @@ public abstract class AbstractTableManager implements TableManager {
       return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), dataTableName);
    }
 
+   @Override
    public int getFetchSize() {
       return config.fetchSize();
    }
@@ -310,10 +349,12 @@ public abstract class AbstractTableManager implements TableManager {
       return !dbMetadata.isUpsertDisabled();
    }
 
+   @Override
    public String getIdentifierQuoteString() {
       return identifierQuoteString;
    }
 
+   @Override
    public TableName getDataTableName() {
       return dataTableName;
    }
@@ -342,7 +383,6 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
-   @Override
    public String getInsertRowSql() {
       return insertRowSql;
    }
@@ -359,7 +399,7 @@ public abstract class AbstractTableManager implements TableManager {
 
    protected String initSelectRowSql() {
       return String.format("SELECT %s, %s FROM %s WHERE %s = ?",
-            config.idColumnName(), config.dataColumnName(), dataTableName, config.idColumnName());
+            config.dataColumnName(), config.idColumnName(), dataTableName, config.idColumnName());
    }
 
    @Override
@@ -371,40 +411,9 @@ public abstract class AbstractTableManager implements TableManager {
       return String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), dataTableName, config.idColumnName());
    }
 
-   @Override
-   public String getSelectIdRowSql() {
-      return selectIdRowSql;
-   }
-
    protected String initCountNonExpiredRowsSql() {
       return "SELECT COUNT(*) FROM " + dataTableName +
             " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
-   }
-
-   @Override
-   public String getCountNonExpiredRowsSql() {
-      return countRowsSql;
-   }
-
-   @Override
-   public String getCountNonExpiredRowsSqlForSegments(int numSegments) {
-      StringBuilder stringBuilder = new StringBuilder("SELECT COUNT(*) FROM ");
-      stringBuilder.append(dataTableName);
-      // Note the timestamp or is surrounded with parenthesis
-      stringBuilder.append(" WHERE (");
-      stringBuilder.append(config.timestampColumnName());
-      stringBuilder.append(" > ? OR ");
-      stringBuilder.append(config.timestampColumnName());
-      stringBuilder.append(" < 0) AND ");
-      stringBuilder.append(config.segmentColumnName());
-      stringBuilder.append(" IN (?");
-
-      for (int i = 1; i < numSegments; ++i) {
-         stringBuilder.append(",?");
-      }
-      stringBuilder.append(")");
-
-      return stringBuilder.toString();
    }
 
    protected String initDeleteRowSql() {
@@ -414,23 +423,6 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getDeleteRowSql() {
       return deleteRowSql;
-   }
-
-   @Override
-   public String getDeleteRowsSqlForSegments(int numSegments) {
-      StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
-      stringBuilder.append(dataTableName);
-      // Note the timestamp or is surrounded with parenthesis
-      stringBuilder.append(" WHERE ");
-      stringBuilder.append(config.segmentColumnName());
-      stringBuilder.append(" IN (?");
-
-      for (int i = 1; i < numSegments; ++i) {
-         stringBuilder.append(",?");
-      }
-      stringBuilder.append(")");
-
-      return stringBuilder.toString();
    }
 
    protected String initLoadNonExpiredAllRowsSql() {
@@ -450,7 +442,6 @@ public abstract class AbstractTableManager implements TableManager {
       return loadAllNonExpiredRowsSql;
    }
 
-   @Override
    public String getLoadNonExpiredRowsSqlForSegments(int numSegments) {
       StringBuilder stringBuilder = new StringBuilder("SELECT ");
       stringBuilder.append(config.dataColumnName());
@@ -476,8 +467,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initLoadAllRowsSql() {
-      return String.format("SELECT %s, %s FROM %s", config.dataColumnName(),
-            config.idColumnName(), dataTableName);
+      return String.format("SELECT %s, %s FROM %s", config.dataColumnName(), config.idColumnName(), dataTableName);
    }
 
    @Override
@@ -487,11 +477,6 @@ public abstract class AbstractTableManager implements TableManager {
 
    protected String initDeleteAllRowsSql() {
       return "DELETE FROM " + dataTableName;
-   }
-
-   @Override
-   public String getDeleteAllRowsSql() {
-      return deleteAllRows;
    }
 
    protected String initSelectOnlyExpiredRowsSql() {
@@ -522,11 +507,6 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getUpsertRowSql() {
-      return upsertRowSql;
-   }
-
-   @Override
    public boolean isStringEncodingRequired() {
       return false;
    }
@@ -537,24 +517,25 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
-      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
-      ps.setLong(2, timestamp);
-      ps.setString(3, key);
-      if (!dbMetadata.isSegmentedDisabled()) {
-         ps.setInt(4, segment);
-      }
-   }
-
-   @Override
    public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, timestamp);
       ps.setString(3, key);
    }
 
+   @Override
+   protected void preparePublishStatement(PreparedStatement ps, IntSet segments) throws SQLException {
+      int offset = 1;
+      ps.setLong(offset, ctx.getTimeService().wallClockTime());
+      if (!dbMetadata.isSegmentedDisabled() && segments != null) {
+         for (PrimitiveIterator.OfInt segIter = segments.iterator(); segIter.hasNext(); ) {
+            ps.setInt(++offset, segIter.nextInt());
+         }
+      }
+   }
+
    @ProtoTypeId(ProtoStreamTypeIds.JDBC_PERSISTED_METADATA)
-   public static class MetadataImpl implements TableManager.Metadata {
+   public static class MetadataImpl implements Metadata {
       final short version;
       final int segments;
 
@@ -583,5 +564,125 @@ public abstract class AbstractTableManager implements TableManager {
                ", segments=" + segments +
                '}';
       }
+   }
+
+   protected String key2Str(Object key) throws PersistenceException {
+      if (!key2StringMapper.isSupportedType(key.getClass())) {
+         throw new UnsupportedKeyTypeException(key);
+      }
+      String keyStr = key2StringMapper.getStringMapping(key);
+      return isStringEncodingRequired() ? encodeString(keyStr) : keyStr;
+   }
+
+   @Override
+   public String getSelectAllSql(IntSet segments) {
+      if (!dbMetadata.isSegmentedDisabled() && segments != null) {
+         return getLoadNonExpiredRowsSqlForSegments(segments.size());
+      } else {
+         return getLoadNonExpiredAllRowsSql();
+      }
+   }
+
+   @Override
+   protected void prepareKeyStatement(PreparedStatement ps, Object key) throws SQLException {
+      String lockingKey = key2Str(key);
+      ps.setString(1, lockingKey);
+   }
+
+   @Override
+   protected MarshallableEntry<K, V> entryFromResultSet(ResultSet rs, Object keyIfPresent, boolean fetchValue,
+         Predicate<? super K> keyPredicate) throws SQLException {
+      MarshallableEntry<K, V> entry = null;
+      K key = (K) keyIfPresent;
+      if (key == null) {
+         String keyStr = rs.getString(2);
+         key = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+      }
+      if (keyPredicate == null || keyPredicate.test(key)) {
+         InputStream inputStream = rs.getBinaryStream(1);
+         MarshalledValue value = unmarshall(inputStream, marshaller);
+         entry = marshallableEntryFactory.create(key,
+               fetchValue ? value.getValueBytes() : null,
+               value.getMetadataBytes(),
+               value.getInternalMetadataBytes(),
+               value.getCreated(),
+               value.getLastUsed());
+         if (entry.getMetadata() != null && entry.isExpired(ctx.getTimeService().wallClockTime())) {
+            return null;
+         }
+      }
+      return entry;
+   }
+
+   @Override
+   public String getDeleteAllSql() {
+      return deleteAllRows;
+   }
+
+   @Override
+   public String getUpsertRowSql() {
+      return upsertRowSql;
+   }
+
+   @Override
+   public String getSizeSql() {
+      return countRowsSql;
+   }
+
+   @Override
+   public void upsertEntry(Connection connection, int segment, MarshallableEntry<? extends K, ? extends V> entry)
+         throws SQLException {
+      if (!dbMetadata.isUpsertDisabled()) {
+         super.upsertEntry(connection, segment, entry);
+         return;
+      }
+
+      String keyStr = key2Str(entry.getKey());
+      String sql = selectIdRowSql;
+      if (log.isTraceEnabled()) {
+         log.tracef("Running legacy upsert sql '%s'. Key string is '%s'", sql, keyStr);
+      }
+      PreparedStatement ps = null;
+      try {
+         ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(readQueryTimeout);
+         ps.setString(1, keyStr);
+         ResultSet rs = ps.executeQuery();
+         boolean update = rs.next();
+         if (update) {
+            sql = updateRowSql;
+         } else {
+            sql = insertRowSql;
+         }
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         if (log.isTraceEnabled()) {
+            log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
+         }
+         ps = connection.prepareStatement(sql);
+         ps.setQueryTimeout(writeQueryTimeout);
+         prepareValueStatement(ps, segment, entry);
+         ps.executeUpdate();
+      } finally {
+         JdbcUtil.safeClose(ps);
+      }
+   }
+
+   @Override
+   protected void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry<? extends K, ? extends V> entry) throws SQLException {
+      String keyStr = key2Str(entry.getKey());
+      ByteBuffer byteBuffer = marshall(entry.getMarshalledValue(), marshaller);
+      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(),
+            byteBuffer.getLength()), byteBuffer.getLength());
+      ps.setLong(2, entry.expiryTime());
+      ps.setString(3, keyStr);
+      if (!dbMetadata.isSegmentedDisabled()) {
+         ps.setInt(4, segment);
+      }
+   }
+
+   @Override
+   protected void prepareSizeStatement(PreparedStatement ps) throws SQLException {
+      ps.setLong(1, ctx.getTimeService().wallClockTime());
    }
 }

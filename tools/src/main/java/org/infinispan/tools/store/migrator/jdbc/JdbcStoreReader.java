@@ -9,11 +9,10 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.DbMetaData;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
@@ -37,8 +36,8 @@ public class JdbcStoreReader implements StoreIterator {
    private final JdbcStringBasedStoreConfiguration config;
    private final ConnectionFactory connectionFactory;
    private final DbMetaData metaData;
-   private final TableManipulationConfiguration stringConfig;
-   private final TableManipulationConfiguration binaryConfig;
+   private final JdbcStringBasedStoreConfiguration stringConfig;
+   private final JdbcStringBasedStoreConfiguration binaryConfig;
 
    public JdbcStoreReader(StoreProperties props) {
       this.props = props;
@@ -49,7 +48,7 @@ public class JdbcStoreReader implements StoreIterator {
       this.metaData = new DbMetaData(config.dialect(), config.dbMajorVersion(), config.dbMinorVersion(), false, false,
             // If we don't have segments then disable it
             segmentCount == null || Integer.parseInt(segmentCount) <= 0);
-      this.stringConfig = config.table();
+      this.stringConfig = config;
       this.binaryConfig = createBinaryTableConfig();
 
       connectionFactory.start(config.connectionFactory(), JdbcStoreReader.class.getClassLoader());
@@ -77,17 +76,18 @@ public class JdbcStoreReader implements StoreIterator {
    }
 
    private TableManager getTableManager(boolean binary) {
-      TableManipulationConfiguration tableConfig = binary ? binaryConfig : stringConfig;
-      return TableManagerFactory.getManager(metaData, null, connectionFactory, tableConfig, props.cacheName());
+      JdbcStringBasedStoreConfiguration config = binary ? binaryConfig : stringConfig;
+      return TableManagerFactory.getManager(metaData, null, connectionFactory, config, props.cacheName());
    }
 
-   private TableManipulationConfiguration createBinaryTableConfig() {
+   private JdbcStringBasedStoreConfiguration createBinaryTableConfig() {
       if (props.storeType() == StoreType.JDBC_STRING)
          return null;
 
       JdbcStringBasedStoreConfigurationBuilder builder = new ConfigurationBuilder().persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-      return JdbcConfigurationUtil.createTableConfig(props, BINARY, builder);
+      JdbcConfigurationUtil.createTableConfig(props, BINARY, builder);
+      return builder.create();
    }
 
    private TwoWayKey2StringMapper getTwoWayMapper() {

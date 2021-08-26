@@ -7,6 +7,7 @@ import static org.infinispan.persistence.jdbc.configuration.SegmentColumnConfigu
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
 
 public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnConfiguration> {
 

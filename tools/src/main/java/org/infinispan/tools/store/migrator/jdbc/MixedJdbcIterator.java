@@ -2,10 +2,10 @@ package org.infinispan.tools.store.migrator.jdbc;
 
 import java.util.Iterator;
 
+import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.table.TableManager;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 
 /**

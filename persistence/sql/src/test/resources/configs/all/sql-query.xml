@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+   <cache-container default-cache="first">
+      <local-cache-configuration name="default">
+         <persistence>
+            <query-jdbc-store fetch-state="false" read-only="false" purge="false" dialect="H2" key-columns="isbn">
+               <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa"
+                                driver="org.h2.Driver"/>
+               <queries select-all="SELECT isbn, title FROM books"
+                        select-single="SELECT isbn, title FROM books WHERE isbn = :key"
+                        delete-all="DELETE FROM books" delete-single="DELETE FROM books WHERE isbn = :key"
+                        upsert="INSERT INTO books (isbn, title) VALUES (:key, :value) ON CONFLICT (isbn) DO UPDATE SET title = :value"
+                        size="SELECT COUNT(*) FROM books"/>
+               <schema message-name="Book" key-message-name="BookID" package="library" embedded-key="true"/>
+            </query-jdbc-store>
+         </persistence>
+      </local-cache-configuration>
+      <local-cache name="first" configuration="default"/>
+      <local-cache name="second" configuration="default"/>
+   </cache-container>
+
+</infinispan>

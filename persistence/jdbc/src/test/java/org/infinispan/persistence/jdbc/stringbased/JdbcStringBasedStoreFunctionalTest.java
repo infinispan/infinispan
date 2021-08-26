@@ -10,10 +10,11 @@ import org.testng.annotations.Test;
 public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
+         String cacheName, boolean preload) {
       JdbcStringBasedStoreConfigurationBuilder store = persistence
-         .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-         .preload(preload);
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+            .preload(preload);
       UnitTestDatabaseManager.buildTableManipulation(store.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
       modifyJdbcConfiguration(store);

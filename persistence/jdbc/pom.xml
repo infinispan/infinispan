@@ -19,6 +19,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc-common</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
@@ -31,19 +36,15 @@
       </dependency>
 
       <dependency>
-         <groupId>io.agroal</groupId>
-         <artifactId>agroal-api</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>io.agroal</groupId>
-         <artifactId>agroal-pool</artifactId>
-         <scope>runtime</scope>
-      </dependency>
-
-      <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc-common</artifactId>
+         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
 

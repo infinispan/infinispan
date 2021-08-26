@@ -9,6 +9,8 @@ import java.util.Properties;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.jdbc.configuration.ConfigurationTest")

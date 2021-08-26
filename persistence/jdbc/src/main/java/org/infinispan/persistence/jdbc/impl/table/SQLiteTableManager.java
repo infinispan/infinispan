@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.logging.LogFactory;
 
@@ -13,7 +13,7 @@ class SQLiteTableManager extends AbstractTableManager {
 
    private static final Log log = LogFactory.getLog(SQLiteTableManager.class, Log.class);
 
-   SQLiteTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+   SQLiteTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
    }
 

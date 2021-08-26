@@ -1,21 +1,20 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
  * Tester class  for {@link JdbcStringBasedStore}.
  *
- * @author Mircea.Markus@jboss.com
+ * @author William Burns
  */
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreTest")
-public class JdbcStringBasedStoreTest extends BaseStoreTest {
+public class JdbcStringBasedStoreTest extends BaseNonBlockingStoreTest {
 
    boolean segmented;
 
@@ -38,22 +37,18 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
    }
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
-            .persistence()
-               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-      storeBuilder.segmented(segmented);
-      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
-      JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
-      stringBasedCacheStore.init(createContext(builder.build()));
-      return stringBasedCacheStore;
+   protected JdbcStringBasedStore createStore() throws Exception {
+      return new JdbcStringBasedStore();
    }
 
    @Override
-   protected boolean storePurgesAllExpired() {
-      // expiration listener is not called for the entries
-      return false;
+   protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = configurationBuilder
+            .persistence()
+            .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      storeBuilder.segmented(segmented);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
+      return configurationBuilder.build();
    }
 }

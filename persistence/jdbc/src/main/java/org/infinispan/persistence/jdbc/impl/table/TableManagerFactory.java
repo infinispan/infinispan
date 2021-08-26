@@ -6,12 +6,11 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.persistence.jdbc.DatabaseType;
-import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration;
+import org.infinispan.persistence.jdbc.common.DatabaseType;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,37 +23,38 @@ public class TableManagerFactory {
    public static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
    public static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
-   public static TableManager getManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, String cacheName) {
+   public static <K, V> TableManager<K, V> getManager(InitializationContext ctx, ConnectionFactory connectionFactory,
+         JdbcStringBasedStoreConfiguration config, String cacheName) {
       DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
             config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
             isPropertyDisabled(config, INDEXING_DISABLED), !config.segmented());
 
-      return getManager(metaData, ctx, connectionFactory, config.table(), cacheName);
+      return getManager(metaData, ctx, connectionFactory, config, cacheName);
    }
 
-   public static TableManager getManager(DbMetaData metaData, InitializationContext ctx, ConnectionFactory connectionFactory,
-                                         TableManipulationConfiguration tableConfig, String cacheName) {
+   public static <K, V> TableManager<K, V> getManager(DbMetaData metaData, InitializationContext ctx,
+         ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, String cacheName) {
       switch (metaData.getType()) {
          case DB2:
          case DB2_390:
-            return new DB2TableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new DB2TableManager(ctx, connectionFactory, config, metaData, cacheName);
          case H2:
-            return new H2TableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new H2TableManager(ctx, connectionFactory, config, metaData, cacheName);
          case MARIA_DB:
          case MYSQL:
-            return new MySQLTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new MyTableOperations(ctx, connectionFactory, config, metaData, cacheName);
          case ORACLE:
-            return new OracleTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new OracleTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case POSTGRES:
-            return new PostgresTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new PostgresTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SQLITE:
-            return new SQLiteTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new SQLiteTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SYBASE:
-            return new SybaseTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new SybaseTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SQL_SERVER:
-            return new SQLServerTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new TableOperations(ctx, connectionFactory, config, metaData, cacheName);
          default:
-            return new GenericTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
+            return new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
       }
    }
 
@@ -94,7 +94,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connection.getMetaData().getDatabaseProductName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
+         return new DbMetaData(DatabaseType.guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
          if (log.isDebugEnabled())
             log.debug("Unable to guess dialect from JDBC metadata.", e);
@@ -107,7 +107,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
+         return new DbMetaData(DatabaseType.guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
          if (log.isDebugEnabled())
             log.debug("Unable to guess database dialect from JDBC driver name.", e);
@@ -122,47 +122,6 @@ public class TableManagerFactory {
       if (log.isDebugEnabled())
          log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
       return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
-   }
-
-   private static DatabaseType guessDialect(String name) {
-      DatabaseType type = null;
-      if (name == null)
-         return null;
-
-      name = name.toLowerCase();
-      if (name.contains("mysql")) {
-         type = DatabaseType.MYSQL;
-      } else if (name.contains("mariadb")) {
-         type = DatabaseType.MARIA_DB;
-         //postgresqlplus example jdbc:edb://localhost:5444/edb
-      } else if (name.contains("postgres") || name.contains("edb")) {
-         type = DatabaseType.POSTGRES;
-      } else if (name.contains("derby")) {
-         type = DatabaseType.DERBY;
-      } else if (name.contains("hsql") || name.contains("hypersonic")) {
-         type = DatabaseType.HSQL;
-      } else if (name.contains("h2")) {
-         type = DatabaseType.H2;
-      } else if (name.contains("sqlite")) {
-         type = DatabaseType.SQLITE;
-      } else if (name.contains("db2")) {
-         type = DatabaseType.DB2;
-      } else if (name.contains("informix")) {
-         type = DatabaseType.INFORMIX;
-      } else if (name.contains("interbase")) {
-         type = DatabaseType.INTERBASE;
-      } else if (name.contains("firebird")) {
-         type = DatabaseType.FIREBIRD;
-      } else if (name.contains("sqlserver") || name.contains("microsoft")) {
-         type = DatabaseType.SQL_SERVER;
-      } else if (name.contains("access")) {
-         type = DatabaseType.ACCESS;
-      } else if (name.contains("oracle")) {
-         type = DatabaseType.ORACLE;
-      } else if (name.contains("adaptive")) {
-         type = DatabaseType.SYBASE;
-      }
-      return type;
    }
 
    private static boolean isPropertyDisabled(AbstractJdbcStoreConfiguration config, String propertyName) {
