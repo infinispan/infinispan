@@ -143,8 +143,8 @@ public interface Log extends BasicLogger {
    @Message(value = "A ConnectionFactory has not been specified for this store", id = 8029)
    CacheConfigurationException missingConnectionFactory();
 
-   @Message(value = "Cannot specify a ConnectionFactory and manageConnectionFactory at the same time", id = 8030)
-   CacheConfigurationException unmanagedConnectionFactory();
+//   @Message(value = "Cannot specify a ConnectionFactory and manageConnectionFactory at the same time", id = 8030)
+//   CacheConfigurationException unmanagedConnectionFactory();
 
    @LogMessage(level = ERROR)
    @Message(value = "Error committing JDBC transaction", id = 8031)
