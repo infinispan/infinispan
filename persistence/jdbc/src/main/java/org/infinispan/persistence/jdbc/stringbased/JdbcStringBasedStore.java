@@ -120,13 +120,12 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    @Override
    public void start() {
       String cacheName = ctx.getCache().getName();
-      if (configuration.manageConnectionFactory()) {
-         ConnectionFactory factory = ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
-         factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
-         this.connectionFactory = factory;
-         tableManager = getTableManager(cacheName);
-         tableManager.start();
-      }
+
+      ConnectionFactory factory = ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
+      factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
+      this.connectionFactory = factory;
+      tableManager = getTableManager(cacheName);
+      tableManager.start();
 
       if (!configuration.table().createOnStart()) {
          Connection connection = null;

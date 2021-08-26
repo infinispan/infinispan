@@ -3,7 +3,6 @@ package org.infinispan.persistence.jdbc.configuration;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MAJOR_VERSION;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MINOR_VERSION;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DIALECT;
-import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.MANAGE_CONNECTION_FACTORY;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.READ_QUERY_TIMEOUT;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.WRITE_QUERY_TIMEOUT;
 import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
@@ -73,10 +72,15 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       return builder;
    }
 
+   /**
+    * @param manageConnectionFactory ignored
+    * @return this
+    * @deprecated Deprecated since 13.0 with no replacement
+    */
    public S manageConnectionFactory(boolean manageConnectionFactory) {
-      attributes.attribute(MANAGE_CONNECTION_FACTORY).set(manageConnectionFactory);
       return self();
    }
+
 
    public S dialect(DatabaseType databaseType) {
       attributes.attribute(DIALECT).set(databaseType);
@@ -106,16 +110,11 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    @Override
    public void validate() {
       super.validate();
-      boolean manageConnectionFactory = attributes.attribute(MANAGE_CONNECTION_FACTORY).get();
-      if (manageConnectionFactory && connectionFactory == null) {
+      if (connectionFactory == null) {
          throw PERSISTENCE.missingConnectionFactory();
-      } else if (!manageConnectionFactory && connectionFactory != null) {
-         throw PERSISTENCE.unmanagedConnectionFactory();
       }
 
-      if (connectionFactory != null) {
-         connectionFactory.validate();
-      }
+      connectionFactory.validate();
    }
 
    @Override
