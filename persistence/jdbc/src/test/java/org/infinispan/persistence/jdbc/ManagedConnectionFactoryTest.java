@@ -10,9 +10,9 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.BaseNonBlockingStoreTest;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.jndi.DummyContextFactory;
@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional")
-public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
+public abstract class ManagedConnectionFactoryTest extends BaseNonBlockingStoreTest {
 
    private DummyDataSource ds;
 

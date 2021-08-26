@@ -6,7 +6,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.mockito.Mockito;
@@ -33,7 +33,7 @@ public class OracleTableManagerTest {
       Configuration configuration = builder.build();
       JdbcStringBasedStoreConfiguration storeConfiguration = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
       InitializationContextImpl context = new InitializationContextImpl(null, null, null, Mockito.mock(PersistenceMarshaller.class), null, null, null, null, null, null, null);
-      OracleTableManager tableManager = new OracleTableManager(context, null, storeConfiguration.table(), dbMetaData, "ALongishCacheName");
+      OracleTableManager tableManager = new OracleTableManager(context, null, storeConfiguration, dbMetaData, "ALongishCacheName");
       String segmentIndexName = tableManager.getIndexName(true, "segment_index");
       String timestampIndexName = tableManager.getIndexName(true, "timestamp_index");
       assertFalse(segmentIndexName.equals(timestampIndexName));

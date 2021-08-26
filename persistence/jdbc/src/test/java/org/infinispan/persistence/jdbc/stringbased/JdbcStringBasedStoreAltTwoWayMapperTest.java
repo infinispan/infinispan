@@ -1,15 +1,15 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheWriter;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 /**
@@ -32,9 +32,9 @@ public class JdbcStringBasedStoreAltTwoWayMapperTest extends JdbcStringBasedStor
       cacheStore.write(MarshalledEntryUtil.create(first, marshaller));
       assertRowCount(1);
       Thread.sleep(1100);
-      AdvancedCacheWriter.PurgeListener purgeListener = mock(AdvancedCacheWriter.PurgeListener.class);
-      cacheStore.purge(new WithinThreadExecutor(), purgeListener);
-      verify(purgeListener).entryPurged(MIRCEA);
+      List<MarshallableEntry> purged = cacheStore.purge();
+      assertEquals(1, purged.size());
+      assertEquals(MIRCEA, purged.get(0).getKey());
       assertRowCount(0);
    }
 }

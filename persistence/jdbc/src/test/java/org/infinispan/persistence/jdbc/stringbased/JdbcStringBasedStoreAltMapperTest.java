@@ -4,29 +4,30 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
-import org.infinispan.commons.util.ReflectionUtil;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +41,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreAltMapperTest")
 public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
-   protected AdvancedLoadWriteStore cacheStore;
+   protected WaitDelegatingNonBlockingStore cacheStore;
    protected TableManager tableManager;
    protected static final Person MIRCEA = new Person("Mircea");
    protected static final Person MANIK = new Person("Manik");
@@ -61,11 +62,11 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-      cacheStore = new JdbcStringBasedStore();
+      JdbcStringBasedStore jdbcStringBasedStore = new JdbcStringBasedStore();
+      cacheStore = new WaitDelegatingNonBlockingStore(jdbcStringBasedStore, SingleSegmentKeyPartitioner.getInstance());
       marshaller = new TestObjectStreamMarshaller(TestDataSCI.INSTANCE);
-      cacheStore.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller));
-      cacheStore.start();
-      tableManager = (TableManager) ReflectionUtil.getValue(cacheStore, "tableManager");
+      cacheStore.startAndWait(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller));
+      tableManager = jdbcStringBasedStore.getTableManager();
    }
 
    @AfterMethod
@@ -84,12 +85,8 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
     * When trying to persist an unsupported object an exception is expected.
     */
    public void persistUnsupportedObject() throws Exception {
-      try {
-         cacheStore.write(MarshalledEntryUtil.create("key", "value", marshaller));
-         fail("exception is expected as PersonKey2StringMapper does not support strings");
-      } catch (UnsupportedKeyTypeException e) {
-         //expected
-      }
+      CompletionStage<Void> stage = cacheStore.write(0, MarshalledEntryUtil.create("key", "value", marshaller));
+      Exceptions.expectCompletionException(UnsupportedKeyTypeException.class, stage);
       //just check that an person object will be persisted okay
       cacheStore.write(MarshalledEntryUtil.create(MIRCEA, "Cluj Napoca", marshaller));
    }
@@ -126,7 +123,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       cacheStore.write(MarshalledEntryUtil.create(second, marshaller));
       assertRowCount(2);
       Thread.sleep(1100);
-      cacheStore.purge(new WithinThreadExecutor(), null);
+      cacheStore.purge();
       assertRowCount(1);
       assertEquals("val2", cacheStore.loadEntry(MANIK).getValue());
    }
@@ -138,7 +135,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
    }
 
    protected ConnectionFactory getConnection() {
-      JdbcStringBasedStore store = (JdbcStringBasedStore) cacheStore;
+      JdbcStringBasedStore store = (JdbcStringBasedStore) cacheStore.delegate();
       return store.getConnectionFactory();
    }
 

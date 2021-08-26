@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -24,7 +24,7 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>,
    private Connection conn;
    private PreparedStatement ps;
    ResultSet rs;
-   int numberOfRows = 0;
+   long numberOfRows = 0;
    int rowIndex = 0;
 
    AbstractJdbcEntryIterator(ConnectionFactory connectionFactory, TableManager tableManager,
@@ -33,25 +33,15 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>,
       this.tableManager = tableManager;
       this.marshaller = marshaller;
 
-      PreparedStatement countPs = null;
-      ResultSet countRs = null;
       try {
          conn = connectionFactory.getConnection();
-
-         countPs = conn.prepareStatement(tableManager.getCountNonExpiredRowsSql());
-         countPs.setLong(1, System.currentTimeMillis());
-         countRs = countPs.executeQuery();
-         countRs.next();
-         numberOfRows = countRs.getInt(1);
+         numberOfRows = tableManager.size(conn);
 
          ps = conn.prepareStatement(tableManager.getLoadAllRowsSql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
          ps.setFetchSize(tableManager.getFetchSize());
          rs = ps.executeQuery();
       } catch (SQLException e) {
          throw new PersistenceException("SQL error while fetching all StoredEntries", e);
-      } finally {
-         JdbcUtil.safeClose(countPs);
-         JdbcUtil.safeClose(countRs);
       }
    }
 

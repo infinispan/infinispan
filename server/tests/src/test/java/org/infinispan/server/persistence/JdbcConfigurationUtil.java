@@ -2,8 +2,8 @@ package org.infinispan.server.persistence;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.util.concurrent.IsolationLevel;
 

@@ -7,6 +7,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 
@@ -14,7 +16,7 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 @ConfigurationFor(JdbcStringBasedStore.class)
 @SerializedWith(JdbcStringBasedStoreConfigurationSerializer.class)
 public class JdbcStringBasedStoreConfiguration extends AbstractJdbcStoreConfiguration {
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.KEY_TO_STRING_MAPPER, DefaultTwoWayKey2StringMapper.class.getName()).immutable().build();
+   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.KEY_TO_STRING_MAPPER, DefaultTwoWayKey2StringMapper.class.getName()).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JdbcStringBasedStoreConfiguration.class, AbstractJdbcStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER);

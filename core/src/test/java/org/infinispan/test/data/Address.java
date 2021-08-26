@@ -12,7 +12,7 @@ public class Address implements Serializable, JsonSerialization {
    @ProtoField(1)
    String street = null;
 
-   @ProtoField(2)
+   @ProtoField(value = 2, defaultValue = "San Jose")
    String city = "San Jose";
 
    @ProtoField(number = 3, defaultValue = "0")
@@ -51,10 +51,12 @@ public class Address implements Serializable, JsonSerialization {
       this.zip = zip;
    }
 
+   @Override
    public String toString() {
       return "street=" + getStreet() + ", city=" + getCity() + ", zip=" + getZip();
    }
 
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -68,6 +70,7 @@ public class Address implements Serializable, JsonSerialization {
       return true;
    }
 
+   @Override
    public int hashCode() {
       int result;
       result = (street != null ? street.hashCode() : 0);

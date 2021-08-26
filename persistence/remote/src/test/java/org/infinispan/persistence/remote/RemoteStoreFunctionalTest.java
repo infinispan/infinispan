@@ -25,17 +25,18 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
    private HotRodServer hrServer;
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
+         String cacheName, boolean preload) {
       localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
       persistence
-         .addStore(RemoteStoreConfigurationBuilder.class)
+            .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName("")
             .preload(preload)
             // local cache encoding is object where as server is protostream so we can't be segmented
             .segmented(false)
             .addServer()
-               .host("localhost")
+            .host("localhost")
                .port(hrServer.getPort());
       return persistence;
    }
