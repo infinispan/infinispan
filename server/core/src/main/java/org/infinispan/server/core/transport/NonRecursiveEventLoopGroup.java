@@ -2,11 +2,8 @@ package org.infinispan.server.core.transport;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -81,14 +78,11 @@ public class NonRecursiveEventLoopGroup extends DelegatingEventLoopGroup {
    @Stop
    public void shutdownGracefullyAndWait() {
       try {
-         shutdownGracefully().get(10, TimeUnit.SECONDS);
+         // Use the same timeouts as in NettyTransport
+         shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS).await();
       } catch (InterruptedException e) {
          log.debug("Interrupted while waiting for event loop group to shut down");
          Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
-      } catch (TimeoutException e) {
-         throw new org.infinispan.util.concurrent.TimeoutException("Timed out waiting for event loop group to shutdown", e);
       }
    }
 }
