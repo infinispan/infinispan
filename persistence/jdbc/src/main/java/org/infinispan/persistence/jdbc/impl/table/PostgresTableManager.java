@@ -2,9 +2,9 @@ package org.infinispan.persistence.jdbc.impl.table;
 
 import java.sql.Connection;
 
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
@@ -16,7 +16,7 @@ class PostgresTableManager extends AbstractTableManager {
 
    private static final Log log = LogFactory.getLog(PostgresTableManager.class, Log.class);
 
-   PostgresTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+   PostgresTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
    }
 
@@ -36,8 +36,8 @@ class PostgresTableManager extends AbstractTableManager {
    @Override
    public String initSelectRowSql() {
       return String.format("SELECT %s, %s FROM %s WHERE %s = cast(? as %s)",
-                                   config.idColumnName(), config.dataColumnName(), dataTableName,
-                                   config.idColumnName(), config.idColumnType());
+            config.dataColumnName(), config.idColumnName(), dataTableName,
+            config.idColumnName(), config.idColumnType());
    }
 
    @Override

@@ -12,16 +12,18 @@ import java.util.Random;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.DummyInitializationContext;
-import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
@@ -74,11 +76,12 @@ public class TableManagerTest extends AbstractInfinispanTest {
       Cache<?, ?> cache = mock(Cache.class);
       when(cache.getCacheConfiguration()).thenReturn(new ConfigurationBuilder().build());
 
-      StoreConfiguration storeConfig = mock(StoreConfiguration.class);
-      when(storeConfig.segmented()).thenReturn(false);
+      JdbcStringBasedStoreConfiguration config = storeBuilder.create();
 
-      ctx = new DummyInitializationContext(storeConfig, cache, new TestObjectStreamMarshaller(), null, null, null, null, null, null, null);
-      tableManager = TableManagerFactory.getManager(ctx, connectionFactory, storeBuilder.create(), "aName");
+      GlobalConfiguration globalConfiguration = mock(GlobalConfiguration.class);
+      when(globalConfiguration.classLoader()).thenReturn(getClass().getClassLoader());
+      ctx = new DummyInitializationContext(config, cache, new TestObjectStreamMarshaller(), null, null, null, globalConfiguration, null, null, null);
+      tableManager = TableManagerFactory.getManager(ctx, connectionFactory, config, "aName");
    }
 
    @AfterClass(alwaysRun = true)
@@ -141,7 +144,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
          ps.setLong(4, 1);
          assert 1 == ps.executeUpdate();
       } finally {
-         JdbcUtil.safeClose(ps);
+         org.infinispan.persistence.jdbc.common.JdbcUtil.safeClose(ps);
       }
       tableManager.dropTables(connection);
       assert !tableManager.tableExists(connection, dataTableName);
@@ -165,7 +168,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
       } catch (SQLException e) {
          return false;
       } finally {
-         JdbcUtil.safeClose(rs);
+         org.infinispan.persistence.jdbc.common.JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(st);
       }
    }

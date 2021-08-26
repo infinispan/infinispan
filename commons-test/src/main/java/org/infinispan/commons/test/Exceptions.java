@@ -63,17 +63,25 @@ public class Exceptions {
    }
 
    public static void assertException(Class<? extends Throwable> wrapperExceptionClass2,
-                                      Class<? extends Throwable> wrapperExceptionClass,
-                                      Class<? extends Throwable> exceptionClass, Throwable t) {
+         Class<? extends Throwable> wrapperExceptionClass,
+         Class<? extends Throwable> exceptionClass, Throwable t) {
       assertException(wrapperExceptionClass2, t);
       assertException(wrapperExceptionClass, t.getCause());
       assertException(exceptionClass, t.getCause().getCause());
    }
 
+   public static void assertException(Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass,
+         Class<? extends Throwable> exceptionClass, String messageRegex, Throwable t) {
+      assertException(wrapperExceptionClass2, t);
+      assertException(wrapperExceptionClass, t.getCause());
+      assertException(exceptionClass, messageRegex, t.getCause().getCause());
+   }
+
    public static void assertException(Class<? extends Throwable> wrapperExceptionClass3,
-                                      Class<? extends Throwable> wrapperExceptionClass2,
-                                      Class<? extends Throwable> wrapperExceptionClass,
-                                      Class<? extends Throwable> exceptionClass, Throwable t) {
+         Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass,
+         Class<? extends Throwable> exceptionClass, Throwable t) {
       assertException(wrapperExceptionClass3, t);
       assertException(wrapperExceptionClass2, t.getCause());
       assertException(wrapperExceptionClass, t.getCause().getCause());
@@ -100,6 +108,13 @@ public class Exceptions {
       assertException(wrapperExceptionClass2, wrapperExceptionClass1, exceptionClass, t);
    }
 
+   public static void expectException(Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass1, Class<? extends Throwable> exceptionClass,
+         String regex, ExceptionRunnable runnable) {
+      Throwable t = extractException(runnable);
+      assertException(wrapperExceptionClass2, wrapperExceptionClass1, exceptionClass, regex, t);
+   }
+
    public static void expectException(Class<? extends Throwable> exceptionClass, ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
       assertException(exceptionClass, t);
@@ -110,6 +125,19 @@ public class Exceptions {
       Throwable t = extractException(runnable);
       assertException(wrapperExceptionClass, t);
       assertException(exceptionClass, t.getCause());
+   }
+
+   @SafeVarargs
+   public static void expectException(String regex, ExceptionRunnable runnable,
+         Class<? extends Throwable>... wrapperExceptionClass) {
+      Throwable t = extractException(runnable);
+      // Go until one before last as we have to check regex against it below
+      for (int i = 0; i < wrapperExceptionClass.length - 1; i++) {
+         Class<? extends Throwable> exceptionClass = wrapperExceptionClass[i];
+         assertException(exceptionClass, t);
+         t = t.getCause();
+      }
+      assertException(wrapperExceptionClass[wrapperExceptionClass.length - 1], regex, t);
    }
 
    public static void expectExceptionNonStrict(Class<? extends Throwable> e, ExceptionRunnable runnable) {

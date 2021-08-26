@@ -11,7 +11,9 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationParser;
+import org.infinispan.persistence.jdbc.common.configuration.Attribute;
+import org.infinispan.persistence.jdbc.common.configuration.Element;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -20,14 +22,14 @@ import org.kohsuke.MetaInfServices;
  * @author Galder Zamarreño
  * @since 9.0
  */
-@MetaInfServices
+@MetaInfServices(ConfigurationParser.class)
 @Namespace(root = "string-keyed-jdbc-store")
 @Namespace(root = "binary-keyed-jdbc-store")
 @Namespace(root = "mixed-keyed-jdbc-store")
 @Namespace(uri = NAMESPACE + "*", root = "string-keyed-jdbc-store")
 @Namespace(uri = NAMESPACE + "*", root = "binary-keyed-jdbc-store", until = "9.0")
 @Namespace(uri = NAMESPACE + "*", root = "mixed-keyed-jdbc-store", until = "9.0")
-public class JdbcStoreConfigurationParser implements ConfigurationParser {
+public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfigurationParser {
 
    static final String NAMESPACE = Parser.NAMESPACE + "store:jdbc:";
 
@@ -35,8 +37,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
    }
 
    @Override
-   public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder)
-         {
+   public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
 
       Element element = Element.forName(reader.getLocalName());
@@ -63,129 +64,25 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case KEY_TO_STRING_MAPPER:
+         if (!handleCommonAttributes(builder, attribute, value)) {
+            if (attribute == Attribute.KEY_TO_STRING_MAPPER) {
                builder.key2StringMapper(value);
-               break;
-            case DIALECT:
-               builder.dialect(DatabaseType.valueOf(value));
-               break;
-            case DB_MAJOR_VERSION:
-               builder.dbMajorVersion(Integer.parseInt(value));
-               break;
-            case DB_MINOR_VERSION:
-               builder.dbMinorVersion(Integer.parseInt(value));
-               break;
-            case READ_QUERY_TIMEOUT:
-               builder.readQueryTimeout(Integer.parseInt(value));
-               break;
-            case WRITE_QUERY_TIMEOUT:
-               builder.writeQueryTimeout(Integer.parseInt(value));
-               break;
-            default:
+            } else {
                Parser.parseStoreAttribute(reader, i, builder);
-               break;
+            }
          }
       }
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case STRING_KEYED_TABLE: {
+         if (!handleCommonElement(builder, element, reader)) {
+            if (element == Element.STRING_KEYED_TABLE) {
                parseTable(reader, builder.table());
-               break;
-            }
-            case CONNECTION_POOL: {
-               parseConnectionPoolAttributes(reader, builder.connectionPool());
-               break;
-            }
-            case DATA_SOURCE: {
-               parseDataSourceAttributes(reader, builder.dataSource());
-               break;
-            }
-            case SIMPLE_CONNECTION: {
-               parseSimpleConnectionAttributes(reader, builder.simpleConnection());
-               break;
-            }
-            default: {
+            } else {
                Parser.parseStoreElement(reader, builder);
-               break;
             }
          }
       }
       persistenceBuilder.addStore(builder);
-   }
-
-   private void parseDataSourceAttributes(ConfigurationReader reader,
-                                          ManagedConnectionFactoryConfigurationBuilder<?> builder) {
-      String jndiUrl = ParseUtils.requireSingleAttribute(reader, Attribute.JNDI_URL.getLocalName());
-      builder.jndiUrl(jndiUrl);
-      ParseUtils.requireNoContent(reader);
-   }
-
-   private void parseConnectionPoolAttributes(ConfigurationReader reader,
-                                              PooledConnectionFactoryConfigurationBuilder<?> builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case PROPERTIES_FILE: {
-               builder.propertyFile(value);
-               break;
-            }
-            case CONNECTION_URL: {
-               builder.connectionUrl(value);
-               break;
-            }
-            case DRIVER_CLASS: {
-               builder.driverClass(value);
-               break;
-            }
-            case PASSWORD: {
-               builder.password(value);
-               break;
-            }
-            case USERNAME: {
-               builder.username(value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-      ParseUtils.requireNoContent(reader);
-   }
-
-   private void parseSimpleConnectionAttributes(ConfigurationReader reader,
-                                                SimpleConnectionFactoryConfigurationBuilder<?> builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CONNECTION_URL: {
-               builder.connectionUrl(value);
-               break;
-            }
-            case DRIVER_CLASS: {
-               builder.driverClass(value);
-               break;
-            }
-            case PASSWORD: {
-               builder.password(value);
-               break;
-            }
-            case USERNAME: {
-               builder.username(value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-      ParseUtils.requireNoContent(reader);
    }
 
    private void parseTable(ConfigurationReader reader, TableManipulationConfigurationBuilder<?, ?> builder)

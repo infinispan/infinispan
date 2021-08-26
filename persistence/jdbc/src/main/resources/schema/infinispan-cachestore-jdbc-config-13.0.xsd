@@ -2,54 +2,18 @@
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
            targetNamespace="urn:infinispan:config:store:jdbc:13.0"
            xmlns:tns="urn:infinispan:config:store:jdbc:13.0"
-           xmlns:config="urn:infinispan:config:13.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+           xmlns:config="urn:infinispan:config:13.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:jdbc-common="urn:infinispan:config:store:jdbc-common:13.0">
   <xs:import namespace="urn:infinispan:config:13.0"
              schemaLocation="https://infinispan.org/schemas/infinispan-config-13.0.xsd" />
+  <xs:import namespace="urn:infinispan:config:store:jdbc-common:13.0"
+             schemaLocation="https://infinispan.org/schemas/infinispan-jdbc-common-13.0.xsd" />
 
   <xs:element name="string-keyed-jdbc-store" type="tns:string-keyed-jdbc-store"/>
 
-  <xs:complexType name="jdbc-store" abstract="true">
-    <xs:complexContent>
-      <xs:extension base="config:store">
-        <xs:sequence>
-          <xs:choice minOccurs="1" maxOccurs="1">
-            <xs:element name="connection-pool" type="tns:connection-pool" />
-            <xs:element name="data-source" type="tns:data-source" />
-            <xs:element name="simple-connection" type="tns:simple-connection" />
-          </xs:choice>
-        </xs:sequence>
-        <xs:attribute name="dialect" type="tns:dialect" use="optional">
-          <xs:annotation>
-            <xs:documentation>Defines the JDBC dialect.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="db-major-version" type="xs:nonNegativeInteger" use="optional">
-          <xs:annotation>
-            <xs:documentation>Defines the major version of the database.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="db-minor-version" type="xs:nonNegativeInteger" use="optional">
-          <xs:annotation>
-            <xs:documentation>Defines the minor version of the database.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="read-query-timeout" type="xs:nonNegativeInteger" use="optional">
-          <xs:annotation>
-            <xs:documentation>Defines the timeout in seconds for read queries. The default is 0 which indicates no timeout.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="write-query-timeout" type="xs:nonNegativeInteger" use="optional">
-          <xs:annotation>
-            <xs:documentation>Defines the timeout in seconds for write queries. The default is 0 which indicates no timeout.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
   <xs:complexType name="string-keyed-jdbc-store">
     <xs:complexContent>
-      <xs:extension base="tns:jdbc-store">
+      <xs:extension base="jdbc-common:abstract-jdbc-store">
         <xs:sequence>
           <xs:element name="string-keyed-table" type="tns:string-keyed-table" minOccurs="0">
             <xs:annotation>
@@ -179,105 +143,5 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-
-  <xs:complexType name="connection-pool">
-    <xs:attribute name="properties-file" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The path of a properties file that provides additional configuration for the connection pool.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="connection-url" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          A JDBC driver-specific connection URL
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="driver" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The class name of the driver used for connecting to the database.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="password" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The password to use when connecting via connectionUrl
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="username" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The username to use when connecting via connectionUrl
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="data-source">
-    <xs:attribute name="jndi-url" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The address of a datasource to use when connecting
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="simple-connection">
-    <xs:attribute name="connection-url" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          A JDBC driver-specific connection URL
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="driver" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The class name of the driver used for connecting to the database.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="password" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The password to use when connecting via connectionUrl
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="username" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          The username to use when connecting via connectionUrl
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:simpleType name="dialect">
-    <xs:restriction base="xs:token">
-      <xs:enumeration value="ACCESS"/>
-      <xs:enumeration value="DB2"/>
-      <xs:enumeration value="DB2_390"/>
-      <xs:enumeration value="DERBY"/>
-      <xs:enumeration value="FIREBIRD"/>
-      <xs:enumeration value="H2"/>
-      <xs:enumeration value="HSQL"/>
-      <xs:enumeration value="INFORMIX"/>
-      <xs:enumeration value="INTERBASE"/>
-      <xs:enumeration value="MARIA_DB"/>
-      <xs:enumeration value="MYSQL"/>
-      <xs:enumeration value="ORACLE"/>
-      <xs:enumeration value="POSTGRES"/>
-      <xs:enumeration value="SQL_SERVER"/>
-      <xs:enumeration value="SQLITE"/>
-      <xs:enumeration value="SYBASE"/>
-    </xs:restriction>
-  </xs:simpleType>
 
 </xs:schema>

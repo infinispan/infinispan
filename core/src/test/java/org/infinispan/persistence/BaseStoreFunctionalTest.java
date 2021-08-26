@@ -8,7 +8,10 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -17,6 +20,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
@@ -39,7 +43,9 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
+import org.infinispan.test.data.Sex;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -55,7 +61,8 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    private static final SerializationContextInitializer CONTEXT_INITIALIZER = TestDataSCI.INSTANCE;
 
-   protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload);
+   protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
+         String cacheName, boolean preload);
 
 
    protected ConfigurationBuilder getDefaultCacheConfiguration() {
@@ -99,7 +106,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    public void testTwoCachesSameCacheStore() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       cb.read(cacheManager.getDefaultCacheConfiguration());
-      createCacheStoreConfig(cb.persistence(), false);
+      createCacheStoreConfig(cb.persistence(), "testTwoCachesSameCacheStore", false);
       Configuration c = cb.build();
       cacheManager.defineConfiguration("testTwoCachesSameCacheStore-1", c);
       cacheManager.defineConfiguration("testTwoCachesSameCacheStore-2", c);
@@ -121,7 +128,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testPreloadAndExpiry() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), true);
+      createCacheStoreConfig(cb.persistence(), "testPreloadAndExpiry", true);
       cacheManager.defineConfiguration("testPreloadAndExpiry", cb.build());
       Cache<String, Object> cache = cacheManager.getCache("testPreloadAndExpiry");
       cache.start();
@@ -149,7 +156,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testPreloadStoredAsBinary() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), true).memory().storageType(StorageType.BINARY);
+      createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storageType(StorageType.BINARY);
       cacheManager.defineConfiguration("testPreloadStoredAsBinary", cb.build());
       Cache<String, Person> cache = cacheManager.getCache("testPreloadStoredAsBinary");
       cache.start();
@@ -157,20 +164,48 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assert cache.getCacheConfiguration().persistence().preload();
       assertEquals(StorageType.BINARY, cache.getCacheConfiguration().memory().storageType());
 
+      byte[] pictureBytes = new byte[]{1, 82, 123, 19};
+
       cache.put("k1", new Person("1"));
-      cache.put("k2", new Person("2"), 111111, TimeUnit.MILLISECONDS);
-      cache.put("k3", new Person("3"), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-      cache.put("k4", new Person("4"), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      cache.put("k2", new Person("2", null, pictureBytes, null, null), 111111, TimeUnit.MILLISECONDS);
+      cache.put("k3", new Person("3", null, null, Sex.MALE, null), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+      cache.put("k4", new Person("4", new Address("Street", "City", 12345), null, null, null), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("EST"));
+      calendar.set(2009, Calendar.MARCH, 18, 3, 22, 57);
+      // Chop off the last milliseconds as some databases don't have that high of accuracy
+      calendar.setTimeInMillis((calendar.getTimeInMillis() / 1000) * 1000);
+      Date infinispanBirthDate = calendar.getTime();
+      cache.put("Infinispan", new Person("Infinispan", null, null, null, infinispanBirthDate));
+
+      // Just to prove nothing in memory even with stop
+      cache.getAdvancedCache().getDataContainer().clear();
+
+      assertEquals(createEmptyPerson("1"), cache.get("k1"));
+      Person person2 = createEmptyPerson("2");
+      person2.setPicture(pictureBytes);
+      assertEquals(person2, cache.get("k2"));
+      Person person3 = createEmptyPerson("3");
+      person3.setSex(Sex.MALE);
+      assertEquals(person3, cache.get("k3"));
+      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null), cache.get("k4"));
+      Person infinispanPerson = createEmptyPerson("Infinispan");
+      infinispanPerson.setBirthDate(infinispanBirthDate);
+      assertEquals(infinispanPerson, cache.get("Infinispan"));
 
       cache.stop();
 
       cache.start();
 
-      assertEquals(4, cache.entrySet().size());
-      assertEquals(new Person("1"), cache.get("k1"));
-      assertEquals(new Person("2"), cache.get("k2"));
-      assertEquals(new Person("3"), cache.get("k3"));
-      assertEquals(new Person("4"), cache.get("k4"));
+      assertEquals(5, cache.entrySet().size());
+      assertEquals(createEmptyPerson("1"), cache.get("k1"));
+      assertEquals(person2, cache.get("k2"));
+      assertEquals(person3, cache.get("k3"));
+      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null), cache.get("k4"));
+      assertEquals(infinispanPerson, cache.get("Infinispan"));
+   }
+
+   protected Person createEmptyPerson(String name) {
+      return new Person(name);
    }
 
    public void testStoreByteArrays(final Method m) throws PersistenceException {
@@ -178,7 +213,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       // we need to purge the container when loading, because we could try to compare
       // some old entry using ByteArrayEquivalence and this throws ClassCastException
       // for non-byte[] arguments
-      cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, true).build());
+      cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), true).build());
       Cache<byte[], byte[]> cache = cacheManager.getCache(m.getName());
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
@@ -200,10 +235,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), true);
+      final String cacheName = "testRemoveCache";
+      createCacheStoreConfig(cb.persistence(), cacheName, true);
       EmbeddedCacheManager local = createCacheManager(true, global, cb);
       try {
-         final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
@@ -221,10 +256,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence().passivation(true), true);
+      final String cacheName = "testRemoveCacheWithPassivation";
+      createCacheStoreConfig(cb.persistence().passivation(true), cacheName, true);
       EmbeddedCacheManager local = createCacheManager(true, global, cb);
       try {
-         final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
@@ -243,34 +278,48 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       }
    }
 
-   public void testPutAllBatch() throws Exception {
+   public void testPutAllBatch() {
       int numberOfEntries = 100;
       String cacheName = "testPutAllBatch";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), false);
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
       cacheManager.defineConfiguration(cacheName, cb.build());
 
       Cache<String, Object> cache = cacheManager.getCache(cacheName);
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
-            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val"+i)));
+            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
       cache.putAll(entriesMap);
 
       assertEquals(numberOfEntries, cache.size());
       WaitNonBlockingStore store = TestingUtil.getFirstStore(cache);
+
       for (int i = 0; i < numberOfEntries; ++i) {
-         assertNotNull("Entry for key: " + i + " was null", store.loadEntry(Integer.toString(i)));
+         assertNotNull("Entry for key: " + i + " was null", store.loadEntry(toStorage(cache, Integer.toString(i))));
       }
+   }
+
+   Object fromStorage(Cache<?, ?> cache, Object value) {
+      return cache.getAdvancedCache().getValueDataConversion()
+            .withRequestMediaType(MediaType.APPLICATION_OBJECT)
+            .fromStorage(value);
+   }
+
+   Object toStorage(Cache<?, ?> cache, Object key) {
+      return cache.getAdvancedCache().getKeyDataConversion()
+            .withRequestMediaType(MediaType.APPLICATION_OBJECT)
+            .toStorage(key);
    }
 
    public void testLoadEntrySet() {
       int numberOfEntries = 10;
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), true);
-      cacheManager.defineConfiguration("testLoadKeySet", cb.build());
-      Cache<String, Object> cache = cacheManager.getCache("testLoadKeySet");
+      createCacheStoreConfig(cb.persistence(), "testLoadEntrySet", true);
+      Configuration configuration = cb.build();
+      cacheManager.defineConfiguration("testLoadEntrySet", configuration);
+      Cache<String, Object> cache = cacheManager.getCache("testLoadEntrySet");
 
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
-            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val"+i)));
+            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
       cache.putAll(entriesMap);
 
       cache.stop();
@@ -285,9 +334,9 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    public void testReloadWithEviction() {
       int numberOfEntries = 10;
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), false).memory().size(numberOfEntries / 2).evictionType(EvictionType.COUNT);
-      cacheManager.defineConfiguration("testReload", cb.build());
-      Cache<String, Object> cache = cacheManager.getCache("testReload");
+      createCacheStoreConfig(cb.persistence(), "testReloadWithEviction", false).memory().size(numberOfEntries / 2).evictionType(EvictionType.COUNT);
+      cacheManager.defineConfiguration("testReloadWithEviction", cb.build());
+      Cache<String, Object> cache = cacheManager.getCache("testReloadWithEviction");
 
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
             .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
@@ -303,19 +352,20 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       entriesMap.forEach((k, v) -> assertEquals(v, cache.get(k)));
    }
 
-   protected ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
+   protected ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, String cacheName,
+         boolean purge) {
       ConfigurationBuilder cfg = base == null ? getDefaultCacheConfiguration() : base;
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      createCacheStoreConfig(cfg.persistence(), false);
+      createCacheStoreConfig(cfg.persistence(), cacheName, false);
       cfg.persistence().stores().get(0).purgeOnStartup(purge);
       return cfg;
    }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
+      InternalCacheEntry ice = dc.get(toStorage(cache, key));
       assertNotNull(ice);
-      assertEquals(value, unwrap(ice.getValue()));
+      assertEquals(value, unwrap(fromStorage(cache, ice.getValue())));
       assertEquals(lifespanMillis, ice.getLifespan());
       assertEquals(maxIdleMillis, ice.getMaxIdle());
       if (lifespanMillis > -1) assert ice.getCreated() > -1 : "Lifespan is set but created time is not";

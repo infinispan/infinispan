@@ -106,8 +106,9 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
+      configuration = null;
       super.tearDown();
       HotRodClientTestingUtil.killServers(hrServer);
       hrServer = null;

@@ -6,13 +6,13 @@ import java.io.File;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.rocksdb.RocksDBException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -32,7 +32,8 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    }
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
+         String cacheName, boolean preload) {
       createStoreBuilder(persistence)
             .preload(preload);
       return persistence;

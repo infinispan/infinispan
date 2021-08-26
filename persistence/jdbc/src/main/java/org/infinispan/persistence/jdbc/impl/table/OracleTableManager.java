@@ -9,11 +9,12 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,7 +30,7 @@ class OracleTableManager extends AbstractTableManager {
    private static final String SEGMENT_INDEX_PREFIX = "SDX";
    private final int dbVersion;
 
-   OracleTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+   OracleTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
       dbVersion = dbMetadata.getMajorVersion() * 100 + dbMetadata.getMinorVersion();
    }
@@ -134,9 +135,11 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
-      ps.setString(1, key);
-      ps.setLong(2, timestamp);
+   protected void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry entry) throws SQLException {
+      String keyStr = key2Str(entry.getKey());
+      ByteBuffer byteBuffer = entry.getValueBytes();
+      ps.setString(1, keyStr);
+      ps.setLong(2, entry.expiryTime());
       // We must use BLOB here to avoid ORA-01461 caused by implicit casts on dual
       ps.setBlob(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       if (!dbMetadata.isSegmentedDisabled()) {

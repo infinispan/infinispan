@@ -5,8 +5,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class TimestampColumnConfiguration {
-   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.NAME, null, String.class).immutable().build();
-   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.TYPE, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.NAME, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.TYPE, null, String.class).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TimestampColumnConfiguration.class, TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE);

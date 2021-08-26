@@ -21,11 +21,12 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
@@ -51,7 +52,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cacheManager;
    private Cache<String, String> cache;
-   private JdbcStringBasedStore store;
+   private WaitDelegatingNonBlockingStore store;
 
    @BeforeMethod
    public void beforeClass() {
@@ -69,13 +70,13 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager(cc);
       cache = cacheManager.getCache();
-      store = TestingUtil.getFirstTxWriter(cache);
+      store = TestingUtil.getFirstStore(cache);
    }
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() throws PersistenceException {
       if (store != null) {
-         store.clear();
+         store.clearAndWait();
          assertRowCount(0);
       }
       TestingUtil.killCacheManagers(cacheManager);
@@ -140,8 +141,9 @@ public class TxStoreTest extends AbstractInfinispanTest {
    }
 
    private void assertRowCount(int rowCount) {
-      ConnectionFactory connectionFactory = store.getConnectionFactory();
-      TableName tableName = store.getTableManager(cache.getName()).getDataTableName();
+      JdbcStringBasedStore jdbcStore = (JdbcStringBasedStore) store.delegate();
+      ConnectionFactory connectionFactory = jdbcStore.getConnectionFactory();
+      TableName tableName = jdbcStore.getTableManager().getDataTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }

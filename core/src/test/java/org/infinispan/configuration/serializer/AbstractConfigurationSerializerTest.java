@@ -52,6 +52,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          this.registry = registry;
       }
 
+      @Override
       public String toString() {
          return config.subpath(config.getNameCount() - 3, config.getNameCount()) + " (" + mediaType.getSubType().toUpperCase() + ")";
       }

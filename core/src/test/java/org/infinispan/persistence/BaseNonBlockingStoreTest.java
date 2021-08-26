@@ -130,8 +130,11 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    private void startStore(WaitNonBlockingStore<?, ?> store) {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      setConfiguration(buildConfig(builder));
+      // Reuse the same configuration between restarts
+      if (configuration == null) {
+         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         setConfiguration(buildConfig(builder));
+      }
       store.startAndWait(createContext(configuration));
       characteristics = store.characteristics();
    }

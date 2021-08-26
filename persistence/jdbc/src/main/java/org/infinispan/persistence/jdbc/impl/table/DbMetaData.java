@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.impl.table;
 
 import java.util.Objects;
 
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.common.DatabaseType;
 
 /**
  * @author Ryan Emerson

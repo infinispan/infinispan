@@ -11,11 +11,11 @@ import java.util.Enumeration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfigurationBuilder;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 
 import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;

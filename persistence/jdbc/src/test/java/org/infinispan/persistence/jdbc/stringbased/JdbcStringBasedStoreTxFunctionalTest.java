@@ -115,7 +115,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
       ConfigurationBuilder base = getDefaultCacheConfiguration();
       base.persistence().passivation(true);
 
-      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, false).build());
+      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), false).build());
       // transactional and shared don't mix with passivation
       if (transactionalConfig || sharedConfig) {
          Exceptions.expectException(CacheConfigurationException.class, runnable);
@@ -127,7 +127,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
    public void testWithPurgeOnStartup(Method m) throws Exception {
       ConfigurationBuilder base = getDefaultCacheConfiguration();
 
-      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, true).build());
+      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), true).build());
       // shared doesn't mix with purgeOnStartup
       if (sharedConfig) {
          Exceptions.expectException(CacheConfigurationException.class, runnable);
@@ -139,7 +139,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
    public void testRollback() throws SystemException, NotSupportedException {
       String cacheName = "testRollback";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), false);
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
       cacheManager.defineConfiguration(cacheName, cb.build());
 
       Cache<String, Object> cache = cacheManager.getCache(cacheName);

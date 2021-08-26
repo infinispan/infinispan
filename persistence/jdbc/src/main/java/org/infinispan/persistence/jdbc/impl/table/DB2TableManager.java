@@ -10,22 +10,24 @@ import java.sql.Statement;
 import java.util.Objects;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.logging.Log;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
-class DB2TableManager extends AbstractTableManager {
+class DB2TableManager<K, V> extends AbstractTableManager<K, V> {
 
    private static final Log log = LogFactory.getLog(DB2TableManager.class, Log.class);
 
-   DB2TableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+   DB2TableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config,
+         DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
    }
 
@@ -60,18 +62,15 @@ class DB2TableManager extends AbstractTableManager {
    }
 
    @Override
-   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
+   protected void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry<? extends K, ? extends V> entry) throws SQLException {
+      String key = key2Str(entry.getKey());
+      ByteBuffer byteBuffer = entry.getValueBytes();
       ps.setString(1, key);
-      ps.setLong(2, timestamp);
+      ps.setLong(2, entry.expiryTime());
       ps.setBinaryStream(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
       }
-   }
-
-   @Override
-   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
-      super.prepareUpsertStatement(ps, key, timestamp, segment, byteBuffer);
    }
 
    @Override

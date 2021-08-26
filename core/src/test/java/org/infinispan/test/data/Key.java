@@ -14,7 +14,8 @@ public class Key implements Externalizable {
    @ProtoField(number = 1)
    String value;
 
-   public Key() {}
+   public Key() {
+   }
 
    public Key(String value) {
       this.value = value;
@@ -33,10 +34,12 @@ public class Key implements Externalizable {
       return value != null ? value.hashCode() : 0;
    }
 
+   @Override
    public void writeExternal(ObjectOutput out) throws IOException {
       out.writeObject(value);
    }
 
+   @Override
    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       value = (String) in.readObject();
    }

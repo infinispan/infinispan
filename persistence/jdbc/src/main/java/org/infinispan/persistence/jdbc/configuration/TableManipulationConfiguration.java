@@ -8,12 +8,12 @@ import org.infinispan.persistence.jdbc.impl.table.TableManager;
 
 public class TableManipulationConfiguration {
 
-   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.PREFIX, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.PREFIX, null, String.class).immutable().build();
    // TODO remove in 10.0
-   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.BATCH_SIZE, AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()).immutable().build();
-   public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.FETCH_SIZE, TableManager.DEFAULT_FETCH_SIZE).immutable().build();
-   public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.CREATE_ON_START, true).immutable().build();
-   public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.configuration.Attribute.DROP_ON_EXIT, false).immutable().build();
+   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.BATCH_SIZE, AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()).immutable().build();
+   public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.FETCH_SIZE, TableManager.DEFAULT_FETCH_SIZE).immutable().build();
+   public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.CREATE_ON_START, true).immutable().build();
+   public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DROP_ON_EXIT, false).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TableManipulationConfiguration.class, TABLE_NAME_PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);

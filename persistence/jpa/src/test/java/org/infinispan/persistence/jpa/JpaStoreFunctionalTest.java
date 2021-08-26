@@ -17,7 +17,8 @@ import org.testng.annotations.Test;
 public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
+         String cacheName, boolean preload) {
       persistence.addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName("org.infinispan.persistence.jpa")
             .entityClass(KeyValueEntity.class)
@@ -50,6 +51,7 @@ public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
       // in the entity class.
    }
 
+   @Override
    @Test(enabled = false, description = "Not applicable")
    public void testPreloadStoredAsBinary() {
       // byte arrays are not entities (no need to test how we can wrap them)
