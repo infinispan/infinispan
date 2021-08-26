@@ -89,8 +89,19 @@ public interface AsyncInterceptorChain {
 
    /**
     * Walks the command through the interceptor chain. The received ctx is being passed in.
+    *
+    * <p>Note: Reusing the context for multiple invocations is allowed, however most context implementations are not
+    * thread-safe.</p>
     */
    CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command);
+
+   /**
+    * Walks the command through the interceptor chain. The received ctx is being passed in.
+    *
+    * <p>Note: Reusing the context for multiple invocations is allowed, however most context implementations are not
+    * thread-safe.</p>
+    */
+   InvocationStage invokeStage(InvocationContext ctx, VisitableCommand command);
 
    /**
     * Returns the first interceptor extending the given class, or {@code null} if there is none.

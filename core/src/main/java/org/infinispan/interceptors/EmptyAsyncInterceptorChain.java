@@ -75,6 +75,11 @@ public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
    }
 
    @Override
+   public InvocationStage invokeStage(InvocationContext ctx, VisitableCommand command) {
+      throw CONTAINER.interceptorStackNotSupported();
+   }
+
+   @Override
    public <T extends AsyncInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
       return null;
    }
