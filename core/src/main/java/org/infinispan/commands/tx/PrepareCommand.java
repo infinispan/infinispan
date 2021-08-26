@@ -114,7 +114,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return invoker.invokeAsync(ctx, this);
       } else {
-         return stage.thenCompose(v -> invoker.invokeAsync(ctx, this)).toCompletableFuture();
+         return stage.thenCompose(v -> invoker.invokeAsync(ctx, this));
       }
    }
 

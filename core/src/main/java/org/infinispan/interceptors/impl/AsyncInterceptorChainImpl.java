@@ -14,12 +14,12 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -40,17 +40,11 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
          new ImmutableListCopy<>();
    private static final Log log = LogFactory.getLog(AsyncInterceptorChainImpl.class);
 
-   private final ComponentRegistry componentRegistry;
-
    private final ReentrantLock lock = new ReentrantLock();
 
    // Modifications are guarded with "lock", but reads do not need synchronization
    private volatile List<AsyncInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
    private volatile AsyncInterceptor firstInterceptor = null;
-
-   public AsyncInterceptorChainImpl(ComponentRegistry componentRegistry) {
-      this.componentRegistry = componentRegistry;
-   }
 
    @Start
    void printChainInfo() {
@@ -235,6 +229,15 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
          }
       } catch (Throwable t) {
          return CompletableFutures.completedExceptionFuture(t);
+      }
+   }
+
+   @Override
+   public InvocationStage invokeStage(InvocationContext ctx, VisitableCommand command) {
+      try {
+         return InvocationStage.makeStage(firstInterceptor.visitCommand(ctx, command));
+      } catch (Throwable t) {
+         return new ExceptionSyncInvocationStage(t);
       }
    }
 
