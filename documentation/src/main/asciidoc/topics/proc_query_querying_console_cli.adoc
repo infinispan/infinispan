@@ -1,0 +1,88 @@
+[id='querying-console_{context}']
+= Querying caches from {brandname} Console and CLI
+
+{brandname} Console and the {brandname} Command Line Interface (CLI) let you query indexed and non-indexed remote caches.
+This procedure explains how to index and query a remote cache that stores `Person` instances.
+
+.Prerequisites
+
+* Have at least one running {brandname} Server instance.
+* Have {brandname} credentials with create permissions.
+
+.Procedure
+
+. Add indexing annotations to your Protobuf schema, as in the following example:
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::protobuf/indexedperson.proto[]
+----
++
+From the {brandname} CLI, use the [command]`schema` command with the [command]`--upload=` argument as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> schema --upload=person.proto person.proto
+----
+
+. Create a cache named **people** that uses ProtoStream encoding and configures {brandname} to index entities declared in your Protobuf schema.
++
+The following cache indexes the `Person` entity from the previous step:
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_person_cache.xml[]
+----
++
+From the CLI, use the [command]`create cache` command with the [command]`--file=` argument as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --file=people.xml people
+----
+
+. Add entries to the cache.
++
+To query a remote cache, it needs to contain some data.
+For this example procedure, create entries that use the following JSON values:
++
+.PersonOne
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/personone.json[]
+----
++
+.PersonTwo
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/persontwo.json[]
+----
++
+.PersonThree
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/personthree.json[]
+----
++
+From the CLI, use the [command]`put` command with the [command]`--file=` argument to add each entry, as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default/caches/people]> put --encoding=application/json --file=personone.json personone
+----
++
+[TIP]
+====
+From {brandname} Console, you must select **Custom Type** for the **Value content type** field when you add values in JSON format with custom types .
+====
+
+. Query your remote cache.
++
+From the CLI, use the [command]`query` command from the context of the remote cache.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default/caches/people]> query "from org.infinispan.example.Person p WHERE p.name='Person' ORDER BY p.age ASC"
+----
++
+The query returns all entries with a name that matches `Person` by age in ascending order.

@@ -1,11 +1,9 @@
-[id='indexing_caches-{context}']
-= Configuring {brandname} to Index Caches
-Create indexes of values in your caches to improve query performance and use full-text search capabilities.
+[id='indexing-caches_{context}']
+= Configuring {brandname} to index caches
+Enable indexing in your cache configuration and specify which entities {brandname} should include when creating indexes.
 
-[NOTE]
-====
-{brandname} uses link:http://lucene.apache.org/[Apache Lucene] technology to index values in caches.
-====
+You should always configure {brandname} to index caches when using queries.
+Indexing provides a significant performance boost to your queries, allowing you to get faster insights into your data.
 
 .Procedure
 
@@ -16,37 +14,43 @@ Create indexes of values in your caches to improve query performance and use ful
 include::xml/indexing_enable.xml[]
 ----
 +
-Adding an `<indexing>` element automatically enables indexing. You do not need to include the `enabled` attribute, even though the default value of the `enabled` attribute is `false` in the configuration schema.
+[TIP]
+====
+Adding an `indexing` element to your configuration enables indexing without the need to include the `enabled=true` attribute.
+
+For remote caches adding this element also implicitly configures encoding as ProtoStream.
+====
 +
-. Specify each entity that you want to index as a value for the `indexed-entity` element.
+. Specify the entities to index with the `indexed-entity` element.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/indexing_entities.xml[]
 ----
 
-.Plain Old Java Objects
 
-For caches that store POJOs, you specify the fully qualified class name that is annotated with `@Indexed`, for example:
+[discrete]
+== Protobuf
 
+* Specify the message declared in the schema as the value of the `indexed-entity` element, for example:
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/indexing_entities_pojo.xml[]
 ----
-
-.Protobuf
-
-For caches that store Protobuf-encoded entries, you specify the `Message` declared in the Protobuf schema.
-
-For example, you use the following Protobuf schema:
-
++
+This configuration indexes the `Book` message in a schema with the `book_sample` package name.
++
 [source,proto]
 ----
-include::code_examples/library.proto[]
+include::protobuf/library.proto[]
 ----
 
-You should then specify the following value for the `indexed-entity` element:
+[discrete]
+== Java objects
 
+* Specify the fully qualified name (FQN) of the class that uses the `@Indexed` annotation, for example:
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/indexing_entities_proto.xml[]

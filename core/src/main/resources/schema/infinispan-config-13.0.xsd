@@ -990,8 +990,9 @@
           <xs:attribute name="enabled" type="xs:boolean" default="${Indexing.enabled}">
             <xs:annotation>
               <xs:documentation>
-                Specify whether indexing is enabled or not. Defaults to false, but it auto-activates if the
-                indexing element is present and indexing is not explicitly disabled. It also auto-activates if 'auto-config' is set to 'true'.
+                Enables and disables cache indexing.
+                Including the indexing element in cache configuration automatically enables indexing without the need to set the value of this attribute to "true".
+                Indexing is also automatically enabled when the "auto-config" attribute is set to a value of "true".
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

@@ -3,10 +3,10 @@ package book_sample;
 /* @Indexed */
 message Book {
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES */
+    /* @Field(store = Store.YES, analyze = Analyze.YES) */
     optional string title = 1;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES */
+    /* @Field(store = Store.YES, analyze = Analyze.YES) */
     optional string description = 2;
     optional int32 publicationYear = 3; // no native Date type available in Protobuf
 

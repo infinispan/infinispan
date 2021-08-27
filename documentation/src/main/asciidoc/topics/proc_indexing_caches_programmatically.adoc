@@ -1,10 +1,10 @@
 [id='indexing_caches_programmatically-{context}']
-= Enabling Cache Indexing Programmatically
-Configure indexing for caches programmatically via {brandname} APIs.
+= Configuring indexing programmatically
+For embedded caches, you can use {brandname} APIs to enable and configure indexing.
 
 .Procedure
 
-* When using {brandname} as an embedded library, enable and configure indexing for caches with the `IndexingConfigurationBuilder` class, as in the following example:
+* Enable and configure indexing for caches with the `IndexingConfigurationBuilder` class.
 
 [source,java]
 ----

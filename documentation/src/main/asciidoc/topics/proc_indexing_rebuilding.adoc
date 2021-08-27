@@ -1,31 +1,32 @@
-[id='indexing_rebuilding-{context}']
-= Rebuilding Indexes
+[id='rebuilding-indexes_{context}']
+= Rebuilding indexes
 Rebuilding an index reconstructs it from the data stored in the cache.
-You rebuild indexes when you change things like the definitions of indexed types or analyzers.
-Likewise, you might also need to rebuild indexes if they are deleted for some reason.
+You should rebuild indexes when you change things like the definitions of indexed types or analyzers.
+Likewise, you can rebuild indexes after you delete them for whatever reason.
 
 [IMPORTANT]
 ====
 Rebuilding indexes can take a long time to complete because the process takes place for all data in the grid.
 While the rebuild operation is in progress, queries might also return fewer results.
-
-{brandname} logs the following warning message when you rebuild an index:
-
-----
-WARN: Rebuilding indexes also affect queries, that can return less results than expected.
-----
 ====
 
 .Procedure
 
-* Rebuild indexes on remote {brandname} servers by calling the `reindexCache()` method as follows:
+Rebuild indexes in one of the following ways:
+
+* Call the `reindexCache()` method to programmatically rebuild an index from a Hot Rod Java client:
 +
 [source,java]
 ----
 remoteCacheManager.administration().reindexCache("MyCache");
 ----
++
+[TIP]
+====
+For remote caches you can also rebuild indexes from {brandname} Console.
+====
 
-* Rebuild indexes when using {brandname} as an embedded library as follows:
+* Call the `index.run()` method to rebuild indexes for embedded caches as follows:
 +
 [source,java]
 ----

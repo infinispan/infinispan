@@ -14,6 +14,7 @@ However, when some operations are processed successfully, they return an HTTP st
 Create and manage {brandname} caches and perform operations on data.
 
 include::{topics}/ref_rest_caches.adoc[leveloffset=+2]
+include::{topics}/ref_rest_caches_query.adoc[leveloffset=+2]
 
 
 [id='rest_v2_xsite_cache']

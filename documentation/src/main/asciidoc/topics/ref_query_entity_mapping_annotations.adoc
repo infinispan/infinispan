@@ -1,0 +1,66 @@
+[id='entity-mapping-annotations_{context}']
+= Entity mapping annotations
+
+Add annotations to your Java classes to map your entities to indexes.
+
+.Hibernate Search API
+
+{brandname} uses the link:http://hibernate.org/search/[Hibernate Search] API to define fine grained configuration for indexing at entity level.
+This configuration includes which fields are annotated, which analyzers should be used, how to map nested objects, and so on.
+
+The following sections provide information that applies to entity mapping annotations for use with {brandname}.
+
+For complete detail about these annotations, you should refer to link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#mapper-orm-mapping[the Hibernate Search manual].
+
+[discrete]
+== @DocumentId
+Unlike Hibernate Search, using `@DocumentId` to mark a field as identifier does not apply to {brandname} values; in {brandname} the identifier for all `@Indexed` objects is the key used to store the value. You can still customize how the key is indexed using a combination of `@Transformable` , custom types and custom `FieldBridge` implementations.
+
+[discrete]
+== @Transformable keys
+The key for each value needs to be indexed as well, and the key instance must be transformed in a `String`. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of `org.infinispan.query.Transformer` .
+
+.Registering a key Transformer via annotations
+
+You can annotate your key class with `org.infinispan.query.Transformable` and your custom transformer implementation
+will be picked up automatically:
+
+[source,java]
+----
+@Transformable(transformer = CustomTransformer.class)
+public class CustomKey {
+   ...
+}
+
+public class CustomTransformer implements Transformer {
+   @Override
+   public Object fromString(String s) {
+      ...
+      return new CustomKey(...);
+   }
+
+   @Override
+   public String toString(Object customType) {
+      CustomKey ck = (CustomKey) customType;
+      return ...
+   }
+}
+----
+
+.Registering a key Transformer via the cache indexing configuration
+
+Use the `key-transformers` xml element in both embedded and server config:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_key_transformer.xml[]
+----
+
+Alternatively, use the Java configuration API (embedded mode):
+
+[source,java]
+----
+   ConfigurationBuilder builder = ...
+   builder.indexing().enable()
+         .addKeyTransformer(CustomKey.class, CustomTransformer.class);
+----
