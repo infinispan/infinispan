@@ -1,0 +1,17 @@
+package org.infinispan.example;
+
+/* @Indexed */
+message Person {
+    /* @Field(index=Index.YES, store = Store.NO, analyze = Analyze.NO) */
+    optional int32 id = 1;
+
+    /* @Field(index=Index.YES, store = Store.YES, analyze = Analyze.NO) */
+    required string name = 2;
+
+    /* @Field(index=Index.YES, store = Store.YES, analyze = Analyze.NO) */
+    required string surname = 3;
+
+    /* @Field(index=Index.YES, store = Store.YES, analyze = Analyze.NO) */
+    optional int32 age = 6;
+
+}
