@@ -1,0 +1,37 @@
+[id='default-analyzers_{context}']
+= Default analyzer definitions
+
+{brandname} provides a set of default analyzer definitions.
+
+[%header,cols=2*]
+|===
+
+| Definition
+| Description
+
+| `standard`
+| Splits text fields into tokens, treating whitespace and punctuation as delimiters.
+
+| `simple`
+| Tokenizes input streams by delimiting at non-letters and then converting all letters to lowercase characters. Whitespace and non-letters are discarded.
+
+| `whitespace`
+| Splits text streams on whitespace and returns sequences of non-whitespace characters as tokens.
+
+| `keyword`
+| Treats entire text fields as single tokens.
+
+| `stemmer`
+| Stems English words using the Snowball Porter filter.
+
+| `ngram`
+| Generates n-gram tokens that are 3 grams in size by default.
+
+| `filename`
+| Splits text fields into larger size tokens than the `standard` analyzer, treating whitespace as a delimiter and converts all letters to lowercase characters.
+
+|===
+
+These analyzer definitions are based on Apache Lucene and are provided "as-is".
+For more information about tokenizers, filters, and CharFilters, see the
+appropriate Lucene documentation.

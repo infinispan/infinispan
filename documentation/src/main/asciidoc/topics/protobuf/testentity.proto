@@ -1,0 +1,9 @@
+/* @Indexed */
+message TestEntity {
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword")) */
+    optional string id = 1;
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "simple")) */
+    optional string name = 2;
+}

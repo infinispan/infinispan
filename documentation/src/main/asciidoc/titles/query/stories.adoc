@@ -1,0 +1,9 @@
+//Reference user stories or topics.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::{stories}/assembly_query_indexing_caches.adoc[leveloffset=+1]
+include::{stories}/assembly_query_creating_ickle_queries.adoc[leveloffset=+1]
+include::{stories}/assembly_query_remote.adoc[leveloffset=+1]
+include::{stories}/assembly_query_embedded.adoc[leveloffset=+1]
+include::{stories}/assembly_query_continuous.adoc[leveloffset=+1]
+include::{stories}/assembly_query_monitoring_tuning.adoc[leveloffset=+1]

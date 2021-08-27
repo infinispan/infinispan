@@ -1,8 +1,8 @@
-[id='indexing_configuration-{context}']
-= Index Configuration
+[id='indexing-configuration_{context}']
+= Index configuration
 {brandname} configuration controls how indexes are stored and constructed.
 
-== Index Storage
+== Index storage
 
 You can configure how {brandname} stores indexes:
 
@@ -22,7 +22,7 @@ include::xml/indexing_file_system.xml[]
 include::xml/indexing_jvm_heap.xml[]
 ----
 
-== Index Reader
+== Index reader
 
 The index reader is an internal component that provides access to the indexes to perform queries. As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
 You can configure the refresh interval for the index reader.
@@ -33,7 +33,7 @@ By default {brandname} reads the index before each query if the index changed si
 include::xml/indexing_index_reader.xml[]
 ----
 
-== Index Writer
+== Index writer
 
 The index writer is an internal component that constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
 Fewer segments usually means less overhead during a query because index reader operations need to take into account all segments.

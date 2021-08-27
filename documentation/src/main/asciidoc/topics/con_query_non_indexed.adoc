@@ -1,0 +1,10 @@
+[id='non-indexed-queries_{context}']
+= Non-indexed queries
+
+{brandname} recommends indexing caches for the best performance for queries.
+However you can query caches that are non-indexed but you must configure them to use ProtoStream encoding, as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_proto_cache_books.xml[]
+----
