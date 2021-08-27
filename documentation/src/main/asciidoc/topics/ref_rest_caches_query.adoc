@@ -1,0 +1,220 @@
+[id='rest_v2_query_cache']
+= Indexing and Querying with the REST API
+Query remote caches with `GET` requests and the `?action=search&query` parameter from any HTTP client.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
+----
+
+.{brandname} response
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_results.json[]
+----
+
+* `total_results` displays the total number of results from the query.
+* `hits` is an array of matches from the query.
+* `hit` is an object that matches the query.
++
+[TIP]
+====
+Hits can contain all fields or a subset of fields if you use a `Select` clause.
+====
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`query`
+|REQUIRED
+|Specifies the query string.
+
+|`max_results`
+|OPTIONAL
+|Sets the number of results to return. The default is `10`.
+
+|`offset`
+|OPTIONAL
+|Specifies the index of the first result to return. The default is `0`.
+
+|`local`
+|OPTIONAL
+|When `true`, the query is restricted to the data present in node that process the request. The default is `false`.
+|===
+
+To use the body of the request instead of specifying query parameters, invoke
+`POST` requests as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}?action=search
+----
+
+.Query in request body
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_request_body.json[]
+----
+
+[id='rest_v2_query_reindex']
+== Re-indexing Data
+Re-index all data in caches with `POST` requests and the `?action=mass-index` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST  /v2/caches/{cacheName}/search/indexes?action=mass-index
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`mode`
+|OPTIONAL
+|Values for the `mode` parameter are as follows:
+
+* `sync` returns `204 (No Content)` only after the re-indexing operation is complete.
+
+* `async` returns `204 (No Content)` immediately and the re-indexing operation continues
+running in the cluster. You can check the status with
+the link:#rest_v2_query_index_stats[Index Statistics] REST call.
+
+|`local`
+|OPTIONAL
+|When `true`, only the data from node that process the request is re-indexed. The default is `false`, meaning all data cluster-wide is re-indexed.
+|===
+
+[id='rest_v2_query_purge_index']
+== Purging Indexes
+Delete all indexes from caches with `POST` requests and the `?action=clear`
+parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST  /v2/caches/{cacheName}/search/indexes?action=clear
+----
+
+If the operation successfully completes, the service returns `204 (No Content)`.
+
+[id='rest_v2_search_stats']
+== Retrieving Query and Index Statistics
+
+Obtain information about queries and indexes in caches with `GET` requests.
+
+[NOTE]
+====
+You must enable statistics in the cache configuration or results are empty.
+====
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/stats
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`scope`
+|OPTIONAL
+|Use `cluster` to retrieve consolidated statistics for all members of the cluster. When omitted, {brandname} returns statistics for the local queries and indexes.
+|===
+
+.{brandname} response
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_search_stats.json[]
+----
+
+In the ```query``` section:
+
+* `indexed_local` Provides details about indexed queries.
+* `indexed_distributed` Provides details about distributed indexed queries.
+* `hybrid` Provides details about queries that used the index only partially.
+* `non_indexed` Provides details about queries that didn't use the index.
+* `entity_load` Provides details about cache operations to fetch objects after indexed queries execution.
+
+[NOTE]
+====
+Time is always measured in nanoseconds.
+====
+
+In the ```index``` section:
+
+* `types` Provide details about each indexed type (class name or protobuf message) that is configured in the cache.
+** `count` The number of entities indexed for the type.
+** `size` Usage in bytes of the type.
+* `reindexing` If the value is `true`, the `Indexer` is running in the cache.
+
+[id='rest_v2_search_stats_clear']
+== Clearing Query Statistics
+
+Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}/search/stats?action=clear
+----
+
+{brandname} resets only query execution times for the local node only.
+This operation does not clear index statistics.
+
+[id='rest_v2_query_index_stats']
+== Retrieving Index Statistics (Deprecated)
+Obtain information about indexes in caches with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/indexes/stats
+----
+
+.{brandname} response
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_index_stats.json[]
+----
+
+* `indexed_class_names` Provides the class names of the indexes present in the cache. For Protobuf the value is always `org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper`.
+* `indexed_entities_count` Provides the number of entities indexed per class.
+* `index_sizes` Provides the size, in bytes, for each index in the cache.
+* `reindexing` Indicates if a re-indexing operation was performed for the cache. If the value is `true`, the `MassIndexer` was started in the cache.
+
+
+[id='rest_v2_query_stats']
+== Retrieving Query Statistics (Deprecated)
+Get information about the queries that have been run in caches with `GET`
+requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/query/stats
+----
+
+.{brandname} response
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_stats.json[]
+----
+
+* `search_query_execution_count` Provides the number of queries that have been run.
+* `search_query_total_time` Provides the total time spent on queries.
+* `search_query_execution_max_time` Provides the maximum time taken for a query.
+* `search_query_execution_avg_time` Provides the average query time.
+* `object_loading_total_time` Provides the total time spent loading objects from the cache after query execution.
+* `object_loading_execution_max_time` Provides the maximum time spent loading objects execution.
+* `object_loading_execution_avg_time` Provides the average time spent loading objects execution.
+* `objects_loaded_count` Provides the count of objects loaded.
+* `search_query_execution_max_time_query_string` Provides the slowest query executed.
+
+[id='rest_v2_query_stats_clear']
+== Clearing Query Statistics (Deprecated)
+Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}/search/query/stats?action=clear
+----

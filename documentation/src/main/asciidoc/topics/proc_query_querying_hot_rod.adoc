@@ -1,0 +1,66 @@
+[id='querying-hot-rod_{context}']
+= Querying caches from Hot Rod Java clients
+
+{brandname} lets you programmatically query remote caches from Java clients through the Hot Rod endpoint.
+This procedure explains how to index query a remote cache that stores `Book` instances.
+
+.Prerequisites
+
+* Add the ProtoStream processor to your `pom.xml`.
+
+{brandname} provides this processor for the `@ProtoField` and `@ProtoDoc` annotations so you can generate Protobuf schemas and perform queries.
+
+[source,xml]
+----
+include::dependencies_maven/protostream-processor.xml[]
+----
+
+.Procedure
+
+. Add indexing annotations to your class, as in the following example:
++
+[source,java, title=Book.java]
+----
+include::code_examples/BookIndexed.java[]
+----
++
+. Implement the `SerializationContextInitializer` interface in a new class and then add the `@AutoProtoSchemaBuilder` annotation.
+.. Reference the class that includes the `@ProtoField` and `@ProtoDoc` annotations with the `includeClasses` parameter.
+.. Define a name for the Protobuf schema that you generate and filesystem path with the `schemaFileName` and `schemaFilePath` parameters.
+.. Specify the package name for the Protobuf schema with the `schemaPackageName` parameter.
++
+[source,java, title=RemoteQueryInitializer.java]
+----
+include::code_examples/RemoteQueryInitializer.java[]
+----
++
+. Compile your project.
++
+The code examples in this procedure generate a `proto/book.proto` schema and an `RemoteQueryInitializerImpl.java` implementation of the annotated `Book` class.
+
+.Next steps
+
+Create a remote cache that configures {brandname} to index your entities.
+For example, the following remote cache indexes the `Book` entity in the `book.proto` schema that you generated in the previous step:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_repl_cache_books.xml[]
+----
+
+The following `RemoteQuery` class does the following:
+
+* Registers the `RemoteQueryInitializerImpl` serialization context with a Hot Rod Java client.
+* Registers the Protobuf schema, `book.proto`, with {brandname} Server.
+* Adds two `Book` instances to the remote cache.
+* Performs a full-text query that matches books by keywords in the title.
+
+[source,java, title=RemoteQuery.java]
+----
+include::code_examples/RemoteQuery.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{encoding_docs}[Marshalling and Encoding Data] for more information about creating serialization contexts and registering Protobuf schema.
+* link:{encoding_docs}#protostream-annotations_marshalling[ProtoStream annotations] for more information about the `@ProtoField`, `@ProtoDoc`, and `@AutoProtoSchemaBuilder` annotations.

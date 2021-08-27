@@ -1,0 +1,21 @@
+[id='indexing-caches']
+:context: indexing-caches
+= Indexing {brandname} caches
+
+{brandname} can create indexes of values in your caches to improve query performance, providing faster results than non-indexed queries.
+Indexing also lets you use full-text search capabilities in your queries.
+
+[NOTE]
+====
+{brandname} uses link:http://lucene.apache.org/[Apache Lucene] technology to index values in caches.
+====
+
+include::{topics}/proc_indexing_configuring.adoc[leveloffset=+1]
+include::{topics}/ref_indexing_configuration.adoc[leveloffset=+2]
+include::{topics}/con_indexing_annotations.adoc[leveloffset=+1]
+include::{topics}/proc_indexing_rebuilding.adoc[leveloffset=+1]
+include::{topics}/con_query_non_indexed.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

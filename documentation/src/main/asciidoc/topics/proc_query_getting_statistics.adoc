@@ -1,0 +1,26 @@
+[id='getting-query-statistics_{context}']
+= Getting query statistics
+
+Collect statistics to gather information about performance of your indexes and queries, including information such as the types of indexes and average time for queries to complete.
+
+.Procedure
+
+Do one of the following:
+
+* Invoke the `getSearchStatistics()` or `getClusteredSearchStatistics()` methods for embedded caches.
+* Use `GET` requests to obtain statistics for remote caches from the REST API.
+
+.Embedded caches
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+// Statistics for the local cluster member
+SearchStatistics statistics = Search.getSearchStatistics(cache);
+
+// Consolidated statistics for the whole cluster
+CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearchStatistics(cache)
+----
+.Remote caches
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+GET /v2/caches/{cacheName}/search/stats
+----

@@ -5,7 +5,7 @@ QUERY(1)
 
 NAME
 ----
-query - retrieves entries that match Ickle query strings.
+query - performs Ickle queries to match entries in remote caches.
 
 
 SYNOPSIS
@@ -19,7 +19,7 @@ OPTIONS
 Specifies the cache to query. Defaults to the currently selected cache.
 
 *--max-results*='MAX_RESULTS'::
-Sets the number of results to return. The default is `10`.
+Sets the maximum number of results to return. The default is `10`.
 
 *-o, --offset*='OFFSET'::
 Specifies the index of the first result to return. The default is `0`.
@@ -31,8 +31,8 @@ The default is `FETCH`.
 
 EXAMPLES
 --------
-`query "from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'"` +
-Queries the currently selected cache to return entries from a Protobuf `Person`
+`query "from org.infinispan.example.Person p where p.gender = 'MALE'"` +
+Queries values in a remote cache to find entries from a Protobuf `Person`
 entity where the gender datatype is `MALE`.
 
 

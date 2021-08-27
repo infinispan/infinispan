@@ -1,0 +1,29 @@
+[id='creating-analyzers_{context}']
+= Creating custom analyzer definitions
+
+Create custom analyzer definitions and add them to your {brandname} Server installations.
+
+.Prerequisites
+
+* Stop {brandname} Server if it is running.
++
+{brandname} Server loads classes at startup only.
+
+.Procedure
+
+. Implement the `ProgrammaticSearchMappingProvider` API.
+. Package your implementation in a JAR with the fully qualified class (FQN) in the following file:
++
+[source,options="nowrap",subs=attributes+]
+----
+META-INF/services/org.infinispan.query.spi.ProgrammaticSearchMappingProvider
+----
++
+. Copy your JAR file to the `server/lib` directory of your {brandname} Server installation.
+. Start {brandname} Server.
+
+.`ProgrammaticSearchMappingProvider` example
+[source,java,options="nowrap"]
+----
+include::code_examples/MyAnalyzerProvider.java[]
+----

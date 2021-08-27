@@ -1,6 +1,8 @@
-<distributed-cache name="pcache">
-   <encoding>
-      <key media-type="application/x-protostream"/>
-      <value media-type="application/x-protostream"/>
-   </encoding>
+<distributed-cache name="people">
+  <encoding media-type="application/x-protostream"/>
+  <indexing>
+    <indexed-entities>
+      <indexed-entity>org.infinispan.example.Person</indexed-entity>
+    </indexed-entities>
+  </indexing>
 </distributed-cache>

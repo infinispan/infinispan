@@ -1,0 +1,68 @@
+[id='indexing-caches_{context}']
+= Configuring {brandname} to index caches
+Enable indexing in your cache configuration and specify which entities {brandname} should include when creating indexes.
+
+You should always configure {brandname} to index caches when using queries.
+Indexing provides a significant performance boost to your queries, allowing you to get faster insights into your data.
+
+.Procedure
+
+. Enable indexing in your cache configuration.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_enable.xml[]
+----
++
+[TIP]
+====
+Adding an `indexing` element to your configuration enables indexing without the need to include the `enabled=true` attribute.
+
+For remote caches adding this element also implicitly configures encoding as ProtoStream.
+====
++
+. Specify the entities to index with the `indexed-entity` element.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_entities.xml[]
+----
+
+
+[discrete]
+== Protobuf messages
+
+* Specify the message declared in the schema as the value of the `indexed-entity` element, for example:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_entities_pojo.xml[]
+----
++
+This configuration indexes the `Book` message in a schema with the `book_sample` package name.
++
+[source,proto]
+----
+include::protobuf/library.proto[]
+----
+
+[discrete]
+== Java objects
+
+* Specify the fully qualified name (FQN) of each class that includes the `@Indexed` annotation.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::config_examples/indexing_entities_proto.xml[]
+----
+
+.`ConfigurationBuilder`
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/IndexBasicConfiguration.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]

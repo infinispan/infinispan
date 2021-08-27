@@ -1,0 +1,46 @@
+[id='indexing-annotations_{context}']
+= Indexing annotations
+
+When you enable indexing in caches, you configure {brandname} to create indexes.
+You also need to provide {brandname} with a structured representation of the entities in your caches so it can actually index them.
+
+There are two annotations that control the entities and fields that {brandname} indexes:
+
+`@Indexed`:: Indicates entities, or Protobuf message types, that {brandname} indexes.
+`@Field`:: Indicates fields that {brandname} indexes and has the following attributes:
++
+[%autowidth,cols="1,1,1",stripes=even]
+|===
+|Attribute |Description |Values
+
+|`index`
+|Controls if {brandname} includes fields in indexes.
+|`Index.YES` or `Index.NO`
+
+|`store`
+|Allows {brandname} to store fields in indexes so you can use them for projections.
+|`Store.YES` or `Store.NO`
+
+|`analyze`
+|Includes fields in full-text searches.
+|`Analyze.NO` or specifies an analyzer definition
+|===
+
+[discrete]
+== Remote caches
+
+You can provide {brandname} with indexing annotations for remote caches in two ways:
+
+* Annotate your Java classes directly with `@ProtoDoc("@Indexed")` and `@ProtoDoc("@Field(...)")`. +
+You then generate Protobuf schema, `.proto` files, before uploading them to {brandname} Server.
+
+* Annotate Protobuf schema directly with `@Indexed` and `@Field(...)`. +
+You then upload your Protobuf schema to {brandname} Server.
+
+[discrete]
+== Embedded caches
+
+For embedded caches, you add indexing annotations to your Java classes according to how {brandname} stores your entries.
+
+* Use the `@Indexed` and `@Field` annotations, along with other Hibernate Search annotations such as `@FullTextField`, for Plain Old Java Objects (POJOs).
+* Use the `@ProtoDoc("@Indexed")` and `@ProtoDoc("@Field(...)")` annotations for objects encoded as Protobuf.

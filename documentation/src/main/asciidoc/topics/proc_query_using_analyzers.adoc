@@ -1,0 +1,21 @@
+[id='using-analyzers_{context}']
+= Using analyzers with remote caches
+Analyzers convert input data into terms that you can index and query.
+You specify analyzer definitions with the `@Field` annotation in your Java classes or directly in Protobuf schema.
+
+.Procedure
+
+. Include the `Analyze.YES` attribute to indicate that the property is analyzed.
+. Specify the analyzer definition with the `@Analyzer` annotation.
+
+.Protobuf schema
+[source,protobuf,options="nowrap",role="primary"]
+----
+include::protobuf/testentity.proto[]
+----
+
+.Java classes
+[source,java,options="nowrap",role="secondary"]
+----
+include::code_examples/AnalyzerDefinitions.java[]
+----

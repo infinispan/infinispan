@@ -1,0 +1,46 @@
+[id='querying-embedded-caches_{context}']
+= Querying embedded caches
+
+This section explains how to query an embedded cache using an example cache named "books" that stores indexed `Book` instances.
+
+In this example, each `Book` instance defines which properties are indexed and specifies some advanced indexing options with Hibernate Search annotations as follows:
+
+[source,java]
+.Book.java
+----
+include::code_examples/BookEmbedded.java[]
+----
+
+[source,java]
+.Author.java
+----
+include::code_examples/AuthorEmbedded.java[]
+----
+
+.Procedure
+
+. Configure {brandname} to index the "books" cache and specify `org.infinispan.sample.Book` as the entity to index.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/indexing_dist_cache_books.xml[]
+----
++
+. Obtain the cache.
++
+[source,java]
+----
+import org.infinispan.Cache;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+
+EmbeddedCacheManager manager = new DefaultCacheManager("infinispan.xml");
+Cache<String, Book> cache = manager.getCache("books");
+----
++
+. Perform queries for fields in the `Book` instances that are stored in the {brandname} cache, as in the following example:
++
+[source,java]
+----
+include::code_examples/QueryExample.java[]
+----

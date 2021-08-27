@@ -1,0 +1,8 @@
+[id='non-indexed-queries_{context}']
+= Non-indexed queries
+
+{brandname} recommends indexing caches for the best performance for queries.
+However you can query caches that are non-indexed.
+
+* For embedded caches, you can perform non-indexed queries on Plain Old Java Objects (POJOs).
+* For remote caches, you must use ProtoStream encoding with the `application/x-protostream` media type to perform non-indexed queries.

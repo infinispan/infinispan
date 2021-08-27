@@ -1,0 +1,52 @@
+[id='continuous-queries_{context}']
+= Continuous queries
+
+Continuous queries provide applications with real-time notifications about data in {brandname} caches that are filtered by queries.
+When entries match the query {brandname} sends the updated data to any listeners, which provides a stream of events instead of applications having to execute the query.
+
+Continuous queries can notify applications about incoming matches, for values that have joined the set; updated matches, for matching values that were modified and continue to match; and outgoing matches, for values that have left the set.
+
+For example, continuous queries can notify applications about all:
+
+* Persons with an age between 18 and 25, assuming the `Person` entity has an `age` property and is updated by the user application.
+* Transactions for dollar amounts larger than $2000.
+* Times where the lap speed of F1 racers were less than 1:45.00 seconds, assuming the cache contains Lap entries and that laps are entered during the race.
+
+[NOTE]
+====
+Continuous queries can use all query capabilities except for grouping, aggregation, and sorting operations.
+====
+
+[discrete]
+== How continuous queries work
+
+Continuous queries notify client listeners with the following events:
+
+`Join`:: A cache entry matches the query.
+`Update`:: A cache entry that matches the query is updated and still matches the query.
+`Leave`:: A cache entry no longer matches the query.
+
+When a client registers a continuous query listener it immediately receives `Join` events for any entries that match the query.
+Client listeners receive subsequent events each time a cache operation modifies entries that match the query.
+
+{brandname} determines when to send `Join`, `Update`, or `Leave` events to client listeners as follows:
+
+* If the query on both the old and new value does not match, {brandname} does not sent an event.
+* If the query on the old value does not match but the new value does, {brandname} sends a `Join` event.
+* If the query on both the old and new values match, {brandname} sends an `Update` event.
+* If the query on the old value matches but the new value does not, {brandname} sends a `Leave` event.
+* If the query on the old value matches and the entry is then deleted or it expires, {brandname} sends a `Leave` event.
+
+[discrete]
+== Continuous query performance impact
+
+Continuous queries are designed to provide a constant stream of updates to applications, which can generate a significant number of events.
+{brandname} temporarily allocates memory for each event it generates, which can result in memory pressure and potentially lead to `OutOfMemory` exceptions, especially for remote caches.
+For this reason, you should carefully design your continuous queries to avoid any performance impact.
+
+{brandname} strongly recommends that you limit the scope of your continuous queries to the smallest amount of information that you need.
+To achieve this, you can use projections and predicates.
+For example, `SELECT field1, field2 FROM Entity WHERE x AND y` provides results about only a subset of fields that match the criteria rather than the entire entry.
+
+It is also important to ensure that each `ContinuousQueryListener` you create can quickly process all received events without blocking threads.
+To achieve this, you should avoid any cache operations that generate events unnecessarily.
