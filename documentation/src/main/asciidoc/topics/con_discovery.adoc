@@ -13,9 +13,8 @@ For instance the DNS_PING protocol performs discovery through DNS server records
 Running {brandname} on hosted platforms requires using discovery mechanisms that are adapted to network constraints that individual cloud providers impose.
 ====
 
-
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#DiscoveryProtocols[JGroups Discovery Protocols]
 //RH KCS article
 ifdef::downstream[]

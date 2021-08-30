@@ -1,0 +1,21 @@
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups {jgroups_schema}">
+    <UDP bind_addr="${jgroups.bind_addr:127.0.0.1}"
+         mcast_addr="${jgroups.udp.mcast_addr:192.0.2.0}"
+         mcast_port="${jgroups.udp.mcast_port:46655}"
+         tos="8"
+         ucast_recv_buf_size="20000000"
+         ucast_send_buf_size="640000"
+         mcast_recv_buf_size="25000000"
+         mcast_send_buf_size="640000"
+         max_bundle_size="64000"
+         ip_ttl="${jgroups.udp.ip_ttl:2}"
+         enable_diagnostics="false"
+         thread_naming_pattern="pl"
+         thread_pool.enabled="true"
+         thread_pool.min_threads="2"
+         thread_pool.max_threads="30"
+         thread_pool.keep_alive_time="5000" />
+    <!-- Other JGroups stack configuration goes here. -->
+</config>

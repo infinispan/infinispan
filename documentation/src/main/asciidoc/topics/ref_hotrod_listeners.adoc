@@ -12,7 +12,7 @@ client listener that prints out each event received:
 import org.infinispan.client.hotrod.annotation.*;
 import org.infinispan.client.hotrod.event.*;
 
-@ClientListener
+@ClientListener(converterFactoryName = "static-converter")
 public class EventPrintListener {
 
    @ClientCacheEntryCreated
