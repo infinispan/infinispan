@@ -1,12 +1,21 @@
 [id='patches-{context}']
 = {brandname} Server Patches
-{brandname} server patches are `.zip` archives that contain artifacts that you
-can apply to your `{server_home}` directory to fix issues and add new features.
+{brandname} Server patches are `.zip` archives that contain artifacts that you can apply to your `{server_home}` directory to fix issues and add new features.
 
-Patches also provide a set of rules for {brandname} to modify your server
-installation. When you apply patches, {brandname} overwrites some files and
-removes others, depending on if they are required for the target version.
+Patches also provide a set of rules for {brandname} to modify your server installation.
+When you apply patches, {brandname} overwrites some files and removes others, depending on if they are required for the target version.
 
-However, {brandname} does not make any changes to configuration files that you
-have created or modified when applying a patch. Server patches do not modify or
-replace any custom configuration or data.
+However, {brandname} does not make any changes to configuration files that you have created or modified when applying a patch.
+Server patches do not modify or replace any custom configuration or data.
+
+ifdef::downstream[]
+The {brandname} command line interface (CLI) includes a [command]`patch create` command that lets you create custom patches.
+However this command is intended for use only for Infinispan Server, or community, deployments.
+
+[IMPORTANT]
+====
+{RedHat} supports patched deployments only with patches that you
+download from the {portal}.
+{RedHat} does not support server patches that you create yourself.
+====
+endif::downstream[]
