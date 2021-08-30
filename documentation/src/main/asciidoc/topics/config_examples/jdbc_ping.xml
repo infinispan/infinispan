@@ -1,7 +1,4 @@
-<config>
-  <JDBC_PING connection_url="jdbc:mysql://localhost:3306/database_name"
-             connection_username="user"
-             connection_password="password"
-             connection_driver="com.mysql.jdbc.Driver"/>
-  <!-- JGroups stack configuration. -->
-</config>
+<JDBC_PING connection_url="jdbc:mysql://localhost:3306/database_name"
+           connection_username="user"
+           connection_password="password"
+           connection_driver="com.mysql.jdbc.Driver"/>

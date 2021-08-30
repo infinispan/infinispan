@@ -19,3 +19,24 @@ Alternatively you can specify an absolute path when you declare the external sta
 ----
 include::config_examples/jgroups_external_stack.xml[]
 ----
+
+ifdef::embedded_caches[]
+You can also use the `addProperty()` method in the `TransportConfigurationBuilder` class to specify a custom JGroups stack file as follows:
+
+[source,java]
+----
+include::code_examples/ConfigureTransportCustom.java[]
+----
+
+In this example, `my-jgroups-udp.xml` references a UDP stack with custom properties such as the following:
+
+.Custom UDP stack example
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jgroups_custom_udp.xml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]
+endif::embedded_caches[]

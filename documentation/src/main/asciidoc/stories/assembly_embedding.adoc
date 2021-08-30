@@ -1,9 +1,9 @@
-[id='library_mode']
-:context: embedding
+[id='embedded-caches']
+:context: embedded-caches
 
 include::assembly_configuring_maven_repository.adoc[leveloffset=+0]
 include::{topics}/proc_installing_embedded.adoc[leveloffset=+0]
-include::{topics}/proc_running_embedded.adoc[leveloffset=+0]
+include::{topics}/proc_initializing_embedded_caches.adoc[leveloffset=+0]
 include::{topics}/proc_enabling_statistics.adoc[leveloffset=+0]
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+0]
 include::{topics}/proc_enabling_jmx_port.adoc[leveloffset=+1]

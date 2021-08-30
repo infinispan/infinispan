@@ -1,7 +1,6 @@
 [id='patching_install-{context}']
 = Installing Server Patches
-Apply patches to {brandname} servers to upgrade or downgrade an existing
-version.
+Apply patches to {brandname} Server to upgrade or downgrade an existing version.
 
 .Prerequisites
 
@@ -12,11 +11,10 @@ ifdef::downstream[]
 * Download a server patch for the target version.
 endif::downstream[]
 
-
 .Procedure
 
-. Navigate to `{server_home}` for the {brandname} server you want to patch.
-. Stop the server if it is running.
+. Navigate to `{server_home}` for the {brandname} Server installation you want to patch.
+. Stop the {brandname} Server if it is running.
 +
 [NOTE]
 ====

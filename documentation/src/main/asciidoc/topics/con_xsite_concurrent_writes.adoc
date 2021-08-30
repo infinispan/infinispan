@@ -56,6 +56,12 @@ Prepend site names with numbers as a simple way to represent the order of
 priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
 ====
 
+[NOTE]
+====
+{brandname} performs conflict resolution with the asynchronous backup strategy (`strategy=async`) only.
+However, you should not use the synchronous backup strategy with an Active/Active configuration because concurrent writes result in deadlocks.
+====
+
 [discrete]
 == Conflict resolution algorithms
 

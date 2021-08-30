@@ -1,21 +1,19 @@
 [id='patching_rollback-{context}']
 = Rolling Back Server Patches
-Remove patches from {brandname} servers by rolling them back and restoring the
-previous {brandname} version.
+Remove patches from {brandname} Server by rolling them back and restoring the previous {brandname} version.
 
 [IMPORTANT]
 ====
-If a server has multiple patches installed, you can roll back the last
-installed patch only.
+If a server has multiple patches installed, you can roll back the last installed patch only.
 
 Rolling back patches does not revert configuration changes you make to
-{brandname} server. Before you roll back patches, you should ensure that your
-configuration is compatible with the version to which you are rolling back.
+{brandname} Server.
+Before you roll back patches, you should ensure that your configuration is compatible with the version to which you are rolling back.
 ====
 
 .Procedure
 
-. Navigate to `{server_home}` for the {brandname} server installation you want to roll back.
+. Navigate to `{server_home}` for the {brandname} Server installation you want to roll back.
 . Stop the server if it is running.
 . Start the CLI.
 +
