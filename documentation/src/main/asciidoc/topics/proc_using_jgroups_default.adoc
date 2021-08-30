@@ -23,7 +23,6 @@ ifdef::embedded_caches[]
 ----
 include::code_examples/ConfigureTransportDefault.java[]
 ----
-<1> Uses the `default-jgroups-udp.xml` stack for cluster transport.
 endif::embedded_caches[]
 
 ifdef::remote_caches[]
@@ -46,7 +45,7 @@ endif::remote_caches[]
 
 //RH KCS article
 ifdef::downstream[]
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:https://access.redhat.com/solutions/5608391[JGroups cluster transport configuration for {brandname} 8.x] ({RedHat} knowledgebase article)
 endif::downstream[]

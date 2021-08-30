@@ -1,6 +1,6 @@
-[id='install_library']
-= Installing {brandname} in Library Mode
-Add {brandname} as an embedded library in your project.
+[id='installing-embedded_{context}']
+= Adding {brandname} to your project
+Add {brandname} to your project to create embedded caches in your applications.
 
 .Procedure
 

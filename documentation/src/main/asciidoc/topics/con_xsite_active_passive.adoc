@@ -3,7 +3,8 @@
 Clients can write to {brandname} clusters in either an Active/Passive or
 Active/Active configuration.
 
-.Active/Passive
+[discrete]
+== Active/Passive
 
 The following diagram illustrates Active/Passive where {brandname} handles
 client requests from one site only:
@@ -21,7 +22,8 @@ cluster at **LON** goes offline for any reason, clients can start sending
 requests to **NYC**. When you bring **LON** back online you can synchronize
 data with **NYC** and then switch clients back to **LON**.
 
-.Active/Active
+[discrete]
+== Active/Active
 
 The following diagram illustrates Active/Active where {brandname} handles
 client requests at two sites:
@@ -41,3 +43,14 @@ while handling client requests. If either **NYC** or **LON** go offline,
 clients can start sending requests to the online site. You can then bring
 offline sites back online, push state to synchronize data, and switch clients
 as required.
+
+[discrete]
+== Backup strategies
+
+[IMPORTANT]
+====
+With an Active/Active configuration, you should always use an asynchronous backup strategy (`strategy=async`).
+====
+
+If multiple clients attempt to write to the same entry concurrently, and the backup strategy is synchronous (`strategy=sync`), then deadlocks occur.
+However you can use the synchronous backup strategy with an Active/Passive configuration if both sites access different data sets, in which case there is no risk of deadlocks from concurrent writes.
