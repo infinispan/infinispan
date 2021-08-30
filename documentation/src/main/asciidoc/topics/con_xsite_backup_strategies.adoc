@@ -1,5 +1,47 @@
-[id='xsite_backup_strategies-{context}']
-= Backup Strategies
-{brandname} clusters can use different strategies for backing up data to remote sites.
+[id='backup-strategies_{context}']
+= Backup strategies
 
-{brandname} replicates across sites at the same time that writes to local caches occur. For example, if a client writes "k1" to **LON**, {brandname} backs up "k1" to **NYC** at the same time.
+{brandname} replicates data between clusters at the same time that writes to caches occur.
+For example, if a client writes "k1" to **LON**, {brandname} backs up "k1" to **NYC** at the same time.
+
+To back up data to a different cluster, {brandname} can use either a synchronous or asynchronous strategy.
+
+[discrete]
+== Synchronous strategy
+When {brandname} replicates data to backup locations, it writes to the cache on the local cluster and the cache on the remote cluster concurrently.
+With the synchronous strategy, {brandname} waits for both write operations to complete before returning.
+
+You can control how {brandname} handles writes to the cache on the local cluster if backup operations fail.
+{brandname} can do the following:
+
+* Ignore the failed backup and silently continue the write to the local cluster.
+* Log a warning message or throw an exception and continue the write to the local cluster.
+* Handle failed backup operations with custom logic.
+
+Synchronous backups also support two-phase commits with caches that participate in optimistic transactions.
+The first phase of the backup acquires a lock.
+The second phase commits the modification.
+
+[IMPORTANT]
+====
+Two-phase commit with cross-site replication has a significant performance impact because it requires two round-trips across the network.
+====
+
+[discrete]
+== Asynchronous strategy
+When {brandname} replicates data to backup locations, it does not wait until the operation completes before writing to the local cache.
+
+Asynchronous backup operations and writes to the local cache are independent of each other.
+If backup operations fail, write operations to the local cache continue and no exceptions occur.
+When this happens {brandname} also retries the write operation until the remote cluster disconnects from the cross-site view.
+
+[discrete]
+== Synchronous vs asynchronous backups
+Synchronous backups offer the strongest guarantee of data consistency across sites.
+If `strategy=sync`, when `cache.put()` calls return you know the value is up to date in the local cache and in the backup locations.
+
+The trade-off for this consistency is performance.
+Synchronous backups have much greater latency in comparison to asynchronous backups.
+
+Asynchronous backups, on the other hand, do not add latency to client requests so they have no performance impact.
+However, if `strategy=async`, when `cache.put()` calls return you cannot be sure of that the value in the backup location is the same as in the local cache.

@@ -1,8 +1,0 @@
-[id='xsite_async_backups-{context}']
-= Asynchronous Backups
-When {brandname} replicates data to backup locations, it does not wait until the
-operation completes before writing to the local cache.
-
-Asynchronous backup operations and writes to the local cache are independent of
-each other. If backup operations fail, write operations to the local cache
-continue and no exceptions occur.
