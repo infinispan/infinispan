@@ -10,6 +10,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -42,7 +43,7 @@ public class TestObjectStreamMarshaller implements PersistenceMarshaller {
    }
 
    public TestObjectStreamMarshaller(SerializationContextInitializer sci) {
-      cacheManager = TestCacheManagerFactory.createCacheManager(sci);
+      cacheManager = TestCacheManagerFactory.createCacheManager(sci, new ConfigurationBuilder());
       marshaller = (PersistenceMarshallerImpl) cacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
