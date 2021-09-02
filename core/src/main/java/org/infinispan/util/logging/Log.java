@@ -2103,8 +2103,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to unmarshall '%s' as a marshaller is not present in the user or global SerializationContext", id = 615)
    MarshallingException marshallerMissingFromUserAndGlobalContext(String type);
 
-   @Message(value = "Unable to migrate data across multiple major versions", id = 616)
-   PersistenceException persistedDataMigrationAcrossMajorVersions();
+   @Message(value = "Unsupported persisted data version: %s", id = 616)
+   PersistenceException persistedDataMigrationUnsupportedVersion(String magic);
 
    @Message(value = "Site '%s' not found.", id = 617)
    IllegalArgumentException siteNotFound(String siteName);
@@ -2185,7 +2185,7 @@ public interface Log extends BasicLogger {
    InvalidTransactionException transactionAlreadyRolledBack(GlobalTransaction gtx);
 
    @LogMessage(level = INFO)
-   @Message(value = "Attempting to recover '%s' corrupt data ...", id = 642)
+   @Message(value = "Attempting to recover possibly corrupted data file %s", id = 642)
    void startRecoveringCorruptPersistenceData(String cacheName);
 
    @LogMessage(level = INFO)
@@ -2209,4 +2209,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "SingleFileStore does not support max-entries when segmented", id = 649)
    CacheConfigurationException segmentedSingleFileStoreDoesNotSupportMaxEntries();
+
+   @Message(value = "Read invalid data in SingleFileStore file %s, please remove the file and retry", id = 650)
+   PersistenceException invalidSingleFileStoreData(String path);
 }

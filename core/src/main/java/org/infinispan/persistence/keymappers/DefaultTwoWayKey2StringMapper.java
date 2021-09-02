@@ -1,11 +1,11 @@
 package org.infinispan.persistence.keymappers;
 
 import java.util.Base64;
+import java.util.UUID;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import java.util.UUID;
 
 /**
  * Default implementation for {@link TwoWayKey2StringMapper} that knows how to handle all primitive
@@ -64,7 +64,6 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
 
    @Override
    public Object getKeyMapping(String key) {
-      log.tracef("Get mapping for key: %s", key);
       if (key.length() > 0 && key.charAt(0) == NON_STRING_PREFIX) {
          char type = key.charAt(1);
          String value = key.substring(2);

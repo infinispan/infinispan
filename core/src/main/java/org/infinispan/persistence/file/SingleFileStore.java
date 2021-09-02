@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
@@ -40,6 +39,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -142,7 +142,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    @GuardedBy("resizeLock")
    private Map<K, FileEntry>[] entries;
    private SortedSet<FileEntry> freeList;
-   private long filePos = MAGIC_LATEST.length;
+   private long filePos;
    private File file;
    private float fragmentationFactor = .75f;
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
@@ -155,9 +155,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    private int actualNumSegments;
    private int maxEntries;
 
-   public static File getStoreFile(GlobalConfiguration globalConfiguration, String locationPath, String cacheName) {
-      Path location = PersistenceUtil.getLocation(globalConfiguration, locationPath);
-      return new File(location.toFile(), cacheName + ".dat");
+   public static File getStoreFile(String directoryPath, String cacheName) {
+      return new File(new File(directoryPath), cacheName + ".dat");
    }
 
    @Override
@@ -172,8 +171,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       maxEntries = configuration.maxEntries();
       segmented = configuration.segmented();
       if (segmented) {
-         AdvancedCache<?, ?> cache = ctx.getCache().getAdvancedCache();
-         actualNumSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
+         actualNumSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
       } else {
          actualNumSegments = 1;
       }
@@ -187,43 +185,40 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private void blockingStart() {
-      try {
-         file = getStoreFile(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName());
-         if (!SecurityActions.fileExists(file)) {
-            if (configuration.ignoreModifications()) {
-               return;
-            }
-            File dir = file.getParentFile();
-            if (!SecurityActions.createDirectoryIfNeeded(dir)) {
-               throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
-            }
-         }
-         channel = SecurityActions.openFileChannel(file);
+      boolean shouldClear = configuration.purgeOnStartup();
+      boolean readOnly = configuration.ignoreModifications();
+      assert !(shouldClear && readOnly) : "Store can't be configured with both purge and ignore modifications";
 
-         // check file format and read persistent state if enabled for the cache
-         byte[] header = new byte[MAGIC_LATEST.length];
-         boolean shouldClear = false;
-         if (!configuration.purgeOnStartup() && channel.read(ByteBuffer.wrap(header), 0) == MAGIC_LATEST.length) {
-            if (Arrays.equals(MAGIC_LATEST, header)) {
+      try {
+         Path resolvedPath = PersistenceUtil.getLocation(ctx.getGlobalConfiguration(), configuration.location());
+         file = getStoreFile(resolvedPath.toString(), cacheName());
+         boolean hasSingleFile = SecurityActions.fileExists(file);
+         if (hasSingleFile) {
+            channel = SecurityActions.openFileChannel(file);
+
+            byte[] magicHeader = validateExistingFile(channel, file.getAbsolutePath());
+            if (magicHeader != null) {
+               migrateNonSegmented(magicHeader, shouldClear);
+            } else if (!shouldClear) {
                rebuildIndex();
                processFreeEntries();
-            } else if (Arrays.equals(MAGIC_12_0, header)) {
-               migrateFromV12_0();
-               processFreeEntries();
-            } else if (Arrays.equals(MAGIC_11_0, header)) {
-               migrateFromV11();
-               processFreeEntries();
-            } else if (Arrays.equals(MAGIC_BEFORE_11, header)) {
-               throw PERSISTENCE.persistedDataMigrationAcrossMajorVersions();
             } else {
-               shouldClear = !configuration.ignoreModifications();
+               clear();
+            }
+         } else if (hasAnyComposedSegmentedFiles()) {
+            if (!shouldClear) {
+               migrateFromComposedSegmentedLoadWriteStore(shouldClear);
             }
          } else {
-            // Store can't be configured with both purge and ignore modifications
-            shouldClear = true;
-         }
-         if (shouldClear) {
-            clear(); // otherwise (unknown file format or no preload) just reset the file
+            // No existing files
+            if (!readOnly) {
+               File dir = file.getParentFile();
+               if (!SecurityActions.createDirectoryIfNeeded(dir)) {
+                  throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
+               }
+
+               channel = createNewFile(file);
+            }
          }
 
          // Initialize the fragmentation factor
@@ -235,6 +230,88 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
+   private boolean hasAnyComposedSegmentedFiles() {
+      int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      for (int segment = 0; segment < numSegments; segment++) {
+         File segmentFile = getComposedSegmentFile(segment);
+         if (SecurityActions.fileExists(segmentFile))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * @return The magic bytes from the header or {@code null} if migration is not needed.
+    */
+   private byte[] validateExistingFile(FileChannel fileChannel, String filePath) throws Exception {
+      // check file format and read persistent state if enabled for the cache
+      byte[] headerMagic = new byte[MAGIC_LATEST.length];
+      int headerBytes = fileChannel.read(ByteBuffer.wrap(headerMagic), 0);
+      if (headerBytes == MAGIC_LATEST.length) {
+         if (!Arrays.equals(MAGIC_LATEST, headerMagic))
+            return headerMagic;
+      } else {
+         // Store file has less than MAGIC_LEN bytes
+         throw PERSISTENCE.invalidSingleFileStoreData(filePath);
+      }
+      return null;
+   }
+
+   private void migrateNonSegmented(byte[] magicHeader, boolean removeOnly) throws Exception {
+      PERSISTENCE.startMigratingPersistenceData(cacheName());
+      File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
+      try {
+         if (SecurityActions.fileExists(newFile)) {
+            if (log.isTraceEnabled()) log.tracef("Overwriting temporary migration file %s", newFile);
+            // Delete file to overwrite permissions as well
+            SecurityActions.deleteFile(newFile);
+         }
+
+         try (FileChannel newChannel = createNewFile(newFile)) {
+            if (!removeOnly) {
+               copyEntriesFromOldFile(magicHeader, newChannel, channel, file.toString());
+            }
+         }
+
+         //close old file
+         channel.close();
+         //replace old file with the new file
+         SecurityActions.moveFile(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         //reopen the file
+         channel = SecurityActions.openFileChannel(file);
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName());
+      } catch (IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);
+      }
+   }
+
+   private void copyEntriesFromOldFile(byte[] magicHeader, FileChannel destChannel, FileChannel sourceChannel,
+                                       String sourcePath) throws Exception {
+      if (Arrays.equals(MAGIC_12_0, magicHeader)) {
+         copyEntriesFromV12_0(destChannel, sourceChannel, sourcePath);
+      } else if (Arrays.equals(MAGIC_11_0, magicHeader)) {
+         copyEntriesFromV11(destChannel, sourceChannel);
+      } else if (Arrays.equals(MAGIC_BEFORE_11, magicHeader)) {
+         throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
+      } else {
+         throw PERSISTENCE.invalidSingleFileStoreData(file.getAbsolutePath());
+      }
+   }
+
+   private FileChannel createNewFile(File newFile) throws IOException {
+      FileChannel newChannel = SecurityActions.openFileChannel(newFile);
+      try {
+         // Write Magic
+         newChannel.truncate(0);
+         newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+         filePos = MAGIC_LATEST.length;
+         return newChannel;
+      } catch (Throwable t) {
+         newChannel.close();
+         throw t;
+      }
+   }
+
    @Override
    public CompletionStage<Void> stop() {
       return ctx.getBlockingManager().runBlocking(this::blockingStop, "sfs-stop");
@@ -243,15 +320,15 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    private void blockingStop() {
       try {
          if (channel != null) {
-            Long approximateSize = CompletionStages.join(approximateSize(IntSets.immutableRangeSet(actualNumSegments)));
-            log.tracef("Stopping store %s, size = %d, file size = %d", ctx.getCache().getName(), approximateSize, channel.size());
-
+            if (log.isTraceEnabled()) {
+               Long size = CompletionStages.join(approximateSize(IntSets.immutableRangeSet(actualNumSegments)));
+               log.tracef("Stopping store %s, size = %d, file size = %d", cacheName(), size, channel.size());
+            }
             // reset state
             channel.close();
             channel = null;
             entries = null;
             freeList = null;
-            filePos = MAGIC_LATEST.length;
          }
       } catch (Exception e) {
          throw new PersistenceException(e);
@@ -265,17 +342,18 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
-      return CompletableFutures.booleanStage(file.exists());
+      return CompletableFutures.booleanStage(SecurityActions.fileExists(file));
    }
 
    /**
     * Rebuilds the in-memory index from file.
     */
    private void rebuildIndex() throws Exception {
+      filePos = MAGIC_LATEST.length;
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
       for (; ; ) {
          // read FileEntry fields from file (size, keyLen etc.)
-         buf = readChannel(buf, filePos, KEY_POS_LATEST);
+         buf = readChannel(buf, filePos, KEY_POS_LATEST, channel);
          // return if end of file is reached
          if (buf.remaining() > 0)
             break;
@@ -295,7 +373,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          // check if the entry is used or free
          if (fe.keyLen > 0) {
             // load the key from file
-            buf = readChannel(buf, fe.offset + KEY_POS_LATEST, fe.keyLen);
+            buf = readChannel(buf, fe.offset + KEY_POS_LATEST, fe.keyLen, channel);
 
             // deserialize key and add to entries map
             // Marshaller should allow for provided type return for safety
@@ -334,50 +412,171 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       return builder.build();
    }
 
-   private void migrateFromV12_0()  throws Exception {
+   private void migrateFromComposedSegmentedLoadWriteStore(boolean removeOnly) throws IOException {
+      PERSISTENCE.startMigratingPersistenceData(cacheName());
+      File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
+      try {
+         if (SecurityActions.fileExists(newFile)) {
+            if (log.isTraceEnabled()) log.tracef("Overwriting temporary migration file %s", newFile);
+            // Delete file to overwrite permissions as well
+            SecurityActions.deleteFile(newFile);
+         }
+
+         try (FileChannel newChannel = createNewFile(newFile)) {
+            if (!removeOnly) {
+               copyEntriesFromOldSegmentFiles(newChannel);
+            }
+         }
+
+         // Move the new file to the final name
+         SecurityActions.moveFile(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+         // Reopen the file
+         channel = SecurityActions.openFileChannel(file);
+
+         // Remove the composed segment files
+         removeComposedSegmentedLoadWriteStoreFiles();
+
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName());
+      } catch (PersistenceException e) {
+         throw e;
+      } catch (Exception e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);
+      }
+   }
+
+   private void copyEntriesFromOldSegmentFiles(FileChannel newChannel) throws Exception {
+      int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      for (int segment = 0; segment < numSegments; segment++) {
+         File segmentFile = getComposedSegmentFile(segment);
+         if (SecurityActions.fileExists(segmentFile)) {
+            try (FileChannel segmentChannel = SecurityActions.openFileChannel(segmentFile)) {
+               byte[] magic = validateExistingFile(segmentChannel, segmentFile.toString());
+               copyEntriesFromOldFile(magic, newChannel, segmentChannel, segmentFile.toString());
+            }
+         }
+      }
+   }
+
+   private void removeComposedSegmentedLoadWriteStoreFiles() {
+      Path rootLocation = PersistenceUtil.getLocation(ctx.getGlobalConfiguration(), configuration.location());
+      if (log.isTraceEnabled()) log.tracef("Removing old ComposedSegmentedLoadWriteStore files from %s", rootLocation);
+      int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      for (int segment = 0; segment < numSegments; segment++) {
+         File segmentFile = getComposedSegmentFile(segment);
+         if (SecurityActions.fileExists(segmentFile)) {
+            SecurityActions.deleteFile(segmentFile);
+            if (segmentFile.getParentFile() != null && segmentFile.isDirectory() &&
+                segmentFile.getParentFile().list().length == 0) {
+               // The segment directory is empty, remove it
+               SecurityActions.deleteFile(segmentFile.getParentFile());
+            }
+         }
+      }
+   }
+
+   private File getComposedSegmentFile(int segment) {
+      return segmentFileLocation(ctx.getGlobalConfiguration(), configuration.location(), cacheName(), segment);
+   }
+
+   private static File segmentFileLocation(GlobalConfiguration globalConfiguration, String location,
+                                           String cacheName, int segment) {
+      Path rootPath = PersistenceUtil.getLocation(globalConfiguration, location);
+      String segmentPath = AbstractSegmentedStoreConfiguration.fileLocationTransform(rootPath.toString(), segment);
+      return getStoreFile(segmentPath, cacheName);
+   }
+
+   private void copyEntriesFromV12_0(FileChannel destChannel, FileChannel sourceChannel, String sourcePath) throws Exception {
       // ISPN-13128 Corrupt migration data can only be created with default marshaller
       if (ctx.getGlobalConfiguration().serialization().marshaller() == null) {
-         migrateCorruptDataV12_0();
+         copyCorruptDataV12_0(destChannel, sourceChannel, sourcePath);
          return;
       }
 
-      // Data is not corrupt, so simply update file magic
-      String cacheName = ctx.getCache().getName();
-      PERSISTENCE.startMigratingPersistenceData(cacheName);
+      // Data is not corrupt
       try {
-         channel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
+         long currentTs = timeService.wallClockTime();
+         ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
+         ByteBuffer bodyBuf = ByteBuffer.allocate(KEY_POS_LATEST);
+
+         long oldFilePos = MAGIC_12_0.length;
+         while (true) {
+            // read FileEntry fields from file (size, keyLen etc.)
+            buf = readChannel(buf, oldFilePos, KEY_POS_11_0, sourceChannel);
+            if (buf.remaining() > 0)
+               break;
+
+            buf.flip();
+
+            // initialize FileEntry from buffer
+            FileEntry oldFe = new FileEntry(oldFilePos, buf);
+
+            // sanity check
+            if (oldFe.size < KEY_POS_11_0 + oldFe.keyLen + oldFe.dataLen + oldFe.metadataLen + oldFe.internalMetadataLen) {
+               throw PERSISTENCE.errorReadingFileStore(file.getPath(), oldFilePos);
+            }
+
+            //update old file pos to the next entry
+            oldFilePos += oldFe.size;
+
+            // check if the entry is used or free
+            // if it is free, it is ignored.
+            if (oldFe.keyLen < 1)
+               continue;
+
+            // The entry has already expired, so avoid writing to the new file
+            if (oldFe.expiryTime > 0 && oldFe.expiryTime < currentTs)
+               continue;
+
+            // Read the body of the entry, skipping the fixed header
+            bodyBuf = allocate(bodyBuf, oldFe.size - KEY_POS_LATEST);
+            readChannel(bodyBuf, oldFe.offset + KEY_POS_LATEST, oldFe.size - KEY_POS_LATEST, sourceChannel);
+
+            K key = (K) ctx.getPersistenceMarshaller().objectFromByteBuffer(bodyBuf.array(), 0, oldFe.keyLen);
+
+            // Update the entry with the destination filePos
+            FileEntry newFe = new FileEntry(this.filePos, oldFe.size, oldFe.keyLen, oldFe.dataLen, oldFe.metadataLen, oldFe.internalMetadataLen, oldFe.expiryTime);
+            // Put the updated entry in the entries map so we don't need to rebuild the index later
+            Map<K, FileEntry> segmentEntries = getSegmentEntries(getSegment(key));
+            segmentEntries.put(key, newFe);
+
+            buf.flip();
+            destChannel.write(buf, this.filePos);
+            bodyBuf.flip();
+            destChannel.write(bodyBuf, this.filePos + KEY_POS_LATEST);
+            this.filePos += newFe.size;
+            if (log.isTraceEnabled())
+               log.tracef("Recovered entry %s at %d:%d", key, newFe.size, newFe.offset, newFe.size);
+         }
       } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);
       }
-      rebuildIndex();
    }
 
-   private void migrateCorruptDataV12_0() {
-      String cacheName = ctx.getCache().getName();
-      PERSISTENCE.startRecoveringCorruptPersistenceData(cacheName);
-      File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
+   private String cacheName() {
+      return ctx.getCache().getName();
+   }
+
+   private void copyCorruptDataV12_0(FileChannel destChannel, FileChannel sourceChannel, String sourcePath) {
+      PERSISTENCE.startRecoveringCorruptPersistenceData(sourcePath);
 
       // Day before the release of Infinispan 10.0.0.Final
       // This was the first release that SFS migrations on startup could be migrated from via ISPN 10 -> 11 -> 12
       long sanityEpoch = LocalDate.of(2019, 10, 26)
-            .atStartOfDay()
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli();
+                                  .atStartOfDay()
+                                  .atZone(ZoneId.systemDefault())
+                                  .toInstant()
+                                  .toEpochMilli();
       long currentTs = timeService.wallClockTime();
 
       int entriesRecovered = 0;
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
       ByRef<ByteBuffer> bufRef = ByRef.create(buf);
-      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
-         //Write Magic
-         newChannel.truncate(0);
-         newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
-
-         long fileSize = channel.size();
+      try {
+         long fileSize = sourceChannel.size();
          long oldFilePos = MAGIC_12_0.length;
          while (true) {
-            buf = readChannel(buf, oldFilePos, KEY_POS_LATEST);
+            buf = readChannel(buf, oldFilePos, KEY_POS_LATEST, sourceChannel);
             // EOF reached
             if (buf.remaining() > 0)
                break;
@@ -412,12 +611,12 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             bufRef.set(buf);
             try {
                // Read old entry content and then write
-               key = unmarshallObject(bufRef, offset, fe.keyLen);
-               value = unmarshallObject(bufRef, offset, fe.dataLen);
+               key = unmarshallObject(bufRef, offset, fe.keyLen, sourceChannel);
+               value = unmarshallObject(bufRef, offset, fe.dataLen, sourceChannel);
 
                int metaLen = fe.metadataLen > 0 ? fe.metadataLen - TIMESTAMP_BYTES : 0;
                if (metaLen > 0)
-                  metadata = unmarshallObject(bufRef, offset, metaLen);
+                  metadata = unmarshallObject(bufRef, offset, metaLen, sourceChannel);
 
                // Entries successfully unmarshalled so it's safe to increment oldFilePos to FileEntry+offset so brute-force can resume on next iteration
                oldFilePos = offset.get();
@@ -433,7 +632,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             long created = -1;
             long lastUsed = -1;
             if (fe.metadataLen > 0 && fe.expiryTime > 0) {
-               buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES);
+               buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES, sourceChannel);
                buf.flip();
                // Try to read timestamps. If corrupt data then this could be nonsense
                created = buf.getLong();
@@ -457,7 +656,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             if (fe.internalMetadataLen > 0) {
                try {
                   bufRef.set(buf);
-                  internalMeta = unmarshallObject(bufRef, offset, fe.internalMetadataLen);
+                  internalMeta = unmarshallObject(bufRef, offset, fe.internalMetadataLen, sourceChannel);
                   oldFilePos = offset.get();
                } catch (Throwable t) {
                   // Will fail if data is corrupt as PrivateMetadata doesn't exist
@@ -475,48 +674,27 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             }
 
             MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory().create(key, value, metadata, internalMeta, created, lastUsed);
-            write(getSegment(key), me, newChannel);
+            write(getSegment(key), me, destChannel);
             entriesRecovered++;
          }
+         if (log.isTraceEnabled()) log.tracef("Recovered %d entries", entriesRecovered);
       } catch (IOException e) {
-         throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
-      }
-
-      try {
-         //close old file
-         channel.close();
-         //replace old file with the new file
-         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-         //reopen the file
-         channel = SecurityActions.openFileChannel(file);
-         PERSISTENCE.corruptDataSuccessfulMigrated(cacheName, entriesRecovered);
-      } catch (IOException e) {
-         throw PERSISTENCE.corruptDataMigrationFailed(cacheName, e);
+         throw PERSISTENCE.corruptDataMigrationFailed(cacheName(), e);
       }
    }
 
-   private void migrateFromV11() {
-      String cacheName = ctx.getCache().getName();
-      PERSISTENCE.startMigratingPersistenceData(cacheName);
-      File newFile = new File(file.getParentFile(), cacheName + "_new.dat");
-      if (newFile.exists()) {
-         newFile.delete();
-      }
+   private void copyEntriesFromV11(FileChannel destChannel, FileChannel sourceChannel) {
       long oldFilePos = MAGIC_11_0.length;
       // Only update the key/value/meta bytes if the default marshaller is configured
       boolean wrapperMissing = ctx.getGlobalConfiguration().serialization().marshaller() == null;
 
-      try (FileChannel newChannel = SecurityActions.openFileChannel(newFile)) {
-         //Write Magic
-         newChannel.truncate(0);
-         newChannel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
-
+      try {
          long currentTs = timeService.wallClockTime();
          ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);
          ByRef<ByteBuffer> bufRef = ByRef.create(buf);
          for (; ; ) {
             // read FileEntry fields from file (size, keyLen etc.)
-            buf = readChannelUpdateOffset(buf, new ByRef.Long(oldFilePos), KEY_POS_11_0);
+            buf = readChannel(buf, oldFilePos, KEY_POS_11_0, sourceChannel);
             if (buf.remaining() > 0)
                break;
 
@@ -527,7 +705,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
             // sanity check
             if (oldFe.size < KEY_POS_11_0 + oldFe.keyLen + oldFe.dataLen + oldFe.metadataLen + oldFe.internalMetadataLen) {
-               throw PERSISTENCE.errorReadingFileStore(file.getPath(), filePos);
+               throw PERSISTENCE.errorReadingFileStore(file.getPath(), oldFilePos);
             }
 
             //update old file pos to the next entry
@@ -547,15 +725,15 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             long created = -1;
             long lastUsed = -1;
             bufRef.set(buf);
-            K key = unmarshallObject(bufRef, offset, oldFe.keyLen, wrapperMissing);
-            V value = unmarshallObject(bufRef, offset, oldFe.dataLen, wrapperMissing);
+            K key = unmarshallObject(bufRef, offset, oldFe.keyLen, wrapperMissing, sourceChannel);
+            V value = unmarshallObject(bufRef, offset, oldFe.dataLen, wrapperMissing, sourceChannel);
             Metadata metadata = null;
             if (oldFe.metadataLen > 0) {
-               metadata = unmarshallObject(bufRef, offset, oldFe.metadataLen - TIMESTAMP_BYTES, wrapperMissing);
+               metadata = unmarshallObject(bufRef, offset, oldFe.metadataLen - TIMESTAMP_BYTES, wrapperMissing, sourceChannel);
 
                if (oldFe.expiryTime > 0) {
                   buf = bufRef.get();
-                  buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES);
+                  buf = readChannelUpdateOffset(buf, offset, TIMESTAMP_BYTES, sourceChannel);
                   buf.flip();
                   created = buf.getLong();
                   lastUsed = buf.getLong();
@@ -565,38 +743,27 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
             PrivateMetadata internalMeta = null;
             if (oldFe.internalMetadataLen > 0) {
-               internalMeta = unmarshallObject(bufRef, offset, oldFe.internalMetadataLen, wrapperMissing);
+               internalMeta = unmarshallObject(bufRef, offset, oldFe.internalMetadataLen, wrapperMissing, sourceChannel);
                buf = bufRef.get();
             }
             MarshallableEntry<? extends K, ? extends V> me = (MarshallableEntry<? extends K, ? extends V>) ctx.getMarshallableEntryFactory()
                   .create(key, value, metadata, internalMeta, created, lastUsed);
-            write(getSegment(key), me, newChannel);
+            write(getSegment(key), me, destChannel);
          }
       } catch (IOException | ClassNotFoundException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
-      }
-
-      try {
-         //close old file
-         channel.close();
-         //replace old file with the new file
-         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-         //reopen the file
-         channel = SecurityActions.openFileChannel(file);
-         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
-      } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);
       }
    }
 
-   private <T> T unmarshallObject(ByRef<ByteBuffer> buf, ByRef.Long offset, int length) throws ClassNotFoundException, IOException {
-      return unmarshallObject(buf, offset, length, false);
+   private <T> T unmarshallObject(ByRef<ByteBuffer> buf, ByRef.Long offset, int length, FileChannel sourceChannel) throws ClassNotFoundException, IOException {
+      return unmarshallObject(buf, offset, length, false, sourceChannel);
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T unmarshallObject(ByRef<ByteBuffer> bufRef, ByRef.Long offset, int length, boolean legacyWrapperMissing) throws ClassNotFoundException, IOException {
+   private <T> T unmarshallObject(ByRef<ByteBuffer> bufRef, ByRef.Long offset, int length, boolean legacyWrapperMissing,
+                                  FileChannel sourceChannel) throws ClassNotFoundException, IOException {
       ByteBuffer buf = bufRef.get();
-      buf = readChannelUpdateOffset(buf, offset, length);
+      buf = readChannelUpdateOffset(buf, offset, length, sourceChannel);
       byte[] bytes = buf.array();
       bufRef.set(buf);
 
@@ -614,11 +781,11 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       return(T) persistenceMarshaller.objectFromByteBuffer(bytes, 0, length);
    }
 
-   private ByteBuffer readChannelUpdateOffset(ByteBuffer buf, ByRef.Long offset, int length) throws IOException {
-      return readChannel(buf, offset.getAndAdd(length), length);
+   private ByteBuffer readChannelUpdateOffset(ByteBuffer buf, ByRef.Long offset, int length, FileChannel sourceChannel) throws IOException {
+      return readChannel(buf, offset.getAndAdd(length), length, sourceChannel);
    }
 
-   private ByteBuffer readChannel(ByteBuffer buf, long offset, int length) throws IOException {
+   private ByteBuffer readChannel(ByteBuffer buf, long offset, int length, FileChannel channel) throws IOException {
       buf = allocate(buf, length);
       channel.read(buf, offset);
       return buf;
@@ -1306,7 +1473,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    private void blockingPurgeExpired(UnicastProcessor<MarshallableEntry<K, V>> processor) {
       try {
          long now = timeService.wallClockTime();
-         for (int segment = 0; segment < numSegments; segment++) {
+         for (int segment = 0; segment < actualNumSegments; segment++) {
             List<KeyValuePair<Object, FileEntry>> entriesToPurge;
             long stamp = resizeLock.readLock();
             try {
