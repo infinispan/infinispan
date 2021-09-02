@@ -15,7 +15,6 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -53,8 +52,7 @@ public class EventLoggerCompatibilityTest {
       String file = "sfs/11_0/event_log_cache.dat";
       InputStream is = FileLookupFactory.newInstance()
             .lookupFile(file, Thread.currentThread().getContextClassLoader());
-      File sfsFile = SingleFileStore
-            .getStoreFile(new GlobalConfigurationBuilder().build(), tmpDirectory, cacheName);
+      File sfsFile = SingleFileStore.getStoreFile(tmpDirectory, cacheName);
       if (!sfsFile.exists()) {
          sfsFile.getParentFile().mkdirs();
       }

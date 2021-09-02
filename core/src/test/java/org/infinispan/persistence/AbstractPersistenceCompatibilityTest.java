@@ -7,26 +7,26 @@ import static org.testng.AssertJUnit.assertNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.concurrent.CompletionException;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Value;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -35,19 +35,23 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 11.0
  */
-@Test(groups = "functional")
-public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManagerTest {
+public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCacheManagerTest {
 
    protected enum Version {
       _10_1,
-      _11_0
+      _11_0,
+      _12_0,
+      _12_1,
    }
 
    protected static final int NUMBER_KEYS = 10;
    protected final KeyValueWrapper<String, Value, T> valueWrapper;
    protected String tmpDirectory;
+   protected Version oldVersion;
+   protected boolean oldSegmented;
+   protected boolean newSegmented;
 
-   protected PersistenceCompatibilityTest(KeyValueWrapper<String, Value, T> valueWrapper) {
+   protected AbstractPersistenceCompatibilityTest(KeyValueWrapper<String, Value, T> valueWrapper) {
       this.valueWrapper = valueWrapper;
       this.cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -68,44 +72,20 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       Files.copy(is, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
    }
 
-   @Test
-   public void testReadWriteFrom101() throws Exception {
-      beforeStartCache(Version._10_1);
-      Exceptions.expectException(CacheConfigurationException.class, CompletionException.class, ".*ISPN000616.*",
-            () -> cacheManager.getCache(cacheName()));
+   protected abstract void beforeStartCache() throws Exception;
+
+   protected void setParameters(Version oldVersion, boolean oldSegmented, boolean newSegmented) {
+      this.oldVersion = oldVersion;
+      this.oldSegmented = oldSegmented;
+      this.newSegmented = newSegmented;
    }
 
-   protected void doTestReadWriteFrom101() throws Exception {
-      beforeStartCache(Version._10_1);
-      Cache<String, String> cache = cacheManager.getCache(cacheName());
-
-      for (int i = 0; i < NUMBER_KEYS; ++i) {
-         String key = key(i);
-         if (i % 2 != 0) {
-            assertNull("Expected null value for key " + key, cache.get(key));
-         } else {
-            assertEquals("Wrong value read for key " + key, "value-" + i, cache.get(key));
-         }
-      }
-
-      for (int i = 0; i < NUMBER_KEYS; ++i) {
-         if (i % 2 != 0) {
-            String key = key(i);
-            cache.put(key, "value-" + i);
-         }
-      }
-
-      for (int i = 0; i < NUMBER_KEYS; ++i) {
-         String key = key(i);
-         assertEquals("Wrong value read for key " + key, "value-" + i, cache.get(key));
-      }
-   }
-
-   @Test
-   public void testReadWriteFrom11() throws Exception {
+   protected void doTestReadWrite() throws Exception {
       // 10 keys
       // even keys stored, odd keys removed
-      beforeStartCache(Version._11_0);
+      beforeStartCache();
+
+      cacheManager.defineConfiguration(cacheName(), cacheConfiguration(false).build());
       Cache<String, T> cache = cacheManager.getCache(cacheName());
 
       for (int i = 0; i < NUMBER_KEYS; ++i) {
@@ -133,12 +113,59 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       cacheManager.stop();
 
       try (EmbeddedCacheManager cm = createCacheManager()) {
+         cm.defineConfiguration(cacheName(), cacheConfiguration(false).build());
          cache = cm.getCache(cacheName());
          for (int i = 0; i < NUMBER_KEYS; ++i) {
             String key = key(i);
             assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
          }
       }
+   }
+
+   @Test(enabled = false)
+   public void generateOldData() throws IOException {
+      newSegmented = false;
+      ConfigurationBuilder cacheBuilder = cacheConfiguration(true);
+      cacheManager.defineConfiguration(cacheName(), cacheBuilder.build());
+      Cache<String, T> cache = cacheManager.getCache(cacheName());
+
+      // 10 keys
+      // even keys stored, odd keys removed
+      for (int i = 0; i < NUMBER_KEYS; ++i) {
+         if (i % 2 == 0) {
+            String key = key(i);
+            cache.put(key, valueWrapper.wrap(key, value(i)));
+         }
+      }
+      cache.stop();
+
+      Path sourcePath = Paths.get(tmpDirectory);
+      Path targetPath = Paths.get("generated").toAbsolutePath();
+      Files.createDirectories(targetPath);
+      Files.walkFileTree(sourcePath, new FileVisitor<Path>() {
+         @Override
+         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir)));
+            return FileVisitResult.CONTINUE;
+         }
+
+         @Override
+         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            Files.copy(file, targetPath.resolve(sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+            return FileVisitResult.CONTINUE;
+         }
+
+         @Override
+         public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            return FileVisitResult.TERMINATE;
+         }
+
+         @Override
+         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            return FileVisitResult.CONTINUE;
+         }
+      });
+      log.infof("Data generated in %s", targetPath);
    }
 
    @Override
@@ -155,26 +182,17 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       Util.recursiveFileRemove(tmpDirectory);
    }
 
-   protected abstract void beforeStartCache(Version version) throws Exception;
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      builder.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory());
+      builder.globalState().persistentLocation(tmpDirectory);
       builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
-      amendGlobalConfigurationBuilder(builder);
-      DefaultCacheManager cacheManager = new DefaultCacheManager(builder.build());
-      cacheManager.defineConfiguration(cacheName(), cacheConfiguration().build());
-      return cacheManager;
-   }
-
-   protected void amendGlobalConfigurationBuilder(GlobalConfigurationBuilder builder) {
-      //no-op by default. To set SerializationContextInitializer (for example)
+      return TestCacheManagerFactory.createCacheManager(builder, null);
    }
 
    protected abstract String cacheName();
 
-   protected abstract void configurePersistence(ConfigurationBuilder builder);
+   protected abstract void configurePersistence(ConfigurationBuilder builder, boolean generatingData);
 
    protected String combinePath(String path, String more) {
       return Paths.get(path, more).toString();
@@ -184,11 +202,11 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       return getQualifiedLocation(cacheManager.getCacheManagerConfiguration(), location, cacheName(), qualifier);
    }
 
-   private ConfigurationBuilder cacheConfiguration() {
+   protected ConfigurationBuilder cacheConfiguration(boolean generatingData) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.LOCAL);
       builder.clustering().hash().numSegments(4);
-      configurePersistence(builder);
+      configurePersistence(builder, generatingData);
       return builder;
    }
 }

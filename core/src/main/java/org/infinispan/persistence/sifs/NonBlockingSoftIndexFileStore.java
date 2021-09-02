@@ -216,7 +216,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
                   configuration.maxFileSize());
             if (oldFileProvider.hasFiles()) {
-               throw PERSISTENCE.persistedDataMigrationAcrossMajorVersions();
+               throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
             }
             oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
                   configuration.maxFileSize());

@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.AbstractPersistenceCompatibilityTest;
 import org.infinispan.persistence.IdentityKeyValueWrapper;
-import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.test.data.Value;
@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @since 11.0
  */
 @Test(groups = "functional", testName = "persistence.jdbc.JdbcStoreCompatibilityTest")
-public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Value> {
+public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibilityTest<Value> {
 
    private static final String DB_FILE_NAME = "jdbc_db.mv.db";
    private static final Map<Version, String> data = new HashMap<>(2);
@@ -35,15 +35,23 @@ public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Val
    }
 
    // The jdbc store should still be able to migrate data from 10.x stream
-   @Override
+   @Test
    public void testReadWriteFrom101() throws Exception {
-      doTestReadWriteFrom101();
+      oldVersion = Version._10_1;
+
+      doTestReadWrite();
    }
 
-   @Override
-   protected void beforeStartCache(Version version) throws Exception {
+   @Test
+   public void testReadWriteFrom11() throws Exception {
+      beforeStartCache();
+
+      doTestReadWrite();
+   }
+
+   protected void beforeStartCache() throws Exception {
       new File(tmpDirectory).mkdirs();
-      copyFile(combinePath(data.get(version), DB_FILE_NAME), Paths.get(tmpDirectory), DB_FILE_NAME);
+      copyFile(combinePath(data.get(oldVersion), DB_FILE_NAME), Paths.get(tmpDirectory), DB_FILE_NAME);
    }
 
    @Override
@@ -52,11 +60,12 @@ public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Val
    }
 
    @Override
-   protected void configurePersistence(ConfigurationBuilder builder) {
+   protected void configurePersistence(ConfigurationBuilder builder, boolean generatingData) {
       JdbcStringBasedStoreConfigurationBuilder jdbcB = builder.persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      jdbcB.segmented(oldSegmented);
       jdbcB.table()
-            .createOnStart(false)
+            .createOnStart(generatingData)
             .tableNamePrefix("ISPN_STRING_TABLE")
             .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
             .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
