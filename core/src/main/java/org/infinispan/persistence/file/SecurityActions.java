@@ -2,14 +2,18 @@ package org.infinispan.persistence.file;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.security.Security;
 
 /**
@@ -30,25 +34,42 @@ final class SecurityActions {
       }
    }
 
+   static <T> T doPrivilegedException(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action);
+      } else {
+         return Security.doPrivileged(action);
+      }
+   }
+
    static boolean fileExists(File file) {
       return doPrivileged(file::exists);
    }
 
-   static FileChannel openFileChannel(File file) throws FileNotFoundException {
-      PrivilegedExceptionAction<FileChannel> action = () -> {
-         return new RandomAccessFile(file, "rw").getChannel();
-      };
+   static boolean deleteFile(File file) {
+      return doPrivileged(file::delete);
+   }
+
+   static void moveFile(Path sourcePath, Path destPath, StandardCopyOption... moveOptions) throws IOException {
       try {
-         if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(action);
+         doPrivilegedException(() -> Files.move(sourcePath, destPath, moveOptions));
+      } catch (PrivilegedActionException e) {
+         if (e.getCause() instanceof IOException) {
+            throw ((IOException) e.getCause());
          } else {
-            return Security.doPrivileged(action);
+            throw new PersistenceException(e);
          }
+      }
+   }
+
+   static FileChannel openFileChannel(File file) throws FileNotFoundException {
+      try {
+         return doPrivilegedException(() -> new RandomAccessFile(file, "rw").getChannel());
       } catch (PrivilegedActionException e) {
          if (e.getCause() instanceof FileNotFoundException) {
             throw ((FileNotFoundException) e.getCause());
          } else {
-            throw new CacheConfigurationException(e);
+            throw new PersistenceException(e);
          }
       }
    }
