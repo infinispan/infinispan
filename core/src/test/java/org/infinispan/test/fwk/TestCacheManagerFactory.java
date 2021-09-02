@@ -322,7 +322,7 @@ public class TestCacheManagerFactory {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
       if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
-      return newDefaultCacheManager(start, globalBuilder, new ConfigurationBuilder());
+      return newDefaultCacheManager(start, globalBuilder, null);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder,
