@@ -32,9 +32,9 @@ Written and maintained by the {brandname} community
 == Administrator
 
 [unstyled]
+* link:titles/tuning/tuning.html[Planning and Tuning {brandname} Deployments]
 * link:titles/upgrading/upgrading.html[Upgrading {brandname}]
 * link:titles/security/security.html[Security]
-* link:titles/tuning/tuning.html[Tuning {brandname} Performance]
 
 [discrete]
 == Developer

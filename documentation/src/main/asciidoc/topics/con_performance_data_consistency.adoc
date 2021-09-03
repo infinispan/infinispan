@@ -1,0 +1,43 @@
+[id='performance-data-consistency_{context}']
+= Data consistency
+
+Data that resides on a distributed system is vulnerable to errors that can arise from temporary network outages, system failures, or just simple human error.
+These external factors are uncontrollable but can have serious consequences for quality of your data.
+The effects of data corruption range from lower customer satisfaction to costly system reconciliation that results in service unavailability.
+
+{brandname} can carry out ACID (atomic, consistent, isolated, durable) transactions to ensure the cache state is consistent.
+
+Transactions are a sequence of operations that {brandname} caries out as a single operation.
+Either all write operations in a transaction complete successfully or they all fail.
+In this way, the transaction either modifies the cache state in a consistent way, providing a history of reads and writes, or it does not modify cache state at all.
+
+The main performance concern for enabling transactions is finding the balance between having a more consistent data set and increasing latency that degrades write throughput.
+
+.Write locks with transactions
+
+Configuring the wrong locking mode can negatively the performance of your transactions.
+The right locking mode depends on whether your {brandname} deployment has a high or low rate of contention for keys.
+
+For workloads with low rates of contention, where two or more transactions are not likely to write to the same key simultaneously, optimistic locking offers the best performance.
+
+{brandname} acquires write locks on keys before transactions commit.
+If there is contention for keys, the time it takes to acquire locks can delay commits.
+Additionally, if {brandname} detects conflicting writes, then it rolls the transaction back and the application must retry it, increasing latency.
+
+For workloads with high rates of contention, pessimistic locking provides the best performance.
+
+{brandname} acquires write locks on keys when applications access them to ensure no other transaction can modify the keys.
+Transaction commits complete in a single phase because keys are already locked.
+Pessimistic locking with multiple key transactions results in {brandname} locking keys for longer periods of time, which can decrease write throughput.
+
+.Read isolation
+
+Isolation levels do not impact {brandname} performance considerations except for optimistic locking with `REPEATABLE_READ`.
+With this combination, {brandname} checks for write skews to detect conflicts, which can result in longer transaction commit phases.
+{brandname} also uses version metadata to detect conflicting write operations, which can increase the amount of memory per entry and generate additional network traffic for the cluster.
+
+.Transaction recovery and partition handling
+
+If networks become unstable due to partitions or other issues, {brandname} can mark transactions as "in-doubt".
+When this happens {brandname} retains write locks that it acquires until the network stabilizes and the cluster returns to a healthy operational state.
+In some cases it might be necessary for a system administrator to manually complete any "in-doubt" transactions.

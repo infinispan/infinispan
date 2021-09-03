@@ -1,0 +1,26 @@
+[id='performance-avoiding-stale-caches_{context}']
+= Strategies to manage stale data
+
+If {brandname} is not the primary source of data, embedded and remote caches are stale by nature.
+While planning, benchmarking, and tuning your {brandname} deployment, choose the appropriate level of cache staleness for your applications.
+
+Choose a level that allows you to make the best use of available RAM and avoid cache misses.
+If {brandname} does not have the entry in memory, then calls go to the primary store when applications send read and write requests.
+
+Cache misses increase the latency of reads and writes but, in many cases, calls to the primary store are more costly than the performance penalty to {brandname}. One example of this is offloading relational database management systems (RDBMS) to {brandname} clusters.
+Deploying {brandname} in this way greatly reduces the financial cost of operating traditional databases so tolerating a higher degree of stale entries in caches makes sense.
+
+With {brandname} you can configure maximum idle and lifespan values for entries to maintain an acceptable level of cache staleness.
+
+Expiration:: Controls how long {brandname} keeps entries in a cache and takes effect across clusters.
+
+Higher expiration values mean that entries remain in memory for longer, which increases the likelihood that read operations return stale values.
+Lower expiration values mean that there are less stale values in the cache but the likelihood of cache misses is greater.
+
+To carry out expiration, {brandname} creates a reaper from the existing thread pool.
+The main performance consideration with the thread is configuring the right interval between expiration runs.
+Shorter intervals perform more frequent expiration but use more threads.
+
+Additionally, with maximum idle expiration, you can control how {brandname} updates timestamp metadata across clusters.
+{brandname} sends touch commands to coordinate maximum idle expiration across nodes synchronously or asynchronously.
+With synchronous replication, you can choose either "sync" or "async" touch commands depending on whether you prefer consistency or speed.

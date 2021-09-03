@@ -1,7 +1,7 @@
 [id='tuning']
 :context: tuning
 
-include::{topics}/performance.adoc[leveloffset=+0]
+include::{topics}/ref_performance_tuning.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

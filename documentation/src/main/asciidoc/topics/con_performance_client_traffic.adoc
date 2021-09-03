@@ -1,0 +1,9 @@
+[id='performance-client-traffic_{context}']
+= Client traffic
+
+When sizing remote {brandname} clusters, you need to calculate the number and size of entries but also the amount of client traffic.
+{brandname} needs enough RAM to store your data and enough CPU to handle client read and write requests in a timely manner.
+
+There are many different factors that affect latency and determine response times.
+For example, the size of the key/value pair affects the response time for remote caches.
+Other factors that affect remote cache performance include the number of requests per second that the cluster receives, the number of clients, as well as the ratio of read operations to write operations.
