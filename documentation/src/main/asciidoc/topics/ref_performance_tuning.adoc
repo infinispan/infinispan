@@ -1,58 +1,15 @@
-This guide will give you information and tweaks about tuning {brandname} performance (both server and library mode).
+[id='performance-tuning_{context}']
+= Performance tuning guidelines
 
-= Capacity planning
+This topic gives you information and tweaks for tuning {brandname} performance.
 
-Data in {brandname} is either stored as plain Java objects or in a serialized form, depending on operating mode (embedded or server) or on specific configuration options such as store-as-binary.
-ifdef::community[]
-For more information, see link:../developing/developing.html#store_as_binary[store-as-binary].
-endif::community[]
-Data size can be estimated using sophisticated tools like  http://openjdk.java.net/projects/code-tools/jol/[Java Object Layout]
-and the total amount of required memory can be roughly estimated using the following formulas:
+== Java Virtual Machine settings
 
-[stem]
-.Total Data Set in library mode
-++++
-Total Data Set = Number Of Entries * (Key Size + Value Size + 200 b (Overhead))
-++++
-
-[stem]
-.Total Data Set in server mode
-++++
-Total Data Set = Number Of Entries * (Serialized Key Size + Serialized Value Size + 200 b (Overhead))
-++++
-
-Term `overhead` is used here as an average amount of additional memory (e.g. expiration or eviction data) needed for storing an Entry in a Cache.
-
-In case of Local or Replicated mode, all data needs to fit in memory, so calculating the amount of required memory is trivial.
-
-Calculating memory requirements for Distributed mode is slightly more complicated and requires using the following:
-
-[stem]
-.Required memory in Distributed mode
-++++
-Required Memory = Total Data Set*(Node Failures + 2)/(Nodes - Node Failures)
-++++
-
-Where:
-
-* `Total Data Set` - Estimated size of all data
-* `Nodes` - The number of nodes in the cluster
-* `Node Failures` - Number of possible failures (also `number of owners - 1`)
-
-Calculated amount of memory should be used for setting `Xmx` and `Xms` parameters.
-
-JVM as well as {brandname} require additional memory for other tasks like searches, allocating network buffers etc.
-It is advised to allocate no more than 50% of memory with living data when using {brandname} solely as a caching data store, and
-no more than 33% of memory with living data when using {brandname} to store and analyze the data using querying, distributed execution or distributed streams.
-
-When considering large heaps, make sure there's enough CPU to perform garbage collection efficiently.
-
-= Java Virtual Machine settings
-
-Java Virtual Machine tuning might be divided into sections like memory or GC.
+Java Virtual Machine tuning can be divided into sections like memory or GC.
 Below is a list of helpful configuration parameters and a guide how to adjust them.
 
-== Memory settings
+[discrete]
+=== Memory settings
 
 Adjusting memory size is one of the most crucial step in {brandname} tuning. The most commonly used JVM flags are:
 
@@ -64,7 +21,8 @@ Adjusting memory size is one of the most crucial step in {brandname} tuning. The
 Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might decrease GC pauses caused by resizing.
 It is a good practice to specify `Xmn` parameter. This guaranteed proper behavior during load peak (in such case {brandname} generates lots of small, short living objects).
 
-== Garbage collection
+[discrete]
+=== Garbage collection
 
 The main goal is to minimize the amount of time when JVM is paused. Having said that, CMS is a suggested GC for {brandname} applications.
 
@@ -77,14 +35,16 @@ The most frequently used JVM flags are:
 * `-XX:+DisableExplicitGC` - Prevent explicit garbage collections.
 * `-XX:+UseG1GC` - Turn on G1 Garbage Collector.
 
-== Other settings
+[discrete]
+=== Other settings
 
 There are two additional parameters which are suggested to be used:
 
 * `-server` - Enables server mode for the JVM.
 * `-XX:+ UseLargePages` - Instructs the JVM to allocate memory in Large Pages. These pages must be configured at the OS level for this parameter to function successfully.
 
-== Example configuration
+[discrete]
+=== Example configuration
 
 In most of the cases we suggest using CMS. However when using the latest JVM, G1 might perform slightly better.
 
@@ -109,7 +69,7 @@ In most of the cases we suggest using CMS. However when using the latest JVM, G1
 -XX:+UseG1GC
 ----
 
-= Network configuration
+== Network configuration
 
 {brandname} uses TCP/IP for sending packets over the network (for both cluster communication when using TCP stack or when communication with Hot Rod clients)
 
@@ -119,7 +79,7 @@ The recommended values are:
 * send window size - 640 KB
 * receive window size - 25 MB
 
-= Number of threads for Hot Rod connectors
+== Number of threads for Hot Rod connectors
 
 The Hot Rod connector for {brandname} server uses worker threads that are
 activated by clients requests. It is important to match the number of worker
@@ -131,7 +91,7 @@ threads to the number of concurrent client requests:
 include::xml/hotrod_worker_threads.xml[]
 ----
 
-= SSL provider
+== SSL provider
 
 {brandname} server will automatically use the native implementation of the OpenSSL libraries on supported platforms to
 achieve much higher performance than what is possible with the JDK implementation of SSL.
@@ -139,9 +99,9 @@ OpenSSL is loaded dynamically, and its location can be specified by the `org.wil
 If this property is not present, the standard system library search path will be used instead.
 Because the library is loaded dynamically, it should be possible to use different versions of OpenSSL without the need to recompile.
 
-= Cache Store performance
+== Cache store performance
 
-In order to achieve the best performance, please follow the recommendations below when using Cache Stores:
+In order to achieve the best performance, please follow the recommendations below when using cache stores:
 
 * Use async mode (write-behind) if possible
 * Prevent cache misses by preloading data
@@ -150,11 +110,12 @@ In order to achieve the best performance, please follow the recommendations belo
 ** Use PRIMARY_KEY on `id` column
 ** Configure batch-size, fetch-size, etc
 
-= Hints for program developers
+== Hints for program developers
 
 There are also several hints for developers which can be easily applied to the client application and will boost up the performance.
 
-== Ignore return values
+[discrete]
+=== Ignore return values
 
 When you're not interested in returning value of the `#put(k, v)` or `#remove(k)` method, use `Flag.IGNORE_RETURN_VALUES` flag as shown below:
 
@@ -172,39 +133,8 @@ It is also possible to set this flag using ConfigurationBuilder
 include::code_examples/ConfigurationBuilderUnreliableReturnValues.java[]
 ----
 
-== Use `Externalizer` for marshalling
-
-{brandname} uses JBoss Marshalling to transfer objects over the wire. The most efficient way to marshall user data is to provide an AdvancedExternalizer.
-This solutions prevents JBoss Marshalling from sending class name over the network and allows to save some bandwidth:
-
-[source,java]
-.User entity with Externalizer
-----
-include::code_examples/AdvancedExternalizerBookExample.java[]
-----
-
-The Externalizer must be registered in cache configuration. See configuration examples below:
-
-.Adding Externalizer using XML
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/advanced_externalizer_book_example.xml[]
-----
-
-.Adding Externalizer using Java
-[source,java]
-----
-include::code_examples/AdvancedExternalizerAddBookExternalizer.java[]
-----
-
-== Storing Strings efficiently
-
-If your strings are mostly ASCII, convert them to `UTF-8` and store them as `byte[]`:
-
-* Using `String#getBytes("UTF-8")` allows to decrease size of the object
-* Consider using G1 GC with additional JVM flag -`XX:+UseStringDeduplication`. This allows to decrease memory footprint (see http://openjdk.java.net/jeps/192[JEP 192] for details).
-
-== Use simple cache for local caches
+[discrete]
+=== Use simple cache for local caches
 
 When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using {brandname} API.
 

@@ -1,0 +1,35 @@
+[id='performance-client-listeners_{context}']
+= Client listeners
+
+Client listeners provide notifications whenever data is added, removed, or modified on your {brandname} cluster.
+
+As an example, the following implementation triggers an event whenever temperatures change at a given location:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/TemperatureMonitor.java[]
+----
+
+Adding listeners to {brandname} clusters adds performance considerations for your deployment.
+
+For embedded caches, listeners use the same CPU cores as {brandname}.
+Listeners that receive many events and use a lot of CPU to process those events reduce the CPU available to {brandname} and slow down all other operations.
+
+For remote caches, {brandname} Server uses an internal process to trigger client notifications.
+{brandname} Server sends the event from the primary owner node to the node where the listener is registered before sending it to the client.
+{brandname} Server also includes a backpressure mechanism that delays write operations to caches if client listeners process events too slowly.
+
+.Filtering listener events
+
+If listeners are invoked on every write operation, {brandname} can generate a high number of events, creating network traffic both inside the cluster and to external clients.
+It all depends on how many clients are registered with each listener, the type of events they trigger, and how data changes on your {brandname} cluster.
+
+As an example with remote caches, if you have ten clients registered with a listener that emits 10 events, {brandname} Server sends 100 events in total across the network.
+
+You can provide {brandname} Server with custom filters to reduce traffic to clients.
+Filters allow {brandname} Server to first process events and determine whether to forward them to clients.
+
+.Continuous queries and listeners
+
+Continuous queries allow you to receive events for matching entries and offers an alternative to deploying client listeners and filtering listener events.
+Of course queries have additional processing costs that you need to take into account but, if you already index caches and perform queries, using a continuous query instead of a client listener could be worthwhile.

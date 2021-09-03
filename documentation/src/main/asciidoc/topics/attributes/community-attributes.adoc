@@ -89,6 +89,9 @@
 //REST
 :rest_docs: ../rest/rest.html
 
+//Query
+:query_docs: ../query/query.html
+
 //HotRod Java client
 :hotrod_docs: ../hotrod_java/hotrod_java.html
 

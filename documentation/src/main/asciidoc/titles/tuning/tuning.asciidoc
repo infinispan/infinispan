@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Tuning {brandname} {infinispanversion} Performance
+= Planning and Tuning {brandname} Deployments
 
 //User stories
 include::stories.adoc[]

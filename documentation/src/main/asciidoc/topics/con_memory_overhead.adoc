@@ -1,0 +1,16 @@
+[id='memory-overhead_{context}']
+= Memory overhead
+
+Memory overhead is additional memory that {brandname} uses to store entries.
+An approximate estimate for memory overhead is 200 bytes per entry in JVM heap memory or 60 bytes per entry in off-heap memory.
+It is impossible to determine a precise amount of memory overhead upfront, however, because the overhead that {brandname} adds per entry depends on several factors.
+For example, bounding the data container with eviction results in {brandname} using additional memory to keep track of entries.
+Likewise configuring expiration adds timestamps metadata to each entry.
+
+The only way to find any kind of exact amount of memory overhead involves JVM heap dump analysis.
+Of course JVM heap dumps provide no information for entries that you store in off-heap memory but memory overhead is much lower for off-heap memory than JVM heap memory.
+
+.Additional memory usage
+
+In addition to the memory overhead that {brandname} imposes per entry, processes such as rebalancing and indexing can increase overall memory usage.
+Rebalancing operations for clusters when nodes join and leave also temporarily require some extra capacity to prevent data loss while replicating entries between cluster members.

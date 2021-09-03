@@ -1,0 +1,18 @@
+[id='continuous-query-performance_{context}']
+= Continuous queries and {brandname} performance
+
+Continuous queries provide a constant stream of updates to applications, which can generate a significant number of events.
+{brandname} temporarily allocates memory for each event it generates, which can result in memory pressure and potentially lead to `OutOfMemoryError` exceptions, especially for remote caches.
+For this reason, you should carefully design your continuous queries to avoid any performance impact.
+
+{brandname} strongly recommends that you limit the scope of your continuous queries to the smallest amount of information that you need.
+To achieve this, you can use projections and predicates.
+For example, the following statement provides results about only a subset of fields that match the criteria rather than the entire entry:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+SELECT field1, field2 FROM Entity WHERE x AND y
+----
+
+It is also important to ensure that each `ContinuousQueryListener` you create can quickly process all received events without blocking threads.
+To achieve this, you should avoid any cache operations that generate events unnecessarily.

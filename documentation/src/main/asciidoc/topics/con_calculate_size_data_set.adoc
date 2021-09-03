@@ -1,0 +1,64 @@
+[id='data-set-size_{context}']
+= How to calculate the size of your data set
+
+Planning a {brandname} deployment involves calculating the size of your data set then figuring out the correct number of nodes and amount of RAM to hold the data set.
+
+You can roughly estimate the total size of your data set with this formula:
+
+[source,options="nowrap",subs=attributes+]
+----
+Data set size = Number of entries * (Average key size + Average value size + Memory overhead)
+----
+
+[NOTE]
+====
+With remote caches you need to calculate key sizes and value sizes in their marshalled forms.
+====
+
+[discrete]
+== Data set size in distributed caches
+
+Distributed caches require some additional calculation to determine the data set size.
+
+In normal operating conditions, distributed caches store a number of copies for each key/value entry that is equal to the `Number of owners` that you configure.
+During cluster rebalancing operations, some entries have an extra copy, so you should calculate `Number of owners + 1` to allow for that scenario.
+
+You can use the following formula to adjust the estimate of your data set size for distributed caches:
+
+[source,options="nowrap",subs=attributes+]
+----
+Distributed data set size = Data set size * (Number of owners + 1)
+----
+
+.Calculating available memory for distributed caches
+
+Distributed caches allow you to increase the data set size either by adding more nodes or by increasing the amount of available memory per node.
+
+[source,options="nowrap",subs=attributes+]
+----
+Distributed data set size \<= Available memory per node * Minimum number of nodes
+----
+
+.Adjusting for node loss tolerance
+
+Even if you plan to have a fixed number of nodes in the cluster, you should take into account the fact that not all nodes will be in the cluster all the time.
+Distributed caches tolerate the loss of `Number of owners - 1` nodes without losing data so you can allocate that many extra node in addition to the minimum number of nodes that you need to fit your data set.
+
+[source,options="nowrap",subs=attributes+]
+----
+Planned nodes = Minimum number of nodes + Number of owners - 1
+
+Distributed data set size \<= Available memory per node * (Planned nodes - Number of owners + 1)
+----
+
+For example, you plan to store one million entries that are 10KB each in size and configure three owners per entry for availability.
+If you plan to allocate 4GB of RAM for each node in the cluster, you can then use the following formula to determine the number of nodes that you need for your data set:
+
+[source,options="nowrap",subs=attributes+]
+----
+Data set size = 1_000_000 * 10KB = 10GB
+Distributed data set size = (3 + 1) * 10GB = 40GB
+40GB \<= 4GB * Minimum number of nodes
+Minimum number of nodes >= 40GB / 4GB = 10
+Planned nodes = 10 + 3 - 1 = 12
+----

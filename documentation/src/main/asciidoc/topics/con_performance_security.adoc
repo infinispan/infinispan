@@ -1,0 +1,75 @@
+[id='performance-security_{context}']
+= Cluster security
+
+Protecting your data and preventing network intrusion is one of the most important aspect of deployment planning.
+Sensitive customer details leaking to the open internet or data breaches that allow hackers to publicly expose confidential information have devastating impacts on business reputation.
+
+With this in mind you need a robust security strategy to authenticate users and encrypt network communication.
+But what are the costs to the performance of your {brandname} deployment?
+How should you approach these considerations during planning?
+
+[discrete]
+== Authentication
+
+The performance cost of validating user credentials depends on the mechanism and protocol.
+{brandname} validates credentials once per user over Hot Rod while potentially for every request over HTTP.
+
+.Authentication mechanisms
+[%autowidth,cols="1,2,3",stripes=even,%header]
+|===
+|SASL mechanism |HTTP mechanism |Performance impact
+
+|`PLAIN`
+|`BASIC`
+|While `PLAIN` and `BASIC` are the fastest authentication mechanisms, they are also the least secure.
+You should only ever use `PLAIN` or `BASIC` in combination with TLS/SSL encryption.
+
+|`DIGEST` and `SCRAM`
+|`DIGEST`
+|For both Hot Rod and HTTP requests, the `DIGEST` scheme uses MD5 hashing algorithms to hash credentials so they are not transmitted in plain text. If you do not enable TLS/SSL encryption then using `DIGEST` is overall less resource intensive than `PLAIN` or `BASIC` with encryption but not as secure because `DIGEST` is vulnerable to monkey-in-the-middle (MITM) attacks and other intrusions.
+
+For Hot Rod endpoints, the `SCRAM` scheme is similar to `DIGEST` with extra levels of protection that increase security but require additional processing that take longer to complete.
+
+|`GSSAPI` / `GS2-KRB5`
+|`SPNEGO`
+|A Kerberos server, Key Distribution Center (KDC), handles authentication and issues tokens to users. {brandname} performance benefits from the fact that a separate system handles user authentication operations.
+However these mechanisms can lead to network bottlenecks depending on the performance of the KDC service itself.
+
+|`OAUTHBEARER`
+|`BEARER_TOKEN`
+|Federated identity providers that implement the OAuth standard for issuing temporary access tokens to {brandname} users. Users authenticate with an identity service instead of directly authenticating to {brandname}, passing the access token as a request header instead. Compared to handling authentication directly, there is a lower performance penalty for {brandname} to validate user access tokens. Similarly to a KDC, actual performance implications depend on the quality of service for the identity provider itself.
+
+|`EXTERNAL`
+|`CLIENT_CERT`
+|You can provide trust stores to {brandname} Server so that it authenticates inbound connections by comparing certificates that clients present against the trust stores.
+
+If the trust store contains only the signing certificate, which is typically a Certificate Authority (CA), any client that presents a certificate signed by the CA can connect to {brandname}. This offers lower security and is vulnerable to MITM attacks but is faster than authenticating the public certificate of each client.
+
+If the trust store contains all client certificates in addition to the signing certificate, only those clients that present a signed certificate that is present in the trust store can connect to {brandname}. In this case {brandname} compares the common Common Name (CN) from the certificate that the client presents with the trust store in addition to verifying that the certificate is signed, adding more overhead.
+
+|===
+
+[discrete]
+== Encryption
+
+Encrypting cluster transport secures data as it passes between nodes and protects your {brandname} deployment from MITM attacks.
+Nodes perform TLS/SSL handshakes when joining the cluster which carries a slight performance penalty and increased latency with additional round trips.
+However, once each node establishes a connection it stays up forever assuming connections never go idle.
+
+For remote caches, {brandname} Server can also encrypt network communication with clients.
+In terms of performance the effect of TLS/SSL connections between clients and remote caches is the same.
+Negotiating secure connections takes longer and requires some additional work but, once the connections are established latency from encryption is not a concern for {brandname} performance.
+
+Apart from using TLSv1.3, the only means of offsetting performance loss from encryption are to configure the JVM on which {brandname} runs.
+For instance using OpenSSL libraries instead of standard Java encryption provides more efficient handling with results up to 20% faster.
+
+[discrete]
+== Authorization
+
+Role-based access control (RBAC) lets you restrict operations on data, offering additional security to your deployments.
+RBAC is the best way to implement a policy of least privilege for user access to data distributed across {brandname} clusters.
+{brandname} users must have a sufficient level of authorization to read, create, modify, or remove data from caches.
+
+Adding another layer of security to protect your data will always carry a performance cost.
+Authorization adds some latency to operations because {brandname} validates each one against an Access Control List (ACL) before allowing users to manipulate data.
+However the overall impact to performance from authorization is much lower than encryption so the cost to benefit generally balances out.

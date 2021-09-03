@@ -1,0 +1,41 @@
+[id='performance-cross-site-replication_{context}']
+= Cluster backups and disaster recovery
+
+{brandname} clusters that perform cross-site replication are typically "symmetrical" in terms of overall CPU and memory allocation.
+When you take cross-site replication into account for sizing, the primary concern is the impact of state transfer operations between clusters.
+
+For example, a {brandname} cluster in NYC goes offline and clients switch to a {brandname} cluster in LON.
+When the cluster in NYC comes back online, state transfer occurs from LON to NYC.
+This operation prevents stale reads from clients but has a performance penalty for the cluster that receives state transfer.
+
+You can distribute the increase in processing that state transfer operations require across the cluster.
+However the performance impact from state transfer operations depends entirely on the environment and factors such as the type and size of the data set.
+
+[discrete]
+== Conflict resolution for Active/Active deployments
+
+{brandname} detects conflicts with concurrent write operations when multiple sites handle client requests, known as an Active/Active site configuration.
+
+The following example illustrates how concurrent writes result in a conflicting entry for {brandname} clusters running in the **LON** and **NYC** data centers:
+
+[source,options="nowrap"]
+----
+include::asciidoc_examples/xsite_async_conflicts.adoc[]
+----
+
+In an Active/Active site configuration, you should never use the synchronous backup strategy because concurrent writes result in deadlocks and you lose data.
+With the asynchronous backup strategy (`strategy=async`), {brandname} gives you a choice cross-site merge policies for handling concurrent writes.
+
+In terms of performance, merge policies that {brandname} uses to resolve conflicts do require additional computation but generally do not incur a significant penalty.
+For instance the default cross-site merge policy uses a lexicographic comparison, or "string comparison", that only takes a couple of nanoseconds to complete.
+
+{brandname} also provides a `XSiteEntryMergePolicy` SPI for cross-site merge policies.
+If you do configure {brandname} to resolve conflicts with a custom implementation you should always monitor performance to gauge any adverse effects.
+
+[NOTE]
+====
+The `XSiteEntryMergePolicy` SPI invokes all merge policies in the non-blocking thread pool.
+If you implement a blocking custom merge policy, it can exhaust the thread pool.
+
+You should delegate complex or blocking policies to a different thread and your implementation should return a `CompletionStage` that completes when the merge policy is done in the other thread.
+====

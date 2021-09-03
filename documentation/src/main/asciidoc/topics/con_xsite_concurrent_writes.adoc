@@ -14,18 +14,7 @@ conflicting entries during backup operations, as in the following illustration:
 
 [source,options="nowrap"]
 ----
-            LON       NYC
-
-k1=(n/a)    0,0       0,0
-
-k1=2        1,0  -->  1,0   k1=2
-
-k1=3        1,1  <--  1,1   k1=3
-
-k1=5        2,1       1,2   k1=8
-
-                 -->  2,1 (conflict)
-(conflict)  1,2  <--
+include::asciidoc_examples/xsite_async_conflicts.adoc[]
 ----
 
 Vector clocks are timestamp metadata that increment with each write to an
@@ -57,28 +46,26 @@ Prepend site names with numbers as a simple way to represent the order of
 priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
 ====
 
-[NOTE]
-====
+[discrete]
+== Backup strategies
+
 {brandname} performs conflict resolution with the asynchronous backup strategy (`strategy=async`) only.
-However, you should not use the synchronous backup strategy with an Active/Active configuration because concurrent writes result in deadlocks.
-====
+
+You should never use the synchronous backup strategy with an Active/Active configuration.
+In this configuration concurrent writes result in deadlocks and you lose data.
+However you can use the synchronous backup strategy with an Active/Active configuration if both sites access different data sets, in which case there is no risk of deadlocks from concurrent writes.
 
 [discrete]
-== Conflict resolution algorithms
+== Cross-site merge policies
 
-{brandname} provides different algorithms for resolving conflicts in addition to an `XSiteEntryMergePolicy` SPI that lets you implement custom conflict resolution strategies.
-
-Apart from the default conflict resolution strategy, which uses lexicographical comparison, you can use {brandname} conflict resolution algorithms to:
+{brandname} provides an `XSiteEntryMergePolicy` SPI in addition to cross-site merge policies that configure {brandname} to do the following:
 
 * Always remove conflicting entries.
-* Keep write operations when write/remove conflicts occur.
+* Apply write operations when write/remove conflicts occur.
 * Remove entries when write/remove conflicts occur.
-
-Find all available algorithms and their descriptions in the `org.infinispan.xsite.spi.XSiteMergePolicy` enum.
 
 [role="_additional-resources"]
 .Additional resources
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[`XSiteMergePolicy` enum lists all merge polices that {brandname} provides]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[`XSiteEntryMergePolicy` SPI]
 * link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
-* link:{xsite_docs}#customizing-conflict-resolution_configuring-cross-site-replication[Customizing the conflict resolution algorithm]
