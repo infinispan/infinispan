@@ -37,4 +37,11 @@ public interface TargetMigrator {
     * @param configuration The configuration of the store
     */
    void connectSource(Cache<Object, Object> cache, StoreConfiguration configuration);
+
+   /**
+    * Check if a cluster is connected to other for doing rolling upgrades
+    * @param cache The cache name
+    * @return true if the cache has a remote store pointing to another cluster ready to do rolling upgrades.
+    */
+   boolean isConnected(Cache<Object, Object> cache);
 }

@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -125,5 +127,17 @@ public class HotRodTargetMigrator implements TargetMigrator {
          }
       });
       CompletableFuture.allOf(future).join();
+   }
+
+   @Override
+   public boolean isConnected(Cache<Object, Object> cache) {
+      ClusterExecutor executor = SecurityActions.getClusterExecutor(cache.getCacheManager());
+      ConcurrentMap<Address, Boolean> responses = new ConcurrentHashMap<>();
+      CompletableFuture<Void> future = executor.submitConsumer(new CheckRemoteStoreTask(cache.getName()), (address, result, error) -> {
+         if (error != null) throw new CacheException(error);
+         responses.put(address, result);
+      });
+      CompletableFuture.allOf(future).join();
+      return responses.values().stream().reduce(true, (v1, v2) -> v1 & v2);
    }
 }

@@ -6,7 +6,7 @@ Connect a target cluster to the source cluster with:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=connect-source
+POST /v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 You must provide a `remote-store` definition in JSON format as the body:
@@ -22,7 +22,37 @@ The configuration must contain minimally the cache name, the `raw-values` set to
 host/ip of the single port in the source cluster. For details about the `remote-store` configuration,
 consult the link:https://infinispan.org/schemas/infinispan-cachestore-remote-config-12.0.xsd[XSD Schema].
 
-If the operation successfully completes, the service returns 204 (No Content).
+If the operation successfully completes, the service returns 204 (No Content). If the target cluster
+is already connected to the source cluster, it returns status 304 (Not Modified).
+
+= Obtaining Source Cluster connection details
+
+To obtain the `remote-store` definition of a cache, use a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/rolling-upgrade/source-connection
+----
+
+If the cache was previously connected, it returns the configuration of the associated `remote-store` in JSON format and status 200 (OK),
+otherwise a 404 (Not Found) status.
+
+
+[NOTE]
+====
+This is not a cluster wide operation, and it only returns the remote-store of the cache in the node where the REST invocation is handled.
+====
+
+= Checking if a Cache is connected
+
+To check if a cache have been connected to a remote cluster, use a `HEAD` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /v2/caches/{cacheName}/rolling-upgrade/source-connection
+----
+
+Returns status 200 (OK) if for all nodes of the cluster, `cacheName` has a single remote store configured, and 404 (NOT_FOUND) otherwise.
 
 = Synchronizing Data
 Synchronize data from a source cluster to a target cluster with `POST` requests
@@ -39,11 +69,12 @@ entries copied to the target cluster.
 [id='rest_v2_disconnect_source']
 = Disconnecting Source Clusters
 After you synchronize data to target clusters, disconnect from the source
-cluster with `POST` requests and the `?action=disconnect-source` parameter:
+cluster with `DELETE` requests:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=disconnect-source
+DELETE /v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 If the operation successfully completes, the service returns `204 (No Content)`.
+It no source was connected, it returns code 304 (Not Modified).

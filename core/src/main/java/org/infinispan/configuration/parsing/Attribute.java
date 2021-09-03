@@ -139,6 +139,7 @@ public enum Attribute {
     PREFIX,
     PRELOAD,
     PRIORITY,
+    PROPERTIES,
     PURGE,
     QUEUE_COUNT,
     @Deprecated
