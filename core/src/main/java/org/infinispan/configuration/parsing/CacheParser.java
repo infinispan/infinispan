@@ -1672,6 +1672,10 @@ public class CacheParser implements ConfigurationParser {
             parseStoreProperty(reader, storeBuilder);
             break;
          }
+         case PROPERTIES: {
+            parseStoreProperties(reader, storeBuilder);
+            break;
+         }
          default: {
             throw ParseUtils.unexpectedElement(reader);
          }
@@ -1718,6 +1722,15 @@ public class CacheParser implements ConfigurationParser {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();
       storeBuilder.addProperty(reader.getNamingStrategy().convert(property), value);
+   }
+
+   public static void parseStoreProperties(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
+      Properties properties = new Properties();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         properties.setProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
+      }
+      storeBuilder.withProperties(properties);
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseCustomStore(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

@@ -64,6 +64,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
@@ -100,6 +101,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
+   private static final String MIGRATOR_NAME = "hotrod";
 
    public CacheResourceV2(InvocationHelper invocationHelper) {
       super(invocationHelper);
@@ -134,9 +136,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Operations
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("size").handleWith(this::getSize)
+
+            // Rolling Upgrade methods
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("sync-data").handleWith(this::syncData)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("connect-source").handleWith(this::connectSource)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").deprecated().withAction("disconnect-source").handleWith(this::deleteSourceConnection)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/rolling-upgrade/source-connection").handleWith(this::addSourceConnection)
+            .invocation().methods(DELETE).path("/v2/caches/{cacheName}/rolling-upgrade/source-connection").handleWith(this::deleteSourceConnection)
+            .invocation().methods(HEAD).path("/v2/caches/{cacheName}/rolling-upgrade/source-connection").handleWith(this::hasSourceConnections)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/rolling-upgrade/source-connection").handleWith(this::getSourceConnection)
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search")
@@ -162,7 +169,55 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .create();
    }
 
-   private CompletionStage<RestResponse> disconnectSource(RestRequest request) {
+   @SuppressWarnings("rawtypes")
+   private CompletionStage<RestResponse> getSourceConnection(RestRequest request) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+
+      PersistenceManager persistenceManager =
+            SecurityActions.getPersistenceManager(invocationHelper.getRestCacheManager().getInstance(), cache.getName());
+
+      List<RemoteStore> remoteStores = new ArrayList<>(persistenceManager.getStores(RemoteStore.class));
+
+      if (remoteStores.isEmpty()) {
+         builder.status(NOT_FOUND);
+         return completedFuture(builder.build());
+      }
+
+      if (remoteStores.size() != 1) {
+         builder.status(INTERNAL_SERVER_ERROR);
+         builder.entity("More than one remote store detected, rolling upgrades aren't supported");
+         return completedFuture(builder.build());
+      }
+
+      RemoteStoreConfiguration storeConfiguration = remoteStores.get(0).getConfiguration();
+
+      builder.entity(SerializationUtils.toJson(storeConfiguration));
+      return completedFuture(builder.build());
+   }
+
+   private CompletionStage<RestResponse> hasSourceConnections(RestRequest request) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
+               builder.status(NOT_FOUND);
+            }
+         } catch (Exception e) {
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         }
+         return builder.build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> deleteSourceConnection(RestRequest request) {
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
       builder.status(NO_CONTENT);
 
@@ -171,14 +226,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
       try {
-         upgradeManager.disconnectSource("hotrod");
+         if (upgradeManager.isConnected(MIGRATOR_NAME)) {
+            upgradeManager.disconnectSource(MIGRATOR_NAME);
+         } else {
+            builder.status(HttpResponseStatus.NOT_MODIFIED);
+         }
       } catch (Exception e) {
          builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
       }
       return completedFuture(builder.build());
    }
 
-   private CompletionStage<RestResponse> connectSource(RestRequest request) {
+   private CompletionStage<RestResponse> addSourceConnection(RestRequest request) {
       final NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
       builder.status(NO_CONTENT);
 
@@ -207,7 +266,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
          try {
             RemoteStoreConfiguration storeConfiguration = SerializationUtils.fromJson(read.toString());
-            upgradeManager.connectSource("hotrod", storeConfiguration);
+            if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
+               upgradeManager.connectSource(MIGRATOR_NAME, storeConfiguration);
+            } else {
+               builder.status(HttpResponseStatus.NOT_MODIFIED);
+            }
          } catch (Exception e) {
             Throwable rootCause = Util.getRootCause(e);
             builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
@@ -236,7 +299,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       return CompletableFuture.supplyAsync(() -> {
          try {
-            long hotrod = upgradeManager.synchronizeData("hotrod", readBatch, threads);
+            long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);
             builder.entity(Log.REST.synchronizedEntries(hotrod));
          } catch (Exception e) {
             Throwable rootCause = Util.getRootCause(e);

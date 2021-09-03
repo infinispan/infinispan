@@ -31,11 +31,11 @@ Alternatively, you can use JMX by invoking
 +
 . Disconnect each node in the target cluster from the source cluster.
 +
-For example, to disconnect the "myCache" cache from the source cluster, invoke the following `POST` request:
+For example, to disconnect the "myCache" cache from the source cluster, invoke the following `DELETE` request:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/myCache?action=disconnect-source
+DELETE /v2/caches/myCache/rolling-upgrade/source-connection
 ----
 +
 To use JMX, invoke `disconnectSource(migratorName=hotrod)` on the `RollingUpgradeManager` MBean.

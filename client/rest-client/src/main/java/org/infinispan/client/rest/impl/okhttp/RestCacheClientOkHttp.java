@@ -28,11 +28,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    private final RestClientOkHttp client;
    private final String name;
    private final String cacheUrl;
+   private final String rollingUpgradeUrl;
 
    RestCacheClientOkHttp(RestClientOkHttp restClient, String name) {
       this.client = restClient;
       this.name = name;
       this.cacheUrl = String.format("%s%s/v2/caches/%s", restClient.getBaseURL(), restClient.getConfiguration().contextPath(), sanitize(name));
+      this.rollingUpgradeUrl = cacheUrl + "/rolling-upgrade";
    }
 
    @Override
@@ -77,14 +79,28 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> disconnectSource() {
       Request.Builder builder = new Request.Builder();
-      builder.post(EMPTY_BODY).url(cacheUrl + "?action=disconnect-source");
+      builder.url(rollingUpgradeUrl + "/source-connection").delete();
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> connectSource(RestEntity value) {
       Request.Builder builder = new Request.Builder();
-      builder.post(((RestEntityAdaptorOkHttp) value).toRequestBody()).url(cacheUrl + "?action=connect-source");
+      builder.post(((RestEntityAdaptorOkHttp) value).toRequestBody()).url(rollingUpgradeUrl + "/source-connection");
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> sourceConnected() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(rollingUpgradeUrl + "/source-connection").head();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> sourceConnection() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(rollingUpgradeUrl + "/source-connection").get();
       return client.execute(builder);
    }
 

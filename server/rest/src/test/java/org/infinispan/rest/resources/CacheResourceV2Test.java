@@ -696,9 +696,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    private Map<String, String> entriesAsMap(RestResponse response) {
       assertThat(response).isOk();
-      final String body = response.getBody();
-      System.out.println(body);
-      List<Json> entries = Json.read(body).asJsonList();
+      List<Json> entries = Json.read(response.getBody()).asJsonList();
       return entries.stream().collect(Collectors.toMap(j -> asString(j.at("key")), j -> asString(j.at("value"))));
    }
 
@@ -1059,6 +1057,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertBadResponse(cacheClient, "{\"jdbc-store\":{\"shared\":true}}");
       assertBadResponse(cacheClient, "{\"jdbc-store\":{\"shared\":true},\"remote-store\":{\"shared\":true}}");
+   }
+
+   @Test
+   public void testSourceConnected() {
+      RestCacheClient cacheClient = client.cache("default");
+      RestResponse restResponse = join(cacheClient.sourceConnected());
+      ResponseAssertion.assertThat(restResponse).isNotFound();
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {
