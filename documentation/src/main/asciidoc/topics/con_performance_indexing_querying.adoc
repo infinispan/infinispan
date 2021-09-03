@@ -1,0 +1,39 @@
+[id='performance-indexing-querying_{context}']
+= Indexing and querying caches
+
+Querying {brandname} caches lets you analyze and filter data to gain real-time insights.
+As an example, consider an online game where players compete against each other in some way to score points.
+If you wanted to implement a leaderboard with the top ten players at any one time, you could create a query to find out which players have the most points at any one time and limit the result to a maximum of ten as follows:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/QueryPlayerScore.java[]
+----
+
+The preceding example illustrates the benefit of using queries because it lets you find ten entries that match a criteria out of potentially millions of cache entries.
+
+In terms of performance impact, though, you should consider the tradeoffs that come with indexing operations versus query operations.
+Configuring {brandname} to index caches results in much faster queries.
+Without indexes, queries must scroll through all data in the cache, slowing down results by orders of magnitude depending on the type and amount of data.
+
+There is a measurable loss of performance for writes when indexing is enabled.
+However, with some careful planning and a good understanding of what you want to index, you can avoid the worst effects.
+
+The most effective approach is to configure {brandname} to index only the fields that you need.
+Whether you store Plain Old Java Objects (POJOs) or use Protobuf schema, the more fields that you annotate, the longer it takes {brandname} to build the index.
+If you have a POJO with five fields but you only need to query two of those fields, do not configure {brandname} to index the three fields you don't need.
+
+{brandname} gives you several options to tune indexing operations.
+For instance {brandname} stores indexes differently to data, saving indexes to disk instead of memory.
+{brandname} keeps the index synchronized with the cache using an index writer, whenever an entry is added, modified or deleted.
+If you enable indexing and then observe slower writes, and think indexing causes the loss of performance, you can keep indexes in a memory buffer for longer periods of time before writing to disk.
+This results in faster indexing operations, and helps mitigate degradation of write throughput, but consumes more memory.
+For most deployments, though, the default indexing configuration is suitable and does not slow down writes too much.
+
+In some scenarios it might be sensible not to index your caches, such as for write-heavy caches that you need to query infrequently and don't need results in milliseconds.
+It all depends on what you want to achieve.
+Faster queries means faster reads but comes at the expense of slower writes that come with indexing.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{query_docs}[Querying {brandname} caches]

@@ -5,6 +5,7 @@
 Applications can register listeners to receive continual updates about cache entries that match query filters.
 
 include::{topics}/con_query_continuous.adoc[leveloffset=+1]
+include::{topics}/con_performance_continuous_queries.adoc[leveloffset=+2]
 include::{topics}/proc_query_creating_continuous.adoc[leveloffset=+1]
 
 // Restore the parent context.
