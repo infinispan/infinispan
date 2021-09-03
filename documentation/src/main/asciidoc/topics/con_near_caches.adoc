@@ -4,7 +4,15 @@ Near caches are local to Hot Rod clients and store recently used data so that ev
 
 Near caches:
 
-* Are populated on calls to `get()` or `getVersioned()`.
+* Are populated with read operations, calls to `get()` or `getVersioned()` methods. +
+In the following example the `put()` call does not populate the near cache and only has the effect of invalidating the entry if it already exists:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+cache.put("k1", "v1");
+cache.get("k1");
+----
++
 * Register a client listener to invalidate entries when they are updated or removed in remote caches on {brandname} Server. +
 If entries are requested after they are invalidated, clients must retrieve them from the remote caches again.
 * Are cleared when clients fail over to different servers.

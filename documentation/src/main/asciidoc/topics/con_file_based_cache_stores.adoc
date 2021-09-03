@@ -29,18 +29,14 @@ The in-memory index uses Java soft references to ensure it can be rebuilt if rem
 Because `SoftIndexFileStore` uses Java soft references to keep indexes in memory, it helps prevent out-of-memory exceptions.
 GC removes indexes before they consume too much memory while still falling back to disk.
 
-You can configure any number of B+ trees.
+You can configure any number of B+ trees with the `segments` attribute on the `index` element declaratively or with the `indexSegments()` method programmatically.
 By default {brandname} creates up to 16 B+ trees, which means there can be up to 16 indexes.
-Having multiple indexes prevents bottlenecks from concurrent writes to an index.
-It also minimizes the number of entries that can be read at the same time because {brandname} reads all entries at the same time when it iterates over a soft-index file store.
+Having multiple indexes prevents bottlenecks from concurrent writes to an index and reduces the number of entries that {brandname} needs to keep in memory.
+As it iterates over a soft-index file store, {brandname} reads all entries in an index at the same time.
 
 Each entry in the B+ tree is a node.
 By default, the size of each node is limited to 4096 bytes.
 `SoftIndexFileStore` throws an exception if keys are longer after serialization occurs.
-
-.Expired entries
-
-`SoftIndexFileStore` cannot detect expired entries, which can lead to excessive usage of space on the file system.
 
 .Segmentation
 

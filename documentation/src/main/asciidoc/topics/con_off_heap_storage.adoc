@@ -6,28 +6,18 @@ When you add entries to off-heap caches, {brandname} dynamically allocates nativ
 {brandname} hashes the serialized `byte[]` for each key into buckets that are similar to a standard Java `HashMap`.
 Buckets include address pointers that {brandname} uses to locate entries that you store in off-heap memory.
 
-[NOTE]
-====
-{brandname} determines equality of Java objects in off-heap storage using the serialized byte[] representation of each object instead of the object instance.
-====
-
-[NOTE]
+[IMPORTANT]
 ====
 Even though {brandname} stores cache entries in native memory, run-time operations require JVM heap representations of those objects.
 For instance, `cache.get()` operations read objects into heap memory before returning.
 Likewise, state transfer operations hold subsets of objects in heap memory while they take place.
 ====
 
-[discrete]
-== Memory overhead
+.Object equality
 
-Memory overhead is the additional memory that {brandname} uses to store entries.
-For off-heap storage, {brandname} uses 25 bytes for each entry in the cache.
+{brandname} determines equality of Java objects in off-heap storage using the serialized byte[] representation of each object instead of the object instance.
 
-When you use eviction to create a bounded off-heap data container, memory overhead increases to a total of 61 bytes because {brandname} creates an additional linked list to track entries in the cache and perform eviction.
-
-[discrete]
-== Data consistency
+.Data consistency
 
 {brandname} uses an array of locks to protect off-heap address spaces.
 The number of locks is twice the number of cores and then rounded to the nearest power of two.
