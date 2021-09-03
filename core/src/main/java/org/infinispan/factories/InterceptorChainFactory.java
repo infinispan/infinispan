@@ -85,11 +85,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
-   /**
-    * Stores the position of the persistence related interceptors so stores can be added at runtime
-    */
-   private int persistenceSlot;
-
    private AsyncInterceptor createInterceptor(AsyncInterceptor interceptor,
          Class<? extends AsyncInterceptor> interceptorType) {
       ComponentRef<? extends AsyncInterceptor> chainedInterceptor = basicComponentRegistry.getComponent(interceptorType);
@@ -229,7 +224,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
-      persistenceSlot = interceptorChain.size();
       if (configuration.persistence().usingStores()) {
          addPersistenceInterceptors(interceptorChain, configuration, configuration.persistence().stores());
       }
@@ -303,10 +297,17 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return interceptorChain;
    }
 
-   private void addInterceptor(AsyncInterceptorChain interceptorChain, AsyncInterceptor interceptor,
-                               Class<? extends AsyncInterceptor> interceptorClass, int position) {
-      if (!interceptorChain.containsInterceptorType(interceptorClass, true))
-         interceptorChain.addInterceptor(createInterceptor(interceptor, interceptorClass), position);
+   private Class<? extends AsyncInterceptor> addInterceptor(AsyncInterceptorChain interceptorChain, AsyncInterceptor interceptor,
+                                                            Class<? extends AsyncInterceptor> interceptorClass, Class<? extends AsyncInterceptor> after) {
+
+      if (interceptorChain.containsInterceptorType(interceptorClass, true)) {
+         return after;
+      }
+
+      AsyncInterceptor newInterceptor = createInterceptor(interceptor, interceptorClass);
+      boolean added = interceptorChain.addInterceptorAfter(newInterceptor, after);
+
+      return added ? newInterceptor.getClass() : after;
    }
 
    /**
@@ -319,37 +320,43 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    public void addPersistenceInterceptors(AsyncInterceptorChain interceptorChain, Configuration cacheConfiguration, List<StoreConfiguration> stores) {
       TransactionMode transactionMode = cacheConfiguration.transaction().transactionMode();
       CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
-      int position = persistenceSlot;
+
+      EntryWrappingInterceptor ewi = interceptorChain.findInterceptorExtending(EntryWrappingInterceptor.class);
+      if (ewi == null) {
+         throw new CacheException("Cannot find instance of EntryWrappingInterceptor in the interceptor chain");
+      }
+
+      Class<? extends AsyncInterceptor> lastAdded = ewi.getClass();
       if (cacheConfiguration.persistence().passivation()) {
          if (cacheMode.isClustered()) {
-            addInterceptor(interceptorChain, new PassivationClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+            lastAdded = addInterceptor(interceptorChain, new PassivationClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
          } else {
-            addInterceptor(interceptorChain, new PassivationCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+            lastAdded = addInterceptor(interceptorChain, new PassivationCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
          }
-         addInterceptor(interceptorChain, new PassivationWriterInterceptor(), PassivationWriterInterceptor.class, position);
+         addInterceptor(interceptorChain, new PassivationWriterInterceptor(), PassivationWriterInterceptor.class, lastAdded);
       } else {
          if (cacheMode.isClustered()) {
-            addInterceptor(interceptorChain, new ClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+            lastAdded = addInterceptor(interceptorChain, new ClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
          } else {
-            addInterceptor(interceptorChain, new CacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, position++);
+            lastAdded = addInterceptor(interceptorChain, new CacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
          }
          boolean transactionalStore = cacheConfiguration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional) ||
                stores.stream().anyMatch(StoreConfiguration::transactional);
          if (transactionalStore && transactionMode.isTransactional())
-            addInterceptor(interceptorChain, new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class, position++);
+            lastAdded = addInterceptor(interceptorChain, new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class, lastAdded);
 
          switch (cacheMode) {
             case DIST_SYNC:
             case DIST_ASYNC:
             case REPL_SYNC:
             case REPL_ASYNC:
-               addInterceptor(interceptorChain, new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class, position);
+               addInterceptor(interceptorChain, new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class, lastAdded);
                break;
             case SCATTERED_SYNC:
-               addInterceptor(interceptorChain, new ScatteredCacheWriterInterceptor(), ScatteredCacheWriterInterceptor.class, position);
+               addInterceptor(interceptorChain, new ScatteredCacheWriterInterceptor(), ScatteredCacheWriterInterceptor.class, lastAdded);
                break;
             default:
-               addInterceptor(interceptorChain, new CacheWriterInterceptor(), CacheWriterInterceptor.class, position);
+               addInterceptor(interceptorChain, new CacheWriterInterceptor(), CacheWriterInterceptor.class, lastAdded);
                break;
          }
       }
