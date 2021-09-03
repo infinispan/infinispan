@@ -1,0 +1,26 @@
+[id='jvm-heap-memory-allocation_{context}']
+= JVM heap space allocation
+
+When allocating JVM heap space for {brandname} deployments, you can use the following guidelines:
+
+[%autowidth,cols="1,1",stripes=even,%noheader]
+|===
+|Cache operations only (read, write, delete)
+|Allocate **50%** of JVM heap space for data storage
+
+|Cache operations + data processing such as queries and cache event listeners
+|Allocate **33%** of JVM heap space for data storage
+|===
+
+[IMPORTANT]
+====
+Allocating too much of JVM heap space for data storage can lead to more frequent garbage collection (GC) as well as GC pauses that lead to {brandname} cluster instability and network partitions.
+====
+
+.Off-heap storage
+
+{brandname} uses JVM heap representations of objects to process read and write operations on caches or perform other operations such as state transfer.
+You must always allocate some JVM heap space to {brandname}, even if you store entries in off-heap memory.
+
+The amount of JVM heap memory that {brandname} uses with off-heap storage is much smaller than when storing data in the JVM heap space.
+However that amount increases as the number of concurrent operations scales up.

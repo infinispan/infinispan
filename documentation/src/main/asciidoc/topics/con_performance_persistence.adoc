@@ -1,0 +1,48 @@
+[id='performance-persistence_{context}']
+= Persistent storage
+
+Configuring {brandname} to interact with a persistent data source greatly impacts performance.
+This performance penalty comes from the fact that more traditional data sources are inherently slower than in-memory caches.
+Read and write operations will always take longer when the call goes outside the JVM.
+Depending on how you use cache stores, though, the reduction of {brandname} performance is offset by the performance boost that in-memory data provides over accessing data in persistent storage.
+
+Configuring {brandname} deployments with persistent storage also gives other benefits, such as allowing you to preserve state for graceful cluster shutdowns.
+You can also overflow data from your caches to persistent storage and gain capacity beyond what is available in memory only.
+For example, you can have ten million entries in total while keeping only two million of them in memory.
+
+{brandname} adds key/value pairs to caches and persistent storage in either write-through mode or write-behind mode.
+Because these writing modes have different impacts on performance, you must consider them when planning a {brandname} deployment.
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Writing mode | Effect on performance
+
+|**Write-through**
+|{brandname} writes data to the cache and persistent storage simultaneously, which increases consistency and avoids data loss that can result from node failure.
+
+The downside to write-through mode is that synchronous writes add latency and decrease throughput.
+`Cache.put()` calls result in application threads waiting until writes to persistent storage complete.
+
+|**Write-behind**
+|{brandname} synchronously writes data to the cache but then adds the modification to a queue so that the write to persistent storage happens asynchronously, which decreases consistency but reduces latency of write operations.
+
+When the cache store cannot handle the number of write operations, {brandname} delays new writes until the number of pending write operations goes below the configured modification queue size, in a similar way to write-through.
+If the store is normally fast enough but latency spikes occur during bursts of cache writes, you can increase the modification queue size to contain the bursts and reduce the latency.
+|===
+
+.Passivation
+
+Enabling passivation configures {brandname} to write entries to persistent storage only when it evicts them from memory.
+Passivation also implies activation.
+Performing a read or write on a key brings that key back into memory and removes it from persistent storage.
+Removing keys from persistent storage during activation does not block the read or write operation, but it does increase load on the external store.
+
+Passivation and activation can potentially result in {brandname} performing multiple calls to persistent storage for a given entry in the cache.
+For example, if an entry is not available in memory, {brandname} brings it back into memory which is one read operation and a delete operation to remove it from persistent storage.
+Additionally, if the cache has reached the size limit, then {brandname} performs another write operation to passivate a newly evicted entry.
+
+.Pre-loading caches with data
+
+Another aspect of persistent storage that can affect {brandname} cluster performance is pre-loading caches.
+This capability populates your caches with data when {brandname} clusters start so they are "warm" and can handle reads and writes straight away.
+Pre-loading caches can slow down {brandname} cluster start times and result in out of memory exceptions if the amount of data in persistent storage is greater than the amount of available RAM.

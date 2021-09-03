@@ -1,0 +1,141 @@
+[id='performance-clustered-cache-modes_{context}']
+= Clustered cache modes
+
+You can configure clustered {brandname} caches as replicated or distributed.
+
+Distributed caches:: Maximize capacity by creating fewer copies of each entry across the cluster.
+Replicated caches:: Provide redundancy by creating a copy of all entries on each node in the cluster.
+
+[discrete]
+== Reads:Writes
+Consider whether your applications perform more write operations or more read operations.
+In general, distributed caches offer the best performance for writes while replicated caches offer the best performance for reads.
+
+To put `k1` in a distributed cache on a cluster of three nodes with two owners, {brandname} writes `k1` twice.
+The same operation in a replicated cache means {brandname} writes `k1` three times.
+The amount of additional network traffic for each write to a replicated cache is equal to the number of nodes in the cluster.
+A replicated cache on a cluster of ten nodes results in a tenfold increase in traffic for writes and so on. You can minimize traffic by using a UDP stack with multicasting for cluster transport.
+
+To get `k1` from a replicated cache, each node can perform the read operation locally.
+Whereas, to get `k1` from a distributed cache, the node that handles the operation might need to retrieve the key from a different node in the cluster, which results in an extra network hop and increases the time for the read operation to complete.
+
+.Client intelligence and near-caching
+
+{brandname} uses consistent hashing techniques to make Hot Rod clients topology-aware and avoid extra network hops, which means read operations have the same performance for distributed caches as they do for replicated caches.
+
+Hot Rod clients can also use near-caching capabilities to keep frequently accessed entries in local memory and avoid repeated reads.
+
+[TIP]
+====
+Distributed caches are the best choice for most {brandname} Server deployments.
+You get the best possible performance for read and write operations along with elasticity for cluster scaling.
+====
+
+[discrete]
+== Data guarantees
+
+Because each node contains all entries, replicated caches provide more protection against data loss than distributed caches.
+On a cluster of three nodes, two nodes can crash and you do not lose data from a replicated cache.
+
+In that same scenario, a distributed cache with two owners would lose data.
+To avoid data loss with distributed caches, you can increase the number of replicas across the cluster by configuring more owners for each entry with either the `owners` attribute declaratively or the `numOwners()` method programmatically.
+
+.Rebalancing operations when node failure occurs
+Rebalancing operations after node failure can impact performance and capacity.
+When a node leaves the cluster, {brandname} replicates cache entries among the remaining members to restore the configured number of owners.
+This rebalancing operation is temporary, but the increased cluster traffic has a negative impact on performance.
+Performance degradation is greater the more nodes leave.
+The nodes left in the cluster might not have enough capacity to keep all data in memory when too many nodes leave.
+
+[discrete]
+== Cluster scaling
+
+{brandname} clusters scale horizontally as your workloads demand to more efficiently use compute resources like CPU and memory.
+To take the most advantage of this elasticity, you should consider how scaling the number of nodes up or down affects cache capacity.
+
+For replicated caches, each time a node joins the cluster, it receives a complete copy of the data set.
+Replicating all entries to each node increases the time it takes for nodes to join and imposes a limit on overall capacity.
+Replicated caches can never exceed the amount of memory available to the host.
+For example, if the size of your data set is 10 GB, each node must have at least 10 GB of available memory.
+
+For distributed caches, adding more nodes increases capacity because each member of the cluster stores only a subset of the data.
+To store 10 GB of data, you can have eight nodes each with 5 GB of available memory if the number of owners is two, without taking memory overhead into consideration.
+Each additional node that joins the cluster increases the capacity of the distributed cache by 5 GB.
+
+The capacity of a distributed cache is not bound by the amount of memory available to underlying hosts.
+
+[discrete]
+== Synchronous or asynchronous replication
+
+{brandname} can communicate synchronously or asynchronously when primary owners send replication requests to backup nodes.
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Replication mode | Effect on performance
+
+|**Synchronous**
+|Synchronous replication helps to keep your data consistent but adds latency to cluster traffic that reduces throughput for cache writes.
+
+|**Asynchronous**
+|Asynchronous replication reduces latency and increases the speed of write operations but leads to data inconsistency and provides a lower guarantee against data loss.
+|===
+
+With synchronous replication, {brandname} notifies the originating node when replication requests complete on backup nodes.
+{brandname} retries the operation if a replication request fails due to a change to the cluster topology.
+When replication requests fail due to other errors, {brandname} throws exceptions for client applications.
+
+With asynchronous replication, {brandname} does not provide any confirmation for replication requests.
+This has the same effect for applications as all requests being successful.
+On the {brandname} cluster, however, the primary owner has the correct entry and {brandname} replicates it to backup nodes at some point in the future.
+In the case that the primary owner crashes then backup nodes might not have a copy of the entry or they might have an out of date copy.
+
+Cluster topology changes can also lead to data inconsistency with asynchronous replication.
+For example, consider a {brandname} cluster that has multiple primary owners.
+Due to a network error or some other issue, one or more of the primary owners leaves the cluster unexpectedly so {brandname} updates which nodes are the primary owners for which segments.
+When this occurs, it is theoretically possible for some nodes to use the old cluster topology and some nodes to use the updated topology.
+With asynchronous communication, this might lead to a short time where {brandname} processes replication requests from the previous topology and applies older values from write operations.
+However, {brandname} can detect node crashes and update cluster topology changes quickly enough that this scenario is not likely to affect many write operations.
+
+Using asynchronous replication does not guarantee improved throughput for writes, because asynchronous replication limits the number of backup writes that a node can handle at any time to the number of possible senders (via JGroups per-sender ordering).
+Synchronous replication allows nodes to handle more incoming write operations at the same time, which in certain configurations might compensate for the fact that individual operations take longer to complete, giving you a higher total throughput.
+
+When a node sends multiple requests to replicate entries, JGroups sends the messages to the rest of the nodes in the cluster one at a time, which results in there being only one replication request per originating node.
+This means that {brandname} nodes can process, in parallel with other write operations, one write from each other node in the cluster.
+
+{brandname} uses a JGroups flow control protocol in the cluster transport layer to handle replication requests to backup nodes.
+If the number of unconfirmed replication requests exceeds the flow control threshold, set with the `max_credits` attribute (4MB by default), write operations are blocked on the originator node.
+This applies to both synchronous and asynchronous replication.
+
+[discrete]
+== Number of segments
+
+{brandname} divides data into segments to distribute data evenly across clusters.
+Even distribution of segments avoids overloading individual nodes and makes cluster re-balancing operations more efficient.
+
+{brandname} creates 256 hash space segments per cluster by default.
+For deployments with up to 20 nodes per cluster, this number of segments is ideal and should not change.
+
+For deployments with greater than 20 nodes per cluster, increasing the number of segments increases the granularity of your data so {brandname} can distribute it across the cluster more efficiently.
+Use the following formula to calculate approximately how many segments you should configure:
+
+----
+Number of segments = 20 * Number of nodes
+----
+
+For example, with a cluster of 30 nodes you should configure 600 segments.
+Adding more segments for larger clusters is generally a good idea, though, and this formula should provide you with a rough idea of the number that is right for your deployment.
+
+Changing the number of segments {brandname} creates requires a full cluster restart.
+If you use persistent storage you might also need to use the `StoreMigrator` utility to change the number of segments, depending on the cache store implementation.
+
+Changing the number of segments can also lead to data corruption so you should do so with caution and based on metrics that you gather from benchmarking and performance monitoring.
+
+[NOTE]
+====
+{brandname} always segments data that it stores in memory.
+When you configure cache stores, {brandname} does not always segment data in persistent storage.
+
+It depends on the cache store implementation but, whenever possible you should enable segmentation for a cache store.
+Segmented cache stores improve {brandname} performance when iterating over data in persistent storage.
+For example, with RocksDB and JDBC-string based cache stores, segmentation reduces the number of objects that {brandname} needs to retrieve from the database.
+====

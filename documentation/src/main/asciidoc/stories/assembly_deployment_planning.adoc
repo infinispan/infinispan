@@ -1,0 +1,32 @@
+:imagesdir: topics/images
+[id="deployment-planning"]
+:context: deployment-planning
+= {brandname} deployment planning
+
+To get the best performance for your {brandname} deployment, you should do the following things:
+
+* Calculate the size of your data set.
+* Determine what type of clustered cache mode best suits your use case and requirements.
+* Understand performance trade-offs and considerations for {brandname} capabilities that provide fault tolerance and consistency guarantees.
+
+include::{topics}/con_calculate_size_data_set.adoc[leveloffset=+1]
+include::{topics}/con_memory_overhead.adoc[leveloffset=+2]
+include::{topics}/con_jvm_heap_memory_allocation.adoc[leveloffset=+2]
+include::{topics}/con_performance_clustered_cache_modes.adoc[leveloffset=+1]
+include::{topics}/con_performance_stale_caches.adoc[leveloffset=+1]
+include::{topics}/con_performance_memory_management.adoc[leveloffset=+1]
+include::{topics}/con_off_heap_memory.adoc[leveloffset=+1]
+include::{topics}/con_off_heap_storage.adoc[leveloffset=+2]
+include::{topics}/con_performance_persistence.adoc[leveloffset=+1]
+include::{topics}/con_performance_security.adoc[leveloffset=+1]
+include::{topics}/con_performance_client_listeners.adoc[leveloffset=+1]
+include::{topics}/con_performance_indexing_querying.adoc[leveloffset=+1]
+include::{topics}/con_performance_continuous_queries.adoc[leveloffset=+2]
+include::{topics}/con_performance_data_consistency.adoc[leveloffset=+1]
+include::{topics}/con_performance_partition_handling.adoc[leveloffset=+1]
+include::{topics}/con_performance_cross_site.adoc[leveloffset=+1]
+include::{topics}/con_performance_clustered_execution.adoc[leveloffset=+1]
+include::{topics}/con_performance_client_traffic.adoc[leveloffset=+1]
+
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
