@@ -1,4 +1,5 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
+include::{stories}/assembly_deployment_planning.adoc[leveloffset=+1]
 include::{stories}/assembly_tuning.adoc[leveloffset=+1]

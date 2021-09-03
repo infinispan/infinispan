@@ -68,11 +68,10 @@ the node where the stream operation is performed will be used, for example inval
 == Example
 
 The code below takes a cache and returns a map with all the cache entries whose values contain the string "JBoss"
+
 [source,java]
 ----
-Map<Object, String> jbossValues = cache.entrySet().stream()
-              .filter(e -> e.getValue().contains("JBoss"))
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+include::code_examples/Stream.java[]
 ----
 
 == Distribution/Replication/Scattered

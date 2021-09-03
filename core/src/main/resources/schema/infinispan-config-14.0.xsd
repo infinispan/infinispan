@@ -2171,7 +2171,7 @@
     <xs:attribute name="segments" type="xs:int" default="${Index.segments}">
       <xs:annotation>
         <xs:documentation>
-          Number of index segment files. Increasing this value improves throughput but requires more threads to be spawned.
+          Specifies the number of index segment files.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

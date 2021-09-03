@@ -1,0 +1,25 @@
+[id='managing-jvm-memory_{context}']
+= JVM memory management with eviction
+
+RAM is a costly resource and usually limited in availability.
+{brandname} lets you manage memory usage to give priority to frequently used data by removing entries from memory.
+
+Eviction:: Controls the amount of data that {brandname} keeps in memory and takes effect for each node.
+
+Eviction bounds {brandname} caches by:
+
+* Total number of entries, a maximum count.
+* Amount of JVM memory, a maximum size.
+
+[IMPORTANT]
+====
+{brandname} evicts entries on a per-node basis.
+Because not all nodes evict the same entries you should use eviction with persistent storage to avoid data inconsistency.
+====
+
+The impact to performance from eviction comes from the additional processing that {brandname} needs to calculate when the size of a cache reaches the configured threshold.
+
+Eviction can also slow down read operations.
+For example, if a read operation retrieves an entry from a cache store, {brandname} brings that entry into memory and then evicts another entry.
+This eviction process can include writing the newly evicted entry to the cache store, if using passivation.
+When this happens, the read operation does not return the value until the eviction process is complete.

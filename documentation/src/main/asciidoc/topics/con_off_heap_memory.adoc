@@ -2,17 +2,12 @@
 = JVM heap and off-heap memory
 
 {brandname} stores cache entries in JVM heap memory by default.
-You can configure {brandname} to use off-heap storage, which means your data occupies native memory outside the managed JVM memory space with the following benefits:
+You can configure {brandname} to use off-heap storage, which means that your data occupies native memory outside the managed JVM memory space.
 
-* Uses less memory than JVM heap memory for the same amount of data.
-* Can improve overall JVM performance by avoiding Garbage Collector (GC) runs.
-
-However, there are some trade-offs with off-heap storage; for example, JVM heap dumps do not show entries stored in off-heap memory.
-
-The following diagram illustrates the memory space for a JVM process where {brandname} is running:
+The following diagram is a simplified illustration of the memory space for a JVM process where {brandname} is running:
 
 .JVM memory space
-image::jvm_memory_space.png[Illustration of JVM memory space]
+image::jvm_memory_space.png[This diagram depicts the JVM memory space divided into heap and off-heap memory.]
 
 [discrete]
 == JVM heap memory
@@ -29,3 +24,10 @@ Because GC is an intensive process, longer and more frequent runs can degrade ap
 Off-heap memory is native available system memory outside JVM memory management.
 The _JVM memory space_ diagram shows the `Metaspace` memory pool that holds class metadata and is allocated from native memory.
 The diagram also represents a section of native memory that holds {brandname} cache entries.
+
+Off-heap memory:
+
+* Uses less memory per entry.
+* Improves overall JVM performance by avoiding Garbage Collector (GC) runs.
+
+One disadvantage, however, is that JVM heap dumps do not show entries stored in off-heap memory.

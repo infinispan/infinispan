@@ -36,17 +36,3 @@ Client listeners receive subsequent events each time a cache operation modifies 
 * If the query on both the old and new values match, {brandname} sends an `Update` event.
 * If the query on the old value matches but the new value does not, {brandname} sends a `Leave` event.
 * If the query on the old value matches and the entry is then deleted or it expires, {brandname} sends a `Leave` event.
-
-[discrete]
-== Continuous query performance impact
-
-Continuous queries are designed to provide a constant stream of updates to applications, which can generate a significant number of events.
-{brandname} temporarily allocates memory for each event it generates, which can result in memory pressure and potentially lead to `OutOfMemory` exceptions, especially for remote caches.
-For this reason, you should carefully design your continuous queries to avoid any performance impact.
-
-{brandname} strongly recommends that you limit the scope of your continuous queries to the smallest amount of information that you need.
-To achieve this, you can use projections and predicates.
-For example, `SELECT field1, field2 FROM Entity WHERE x AND y` provides results about only a subset of fields that match the criteria rather than the entire entry.
-
-It is also important to ensure that each `ContinuousQueryListener` you create can quickly process all received events without blocking threads.
-To achieve this, you should avoid any cache operations that generate events unnecessarily.

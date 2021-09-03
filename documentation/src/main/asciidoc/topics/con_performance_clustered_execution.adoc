@@ -1,0 +1,48 @@
+[id='performance-clustered-execution_{context}']
+= Code execution and data processing
+
+One of the benefits of distributed caching is that you can leverage compute resources from each host to perform large scale data processing more efficiently.
+By executing your processing logic directly on {brandname} you spread the workload across multiple JVM instances.
+Your code also runs in the same memory space where {brandname} stores your data, meaning that you can iterate over entries much faster.
+
+In terms of performance impact to your {brandname} deployment, that entirely depends on your code execution.
+More complex processing operations have higher performance penalties so you should approach running any code on {brandname} clusters with careful planning.
+Start out by testing your code and performing multiple execution runs on a smaller, sample data set.
+After you gather some metrics you can start identifying optimizations and understanding what performance implications of the code you're running.
+
+One definite consideration is that long running processes can start having a negative impact on normal read and write operations.
+So it is imperative that you monitor your deployment over time and continually assess performance.
+
+[discrete]
+== Embedded caches
+
+With embedded caches, {brandname} provides two APIs that let you execute code in the same memory space as your data.
+
+`ClusterExecutor` API:: Lets you perform any operation with the cache manager, including iterating over the entries of one or more caches, and gives you processing based on {brandname} nodes.
+`CacheStream` API:: Lets you perform operations on collections and gives you processing based on data.
+
+If you want to run an operation on a single node, a group of nodes, or all nodes in a certain geographic region, then you should use clustered execution.
+If you want to run an operation that guarantees a correct result for your entire data set, then using distributed streams is a more effective option.
+
+.Cluster execution
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/ClusterExecutor.java[]
+----
+
+.CacheStream
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/Stream.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[org.infinispan.manager.ClusterExecutor]
+* link:{javadocroot}/org/infinispan/CacheStream.html[org.infinispan.CacheStream]
+
+[discrete]
+== Remote caches
+
+For remote caches, {brandname} provides a `ServerTask` API that lets you register custom Java implementations with {brandname} Server and execute tasks programmatically by calling the `execute()` method over Hot Rod or by using the {brandname} Command Line Interface (CLI).
+You can execute tasks on one {brandname} Server instance only or all server instances in the cluster.
