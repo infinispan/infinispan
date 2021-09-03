@@ -49,6 +49,9 @@ public class JsonRemoteStoreOnlyParsingTest {
             "                \"name\":4\n" +
             "            }\n" +
             "        },\n" +
+            "        \"properties\":{\n" +
+            "                \"key\":\"value\"\n" +
+            "        },\n" +
             "        \"security\":{\n" +
             "            \"authentication\":{\n" +
             "                \"server-name\":\"servername\",\n" +

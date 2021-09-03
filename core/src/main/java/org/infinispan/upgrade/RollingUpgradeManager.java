@@ -95,6 +95,15 @@ public class RollingUpgradeManager {
       migrator.connectSource(cache, configuration);
    }
 
+   @ManagedOperation(
+         description = "Checks if the target cluster is connected to the source cluster.",
+         displayName = "Checks if the target cluster is connected to the source cluster."
+   )
+   public boolean isConnected(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
+      TargetMigrator migrator = getMigrator(migratorName);
+      return migrator.isConnected(cache);
+   }
+
    private TargetMigrator getMigrator(String name) throws Exception {
       TargetMigrator targetMigrator = targetMigrators.get(name);
       if (targetMigrator == null) {

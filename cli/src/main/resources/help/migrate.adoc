@@ -16,6 +16,8 @@ SYNOPSIS
 
 *migrate cluster disconnect*
 
+*migrate cluster source-connection*
+
 
 DESCRIPTION
 -----------
@@ -36,6 +38,8 @@ Synchronize data between the source cluster and the target cluster.
 *migrate cluster disconnect*::
 Disconnects the target cluster from the source cluster.
 
+*migrate cluster source-connection*::
+Gets connection configuration of the target cluster. The command will print "Not Found" if the connections hasn't been established.
 
 COMMON OPTIONS
 --------------
@@ -72,3 +76,9 @@ CLUSTER DISCONNECT OPTIONS
 
 *-c, --cache*='name'::
 The name of the cache to disconnect from the source.
+
+CLUSTER CONNECTION OPTIONS
+--------------------------
+
+*-c, --cache*='name'::
+The name of the cache to obtain the connection configuration.

@@ -45,7 +45,7 @@ public class Migrate extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @GroupCommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
+   @GroupCommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSourceConnection.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
    public static class Cluster extends CliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -108,6 +108,27 @@ public class Migrate extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).disconnectSource();
+      }
+   }
+
+
+   @CommandDefinition(name = "source-connection", description = "Obtains the remote store configuration if a cache is connected to another cluster")
+   public static class ClusterSourceConnection extends RestCliCommand {
+
+      @Option(completer = CacheCompleter.class, shortName = 'c', description = "The name of the cache.")
+      String cache;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).sourceConnection();
       }
    }
 

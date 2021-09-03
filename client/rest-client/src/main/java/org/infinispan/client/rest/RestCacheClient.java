@@ -408,6 +408,17 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> connectSource(RestEntity remoteStoreJsonConfig);
 
    /**
+    * Checks if the cache is connected through a remote store to perform rolling upgrades
+    */
+   CompletionStage<RestResponse> sourceConnected();
+
+   /**
+    * Return the remote store configuration in case the case has been connected to another cluster using
+    * {@link #connectSource(RestEntity)}
+    */
+   CompletionStage<RestResponse> sourceConnection();
+
+   /**
     * Rebuild the search indexes of the cache based on its data.
     */
    CompletionStage<RestResponse> reindex();

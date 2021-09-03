@@ -7,10 +7,22 @@ Since 12.0, {brandname} ignores this parameter since it detects the optimal way 
 
 == REST
 
+=== Indexer
+
 The ```mass-index``` operation from the cache resource has been deprecated.
 Use ```reindex``` instead:
 
   /v2/caches/{cacheName}/search/indexes?action=reindex
+
+=== Rolling Upgrades
+
+The following operation has been deprecated:
+
+* ```POST /v2/caches/{cacheName}?action=disconnect-source```
+
+Use the substitute:
+
+* ```DELETE /v2/caches/{cacheName}/rolling-upgrade/source-connection```
 
 == File-Based Cache Store (`file-store`) Configuration Defaults to SoftIndexFileStore
 

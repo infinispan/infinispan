@@ -54,6 +54,33 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.readln("migrate cluster connect --file=" + dest + " --cache=" + CACHE_NAME);
+         terminal.clear();
+         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.assertContains("remote-store");
+      }
+   }
+
+   @Override
+   protected void assertSourceConnected() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.assertContains("remote-store");
+      }
+   }
+
+   @Override
+   protected void assertSourceDisconnected() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         terminal.readln("connect 127.0.0.1:" + target.getSinglePort(0));
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.assertContains("Not Found");
       }
    }
 

@@ -15,11 +15,12 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**
- * Task to a remote store to the cache.
+ * Task to add a remote store to the cache.
  *
  * @since 13.0
  */
@@ -37,7 +38,10 @@ public class AddSourceRemoteStoreTask implements Function<EmbeddedCacheManager, 
       ComponentRegistry cr = embeddedCacheManager.getCache(cacheName).getAdvancedCache().getComponentRegistry();
       PersistenceManager persistenceManager = cr.getComponent(PersistenceManager.class);
       try {
-         return CompletionStages.join(persistenceManager.addStore(storeConfiguration));
+         if (persistenceManager.getStores(RemoteStore.class).isEmpty()) {
+             return CompletionStages.join(persistenceManager.addStore(storeConfiguration));
+         }
+         return null;
       } catch (Exception e) {
          throw new CacheException(e);
       }
