@@ -2,6 +2,7 @@ package org.infinispan.metadata;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.versioning.EntryVersion;
 
 /**
@@ -38,6 +39,21 @@ public interface Metadata {
     * @return version of the entry
     */
    EntryVersion version();
+
+   /**
+    * Returns if the creation timestamp is updated when an entry is modified.
+    * <p>
+    * Created entries always update the creation timestamp.
+    * <p>
+    * This feature is experimental and all Infinispan implementation returns {@code true}. If you want o use this
+    * feature, you have to create a custom {@link Metadata} implementation.
+    *
+    * @return {@code true} to update the creation timestamp for modified.
+    */
+   @Experimental
+   default boolean updateCreationTimestamp() {
+      return true;
+   }
 
    /**
     * Returns an instance of {@link Builder} which can be used to build
@@ -94,6 +110,27 @@ public interface Metadata {
        * @return a builder instance with the version applied
        */
       Builder version(EntryVersion version);
+
+      /**
+       * Set how the creation timestamp is updated.
+       * <p>
+       * It only affects mortal entries; in other words, where {@link Metadata#lifespan()} is greater than zero.
+       * <p>
+       * When {@code true} (default), the creation timestamp is updated when an entry is created or modified. When set
+       * to {@code false}, the creation timestamp is only updated when the entry is created.
+       * <p>
+       * The feature is experimental and Infinispan {@link Metadata} and {@link Builder} does not implement this method.
+       * If you want to use this feature, you have to create your own {@link Metadata} and {@link Builder}
+       * implementation.
+       *
+       * @param enabled {@code false} to disable creation timestamp update when modifying an entry.
+       * @return a builder instance with the version applied
+       */
+      @Experimental
+      default Builder updateCreationTimestamp(boolean enabled) {
+         //no-op by default
+         return this;
+      }
 
       /**
        * Build a metadata instance.

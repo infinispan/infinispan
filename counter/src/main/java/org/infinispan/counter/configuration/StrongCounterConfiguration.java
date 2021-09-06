@@ -19,13 +19,17 @@ public class StrongCounterConfiguration extends AbstractCounterConfiguration {
          .immutable()
          .build();
 
+   static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder(Attribute.LIFESPAN, -1L)
+         .immutable()
+         .build();
+
    StrongCounterConfiguration(AttributeSet attributes) {
       super(attributes);
    }
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StrongCounterConfiguration.class, AbstractCounterConfiguration.attributeDefinitionSet(),
-            LOWER_BOUND, UPPER_BOUND);
+            LOWER_BOUND, UPPER_BOUND, LIFESPAN);
    }
 
    /**
@@ -41,5 +45,9 @@ public class StrongCounterConfiguration extends AbstractCounterConfiguration {
 
    public long upperBound() {
       return attributes.attribute(UPPER_BOUND).get();
+   }
+
+   public long lifespan() {
+      return attributes.attribute(LIFESPAN).get();
    }
 }

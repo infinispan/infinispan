@@ -179,11 +179,12 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       // the cache entry should also acquire the same lock, to avoid returning
       // partially applied cache entry updates
       synchronized (cacheEntry) {
+         boolean reincarnate = metadata == null || metadata.updateCreationTimestamp();
          cacheEntry.setValue(value);
          InternalCacheEntry original = cacheEntry;
          cacheEntry = update(cacheEntry, metadata);
          // we have the same instance. So we need to reincarnate, if mortal.
-         if (cacheEntry.getLifespan() > 0 && original == cacheEntry) {
+         if (reincarnate && cacheEntry.getLifespan() > 0 && original == cacheEntry) {
             cacheEntry.reincarnate(timeService.wallClockTime());
          }
          return cacheEntry;

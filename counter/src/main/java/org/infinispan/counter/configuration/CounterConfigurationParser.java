@@ -24,7 +24,7 @@ import org.kohsuke.MetaInfServices;
  * Counters configuration parser
  *
  * @author Pedro Ruivo
- * @since 9.0
+ * @since 13.0
  */
 @MetaInfServices(ConfigurationParser.class)
 @Namespace(root = "counters")
@@ -39,15 +39,10 @@ public class CounterConfigurationParser extends CounterParser {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
 
       Element element = Element.forName(reader.getLocalName());
-      switch (element) {
-         case COUNTERS: {
-            parseCountersElement(reader, builder.addModule(CounterManagerConfigurationBuilder.class));
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedElement(reader);
-         }
+      if (element != Element.COUNTERS) {
+         throw ParseUtils.unexpectedElement(reader);
       }
+      parseCountersElement(reader, builder.addModule(CounterManagerConfigurationBuilder.class));
    }
 
    @Override
@@ -70,15 +65,10 @@ public class CounterConfigurationParser extends CounterParser {
          reader.nextElement();
          reader.require(ConfigurationReader.ElementType.START_ELEMENT);
          Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case COUNTERS: {
-               parseCountersElement(reader, builder);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
+         if (element != Element.COUNTERS) {
+            throw ParseUtils.unexpectedElement(reader);
          }
+         parseCountersElement(reader, builder);
       } finally {
          Util.close(reader);
       }

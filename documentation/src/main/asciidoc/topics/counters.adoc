@@ -88,9 +88,16 @@ Default value is `Long.MIN_VALUE`.
 * `upper-bound` [strong]: Sets the strong consistent counter's upper bound.
 Default value is `Long.MAX_VALUE`.
 
+* `lifespan` [strong]: Sets the strong consistent counter's lifespan in milliseconds.
+After this time, the counter is removed and its value reset to the counter's initial value.
+A `lifespan` lower or equals to `0` (zero), disables this feature.
+Default value is `-1`.
+
 NOTE: If neither the `lower-bound` or `upper-bound` are configured, the strong counter is set as unbounded.
 
 WARNING: The `initial-value` must be between `lower-bound` and `upper-bound` inclusive.
+
+WARNING: The `lifespan` is an experimental feature and may be changed or removed in the future.
 
 * `concurrency-level` [weak]: Sets the number of concurrent updates.
 Its value *must be positive* and the default value is `16`.
@@ -247,6 +254,15 @@ With compare-and-swap, it saves one invocation counter invocation (`counter.getV
 ----
 include::code_examples/CounterGetStrongCompareSwap.java[]
 ----
+
+To use a strong counter as rate limiter, configure `upper-bound` and `lifespan` as follows:
+
+[source,java]
+----
+include::code_examples/CounterRateLimiter.java[]
+----
+
+NOTE: this is an experimental feature and may be removed in a future.
 
 === The `WeakCounter` interface: when speed is needed
 

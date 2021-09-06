@@ -261,25 +261,16 @@ public interface MetaParam<T> {
       }
    }
 
-   /**
-    * Non-writable parameter telling if the entry was loaded from a persistence tier
-    * ({@link org.infinispan.persistence.spi.CacheLoader}) or not.
-    * This information may be available only to write commands due to implementation reasons.
-    */
    @Experimental
-   final class MetaLoadedFromPersistence implements MetaParam<Boolean> {
-      public static final MetaLoadedFromPersistence LOADED = new MetaLoadedFromPersistence(true);
-      public static final MetaLoadedFromPersistence NOT_LOADED = new MetaLoadedFromPersistence(false);
+   abstract class MetaBoolean implements MetaParam<Boolean> {
+      protected final boolean value;
 
-      private boolean loaded;
-
-      private MetaLoadedFromPersistence(boolean loaded) {
-         this.loaded = loaded;
+      public MetaBoolean(boolean value) {
+         this.value = value;
       }
 
-      @Override
       public Boolean get() {
-         return loaded;
+         return value;
       }
 
       @Override
@@ -287,18 +278,53 @@ public interface MetaParam<T> {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
 
-         MetaLoadedFromPersistence that = (MetaLoadedFromPersistence) o;
+         MetaBoolean metaBoolean = (MetaBoolean) o;
 
-         return loaded == that.loaded;
+         return value == metaBoolean.value;
       }
 
       @Override
       public int hashCode() {
-         return (loaded ? 1 : 0);
+         return value ? 1 : 0;
+      }
+   }
+
+   /**
+    * Non-writable parameter telling if the entry was loaded from a persistence tier
+    * ({@link org.infinispan.persistence.spi.CacheLoader}) or not.
+    * This information may be available only to write commands due to implementation reasons.
+    */
+   @Experimental
+   final class MetaLoadedFromPersistence extends MetaBoolean {
+      public static final MetaLoadedFromPersistence LOADED = new MetaLoadedFromPersistence(true);
+      public static final MetaLoadedFromPersistence NOT_LOADED = new MetaLoadedFromPersistence(false);
+
+      private MetaLoadedFromPersistence(boolean loaded) {
+         super(loaded);
       }
 
       public static MetaLoadedFromPersistence of(boolean loaded) {
          return loaded ? LOADED : NOT_LOADED;
+      }
+   }
+
+   /**
+    * A parameter to tell if the creation timestamp should be updated for modified entries.
+    * <p>
+    * Created entries will always update its creation timestamp.
+    */
+   @Experimental
+   final class MetaUpdateCreationTime extends MetaBoolean implements Writable<Boolean> {
+
+      private static final MetaUpdateCreationTime UPDATE = new MetaUpdateCreationTime(true);
+      private static final MetaUpdateCreationTime NOT_UPDATE = new MetaUpdateCreationTime(false);
+
+      public MetaUpdateCreationTime(boolean value) {
+         super(value);
+      }
+
+      public static MetaUpdateCreationTime of(boolean update) {
+         return update ? UPDATE : NOT_UPDATE;
       }
    }
 
