@@ -292,7 +292,18 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                throw new ConfigurationReaderException("Incomplete line", Location.of(row, 1));
             }
          } else if (state == 3) { // we reached the end of the line
-            parsed.value = s.substring(start).trim();
+            String val = s.substring(start).trim();
+            switch (val) {
+               // Handle various null values: null | Null | NULL | {}
+               case "{}":
+               case "null":
+               case "Null":
+               case "NULL":
+                  parsed.value = null;
+                  return parsed;
+               default:
+                  parsed.value = val;
+            }
          }
          return parsed;
       }
