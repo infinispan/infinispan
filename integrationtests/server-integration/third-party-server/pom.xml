@@ -237,7 +237,7 @@
                                         when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
                                         when false, the plugin downloads the jars at build time
                                          -->
-                                        <jboss-maven-dist>true</jboss-maven-dist>
+                                        <jboss-maven-dist>false</jboss-maven-dist>
                                     </plugin-options>
                                 </configuration>
                             </execution>
