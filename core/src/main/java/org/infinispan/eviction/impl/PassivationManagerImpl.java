@@ -84,19 +84,18 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
-   private CompletionStage<Boolean> doPassivate(Object key, InternalCacheEntry<?, ?> entry) {
+   private CompletionStage<Void> doPassivate(Object key, InternalCacheEntry<?, ?> entry) {
       if (log.isTraceEnabled()) log.tracef("Passivating entry %s", toStr(key));
       MarshallableEntry<?, ?> marshalledEntry = marshalledEntryFactory.create((InternalCacheEntry) entry);
       CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
          return stage.handle((v, t) -> {
             if (t != null) {
                CONTAINER.unableToPassivateEntry(key, t);
-               return false;
             }
             if (statsEnabled) {
                passivations.getAndIncrement();
             }
-            return true;
+            return null;
          });
    }
 
@@ -109,7 +108,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
                   .thenCompose(v -> doPassivate(key, entry))
                   .thenCompose(v -> notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE, null));
          } else {
-            return CompletionStages.ignoreValue(doPassivate(key, entry));
+            return doPassivate(key, entry);
          }
       }
       return CompletableFutures.completedNull();
