@@ -440,22 +440,20 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          return CompletableFutures.booleanStage(CompletionStages.join(stage));
       }
 
-      return stage
-            .handle((expired, t) -> {
-               if (t != null) {
-                  Throwable innerT = CompletableFutures.extractException(t);
-                  if (innerT instanceof OutdatedTopologyException) {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Touch received OutdatedTopologyException, retrying");
-                     }
-                     return attemptTouchAndReturnIfExpired(ice, segment, currentTime);
-                  }
-                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
-               } else {
-                  return CompletableFutures.booleanStage(expired);
+      return CompletionStages.handleAndCompose(stage, (expired, t) -> {
+         if (t != null) {
+            Throwable innerT = CompletableFutures.extractException(t);
+            if (innerT instanceof OutdatedTopologyException) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Touch received OutdatedTopologyException, retrying");
                }
-            })
-            .thenCompose(Function.identity());
+               return attemptTouchAndReturnIfExpired(ice, segment, currentTime);
+            }
+            return CompletableFutures.completedExceptionFuture(t);
+         }
+
+         return CompletableFutures.booleanStage(expired);
+      });
    }
 
    private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry<?, ?> ice, int segment, long currentTime) {

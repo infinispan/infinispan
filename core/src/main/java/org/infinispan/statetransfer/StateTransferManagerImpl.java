@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
-import static org.infinispan.util.concurrent.CompletionStages.ignoreValue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -202,7 +201,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             });
    }
 
-   private CompletionStage<Void> updateProviderAndConsumer(boolean isRebalance, int newTopologyId, CacheTopology newCacheTopology,
+   private CompletionStage<?> updateProviderAndConsumer(boolean isRebalance, int newTopologyId, CacheTopology newCacheTopology,
                                                            int newRebalanceId, CacheTopology.Phase phase) {
       CompletionStage<CompletionStage<Void>> consumerUpdateFuture =
             stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
@@ -218,7 +217,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       });
       // Block topology updates until the consumer finishes applying the topology update
-      return ignoreValue(consumerUpdateFuture);
+      return consumerUpdateFuture;
    }
 
    private void completeInitialTransferIfNeeded(CacheTopology newCacheTopology, CacheTopology.Phase phase) {
