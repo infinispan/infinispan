@@ -38,10 +38,12 @@ public final class ConvertUtil {
             StrongCounterConfigurationBuilder bBuilder = new StrongCounterConfigurationBuilder(null);
             bBuilder.upperBound(configuration.upperBound());
             bBuilder.lowerBound(configuration.lowerBound());
+            bBuilder.lifespan(configuration.lifespan());
             populateCommonAttributes(bBuilder, name, configuration);
             return bBuilder.create();
          case UNBOUNDED_STRONG:
             StrongCounterConfigurationBuilder uBuilder = new StrongCounterConfigurationBuilder(null);
+            uBuilder.lifespan(configuration.lifespan());
             populateCommonAttributes(uBuilder, name, configuration);
             return uBuilder.create();
          default:
@@ -64,10 +66,12 @@ public final class ConvertUtil {
                   .initialValue(configuration.initialValue())
                   .lowerBound(configuration.lowerBound())
                   .upperBound(configuration.upperBound())
+                   .lifespan(configuration.lifespan())
                   .storage(configuration.storage())
                   .build() :
             builder(CounterType.UNBOUNDED_STRONG)
                   .initialValue(configuration.initialValue())
+                   .lifespan(configuration.lifespan())
                   .storage(configuration.storage())
                   .build();
    }

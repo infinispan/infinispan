@@ -24,16 +24,18 @@ public class CounterConfiguration {
    private final long initialValue;
    private final long upperBound;
    private final long lowerBound;
+   private final long lifespan;
    private final int concurrencyLevel;
    private final CounterType type;
    private final Storage storage;
 
    @ProtoFactory
    CounterConfiguration(long initialValue, long lowerBound, long upperBound, int concurrencyLevel, CounterType type,
-         Storage storage) {
+                        Storage storage, long lifespan) {
       this.initialValue = initialValue;
       this.upperBound = upperBound;
       this.lowerBound = lowerBound;
+      this.lifespan = lifespan;
       this.concurrencyLevel = concurrencyLevel;
       this.type = type;
       this.storage = storage;
@@ -71,6 +73,11 @@ public class CounterConfiguration {
    @ProtoField(6)
    public Storage storage() {
       return storage;
+   }
+
+   @ProtoField(number = 7, defaultValue = "0")
+   public long lifespan() {
+      return lifespan;
    }
 
    @Override
@@ -123,6 +130,7 @@ public class CounterConfiguration {
       private long initialValue = 0;
       private long lowerBound = Long.MIN_VALUE;
       private long upperBound = Long.MAX_VALUE;
+      private long lifespan = 0;
       private Storage storage = Storage.VOLATILE;
       private int concurrencyLevel = 16;
 
@@ -170,6 +178,11 @@ public class CounterConfiguration {
          return this;
       }
 
+      public Builder lifespan(long lifespan) {
+         this.lifespan = lifespan;
+         return this;
+      }
+
       /**
        * Sets the storage mode of the counter.
        * <p>
@@ -206,7 +219,8 @@ public class CounterConfiguration {
        * @return the {@link CounterConfiguration} with this configuration.
        */
       public CounterConfiguration build() {
-         return new CounterConfiguration(initialValue, lowerBound, upperBound, concurrencyLevel, type, storage);
+         return new CounterConfiguration(initialValue, lowerBound, upperBound, concurrencyLevel, type, storage,
+               lifespan);
       }
    }
 

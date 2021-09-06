@@ -30,6 +30,20 @@
         </testResources>
         <plugins>
             <plugin>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-defaults-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>extract-defaults</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>extract-defaults</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>

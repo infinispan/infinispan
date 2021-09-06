@@ -41,7 +41,8 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @ProtoFactory
    MetaParamsInternalMetadata(NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion,
-                              long created, long lastUsed, long lifespan, long maxIdle, CounterConfiguration counterConfiguration) {
+                              long created, long lastUsed, long lifespan, long maxIdle, CounterConfiguration counterConfiguration,
+                              boolean updateCreationTimestamp) {
       this.params = new MetaParams(MetaParams.EMPTY_ARRAY, 0);
       if (numericVersion != null || clusteredVersion != null) {
          this.params.add(new MetaEntryVersion(numericVersion == null ? clusteredVersion : numericVersion));
@@ -53,6 +54,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       if (counterConfiguration != null) {
          params.add(new CounterConfigurationMetaParam(counterConfiguration));
       }
+      params.add(MetaParam.MetaUpdateCreationTime.of(updateCreationTimestamp));
    }
 
    private MetaParamsInternalMetadata(MetaParams params) {
@@ -124,6 +126,12 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    @ProtoField(7)
    public CounterConfiguration counterConfiguration() {
       return params.find(CounterConfigurationMetaParam.class).map(CounterConfigurationMetaParam::get).orElse(null);
+   }
+
+   @ProtoField(value = 8, defaultValue = "true")
+   @Override
+   public boolean updateCreationTimestamp() {
+      return params.find(MetaParam.MetaUpdateCreationTime.class).map(MetaParam.MetaBoolean::get).orElse(true);
    }
 
    @Override
@@ -224,6 +232,12 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       }
 
       @Override
+      public Metadata.Builder updateCreationTimestamp(boolean enabled) {
+         params.add(new MetaParam.MetaUpdateCreationTime(enabled));
+         return this;
+      }
+
+      @Override
       public MetaParamsInternalMetadata build() {
          return new MetaParamsInternalMetadata(params);
       }
@@ -246,6 +260,9 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
             }
             if (!params.find(MetaEntryVersion.class).isPresent()) {
                version(metadata.version());
+            }
+            if (!params.find(MetaParam.MetaUpdateCreationTime.class).isPresent()) {
+               updateCreationTimestamp(metadata.updateCreationTimestamp());
             }
          }
          return this;

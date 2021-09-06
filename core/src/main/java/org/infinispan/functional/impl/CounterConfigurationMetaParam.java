@@ -25,4 +25,11 @@ public class CounterConfigurationMetaParam implements MetaParam.Writable<Counter
    public CounterConfiguration get() {
       return configuration;
    }
+
+   @Override
+   public String toString() {
+      return "CounterConfigurationMetaParam{" +
+            "configuration=" + configuration +
+            '}';
+   }
 }

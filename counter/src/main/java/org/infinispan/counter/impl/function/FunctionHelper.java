@@ -2,9 +2,11 @@ package org.infinispan.counter.impl.function;
 
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.impl.entries.CounterValue;
+import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
 
@@ -40,7 +42,7 @@ final class FunctionHelper {
                return CounterState.UPPER_BOUND_REACHED;
             }
          }
-         entry.set(newCounterValue(update, CounterState.VALID), metadata);
+         setInEntry(entry, newCounterValue(update, CounterState.VALID), metadata);
       }
       return retVal;
    }
@@ -79,7 +81,7 @@ final class FunctionHelper {
          //overflow!
          newValue = newCounterValue(Long.MAX_VALUE, CounterState.UPPER_BOUND_REACHED);
       }
-      entry.set(newValue, metadata);
+      setInEntry(entry, newValue, metadata);
       return newValue;
    }
 
@@ -101,7 +103,7 @@ final class FunctionHelper {
          //overflow!
          newValue = newCounterValue(Long.MIN_VALUE, CounterState.LOWER_BOUND_REACHED);
       }
-      entry.set(newValue, metadata);
+      setInEntry(entry, newValue, metadata);
       return newValue;
    }
 
@@ -117,12 +119,21 @@ final class FunctionHelper {
          //overflow!
          newValue = newCounterValue(delta > 0 ? Long.MAX_VALUE : Long.MIN_VALUE);
       }
-      entry.set(newValue, metadata);
+      setInEntry(entry, newValue, metadata);
       return newValue;
    }
 
    private static boolean noChange(long currentValue, long delta) {
       return currentValue == Long.MAX_VALUE && delta > 0 ||
             currentValue == Long.MIN_VALUE && delta < 0;
+   }
+
+   private static void setInEntry(EntryView.ReadWriteEntryView<?, CounterValue> entry, CounterValue value, CounterConfigurationMetaParam metadata) {
+      CounterConfiguration configuration = metadata.get();
+      if (configuration.type() != CounterType.WEAK && configuration.lifespan() > 0) {
+         entry.set(value, metadata, new MetaParam.MetaLifespan(configuration.lifespan()), new MetaParam.MetaUpdateCreationTime(false));
+      } else {
+         entry.set(value, metadata);
+      }
    }
 }
