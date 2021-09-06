@@ -70,6 +70,18 @@ public class YamlConfigurationReaderTest {
       assertEquals("key", p.name);
       assertEquals("value", p.value);
 
+      // Test null values
+      assertNull(yaml.parseLine("key: ~").value);
+      assertNull(yaml.parseLine("key: {}").value);
+      assertNull(yaml.parseLine("key: null").value);
+      assertNull(yaml.parseLine("key: Null").value);
+      assertNull(yaml.parseLine("key: NULL").value);
+      assertEquals("null", yaml.parseLine("key: \"null\"").value);
+      assertEquals("nullAndSome", yaml.parseLine("key: \"nullAndSome\"").value);
+      assertEquals("Null", yaml.parseLine("key: \"Null\"").value);
+      assertEquals("NULL", yaml.parseLine("key: \"NULL\"").value);
+      assertEquals("NUll", yaml.parseLine("key: NUll").value);
+
       Exceptions.expectException(ConfigurationReaderException.class, () -> yaml.parseLine("  key # comment"));
       Exceptions.expectException(ConfigurationReaderException.class, () -> yaml.parseLine("  key value"));
    }
