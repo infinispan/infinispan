@@ -1,14 +1,18 @@
 package org.infinispan.counter;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.nio.file.Paths;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -33,7 +37,6 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -59,13 +62,13 @@ public class ConfigurationTest extends AbstractCacheTest {
    }
 
    private static void assertCounterAndCacheConfiguration(CounterManagerConfiguration config,
-         Configuration cacheConfig) {
-      AssertJUnit.assertEquals(CacheMode.DIST_SYNC, cacheConfig.clustering().cacheMode());
-      AssertJUnit.assertEquals(config.numOwners(), cacheConfig.clustering().hash().numOwners());
-      AssertJUnit.assertEquals(config.reliability() == Reliability.CONSISTENT,
+                                                          Configuration cacheConfig) {
+      assertEquals(CacheMode.DIST_SYNC, cacheConfig.clustering().cacheMode());
+      assertEquals(config.numOwners(), cacheConfig.clustering().hash().numOwners());
+      assertEquals(config.reliability() == Reliability.CONSISTENT,
             cacheConfig.clustering().partitionHandling().whenSplit() == PartitionHandling.DENY_READ_WRITES);
-      AssertJUnit.assertFalse(cacheConfig.clustering().l1().enabled());
-      AssertJUnit.assertEquals(TransactionMode.NON_TRANSACTIONAL, cacheConfig.transaction().transactionMode());
+      assertFalse(cacheConfig.clustering().l1().enabled());
+      assertEquals(TransactionMode.NON_TRANSACTIONAL, cacheConfig.transaction().transactionMode());
    }
 
    @AfterMethod(alwaysRun = true)
@@ -254,31 +257,31 @@ public class ConfigurationTest extends AbstractCacheTest {
       final GlobalConfigurationBuilder builder = defaultGlobalConfigurationBuilder(true);
       CounterManagerConfigurationBuilder counterBuilder = builder.addModule(CounterManagerConfigurationBuilder.class);
       counterBuilder.addStrongCounter().name("unbounded-strong-1").initialValue(1).storage(Storage.VOLATILE)
-            .addStrongCounter().name("lower-bounded-strong-2").initialValue(2).lowerBound(-10)
+            .addStrongCounter().name("lower-bounded-strong-2").initialValue(2).lowerBound(-10).lifespan(-1)
             .storage(Storage.PERSISTENT)
-            .addStrongCounter().name("upper-bounded-strong-3").initialValue(3).upperBound(10)
+            .addStrongCounter().name("upper-bounded-strong-3").initialValue(3).upperBound(10).lifespan(1000)
             .storage(Storage.VOLATILE)
-            .addStrongCounter().name("bounded-strong-4").initialValue(4).lowerBound(-20).upperBound(20)
+            .addStrongCounter().name("bounded-strong-4").initialValue(4).lowerBound(-20).upperBound(20).lifespan(2000)
             .storage(Storage.PERSISTENT)
             .addWeakCounter().name("weak-5").initialValue(5).concurrencyLevel(10).storage(Storage.VOLATILE);
       GlobalConfiguration config = builder.build();
       CounterManagerConfiguration counterConfig = config.module(CounterManagerConfiguration.class);
       assertUnboundedStrongCounter(counterConfig);
       assertBoundedStrongCounter(counterConfig, "lower-bounded-strong-2", 2, -10, Long.MAX_VALUE,
-            Storage.PERSISTENT);
+            -1, Storage.PERSISTENT);
       assertBoundedStrongCounter(counterConfig, "upper-bounded-strong-3", 3, Long.MIN_VALUE, 10,
-            Storage.VOLATILE);
-      assertBoundedStrongCounter(counterConfig, "bounded-strong-4", 4, -20, 20, Storage.PERSISTENT);
+            1000, Storage.VOLATILE);
+      assertBoundedStrongCounter(counterConfig, "bounded-strong-4", 4, -20, 20, 2000, Storage.PERSISTENT);
       assertWeakCounter(counterConfig);
 
       TestingUtil.withCacheManager(() -> new DefaultCacheManager(builder.build()), cacheManager -> {
          CounterManager manager = asCounterManager(cacheManager);
-         AssertJUnit.assertTrue(manager.isDefined("unbounded-strong-1"));
-         AssertJUnit.assertTrue(manager.isDefined("lower-bounded-strong-2"));
-         AssertJUnit.assertTrue(manager.isDefined("upper-bounded-strong-3"));
-         AssertJUnit.assertTrue(manager.isDefined("bounded-strong-4"));
-         AssertJUnit.assertTrue(manager.isDefined("weak-5"));
-         AssertJUnit.assertFalse(manager.isDefined("not-defined-counter"));
+         assertTrue(manager.isDefined("unbounded-strong-1"));
+         assertTrue(manager.isDefined("lower-bounded-strong-2"));
+         assertTrue(manager.isDefined("upper-bounded-strong-3"));
+         assertTrue(manager.isDefined("bounded-strong-4"));
+         assertTrue(manager.isDefined("weak-5"));
+         assertFalse(manager.isDefined("not-defined-counter"));
       });
    }
 
@@ -294,63 +297,64 @@ public class ConfigurationTest extends AbstractCacheTest {
          CounterManager manager = asCounterManager(cacheManager);
          CounterConfiguration cfg = CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(10)
                .lowerBound(10).upperBound(10).build();
-         Exceptions.expectException(CounterConfigurationException.class, () -> manager.defineCounter("invalid", cfg));
+         expectException(CounterConfigurationException.class, () -> manager.defineCounter("invalid", cfg));
       });
    }
 
    private void assertUnboundedStrongCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("unbounded-strong-1")) {
-            AssertJUnit.assertTrue(counterConfig instanceof StrongCounterConfiguration);
-            AssertJUnit.assertEquals(1, counterConfig.initialValue());
-            AssertJUnit.assertEquals(Storage.VOLATILE, counterConfig.storage());
+            assertTrue(counterConfig instanceof StrongCounterConfiguration);
+            assertEquals(1, counterConfig.initialValue());
+            assertEquals(-1, ((StrongCounterConfiguration) counterConfig).lifespan());
+            assertEquals(Storage.VOLATILE, counterConfig.storage());
             return;
          }
       }
-      AssertJUnit.fail();
+      fail();
    }
 
    private void assertWeakCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("weak-5")) {
-            AssertJUnit.assertTrue(counterConfig instanceof WeakCounterConfiguration);
-            AssertJUnit.assertEquals(5, counterConfig.initialValue());
-            AssertJUnit.assertEquals(Storage.VOLATILE, counterConfig.storage());
-            AssertJUnit.assertEquals(10, ((WeakCounterConfiguration) counterConfig).concurrencyLevel());
+            assertTrue(counterConfig instanceof WeakCounterConfiguration);
+            assertEquals(5, counterConfig.initialValue());
+            assertEquals(Storage.VOLATILE, counterConfig.storage());
+            assertEquals(10, ((WeakCounterConfiguration) counterConfig).concurrencyLevel());
             return;
          }
       }
-      AssertJUnit.fail();
+      fail();
    }
 
    private void assertBoundedStrongCounter(CounterManagerConfiguration config, String name, long initialValue, long min,
-         long max, Storage storage) {
+         long max, long lifespan, Storage storage) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals(name)) {
-            AssertJUnit.assertTrue(counterConfig instanceof StrongCounterConfiguration);
-            AssertJUnit.assertEquals(initialValue, counterConfig.initialValue());
-            AssertJUnit.assertEquals(storage, counterConfig.storage());
-            AssertJUnit.assertTrue(((StrongCounterConfiguration) counterConfig).isBound());
-            AssertJUnit.assertEquals(min, ((StrongCounterConfiguration) counterConfig).lowerBound());
-            AssertJUnit.assertEquals(max, ((StrongCounterConfiguration) counterConfig).upperBound());
+            assertTrue(counterConfig instanceof StrongCounterConfiguration);
+            assertEquals(initialValue, counterConfig.initialValue());
+            assertEquals(storage, counterConfig.storage());
+            assertTrue(((StrongCounterConfiguration) counterConfig).isBound());
+            assertEquals(min, ((StrongCounterConfiguration) counterConfig).lowerBound());
+            assertEquals(max, ((StrongCounterConfiguration) counterConfig).upperBound());
+            assertEquals(lifespan, ((StrongCounterConfiguration) counterConfig).lifespan());
             return;
          }
       }
-      AssertJUnit.fail();
+      fail();
    }
 
    private void assertCounterConfigurationException(GlobalConfigurationBuilder builder) {
       try {
          builder.build();
-         AssertJUnit.fail("CacheConfigurationExpected");
+         fail("CacheConfigurationExpected");
       } catch (CounterConfigurationException | CacheConfigurationException expected) {
          log.trace("Expected", expected);
       }
    }
 
    public void testLocalManagerNotStarted() {
-      withCacheManager(TestCacheManagerFactory.createCacheManager(false), cm -> {
-         Exceptions.expectException(IllegalLifecycleStateException.class, () -> EmbeddedCounterManagerFactory.asCounterManager(cm));
-      });
+      withCacheManager(TestCacheManagerFactory.createCacheManager(false),
+            cm -> expectException(IllegalLifecycleStateException.class, () -> EmbeddedCounterManagerFactory.asCounterManager(cm)));
    }
 }

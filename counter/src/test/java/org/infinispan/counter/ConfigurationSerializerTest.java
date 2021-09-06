@@ -45,10 +45,10 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       Map<String, AbstractCounterConfiguration> counters = counterManagerConfiguration.counters();
 
       assertStrongCounter("c1", counters.get("c1"), 1, Storage.PERSISTENT, false, Long.MIN_VALUE,
-                          Long.MAX_VALUE);
-      assertStrongCounter("c2", counters.get("c2"), 2, Storage.VOLATILE, true, 0, Long.MAX_VALUE);
-      assertStrongCounter("c3", counters.get("c3"), 3, Storage.PERSISTENT, true, Long.MIN_VALUE, 5);
-      assertStrongCounter("c4", counters.get("c4"), 4, Storage.VOLATILE, true, 0, 10);
+                          Long.MAX_VALUE, -1);
+      assertStrongCounter("c2", counters.get("c2"), 2, Storage.VOLATILE, true, 0, Long.MAX_VALUE, -1);
+      assertStrongCounter("c3", counters.get("c3"), 3, Storage.PERSISTENT, true, Long.MIN_VALUE, 5, 2000);
+      assertStrongCounter("c4", counters.get("c4"), 4, Storage.VOLATILE, true, 0, 10, 0);
       assertWeakCounter(counters.get("c5"));
    }
 
@@ -58,7 +58,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
 
    @Override
    protected void compareExtraGlobalConfiguration(GlobalConfiguration configurationBefore,
-         GlobalConfiguration configurationAfter) {
+                                                  GlobalConfiguration configurationAfter) {
       CounterManagerConfiguration configBefore = configurationBefore.module(CounterManagerConfiguration.class);
       CounterManagerConfiguration configAfter = configurationAfter.module(CounterManagerConfiguration.class);
 
@@ -98,13 +98,13 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    private void assertWeakCounter(AbstractCounterConfiguration configuration) {
       assertTrue(configuration instanceof WeakCounterConfiguration);
       assertEquals("c5", configuration.name());
-      assertEquals((long) 5, configuration.initialValue());
+      assertEquals(5, configuration.initialValue());
       assertEquals(Storage.PERSISTENT, configuration.storage());
       assertEquals(1, ((WeakCounterConfiguration) configuration).concurrencyLevel());
    }
 
    private void assertStrongCounter(String name, AbstractCounterConfiguration configuration, long initialValue,
-         Storage storage, boolean bound, long lowerBound, long upperBound) {
+                                    Storage storage, boolean bound, long lowerBound, long upperBound, long lifespan) {
       assertTrue(configuration instanceof StrongCounterConfiguration);
       assertEquals(name, configuration.name());
       assertEquals(initialValue, configuration.initialValue());
@@ -112,6 +112,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       assertEquals(bound, ((StrongCounterConfiguration) configuration).isBound());
       assertEquals(lowerBound, ((StrongCounterConfiguration) configuration).lowerBound());
       assertEquals(upperBound, ((StrongCounterConfiguration) configuration).upperBound());
+      assertEquals(lifespan, ((StrongCounterConfiguration) configuration).lifespan());
    }
 
 }

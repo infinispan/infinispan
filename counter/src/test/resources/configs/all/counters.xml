@@ -14,10 +14,10 @@
             <locking concurrency-level="100" acquire-timeout="1000"/>
         </local-cache>
         <counters xmlns="urn:infinispan:config:counters:${infinispan.core.schema.version}" num-owners="3" reliability="CONSISTENT">
-            <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
+            <strong-counter name="c1" initial-value="1" storage="PERSISTENT" lifespan="-1"/>
             <strong-counter name="c2" initial-value="2" storage="VOLATILE" lower-bound="0"/>
-            <strong-counter name="c3" initial-value="3" storage="PERSISTENT" upper-bound="5"/>
-            <strong-counter name="c4" initial-value="4" storage="VOLATILE" lower-bound="0" upper-bound="10"/>
+            <strong-counter name="c3" initial-value="3" storage="PERSISTENT" upper-bound="5" lifespan="2000"/>
+            <strong-counter name="c4" initial-value="4" storage="VOLATILE" lower-bound="0" upper-bound="10" lifespan="0"/>
             <weak-counter name="c5" initial-value="5" storage="PERSISTENT" concurrency-level="1"/>
         </counters>
     </cache-container>

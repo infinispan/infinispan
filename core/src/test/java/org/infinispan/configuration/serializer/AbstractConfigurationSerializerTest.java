@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
    public static List<MediaType> ALL = Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON);
-   public static List<MediaType> XML = Arrays.asList(MediaType.APPLICATION_XML);
+   public static List<MediaType> XML = Collections.singletonList(MediaType.APPLICATION_XML);
 
    public static class Parameter {
       final Path config;
@@ -90,7 +90,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       try (ConfigurationWriter writer = ConfigurationWriter.to(baos).withType(parameter.mediaType).build()) {
          parameter.registry.serialize(writer, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
       }
-      System.out.println(baos);
+      log.debug(baos);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
       ConfigurationBuilderHolder holderAfter = parameter.registry.parse(bais, null, parameter.mediaType);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();

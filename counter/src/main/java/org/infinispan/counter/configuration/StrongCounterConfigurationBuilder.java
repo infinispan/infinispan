@@ -41,6 +41,11 @@ public class StrongCounterConfigurationBuilder extends
       return self();
    }
 
+   public StrongCounterConfigurationBuilder lifespan(long value) {
+      attributes.attribute(StrongCounterConfiguration.LIFESPAN).set(value);
+      return self();
+   }
+
    @Override
    public StrongCounterConfiguration create() {
       return new StrongCounterConfiguration(attributes);

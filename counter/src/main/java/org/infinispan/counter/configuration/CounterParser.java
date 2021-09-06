@@ -67,12 +67,10 @@ public class CounterParser implements ConfigurationParser {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CONCURRENCY_LEVEL:
-               builder.concurrencyLevel(Integer.parseInt(value));
-               break;
-            default:
-               parserCommonCounterAttributes(reader, builder, i, attribute, value);
+         if (attribute == Attribute.CONCURRENCY_LEVEL) {
+            builder.concurrencyLevel(Integer.parseInt(value));
+         } else {
+            parserCommonCounterAttributes(reader, builder, i, attribute, value);
          }
       }
       ParseUtils.requireNoContent(reader);
@@ -105,13 +103,10 @@ public class CounterParser implements ConfigurationParser {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case VALUE:
-               builder.upperBound(Long.parseLong(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
+         if (attribute != Attribute.VALUE) {
+            throw ParseUtils.unexpectedElement(reader);
          }
+         builder.upperBound(Long.parseLong(value));
       }
       ParseUtils.requireNoContent(reader);
    }
@@ -121,13 +116,10 @@ public class CounterParser implements ConfigurationParser {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case VALUE:
-               builder.lowerBound(Long.parseLong(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
+         if (attribute != Attribute.VALUE) {
+            throw ParseUtils.unexpectedElement(reader);
          }
+         builder.lowerBound(Long.parseLong(value));
       }
       ParseUtils.requireNoContent(reader);
    }
@@ -145,6 +137,9 @@ public class CounterParser implements ConfigurationParser {
             case LOWER_BOUND:
                builder.lowerBound(Long.parseLong(value));
                break;
+            case LIFESPAN:
+               builder.lifespan(Long.parseLong(value));
+               break;
             default:
                parserCommonCounterAttributes(reader, builder, i, attribute, value);
          }
@@ -152,7 +147,7 @@ public class CounterParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parserCommonCounterAttributes(ConfigurationReader reader, CounterConfigurationBuilder builder,
+   private void parserCommonCounterAttributes(ConfigurationReader reader, CounterConfigurationBuilder<?,?> builder,
                                               int index, Attribute attribute, String value) {
       switch (attribute) {
          case NAME:

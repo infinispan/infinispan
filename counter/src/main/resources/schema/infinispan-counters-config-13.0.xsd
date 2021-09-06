@@ -26,14 +26,14 @@
                 </xs:element>
             </xs:choice>
         </xs:sequence>
-        <xs:attribute name="num-owners" type="xs:positiveInteger" default="2">
+        <xs:attribute name="num-owners" type="xs:positiveInteger" default="${CounterManager.num-owners}">
             <xs:annotation>
                 <xs:documentation>
                     Sets the number of copies of the counter's value available in the cluster.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="reliability" type="tns:reliability" default="AVAILABLE">
+        <xs:attribute name="reliability" type="tns:reliability" default="${CounterManager.reliability}">
             <xs:annotation>
                 <xs:documentation>
                     Sets the reliability mode for the partitions when the cluster splits.
@@ -60,6 +60,15 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="lifespan" type="xs:long" default="${StrongCounter.lifespan}">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Specifies the maximum amount of time, in milliseconds, that the strong counter can exist.
+                            After reaching their lifespan, the counter is removed from the cluster. A 0 (zero) or -1
+                            value disables this.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -67,7 +76,7 @@
     <xs:complexType name="weak-counter">
         <xs:complexContent>
             <xs:extension base="tns:counter">
-                <xs:attribute name="concurrency-level" type="xs:positiveInteger" default="16">
+                <xs:attribute name="concurrency-level" type="xs:positiveInteger" default="${WeakCounter.concurrency-level}">
                     <xs:annotation>
                         <xs:documentation>
                             Sets the weak consistent counter's concurrency level. The concurrency level configures the
@@ -87,14 +96,14 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="initial-value" type="xs:int" default="0">
+        <xs:attribute name="initial-value" type="xs:int" default="${AbstractCounter.initial-value}">
             <xs:annotation>
                 <xs:documentation>
                     Sets the counter's initial value.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="storage" type="tns:storage" default="VOLATILE">
+        <xs:attribute name="storage" type="tns:storage" default="${AbstractCounter.storage}">
             <xs:annotation>
                 <xs:documentation>
                     Sets the counter's storage mode.

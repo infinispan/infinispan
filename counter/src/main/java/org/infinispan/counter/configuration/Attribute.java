@@ -19,7 +19,8 @@ public enum Attribute {
    RELIABILITY("reliability"),
    STORAGE("storage"),
    UPPER_BOUND("upper-bound"),
-   VALUE("value");
+   VALUE("value"),
+   LIFESPAN("lifespan");
    private static final Map<String, Attribute> ATTRIBUTES;
 
    static {
