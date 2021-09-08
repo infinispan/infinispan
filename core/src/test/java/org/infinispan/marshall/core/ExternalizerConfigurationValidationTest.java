@@ -28,13 +28,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Test the behaviour of JBoss Marshalling based {@link org.infinispan.commons.marshall.StreamingMarshaller} implementation
- * which is {@link JBossMarshaller}}. This class should contain methods that exercise
- * logic in this particular implementation.
+ * Test the externalizer validation logic.
+ *
+ * Externalizers can only be used with jboss-marshalling, so we cannot test the actual functionality
+ * in the core module.
  */
-@Test(groups = "functional", testName = "marshall.jboss.JBossMarshallerTest")
-public class JBossMarshallerTest extends AbstractInfinispanTest {
-   private static final Log log = LogFactory.getLog(JBossMarshallerTest.class);
+@Test(groups = "functional", testName = "marshall.core.ExternalizerConfigurationValidationTest")
+public class ExternalizerConfigurationValidationTest extends AbstractInfinispanTest {
+   private static final Log log = LogFactory.getLog(ExternalizerConfigurationValidationTest.class);
 
    private EmbeddedCacheManager cm;
 
