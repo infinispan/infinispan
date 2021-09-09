@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -48,7 +47,6 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    protected final ChannelFactory channelFactory;
    protected final DataFormat dataFormat;
    protected final HeaderParams header;
-   private final MarshallerRegistry marshallerRegistry;
    protected volatile ScheduledFuture<?> timeoutFuture;
    private Channel channel;
 
@@ -63,7 +61,6 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       this.cacheName = cacheName;
       this.codec = codec;
       this.channelFactory = channelFactory;
-      this.marshallerRegistry = channelFactory.getMarshallerRegistry();
       this.dataFormat = dataFormat;
       // TODO: we could inline all the header here
       this.header = new HeaderParams(requestCode, responseCode, MSG_ID.getAndIncrement())

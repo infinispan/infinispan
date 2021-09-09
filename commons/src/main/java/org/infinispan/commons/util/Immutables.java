@@ -65,6 +65,7 @@ public class Immutables {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
       if (list.size() == 1) return Collections.singletonList(list.get(0));
+      if (list instanceof ImmutableListCopy) return list;
       return new ImmutableListCopy<>(list);
    }
 
