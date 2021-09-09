@@ -381,7 +381,7 @@ public class Codec20 implements Codec, HotRodConstants {
       final Log localLog = getLog();
       int newTopologyId = ByteBufUtil.readVInt(buf);
 
-      SocketAddress[] addresses = readTopology(buf);
+      InetSocketAddress[] addresses = readTopology(buf);
 
       final short hashFunctionVersion;
       final SocketAddress[][] segmentOwners;
@@ -410,13 +410,11 @@ public class Codec20 implements Codec, HotRodConstants {
       // Since the header is now created only once (not during each retry) the topologyAge in header may be non-actual
       // but we should still accept the topology
       if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
-         params.topologyId.set(newTopologyId);
-         List<SocketAddress> addressList = Arrays.asList(addresses);
-         if (localLog.isInfoEnabled()) {
-            localLog.newTopology(newTopologyId, topologyAge,
+         List<InetSocketAddress> addressList = Arrays.asList(addresses);
+         if (log.isInfoEnabled()) {
+            log.newTopology(newTopologyId, topologyAge,
                   addresses.length, new HashSet<>(addressList));
          }
-         channelFactory.updateServers(addressList, params.cacheName, false);
          if (hashFunctionVersion >= 0) {
             if (trace) {
                String cacheNameString = new String(params.cacheName);
@@ -425,8 +423,10 @@ public class Codec20 implements Codec, HotRodConstants {
                else
                   localLog.tracef("[%s] Updating client hash function with %s number of segments", cacheNameString, segmentOwners.length);
             }
-            channelFactory.updateHashFunction(segmentOwners,
-                  segmentOwners.length, hashFunctionVersion, params.cacheName, params.topologyId);
+            channelFactory.updateConsistentHash(segmentOwners, segmentOwners.length, hashFunctionVersion,
+                                                params.cacheName, newTopologyId, addressList);
+         } else {
+            channelFactory.updateServers(addressList, params.cacheName, newTopologyId, false);
          }
       } else {
          if (trace)
@@ -435,9 +435,9 @@ public class Codec20 implements Codec, HotRodConstants {
       }
    }
 
-   private SocketAddress[] readTopology(ByteBuf buf) {
+   private InetSocketAddress[] readTopology(ByteBuf buf) {
       int clusterSize = ByteBufUtil.readVInt(buf);
-      SocketAddress[] addresses = new SocketAddress[clusterSize];
+      InetSocketAddress[] addresses = new InetSocketAddress[clusterSize];
       for (int i = 0; i < clusterSize; i++) {
          String host = ByteBufUtil.readString(buf);
          int port = buf.readUnsignedShort();

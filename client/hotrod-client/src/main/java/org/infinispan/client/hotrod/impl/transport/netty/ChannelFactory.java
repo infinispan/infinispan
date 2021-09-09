@@ -2,18 +2,16 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.client.hotrod.impl.Util.await;
+import static org.infinispan.client.hotrod.impl.Util.wrapBytes;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -26,13 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
@@ -41,15 +38,18 @@ import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.topology.CacheInfo;
+import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.ProcessorInfo;
-import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -78,75 +78,68 @@ public class ChannelFactory {
    private final Function<SocketAddress, ChannelPool> newPool = this::newPool;
    private EventLoopGroup eventLoopGroup;
    private ExecutorService executorService;
-   // Per cache request balancing strategy
-   private Map<WrappedByteArray, FailoverRequestBalancingStrategy> balancers;
    private OperationsFactory operationsFactory;
    private Configuration configuration;
-   private Collection<SocketAddress> initialServers;
    private int maxRetries;
    private Marshaller marshaller;
-   private Collection<Consumer<Set<SocketAddress>>> failedServerNotifier;
+   private ClientListenerNotifier listenerNotifier;
    @GuardedBy("lock")
    private volatile TopologyInfo topologyInfo;
 
-   private volatile String currentClusterName;
-   private List<ClusterInfo> clusters = new ArrayList<>();
-   // Topology age provides a way to avoid concurrent cluster view changes,
-   // affecting a cluster switch. After a cluster switch, the topology age is
-   // increased and so any old requests that might have received topology
-   // updates won't be allowed to apply since they refer to older views.
-   private final AtomicInteger topologyAge = new AtomicInteger(0);
+   private List<ClusterInfo> clusters;
 
    private MarshallerRegistry marshallerRegistry;
    private LongAdder totalRetries = new LongAdder();
 
-   public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId,
-                     Marshaller marshaller, ExecutorService executorService,
-                     ClientListenerNotifier listenerNotifier, Collection<Consumer<Set<SocketAddress>>> failedServerNotifier, MarshallerRegistry marshallerRegistry) {
+   public void start(Codec codec, Configuration configuration, Marshaller marshaller, ExecutorService executorService,
+                     ClientListenerNotifier listenerNotifier, MarshallerRegistry marshallerRegistry) {
       this.marshallerRegistry = marshallerRegistry;
       lock.writeLock().lock();
       try {
          this.marshaller = marshaller;
          this.configuration = configuration;
          this.executorService = executorService;
-         this.failedServerNotifier = failedServerNotifier;
+         this.listenerNotifier = listenerNotifier;
          int asyncThreads = maxAsyncThreads(executorService, configuration);
          // static field with default is private in MultithreadEventLoopGroup
-         int eventLoopThreads = SecurityActions.getIntProperty("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
+         int eventLoopThreads =
+               SecurityActions.getIntProperty("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = TransportHelper.createEventLoopGroup(maxExecutors, executorService);
 
-         Collection<SocketAddress> servers = new ArrayList<>();
-         initialServers = new ArrayList<>();
+         List<InetSocketAddress> initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
-            servers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
+            initialServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
-         initialServers.addAll(servers);
-         if (!configuration.clusters().isEmpty()) {
-            configuration.clusters().forEach(cluster -> {
-               Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
-                       .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
-                       .collect(Collectors.toList());
-               ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
-               log.debugf("Add secondary cluster: %s", clusterInfo);
-               clusters.add(clusterInfo);
-            });
-            clusters.add(new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers));
-         }
-         currentClusterName = DEFAULT_CLUSTER_NAME;
-         topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
-         operationsFactory = new OperationsFactory(this, codec, listenerNotifier, configuration);
-         maxRetries = configuration.maxRetries();
-
+         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers);
+         List<ClusterInfo> clustersDefinitions = new ArrayList<>();
          if (log.isDebugEnabled()) {
-            log.debugf("Statically configured servers: %s", servers);
+            log.debugf("Statically configured servers: %s", initialServers);
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                     configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
          }
-         balancers = new HashMap<>();
-         WrappedByteArray defaultCacheName = new WrappedByteArray(RemoteCacheManager.cacheNameBytes());
-         balancers.put(defaultCacheName, createBalancer(defaultCacheName));
+
+         if (!configuration.clusters().isEmpty()) {
+            for (ClusterConfiguration clusterConfiguration : configuration.clusters()) {
+               List<InetSocketAddress> alternateServers = new ArrayList<>();
+               for (ServerConfiguration server : clusterConfiguration.getCluster()) {
+                  alternateServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
+               }
+               ClusterInfo alternateCluster =
+                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers);
+               log.debugf("Add secondary cluster: %s", alternateCluster);
+               clustersDefinitions.add(alternateCluster);
+            }
+            clustersDefinitions.add(mainCluster);
+         }
+         clusters = Immutables.immutableListCopy(clustersDefinitions);
+         topologyInfo = new TopologyInfo(configuration, mainCluster);
+         operationsFactory = new OperationsFactory(this, codec, listenerNotifier, configuration);
+         maxRetries = configuration.maxRetries();
+
+         WrappedByteArray defaultCacheName = wrapBytes(RemoteCacheManager.cacheNameBytes());
+         topologyInfo.createCacheInfo(defaultCacheName);
       } finally {
          lock.writeLock().unlock();
       }
@@ -188,14 +181,8 @@ public class ChannelFactory {
       return pool;
    }
 
-   private FailoverRequestBalancingStrategy createBalancer(WrappedByteArray cacheName) {
-      FailoverRequestBalancingStrategy balancer = configuration.balancingStrategyFactory().get();
-      balancer.setServers(topologyInfo.getServers(cacheName));
-      return balancer;
-   }
-
    private void pingServersIgnoreException() {
-      Collection<SocketAddress> servers = topologyInfo.getServers();
+      Collection<InetSocketAddress> servers = topologyInfo.getCurrentServers();
       for (SocketAddress addr : servers) {
          // Go through all statically configured nodes and force a
          // connection to be established and a ping message to be sent.
@@ -231,22 +218,36 @@ public class ChannelFactory {
       }
    }
 
-   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash,
-                                  int numKeyOwners, short hashFunctionVersion, int hashSpace,
-                                  byte[] cacheName, AtomicInteger topologyId) {
+   public void updateConsistentHash(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
+                                    byte[] cacheName, int topologyId, List<InetSocketAddress> servers) {
       lock.writeLock().lock();
       try {
-         topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
+         WrappedByteArray wrappedCacheName = wrapBytes(cacheName);
+         CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(wrappedCacheName);
+         assert oldCacheInfo != null : "The cache info must exist before receiving a topology update";
+         SegmentConsistentHash consistentHash =
+               topologyInfo.createConsistentHash(numSegments, hashFunctionVersion, segmentOwners);
+         CacheInfo newCacheInfo = oldCacheInfo.withNewHash(topologyId, servers, consistentHash, numSegments);
+         updateCacheInfo(wrappedCacheName, newCacheInfo, false);
+         newCacheInfo.getTopologyIdRef().set(topologyId);
       } finally {
          lock.writeLock().unlock();
       }
    }
 
-   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
-                                  byte[] cacheName, AtomicInteger topologyId) {
+   public void updateConsistentHash1x(List<InetSocketAddress> servers,
+                                      Map<InetSocketAddress, Set<Integer>> servers2Hash, int numKeyOwners,
+                                      short hashFunctionVersion, int hashSpace, byte[] cacheName, int topologyId) {
       lock.writeLock().lock();
       try {
-         topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName, topologyId);
+         WrappedByteArray wrappedCacheName = wrapBytes(cacheName);
+         CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(wrappedCacheName);
+         assert oldCacheInfo != null : "The cache info must exist before receiving a topology update";
+         ConsistentHash consistentHash =
+               topologyInfo.createConsistentHash1x(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
+         CacheInfo newCacheInfo = oldCacheInfo.withNewHash(topologyId, servers, consistentHash, -1);
+         updateCacheInfo(wrappedCacheName, newCacheInfo, false);
+         newCacheInfo.getTopologyIdRef().set(topologyId);
       } finally {
          lock.writeLock().unlock();
       }
@@ -270,12 +271,14 @@ public class ChannelFactory {
       SocketAddress server;
       lock.writeLock().lock();
       try {
-         if (failedServers != null && failedServers.containsAll(getServers(cacheName))) {
+         CacheInfo cacheInfo = topologyInfo.getCacheInfo(wrapBytes(cacheName));
+         if (failedServers != null && failedServers.containsAll(cacheInfo.getServers())) {
             log.switchToInitialServerList();
-            reset(cacheName);
+            reset(wrapBytes(cacheName));
+            closeChannelPools(failedServers);
             failedServers.clear();
          }
-         FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
+         FailoverRequestBalancingStrategy balancer = cacheInfo.getBalancer();
          server = balancer.nextServer(failedServers);
       } finally {
          lock.writeLock().unlock();
@@ -286,30 +289,30 @@ public class ChannelFactory {
       return server;
    }
 
-   @GuardedBy("lock")
-   private FailoverRequestBalancingStrategy getOrCreateIfAbsentBalancer(byte[] cacheName) {
-      return balancers.computeIfAbsent(new WrappedByteArray(cacheName), this::createBalancer);
+   private void closeChannelPools(Set<? extends SocketAddress> failedServers) {
+      for (SocketAddress failedServer : failedServers) {
+         log.removingServer(failedServer);
+         ChannelPool pool = channelPoolMap.remove(failedServer);
+         if (pool != null) {
+            pool.close();
+         }
+      }
    }
 
    public SocketAddress getSocketAddress(Object key, byte[] cacheName) {
-      return topologyInfo.getHashAwareServer(key, cacheName).orElse(null);
+      return topologyInfo.getHashAwareServer(key, cacheName);
    }
 
    public <T extends ChannelOperation> T fetchChannelAndInvoke(Object key, Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
-      return fetchChannelAndInvoke(topologyInfo.getHashAwareServer(key, cacheName), failedServers, cacheName, operation);
+      SocketAddress server = topologyInfo.getHashAwareServer(key, cacheName);
+      if (server == null || (failedServers != null && failedServers.contains(server))) {
+         server = getNextServer(failedServers, cacheName);
+      }
+      return fetchChannelAndInvoke(server, operation);
    }
 
    public <T extends ChannelOperation> T fetchChannelAndInvokeForSegments(Set<Integer> segments, Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
-      return fetchChannelAndInvoke(topologyInfo.getHashAwareServer(segments, cacheName), failedServers, cacheName, operation);
-   }
-
-   private <T extends ChannelOperation> T fetchChannelAndInvoke(Optional<SocketAddress> hashAwareServer,
-         Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
-      if (failedServers != null) {
-         hashAwareServer = hashAwareServer.filter(server -> !failedServers.contains(server));
-      }
-      SocketAddress server = hashAwareServer.orElseGet(() -> getNextServer(failedServers, cacheName));
-      return fetchChannelAndInvoke(server, operation);
+      return fetchChannelAndInvoke(topologyInfo.getHashAwareServer(segments, cacheName), operation);
    }
 
    public void releaseChannel(Channel channel) {
@@ -324,92 +327,68 @@ public class ChannelFactory {
       record.getChannelPool().release(channel, record);
    }
 
-   public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
+   public void updateServers(List<InetSocketAddress> newServers, byte[] cacheName, int topologyId, boolean quiet) {
       lock.writeLock().lock();
       try {
-         Collection<SocketAddress> servers = updateTopologyInfo(cacheName, newServers, quiet);
-         if (!servers.isEmpty()) {
-            FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
-            balancer.setServers(servers);
-         }
-      } finally {
-         lock.writeLock().unlock();
-      }
-   }
-
-   private void updateServers(Collection<SocketAddress> newServers) {
-      lock.writeLock().lock();
-      try {
-         Collection<SocketAddress> servers = updateTopologyInfo(Util.EMPTY_BYTE_ARRAY, newServers, true);
-         if (!servers.isEmpty()) {
-            for (FailoverRequestBalancingStrategy balancer : balancers.values())
-               balancer.setServers(servers);
-         }
+         WrappedByteArray wrappedCacheName = wrapBytes(cacheName);
+         CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(wrappedCacheName);
+         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(topologyId, newServers);
+         updateCacheInfo(wrappedCacheName, newCacheInfo, quiet);
+         newCacheInfo.getTopologyIdRef().set(topologyId);
       } finally {
          lock.writeLock().unlock();
       }
    }
 
    @GuardedBy("lock")
-   private Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
-      Collection<SocketAddress> servers = topologyInfo.getServers(new WrappedByteArray(cacheName));
+   protected CacheInfo updateCacheInfo(WrappedBytes cacheName, CacheInfo newCacheInfo, boolean quiet) {
+      List<InetSocketAddress> newServers = newCacheInfo.getServers();
+      CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
+      List<InetSocketAddress> oldServers = oldCacheInfo.getServers();
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
-      addedServers.removeAll(servers);
-      Set<SocketAddress> failedServers = new HashSet<>(servers);
+      addedServers.removeAll(oldServers);
+      Set<SocketAddress> failedServers = new HashSet<>(oldServers);
       failedServers.removeAll(newServers);
       if (trace) {
-         String cacheNameString = cacheName == null ? "<default>" : new String(cacheName);
-         log.tracef("[%s] Current list: %s", cacheNameString, servers);
+         String cacheNameString = cacheName == null ? "<default>" : new String(cacheName.getBytes());
+         log.tracef("[%s] Current list: %s", cacheNameString, oldServers);
          log.tracef("[%s] New list: %s", cacheNameString, newServers);
          log.tracef("[%s] Added servers: %s", cacheNameString, addedServers);
          log.tracef("[%s] Removed servers: %s", cacheNameString, failedServers);
       }
 
-      if (failedServers.isEmpty() && addedServers.isEmpty()) {
-         log.debug("Same list of servers, not changing the pool");
-         return Collections.emptyList();
-      }
-
-      //1. first add new servers. For servers that went down, the returned transport will fail for now
+      // First add new servers. For servers that went down, the returned transport will fail for now
       for (SocketAddress server : addedServers) {
          log.newServerAdded(server);
          fetchChannelAndInvoke(server, new ReleaseChannelOperation(quiet));
       }
 
-      //2. Remove failed servers
-      for (SocketAddress server : failedServers) {
-         log.removingServer(server);
-         ChannelPool pool = channelPoolMap.remove(server);
-         if (pool != null) {
-            pool.close();
-         }
-      }
+      // Then update the server list for new operations
+      topologyInfo.updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
 
-      servers = Collections.unmodifiableList(new ArrayList<>(newServers));
-      topologyInfo.updateServers(cacheName, servers);
+      // And finally remove the failed servers
+      closeChannelPools(failedServers);
 
       if (!failedServers.isEmpty()) {
-         for (Consumer<Set<SocketAddress>> notifier : failedServerNotifier) {
-            notifier.accept(failedServers);
-         }
+         listenerNotifier.failoverListeners(failedServers);
       }
 
-      return servers;
+      return oldCacheInfo;
    }
 
-   public Collection<SocketAddress> getServers() {
+   public Collection<InetSocketAddress> getServers() {
       lock.readLock().lock();
       try {
-         return topologyInfo.getServers();
+         return topologyInfo.getCurrentServers();
       } finally {
          lock.readLock().unlock();
       }
    }
 
-   public Collection<SocketAddress> getServers(byte[] cacheName) {
+   public List<InetSocketAddress> getServers(byte[] cacheName) {
       lock.readLock().lock();
       try {
-         return topologyInfo.getServers(new WrappedByteArray(cacheName));
+         return topologyInfo.getServers(wrapBytes(cacheName));
       } finally {
          lock.readLock().unlock();
       }
@@ -421,7 +400,7 @@ public class ChannelFactory {
    public ConsistentHash getConsistentHash(byte[] cacheName) {
       lock.readLock().lock();
       try {
-         return topologyInfo.getConsistentHash(cacheName);
+         return topologyInfo.getCacheInfo(wrapBytes(cacheName)).getConsistentHash();
       } finally {
          lock.readLock().unlock();
       }
@@ -443,17 +422,23 @@ public class ChannelFactory {
       return maxRetries;
    }
 
-   public void reset(byte[] cacheName) {
-      updateServers(initialServers, cacheName, true);
-      topologyInfo.setTopologyId(cacheName, HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
+   private void reset(WrappedBytes cacheName) {
+      lock.writeLock().lock();
+      try {
+         // Switch to the initial server list of the current cluster
+         ClusterInfo cluster = topologyInfo.getCurrentCluster();
+         topologyInfo.switchCluster(cluster, cacheName);
+      } finally {
+         lock.writeLock().unlock();
+      }
    }
 
    public AtomicInteger createTopologyId(byte[] cacheName) {
-      return topologyInfo.createTopologyId(cacheName, -1);
+      return topologyInfo.getOrCreateCacheInfo(wrapBytes(cacheName)).getTopologyIdRef();
    }
 
    public int getTopologyId(byte[] cacheName) {
-      return topologyInfo.getTopologyId(cacheName);
+      return topologyInfo.getCacheInfo(wrapBytes(cacheName)).getTopologyId();
    }
 
    public CompletableFuture<ClusterSwitchStatus> trySwitchCluster(String failedClusterName, byte[] cacheName) {
@@ -467,7 +452,7 @@ public class ChannelFactory {
             return NOT_SWITCHED_FUTURE;
          }
 
-         String currentClusterName = this.currentClusterName;
+         String currentClusterName = topologyInfo.getCurrentCluster().getName();
          if (!isSwitchedClusterNotAvailable(failedClusterName, currentClusterName)) {
             log.debugf("Cluster already switched from failed cluster `%s` to `%s`, try again",
                     failedClusterName, currentClusterName);
@@ -476,6 +461,8 @@ public class ChannelFactory {
 
          // Switch cluster if there has not been a topology id cluster switch reset recently,
          if (!topologyInfo.isTopologyValid(cacheName)) {
+            if (log.isTraceEnabled())
+               log.tracef("Cluster switch is already in progress for topology age %d", getTopologyAge());
             return IN_PROGRESS_FUTURE;
          }
 
@@ -485,7 +472,7 @@ public class ChannelFactory {
 
          List<ClusterInfo> candidateClusters = new ArrayList<>();
          for (ClusterInfo cluster : clusters) {
-            String clusterName = cluster.clusterName;
+            String clusterName = cluster.getName();
             if (!clusterName.equals(failedClusterName))
                candidateClusters.add(cluster);
          }
@@ -496,14 +483,14 @@ public class ChannelFactory {
             return NOT_SWITCHED_FUTURE;
          }
          ClusterInfo cluster = clusterIterator.next();
-         return checkServersAlive(cluster.clusterAddresses)
+         return checkServersAlive(cluster.getInitialServers())
                .thenCompose(new ClusterSwitcher(clusterIterator, cacheName, cluster));
       } finally {
          lock.writeLock().unlock();
       }
    }
 
-   private CompletableFuture<Boolean> checkServersAlive(Collection<SocketAddress> servers) {
+   private CompletableFuture<Boolean> checkServersAlive(Collection<InetSocketAddress> servers) {
       AtomicInteger remainingResponses = new AtomicInteger(servers.size());
       CompletableFuture<Boolean> allFuture = new CompletableFuture<>();
       for (SocketAddress server : servers) {
@@ -539,39 +526,43 @@ public class ChannelFactory {
          return false;
       }
 
-      Collection<SocketAddress> addresses = findClusterInfo(clusterName);
-      if (!addresses.isEmpty()) {
-         updateServers(addresses);
-         log.debugf("Switching to %s, servers: %s, setting topology.", clusterName, addresses);
-         topologyInfo.setAllTopologyIds(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+      ClusterInfo cluster = findCluster(clusterName);
+      if (cluster != null) {
+         lock.writeLock().lock();
+         try {
+            log.debugf("Switching to %s, servers: %s, setting topology.", clusterName, cluster.getInitialServers());
+            topologyInfo.switchCluster(cluster, WrappedByteArray.EMPTY_BYTES);
 
-         if (log.isInfoEnabled()) {
+            if (log.isInfoEnabled()) {
             if (!clusterName.equals(DEFAULT_CLUSTER_NAME))
                log.manuallySwitchedToCluster(clusterName);
             else
                log.manuallySwitchedBackToMainCluster();
          }
 
-         return true;
+            return true;
+         } finally {
+            lock.writeLock().unlock();
+         }
       }
 
       return false;
    }
 
    public String getCurrentClusterName() {
-      return currentClusterName;
+      return topologyInfo.getCurrentCluster().getName();
    }
 
    public int getTopologyAge() {
-      return topologyAge.get();
+      return topologyInfo.getTopologyAge();
    }
 
-   private Collection<SocketAddress> findClusterInfo(String clusterName) {
+   private ClusterInfo findCluster(String clusterName) {
       for (ClusterInfo cluster : clusters) {
-         if (cluster.clusterName.equals(clusterName))
-            return cluster.clusterAddresses;
+         if (cluster.getName().equals(clusterName))
+            return cluster;
       }
-      return Collections.emptyList();
+      return null;
    }
 
    /**
@@ -580,7 +571,7 @@ public class ChannelFactory {
    public FailoverRequestBalancingStrategy getBalancer(byte[] cacheName) {
       lock.readLock().lock();
       try {
-         return balancers.get(new WrappedByteArray(cacheName));
+         return topologyInfo.getCacheInfo(wrapBytes(cacheName)).getBalancer();
       } finally {
          lock.readLock().unlock();
       }
@@ -624,24 +615,6 @@ public class ChannelFactory {
       NOT_SWITCHED, SWITCHED, IN_PROGRESS
    }
 
-   private static final class ClusterInfo {
-      final Collection<SocketAddress> clusterAddresses;
-      final String clusterName;
-
-      private ClusterInfo(String clusterName, Collection<SocketAddress> clusterAddresses) {
-         this.clusterAddresses = clusterAddresses;
-         this.clusterName = clusterName;
-      }
-
-      @Override
-      public String toString() {
-         return "ClusterInfo{" +
-                 "name='" + clusterName + '\'' +
-                 ", addresses=" + clusterAddresses +
-                 '}';
-      }
-   }
-
    private class ClusterSwitcher implements Function<Boolean, CompletionStage<ClusterSwitchStatus>> {
       private final Iterator<ClusterInfo> clusterIterator;
       private final byte[] cacheName;
@@ -661,26 +634,13 @@ public class ChannelFactory {
                return NOT_SWITCHED_FUTURE;
             }
             cluster = clusterIterator.next();
-            return checkServersAlive(cluster.clusterAddresses).thenCompose(this);
+            return checkServersAlive(cluster.getInitialServers()).thenCompose(this);
          }
-         topologyAge.incrementAndGet();
-         lock.writeLock().lock();
-         try {
-            Collection<SocketAddress> servers = updateTopologyInfo(cacheName, cluster.clusterAddresses, true);
-            if (!servers.isEmpty()) {
-               FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
-               balancer.setServers(servers);
-            }
-         } finally {
-            lock.writeLock().unlock();
-         }
-         topologyInfo.setTopologyId(cacheName, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
-         //clustersViewed++; // Increase number of clusters viewed
-         currentClusterName = cluster.clusterName;
+         topologyInfo.switchCluster(cluster, wrapBytes(cacheName));
 
          if (log.isInfoEnabled()) {
-            if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
-               log.switchedToCluster(cluster.clusterName);
+            if (!cluster.getName().equals(DEFAULT_CLUSTER_NAME))
+               log.switchedToCluster(cluster.getName());
             else
                log.switchedBackToMainCluster();
          }

@@ -426,7 +426,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          Collection<Address> backupOwners = distributionInfo.writeBackups();
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
             if (trace) {
-               log.tracef("Command %s not successful in primary owner.", id);
+               log.tracef("Not sending command %s to backups", id);
             }
             return rv;
          }

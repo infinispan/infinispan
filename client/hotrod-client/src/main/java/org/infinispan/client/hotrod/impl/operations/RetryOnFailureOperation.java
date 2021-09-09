@@ -40,7 +40,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    private int retryCount = 0;
    private Set<SocketAddress> failedServers = null;
-   private boolean triedCompleteRestart = false;
    private String currentClusterName;
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
@@ -210,7 +209,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             }
             switch (status) {
                case SWITCHED:
-                  triedCompleteRestart = true;
                   retryCount = 0;
                   failedServers.clear();
                   break;

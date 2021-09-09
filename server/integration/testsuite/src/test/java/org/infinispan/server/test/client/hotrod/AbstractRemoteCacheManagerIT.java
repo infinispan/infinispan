@@ -377,7 +377,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
         ChannelFactory ttf = getChannelFactoryField(of);
-        Collection<SocketAddress> servers = ttf.getServers();
+        Collection<InetSocketAddress> servers = ttf.getServers();
         // create a list of IP address:port to return
         StringBuilder serverList = new StringBuilder();
         int listSize = servers.size();
