@@ -1,13 +1,10 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
-import static java.util.Arrays.stream;
-
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -62,10 +59,12 @@ public final class SegmentConsistentHash implements ConsistentHash {
    @Override
    public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
       Map<SocketAddress, Set<Integer>> map = new HashMap<>();
-      IntStream.range(0, segmentOwners.length).forEach(seg -> {
-         SocketAddress[] owners = segmentOwners[seg];
-         stream(owners).forEach(s -> map.computeIfAbsent(s, k -> new HashSet<>(owners.length)).add(seg));
-      });
+      for (int segment = 0; segment < segmentOwners.length; segment++) {
+         SocketAddress[] owners = segmentOwners[segment];
+         for (SocketAddress s : owners) {
+            map.computeIfAbsent(s, k -> new HashSet<>()).add(segment);
+         }
+      }
       return Immutables.immutableMapWrap(map);
    }
 

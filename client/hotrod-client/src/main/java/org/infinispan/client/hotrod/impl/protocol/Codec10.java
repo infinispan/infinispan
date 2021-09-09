@@ -5,8 +5,10 @@ import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -246,34 +248,39 @@ public class Codec10 implements Codec {
                                          ChannelFactory channelFactory) {
       final Log localLog = getLog();
       int newTopologyId = ByteBufUtil.readVInt(buf);
-      topologyId.set(newTopologyId);
       int numKeyOwners = buf.readUnsignedShort();
       short hashFunctionVersion = buf.readUnsignedByte();
       int hashSpace = ByteBufUtil.readVInt(buf);
       int clusterSize = ByteBufUtil.readVInt(buf);
 
-      Map<SocketAddress, Set<Integer>> servers2Hash = computeNewHashes(
+      Map<InetSocketAddress, Set<Integer>> servers2Hash = computeNewHashes(
             buf, channelFactory, localLog, newTopologyId, numKeyOwners,
             hashFunctionVersion, hashSpace, clusterSize);
 
-      Set<SocketAddress> socketAddresses = servers2Hash.keySet();
+      List<InetSocketAddress> socketAddresses = new ArrayList<>(servers2Hash.keySet());
       int topologyAge = channelFactory.getTopologyAge();
       if (localLog.isInfoEnabled()) {
          localLog.newTopology(newTopologyId, topologyAge,
                socketAddresses.size(), socketAddresses);
       }
-      channelFactory.updateServers(socketAddresses, cacheName, false);
+      boolean useConsistentHash = false;
       if (hashFunctionVersion == 0) {
          localLog.trace("Not using a consistent hash function (version 0).");
       } else if (hashFunctionVersion == 1) {
          localLog.trace("Ignoring obsoleted consistent hash function (version 1)");
       } else {
-         channelFactory.updateHashFunction(
-               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
+         useConsistentHash = true;
+      }
+
+      if (useConsistentHash) {
+         channelFactory.updateConsistentHash1x(socketAddresses,
+               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, newTopologyId);
+      } else {
+         channelFactory.updateServers(socketAddresses, cacheName, newTopologyId, false);
       }
    }
 
-   protected Map<SocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
+   protected Map<InetSocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
                                                                Log localLog, int newTopologyId, int numKeyOwners,
                                                                short hashFunctionVersion, int hashSpace, int clusterSize) {
       if (trace) {
@@ -282,14 +289,14 @@ public class Codec10 implements Codec {
                newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
 
-      Map<SocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<SocketAddress, Set<Integer>>();
+      Map<InetSocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<>();
 
       for (int i = 0; i < clusterSize; i++) {
          String host = ByteBufUtil.readString(buf);
          int port = buf.readUnsignedShort();
          int hashCode = buf.readIntLE();
          if (trace) localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
-         SocketAddress address = InetSocketAddress.createUnresolved(host, port);
+         InetSocketAddress address = InetSocketAddress.createUnresolved(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
             hashes = new HashSet<>();

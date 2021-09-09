@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.WrappedByteArray;
 
 public class Util {
    private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
@@ -53,5 +54,15 @@ public class Util {
       } else {
          return new TransportException(e.getCause(), null);
       }
+   }
+
+   public static WrappedByteArray wrapBytes(byte[] cacheName) {
+      WrappedByteArray wrappedCacheName;
+      if (cacheName == null || cacheName.length == 0) {
+         wrappedCacheName = WrappedByteArray.EMPTY_BYTES;
+      } else {
+         wrappedCacheName = new WrappedByteArray(cacheName);
+      }
+      return wrappedCacheName;
    }
 }

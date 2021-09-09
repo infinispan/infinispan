@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class Codec11 extends Codec10 {
    }
 
    @Override
-   protected Map<SocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
+   protected Map<InetSocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
                                                                Log localLog, int newTopologyId, int numKeyOwners,
                                                                short hashFunctionVersion, int hashSpace, int clusterSize) {
       // New in 1.1
@@ -44,8 +43,7 @@ public class Codec11 extends Codec10 {
                numVirtualNodes);
       }
 
-      Map<SocketAddress, Set<Integer>> servers2Hash =
-            new LinkedHashMap<SocketAddress, Set<Integer>>();
+      Map<InetSocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<>();
 
       ConsistentHash ch = null;
       if (hashFunctionVersion == 0) {
@@ -85,7 +83,7 @@ public class Codec11 extends Codec10 {
    }
 
    private void calcVirtualHashCodes(int addrHashCode, int numVirtualNodes,
-            Map<SocketAddress, Set<Integer>> servers2Hash, String host, int port,
+            Map<InetSocketAddress, Set<Integer>> servers2Hash, String host, int port,
             ConsistentHash ch) {
       for (int j = 1; j < numVirtualNodes; j++) {
          int hashCode = calcVNodeHashCode(addrHashCode, j);
@@ -93,9 +91,9 @@ public class Codec11 extends Codec10 {
       }
    }
 
-   private void cacheHashCode(Map<SocketAddress, Set<Integer>> servers2Hash,
+   private void cacheHashCode(Map<InetSocketAddress, Set<Integer>> servers2Hash,
             String host, int port, int hashCode) {
-      SocketAddress address = InetSocketAddress.createUnresolved(host, port);
+      InetSocketAddress address = InetSocketAddress.createUnresolved(host, port);
       Set<Integer> hashes = servers2Hash.get(address);
       if (hashes == null) {
          hashes = new HashSet<Integer>();

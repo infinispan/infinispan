@@ -11,7 +11,6 @@ import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
@@ -62,7 +61,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Server sent new topology view (id=%d, age=%d) containing %d addresses: %s", id = 4006)
-   void newTopology(int viewId, int age, int topologySize, Set<SocketAddress> topology);
+   void newTopology(int viewId, int age, int topologySize, Collection<? extends SocketAddress> topology);
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)

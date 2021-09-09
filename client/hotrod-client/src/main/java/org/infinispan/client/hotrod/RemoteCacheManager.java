@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +17,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,7 +91,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private volatile boolean started = false;
    private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
    private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
-   private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    private Configuration configuration;
    private Codec codec;
 
@@ -300,8 +299,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       ExecutorService asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
-            listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners), marshallerRegistry);
+      channelFactory.start(codec, configuration, marshaller, asyncExecutorService,
+                           listenerNotifier, marshallerRegistry);
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
@@ -543,7 +542,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    @Override
    public String[] getServers() {
-      Collection<SocketAddress> addresses = channelFactory.getServers();
+      Collection<InetSocketAddress> addresses = channelFactory.getServers();
       return addresses.stream().map(SocketAddress::toString).toArray(String[]::new);
    }
 
