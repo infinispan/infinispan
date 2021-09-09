@@ -8,8 +8,8 @@ import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -403,13 +403,11 @@ public class Codec20 implements Codec, HotRodConstants {
       // Since the header is now created only once (not during each retry) the topologyAge in header may be non-actual
       // but we should still accept the topology
       if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
-         params.topologyId.set(newTopologyId);
-         Collection<InetSocketAddress> addressList = Arrays.asList(addresses);
+         List<InetSocketAddress> addressList = Arrays.asList(addresses);
          if (HOTROD.isInfoEnabled()) {
             HOTROD.newTopology(newTopologyId, topologyAge,
                   addresses.length, new HashSet<>(addressList));
          }
-         channelFactory.updateServers(addressList, params.cacheName, false);
          if (hashFunctionVersion >= 0) {
             if (log.isTraceEnabled()) {
                String cacheNameString = new String(params.cacheName);
@@ -418,8 +416,10 @@ public class Codec20 implements Codec, HotRodConstants {
                else
                   localLog.tracef("[%s] Updating client hash function with %s number of segments", cacheNameString, segmentOwners.length);
             }
-            channelFactory.updateHashFunction(segmentOwners,
-                  segmentOwners.length, hashFunctionVersion, params.cacheName, params.topologyId);
+            channelFactory.updateConsistentHash(segmentOwners, segmentOwners.length, hashFunctionVersion,
+                                                params.cacheName, newTopologyId, addressList);
+         } else {
+            channelFactory.updateServers(addressList, params.cacheName, newTopologyId, false);
          }
       } else {
          if (log.isTraceEnabled())

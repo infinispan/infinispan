@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,7 +107,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private volatile boolean started = false;
    private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
    private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
-   private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    private final Configuration configuration;
    private Codec codec;
 
@@ -379,8 +377,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
-            listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners), marshallerRegistry);
+      channelFactory.start(codec, configuration, marshaller, asyncExecutorService,
+                           listenerNotifier, marshallerRegistry);
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
       TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory, codec);
