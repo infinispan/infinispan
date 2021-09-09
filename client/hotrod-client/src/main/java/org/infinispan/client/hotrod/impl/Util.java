@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.WrappedByteArray;
 
 public class Util {
    private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
@@ -112,5 +113,15 @@ public class Util {
          log.debugf("Exception while checking transaction support in server", e);
       }
       return false;
+   }
+
+   public static WrappedByteArray wrapBytes(byte[] cacheName) {
+      WrappedByteArray wrappedCacheName;
+      if (cacheName == null || cacheName.length == 0) {
+         wrappedCacheName = WrappedByteArray.EMPTY_BYTES;
+      } else {
+         wrappedCacheName = new WrappedByteArray(cacheName);
+      }
+      return wrappedCacheName;
    }
 }

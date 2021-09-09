@@ -1,34 +1,32 @@
 package org.infinispan.client.hotrod.impl;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.IntStream.range;
+import static org.infinispan.client.hotrod.impl.Util.wrapBytes;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.topology.CacheInfo;
+import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.marshall.WrappedBytes;
 
 /**
  * Maintains topology information about caches.
@@ -39,183 +37,150 @@ public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
 
-   private Map<WrappedByteArray, Collection<InetSocketAddress>> servers = new ConcurrentHashMap<>();
-   private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();
-   private Map<WrappedByteArray, Integer> segmentsByCache = new ConcurrentHashMap<>();
-   private Map<WrappedByteArray, AtomicInteger> topologyIds = new ConcurrentHashMap<>();
+   private final Supplier<FailoverRequestBalancingStrategy> balancerFactory;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
-   public TopologyInfo(AtomicInteger topologyId, Collection<InetSocketAddress> initialServers, Configuration configuration) {
-      this.topologyIds.put(WrappedByteArray.EMPTY_BYTES, topologyId);
-      this.servers.put(WrappedByteArray.EMPTY_BYTES, initialServers);
-      this.hashFactory.init(configuration);
-   }
+   private final ConcurrentMap<WrappedBytes, CacheInfo> caches = new ConcurrentHashMap<>();
+   private volatile ClusterInfo currentCluster;
+   // Topology age provides a way to avoid concurrent cluster view changes,
+   // affecting a cluster switch. After a cluster switch, the topology age is
+   // increased and so any old requests that might have received topology
+   // updates won't be allowed to apply since they refer to older views.
+   private int topologyAge;
 
-   private Map<SocketAddress, Set<Integer>> getSegmentsByServer(byte[] cacheName) {
-      WrappedByteArray key = new WrappedByteArray(cacheName);
-      ConsistentHash consistentHash = consistentHashes.get(key);
-      if (consistentHash != null) {
-         return consistentHash.getSegmentsByServer();
-      } else {
-         Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(key));
-         Optional<Set<Integer>> segments = numSegments.map(n -> range(0, n).boxed().collect(Collectors.toSet()));
-         return Immutables.immutableMapWrap(
-               servers.get(key).stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
-         );
-      }
+   public TopologyInfo(Configuration configuration, ClusterInfo clusterInfo) {
+      this.balancerFactory = configuration.balancingStrategyFactory();
+      this.hashFactory.init(configuration);
+
+      this.topologyAge = 0;
+      this.currentCluster = clusterInfo;
    }
 
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(byte[] cacheName) {
-      WrappedByteArray key = new WrappedByteArray(cacheName);
-      ConsistentHash consistentHash = consistentHashes.get(key);
-      if (consistentHash != null) {
-         return consistentHash.getPrimarySegmentsByServer();
+      WrappedByteArray key = wrapBytes(cacheName);
+      CacheInfo cacheInfo = caches.get(key);
+      if (cacheInfo != null) {
+         return cacheInfo.getPrimarySegments();
       } else {
-         Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(key));
-         Collection<InetSocketAddress> cacheServers = servers.get(key);
-
-         if (cacheServers.isEmpty()) {
-            return Collections.emptyMap();
-         }
-
-         Optional<Map<SocketAddress, Set<Integer>>> targets = numSegments.map(maxSegment -> {
-            Map<SocketAddress, Set<Integer>> addressSegments = new HashMap<>(cacheServers.size());
-            Iterator<InetSocketAddress> addressIterator = cacheServers.iterator();
-            for (int i = 0; i < maxSegment; ++i) {
-               SocketAddress nextAddress;
-               if (!addressIterator.hasNext()) {
-                  addressIterator = cacheServers.iterator();
-               }
-               nextAddress = addressIterator.next();
-               addressSegments.computeIfAbsent(nextAddress, ignore -> new HashSet<>()).add(i);
-            }
-            return addressSegments;
-         });
-
-         return Immutables.immutableMapWrap(targets.orElse(Collections.emptyMap()));
+         return Collections.emptyMap();
       }
    }
 
-   public Collection<InetSocketAddress> getServers(WrappedByteArray cacheName) {
-      return servers.computeIfAbsent(cacheName, k -> servers.get(WrappedByteArray.EMPTY_BYTES));
+   public List<InetSocketAddress> getServers(WrappedBytes cacheName) {
+      return getCacheInfo(cacheName).getServers();
    }
 
-   public Collection<InetSocketAddress> getServers() {
-      // Note: the returned list contains duplicities as the server is there once per each cache
-      return servers.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+   public Collection<InetSocketAddress> getCurrentServers() {
+      return caches.values().stream().flatMap(ct -> ct.getServers().stream()).collect(Collectors.toSet());
    }
 
-   public void updateTopology(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace,
-         byte[] cacheName, AtomicInteger topologyId) {
-      ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
-      if (hash == null) {
-         HOTROD.noHasHFunctionConfigured(hashFunctionVersion);
-      } else {
-         hash.init(servers2Hash, numKeyOwners, hashSpace);
-      }
-      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
-      consistentHashes.put(wrappedName, hash);
-      if (log.isTraceEnabled()) {
-         log.tracef("(1) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
-      }
-      topologyIds.put(wrappedName, topologyId);
-   }
-
-   public void updateTopology(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
-         byte[] cacheName, AtomicInteger topologyId) {
-      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
+   public SegmentConsistentHash createConsistentHash(int numSegments, short hashFunctionVersion,
+                                                     SocketAddress[][] segmentOwners) {
+      SegmentConsistentHash hash = null;
       if (hashFunctionVersion > 0) {
-         SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
+         hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
             HOTROD.noHasHFunctionConfigured(hashFunctionVersion);
          } else {
             hash.init(segmentOwners, numSegments);
          }
-         consistentHashes.put(wrappedName, hash);
       }
-      segmentsByCache.put(wrappedName, numSegments);
-      if (log.isTraceEnabled()) {
-         log.tracef("(2) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
-      }
-      topologyIds.put(wrappedName, topologyId);
+      return hash;
    }
 
-   public Optional<SocketAddress> getHashAwareServer(Object key, byte[] cacheName) {
-      Optional<SocketAddress> server = Optional.empty();
-      if (isTopologyValid(cacheName)) {
-         ConsistentHash consistentHash = consistentHashes.get(new WrappedByteArray(cacheName));
-         if (consistentHash != null) {
-            server = Optional.of(consistentHash.getServer(key));
-            if (log.isTraceEnabled()) {
-               log.tracef("Using consistent hash for determining the server: " + server);
-            }
-         }
-         return server;
+   public SocketAddress getHashAwareServer(Object key, byte[] cacheName) {
+      CacheInfo cacheInfo = caches.get(wrapBytes(cacheName));
+      if (cacheInfo != null && cacheInfo.isValidTopology() && cacheInfo.getConsistentHash() != null) {
+         return cacheInfo.getConsistentHash().getServer(key);
       }
 
-      return Optional.empty();
+      return null;
    }
 
    public boolean isTopologyValid(byte[] cacheName) {
-      Integer id = topologyIds.get(new WrappedByteArray(cacheName)).get();
-      Boolean valid = id == null || id.intValue() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
-      if (log.isTraceEnabled())
-         log.tracef("Is topology id (%s) valid? %b", id, valid);
+      CacheInfo cacheInfo = caches.get(wrapBytes(cacheName));
 
-      return valid;
-   }
-
-   public void updateServers(byte[] cacheName, Collection<InetSocketAddress> updatedServers) {
-      // We must not update servers for other caches than cacheName because the list of servers
-      // here would get out of sync with balancer.
-      WrappedByteArray wrappedCacheName;
-      if (cacheName == null || cacheName.length == 0) {
-         wrappedCacheName = WrappedByteArray.EMPTY_BYTES;
-      } else {
-         wrappedCacheName = new WrappedByteArray(cacheName);
-      }
-      servers.put(wrappedCacheName, updatedServers);
-   }
-
-
-   public ConsistentHash getConsistentHash(byte[] cacheName) {
-      return consistentHashes.get(new WrappedByteArray(cacheName));
+      return cacheInfo != null && cacheInfo.isValidTopology();
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
       return hashFactory;
    }
 
-   public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
-      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
-      if (log.isTraceEnabled()) {
-         log.tracef("Creating topology for %s (absent ? %s) id=%d", wrappedName, topologyIds.get(wrappedName), topologyId);
-      }
-      return topologyIds.computeIfAbsent(wrappedName, c -> new AtomicInteger(topologyId));
-   }
-
-   public void setTopologyId(byte[] cacheName, int topologyId) {
-      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
-      AtomicInteger id = topologyIds.get(wrappedName);
-      if (log.isTraceEnabled()) {
-         log.tracef("Setting topology for %s: %d -> %d", wrappedName, id.get(), topologyId);
-      }
-      id.set(topologyId);
-   }
-
-   public void setAllTopologyIds(int newTopologyId) {
-      for (AtomicInteger topologyId : topologyIds.values())
-         topologyId.set(newTopologyId);
-   }
-
-   public int getTopologyId(byte[] cacheName)  {
-      return topologyIds.get(new WrappedByteArray(cacheName)).get();
-   }
-
    public CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName) {
-      WrappedByteArray key = new WrappedByteArray(cacheName);
-      return new CacheTopologyInfoImpl(getSegmentsByServer(cacheName), segmentsByCache.get(key),
-         topologyIds.get(key).get());
+      WrappedByteArray key = wrapBytes(cacheName);
+      return caches.get(key).getCacheTopologyInfo();
    }
 
+   public CacheInfo getCacheInfo(WrappedBytes cacheName) {
+      return caches.get(cacheName);
+   }
+
+   public CacheInfo createCacheInfo(WrappedBytes cacheName) {
+      CacheInfo cacheInfo = new CacheInfo(cacheName, balancerFactory.get(), currentCluster);
+      cacheInfo.updateBalancerServers();
+      caches.put(cacheName, cacheInfo);
+      return cacheInfo;
+   }
+
+   public CacheInfo getOrCreateCacheInfo(WrappedBytes cacheName) {
+      return caches.computeIfAbsent(cacheName, cn -> {
+         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), currentCluster);
+         // Copy the servers and consistent hash from the default cache, if it exists
+         CacheInfo defaultCacheInfo = caches.get(WrappedByteArray.EMPTY_BYTES);
+         if (defaultCacheInfo != null) {
+            cacheInfo = cacheInfo.withNewHash(-1, defaultCacheInfo.getServers(),
+                                              defaultCacheInfo.getConsistentHash(), defaultCacheInfo.getNumSegments());
+         }
+         cacheInfo.updateBalancerServers();
+         return cacheInfo;
+      });
+   }
+
+   /**
+    * Switch the cluster or reset to the initial server list of the current cluster.
+    *
+    * <p>Reset the topology id and server list of all caches.</p>
+    */
+   public void switchCluster(ClusterInfo newCluster, WrappedBytes cacheName) {
+      if (log.isTraceEnabled()) log.tracef("Updating cluster for %s: %s -> %s",
+                                           cacheName, currentCluster.getName(), newCluster.getName());
+      // FIXME We need this hack because the switch to the initial server list can be triggered before the cluster switch
+      int tempTopologyId = (newCluster != currentCluster) ? HotRodConstants.SWITCH_CLUSTER_TOPOLOGY : -1;
+      // TODO Remove the cacheName parameter?
+      topologyAge++;
+      currentCluster = newCluster;
+
+      // TODO Maybe it 's enough to update the topology age here and to update the cache infos lazily
+      //  as we get new operations and they notice the topology age is outdated?
+      //  We'd have to keep track of topologyAge in CacheInfo for that to work
+      //  The old code (pre-ISPN-13264) only updated the topology id and server list for the cache
+      //  given as a parameter, but that seems wrong
+      caches.replaceAll((name, oldInfo) -> {
+         CacheInfo newInfo = oldInfo.withNewCluster(currentCluster, currentCluster.getInitialServers(), tempTopologyId);
+         // Updates the balancer in both infos
+         newInfo.updateBalancerServers();
+         // Update the topology ref for both infos and ongoing operations
+         newInfo.getTopologyIdRef().set(newInfo.getTopologyId());
+         return newInfo;
+      });
+   }
+
+   public ClusterInfo getCurrentCluster() {
+      return currentCluster;
+   }
+
+   public int getTopologyAge() {
+      return topologyAge;
+   }
+
+   public void updateCacheInfo(WrappedBytes cacheName, CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
+      if (log.isTraceEnabled()) log.tracef("Updating topology for %s: %s -> %s",
+                                           cacheName, oldCacheInfo.getTopologyId(), newCacheInfo.getTopologyId());
+      CacheInfo existing = caches.put(cacheName, newCacheInfo);
+      assert existing == oldCacheInfo : "Locking should have prevented concurrent updates";
+
+      // The new CacheInfo doesn't have a new balancer instance, so the server update affects both
+      newCacheInfo.updateBalancerServers();
+   }
 }
