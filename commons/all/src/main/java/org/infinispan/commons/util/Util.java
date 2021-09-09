@@ -643,7 +643,7 @@ public final class Util {
       for (byte b : buffer) {
          addHexByte(sb, b);
       }
-      if (buffer.length <= actualLength) {
+      if (buffer.length < actualLength) {
          sb.append("...");
       }
       sb.append(" (").append(actualLength).append(" bytes)");
