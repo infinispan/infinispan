@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiConsumer;
 
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.logging.Log;
@@ -34,6 +35,7 @@ import io.netty.util.internal.PlatformDependent;
  * The connections are handled LIFO, pending requests are handled FIFO.
  */
 class ChannelPool {
+   enum ChannelEventType { CONNECTED, CLOSED_IDLE, CLOSED_ACTIVE, CONNECT_FAILED}
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
@@ -44,15 +46,20 @@ class ChannelPool {
    private final SocketAddress address;
    private final ChannelInitializer newChannelInvoker;
    private final ExhaustedAction exhaustedAction;
+   private final BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener;
    private final long maxWait;
    private final int maxConnections;
    private final int maxPendingRequests;
    private final AtomicInteger created  = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
+   private final AtomicInteger connected = new AtomicInteger();
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private volatile boolean terminated = false;
 
-   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker, ExhaustedAction exhaustedAction, long maxWait, int maxConnections, int maxPendingRequests) {
+   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker,
+               ExhaustedAction exhaustedAction, BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener,
+               long maxWait, int maxConnections, int maxPendingRequests) {
+      this.connectionFailureListener = connectionFailureListener;
       this.executor = executor;
       this.address = address;
       this.newChannelInvoker = newChannelInvoker;
@@ -89,7 +96,8 @@ class ChannelPool {
       int current = created.get();
       while (current < maxConnections) {
          if (created.compareAndSet(current, current + 1)) {
-            active.incrementAndGet();
+            int currentActive = active.incrementAndGet();
+            if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, current + 1, currentActive);
             // create new connection and apply callback
             createAndInvoke(callback);
             return;
@@ -103,8 +111,9 @@ class ChannelPool {
          case WAIT:
             break;
          case CREATE_NEW:
-            created.incrementAndGet();
-            active.incrementAndGet();
+            int currentCreated = created.incrementAndGet();
+            int currentActive = active.incrementAndGet();
+            if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, currentCreated, currentActive);
             createAndInvoke(callback);
             return;
          default:
@@ -144,15 +153,31 @@ class ChannelPool {
                assert currentActive >= 0;
                int currentCreated = created.decrementAndGet();
                assert currentCreated >= 0;
+               if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
+                                     address, currentCreated, currentActive, connected.get());
                callback.cancel(address, throwable);
+               connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
             } else {
+               int currentConnected = connected.incrementAndGet();
+               if (log.isTraceEnabled()) log.tracef(throwable, "Channel connected, created = %d, active = %d, connected = %d",
+                                                    created.get(), active.get(), currentConnected);
                callback.invoke(channel);
+               connectionFailureListener.accept(this, ChannelEventType.CONNECTED);
             }
          });
       } catch (Throwable t) {
-         active.decrementAndGet();
-         created.decrementAndGet();
+         int currentActive = active.decrementAndGet();
+         int currentCreated = created.decrementAndGet();
+         if (log.isTraceEnabled()) log.tracef(t, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
+                               address, currentCreated, currentActive, connected.get());
+         if (currentCreated < 0) {
+            log.warnf("Invalid created count after channel create failure");
+         }
+         if (currentActive < 0) {
+            log.warnf("Invalid active count after channel create failure");
+         }
          callback.cancel(address, t);
+         connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
       }
    }
 
@@ -168,6 +193,8 @@ class ChannelPool {
       if (!channel.isActive()) {
          int currentCreated = created.decrementAndGet();
          assert currentCreated >= 0 : "Error releasing " + channel;
+         connected.decrementAndGet();
+         log.debugf("Closing %s when idle", channel);
          return;
       } else if (idle) {
          log.debugf("Not releasing idle non-closed channel %s", channel);
@@ -199,7 +226,8 @@ class ChannelPool {
 
    private void activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
       assert channel.isActive() : "Channel " + channel + " is not active";
-      active.incrementAndGet();
+      int currentActive = active.incrementAndGet();
+      if (log.isTraceEnabled()) log.tracef("[%s] Activated record %s, created = %d, active = %d", address, channel, created.get(), currentActive);
       ChannelRecord record = ChannelRecord.of(channel);
       record.setAcquired();
       if (useExecutor) {
@@ -230,8 +258,14 @@ class ChannelPool {
          if (!record.isIdle()) {
             active.decrementAndGet();
             created.decrementAndGet();
+            int currentConnected = connected.decrementAndGet();
+            log.tracef("Closed %s, %s now has %d connected channels", channel, address, currentConnected);
          }
       }
+   }
+
+   public SocketAddress getAddress() {
+      return address;
    }
 
    public int getActive() {
@@ -240,6 +274,10 @@ class ChannelPool {
 
    public int getIdle() {
       return Math.max(0, created.get() - active.get());
+   }
+
+   public int getConnected() {
+      return connected.get();
    }
 
    public void close() {
@@ -267,6 +305,7 @@ class ChannelPool {
             ", maxPendingRequests=" + maxPendingRequests +
             ", created=" + created +
             ", active=" + active +
+            ", connected=" + connected +
             ", terminated=" + terminated +
             ']';
    }
