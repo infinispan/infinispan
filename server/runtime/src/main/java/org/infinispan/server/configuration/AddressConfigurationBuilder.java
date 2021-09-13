@@ -23,47 +23,12 @@ class AddressConfigurationBuilder implements Builder<AddressConfiguration> {
       return this;
    }
 
-   AddressConfigurationBuilder type(AddressType addressType) {
-      this.addressType = addressType;
-      return this;
-   }
-
    AddressType addressType() {
       return addressType;
    }
 
    public String value() {
       return attributes.attribute(VALUE).get();
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      AddressConfigurationBuilder that = (AddressConfigurationBuilder) o;
-
-      if (!attributes.equals(that.attributes)) return false;
-      return addressType == that.addressType;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = attributes.hashCode();
-      result = 31 * result + addressType.hashCode();
-      return result;
-   }
-
-   @Override
-   public String toString() {
-      return "InterfaceConfiguration{" +
-            "attributes=" + attributes +
-            ", addressType=" + addressType +
-            '}';
-   }
-
-   @Override
-   public void validate() {
    }
 
    @Override

@@ -226,8 +226,13 @@ public interface Log extends BasicLogger {
    @Message(value = "No script engines are available", id = 80059)
    void noScriptEngines();
 
-
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "SSL Transport using realm '%s`", id = 80060)
    void sslTransport(String value);
+
+   @Message(value = "Realm '%s' does not provide an SSL context", id = 80061)
+   IllegalStateException noSSLContext(String realm);
+
+   @Message(value = "Cannot add multiple realms of type '%s' to security realm '%s'", id = 80062)
+   CacheConfigurationException duplicateRealmType(String type, String realm);
 }

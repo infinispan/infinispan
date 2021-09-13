@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
@@ -31,6 +32,11 @@ public class EncryptionConfigurationBuilder implements Builder<EncryptionConfigu
    }
 
    public EncryptionConfigurationBuilder sslContext(SSLContext context) {
+      ssl.sslContext(context);
+      return this;
+   }
+
+   public EncryptionConfigurationBuilder sslContext(Supplier<SSLContext> context) {
       ssl.sslContext(context);
       return this;
    }

@@ -134,6 +134,10 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       return this.self();
    }
 
+   public boolean startTransport() {
+      return attributes.attribute(START_TRANSPORT).get();
+   }
+
    @Override
    public S adminOperationsHandler(AdminOperationsHandler handler) {
       attributes.attribute(ADMIN_OPERATION_HANDLER).set(handler);

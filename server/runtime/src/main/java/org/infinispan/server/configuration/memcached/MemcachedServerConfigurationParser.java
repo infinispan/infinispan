@@ -57,10 +57,8 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseMemcached(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder)
-         {
+   private void parseMemcached(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder) {
       String[] required = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
-      serverBuilder.applySocketBinding(required[0], builder, serverBuilder.endpoints().current().singlePort());
       builder.startTransport(true);
       builder.socketBinding(required[0]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -92,7 +90,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING:
-               // Already seen
+               // already seen
                break;
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);

@@ -5,18 +5,14 @@ import static org.infinispan.server.configuration.security.UserPropertiesConfigu
 import static org.infinispan.server.configuration.security.UserPropertiesConfiguration.PLAIN_TEXT;
 import static org.infinispan.server.configuration.security.UserPropertiesConfiguration.RELATIVE_TO;
 
-import java.io.File;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.parsing.ParseUtils;
 
 /**
  * @since 10.0
  */
 public class UserPropertiesConfigurationBuilder implements Builder<UserPropertiesConfiguration> {
    private final AttributeSet attributes;
-   private File userFile;
 
    UserPropertiesConfigurationBuilder() {
       attributes = UserPropertiesConfiguration.attributeDefinitionSet();
@@ -44,23 +40,6 @@ public class UserPropertiesConfigurationBuilder implements Builder<UserPropertie
 
    public boolean plainText() {
       return attributes.attribute(PLAIN_TEXT).get();
-   }
-
-   public String digestRealmName() {
-      return attributes.attribute(DIGEST_REALM_NAME).get();
-   }
-
-   @Override
-   public void validate() {
-   }
-
-   public File getFile() {
-      if (userFile == null) {
-         String path = attributes.attribute(PATH).get();
-         String relativeTo = attributes.attribute(RELATIVE_TO).get();
-         userFile = new File(ParseUtils.resolvePath(path, relativeTo));
-      }
-      return userFile;
    }
 
    @Override

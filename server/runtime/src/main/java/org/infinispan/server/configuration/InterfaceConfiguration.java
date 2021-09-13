@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration;
 
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -32,25 +34,22 @@ public class InterfaceConfiguration extends ConfigurationElement<InterfaceConfig
       return attributes.attribute(NAME).get();
    }
 
-   NetworkAddress getNetworkAddress() {
-      return networkAddress;
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
+      if (!super.equals(o)) return false;
       InterfaceConfiguration that = (InterfaceConfiguration) o;
-
-      if (!addressConfiguration.equals(that.addressConfiguration)) return false;
-      return attributes.equals(that.attributes);
+      return Objects.equals(addressConfiguration, that.addressConfiguration) && Objects.equals(networkAddress, that.networkAddress);
    }
 
    @Override
    public int hashCode() {
-      int result = addressConfiguration.hashCode();
-      result = 31 * result + attributes.hashCode();
-      return result;
+      return Objects.hash(super.hashCode(), addressConfiguration, networkAddress);
    }
+
+   NetworkAddress getNetworkAddress() {
+      return networkAddress;
+   }
+
 }

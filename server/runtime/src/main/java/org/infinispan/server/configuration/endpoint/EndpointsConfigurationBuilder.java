@@ -9,6 +9,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.SocketBindingsConfiguration;
+import org.infinispan.server.configuration.security.SecurityConfiguration;
 
 public class EndpointsConfigurationBuilder implements Builder<EndpointsConfiguration> {
 
@@ -42,13 +44,13 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
    }
 
    @Override
-   public void validate() {
+   public EndpointsConfiguration create() {
+      throw new UnsupportedOperationException();
    }
 
-   @Override
-   public EndpointsConfiguration create() {
+   public EndpointsConfiguration create(SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
       List<EndpointConfiguration> list = endpoints.values().stream()
-            .map(EndpointConfigurationBuilder::create).collect(Collectors.toList());
+            .map(e -> e.create(bindingsConfiguration, securityConfiguration)).collect(Collectors.toList());
       return new EndpointsConfiguration(attributes.protect(), list);
    }
 

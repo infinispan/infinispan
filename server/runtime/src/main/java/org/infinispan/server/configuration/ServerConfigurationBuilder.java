@@ -1,34 +1,43 @@
 package org.infinispan.server.configuration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
-import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
+import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfigurationBuilder;
-import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.security.ServerSecurityRealm;
 
 /**
  * @author Tristan Tarrant
  * @since 10.0
  */
 public class ServerConfigurationBuilder implements Builder<ServerConfiguration> {
-   private final GlobalConfigurationBuilder builder;
-
+   private final Properties properties = new Properties();
    private final InterfacesConfigurationBuilder interfaces = new InterfacesConfigurationBuilder();
    private final SocketBindingsConfigurationBuilder socketBindings = new SocketBindingsConfigurationBuilder(this);
-   private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder();
+   private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder(this);
    private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder();
    private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
+   private final List<SSLContextSupplier> suppliers = new ArrayList<>();
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
-      this.builder = builder;
+   }
+
+   public ServerConfigurationBuilder properties(Properties properties) {
+      this.properties.clear();
+      this.properties.putAll(properties);
+      return this;
+   }
+
+   public Properties properties() {
+      return properties;
    }
 
    public SecurityConfigurationBuilder security() {
@@ -58,12 +67,18 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
 
    @Override
    public ServerConfiguration create() {
+      SecurityConfiguration securityConfiguration = security.create();
+      for(SSLContextSupplier supplier : suppliers) {
+         supplier.configuration = securityConfiguration;
+      }
+      InterfacesConfiguration interfacesConfiguration = interfaces.create();
+      SocketBindingsConfiguration bindingsConfiguration = socketBindings.create(interfacesConfiguration);
       return new ServerConfiguration(
-            interfaces.create(),
-            socketBindings.create(),
-            security.create(),
+            interfacesConfiguration,
+            bindingsConfiguration,
+            securityConfiguration,
             dataSources.create(),
-            endpoints.create()
+            endpoints.create(bindingsConfiguration, securityConfiguration)
       );
    }
 
@@ -73,47 +88,31 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return this;
    }
 
-   public ServerSecurityRealm getSecurityRealm(String name) {
-      ServerSecurityRealm serverSecurityRealm = security.realms().getServerSecurityRealm(name);
-      if (serverSecurityRealm == null) {
-         throw Server.log.unknownSecurityDomain(name);
-      }
-      return serverSecurityRealm;
+   public Supplier<SSLContext> serverSSLContextSupplier(String sslContextName) {
+      SSLContextSupplier supplier = new SSLContextSupplier(sslContextName, false);
+      suppliers.add(supplier);
+      return supplier;
    }
 
-   public boolean hasSSLContext(String name) {
-      return security.realms().getSSLContext(name) != null;
+   public Supplier<SSLContext> clientSSLContextSupplier(String sslContextName) {
+      SSLContextSupplier supplier = new SSLContextSupplier(sslContextName, true);
+      suppliers.add(supplier);
+      return supplier;
    }
 
-   public SSLContext getSSLContext(String name) {
-      SSLContext sslContext = security.realms().getSSLContext(name);
-      if (sslContext == null) {
-         throw Server.log.unknownSecurityDomain(name);
-      }
-      return sslContext;
-   }
+   private static class SSLContextSupplier implements Supplier<SSLContext> {
+      final String name;
+      final boolean client;
+      SecurityConfiguration configuration;
 
-   public SSLContext getClientSSLContext(String name) {
-      SSLContext sslContext = security.realms().getClientSSLContext(name);
-      if (sslContext == null) {
-         throw Server.log.unknownSecurityDomain(name);
+      SSLContextSupplier(String name, boolean client) {
+         this.name = name;
+         this.client = client;
       }
-      return sslContext;
-   }
 
-   public void applySocketBinding(String bindingName, ProtocolServerConfigurationBuilder builder, SinglePortServerConfigurationBuilder singlePort) {
-      if (!socketBindings.exists(bindingName)) {
-         throw Server.log.unknownSocketBinding(bindingName);
+      @Override
+      public SSLContext get() {
+         return client ? configuration.realms().getRealm(name).clientSSLContext() : configuration.realms().getRealm(name).serverSSLContext();
       }
-      SocketBinding socketBinding = socketBindings.getSocketBinding(bindingName);
-      String host = socketBinding.getAddress().getAddress().getHostAddress();
-      int port = socketBinding.getPort();
-      if (builder != singlePort) {
-         // Ensure we are using a different socket binding than the one used by the single-port endpoint
-         if (singlePort.host().equals(host) && singlePort.port() == port) {
-            throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
-         }
-      }
-      builder.socketBinding(bindingName).host(host).port(port);
    }
 }

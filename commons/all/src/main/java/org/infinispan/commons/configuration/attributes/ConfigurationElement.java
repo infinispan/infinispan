@@ -38,7 +38,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       this.children = children != null ? children : CHILDLESS;
    }
 
-   public String name() {
+   public final String elementName() {
       return element;
    }
 
@@ -61,7 +61,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       } else {
          String part = name.substring(0, sep);
          for (ConfigurationElement<?> child : children) {
-            if (part.equals(child.name())) {
+            if (part.equals(child.elementName())) {
                return child.findAttribute(name.substring(sep + 1));
             }
          }

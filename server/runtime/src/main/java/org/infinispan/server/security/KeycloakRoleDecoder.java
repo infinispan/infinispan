@@ -23,7 +23,7 @@ public class KeycloakRoleDecoder implements RoleDecoder {
       Entry realmAccess = attributes.get(CLAIM_REALM_ACCESS);
       Set<String> roleSet = new HashSet<>();
 
-      if (realmAccess != null) {
+      if (realmAccess != null && !realmAccess.isEmpty()) {
          String realmAccessValue = realmAccess.get(0);
          Json json = Json.read(realmAccessValue);
          Json rolesValue = json.at(CLAIM_ROLES);

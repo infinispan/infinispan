@@ -20,7 +20,7 @@ import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -69,7 +69,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
 
    private void parseRest(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder) {
       boolean dedicatedSocketBinding = false;
-      ServerSecurityRealm securityRealm = null;
+      String securityRealm = null;
       EndpointConfigurationBuilder endpoint = serverBuilder.endpoints().current();
       RestServerConfigurationBuilder builder = endpoint.addConnector(RestServerConfigurationBuilder.class);
       ServerConfigurationParser.configureEndpoint(reader.getProperties(), endpoint, builder);
@@ -100,13 +100,12 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
-               serverBuilder.applySocketBinding(value, builder, endpoint.singlePort());
                builder.startTransport(true);
                dedicatedSocketBinding = true;
                break;
             }
             case SECURITY_REALM: {
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealm = value;
             }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
@@ -114,7 +113,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          }
       }
       if (!dedicatedSocketBinding) {
-         builder.socketBinding(endpoint.singlePort().socketBinding());
+         builder.socketBinding(endpoint.singlePort().socketBinding()).startTransport(false);
       }
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
@@ -138,9 +137,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
             }
          }
-      }
-      if (securityRealm != null) {
-         EndpointConfigurationBuilder.enableImplicitAuthentication(serverBuilder, securityRealm, builder);
       }
    }
 
@@ -232,9 +228,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) {
-      if (securityRealm == null) {
-         securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, String securityRealmName) {
+      if (securityRealmName == null) {
+         securityRealmName = serverBuilder.endpoints().current().securityRealm();
       }
       String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -244,7 +240,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          switch (attribute) {
             case SECURITY_REALM: {
                builder.securityRealm(value);
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealmName = value;
                break;
             }
             case MECHANISMS: {
@@ -262,13 +258,13 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
 
       ParseUtils.requireNoContent(reader);
-      if (securityRealm == null) {
+      if (securityRealmName == null) {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
-      builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, builder.mechanisms()));
+      builder.authenticator(new ElytronHTTPAuthenticator(securityRealmName, serverPrincipal, builder.mechanisms()));
    }
 
-   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) {
+   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, String securityRealmName) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -279,7 +275,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealmName = value;
                break;
             }
             default: {
@@ -288,11 +284,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          }
       }
 
-      if (securityRealm == null) {
+      if (securityRealmName == null) {
          throw Server.log.encryptionWithoutSecurityRealm();
       } else {
-         String name = securityRealm.getName();
-         encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
+         encryption.realm(securityRealmName).sslContext(serverBuilder.serverSSLContextSupplier(securityRealmName));
       }
 
       while (reader.inTag(Element.ENCRYPTION)) {
@@ -323,7 +318,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case SECURITY_REALM: {
                sni.realm(value);
-               sni.sslContext(serverBuilder.getSSLContext(value));
+               sni.sslContext(serverBuilder.serverSSLContextSupplier(value));
                break;
             }
             default: {

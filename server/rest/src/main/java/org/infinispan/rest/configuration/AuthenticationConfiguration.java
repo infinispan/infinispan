@@ -49,4 +49,8 @@ public class AuthenticationConfiguration extends ConfigurationElement<Authentica
    public boolean metricsAuth() {
       return attributes.attribute(METRICS_AUTH).get();
    }
+
+   public String securityRealm() {
+      return attributes.attribute(SECURITY_REALM).get();
+   }
 }

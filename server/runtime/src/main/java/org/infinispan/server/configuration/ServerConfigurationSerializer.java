@@ -20,13 +20,12 @@ import org.infinispan.server.configuration.security.CredentialStoresConfiguratio
 import org.infinispan.server.configuration.security.FileSystemRealmConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
 import org.infinispan.server.configuration.security.LdapAttributeConfiguration;
-import org.infinispan.server.configuration.security.LdapAttributeMappingConfiguration;
 import org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
-import org.infinispan.server.configuration.security.LdapUserPasswordMapperConfiguration;
 import org.infinispan.server.configuration.security.LocalRealmConfiguration;
 import org.infinispan.server.configuration.security.PropertiesRealmConfiguration;
 import org.infinispan.server.configuration.security.RealmConfiguration;
+import org.infinispan.server.configuration.security.RealmProvider;
 import org.infinispan.server.configuration.security.RealmsConfiguration;
 import org.infinispan.server.configuration.security.SSLConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
@@ -59,7 +58,7 @@ public class ServerConfigurationSerializer
 
    private void writeInterfaces(ConfigurationWriter writer, InterfacesConfiguration networkInterfaces) {
       writer.writeStartListElement(Element.INTERFACES, true);
-      for (InterfaceConfiguration netIf : networkInterfaces.interfaces()) {
+      for (InterfaceConfiguration netIf : networkInterfaces.interfaces().values()) {
          writer.writeStartElement(Element.INTERFACE);
          writer.writeAttribute(Attribute.NAME, netIf.name());
          AddressType addressType = netIf.addressConfiguration().addressType();
@@ -79,14 +78,14 @@ public class ServerConfigurationSerializer
       writer.writeStartListElement(Element.SOCKET_BINDINGS, true);
       socketBindings.attributes().write(writer);
       if (writer.hasFeature(ConfigurationFormatFeature.MIXED_ELEMENTS)) {
-         for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings()) {
+         for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings().values()) {
             writer.writeStartElement(Element.SOCKET_BINDING);
             socketBinding.attributes().write(writer);
             writer.writeEndElement(); // SOCKET_BINDING
          }
       } else {
          writer.writeStartElement(Element.SOCKET_BINDING);
-         for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings()) {
+         for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings().values()) {
             writer.writeStartArrayElement(Element.SOCKET_BINDING);
             socketBinding.attributes().write(writer);
             writer.writeEndArrayElement(); // SOCKET_BINDING
@@ -105,7 +104,7 @@ public class ServerConfigurationSerializer
 
    private void writeCredentialStores(ConfigurationWriter writer, CredentialStoresConfiguration credentialStores) {
       writer.writeStartArrayElement(Element.CREDENTIAL_STORES);
-      for (CredentialStoreConfiguration credentialStore : credentialStores.credentialStores()) {
+      for (CredentialStoreConfiguration credentialStore : credentialStores.credentialStores().values()) {
          credentialStore.write(writer);
       }
       writer.writeEndArrayElement();
@@ -113,16 +112,26 @@ public class ServerConfigurationSerializer
 
    private void writeSecurityRealms(ConfigurationWriter writer, RealmsConfiguration realms) {
       writer.writeStartArrayElement(Element.SECURITY_REALMS);
-      for (RealmConfiguration realm : realms.realms()) {
+      for (Map.Entry<String, RealmConfiguration> e : realms.realms().entrySet()) {
+         RealmConfiguration realm = e.getValue();
          writer.writeStartElement(Element.SECURITY_REALM);
          realm.attributes().write(writer);
          writeServerIdentities(writer, realm.serverIdentitiesConfiguration());
-         writeRealm(writer, realm.fileSystemConfiguration());
-         writeRealm(writer, realm.ldapConfiguration());
-         writeRealm(writer, realm.localConfiguration());
-         writeRealm(writer, realm.propertiesRealm());
-         writeRealm(writer, realm.tokenConfiguration());
-         writeRealm(writer, realm.trustStoreConfiguration());
+         for (RealmProvider provider : realm.realmProviders()) {
+            if (provider instanceof FileSystemRealmConfiguration) {
+               writeRealm(writer, (FileSystemRealmConfiguration) provider);
+            } else if (provider instanceof LdapRealmConfiguration) {
+               writeRealm(writer, (LdapRealmConfiguration) provider);
+            } else if (provider instanceof LocalRealmConfiguration) {
+               writeRealm(writer, (LocalRealmConfiguration) provider);
+            } else if (provider instanceof PropertiesRealmConfiguration) {
+               writeRealm(writer, (PropertiesRealmConfiguration) provider);
+            } else if (provider instanceof TokenRealmConfiguration) {
+               writeRealm(writer, (TokenRealmConfiguration) provider);
+            } else if (provider instanceof TrustStoreConfiguration) {
+               writeRealm(writer, (TrustStoreRealmConfiguration) provider);
+            }
+         }
          writer.writeEndElement(); // SECURITY_REALM
       }
       writer.writeEndArrayElement(); // SECURITY_REALMS
@@ -146,25 +155,18 @@ public class ServerConfigurationSerializer
             }
             writer.writeEndElement();
          }
-         for (LdapIdentityMappingConfiguration identity : realm.identityMappings()) {
-            writer.writeStartElement(Element.IDENTITY_MAPPING);
-            identity.attributes().write(writer);
-            if (!identity.attributeMappings().isEmpty()) {
-               writer.writeStartElement(Element.ATTRIBUTE_MAPPING);
-               for (LdapAttributeMappingConfiguration mapping : identity.attributeMappings()) {
-                  for (LdapAttributeConfiguration attribute : mapping.attributesConfiguration()) {
-                     attribute.write(writer);
-                  }
-               }
-               writer.writeEndElement(); // ATTRIBUTE_MAPPING
+         LdapIdentityMappingConfiguration identity = realm.identityMapping();
+         writer.writeStartElement(Element.IDENTITY_MAPPING);
+         identity.attributes().write(writer);
+         if (!identity.attributeMappings().isEmpty()) {
+            writer.writeStartElement(Element.ATTRIBUTE_MAPPING);
+            for (LdapAttributeConfiguration mapping : identity.attributeMappings()) {
+               mapping.write(writer);
             }
-            if (!identity.userPasswordMapper().isEmpty()) {
-               for (LdapUserPasswordMapperConfiguration mapper : identity.userPasswordMapper()) {
-                  mapper.attributes().write(writer, Element.USER_PASSWORD_MAPPER);
-               }
-            }
-            writer.writeEndElement(); // IDENTITY_MAPPING
+            writer.writeEndElement(); // ATTRIBUTE_MAPPING
          }
+         identity.userPasswordMapper().attributes().write(writer, Element.USER_PASSWORD_MAPPER);
+         writer.writeEndElement(); // IDENTITY_MAPPING
          writer.writeEndElement(); // LDAP_REALM
       }
    }

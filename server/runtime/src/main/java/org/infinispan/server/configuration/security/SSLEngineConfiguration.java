@@ -6,6 +6,9 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.wildfly.security.ssl.CipherSuiteSelector;
+import org.wildfly.security.ssl.ProtocolSelector;
+import org.wildfly.security.ssl.SSLContextBuilder;
 
 /**
  * @since 10.0
@@ -24,11 +27,14 @@ public class SSLEngineConfiguration extends ConfigurationElement<SSLEngineConfig
       super(Element.ENGINE, attributes);
    }
 
-   public String[] enabledProtocols() {
-      return attributes.attribute(ENABLED_PROTOCOLS).get();
-   }
-
-   public String enabledCiphersuites() {
-      return attributes.attribute(ENABLED_CIPHERSUITES).get();
+   void build(SSLContextBuilder builder) {
+      attributes.attribute(ENABLED_PROTOCOLS).apply(protocols -> {
+         ProtocolSelector protocolSelector = ProtocolSelector.empty();
+         for (String protocol : protocols) {
+            protocolSelector = protocolSelector.add(protocol);
+         }
+         builder.setProtocolSelector(protocolSelector);
+      });
+      attributes.attribute(ENABLED_CIPHERSUITES).apply(cipherSuites -> builder.setCipherSuiteSelector(CipherSuiteSelector.fromString(cipherSuites)));
    }
 }

@@ -16,6 +16,7 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.ServerConfiguration;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -36,22 +37,38 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 10.0
  **/
 public class ElytronHTTPAuthenticator implements Authenticator {
-   private final HttpAuthenticationFactory factory;
-   private final ServerSecurityRealm serverSecurityRealm;
+   private final String name;
+   private final String serverPrincipal;
+   private final Collection<String> mechanisms;
+   private HttpAuthenticationFactory factory;
+   private ServerSecurityRealm serverSecurityRealm;
    private Executor executor;
    private RestServerConfiguration configuration;
 
-   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm realm, String serverPrincipal, Collection<String> mechanisms) {
-      this.serverSecurityRealm = realm;
+   public ElytronHTTPAuthenticator(String name, String serverPrincipal, Collection<String> mechanisms) {
+      this.name = name;
+      this.serverPrincipal = serverPrincipal;
+      this.mechanisms = mechanisms;
+   }
+
+   public static void init(RestServerConfiguration configuration, ServerConfiguration serverConfiguration) {
+      ElytronHTTPAuthenticator authenticator = (ElytronHTTPAuthenticator) configuration.authentication().authenticator();
+      if (authenticator != null) {
+         authenticator.init(serverConfiguration);
+      }
+   }
+
+   public void init(ServerConfiguration serverConfiguration) {
+      this.serverSecurityRealm = serverConfiguration.security().realms().getRealm(name).serverSecurityRealm();
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
-      httpBuilder.setSecurityDomain(realm.getSecurityDomain());
+      httpBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
 
       HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory();
       httpServerFactory = new SetMechanismInformationMechanismFactory(new FilterServerMechanismFactory(httpServerFactory, true, mechanisms));
       httpBuilder.setFactory(httpServerFactory);
 
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();
-      realm.applyServerCredentials(mechConfigurationBuilder, serverPrincipal);
+      serverSecurityRealm.applyServerCredentials(mechConfigurationBuilder, serverPrincipal);
       final MechanismRealmConfiguration.Builder mechRealmBuilder = MechanismRealmConfiguration.builder();
       mechRealmBuilder.setRealmName(name);
       mechConfigurationBuilder.addMechanismRealm(mechRealmBuilder.build());
@@ -88,7 +105,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
             }
             return requestAdapter.getResponse();
          } catch (Exception e) {
-            throw e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e);
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
          }
       }, executor);
    }

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -28,12 +29,14 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.security.LdapRealmConfiguration;
 import org.infinispan.server.configuration.security.RealmConfiguration;
+import org.infinispan.server.configuration.security.RealmProvider;
+import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
-import org.infinispan.server.network.SocketBinding;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -96,7 +99,7 @@ public class ServerConfigurationParserTest {
       validateConfiguration(serverConfiguration);
 
       // Output serialized version
-      for(MediaType t : data()) {
+      for (MediaType t : data()) {
          StringBuilderWriter sw = new StringBuilderWriter();
          try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(t).build()) {
             new ServerConfigurationSerializer().serialize(w, serverConfiguration);
@@ -107,26 +110,26 @@ public class ServerConfigurationParserTest {
    private void validateConfiguration(ServerConfiguration configuration) {
       // Interfaces
       assertEquals(2, configuration.networkInterfaces().size());
-      NetworkAddress defaultInterface = configuration.networkInterfaces().get("default");
+      NetworkAddress defaultInterface = configuration.networkInterfaces().get("default").getNetworkAddress();
       assertNotNull(defaultInterface);
       assertTrue(defaultInterface.getAddress().isLoopbackAddress());
 
       // Socket bindings
-      Map<String, SocketBinding> socketBindings = configuration.socketBindings();
+      Map<String, SocketBindingConfiguration> socketBindings = configuration.socketBindings();
       assertEquals(5, socketBindings.size());
-      assertEquals(11221, socketBindings.get("memcached").getPort());
-      assertEquals(12221, socketBindings.get("memcached-2").getPort());
-      assertEquals(11222, socketBindings.get("default").getPort());
-      assertEquals(11223, socketBindings.get("hotrod").getPort());
-      assertEquals(8080, socketBindings.get("rest").getPort());
+      assertEquals(11221, socketBindings.get("memcached").port());
+      assertEquals(12221, socketBindings.get("memcached-2").port());
+      assertEquals(11222, socketBindings.get("default").port());
+      assertEquals(11223, socketBindings.get("hotrod").port());
+      assertEquals(8080, socketBindings.get("rest").port());
 
       // Security realms
-      List<RealmConfiguration> realms = configuration.security().realms().realms();
+      Map<String, RealmConfiguration> realms = configuration.security().realms().realms();
       assertEquals(3, realms.size());
-      RealmConfiguration realmConfiguration = realms.get(0);
+      RealmConfiguration realmConfiguration = realms.get("default");
       assertEquals("default", realmConfiguration.name());
 
-      realmConfiguration = realms.get(1);
+      realmConfiguration = realms.get("using-credentials");
       assertEquals("using-credentials", realmConfiguration.name());
 
       // Data Sources
@@ -159,14 +162,18 @@ public class ServerConfigurationParserTest {
 
       // Ensure endpoints are bound to the interfaces
       SinglePortRouterConfiguration singlePortRouter = configuration.endpoints().endpoints().get(0).singlePortRouter();
-      assertEquals(socketBindings.get("default").getAddress().getAddress().getHostAddress(), singlePortRouter.host());
-      assertEquals(socketBindings.get("default").getPort(), singlePortRouter.port());
-      assertEquals(socketBindings.get("memcached").getPort(), configuration.endpoints().endpoints().get(0).connectors().get(2).port());
+      assertEquals(socketBindings.get("default").interfaceConfiguration().getNetworkAddress().getAddress().getHostAddress(), singlePortRouter.host());
+      assertEquals(socketBindings.get("default").port(), singlePortRouter.port());
+      assertEquals(socketBindings.get("memcached").port(), configuration.endpoints().endpoints().get(0).connectors().get(2).port());
 
-      assertEquals("strongPassword", new String((char[]) realmConfiguration.ldapConfiguration().attributes().attribute(Attribute.CREDENTIAL).get()));
-      assertEquals("secret", new String((char[]) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute(Attribute.PASSWORD).get())); //stores it as char[]
-      assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", new String((char[]) realmConfiguration.tokenConfiguration().oauth2Configuration().attributes().attribute(Attribute.CLIENT_SECRET).get()));
-      assertEquals("password", new String((char[]) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().keyStore().attributes().attribute(Attribute.KEYSTORE_PASSWORD).get()));
+      assertEquals("strongPassword", new String(((Supplier<char[]>) realmProvider(realmConfiguration, LdapRealmConfiguration.class).attributes().attribute(Attribute.CREDENTIAL).get()).get()));
+      assertEquals("secret", new String(((Supplier<char[]>) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute(Attribute.PASSWORD).get()).get()));
+      assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", new String(((Supplier<char[]>) realmProvider(realmConfiguration, TokenRealmConfiguration.class).oauth2Configuration().attributes().attribute(Attribute.CLIENT_SECRET).get()).get()));
+      assertEquals("password", new String(((Supplier<char[]>) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().keyStore().attributes().attribute(Attribute.KEYSTORE_PASSWORD).get()).get()));
+   }
+
+   <T extends RealmProvider> T realmProvider(RealmConfiguration realm, Class<T> providerClass) {
+      return (T) realm.realmProviders().stream().filter(r -> providerClass.isAssignableFrom(r.getClass())).findFirst().get();
    }
 
    public static Path getConfigPath() {
