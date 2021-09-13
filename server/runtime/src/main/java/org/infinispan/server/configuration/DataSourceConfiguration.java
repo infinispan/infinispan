@@ -4,6 +4,7 @@ import static org.infinispan.commons.configuration.attributes.AttributeSerialize
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -21,7 +22,7 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    static final AttributeDefinition<String> DRIVER = AttributeDefinition.builder(Attribute.DRIVER, null, String.class).build();
    static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).build();
    static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(Attribute.USERNAME, null, String.class).build();
-   static final AttributeDefinition<char[]> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, char[].class).serializer(SECRET).build();
+   static final AttributeDefinition<Supplier<char[]>> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class).serializer(SECRET).build();
    static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder(Attribute.NEW_CONNECTION_SQL, null, String.class).build();
    static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder(Attribute.TRANSACTION_ISOLATION, TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
 
@@ -69,7 +70,7 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    }
 
    public char[] password() {
-      return attributes.attribute(PASSWORD).get();
+      return attributes.attribute(PASSWORD).get().get();
    }
 
    public String url() {

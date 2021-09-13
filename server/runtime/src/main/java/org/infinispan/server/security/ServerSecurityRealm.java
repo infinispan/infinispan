@@ -1,12 +1,9 @@
 package org.infinispan.server.security;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.function.Supplier;
 
-import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.server.configuration.security.ServerIdentitiesConfiguration;
-import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.source.CredentialSource;
@@ -34,14 +31,6 @@ public class ServerSecurityRealm {
       return name;
    }
 
-   public ServerAuthenticationProvider getSASLAuthenticationProvider(String serverPrincipal, Collection<String> mechanisms) {
-      return new ElytronSASLAuthenticationProvider(name, this, serverPrincipal, mechanisms);
-   }
-
-   public Authenticator getHTTPAuthenticationProvider(String serverPrincipal, Collection<String> mechanisms) {
-      return new ElytronHTTPAuthenticator(name, this, serverPrincipal, mechanisms);
-   }
-
    public boolean isReadyForHttpChallenge() {
       return httpChallengeReadiness.get();
    }
@@ -65,7 +54,15 @@ public class ServerSecurityRealm {
       return features.contains(feature);
    }
 
+   @Override
+   public String toString() {
+      return "ServerSecurityRealm{" +
+            "name='" + name + '\'' +
+            ", features=" + features +
+            '}';
+   }
+
    public enum Feature {
-      PASSWORD, TOKEN, TRUST,
+      PASSWORD, TOKEN, TRUST, ENCRYPT
    }
 }

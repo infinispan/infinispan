@@ -23,12 +23,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.naming.InitialContext;
 import javax.naming.spi.NamingManager;
-import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
 import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
@@ -69,6 +69,7 @@ import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
+import org.infinispan.server.configuration.security.RealmConfiguration;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.configuration.security.TransportSecurityConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
@@ -82,6 +83,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.datasource.DataSourceFactory;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.logging.Log;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
@@ -92,6 +94,8 @@ import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
+import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
@@ -326,9 +330,9 @@ public class Server implements ServerManagement, AutoCloseable {
          TransportSecurityConfiguration transportSecurityConfiguration = serverBuilder.security().transport().create();
          if (transportSecurityConfiguration.securityRealm() != null) {
             String securityRealm = transportSecurityConfiguration.securityRealm();
-            ServerSocketFactory serverSocketFactory = serverBuilder.getSSLContext(securityRealm).getServerSocketFactory();
-            SocketFactory clientSocketFactory = serverBuilder.getClientSSLContext(securityRealm).getSocketFactory();
-            NamedSocketFactory namedSocketFactory = new NamedSocketFactory(clientSocketFactory, serverSocketFactory);
+            Supplier<SSLContext> serverSSLContextSupplier = serverBuilder.serverSSLContextSupplier(securityRealm);
+            Supplier<SSLContext> clientSSLContextSupplier = serverBuilder.clientSSLContextSupplier(securityRealm);
+            NamedSocketFactory namedSocketFactory = new NamedSocketFactory(() -> clientSSLContextSupplier.get().getSocketFactory(), () -> serverSSLContextSupplier.get().getServerSocketFactory());
             global.transport().addProperty(JGroupsTransport.SOCKET_FACTORY, namedSocketFactory);
             Server.log.sslTransport(securityRealm);
          }
@@ -422,6 +426,11 @@ public class Server implements ServerManagement, AutoCloseable {
                   if (endpoint.admin()) {
                      protocolServer.setServerManagement(this);
                   }
+                  if (configuration instanceof HotRodServerConfiguration) {
+                     ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration);
+                  } else if (configuration instanceof RestServerConfiguration) {
+                     ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
+                  }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cm);
                   ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
@@ -476,7 +485,8 @@ public class Server implements ServerManagement, AutoCloseable {
       RestServerConfiguration rest = (RestServerConfiguration) protocolServer.getConfiguration();
       if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
          // Find the token realm
-         TokenRealmConfiguration realmConfiguration = serverConfiguration.security().realms().realms().get(0).tokenConfiguration();
+         RealmConfiguration realm = serverConfiguration.security().realms().getRealm(rest.authentication().securityRealm());
+         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration)r).findFirst().get();
          loginConfiguration.put("mode", "OIDC");
          loginConfiguration.put("url", realmConfiguration.authServerUrl());
          loginConfiguration.put("realm", realmConfiguration.name());

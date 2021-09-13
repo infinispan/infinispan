@@ -63,7 +63,7 @@
                                    filter-dn="ou=People,dc=infinispan,dc=org"/>
                         <attribute-reference reference="memberOf" to="Roles3"/>
                      </attribute-mapping>
-                     <user-password-mapper from="userPassword" verifiable="false" writable="false"/>
+                     <user-password-mapper from="userPassword" verifiable="false"/>
                   </identity-mapping>
                </ldap-realm>
                <local-realm name="test-local"/>
@@ -138,7 +138,7 @@
 
       <endpoints>
          <endpoint socket-binding="default" security-realm="default" io-threads="12" idle-timeout="1"
-                    cache-container="test" receive-buffer-size="2" send-buffer-size="3" tcp-keepalive="true"
+                    receive-buffer-size="2" send-buffer-size="3" tcp-keepalive="true"
                     tcp-nodelay="true" worker-threads="10">
             <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" worker-threads="20" tcp-keepalive="false"
                               send-buffer-size="10" receive-buffer-size="20" idle-timeout="2" socket-binding="hotrod"

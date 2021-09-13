@@ -2,6 +2,7 @@ package org.infinispan.server.core.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
@@ -82,6 +83,14 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
     * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
    public SslConfigurationBuilder sslContext(SSLContext sslContext) {
+      defaultDomainConfigurationBuilder.sslContext(sslContext);
+      return this;
+   }
+
+   /**
+    * Sets the {@link SSLContext} to use for setting up SSL connections.
+    */
+   public SslConfigurationBuilder sslContext(Supplier<SSLContext> sslContext) {
       defaultDomainConfigurationBuilder.sslContext(sslContext);
       return this;
    }

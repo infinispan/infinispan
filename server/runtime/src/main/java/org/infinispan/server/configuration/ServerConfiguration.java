@@ -9,8 +9,6 @@ import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
-import org.infinispan.server.network.NetworkAddress;
-import org.infinispan.server.network.SocketBinding;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -39,12 +37,12 @@ public class ServerConfiguration {
       this.endpoints = endpoints;
    }
 
-   public Map<String, NetworkAddress> networkInterfaces() {
-      return interfaces.getAddressMap();
+   public Map<String, InterfaceConfiguration> networkInterfaces() {
+      return interfaces.interfaces();
    }
 
-   public Map<String, SocketBinding> socketBindings() {
-      return socketBindings.socketBindings().stream().collect(Collectors.toMap(SocketBindingConfiguration::name, SocketBindingConfiguration::getSocketBinding));
+   public Map<String, SocketBindingConfiguration> socketBindings() {
+      return socketBindings.socketBindings();
    }
 
 

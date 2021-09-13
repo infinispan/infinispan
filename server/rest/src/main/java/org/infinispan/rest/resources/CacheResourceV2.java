@@ -643,7 +643,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private static void mutableAttributes(ConfigurationElement<?> element, List<String> attributes, String prefix) {
-      prefix = prefix == null ? "" : element.name();
+      prefix = prefix == null ? "" : element.elementName();
       for (Attribute<?> attribute : element.attributes().attributes()) {
          if (!attribute.isImmutable()) {
             attributes.add(prefix + "." + attribute.getAttributeDefinition().name());

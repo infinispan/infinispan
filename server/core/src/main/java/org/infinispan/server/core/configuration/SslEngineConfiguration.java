@@ -1,5 +1,7 @@
 package org.infinispan.server.core.configuration;
 
+import java.util.function.Supplier;
+
 import javax.net.ssl.SSLContext;
 
 /**
@@ -15,14 +17,14 @@ public class SslEngineConfiguration {
    private final char[] keyStorePassword;
    private final String keyAlias;
    private final String protocol;
-   private final SSLContext sslContext;
+   private final Supplier<SSLContext> sslContext;
    private final String trustStoreFileName;
    private final String trustStoreType;
    private final char[] trustStorePassword;
    private final char[] keyStoreCertificatePassword;
 
    SslEngineConfiguration(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
-                          SSLContext sslContext, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String protocol) {
+                          Supplier<SSLContext> sslContext, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String protocol) {
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
       this.keyStorePassword = keyStorePassword;
@@ -56,6 +58,10 @@ public class SslEngineConfiguration {
    }
 
    public SSLContext sslContext() {
+      return sslContext == null ? null : sslContext.get();
+   }
+
+   Supplier<SSLContext> sslContextSupplier() {
       return sslContext;
    }
 

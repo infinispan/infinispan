@@ -8,7 +8,9 @@ import java.util.Map;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -26,9 +28,26 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
  * @since 10.0
  **/
 public class ElytronSASLAuthenticationProvider implements ServerAuthenticationProvider {
-   private final SaslAuthenticationFactory saslAuthenticationFactory;
+   private final String name;
+   private final String serverPrincipal;
+   private final Collection<String> mechanisms;
+   private SaslAuthenticationFactory saslAuthenticationFactory;
 
-   public ElytronSASLAuthenticationProvider(String name, ServerSecurityRealm realm, String serverPrincipal, Collection<String> mechanisms) {
+   public ElytronSASLAuthenticationProvider(String name, String serverPrincipal, Collection<String> mechanisms) {
+      this.name = name;
+      this.serverPrincipal = serverPrincipal;
+      this.mechanisms = mechanisms;
+   }
+
+   public static void init(HotRodServerConfiguration configuration, ServerConfiguration serverConfiguration) {
+      ElytronSASLAuthenticationProvider authenticator = (ElytronSASLAuthenticationProvider) configuration.authentication().serverAuthenticationProvider();
+      if (authenticator != null) {
+         authenticator.init(serverConfiguration);
+      }
+   }
+
+   public void init(ServerConfiguration serverConfiguration) {
+      ServerSecurityRealm realm = serverConfiguration.security().realms().getRealm(name).serverSecurityRealm();
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
       SecurityProviderSaslServerFactory all = SaslFactories.getProviderSaslServerFactory();
       AggregateSaslServerFactory factory = new AggregateSaslServerFactory(new FilterMechanismSaslServerFactory(all, true, mechanisms));

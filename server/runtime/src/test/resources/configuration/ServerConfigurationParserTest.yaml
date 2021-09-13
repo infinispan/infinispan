@@ -1,232 +1,281 @@
 infinispan:
+  cache-container: {}
   server:
     interfaces:
-      - name: "default"
-        loopback: ~
-      - name: "another"
-        loopback: ~
-    socketBindings:
-      defaultInterface: "default"
-      portOffset: "${infinispan.socket.binding.port-offset:0}"
-      socketBinding:
-        - name: "default"
-          port: "11222"
-        - name: "hotrod"
-          port: "11223"
-        - name: "memcached"
-          port: "11221"
-        - name: "memcached-2"
-          port: "12221"
-        - name: "rest"
-          port: "8080"
+    - name: default
+      loopback: null
+    - name: another
+      loopback: null
+    socket-bindings:
+      port-offset: '0'
+      default-interface: default
+      socket-binding:
+      - name: default
+        port: '11222'
+        interface: default
+      - name: hotrod
+        port: '11223'
+        interface: default
+      - name: memcached
+        port: '11221'
+        interface: default
+      - name: memcached-2
+        port: '12221'
+        interface: default
+      - name: rest
+        port: '8080'
+        interface: default
     security:
-      credentialStores:
-        - name: "credentials"
-          path: "credentials.pfx"
-          clearTextCredential:
-            clearText: "secret"
-      securityRealms:
-        - name: "default"
-          serverIdentities:
+      credential-stores:
+        - name: credentials
+          path: credentials.pfx
+          clear-text-credential:
+            clear-text: secret
+      security-realms:
+        - name: default
+          server-identities:
             ssl:
               keystore:
-                path: "ServerConfigurationParserTest-keystore.pfx"
-                relativeTo: "infinispan.server.config.path"
-                keystorePassword: "password"
-                alias: "server"
-                keyPassword: "password"
-                generateSelfSignedCertificateHost: "localhost"
+                alias: server
+                generate-self-signed-certificate-host: localhost
+                key-password: password
+                keystore-password: password
+                path: ServerConfigurationParserTest-keystore.pfx
+                provider: SunJSSE
               truststore:
-                path: "truststore.p12"
-                relativeTo: "infinispan.server.config.path"
-                password: "secret"
+                password: secret
+                path: truststore.p12
+                provider: SunJSSE
               engine:
-                enabledProtocols: "TLSV1.1 TLSV1.2 TLSV1.3"
-                enabledCiphersuites: "DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"
+                enabled-protocols: TLSV1.1 TLSV1.2 TLSV1.3
+                enabled-ciphersuites: 'DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256'
             kerberos:
-              principal: "kerberos@DOMAIN.ORG"
-              keytabPath: "keytab"
-              required: "false"
-              debug: "false"
-              failCache: "1000"
-              mechanismNames: "KRB5 SPNEGO"
-              relativeTo: "infinispan.server.config.path"
-          filesystemRealm:
-            path: "security"
-            levels: "3"
-            encoded: "false"
-            relativeTo: "infinispan.server.config.path"
-          ldapRealm:
-            name: "ldap"
-            url: "ldap://${org.infinispan.test.host.address}:10389"
-            principal: "uid: admin,ou: People,dc: infinispan,dc: org"
-            credential: "strongPassword"
-            nameRewriter:
-              regexPrincipalTransformer:
-                name: "domain-remover"
-                pattern: "(.*)@INFINISPAN\.ORG"
-                replacement: "$1"
-            identityMapping:
-              rdnIdentifier: "uid"
-              searchDn: "ou: People,dc: infinispan,dc: org"
-              attributeMapping:
-                - from: "cn"
-                  to: "Roles"
-                  filter: "(&amp;(objectClass: groupOfNames)(member: {1}))"
-                  filterDn: "ou: Roles,dc: infinispan,dc: org"
-                - from: "cn2"
-                  to: "Roles2"
-                  filter: "(&amp;(objectClass: GroupOfUniqueNames)(member: {0}))"
-                  filterDn: "ou: People,dc: infinispan,dc: org"
-                - reference: "memberOf"
-                  to: "Roles3"
-              userPasswordMapper:
-                from: "userPassword"
-                verifiable: "false"
-                writable: "false"
-          localRealm:
-            name: "test-local"
-          propertiesRealm:
-            groupsAttribute: "Roles"
-            userProperties:
-              path: "ServerConfigurationParserTest-user.properties"
-              digestRealmName: "digest"
-              relativeTo: "infinispan.server.config.path"
-              plainText: "true"
-            groupProperties:
-              path: "ServerConfigurationParserTest-group.properties"
-              relativeTo: "infinispan.server.config.path"
-          tokenRealm:
-            name: "token-test"
-            principalClaim: "username-claim"
-            authServerUrl: "http://${org.infinispan.test.host.address}:14567/auth/"
-            clientId: "infinispan-console"
-            oauth2Introspection:
-              hostNameVerificationPolicy: "ANY"
-              introspectionUrl: "http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
-              clientId: "infinispan-server"
-              clientSecret: "1fdca4ec-c416-47e0-867a-3d471af7050f"
-          truststoreRealm: ~
-        - name: "using-credentials"
-            serverIdentities:
-              ssl:
-                keystore:
-                  path: "ServerConfigurationParserTest-keystore.pfx"
-                  relativeTo: "infinispan.server.config.path"
-                  alias: "server"
-                  credentialReference:
-                    store: "credentials"
-                    alias: "keystore"
-                truststore:
-                  path: "truststore.p12"
-                  provider: "SunJSSE"
-                  relativeTo: "infinispan.server.config.path"
-                  credentialReference:
-                    store: "credentials"
-                    alias: "trust"
-            ldapRealm:
-              name: "ldap"
-              url: "ldap://${org.infinispan.test.host.address}:10389"
-              principal: "uid: admin,ou: People,dc: infinispan,dc: org">
-              credentialReference:
-                store: "credentials"
-                alias: "ldap"
-              identityMapping:
-                rdnIdentifier: "uid"
-                searchDn: "ou: People,dc: infinispan,dc: org"
-            tokenRealm:
-              name: "token-test"
-              principalClaim: "username-claim"
-              authServerUrl: "http://${org.infinispan.test.host.address}:14567/auth/"
-              clientId: "infinispan-console"
-              oauth2Introspection:
-                hostNameVerificationPolicy: "ANY"
-                introspectionUrl: "http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
-                clientId: "infinispan-server">
-                credentialReference:
-                  store: "credentials"
-                  alias: "oauth2"
-            truststoreRealm: ~
-        - name: "basic"
-            propertiesRealm:
-              groupsAttribute: "Roles"
-              userProperties:
-                path: "ServerConfigurationParserTest-user.properties"
-                digestRealmName: "digest"
-                relativeTo: "infinispan.server.config.path"
-                plainText: "true"
-              groupProperties:
-                path: "ServerConfigurationParserTest-group.properties"
-                relativeTo: "infinispan.server.config.path"
-    dataSources:
-      - name: "database"
-        jndiName: "jdbc/database"
-        statistics: "true"
-        connectionFactory:
-          driver: "org.h2.Driver"
-          username: "test"
-          password: "test"
-          url: "jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test"
-          newConnectionSql: "SELECT 1"
-          connectionProperties:
-            someproperty: "somevalue"
-        connectionPool:
-          maxSize: "10"
-          minSize: "1"
-          backgroundValidation: "1000"
-          validateOnAcquisition: "500"
-          idleRemoval: "1"
-          initialSize: "1"
-          leakDetection: "10000"
-      - name: "database-with-credential"
-        jndiName: "jdbc/database-with-credential"
-        statistics: "true"
-        connectionFactory:
-          driver: "org.h2.Driver"
-          username: "test"
-          url: "jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test"
-          newConnectionSql: "SELECT 1"
-          credentialReference:
-            store: "credentials"
-            alias: "db"
-        connectionPool:
-          maxSize: "10"
-          minSize: "1"
-          backgroundValidation: "1000"
-          idleRemoval: "1"
-          initialSize: "1"
-          leakDetection: "10000"
+              principal: kerberos@DOMAIN.ORG
+              keytab-path: keytab
+              relative-to: infinispan.server.config.path
+              debug: false
+              fail-cache: '1000'
+              required: false
+          filesystem-realm:
+            name: filesystem
+            path: security
+            levels: '3'
+            encoded: false
+          ldap-realm:
+            credential: strongPassword
+            name: ldap
+            principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
+            url: 'ldap://${org.infinispan.test.host.address}:10389'
+            name-rewriter:
+              regex-principal-transformer:
+                pattern: (.*)@INFINISPAN\.ORG
+                replacement: $1
+            identity-mapping:
+              rdn-identifier: uid
+              search-dn: 'ou=People,dc=infinispan,dc=org'
+              attribute-mapping:
+                - filter: '(&(objectClass=groupOfNames)(member={1}))'
+                  filter-dn: 'ou=Roles,dc=infinispan,dc=org'
+                  from: cn
+                  to: Roles
+                - filter: '(&(objectClass=GroupOfUniqueNames)(member={0}))'
+                  filter-dn: 'ou=People,dc=infinispan,dc=org'
+                  from: cn2
+                  to: Roles2
+                - to: Roles3
+                  reference: memberOf
+              user-password-mapper:
+                from: userPassword
+                verifiable: false
+          local-realm:
+            name: test-local
+          properties-realm:
+            groups-attribute: Roles
+            user-properties:
+              digest-realm-name: digest
+              path: ServerConfigurationParserTest-user.properties
+              plain-text: true
+            group-properties:
+              path: ServerConfigurationParserTest-group.properties
+          token-realm:
+            name: token-test
+            auth-server-url: 'http://${org.infinispan.test.host.address}:14567/auth/'
+            client-id: infinispan-console
+            principal-claim: username-claim
+            oauth2-introspection:
+              client-id: infinispan-server
+              client-secret: '***'
+              introspection-url: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect
+              host-name-verification-policy: ANY
+          truststore-realm:
+            name: trust
+        - name: using-credentials
+          server-identities:
+            ssl:
+              keystore:
+                alias: server
+                path: ServerConfigurationParserTest-keystore.pfx
+                provider: SunJSSE
+                credential-reference:
+                  store: credentials
+                  alias: keystore
+              truststore:
+                path: truststore.p12
+                provider: SunJSSE
+                credential-reference:
+                  store: credentials
+                  alias: trust
+          ldap-realm:
+            name: ldap
+            principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
+            url: 'ldap://${org.infinispan.test.host.address}:10389'
+            credential-reference:
+              store: credentials
+              alias: ldap
+            identity-mapping:
+              rdn-identifier: uid
+              search-dn: 'ou=People,dc=infinispan,dc=org'
+          token-realm:
+            name: token-test
+            auth-server-url: 'http://${org.infinispan.test.host.address}:14567/auth/'
+            client-id: infinispan-console
+            principal-claim: username-claim
+            oauth2-introspection:
+              client-id: infinispan-server
+              introspection-url: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect
+              host-name-verification-policy: ANY
+              credential-reference:
+                store: credentials
+                alias: oauth2
+          truststore-realm:
+            name: trust
+        - name: basic
+          server-identities: {}
+          properties-realm:
+            groups-attribute: Roles
+            user-properties:
+              digest-realm-name: digest
+              path: ServerConfigurationParserTest-user.properties
+              plain-text: true
+            group-properties:
+              path: ServerConfigurationParserTest-group.properties
+    data-sources:
+      - name: database
+        jndi-name: jdbc/database
+        statistics: true
+        connection-factory:
+          driver: org.h2.Driver
+          username: test
+          password: test
+          url: 'jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test'
+          new-connection-sql: SELECT 1
+          connection-properties:
+            someproperty: somevalue
+        connection-pool:
+          background-validation: '1000'
+          idle-removal: '1'
+          initial-size: '1'
+          leak-detection: '10000'
+          max-size: '10'
+          min-size: '1'
+          validate-on-acquisition: '500'
+      - name: database-with-credential
+        jndi-name: jdbc/database-with-credential
+        statistics: true
+        connection-factory:
+          driver: org.h2.Driver
+          username: test
+          url: 'jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test'
+          new-connection-sql: SELECT 1
+          credential-reference:
+            store: credentials
+            alias: db
+        connection-pool:
+          background-validation: '1000'
+          idle-removal: '1'
+          initial-size: '1'
+          leak-detection: '10000'
+          max-size: '10'
+          min-size: '1'
     endpoints:
-      - socketBinding: "default"
-        securityRealm: "default"
-        ioThreads: "12"
-        idleTimeout: "1"
-        receiveBufferSize: "2"
-        sendBufferSize: "3"
-        tcpKeepalive: "true"
-        tcpNodelay: "true"
-        workerThreads: "10"
+      - socket-binding: default
+        security-realm: default
         connectors:
           hotrod:
-            hotrodConnector:
-              name: "hotrod"
-              ioThreads: "23"
-              tcpNodelay: "false"
-              workerThreads: "20"
-              tcpKeepalive: "false"
+            hotrod-connector:
+              idle-timeout: '2'
+              receive-buffer-size: '20'
+              send-buffer-size: '10'
+              tcp-nodelay: false
+              tcp-keepalive: false
+              io-threads: '23'
+              socket-binding: hotrod
+              worker-threads: '20'
+              external-host: external
+              external-port: '12345'
+              topology-state-transfer:
+                await-initial-retrieval: false
+                lock-timeout: '12'
+                replication-timeout: '13'
+                lazy-retrieval: false
+              authentication:
+                security-realm: default
+                sasl:
+                  server-name: localhost
+                  mechanisms: GSSAPI DIGEST-MD5 PLAIN
+                  qop: auth auth-conf
+                  strength: high medium low
+                  policy: forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials
+                  properties:
+                    com.sun.security.sasl.digest.realm: default
+              encryption:
+                require-ssl-client-auth: true
+                security-realm: default
+                sni:
+                  - host-name: sni-host-1
+                    security-realm: default
+                  - host-name: sni-host-2
+                    security-realm: default
           rest:
-            restConnector:
-              name: "rest"
+            rest-connector:
+              io-threads: '11'
+              socket-binding: rest
+              worker-threads: '3'
+              extended-headers: NEVER
+              context-path: rest
+              max-content-length: '3'
+              compression-level: '3'
+              authentication:
+                mechanisms: DIGEST BASIC
+                security-realm: default
+              cors-rules:
+                - name: rule1
+                  allow-credentials: true
+                  max-age-seconds: '1'
+                  allowed-origins: origin1 origin2
+                  allowed-methods: GET POST
+                  allowed-headers: Accept
+                  expose-headers: Accept Content-Type
+                - name: rule2
+                  allowed-origins: '*'
+                  allowed-methods: GET POST
+              encryption:
+                require-ssl-client-auth: false
+                security-realm: default
+                sni:
+                  - host-name: sni-host-3
+                    security-realm: default
+                  - host-name: sni-hHost-4
+                    security-realm: default
           memcached:
-            memcachedConnector:
-              name: "memcached"
-              socketBinding: "memcached"
-              ioThreads: "1"
-              workerThreads: "160"
-              idleTimeout: "1"
-              tcpNodelay: "true" t
-              tcpKeepalive: "true"
-              sendBufferSize: "3"
-              receiveBufferSize: "3"
-              cache: "string"
-              clientEncoding: "application/json"
+            memcached-connector:
+              cache: string
+              idle-timeout: '1'
+              receive-buffer-size: '3'
+              send-buffer-size: '3'
+              tcp-nodelay: true
+              tcp-keepalive: true
+              io-threads: '1'
+              socket-binding: memcached
+              worker-threads: '160'
+              client-encoding: application/json

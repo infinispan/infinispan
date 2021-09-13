@@ -1,10 +1,12 @@
 package org.infinispan.server.configuration;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.InstanceSupplier;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 
@@ -16,10 +18,6 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
       attributes = DataSourceConfiguration.attributeDefinitionSet();
       attributes.attribute(DataSourceConfiguration.NAME).set(name);
       attributes.attribute(DataSourceConfiguration.JNDI_NAME).set(jndiName);
-   }
-
-   @Override
-   public void validate() {
    }
 
    @Override
@@ -44,6 +42,11 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
    }
 
    public DataSourceConfigurationBuilder password(char[] password) {
+      attributes.attribute(DataSourceConfiguration.PASSWORD).set(new InstanceSupplier<>(password));
+      return this;
+   }
+
+   public DataSourceConfigurationBuilder password(Supplier<char[]> password) {
       attributes.attribute(DataSourceConfiguration.PASSWORD).set(password);
       return this;
    }

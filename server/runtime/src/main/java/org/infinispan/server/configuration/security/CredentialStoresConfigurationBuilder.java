@@ -1,15 +1,15 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.server.Server;
-import org.wildfly.security.credential.Credential;
+import org.infinispan.server.configuration.ServerConfigurationBuilder;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -19,8 +19,11 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
 
    private final AttributeSet attributes;
    private final Map<String, CredentialStoreConfigurationBuilder> credentialStores = new LinkedHashMap<>(2);
+   private final List<CredentialSupplier> suppliers = new ArrayList<>();
+   private final ServerConfigurationBuilder builder;
 
-   public CredentialStoresConfigurationBuilder() {
+   public CredentialStoresConfigurationBuilder(ServerConfigurationBuilder builder) {
+      this.builder = builder;
       this.attributes = CredentialStoresConfiguration.attributeDefinitionSet();
    }
 
@@ -30,41 +33,43 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       return credentialStoreBuilder;
    }
 
-   public <C extends Credential> C getCredential(String store, String alias, Class<C> type, Properties properties) {
-      CredentialStoreConfigurationBuilder credentialStoreConfigurationBuilder;
-      if (store == null) {
-         if (credentialStores.size() == 1) {
-            credentialStoreConfigurationBuilder = credentialStores.values().iterator().next();
-         } else {
-            throw Server.log.missingCredentialStoreName();
-         }
-      } else {
-         credentialStoreConfigurationBuilder = credentialStores.get(store);
-      }
-      if (credentialStoreConfigurationBuilder == null) {
-         throw Server.log.unknownCredentialStore(store);
-      }
-      C credential = credentialStoreConfigurationBuilder.getCredential(alias, type, properties);
-      if (credential == null) {
-         throw Server.log.unknownCredential(alias, store);
-      } else {
-         return credential;
-      }
-   }
-
-   @Override
-   public void validate() {
-   }
-
    @Override
    public CredentialStoresConfiguration create() {
-      List<CredentialStoreConfiguration> list = credentialStores.values().stream()
-            .map(CredentialStoreConfigurationBuilder::create).collect(Collectors.toList());
-      return new CredentialStoresConfiguration(attributes.protect(), list);
+      Map<String, CredentialStoreConfiguration> map = credentialStores.entrySet().stream()
+            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
+      CredentialStoresConfiguration configuration = new CredentialStoresConfiguration(attributes.protect(), map, builder.properties());
+      for(CredentialSupplier s : suppliers) {
+         s.configuration = configuration;
+      }
+      return configuration;
    }
 
    @Override
    public Builder<?> read(CredentialStoresConfiguration template) {
+      credentialStores.clear();
+      template.credentialStores().forEach((k, v) -> addCredentialStore(k).read(v));
       return this;
+   }
+
+   public Supplier<char[]> getCredential(String store, String alias) {
+      CredentialSupplier credentialSupplier = new CredentialSupplier(store, alias);
+      suppliers.add(credentialSupplier);
+      return credentialSupplier;
+   }
+
+   private static class CredentialSupplier implements Supplier<char[]> {
+      final String store;
+      final String alias;
+      CredentialStoresConfiguration configuration;
+
+      CredentialSupplier(String store, String alias) {
+         this.store = store;
+         this.alias = alias;
+      }
+
+      @Override
+      public char[] get() {
+         return configuration.getCredential(store, alias);
+      }
    }
 }

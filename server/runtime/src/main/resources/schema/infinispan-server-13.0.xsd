@@ -1075,6 +1075,13 @@
          <xs:element type="tns:security-realm-user-properties" name="user-properties"/>
          <xs:element type="tns:security-realm-group-properties" name="group-properties"/>
       </xs:sequence>
+      <xs:attribute type="xs:string" name="name">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="groups-attribute"/>
    </xs:complexType>
 
@@ -1143,27 +1150,6 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="search-dn">
-         <xs:annotation>
-            <xs:documentation>
-              Names the context for query execution. This option provides a
-              useful method to authenticate users based on names that do not
-              use X.500 format, such as "plainUser". In this case, you must
-              also specify the rdn-identifier. If names to authenticate users
-              are based on the X.500 format, you can suppress this
-              configuration. You should also note that this option lets realms
-              authenticate users based on simple, or X.500, names.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute type="xs:string" name="rdn-identifier">
-         <xs:annotation>
-            <xs:documentation>
-               Specifies an LDAP attribute that contains the user name and
-               appears in the path of new entries.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute type="xs:boolean" name="enable-connection-pooling" default="false">
          <xs:annotation>
             <xs:documentation>
@@ -1193,6 +1179,13 @@
             <xs:documentation>
                Sets the read timeout, in milliseconds, for LDAP server
                operations. The default value is 1 minute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="client-ssl-context">
+         <xs:annotation>
+            <xs:documentation>
+               The name of a realm which provides a trust store with which to validate SSL client connections.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1269,18 +1262,24 @@
          <xs:element type="tns:ldap-attribute-mapping" name="attribute-mapping" minOccurs="0"/>
          <xs:element type="tns:ldap-user-password-mapper" name="user-password-mapper" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="rdn-identifier">
-         <xs:annotation>
-            <xs:documentation>
-               Specifies the RDN for the principal DN to retrieve the principal
-               name from an LDAP entry.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute type="xs:string" name="search-dn">
          <xs:annotation>
             <xs:documentation>
-               Sets the base DN for query execution.
+               Names the context for query execution. This option provides a
+               useful method to authenticate users based on names that do not
+               use X.500 format, such as "plainUser". In this case, you must
+               also specify the rdn-identifier. If names to authenticate users
+               are based on the X.500 format, you can suppress this
+               configuration. You should also note that this option lets realms
+               authenticate users based on simple, or X.500, names.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="rdn-identifier">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies an LDAP attribute that contains the user name and
+               appears in the path of new entries.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1288,6 +1287,13 @@
          <xs:annotation>
             <xs:documentation>
                Performs recursive queries.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="search-time-limit" type="xs:int" default="10000">
+         <xs:annotation>
+            <xs:documentation>
+               The time limit of LDAP search in milliseconds. Defaults to 10000 ms.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1421,13 +1427,6 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:boolean" name="writable">
-         <xs:annotation>
-            <xs:documentation>
-               If the password credential is writable.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
    </xs:complexType>
 
    <xs:simpleType name="referral-list">
@@ -1458,7 +1457,13 @@
       <xs:attribute type="tns:name-list" name="audience"/>
       <xs:attribute type="xs:string" name="public-key"/>
       <xs:attribute type="xs:long" name="jku-timeout"/>
-      <xs:attribute type="xs:string" name="client-ssl-context"/>
+      <xs:attribute type="xs:string" name="client-ssl-context">
+         <xs:annotation>
+            <xs:documentation>
+               The name of a realm which provides a trust store with which to validate SSL client connections.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="oauth2-introspection">
@@ -1468,7 +1473,13 @@
       <xs:attribute type="xs:string" name="client-id" use="required"/>
       <xs:attribute type="xs:string" name="client-secret"/>
       <xs:attribute type="xs:string" name="introspection-url" use="required"/>
-      <xs:attribute type="xs:string" name="client-ssl-context"/>
+      <xs:attribute type="xs:string" name="client-ssl-context">
+         <xs:annotation>
+            <xs:documentation>
+               The name of a realm which provides a trust store with which to validate SSL client connections.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="host-name-verification-policy"/>
    </xs:complexType>
 

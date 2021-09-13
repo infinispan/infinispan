@@ -1,57 +1,92 @@
 package org.infinispan.server.configuration.security;
 
-import java.util.List;
+import java.util.Properties;
+import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
+import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityRealm;
 
 /**
  * @since 10.0
  */
-public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfiguration> {
+@BuiltBy(LdapRealmConfigurationBuilder.class)
+public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfiguration> implements RealmProvider {
 
-   static final AttributeDefinition<char[]> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, char[].class)
+   static final AttributeDefinition<Supplier<char[]>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<char[]>>) (Class<?>) char[].class)
          .serializer(AttributeSerializer.SECRET)
+         .immutable()
          .build();
-   static final AttributeDefinition<Boolean> DIRECT_EVIDENCE_VERIFICATION = AttributeDefinition.builder(Attribute.DIRECT_VERIFICATION, null, Boolean.class).build();
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
-   static final AttributeDefinition<NameRewriter> NAME_REWRITER = AttributeDefinition.builder(Element.NAME_REWRITER, null, NameRewriter.class).autoPersist(false).build();
-   static final AttributeDefinition<String> PRINCIPAL = AttributeDefinition.builder(Attribute.PRINCIPAL, null, String.class).build();
-   static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder(Attribute.PAGE_SIZE, 50, Integer.class).build();
-   static final AttributeDefinition<String> RDN_IDENTIFIER = AttributeDefinition.builder(Attribute.RDN_IDENTIFIER, null, String.class).build();
-   static final AttributeDefinition<String> SEARCH_DN = AttributeDefinition.builder(Attribute.SEARCH_DN, null, String.class).build();
-   static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).build();
-   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, 5_000, Integer.class).build();
-   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, 60_000, Integer.class).build();
-   static final AttributeDefinition<Boolean> CONNECTION_POOLING = AttributeDefinition.builder(Attribute.CONNECTION_POOLING, false, Boolean.class).build();
-   static final AttributeDefinition<DirContextFactory.ReferralMode> REFERRAL_MODE = AttributeDefinition.builder(Attribute.REFERRAL_MODE, DirContextFactory.ReferralMode.IGNORE, DirContextFactory.ReferralMode.class).build();
+   static final AttributeDefinition<Boolean> DIRECT_EVIDENCE_VERIFICATION = AttributeDefinition.builder(Attribute.DIRECT_VERIFICATION, null, Boolean.class).immutable().build();
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, "ldap", String.class).immutable().build();
+   static final AttributeDefinition<NameRewriter> NAME_REWRITER = AttributeDefinition.builder(Element.NAME_REWRITER, null, NameRewriter.class).autoPersist(false).immutable().build();
+   static final AttributeDefinition<String> PRINCIPAL = AttributeDefinition.builder(Attribute.PRINCIPAL, null, String.class).immutable().build();
+   static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder(Attribute.PAGE_SIZE, 50, Integer.class).immutable().build();
+   static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).immutable().build();
+   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, 5_000, Integer.class).immutable().build();
+   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, 60_000, Integer.class).immutable().build();
+   static final AttributeDefinition<Boolean> CONNECTION_POOLING = AttributeDefinition.builder(Attribute.CONNECTION_POOLING, false, Boolean.class).immutable().build();
+   static final AttributeDefinition<DirContextFactory.ReferralMode> REFERRAL_MODE = AttributeDefinition.builder(Attribute.REFERRAL_MODE, DirContextFactory.ReferralMode.IGNORE, DirContextFactory.ReferralMode.class).immutable().build();
+   static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LdapRealmConfiguration.class, CREDENTIAL, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, RDN_IDENTIFIER, SEARCH_DN, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE);
+      return new AttributeSet(LdapRealmConfiguration.class, CREDENTIAL, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE, CLIENT_SSL_CONTEXT);
    }
 
-   private final List<LdapIdentityMappingConfiguration> identityMappings;
+   private final LdapIdentityMappingConfiguration identityMapping;
 
-   LdapRealmConfiguration(AttributeSet attributes, List<LdapIdentityMappingConfiguration> identityMappings) {
+   LdapRealmConfiguration(AttributeSet attributes, LdapIdentityMappingConfiguration identityMapping) {
       super(Element.LDAP_REALM, attributes);
-      this.identityMappings = identityMappings;
+      this.identityMapping = identityMapping;
    }
 
-   public List<LdapIdentityMappingConfiguration> identityMappings() {
-      return identityMappings;
+   public LdapIdentityMappingConfiguration identityMapping() {
+      return identityMapping;
    }
 
+   @Override
    public String name() {
       return attributes.attribute(NAME).get();
    }
 
    public NameRewriter nameRewriter() {
       return attributes.attribute(NAME_REWRITER).get();
+   }
+
+   @Override
+   public SecurityRealm build(SecurityConfiguration security, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
+      LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
+      attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(v -> ldapRealmBuilder.addDirectEvidenceVerification(v));
+      ldapRealmBuilder.setPageSize(attributes.attribute(PAGE_SIZE).get());
+      identityMapping.build(ldapRealmBuilder);
+      Properties connectionProperties = new Properties();
+      connectionProperties.setProperty("com.sun.jndi.ldap.connect.pool", attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).get().toString());
+      SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
+      dirContextBuilder.setProviderUrl(attributes.attribute(URL).get());
+      dirContextBuilder.setSecurityPrincipal(attributes.attribute(PRINCIPAL).get());
+      dirContextBuilder.setSecurityCredential(new String(attributes.attribute(CREDENTIAL).get().get()));
+      dirContextBuilder
+            .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get())
+            .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get());
+      dirContextBuilder.setConnectionProperties(connectionProperties);
+      attributes.attribute(CLIENT_SSL_CONTEXT).apply(v -> dirContextBuilder.setSocketFactory(security.realms().getRealm(v).clientSSLContext().getSocketFactory()));
+      DirContextFactory dirContextFactory = dirContextBuilder.build();
+      ldapRealmBuilder.setDirContextSupplier(() -> dirContextFactory.obtainDirContext(attributes.attribute(LdapRealmConfiguration.REFERRAL_MODE).get()));
+      if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
+         ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
+      }
+      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD);
+      return ldapRealmBuilder.build();
    }
 }

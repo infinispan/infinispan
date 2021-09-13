@@ -30,10 +30,6 @@ public class SSLConfigurationBuilder implements Builder<SSLConfiguration> {
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public SSLConfiguration create() {
       return new SSLConfiguration(keyStore.create(), trustStore.create(), engine.create());
    }

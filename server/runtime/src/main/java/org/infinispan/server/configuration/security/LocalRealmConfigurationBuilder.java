@@ -1,12 +1,11 @@
 package org.infinispan.server.configuration.security;
 
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * @since 10.0
  */
-public class LocalRealmConfigurationBuilder implements Builder<LocalRealmConfiguration> {
+public class LocalRealmConfigurationBuilder implements RealmProviderBuilder<LocalRealmConfiguration> {
    private final AttributeSet attributes;
 
    LocalRealmConfigurationBuilder() {
@@ -16,10 +15,6 @@ public class LocalRealmConfigurationBuilder implements Builder<LocalRealmConfigu
    public LocalRealmConfigurationBuilder name(String name) {
       attributes.attribute(LocalRealmConfiguration.NAME).set(name);
       return this;
-   }
-
-   @Override
-   public void validate() {
    }
 
    @Override

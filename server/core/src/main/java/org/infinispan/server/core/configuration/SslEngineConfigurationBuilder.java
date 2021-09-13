@@ -1,7 +1,10 @@
 package org.infinispan.server.core.configuration;
 
+import java.util.function.Supplier;
+
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,7 +22,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    private char[] keyStorePassword;
    private String keyAlias;
    private String protocol;
-   private SSLContext sslContext;
+   private Supplier<SSLContext> sslContextSupplier;
    private String trustStoreFileName;
    private char[] trustStorePassword;
    private char[] keyStoreCertificatePassword;
@@ -35,7 +38,15 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
    public SslEngineConfigurationBuilder sslContext(SSLContext sslContext) {
-      this.sslContext = sslContext;
+      this.sslContextSupplier = new InstanceSupplier<>(sslContext);
+      return this;
+   }
+
+   /**
+    * Sets the {@link SSLContext} to use for setting up SSL connections.
+    */
+   public SslEngineConfigurationBuilder sslContext(Supplier<SSLContext> sslContext) {
+      this.sslContextSupplier = sslContext;
       return this;
    }
 
@@ -125,7 +136,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
       if(domain == null) {
          throw log.noSniDomainConfigured();
       }
-      if (sslContext == null) {
+      if (sslContextSupplier == null || sslContextSupplier.get() == null) {
          if (keyStoreFileName == null) {
             throw log.noSSLKeyManagerConfiguration();
          }
@@ -144,7 +155,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public SslEngineConfiguration create() {
-      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, sslContext, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
+      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, sslContextSupplier, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
    }
 
    @Override
@@ -153,7 +164,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
       this.keyStoreType = template.keyStoreType();
       this.keyStorePassword = template.keyStorePassword();
       this.keyAlias = template.keyAlias();
-      this.sslContext = template.sslContext();
+      this.sslContextSupplier = template.sslContextSupplier();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStoreType  = template.trustStoreType();
       this.trustStorePassword = template.trustStorePassword();

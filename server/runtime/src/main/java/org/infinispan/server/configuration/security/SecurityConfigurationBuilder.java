@@ -1,14 +1,21 @@
 package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.server.configuration.ServerConfigurationBuilder;
 
 /**
  * @since 10.0
  */
 public class SecurityConfigurationBuilder implements Builder<SecurityConfiguration> {
-   private final CredentialStoresConfigurationBuilder credentialStoresConfiguration = new CredentialStoresConfigurationBuilder();
+   private final CredentialStoresConfigurationBuilder credentialStoresConfiguration;
    private final RealmsConfigurationBuilder realmsConfiguration = new RealmsConfigurationBuilder();
    private final TransportSecurityConfigurationBuilder transport = new TransportSecurityConfigurationBuilder();
+   private final ServerConfigurationBuilder builder;
+
+   public SecurityConfigurationBuilder(ServerConfigurationBuilder builder) {
+      this.builder = builder;
+      this.credentialStoresConfiguration = new CredentialStoresConfigurationBuilder(builder);
+   }
 
    public CredentialStoresConfigurationBuilder credentialStores() {
       return credentialStoresConfiguration;
@@ -27,7 +34,7 @@ public class SecurityConfigurationBuilder implements Builder<SecurityConfigurati
 
    @Override
    public SecurityConfiguration create() {
-      return new SecurityConfiguration(credentialStoresConfiguration.create(), realmsConfiguration.create(), transport.create());
+      return new SecurityConfiguration(credentialStoresConfiguration.create(), realmsConfiguration.create(), transport.create(), builder.properties());
    }
 
    @Override
