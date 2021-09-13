@@ -33,7 +33,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
       Map<SocketAddress, Set<byte[]>> splittedKeys = new HashMap<>();
 
       for (byte[] key : keys) {
-         SocketAddress socketAddress = channelFactory.getSocketAddress(key, cacheName);
+         SocketAddress socketAddress = channelFactory.getHashAwareServer(key, cacheName);
          Set<byte[]> keys = splittedKeys.computeIfAbsent(socketAddress, k -> new HashSet<>());
          keys.add(key);
       }

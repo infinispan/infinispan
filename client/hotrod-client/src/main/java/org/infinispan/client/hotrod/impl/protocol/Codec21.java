@@ -20,11 +20,6 @@ public class Codec21 extends Codec20 {
    private static final Log log = LogFactory.getLog(Codec21.class, Log.class);
 
    @Override
-   public Log getLog() {
-      return log;
-   }
-
-   @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
       return writeHeader(buf, params, HotRodConstants.VERSION_21);
    }
@@ -86,7 +81,7 @@ public class Codec21 extends Codec20 {
                Object expiredKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
                return createExpiredEvent(listenerId, expiredKey);
             default:
-               throw getLog().unknownEvent(eventTypeId);
+               throw log.unknownEvent(eventTypeId);
          }
       }
    }

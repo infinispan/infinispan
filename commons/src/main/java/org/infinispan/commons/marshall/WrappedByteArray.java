@@ -86,7 +86,7 @@ public class WrappedByteArray implements WrappedBytes {
 
    @Override
    public String toString() {
-      return "WrappedByteArray(" + Util.hexDump(bytes) + ')';
+      return "WrappedByteArray[" + Util.hexDump(bytes) + ']';
    }
 
    public static final class Externalizer extends AbstractExternalizer<WrappedByteArray> {

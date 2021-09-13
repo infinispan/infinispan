@@ -360,12 +360,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public boolean switchToCluster(String clusterName) {
-      return channelFactory.switchToCluster(clusterName);
+      return channelFactory.manualSwitchToCluster(clusterName);
    }
 
    @Override
    public boolean switchToDefaultCluster() {
-      return channelFactory.switchToCluster(ChannelFactory.DEFAULT_CLUSTER_NAME);
+      return channelFactory.manualSwitchToCluster(ChannelFactory.DEFAULT_CLUSTER_NAME);
    }
 
    private Properties loadFromStream(InputStream stream) {

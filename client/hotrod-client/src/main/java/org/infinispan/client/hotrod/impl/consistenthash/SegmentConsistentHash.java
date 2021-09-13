@@ -40,10 +40,11 @@ public final class SegmentConsistentHash implements ConsistentHash {
    @Override
    public SocketAddress getServer(Object key) {
       int segmentId = getSegment(key);
-      if (trace)
-         log.tracef("Find server in segment id %s for key %s", segmentId, Util.toStr(key));
+      SocketAddress server = segmentOwners[segmentId][0];
 
-      return segmentOwners[segmentId][0];
+      if (trace)
+         log.tracef("Found server %s for segment %s of key %s", server, segmentId, Util.toStr(key));
+      return server;
    }
 
    public int getSegment(Object key) {
