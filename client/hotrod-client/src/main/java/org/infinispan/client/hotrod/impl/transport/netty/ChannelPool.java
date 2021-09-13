@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.BiConsumer;
 
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.logging.Log;
@@ -33,6 +34,7 @@ import io.netty.util.internal.PlatformDependent;
  * The connections are handled LIFO, pending requests are handled FIFO.
  */
 class ChannelPool {
+   enum ChannelEventType { CONNECTED, CLOSED_IDLE, CLOSED_ACTIVE, CONNECT_FAILED}
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
@@ -43,15 +45,20 @@ class ChannelPool {
    private final SocketAddress address;
    private final ChannelInitializer newChannelInvoker;
    private final ExhaustedAction exhaustedAction;
+   private final BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener;
    private final long maxWait;
    private final int maxConnections;
    private final int maxPendingRequests;
    private final AtomicInteger created = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
+   private final AtomicInteger connected = new AtomicInteger();
    private final StampedLock lock = new StampedLock();
    private volatile boolean terminated = false;
 
-   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker, ExhaustedAction exhaustedAction, long maxWait, int maxConnections, int maxPendingRequests) {
+   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker,
+               ExhaustedAction exhaustedAction, BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener,
+               long maxWait, int maxConnections, int maxPendingRequests) {
+      this.connectionFailureListener = connectionFailureListener;
       this.executor = executor;
       this.address = address;
       this.newChannelInvoker = newChannelInvoker;
@@ -89,7 +96,7 @@ class ChannelPool {
       while (current < maxConnections) {
          if (created.compareAndSet(current, current + 1)) {
             int currentActive = active.incrementAndGet();
-            if (log.isTraceEnabled()) log.tracef("Creating new channel, created = %d, active = %d", current + 1, currentActive);
+            if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, current + 1, currentActive);
             // create new connection and apply callback
             createAndInvoke(callback);
             return;
@@ -105,7 +112,7 @@ class ChannelPool {
          case CREATE_NEW:
             int currentCreated = created.incrementAndGet();
             int currentActive = active.incrementAndGet();
-            if (log.isTraceEnabled()) log.tracef("Creating new channel, created = %d, active = %d", currentCreated, currentActive);
+            if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, currentCreated, currentActive);
             createAndInvoke(callback);
             return;
          default:
@@ -145,18 +152,23 @@ class ChannelPool {
                assert currentActive >= 0;
                int currentCreated = created.decrementAndGet();
                assert currentCreated >= 0;
-               if (log.isTraceEnabled()) log.tracef(throwable, "Channel could not be created, created = %d, active = %d",
-                                     currentCreated, currentActive);
+               if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
+                                     address, currentCreated, currentActive, connected.get());
                callback.cancel(address, throwable);
+               connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
             } else {
+               int currentConnected = connected.incrementAndGet();
+               if (log.isTraceEnabled()) log.tracef(throwable, "Channel connected, created = %d, active = %d, connected = %d",
+                                                    created.get(), active.get(), currentConnected);
                callback.invoke(channel);
+               connectionFailureListener.accept(this, ChannelEventType.CONNECTED);
             }
          });
       } catch (Throwable t) {
          int currentActive = active.decrementAndGet();
          int currentCreated = created.decrementAndGet();
-         if (log.isTraceEnabled()) log.tracef(t, "Channel could not be created, created = %d, active = %d",
-                               currentCreated, currentActive);
+         if (log.isTraceEnabled()) log.tracef(t, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
+                               address, currentCreated, currentActive, connected.get());
          if (currentCreated < 0) {
             HOTROD.warnf("Invalid created count after channel create failure");
          }
@@ -178,14 +190,15 @@ class ChannelPool {
       }
 
       if (record.setIdleAndIsClosed()) {
-         if (log.isTraceEnabled()) log.tracef("Attempt to release already closed channel %s, active = %d", channel, active.get());
+         if (log.isTraceEnabled()) log.tracef("[%s] Attempt to release already closed channel %s, active = %d",
+                                              address, channel, active.get());
          return;
       }
 
       int currentActive = active.decrementAndGet();
-      if (log.isTraceEnabled()) log.tracef("Released channel %s, active = %d", channel, currentActive);
+      if (log.isTraceEnabled()) log.tracef("[%s] Released channel %s, active = %d", address, channel, currentActive);
       if (currentActive < 0) {
-         HOTROD.warnf("Invalid active count after releasing channel %s", channel);
+         HOTROD.warnf("[%s] Invalid active count after releasing channel %s", address, channel);
       }
 
       ChannelOperation callback;
@@ -217,20 +230,22 @@ class ChannelPool {
 
       int currentCreated = created.decrementAndGet();
       int currentActive = !idle ? active.decrementAndGet() : active.get();
-      if (log.isTraceEnabled()) log.tracef("Closed channel %s, created = %s, idle = %b, active = %d",
-                            channel, currentCreated, idle, currentActive);
+      int currentConnected = connected.decrementAndGet();
+      if (log.isTraceEnabled()) log.tracef("[%s] Closed channel %s, created = %s, idle = %b, active = %d, connected = %d",
+                                           address, channel, currentCreated, idle, currentActive, currentConnected);
       if (currentCreated < 0) {
          HOTROD.warnf("Invalid created count after closing channel %s", channel);
       }
       if (currentActive < 0) {
          HOTROD.warnf("Invalid active count after closing channel %s", channel);
       }
+      connectionFailureListener.accept( this, idle ? ChannelEventType.CLOSED_IDLE : ChannelEventType.CLOSED_ACTIVE);
    }
 
    private void activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
       assert channel.isActive() : "Channel " + channel + " is not active";
       int currentActive = active.incrementAndGet();
-      if (log.isTraceEnabled()) log.tracef("Activated record %s, created = %d, active = %d", channel, created.get(), currentActive);
+      if (log.isTraceEnabled()) log.tracef("[%s] Activated record %s, created = %d, active = %d", address, channel, created.get(), currentActive);
       ChannelRecord record = ChannelRecord.of(channel);
       record.setAcquired();
       if (useExecutor) {
@@ -258,12 +273,20 @@ class ChannelPool {
       channel.close();
    }
 
+   public SocketAddress getAddress() {
+      return address;
+   }
+
    public int getActive() {
       return active.get();
    }
 
    public int getIdle() {
       return Math.max(0, created.get() - active.get());
+   }
+
+   public int getConnected() {
+      return connected.get();
    }
 
    public void close() {
@@ -291,6 +314,7 @@ class ChannelPool {
             ", maxPendingRequests=" + maxPendingRequests +
             ", created=" + created +
             ", active=" + active +
+            ", connected=" + connected +
             ", terminated=" + terminated +
             ']';
    }

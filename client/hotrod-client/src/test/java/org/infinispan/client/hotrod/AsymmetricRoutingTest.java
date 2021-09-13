@@ -128,6 +128,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
       int attemptsLeft = 1000;
       do {
          r.nextBytes(dummy);
+         attemptsLeft--;
       } while (!isFirstOwner(cache, dummy) && attemptsLeft >= 0);
 
       if (attemptsLeft < 0)

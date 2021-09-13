@@ -7,9 +7,6 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -126,7 +123,7 @@ public class Codec20 implements Codec, HotRodConstants {
       ByteBufUtil.writeVInt(buf, topologyId);
 
       if (log.isTraceEnabled())
-         getLog().tracef("[%s] Wrote header for messageId=%d. Operation code: %#04x(%s). Flags: %#x. Topology id: %s",
+         log.tracef("[%s] Wrote header for messageId=%d. Operation code: %#04x(%s). Flags: %#x. Topology id: %s",
                new String(params.cacheName), params.messageId, params.opCode,
                Names.of(params.opCode), joinedFlags, topologyId);
 
@@ -143,10 +140,9 @@ public class Codec20 implements Codec, HotRodConstants {
    public long readMessageId(ByteBuf buf) {
       short magic = buf.readUnsignedByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
-         final Log localLog = getLog();
 
          if (log.isTraceEnabled())
-            localLog.tracef("Socket dump: %s", limitedHexDump(buf));
+            log.tracef("Socket dump: %s", limitedHexDump(buf));
          throw HOTROD.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
       }
       return ByteBufUtil.readVLong(buf);
@@ -305,14 +301,8 @@ public class Codec20 implements Codec, HotRodConstants {
       return new CustomEventImpl<>(listenerId, eventData, isRetried, eventType);
    }
 
-   @Override
-   public Log getLog() {
-      return log;
-   }
-
    protected void checkForErrorsInResponseStatus(ByteBuf buf, HeaderParams params, short status, SocketAddress serverAddress) {
-      final Log localLog = getLog();
-      if (log.isTraceEnabled()) localLog.tracef("[%s] Received operation status: %#x", new String(params.cacheName), status);
+      if (log.isTraceEnabled()) log.tracef("[%s] Received operation status: %#x", new String(params.cacheName), status);
 
       String msgFromServer;
       try {
@@ -326,7 +316,7 @@ public class Codec20 implements Codec, HotRodConstants {
                // If error, the body of the message just contains a message
                msgFromServer = ByteBufUtil.readString(buf);
                if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && log.isTraceEnabled()) {
-                  localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
+                  log.tracef("Server-side timeout performing operation: %s", msgFromServer);
                } else {
                   HOTROD.errorFromServer(msgFromServer);
                }
@@ -339,9 +329,9 @@ public class Codec20 implements Codec, HotRodConstants {
                // Handle both Infinispan's and JGroups' suspicions
                msgFromServer = ByteBufUtil.readString(buf);
                if (log.isTraceEnabled())
-                  localLog.tracef("[%s] A remote node was suspected while executing messageId=%d. " +
-                              "Check if retry possible. Message from server: %s",
-                        new String(params.cacheName), params.messageId, msgFromServer);
+                  log.tracef("[%s] A remote node was suspected while executing messageId=%d. " +
+                             "Check if retry possible. Message from server: %s",
+                             new String(params.cacheName), params.messageId, msgFromServer);
 
                throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
             default: {
@@ -371,7 +361,6 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    protected void readNewTopologyAndHash(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory) {
-      final Log localLog = getLog();
       int newTopologyId = ByteBufUtil.readVInt(buf);
 
       InetSocketAddress[] addresses = readTopology(buf);
@@ -398,34 +387,8 @@ public class Codec20 implements Codec, HotRodConstants {
          segmentOwners = null;
       }
 
-      int currentTopology = channelFactory.getTopologyId(params.cacheName);
-      int topologyAge = channelFactory.getTopologyAge();
-      // Since the header is now created only once (not during each retry) the topologyAge in header may be non-actual
-      // but we should still accept the topology
-      if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
-         List<InetSocketAddress> addressList = Arrays.asList(addresses);
-         if (HOTROD.isInfoEnabled()) {
-            HOTROD.newTopology(newTopologyId, topologyAge,
-                  addresses.length, new HashSet<>(addressList));
-         }
-         if (hashFunctionVersion >= 0) {
-            if (log.isTraceEnabled()) {
-               String cacheNameString = new String(params.cacheName);
-               if (hashFunctionVersion == 0)
-                  localLog.tracef("[%s] Not using a consistent hash function (hash function version == 0).", cacheNameString);
-               else
-                  localLog.tracef("[%s] Updating client hash function with %s number of segments", cacheNameString, segmentOwners.length);
-            }
-            channelFactory.updateConsistentHash(segmentOwners, segmentOwners.length, hashFunctionVersion,
-                                                params.cacheName, newTopologyId, addressList);
-         } else {
-            channelFactory.updateServers(addressList, params.cacheName, newTopologyId, false);
-         }
-      } else {
-         if (log.isTraceEnabled())
-            localLog.tracef("[%s] Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
-                  new String(params.cacheName), newTopologyId, topologyAge, Arrays.toString(addresses));
-      }
+      channelFactory.receiveTopology(params.cacheName, params.topologyAge, newTopologyId, addresses, segmentOwners,
+                                     hashFunctionVersion);
    }
 
    private InetSocketAddress[] readTopology(ByteBuf buf) {

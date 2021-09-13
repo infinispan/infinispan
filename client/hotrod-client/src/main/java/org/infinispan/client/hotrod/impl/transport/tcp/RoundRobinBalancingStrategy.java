@@ -48,9 +48,9 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
          if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
             if (log.isTraceEnabled()) {
                if (failedServers == null)
-                  log.tracef("Selected %s from %s", server, Arrays.toString(servers));
+                  log.tracef("Found server %s", server);
                else
-                  log.tracef("Selected %s from %s, with failed servers %s", server, Arrays.toString(servers), failedServers.toString());
+                  log.tracef("Found server %s, with failed servers %s", server, failedServers.toString());
             }
 
             return server;

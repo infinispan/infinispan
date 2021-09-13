@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -13,17 +12,16 @@ import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory.ClusterSwitchStatus;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.util.concurrent.EventExecutor;
+
 /**
  * Tests the number of retries.
  *
@@ -33,10 +31,7 @@ import io.netty.util.concurrent.EventExecutor;
 @Test(groups = "unit", testName = "client.hotrod.retry.RetryOnFailureUnitTest")
 public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
 
-   private EventExecutor mockExecutor = Mockito.mock(EventExecutor.class, invocation -> {
-      throw new UnsupportedOperationException(invocation.toString());
-   });
-   private Channel mockChannel = Mockito.mock(Channel.class);
+   private final Channel mockChannel = Mockito.mock(Channel.class);
 
    public void testNoRetryOnTransportFailure() {
       doRetryTest(0, true);
@@ -65,36 +60,27 @@ public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
    private void doRetryTest(int maxRetry, boolean failOnTransport) {
       ChannelFactory mockTransport = Mockito.mock(ChannelFactory.class);
       Mockito.when(mockTransport.getMaxRetries()).thenReturn(maxRetry);
-      Mockito.when(mockTransport.trySwitchCluster(Mockito.any(), Mockito.any()))
-            .thenReturn(CompletableFuture.completedFuture(ClusterSwitchStatus.NOT_SWITCHED));
-      MockOperation mockOperation = new MockOperation(mockTransport, failOnTransport);
-      Mockito.doReturn(true).when(mockExecutor).inEventLoop();
-      // Netty executes only up to 8 listeners in single stack and we have more retries
-      Mockito.doAnswer(invocation -> {
-         ((Runnable) invocation.getArgument(0)).run();
-         return null;
-      }).when(mockExecutor).execute(Mockito.any(Runnable.class));
-      Mockito.doReturn(true).when(mockChannel).isActive();
+      TestOperation testOperation = new TestOperation(mockTransport, failOnTransport);
 
-      Exceptions.expectExceptionNonStrict(HotRodClientException.class, () -> await(mockOperation.execute(), 10000));
+      Exceptions.expectExceptionNonStrict(HotRodClientException.class, () -> await(testOperation.execute(), 10000));
 
       if (failOnTransport) {
          // Number of retries doubles as a result of dealing with complete shutdown recoveries
-         assertEquals("Wrong getChannel() invocation.", maxRetry + 1, mockOperation.channelInvocationCount.get());
-         assertEquals("Wrong execute() invocation.", 0, mockOperation.executeInvocationCount.get());
+         assertEquals("Wrong getChannel() invocation.", maxRetry + 1, testOperation.channelInvocationCount.get());
+         assertEquals("Wrong execute() invocation.", 0, testOperation.executeInvocationCount.get());
       } else {
-         assertEquals("Wrong getChannel() invocation.", maxRetry + 1, mockOperation.channelInvocationCount.get());
-         assertEquals("Wrong execute() invocation.", maxRetry + 1, mockOperation.executeInvocationCount.get());
+         assertEquals("Wrong getChannel() invocation.", maxRetry + 1, testOperation.channelInvocationCount.get());
+         assertEquals("Wrong execute() invocation.", maxRetry + 1, testOperation.executeInvocationCount.get());
       }
    }
 
-   private class MockOperation extends RetryOnFailureOperation<Void> {
+   private class TestOperation extends RetryOnFailureOperation<Void> {
 
       private final AtomicInteger channelInvocationCount;
       private final AtomicInteger executeInvocationCount;
       private final boolean failOnTransport;
 
-      MockOperation(ChannelFactory channelFactory, boolean failOnTransport) {
+      TestOperation(ChannelFactory channelFactory, boolean failOnTransport) {
          super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0,
                HotRodClientTestingUtil.newRemoteConfigurationBuilder().build(), null);
          this.failOnTransport = failOnTransport;
