@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -27,11 +28,15 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * Maintains topology information about caches.
  *
  * @author gustavonalle
+ * @author Dan Berindei
  */
+@NotThreadSafe
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
@@ -41,7 +46,7 @@ public final class TopologyInfo {
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    private final ConcurrentMap<WrappedBytes, CacheInfo> caches = new ConcurrentHashMap<>();
-   private volatile ClusterInfo currentCluster;
+   private volatile ClusterInfo cluster;
    // Topology age provides a way to avoid concurrent cluster view changes,
    // affecting a cluster switch. After a cluster switch, the topology age is
    // increased and so any old requests that might have received topology
@@ -53,14 +58,14 @@ public final class TopologyInfo {
       this.hashFactory.init(configuration);
 
       this.topologyAge = 0;
-      this.currentCluster = clusterInfo;
+      this.cluster = clusterInfo;
    }
 
    public List<InetSocketAddress> getServers(WrappedBytes cacheName) {
       return getCacheInfo(cacheName).getServers();
    }
 
-   public Collection<InetSocketAddress> getCurrentServers() {
+   public Collection<InetSocketAddress> getAllServers() {
       return caches.values().stream().flatMap(ct -> ct.getServers().stream()).collect(Collectors.toSet());
    }
 
@@ -90,15 +95,6 @@ public final class TopologyInfo {
          }
       }
       return hash;
-   }
-
-   public SocketAddress getHashAwareServer(Object key, byte[] cacheName) {
-      CacheInfo cacheInfo = caches.get(wrapBytes(cacheName));
-      if (cacheInfo != null && cacheInfo.isValidTopology() && cacheInfo.getConsistentHash() != null) {
-         return cacheInfo.getConsistentHash().getServer(key);
-      }
-
-      return null;
    }
 
    private boolean isReplicated(Map<SocketAddress, Set<Integer>> ch) {
@@ -172,7 +168,7 @@ public final class TopologyInfo {
    public boolean isTopologyValid(byte[] cacheName) {
       CacheInfo cacheInfo = caches.get(wrapBytes(cacheName));
 
-      return cacheInfo != null && cacheInfo.isValidTopology();
+      return cacheInfo != null && cacheInfo.getTopologyId() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -188,23 +184,12 @@ public final class TopologyInfo {
       return caches.get(cacheName);
    }
 
-   public CacheInfo createCacheInfo(WrappedBytes cacheName) {
-      CacheInfo cacheInfo = new CacheInfo(cacheName, balancerFactory.get(), currentCluster);
-      cacheInfo.updateBalancerServers();
-      caches.put(cacheName, cacheInfo);
-      return cacheInfo;
-   }
-
    public CacheInfo getOrCreateCacheInfo(WrappedBytes cacheName) {
       return caches.computeIfAbsent(cacheName, cn -> {
-         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), currentCluster);
-         // Copy the servers and consistent hash from the default cache, if it exists
-         CacheInfo defaultCacheInfo = caches.get(WrappedByteArray.EMPTY_BYTES);
-         if (defaultCacheInfo != null) {
-            cacheInfo = cacheInfo.withNewHash(-1, defaultCacheInfo.getServers(),
-                                              defaultCacheInfo.getConsistentHash(), defaultCacheInfo.getNumSegments());
-         }
+         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), topologyAge, cluster.getInitialServers());
          cacheInfo.updateBalancerServers();
+         if (log.isTraceEnabled()) log.tracef("Creating cache info %s with topology age %d",
+                                              cacheInfo.getCacheName(), topologyAge);
          return cacheInfo;
       });
    }
@@ -212,24 +197,43 @@ public final class TopologyInfo {
    /**
     * Switch the cluster or reset to the initial server list of the current cluster.
     *
-    * <p>Reset the topology id and server list of all caches.</p>
+    * <p>Does not itself reset the topology id and server list of individual caches.
+    * New operations will send the incremented topology age to the server,
+    * and </p>
     */
-   public void switchCluster(ClusterInfo newCluster, WrappedBytes cacheName) {
-      if (log.isTraceEnabled()) log.tracef("Updating cluster for %s: %s -> %s",
-                                           cacheName, currentCluster.getName(), newCluster.getName());
-      // FIXME We need this hack because the switch to the initial server list can be triggered before the cluster switch
-      int tempTopologyId = (newCluster != currentCluster) ? HotRodConstants.SWITCH_CLUSTER_TOPOLOGY : -1;
-      // TODO Remove the cacheName parameter?
-      topologyAge++;
-      currentCluster = newCluster;
+   public void switchCluster(ClusterInfo newCluster) {
+      if (log.isTraceEnabled())
+         log.tracef("Switching cluster: %s -> %s", cluster.getName(), newCluster.getName());
 
-      // TODO Maybe it 's enough to update the topology age here and to update the cache infos lazily
-      //  as we get new operations and they notice the topology age is outdated?
-      //  We'd have to keep track of topologyAge in CacheInfo for that to work
-      //  The old code (pre-ISPN-13264) only updated the topology id and server list for the cache
-      //  given as a parameter, but that seems wrong
+      // Stop accepting topology updates from old requests
       caches.replaceAll((name, oldInfo) -> {
-         CacheInfo newInfo = oldInfo.withNewCluster(currentCluster, currentCluster.getInitialServers(), tempTopologyId);
+         CacheInfo newInfo = oldInfo.withNewServers(topologyAge + 1, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
+                                                    newCluster.getInitialServers());
+         // Updates the balancer in both infos
+         newInfo.updateBalancerServers();
+         // Update the topology ref for both infos and ongoing operations
+         newInfo.getTopologyIdRef().set(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+         return newInfo;
+      });
+
+      // Actual cluster switch
+      cluster = newCluster;
+      // Increment the topology age for new requests so that the topology updates from their responses are accepted
+      topologyAge++;
+   }
+
+   /**
+    * Reset a single ache to the initial server list.
+    *
+    * <p>Useful if there are still live servers in the cluster, but all the server in this cache's
+    * current topology are unreachable.</p>
+    */
+   public void reset(WrappedBytes cacheName) {
+      if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
+                                           cacheName, cluster.getName());
+      caches.computeIfPresent(cacheName, (name, oldInfo) -> {
+         CacheInfo newInfo = oldInfo.withNewServers(topologyAge, HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+                                                    cluster.getInitialServers());
          // Updates the balancer in both infos
          newInfo.updateBalancerServers();
          // Update the topology ref for both infos and ongoing operations
@@ -238,8 +242,8 @@ public final class TopologyInfo {
       });
    }
 
-   public ClusterInfo getCurrentCluster() {
-      return currentCluster;
+   public ClusterInfo getCluster() {
+      return cluster;
    }
 
    public int getTopologyAge() {
@@ -247,12 +251,16 @@ public final class TopologyInfo {
    }
 
    public void updateCacheInfo(WrappedBytes cacheName, CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
-      if (log.isTraceEnabled()) log.tracef("Updating topology for %s: %s -> %s",
-                                           cacheName, oldCacheInfo.getTopologyId(), newCacheInfo.getTopologyId());
+      if (log.isTraceEnabled()) log.tracef("Updating topology for %s: %s -> %s", newCacheInfo.getCacheName(),
+                                           oldCacheInfo.getTopologyId(), newCacheInfo.getTopologyId());
       CacheInfo existing = caches.put(cacheName, newCacheInfo);
       assert existing == oldCacheInfo : "Locking should have prevented concurrent updates";
 
       // The new CacheInfo doesn't have a new balancer instance, so the server update affects both
       newCacheInfo.updateBalancerServers();
+   }
+
+   public void forEachCache(BiConsumer<WrappedBytes, CacheInfo> action) {
+      caches.forEach(action);
    }
 }

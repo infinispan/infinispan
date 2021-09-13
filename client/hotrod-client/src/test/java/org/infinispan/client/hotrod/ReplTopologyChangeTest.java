@@ -73,7 +73,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       //Important: this only connects to one of the two servers!
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(hotRodServer2.getPort());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer2.getPort());
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 

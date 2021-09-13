@@ -179,7 +179,6 @@ public class Codec10 implements Codec {
       return (flags & Flag.FORCE_RETURN_VALUE.getFlagInt()) != 0;
    }
 
-   @Override
    public Log getLog() {
       return log;
    }
@@ -276,7 +275,7 @@ public class Codec10 implements Codec {
          channelFactory.updateConsistentHash1x(socketAddresses,
                servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, newTopologyId);
       } else {
-         channelFactory.updateServers(socketAddresses, cacheName, newTopologyId, false);
+         channelFactory.receiveTopology(cacheName, channelFactory.getTopologyAge(), newTopologyId, socketAddresses, null, (short) -1);
       }
    }
 
