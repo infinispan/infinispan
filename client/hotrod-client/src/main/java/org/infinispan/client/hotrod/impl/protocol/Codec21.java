@@ -11,17 +11,11 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.event.impl.ExpiredEventImpl;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.ClassAllowList;
 
 import io.netty.buffer.ByteBuf;
 
 public class Codec21 extends Codec20 {
-
-   @Override
-   public Log getLog() {
-      return log;
-   }
 
    @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {

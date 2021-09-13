@@ -7,6 +7,8 @@ import org.infinispan.commons.util.Immutables;
 
 /**
  * Cluster definition
+ *
+ * @author Dan Berindei
  */
 public class ClusterInfo {
    private final String clusterName;

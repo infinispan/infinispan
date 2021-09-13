@@ -42,7 +42,7 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
       Map<SocketAddress, Map<byte[], byte[]>> splittedMaps = new HashMap<>();
 
       for (Map.Entry<byte[], byte[]> entry : map.entrySet()) {
-         SocketAddress socketAddress = channelFactory.getSocketAddress(entry.getKey(), cacheName);
+         SocketAddress socketAddress = channelFactory.getHashAwareServer(entry.getKey(), cacheName);
          Map<byte[], byte[]> keyValueMap = splittedMaps.get(socketAddress);
          if (keyValueMap == null) {
             keyValueMap = new HashMap<>();

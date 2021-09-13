@@ -74,7 +74,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testTopologyAwareIntelligence() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(server(0).getPort());
+      clientBuilder.addServer().host("127.0.0.1").port(server(0).getPort());
       clientBuilder.clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new InternalRemoteCacheManager(clientBuilder.build())) {
@@ -90,7 +90,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testHashAwareIntelligence() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(server(0).getPort());
+      clientBuilder.addServer().host("127.0.0.1").port(server(0).getPort());
       clientBuilder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new InternalRemoteCacheManager(clientBuilder.build())) {

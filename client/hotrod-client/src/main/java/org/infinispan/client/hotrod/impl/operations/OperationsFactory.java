@@ -314,7 +314,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public int getTopologyId() {
-      return channelFactory.getTopologyId(cacheNameBytes);
+      return topologyId.get();
    }
 
    public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, IntSet segments, int batchSize, boolean metadata, DataFormat dataFormat, SocketAddress targetAddress) {

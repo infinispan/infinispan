@@ -28,9 +28,10 @@ import org.infinispan.commons.util.IntSets;
  * @since 13.0
  */
 public class CacheInfo {
-   private final WrappedBytes cacheName;
-   private final ClusterInfo cluster;
-   // The balancer is final, but using it still needs synchronization
+   private final String cacheName;
+   // The topology age at the time this topology was received
+   private final int topologyAge;
+   // The balancer is final, but using it still needs synchronization because it is not thread-safe
    private final FailoverRequestBalancingStrategy balancer;
    private final int numSegments;
    private final int topologyId;
@@ -39,15 +40,16 @@ public class CacheInfo {
    private final ConsistentHash consistentHash;
    private final AtomicInteger topologyIdRef;
 
-   public CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, ClusterInfo cluster) {
+   public CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge, List<InetSocketAddress> servers) {
       this.balancer = balancer;
-      this.cluster = cluster;
-      this.cacheName = cacheName;
+      this.topologyAge = topologyAge;
+      this.cacheName = cacheName == null || cacheName.getLength() == 0 ? "<default>" :
+                       new String(cacheName.getBytes(), HotRodConstants.HOTROD_STRING_CHARSET);
       this.numSegments = -1;
       this.topologyId = HotRodConstants.DEFAULT_CACHE_TOPOLOGY;
       this.consistentHash = null;
 
-      this.servers = Immutables.immutableListCopy(cluster.getInitialServers());
+      this.servers = Immutables.immutableListCopy(servers);
 
       // Before the first topology update or after a topology-aware (non-hash) topology update
       this.primarySegments = null;
@@ -60,25 +62,20 @@ public class CacheInfo {
       balancer.setServers((List) servers);
    }
 
-   public CacheInfo withNewServers(int topologyId, List<InetSocketAddress> servers) {
-      return new CacheInfo(cacheName, balancer, cluster, topologyId, servers, null, -1, topologyIdRef);
+   public CacheInfo withNewServers(int topologyAge, int topologyId, List<InetSocketAddress> servers) {
+      return new CacheInfo(cacheName, balancer, topologyAge, topologyIdRef, topologyId, servers, null, -1);
    }
 
-   public CacheInfo withNewHash(int topologyId, List<InetSocketAddress> servers, ConsistentHash consistentHash,
-                                int numSegments) {
-      return new CacheInfo(cacheName, balancer, cluster, topologyId, servers, consistentHash, numSegments,
-                           topologyIdRef);
+   public CacheInfo withNewHash(int topologyAge, int topologyId, List<InetSocketAddress> servers,
+                                ConsistentHash consistentHash, int numSegments) {
+      return new CacheInfo(cacheName, balancer, topologyAge, topologyIdRef, topologyId, servers, consistentHash, numSegments);
    }
 
-   public CacheInfo withNewCluster(ClusterInfo newCluster, List<InetSocketAddress> servers, int tempTopologyId) {
-      return new CacheInfo(cacheName, balancer, newCluster, tempTopologyId, servers, null, -1, topologyIdRef);
-   }
-
-   private CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, ClusterInfo cluster,
-                     int topologyId, List<InetSocketAddress> servers, ConsistentHash consistentHash,
-                     int numSegments, AtomicInteger topologyIdRef) {
+   private CacheInfo(String cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge,
+                     AtomicInteger topologyIdRef, int topologyId, List<InetSocketAddress> servers,
+                     ConsistentHash consistentHash, int numSegments) {
       this.balancer = balancer;
-      this.cluster = cluster;
+      this.topologyAge = topologyAge;
       this.cacheName = cacheName;
       this.numSegments = numSegments;
       this.topologyId = topologyId;
@@ -96,12 +93,12 @@ public class CacheInfo {
       }
    }
 
-   public ClusterInfo getCluster() {
-      return cluster;
+   public String getCacheName() {
+      return cacheName;
    }
 
-   public WrappedBytes getCacheName() {
-      return cacheName;
+   public int getTopologyAge() {
+      return topologyAge;
    }
 
    public FailoverRequestBalancingStrategy getBalancer() {
@@ -149,10 +146,5 @@ public class CacheInfo {
       return new CacheTopologyInfoImpl(segmentsByServer,
                                        numSegments > 0 ? numSegments : null,
                                        topologyId > 0 ? topologyId : null);
-   }
-
-   public boolean isValidTopology() {
-      // TODO Is it ok to consider -1 a valid topology?
-      return topologyId != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
    }
 }
