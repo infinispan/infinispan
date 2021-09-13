@@ -10,11 +10,16 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.SocketBindingsConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
+import org.infinispan.server.configuration.security.RealmConfiguration;
+import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -32,13 +37,16 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       this.serverConfigurationBuilder = serverConfigurationBuilder;
       this.attributes = EndpointConfiguration.attributeDefinitionSet();
       attributes.attribute(EndpointConfiguration.SOCKET_BINDING).set(socketBindingName);
-      serverConfigurationBuilder.applySocketBinding(socketBindingName, singlePortBuilder, singlePortBuilder);
+      singlePortBuilder.socketBinding(socketBindingName);
    }
 
    public EndpointConfigurationBuilder securityRealm(String name) {
       attributes.attribute(EndpointConfiguration.SECURITY_REALM).set(name);
-      singlePortBuilder.securityRealm(serverConfigurationBuilder.getSecurityRealm(name));
       return this;
+   }
+
+   public String securityRealm() {
+      return attributes.attribute(EndpointConfiguration.SECURITY_REALM).get();
    }
 
    public EndpointConfigurationBuilder implicitConnectorSecurity(boolean implicitConnectorSecurity) {
@@ -95,17 +103,29 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
 
    @Override
    public EndpointConfiguration create() {
-      boolean implicitSecurity = implicitConnectorSecurity && singlePortBuilder.securityRealm() != null;
+      throw new UnsupportedOperationException();
+   }
+
+   public EndpointConfiguration create(SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
+      boolean implicitSecurity = implicitConnectorSecurity && securityRealm() != null;
+      bindingsConfiguration.applySocketBinding(attributes.attribute(EndpointConfiguration.SOCKET_BINDING).get(), singlePortBuilder, singlePortBuilder);
       List<ProtocolServerConfiguration> connectors = new ArrayList<>(connectorBuilders.size());
       for (ProtocolServerConfigurationBuilder<?, ?> builder : connectorBuilders) {
+         bindingsConfiguration.applySocketBinding(builder.socketBinding(), builder, singlePortBuilder);
          if (implicitSecurity) {
             if (builder instanceof HotRodServerConfigurationBuilder) {
-               enableImplicitAuthentication(serverConfigurationBuilder, singlePortBuilder.securityRealm(), (HotRodServerConfigurationBuilder) builder);
+               enableImplicitAuthentication(securityConfiguration, securityRealm(), (HotRodServerConfigurationBuilder) builder);
             } else if (builder instanceof RestServerConfigurationBuilder) {
-               enableImplicitAuthentication(serverConfigurationBuilder, singlePortBuilder.securityRealm(), (RestServerConfigurationBuilder) builder);
+               enableImplicitAuthentication(securityConfiguration, securityRealm(), (RestServerConfigurationBuilder) builder);
             }
          }
          connectors.add(builder.create());
+      }
+      if (implicitSecurity) {
+         RealmConfiguration realm = securityConfiguration.realms().getRealm(securityRealm());
+         if (realm.hasSslIdentity()) {
+            singlePortBuilder.ssl().enable().sslContext(realm.serverSSLContext());
+         }
       }
       return new EndpointConfiguration(attributes.protect(), connectors, singlePortBuilder.create());
    }
@@ -116,15 +136,14 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return this;
    }
 
-   public static void enableImplicitAuthentication(ServerConfigurationBuilder serverConfigurationBuilder, ServerSecurityRealm securityRealm, HotRodServerConfigurationBuilder builder) {
+   public static void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, HotRodServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
       AuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
-         authentication.securityRealm(securityRealm.getName());
-         Server.log.debugf("Using endpoint realm \"%s\" for Hot Rod", securityRealm.getName());
-      } else {
-         securityRealm = serverConfigurationBuilder.getSecurityRealm(authentication.securityRealm());
+         authentication.securityRealm(securityRealmName);
+         Server.log.debugf("Using endpoint realm \"%s\" for Hot Rod", securityRealmName);
       }
+      ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
       // Only add implicit mechanisms if the user has not set any explicitly
       if (!authentication.hasMechanisms()) {
          String serverPrincipal = null;
@@ -168,25 +187,25 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             Server.log.debug("Enabled SCRAM, DIGEST and CRAM mechanisms for Hot Rod");
 
             // Only enable PLAIN if encryption is on
-            if (serverConfigurationBuilder.hasSSLContext(securityRealm.getName())) {
+            if (securityRealm.hasFeature(ServerSecurityRealm.Feature.ENCRYPT)) {
                authentication
                      .enable()
                      .addMechanisms(SaslMechanismInformation.Names.PLAIN);
                Server.log.debug("Enabled PLAIN mechanism for Hot Rod");
             }
          }
-         authentication.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal, authentication.sasl().mechanisms()));
+         authentication.serverAuthenticationProvider(new ElytronSASLAuthenticationProvider(authentication.securityRealm(), serverPrincipal, authentication.sasl().mechanisms()));
       }
    }
 
-   public static void enableImplicitAuthentication(ServerConfigurationBuilder serverConfigurationBuilder, ServerSecurityRealm securityRealm, RestServerConfigurationBuilder builder) {
+   public static void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RestServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
       org.infinispan.rest.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
-         authentication.securityRealm(securityRealm.getName());
-      } else {
-         securityRealm = serverConfigurationBuilder.getSecurityRealm(authentication.securityRealm());
+         authentication.securityRealm(securityRealmName);
       }
+      ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
+
       // Only add implicit mechanisms if the user has not set any explicitly
       if (!authentication.hasMechanisms()) {
          String serverPrincipal = null;
@@ -218,14 +237,14 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             Server.log.debug("Enabled DIGEST for HTTP");
 
             // Only enable PLAIN if encryption is on
-            if (serverConfigurationBuilder.hasSSLContext(securityRealm.getName())) {
+            if (securityRealm.hasFeature(ServerSecurityRealm.Feature.ENCRYPT)) {
                authentication
                      .enable()
                      .addMechanisms("BASIC");
                Server.log.debug("Enabled BASIC for HTTP");
             }
          }
-         authentication.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal, authentication.mechanisms()));
+         authentication.authenticator(new ElytronHTTPAuthenticator(authentication.securityRealm(), serverPrincipal, authentication.mechanisms()));
       }
    }
 }

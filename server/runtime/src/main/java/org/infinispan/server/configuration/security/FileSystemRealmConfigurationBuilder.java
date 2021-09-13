@@ -6,26 +6,16 @@ import static org.infinispan.server.configuration.security.FileSystemRealmConfig
 import static org.infinispan.server.configuration.security.FileSystemRealmConfiguration.PATH;
 import static org.infinispan.server.configuration.security.FileSystemRealmConfiguration.RELATIVE_TO;
 
-import java.io.File;
-import java.nio.file.Path;
-
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.parsing.ParseUtils;
-import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
-import org.wildfly.security.auth.server.NameRewriter;
 
 /**
  * @since 10.0
  */
-public class FileSystemRealmConfigurationBuilder implements Builder<FileSystemRealmConfiguration> {
+public class FileSystemRealmConfigurationBuilder implements RealmProviderBuilder<FileSystemRealmConfiguration> {
    private final AttributeSet attributes;
-   private final RealmConfigurationBuilder realmBuilder;
-   private FileSystemSecurityRealm securityRealm;
 
-   FileSystemRealmConfigurationBuilder(RealmConfigurationBuilder realmBuilder) {
+   FileSystemRealmConfigurationBuilder() {
       this.attributes = FileSystemRealmConfiguration.attributeDefinitionSet();
-      this.realmBuilder = realmBuilder;
    }
 
    public FileSystemRealmConfigurationBuilder name(String name) {
@@ -54,31 +44,13 @@ public class FileSystemRealmConfigurationBuilder implements Builder<FileSystemRe
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public FileSystemRealmConfiguration create() {
-      return new FileSystemRealmConfiguration(attributes.protect(), securityRealm);
+      return new FileSystemRealmConfiguration(attributes.protect());
    }
 
    @Override
    public FileSystemRealmConfigurationBuilder read(FileSystemRealmConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   public FileSystemSecurityRealm build() {
-      if (securityRealm == null && attributes.isModified()) {
-         String name = attributes.attribute(NAME).get();
-         String path = attributes.attribute(PATH).get();
-         String relativeTo = attributes.attribute(RELATIVE_TO).get();
-         Integer levels = attributes.attribute(LEVELS).get();
-         Boolean encoded = attributes.attribute(ENCODED).get();
-         Path filesystemPath = new File(ParseUtils.resolvePath(path, relativeTo)).toPath();
-         this.securityRealm = new FileSystemSecurityRealm(filesystemPath, NameRewriter.IDENTITY_REWRITER, levels, encoded);
-         realmBuilder.addRealm(name, securityRealm);
-      }
-      return securityRealm;
    }
 }

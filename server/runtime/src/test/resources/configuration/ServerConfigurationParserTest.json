@@ -130,8 +130,7 @@
                 ],
                 "user-password-mapper": {
                   "from": "userPassword",
-                  "verifiable": false,
-                  "writable": false
+                  "verifiable": false
                 }
               }
             },

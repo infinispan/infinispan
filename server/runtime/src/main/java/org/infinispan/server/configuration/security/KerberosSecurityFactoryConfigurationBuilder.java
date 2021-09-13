@@ -122,10 +122,6 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public KerberosSecurityFactoryConfiguration create() {
       return new KerberosSecurityFactoryConfiguration(attributes.protect(), credentialSource);
    }

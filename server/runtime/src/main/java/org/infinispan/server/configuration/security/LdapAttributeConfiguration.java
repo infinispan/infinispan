@@ -5,6 +5,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.wildfly.security.auth.realm.ldap.AttributeMapping;
+import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 
 /**
  * @since 10.0
@@ -26,5 +28,19 @@ public class LdapAttributeConfiguration extends ConfigurationElement<LdapAttribu
 
    LdapAttributeConfiguration(AttributeSet attributes) {
       super(attributes.attribute(REFERENCE).isModified() ? Element.ATTRIBUTE_REFERENCE : Element.ATTRIBUTE, attributes);
+   }
+
+   public void build(LdapSecurityRealmBuilder.IdentityMappingBuilder identity) {
+      AttributeMapping.Builder builder = attributes.attribute(REFERENCE).isModified() ?
+            AttributeMapping.fromReference(attributes.attribute(REFERENCE).get()) :
+            AttributeMapping.fromFilter(attributes.attribute(FILTER).get());
+      attributes.attribute(FILTER_DN).apply(v -> builder.searchDn(v));
+      attributes.attribute(FROM).apply(v -> builder.from(v));
+      attributes.attribute(TO).apply(v -> builder.to(v));
+      attributes.attribute(SEARCH_RECURSIVE).apply(v -> builder.searchRecursively(v));
+      attributes.attribute(ROLE_RECURSION).apply(v -> builder.roleRecursion(v));
+      attributes.attribute(ROLE_RECURSION_NAME).apply(v -> builder.roleRecursionName(v));
+      attributes.attribute(EXTRACT_RDN).apply(v -> builder.extractRdn(v));
+      identity.map(builder.build());
    }
 }

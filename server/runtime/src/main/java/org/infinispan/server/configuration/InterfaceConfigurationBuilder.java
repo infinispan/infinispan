@@ -62,10 +62,6 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public InterfaceConfiguration create() {
       return new InterfaceConfiguration(attributes.protect(), address.create(), networkAddress);
    }

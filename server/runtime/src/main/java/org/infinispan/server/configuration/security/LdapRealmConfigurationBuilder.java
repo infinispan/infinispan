@@ -1,53 +1,27 @@
 package org.infinispan.server.configuration.security;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.commons.util.InstanceSupplier;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
-import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.SecurityRealm;
 
 /**
  * @since 10.0
  */
-public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfiguration> {
+public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapRealmConfiguration> {
    private final AttributeSet attributes;
-   private final List<LdapIdentityMappingConfigurationBuilder> identityMappings = new ArrayList<>();
-   private final RealmConfigurationBuilder realmBuilder;
-   private SecurityRealm securityRealm;
-   private final SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
-   private final LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
-   private final LdapSecurityRealmBuilder.IdentityMappingBuilder identityMappingBuilder = ldapRealmBuilder.identityMapping();
+   private final LdapIdentityMappingConfigurationBuilder identityMapping;
 
 
-   LdapRealmConfigurationBuilder(RealmConfigurationBuilder realmBuilder) {
-      this.realmBuilder = realmBuilder;
+   LdapRealmConfigurationBuilder() {
       this.attributes = LdapRealmConfiguration.attributeDefinitionSet();
+      identityMapping = new LdapIdentityMappingConfigurationBuilder(this);
    }
 
-   public SimpleDirContextFactoryBuilder getDirContextBuilder() {
-      return dirContextBuilder;
-   }
-
-   LdapSecurityRealmBuilder getLdapRealmBuilder() {
-      return ldapRealmBuilder;
-   }
-
-   LdapSecurityRealmBuilder.IdentityMappingBuilder getIdentityMappingBuilder() {
-      return identityMappingBuilder;
-   }
-
-   public LdapIdentityMappingConfigurationBuilder addIdentityMap() {
-      LdapIdentityMappingConfigurationBuilder identity = new LdapIdentityMappingConfigurationBuilder(this);
-      identityMappings.add(identity);
-      return identity;
+   public LdapIdentityMappingConfigurationBuilder identityMapping() {
+      return identityMapping;
    }
 
    public LdapRealmConfigurationBuilder name(String name) {
@@ -57,43 +31,31 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
 
    public LdapRealmConfigurationBuilder url(String url) {
       attributes.attribute(LdapRealmConfiguration.URL).set(url);
-      dirContextBuilder.setProviderUrl(url);
       return this;
    }
 
    public LdapRealmConfigurationBuilder principal(String principal) {
       attributes.attribute(LdapRealmConfiguration.PRINCIPAL).set(principal);
-      dirContextBuilder.setSecurityPrincipal(principal);
       return this;
    }
 
    public LdapRealmConfigurationBuilder credential(char[] credential) {
+      attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(new InstanceSupplier<>(credential));
+      return this;
+   }
+
+   public LdapRealmConfigurationBuilder credential(Supplier<char[]> credential) {
       attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(credential);
-      dirContextBuilder.setSecurityCredential(new String(credential));
       return this;
    }
 
    public LdapRealmConfigurationBuilder directEvidenceVerification(boolean value) {
       attributes.attribute(LdapRealmConfiguration.DIRECT_EVIDENCE_VERIFICATION).set(value);
-      ldapRealmBuilder.addDirectEvidenceVerification(value);
       return this;
    }
 
    public LdapRealmConfigurationBuilder pageSize(int value) {
       attributes.attribute(LdapRealmConfiguration.PAGE_SIZE).set(value);
-      ldapRealmBuilder.setPageSize(value);
-      return this;
-   }
-
-   public LdapRealmConfigurationBuilder searchDn(String value) {
-      attributes.attribute(LdapRealmConfiguration.SEARCH_DN).set(value);
-      identityMappingBuilder.setSearchDn(value);
-      return this;
-   }
-
-   public LdapRealmConfigurationBuilder rdnIdentifier(String value) {
-      attributes.attribute(LdapRealmConfiguration.RDN_IDENTIFIER).set(value);
-      identityMappingBuilder.setRdnIdentifier(value);
       return this;
    }
 
@@ -124,43 +86,18 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
 
    @Override
    public void validate() {
-      identityMappings.forEach(LdapIdentityMappingConfigurationBuilder::validate);
+      identityMapping.validate();
    }
 
    @Override
    public LdapRealmConfiguration create() {
-      List<LdapIdentityMappingConfiguration> identities = identityMappings.stream()
-            .map(LdapIdentityMappingConfigurationBuilder::create).collect(Collectors.toList());
-      return new LdapRealmConfiguration(attributes.protect(), identities);
+      return new LdapRealmConfiguration(attributes.protect(), identityMapping.create());
    }
 
    @Override
    public LdapRealmConfigurationBuilder read(LdapRealmConfiguration template) {
       attributes.read(template.attributes());
-      identityMappings.clear();
-      template.identityMappings().forEach(i -> addIdentityMap().read(i));
+      identityMapping.read(template.identityMapping());
       return this;
-   }
-
-   public SecurityRealm build() {
-      if (securityRealm == null) {
-         identityMappingBuilder.build();
-         Properties connectionProperties = new Properties();
-         connectionProperties.setProperty("com.sun.jndi.ldap.connect.pool", attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).get().toString());
-         dirContextBuilder
-               .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get())
-               .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get());
-         dirContextBuilder.setConnectionProperties(connectionProperties);
-         DirContextFactory dirContextFactory = dirContextBuilder.build();
-         ldapRealmBuilder.setDirContextSupplier(() -> dirContextFactory.obtainDirContext(attributes.attribute(LdapRealmConfiguration.REFERRAL_MODE).get()));
-         if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
-            ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
-         }
-         String name = attributes.attribute(LdapRealmConfiguration.NAME).get();
-         securityRealm = ldapRealmBuilder.build();
-         realmBuilder.addRealm(name, securityRealm);
-         realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
-      }
-      return securityRealm;
    }
 }

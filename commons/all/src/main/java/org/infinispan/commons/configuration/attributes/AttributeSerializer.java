@@ -1,6 +1,7 @@
 package org.infinispan.commons.configuration.attributes;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 
@@ -18,9 +19,9 @@ public interface AttributeSerializer<T> {
          writer.writeAttribute(name, value.toString());
       }
    };
-   AttributeSerializer<char[]> SECRET = (writer, name, value) -> {
+   AttributeSerializer<Supplier<char[]>> SECRET = (writer, name, value) -> {
       if (Boolean.getBoolean("org.infinispan.configuration.clear-text-secrets")) {
-         writer.writeAttribute(name, new String(value));
+         writer.writeAttribute(name, new String(value.get()));
       } else {
          writer.writeAttribute(name, "***");
       }

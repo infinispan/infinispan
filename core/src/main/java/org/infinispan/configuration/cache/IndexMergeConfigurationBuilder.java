@@ -10,7 +10,6 @@ import static org.infinispan.configuration.cache.IndexMergeConfiguration.MIN_SIZ
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 12.0
@@ -85,16 +84,4 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
       this.attributes.read(template.attributes());
       return this;
    }
-
-   @Override
-   public String toString() {
-      return "IndexMergeConfiguration{" +
-            "attributes=" + attributes +
-            '}';
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
-   }
-
 }

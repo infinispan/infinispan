@@ -18,10 +18,6 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
       this.realmBuilder = realmBuilder;
    }
 
-   @Override
-   public void validate() {
-   }
-
    public SSLConfigurationBuilder sslConfiguration() {
       if (sslConfigurationBuilder == null) {
          sslConfigurationBuilder = new SSLConfigurationBuilder(realmBuilder);

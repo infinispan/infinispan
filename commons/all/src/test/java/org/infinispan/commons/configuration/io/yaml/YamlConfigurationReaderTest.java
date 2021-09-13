@@ -60,12 +60,12 @@ public class YamlConfigurationReaderTest {
       assertNull(p.name);
       assertNull(p.value);
       p = yaml.parseLine("  - value");
-      assertEquals(2, p.indent);
+      assertEquals(3, p.indent);
       assertTrue(p.listItem);
       assertNull(p.name);
       assertEquals("value", p.value);
       p = yaml.parseLine("  - key: value");
-      assertEquals(2, p.indent);
+      assertEquals(3, p.indent);
       assertTrue(p.listItem);
       assertEquals("key", p.name);
       assertEquals("value", p.value);

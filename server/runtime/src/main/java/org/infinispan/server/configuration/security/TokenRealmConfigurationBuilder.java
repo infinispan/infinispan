@@ -5,32 +5,20 @@ import static org.infinispan.server.configuration.security.TokenRealmConfigurati
 import static org.infinispan.server.configuration.security.TokenRealmConfiguration.NAME;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.server.security.KeycloakRoleDecoder;
-import org.infinispan.server.security.ServerSecurityRealm;
-import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
-import org.wildfly.security.auth.realm.token.TokenValidator;
-import org.wildfly.security.auth.realm.token.validator.JwtValidator;
-import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
 
 /**
  * @since 10.0
  */
-public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfiguration> {
+public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<TokenRealmConfiguration> {
    private final AttributeSet attributes;
-   private final TokenSecurityRealm.Builder tokenRealmBuilder = TokenSecurityRealm.builder();
    private final JwtConfigurationBuilder jwtConfiguration;
    private final OAuth2ConfigurationBuilder oauth2Configuration;
-   private final RealmConfigurationBuilder realmBuilder;
 
-   private TokenSecurityRealm securityRealm;
-
-   public TokenRealmConfigurationBuilder(RealmConfigurationBuilder realmBuilder) {
-      this.realmBuilder = realmBuilder;
+   public TokenRealmConfigurationBuilder() {
       this.attributes = TokenRealmConfiguration.attributeDefinitionSet();
-      this.jwtConfiguration = new JwtConfigurationBuilder(realmBuilder);
-      this.oauth2Configuration = new OAuth2ConfigurationBuilder(realmBuilder.realmsBuilder());
+      this.jwtConfiguration = new JwtConfigurationBuilder();
+      this.oauth2Configuration = new OAuth2ConfigurationBuilder();
    }
 
    public JwtConfigurationBuilder jwtConfiguration() {
@@ -61,35 +49,13 @@ public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfigu
       return this;
    }
 
-   public TokenSecurityRealm build() {
-      if (securityRealm == null) {
-         if (oauth2Configuration.isChanged() && jwtConfiguration.isChanged()) {
-            throw new CacheConfigurationException("Cannot have both Oauth2 and JWT as validators");
-         }
-         if (!oauth2Configuration.isChanged() && !jwtConfiguration.isChanged()) {
-            return null;
-         }
-         String name = attributes.attribute(NAME).get();
-         TokenValidator validator;
-         if (oauth2Configuration.isChanged()) {
-            OAuth2IntrospectValidator.Builder oauthValidatorBuilder = oauth2Configuration.getValidatorBuilder();
-            validator = oauthValidatorBuilder.build();
-         } else {
-            JwtValidator.Builder jwtValidatorBuilder = jwtConfiguration.getValidatorBuilder();
-            validator = jwtValidatorBuilder.build();
-         }
-         tokenRealmBuilder.validator(validator);
-         securityRealm = tokenRealmBuilder.build();
-         realmBuilder.addRealm(name, securityRealm, b -> b.setRoleDecoder(new KeycloakRoleDecoder()));
-         realmBuilder.addFeature(ServerSecurityRealm.Feature.TOKEN);
-      }
-      return securityRealm;
-   }
-
    @Override
    public void validate() {
       jwtConfiguration.validate();
       oauth2Configuration.validate();
+      if (oauth2Configuration.isModified() && jwtConfiguration.isModified()) {
+         throw new CacheConfigurationException("Cannot have both Oauth2 and JWT as validators");
+      }
    }
 
    @Override

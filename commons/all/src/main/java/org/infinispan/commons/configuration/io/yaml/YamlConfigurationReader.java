@@ -2,7 +2,9 @@ package org.infinispan.commons.configuration.io.yaml;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -44,6 +46,26 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
       namespaces.put("", ""); // Default namespace
       loadTree();
+      if (Log.CONFIG.isTraceEnabled()) {
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         printTree(pw, lines);
+         Log.CONFIG.trace(sw);
+      }
+   }
+
+   private void printTree(PrintWriter pw, Node node) {
+      if (node != null) {
+         for (int i = 0; i < node.parsed.indent; i++) {
+            pw.print(' ');
+         }
+         pw.println(node.parsed);
+         if (node.children != null) {
+            for (Node c : node.children) {
+               printTree(pw, c);
+            }
+         }
+      }
    }
 
    private static class Node {
@@ -119,7 +141,8 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                // Find the parent of the previous element
                current = findParent(current, parsed);
                // Copy the last node
-               current = current.addSibling(new Node(current.parsed));
+               current = addListItem(parsed, current);
+               current = current.addChild(new Node(parsed));
             } else if (parsed.indent == current.parsed.indent) {
                // Sibling of the current node
                current = current.addSibling(new Node(parsed));
@@ -180,7 +203,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             int c = s.charAt(i);
             switch (c) {
                case ' ':
-                  if (state == 0 && !parsed.listItem) {
+                  if (state == 0) {
                      parsed.indent++;
                   } // else ignore: it may be ignorable or part of a key/value
                   break;

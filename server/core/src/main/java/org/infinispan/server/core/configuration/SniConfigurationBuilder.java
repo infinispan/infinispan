@@ -1,5 +1,7 @@
 package org.infinispan.server.core.configuration;
 
+import java.util.function.Supplier;
+
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
@@ -33,6 +35,11 @@ public class SniConfigurationBuilder implements Builder<SniConfiguration> {
       return this;
    }
 
+   public SniConfigurationBuilder sslContext(Supplier<SSLContext> sslContext) {
+      ssl.sslContext(sslContext);
+      return this;
+   }
+
    @Override
    public SniConfiguration create() {
       return new SniConfiguration(attributes.protect());
@@ -41,7 +48,6 @@ public class SniConfigurationBuilder implements Builder<SniConfiguration> {
    @Override
    public SniConfigurationBuilder read(SniConfiguration template) {
       attributes.read(template.attributes());
-
       return this;
    }
 

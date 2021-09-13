@@ -10,6 +10,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import javax.net.ServerSocketFactory;
 
@@ -23,13 +24,13 @@ import org.jgroups.util.Util;
  * @since 13.0
  **/
 public class NamedSocketFactory implements SocketFactory {
-   private final javax.net.SocketFactory socketFactory;
-   private final ServerSocketFactory serverSocketFactory;
+   private final Supplier<javax.net.SocketFactory> socketFactory;
+   private final Supplier<ServerSocketFactory> serverSocketFactory;
    private String name;
    private BiConsumer<String, Socket> socketConfigurator = (c, s) -> {};
    private BiConsumer<String, ServerSocket> serverSocketConfigurator = (c, s) -> {};
 
-   public NamedSocketFactory(javax.net.SocketFactory socketFactory, ServerSocketFactory serverSocketFactory) {
+   public NamedSocketFactory(Supplier<javax.net.SocketFactory> socketFactory, Supplier<ServerSocketFactory> serverSocketFactory) {
       this.socketFactory = socketFactory;
       this.serverSocketFactory = serverSocketFactory;
    }
@@ -50,14 +51,6 @@ public class NamedSocketFactory implements SocketFactory {
       this.name = name;
    }
 
-   public void setSocketConfigurator(BiConsumer<String, Socket> socketConfigurator) {
-      this.socketConfigurator = socketConfigurator;
-   }
-
-   public void setServerSocketConfigurator(BiConsumer<String, ServerSocket> serverSocketConfigurator) {
-      this.serverSocketConfigurator = serverSocketConfigurator;
-   }
-
    private Socket configureSocket(Socket socket) {
       socketConfigurator.accept(name, socket);
       return socket;
@@ -70,47 +63,47 @@ public class NamedSocketFactory implements SocketFactory {
 
    @Override
    public Socket createSocket(String s) throws IOException {
-      return configureSocket(socketFactory.createSocket());
+      return configureSocket(socketFactory.get().createSocket());
    }
 
    @Override
    public Socket createSocket(String s, String host, int port) throws IOException {
-      return configureSocket(socketFactory.createSocket(host, port));
+      return configureSocket(socketFactory.get().createSocket(host, port));
    }
 
    @Override
    public Socket createSocket(String s, InetAddress host, int port) throws IOException {
-      return configureSocket(socketFactory.createSocket(host, port));
+      return configureSocket(socketFactory.get().createSocket(host, port));
    }
 
    @Override
    public Socket createSocket(String s, String host, int port, InetAddress localHost, int localPort) throws IOException {
-      return configureSocket(socketFactory.createSocket(host, port, localHost, localPort));
+      return configureSocket(socketFactory.get().createSocket(host, port, localHost, localPort));
    }
 
    @Override
    public Socket createSocket(String s, InetAddress host, int port, InetAddress localHost, int localPort) throws IOException {
-      return configureSocket(socketFactory.createSocket(host, port, localHost, localPort));
+      return configureSocket(socketFactory.get().createSocket(host, port, localHost, localPort));
    }
 
    @Override
    public ServerSocket createServerSocket(String s) throws IOException {
-      return configureSocket(serverSocketFactory.createServerSocket());
+      return configureSocket(serverSocketFactory.get().createServerSocket());
    }
 
    @Override
    public ServerSocket createServerSocket(String s, int port) throws IOException {
-      return configureSocket(serverSocketFactory.createServerSocket(port));
+      return configureSocket(serverSocketFactory.get().createServerSocket(port));
    }
 
    @Override
    public ServerSocket createServerSocket(String s, int port, int backlog) throws IOException {
-      return configureSocket(serverSocketFactory.createServerSocket(port, backlog));
+      return configureSocket(serverSocketFactory.get().createServerSocket(port, backlog));
    }
 
    @Override
    public ServerSocket createServerSocket(String s, int port, int backlog, InetAddress bindAddress) throws IOException {
-      return configureSocket(serverSocketFactory.createServerSocket(port, backlog, bindAddress));
+      return configureSocket(serverSocketFactory.get().createServerSocket(port, backlog, bindAddress));
    }
 
    public DatagramSocket createDatagramSocket(String service_name) throws SocketException {

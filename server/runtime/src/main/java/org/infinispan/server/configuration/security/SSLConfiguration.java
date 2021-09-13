@@ -1,5 +1,10 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.Properties;
+
+import org.infinispan.commons.util.SslContextFactory;
+import org.wildfly.security.ssl.SSLContextBuilder;
+
 /**
  * @since 10.0
  */
@@ -25,5 +30,13 @@ public class SSLConfiguration {
 
    public SSLEngineConfiguration engine() {
       return engine;
+   }
+
+   SSLContextBuilder build(Properties properties) {
+      SSLContextBuilder builder = new SSLContextBuilder().setWrap(false).setProviderName(SslContextFactory.getSslProvider());
+      keyStore.build(builder, properties);
+      trustStore.build(builder, properties);
+      engine.build(builder);
+      return builder;
    }
 }

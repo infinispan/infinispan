@@ -3,29 +3,16 @@ package org.infinispan.server.configuration.security;
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_LIFESPAN;
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_MAX_SIZE;
 
-import java.security.GeneralSecurityException;
-import java.util.EnumSet;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.net.ssl.SSLContext;
-
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.SslContextFactory;
-import org.infinispan.server.security.ServerSecurityRealm;
-import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
-import org.infinispan.server.security.realm.CachingSecurityRealm;
-import org.wildfly.security.auth.permission.LoginPermission;
-import org.wildfly.security.auth.realm.CacheableSecurityRealm;
-import org.wildfly.security.auth.server.ModifiableSecurityRealm;
-import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.cache.LRURealmIdentityCache;
-import org.wildfly.security.cache.RealmIdentityCache;
-import org.wildfly.security.permission.PermissionVerifier;
-import org.wildfly.security.ssl.SSLContextBuilder;
+import org.infinispan.commons.util.Util;
+import org.infinispan.server.Server;
+import org.infinispan.server.configuration.Element;
 
 /**
  * @since 10.0
@@ -33,45 +20,13 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private final AttributeSet attributes;
 
-   private final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
-   private final RealmsConfigurationBuilder realmsBuilder;
-
    private final ServerIdentitiesConfigurationBuilder serverIdentitiesConfiguration = new ServerIdentitiesConfigurationBuilder(this);
-   private final FileSystemRealmConfigurationBuilder fileSystemConfiguration = new FileSystemRealmConfigurationBuilder(this);
-   private final LdapRealmConfigurationBuilder ldapConfiguration = new LdapRealmConfigurationBuilder(this);
-   private final LocalRealmConfigurationBuilder localConfiguration = new LocalRealmConfigurationBuilder();
-   private final TokenRealmConfigurationBuilder tokenConfiguration = new TokenRealmConfigurationBuilder(this);
-   private final TrustStoreRealmConfigurationBuilder trustStoreConfiguration = new TrustStoreRealmConfigurationBuilder(this);
-   private final PropertiesRealmConfigurationBuilder propertiesRealmConfiguration = new PropertiesRealmConfigurationBuilder(this);
 
-   private SSLContext sslContext = null;
-   private SSLContext clientSslContext = null;
-   private SSLContextBuilder sslContextBuilder = null;
-   private Supplier<Boolean> httpChallengeReadiness = () -> true;
-   private ServerSecurityRealm serverSecurityRealm = null;
-   private EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
-   private RealmIdentityCache cache;
+   private final List<RealmProviderBuilder<?>> builders = new ArrayList<>();
 
-   RealmConfigurationBuilder(String name, RealmsConfigurationBuilder realmsBuilder) {
-      this.realmsBuilder = realmsBuilder;
+   RealmConfigurationBuilder(String name) {
       this.attributes = RealmConfiguration.attributeDefinitionSet();
-      domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
       attributes.attribute(RealmConfiguration.NAME).set(name);
-   }
-
-   RealmsConfigurationBuilder realmsBuilder() {
-      return realmsBuilder;
-   }
-
-   SSLContextBuilder sslContextBuilder() {
-      if (sslContextBuilder == null) {
-         sslContextBuilder = new SSLContextBuilder();
-      }
-      return sslContextBuilder;
-   }
-
-   SecurityDomain.Builder domainBuilder() {
-      return domainBuilder;
    }
 
    public RealmConfigurationBuilder cacheMaxSize(int size) {
@@ -85,155 +40,72 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    public FileSystemRealmConfigurationBuilder fileSystemConfiguration() {
-      return fileSystemConfiguration;
+      return addBuilder(Element.FILESYSTEM_REALM, new FileSystemRealmConfigurationBuilder());
    }
 
    public LdapRealmConfigurationBuilder ldapConfiguration() {
-      return ldapConfiguration;
+      return addBuilder(Element.LDAP_REALM, new LdapRealmConfigurationBuilder());
    }
 
    public LocalRealmConfigurationBuilder localConfiguration() {
-      return localConfiguration;
+      return addBuilder(Element.LOCAL_REALM, new LocalRealmConfigurationBuilder());
    }
 
    public TokenRealmConfigurationBuilder tokenConfiguration() {
-      return tokenConfiguration;
+      return addBuilder(Element.TOKEN_REALM, new TokenRealmConfigurationBuilder());
    }
 
    public TrustStoreRealmConfigurationBuilder trustStoreConfiguration() {
-      return trustStoreConfiguration;
+      return addBuilder(Element.TRUSTSTORE_REALM, new TrustStoreRealmConfigurationBuilder(), 0);
+   }
+
+   public PropertiesRealmConfigurationBuilder propertiesConfiguration() {
+      return addBuilder(Element.PROPERTIES_REALM, new PropertiesRealmConfigurationBuilder());
    }
 
    public ServerIdentitiesConfigurationBuilder serverIdentitiesConfiguration() {
       return serverIdentitiesConfiguration;
    }
 
-   public PropertiesRealmConfigurationBuilder propertiesRealm() {
-      return propertiesRealmConfiguration;
+   private <T extends RealmProviderBuilder> T addBuilder(Enum<?> type, T builder) {
+      return addBuilder(type, builder, builders.size());
    }
 
-   void setHttpChallengeReadiness(Supplier<Boolean> readiness) {
-      this.httpChallengeReadiness = readiness;
+   private <T extends RealmProviderBuilder> T addBuilder(Enum<?> type, T builder, int index) {
+      for(RealmProviderBuilder<?> b : builders) {
+         if (b.getClass().equals(builder.getClass())) {
+            throw Server.log.duplicateRealmType(type.toString(), attributes.attribute(RealmConfiguration.NAME).get());
+         }
+      }
+      builders.add(index, builder);
+      return builder;
    }
 
    @Override
    public void validate() {
-      fileSystemConfiguration.validate();
-      ldapConfiguration.validate();
-      localConfiguration.validate();
-      tokenConfiguration.validate();
-      trustStoreConfiguration.validate();
       serverIdentitiesConfiguration.validate();
-      propertiesRealmConfiguration.validate();
+      builders.forEach(Builder::validate);
    }
 
    @Override
    public RealmConfiguration create() {
       return new RealmConfiguration(
             attributes.protect(),
-            fileSystemConfiguration.create(),
-            ldapConfiguration.create(),
-            localConfiguration.create(),
-            tokenConfiguration.create(),
-            trustStoreConfiguration.create(),
             serverIdentitiesConfiguration.create(),
-            propertiesRealmConfiguration.create());
+            builders.stream().map(RealmProviderBuilder::create).collect(Collectors.toList())
+      );
    }
 
    @Override
    public RealmConfigurationBuilder read(RealmConfiguration template) {
       this.attributes.read(template.attributes());
-      fileSystemConfiguration.read(template.fileSystemConfiguration());
-      ldapConfiguration.read(template.ldapConfiguration());
-      localConfiguration.read(template.localConfiguration());
-      tokenConfiguration.read(template.tokenConfiguration());
-      trustStoreConfiguration.read(template.trustStoreConfiguration());
       serverIdentitiesConfiguration.read(template.serverIdentitiesConfiguration());
-      propertiesRealmConfiguration.read(template.propertiesRealm());
+      this.builders.clear();
+      for(RealmProvider provider : template.realmProviders()) {
+         RealmProviderBuilder builder = Util.getInstance(provider.getClass().getAnnotation(BuiltBy.class).value().asSubclass(RealmProviderBuilder.class));
+         builder.read(provider);
+         builders.add(builder);
+      }
       return this;
-   }
-
-   ServerSecurityRealm getServerSecurityRealm() {
-      if (serverSecurityRealm == null) {
-         SecurityDomain securityDomain = domainBuilder.build();
-         String name = attributes.attribute(RealmConfiguration.NAME).get();
-         serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration.create(), features);
-      }
-      return serverSecurityRealm;
-   }
-
-   SSLContext getSSLContext() {
-      createSslContexts();
-      return sslContext;
-   }
-
-   SSLContext getClientSSLContext() {
-      createSslContexts();
-      return clientSslContext;
-   }
-
-   public void addFeature(ServerSecurityRealm.Feature feature) {
-      features.add(feature);
-   }
-
-   private SecurityRealm cacheable(SecurityRealm realm) {
-      int maxEntries = attributes.attribute(CACHE_MAX_SIZE).get();
-      if (maxEntries > 0 && realm instanceof CacheableSecurityRealm) {
-         if (cache == null) {
-            cache = new LRURealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get());
-         }
-         if (realm instanceof ModifiableSecurityRealm) {
-            return new CachingModifiableSecurityRealm((CacheableSecurityRealm) realm, cache);
-         } else {
-            return new CachingSecurityRealm((CacheableSecurityRealm) realm, cache);
-         }
-      } else {
-         return realm;
-      }
-   }
-
-   public void addRealm(String realmName, SecurityRealm realm) {
-      addRealm(realmName, realm, null);
-   }
-
-   public void addRealm(String realmName, SecurityRealm realm, Consumer<SecurityDomain.RealmBuilder> realmBuilderConsumer) {
-      SecurityDomain.RealmBuilder realmBuilder = domainBuilder.addRealm(realmName, cacheable(realm));
-      if (realmBuilderConsumer != null) {
-         realmBuilderConsumer.accept(realmBuilder);
-      }
-      // Build with realm with the side-effect of adding itself to the parent
-      realmBuilder.build();
-      if (domainBuilder.getDefaultRealmName() == null) {
-         domainBuilder.setDefaultRealmName(realmName);
-      }
-   }
-
-   private void createSslContexts() {
-      if (sslContextBuilder == null) {
-         return;
-      }
-      if (sslContext == null) {
-         if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
-            sslContextBuilder.setSecurityDomain(getServerSecurityRealm().getSecurityDomain());
-         }
-         sslContextBuilder.setWrap(false);
-         String sslProvider = SslContextFactory.getSslProvider();
-         if (sslProvider != null) {
-            sslContextBuilder.setProviderName(sslProvider);
-         }
-         try {
-            sslContext = sslContextBuilder.build().create();
-         } catch (GeneralSecurityException e) {
-            throw new CacheConfigurationException(e);
-         }
-      }
-      if (clientSslContext == null) {
-         sslContextBuilder.setClientMode(true);
-         try {
-            clientSslContext = sslContextBuilder.build().create();
-         } catch (GeneralSecurityException e) {
-            throw new CacheConfigurationException(e);
-         }
-      }
    }
 }

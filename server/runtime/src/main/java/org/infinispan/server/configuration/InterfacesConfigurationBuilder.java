@@ -1,12 +1,10 @@
 package org.infinispan.server.configuration;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.server.network.NetworkAddress;
 
 public class InterfacesConfigurationBuilder implements Builder<InterfacesConfiguration> {
 
@@ -18,29 +16,16 @@ public class InterfacesConfigurationBuilder implements Builder<InterfacesConfigu
       return interfaceConfigurationBuilder;
    }
 
-   NetworkAddress getNetworkAddress(String interfaceName) {
-      return interfaces.get(interfaceName).networkAddress();
-   }
-
    @Override
    public InterfacesConfiguration create() {
-      List<InterfaceConfiguration> configurations = interfaces.values().stream()
-            .map(InterfaceConfigurationBuilder::create).collect(Collectors.toList());
+      Map<String, InterfaceConfiguration> configurations = interfaces.values().stream().collect(Collectors.toMap(e -> e.name(), InterfaceConfigurationBuilder::create));
       return new InterfacesConfiguration(configurations);
    }
 
    @Override
    public InterfacesConfigurationBuilder read(InterfacesConfiguration template) {
       interfaces.clear();
-      template.interfaces().forEach(i -> addInterface(i.name()).read(i));
+      template.interfaces().forEach((n, i) -> addInterface(i.name()).read(i));
       return this;
-   }
-
-   @Override
-   public void validate() {
-   }
-
-   boolean exists(String interfaceName) {
-      return interfaces.containsKey(interfaceName);
    }
 }

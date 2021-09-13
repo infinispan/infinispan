@@ -35,10 +35,6 @@ public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfi
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public DataSourcesConfiguration create() {
       List<DataSourceConfiguration> list = dataSources.values().stream()
             .map(DataSourceConfigurationBuilder::create).collect(Collectors.toList());

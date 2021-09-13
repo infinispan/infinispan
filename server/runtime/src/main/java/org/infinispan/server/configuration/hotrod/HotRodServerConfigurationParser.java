@@ -12,7 +12,6 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
-import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.Attribute;
@@ -20,7 +19,7 @@ import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBui
 import org.infinispan.server.hotrod.configuration.Element;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.SaslConfigurationBuilder;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
 
@@ -50,7 +49,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          case HOTROD_CONNECTOR: {
             ServerConfigurationBuilder serverBuilder = builder.module(ServerConfigurationBuilder.class);
             if (serverBuilder != null) {
-               parseHotRodConnector(reader, holder, serverBuilder, serverBuilder.endpoints().current().addConnector(HotRodServerConfigurationBuilder.class));
+               parseHotRodConnector(reader, serverBuilder, serverBuilder.endpoints().current().addConnector(HotRodServerConfigurationBuilder.class));
             }
             break;
          }
@@ -65,9 +64,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
-   private void parseHotRodConnector(ConfigurationReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder) {
+   private void parseHotRodConnector(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder) {
       boolean dedicatedSocketBinding = false;
-      ServerSecurityRealm securityRealm = null;
+      String securityRealm = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -87,13 +86,13 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
-               serverBuilder.applySocketBinding(value, builder, serverBuilder.endpoints().current().singlePort());
                builder.startTransport(true);
                dedicatedSocketBinding = true;
                break;
             }
             case SECURITY_REALM: {
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               builder.authentication().securityRealm(value);
+               break;
             }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
@@ -101,7 +100,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          }
       }
       if (!dedicatedSocketBinding) {
-         builder.socketBinding(serverBuilder.endpoints().current().singlePort().socketBinding());
+         builder.socketBinding(serverBuilder.endpoints().current().singlePort().socketBinding()).startTransport(false);
       }
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
@@ -126,12 +125,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      if (securityRealm != null) {
-         EndpointConfigurationBuilder.enableImplicitAuthentication(serverBuilder, securityRealm, builder);
-      }
    }
 
-   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, ServerSecurityRealm securityRealm) {
+   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, String securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -142,7 +138,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealm = value;
                break;
             }
             default: {
@@ -153,8 +149,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       if (securityRealm == null) {
          throw Server.log.encryptionWithoutSecurityRealm();
       } else {
-         String name = securityRealm.getName();
-         encryption.realm(name).sslContext(serverBuilder.getSSLContext(name));
+         encryption.realm(securityRealm).sslContext(serverBuilder.serverSSLContextSupplier(securityRealm));
       }
       while (reader.inTag(Element.ENCRYPTION)) {
          Element element = Element.forName(reader.getLocalName());
@@ -184,7 +179,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
             case SECURITY_REALM: {
                sni.realm(value);
-               sni.sslContext(serverBuilder.getSSLContext(value));
+               sni.sslContext(serverBuilder.serverSSLContextSupplier(value));
                break;
             }
             default: {
@@ -195,14 +190,14 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, ServerSecurityRealm securityRealm) {
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, String securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SECURITY_REALM: {
-               securityRealm = serverBuilder.getSecurityRealm(value);
+               securityRealm = value;
                break;
             }
             default: {
@@ -211,13 +206,13 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          }
       }
       if (securityRealm == null) {
-         securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
+         securityRealm = serverBuilder.endpoints().current().securityRealm();
       }
       if (securityRealm == null) {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
       // Automatically set the digest realm name. It can be overridden by the user
-      builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm.getName());
+      builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm);
       String serverPrincipal = null;
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
@@ -231,8 +226,8 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      builder.securityRealm(securityRealm.getName());
-      builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal, builder.sasl().mechanisms()));
+      builder.securityRealm(securityRealm);
+      builder.serverAuthenticationProvider(new ElytronSASLAuthenticationProvider(securityRealm, serverPrincipal, builder.sasl().mechanisms()));
    }
 
    private String parseSasl(ConfigurationReader reader, AuthenticationConfigurationBuilder builder) {
