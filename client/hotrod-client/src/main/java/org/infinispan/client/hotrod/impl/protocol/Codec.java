@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
@@ -68,11 +67,6 @@ public interface Codec {
    AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress);
 
    Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
-
-   /**
-    * Logger for Hot Rod client codec
-    */
-   Log getLog();
 
    void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 

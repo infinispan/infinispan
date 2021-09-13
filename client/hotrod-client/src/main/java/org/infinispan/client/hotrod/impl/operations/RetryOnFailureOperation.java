@@ -53,7 +53,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    public CompletableFuture<T> execute() {
       assert !isDone();
       try {
-         currentClusterName = channelFactory.getCurrentClusterName();
          if (log.isTraceEnabled()) {
             log.tracef("Requesting channel for operation %s", this);
          }
@@ -94,7 +93,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          }
       } else {
          reset();
-         currentClusterName = channelFactory.getCurrentClusterName();
          fetchChannelAndInvoke(retryCount, failedServers);
       }
    }
@@ -107,9 +105,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          timeoutFuture.cancel(false);
          timeoutFuture = null;
       }
+      // Update the topology age in case the retry is connecting to a new cluster
+      header.topologyAge(channelFactory.getTopologyAge());
    }
 
-   private Set<SocketAddress> updateFailedServers(SocketAddress address) {
+   private Set<SocketAddress> addFailedServer(SocketAddress address) {
       if (failedServers == null) {
          failedServers = new HashSet<>();
       }
@@ -127,8 +127,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          return;
       }
       SocketAddress address = ChannelRecord.of(channel).getUnresolvedAddress();
-      updateFailedServers(address);
-      logAndRetryOrFail(HOTROD.connectionClosed(address, address), true);
+      addFailedServer(address);
+      logAndRetryOrFail(HOTROD.connectionClosed(address, address));
    }
 
    @Override
@@ -159,7 +159,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             return null;
          }
          if (address != null) {
-            updateFailedServers(address);
+            addFailedServer(address);
          }
          if (channel != null) {
             // We need to remove decoder even if we're about to close the channel
@@ -174,11 +174,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
                headerDecoder.failoverClientListeners();
             }
          }
-         logAndRetryOrFail(cause, true);
+         logAndRetryOrFail(cause);
          return null;
       } else if (cause instanceof RemoteNodeSuspectException) {
          // TODO Clients should never receive a RemoteNodeSuspectException, see ISPN-11636
-         logAndRetryOrFail(cause, false);
+         logAndRetryOrFail(cause);
          return null;
       } else if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {
          // fail the operation (don't retry) but don't close the channel
@@ -189,7 +189,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       }
    }
 
-   protected void logAndRetryOrFail(Throwable e, boolean canSwitchCluster) {
+   protected void logAndRetryOrFail(Throwable e) {
       if (retryCount < channelFactory.getMaxRetries()) {
          if (log.isTraceEnabled()) {
             log.tracef(e, "Exception encountered in %s. Retry %d out of %d", this, retryCount, channelFactory.getMaxRetries());
@@ -197,29 +197,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          retryCount++;
          channelFactory.incrementRetryCount();
          retryIfNotDone();
-      } else if (canSwitchCluster && !cfg.clusters().isEmpty()) {
-         channelFactory.trySwitchCluster(currentClusterName, cacheName).whenComplete((status, throwable) -> {
-            if (throwable != null) {
-               completeExceptionally(throwable);
-               return;
-            }
-            switch (status) {
-               case SWITCHED:
-                  retryCount = 0;
-                  failedServers.clear();
-                  break;
-               case NOT_SWITCHED:
-                  HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
-                  completeExceptionally(e);
-                  break;
-               case IN_PROGRESS:
-                  log.trace("Cluster switch in progress, retry operation without increasing retry count");
-                  break;
-               default:
-                  completeExceptionally(new IllegalStateException("Unknown cluster switch status: " + status));
-            }
-            retryIfNotDone();
-         });
       } else {
          HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
          completeExceptionally(e);
