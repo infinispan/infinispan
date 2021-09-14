@@ -224,6 +224,12 @@ class IndexNode {
             return leafNode.loadRecord(fileProvider, key, timeService);
          }
       },
+      GET_EXPIRED_RECORD {
+         @Override
+         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+            return leafNode.loadRecord(fileProvider, key, null);
+         }
+      },
       GET_POSITION {
          @Override
          protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
@@ -1067,7 +1073,7 @@ class IndexNode {
                }
                return null;
             }
-            if (headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
+            if (timeService != null && headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
                if (trace) {
                   log.trace("Key on " + file + ":" + readOffset + " matched but expired.");
                }
