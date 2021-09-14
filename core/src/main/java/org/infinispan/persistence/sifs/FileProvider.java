@@ -75,13 +75,17 @@ public class FileProvider {
       }
    }
 
+   public boolean isLogFile(int fileId) {
+      return logFiles.contains(fileId);
+   }
+
    public Handle getFile(int fileId) throws IOException {
       lock.readLock().lock();
       try {
-         for (;;) {
+         for (; ; ) {
             Record record = openFiles.get(fileId);
             if (record == null) {
-               for (;;) {
+               for (; ; ) {
                   int open = currentOpenFiles.get();
                   if (open >= openFileLimit) {
                      // we'll continue only after some other file will be closed

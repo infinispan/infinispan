@@ -32,16 +32,17 @@ class IndexRequest extends CompletableFuture<Object> {
    private final byte[] serializedKey;
    private final int size;
 
-   private IndexRequest(Type type, int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+   private IndexRequest(Type type, int segment, Object key, byte[] serializedKey, int file, int offset, int size,
+         int prevFile, int prevOffset) {
       this.type = type;
       this.segment = segment;
       this.key = key;
       this.file = file;
       this.offset = offset;
-      this.prevFile = prevFile;
-      this.prevOffset = prevOffset;
       this.serializedKey = serializedKey;
       this.size = size;
+      this.prevFile = prevFile;
+      this.prevOffset = prevOffset;
    }
 
    public static IndexRequest update(int segment, Object key, byte[] serializedKey, int file, int offset, int size) {
@@ -75,7 +76,7 @@ class IndexRequest extends CompletableFuture<Object> {
    }
 
    public static IndexRequest sizeRequest() {
-      return new IndexRequest(Type.SIZE, -1,null, null, -1, -1, -1, -1, -1);
+      return new IndexRequest(Type.SIZE, -1, null, null, -1, -1, -1, -1, -1);
    }
 
 

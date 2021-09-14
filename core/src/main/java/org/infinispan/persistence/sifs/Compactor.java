@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -57,6 +60,7 @@ class Compactor implements Consumer<Object> {
    private final java.nio.ByteBuffer REUSED_BUFFER = java.nio.ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
 
    FileProvider.Log logFile = null;
+   long nextExpirationTime = -1;
    int currentOffset = 0;
 
    public Compactor(FileProvider fileProvider, TemporaryTable temporaryTable, Marshaller marshaller,
@@ -94,22 +98,37 @@ class Compactor implements Consumer<Object> {
    public void free(int file, int size) {
       // entries expired from compacted file are reported with file = -1
       if (file < 0) return;
-      recordFreeSpace(getStats(file, -1), file, size);
+      recordFreeSpace(getStats(file, -1, -1), file, size);
    }
 
-   public void completeFile(int file, int currentSize) {
-      Stats stats = getStats(file, currentSize);
+   public void completeFile(int file, int currentSize, long nextExpirationTime) {
+      Stats stats = getStats(file, currentSize, nextExpirationTime);
       stats.setCompleted();
       if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
    }
 
-   private Stats getStats(int file, int currentSize) {
+   public interface CompactionExpirationSubscriber {
+      void onEntryPosition(EntryPosition entryPosition) throws IOException;
+
+      void onEntryEntryRecord(EntryRecord entryRecord) throws IOException;
+
+      void onComplete();
+
+      void onError(Throwable t);
+   }
+
+
+   public void performExpirationCompaction(CompactionExpirationSubscriber subscriber) {
+      processor.onNext(subscriber);
+   }
+
+   private Stats getStats(int file, int currentSize, long expirationTime) {
       Stats stats = fileStats.get(file);
       if (stats == null) {
          int fileSize = currentSize < 0 ? (int) fileProvider.getFileSize(file) : currentSize;
-         stats = new Stats(fileSize, 0);
+         stats = new Stats(fileSize, 0, expirationTime);
          Stats other = fileStats.putIfAbsent(file, stats);
          if (other != null) {
             if (fileSize > other.getTotal()) {
@@ -194,17 +213,58 @@ class Compactor implements Consumer<Object> {
 
             if (logFile != null) {
                logFile.close();
-               completeFile(logFile.fileId, currentOffset);
+               completeFile(logFile.fileId, currentOffset, nextExpirationTime);
                logFile = null;
+               nextExpirationTime = -1;
             }
          }
          return;
       }
 
+      if (o instanceof CompactionExpirationSubscriber) {
+         CompactionExpirationSubscriber subscriber = (CompactionExpirationSubscriber) o;
+         try {
+            for (CloseableIterator<Integer> iter = fileProvider.getFileIterator(); iter.hasNext(); ) {
+               int fileId = iter.next();
+               Stats stats = fileStats.get(fileId);
+               long currentTimeMilliseconds = timeService.wallClockTime();
+               boolean isLogFile = fileProvider.isLogFile(fileId);
+               // Only run expiration compaction on files that have expired entries or log files, which doesn't have a expiration time.
+               // If there is no stat for the file it also means it is a log file
+               if (stats == null || isLogFile || stats.nextExpirationTime < currentTimeMilliseconds) {
+                  // We cannot compact a file that is currently being logged to... yet
+                  compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
+               }
+            }
+            subscriber.onComplete();
+         } catch (Throwable t) {
+            subscriber.onError(t);
+         }
+         return;
+      }
+
       // Any other type submitted has to be a positive integer
-      int scheduledFile = (int) o;
+      compactSingleFile((int) o, false, null, timeService.wallClockTime());
+   }
+
+   /**
+    * Compacts a single file into the current log file. This method has two modes of operation based on if the file
+    * is a log file or not. If it is a log file non expired entries are ignored and only expired entries are "updated"
+    * to be deleted in the new log file and expiration listener is notified. If it is not a log file all entries are
+    * moved to the new log file and the current file is deleted afterwards. If an expired entry is found during compaction
+    * of a non log file the expiration listener is notified and the entry is not moved, however if no expiration listener
+    * is provided the expired entry is moved to the new file as is still expired.
+    * @param scheduledFile the file identifier to compact
+    * @param isLogFile     whether the provided file as a log file, which means we only notify and compact expired
+    *                      entries (ignore others)
+    * @param subscriber    the subscriber that is notified of various entries being expired
+    * @throws IOException            thrown if there was an issue with reading or writing to a file
+    * @throws ClassNotFoundException thrown if there is an issue deserializing the key for an entry
+    */
+   private void compactSingleFile(int scheduledFile, boolean isLogFile, CompactionExpirationSubscriber subscriber,
+         long currentTimeMilliseconds) throws IOException, ClassNotFoundException {
       assert scheduledFile >= 0;
-      log.debugf("Compacting file %d", scheduledFile);
+      log.tracef("Compacting file %d", scheduledFile);
       int scheduledOffset = 0;
       FileProvider.Handle handle = fileProvider.getFile(scheduledFile);
       if (handle == null) {
@@ -225,9 +285,13 @@ class Compactor implements Consumer<Object> {
             Object key = marshaller.objectFromByteBuffer(serializedKey);
             int segment = keyPartitioner.getSegment(key);
 
-            int indexedOffset = header.valueLength() > 0 ? scheduledOffset : ~scheduledOffset;
+            int valueLength = header.valueLength();
+            int indexedOffset = valueLength > 0 ? scheduledOffset : ~scheduledOffset;
+            // Whether to drop the entire index (this cannot be true if truncate is false)
             boolean drop = true;
+            // Whether to truncate the value
             boolean truncate = false;
+            // Whether the entry when truncating was due to expiration (this cannot be true if truncate is false)
             EntryPosition entry = temporaryTable.get(segment, key);
             if (entry != null) {
                synchronized (entry) {
@@ -236,10 +300,19 @@ class Compactor implements Consumer<Object> {
                            scheduledFile, scheduledOffset, entry.file, entry.offset);
                   }
                   if (entry.file == scheduledFile && entry.offset == indexedOffset) {
+                     long entryExpiryTime = header.expiryTime();
                      // It's quite unlikely that we would compact a record that is not indexed yet,
                      // but let's handle that
-                     if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
-                        truncate = true;
+                     if (entryExpiryTime >= 0 && entryExpiryTime <= currentTimeMilliseconds) {
+                        // We can only truncate expired entries if this was compacted with purge expire
+                        if (subscriber != null) {
+                           truncate = true;
+                           subscriber.onEntryPosition(entry);
+                        }
+                     } else if (isLogFile) {
+                        // Non expired entry in a log file, just skip it
+                        scheduledOffset += header.totalLength();
+                        continue;
                      }
                   } else {
                      truncate = true;
@@ -255,26 +328,44 @@ class Compactor implements Consumer<Object> {
                assert info.numRecords > 0;
                if (info.file == scheduledFile && info.offset == scheduledOffset) {
                   assert header.valueLength() > 0;
+                  long entryExpiryTime = header.expiryTime();
                   // live record with data
-                  truncate = header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime();
+                  if (entryExpiryTime >= 0 && entryExpiryTime <= currentTimeMilliseconds) {
+                     EntryRecord record = index.getRecordEvenIfExpired(key, serializedKey);
+                     // We can only truncate expired entries if this was compacted with purge expire
+                     if (subscriber != null) {
+                        truncate = true;
+                        subscriber.onEntryEntryRecord(record);
+                        // If there are more entries we cannot drop the index as we need a tombstone
+                        if (info.numRecords > 1) {
+                           drop = false;
+                        }
+                     } else {
+                        drop = false;
+                     }
+                  } else if (isLogFile) {
+                     // Non expired entry in a log file, just skip it
+                     scheduledOffset += header.totalLength();
+                     continue;
+                  } else {
+                     drop = false;
+                  }
+
                   if (log.isTraceEnabled()) {
                      log.tracef("Is %d:%d expired? %s, numRecords? %d", scheduledFile, scheduledOffset, truncate, info.numRecords);
                   }
-                  if (!truncate || info.numRecords > 1) {
-                     drop = false;
-                  }
-                  // Drop only when it is expired and has single record
                } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
-                  // just tombstone but there are more non-compacted records for this key so we have to keep it
+                  // The entry was expired, but we have other records so we can't drop this one or else the index will rebuild incorrectly
                   drop = false;
                } else if (log.isTraceEnabled()) {
                   log.tracef("Key for %d:%d was found in index on %d:%d, %d record => drop",
                         scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                }
             }
+
             if (drop) {
                if (log.isTraceEnabled()) {
-                  log.tracef("Drop %d:%d (%s)", scheduledFile, (Object)scheduledOffset,
+                  log.tracef("Drop %d:%d (%s)", scheduledFile, (Object) scheduledOffset,
                         header.valueLength() > 0 ? "record" : "tombstone");
                }
                index.handleRequest(IndexRequest.dropped(segment, key, serializedKey, scheduledFile, scheduledOffset));
@@ -282,7 +373,8 @@ class Compactor implements Consumer<Object> {
                if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
                   if (logFile != null) {
                      logFile.close();
-                     completeFile(logFile.fileId, currentOffset);
+                     completeFile(logFile.fileId, currentOffset, nextExpirationTime);
+                     nextExpirationTime = -1;
                   }
                   currentOffset = 0;
                   logFile = fileProvider.getFileForLog();
@@ -308,6 +400,7 @@ class Compactor implements Consumer<Object> {
                   entryOffset = ~currentOffset;
                   writtenLength = header.getHeaderLength() + header.keyLength();
                }
+               nextExpirationTime = ExpiryHelper.mostRecentExpirationTime(nextExpirationTime, header.expiryTime());
                EntryRecord.writeEntry(logFile.fileChannel, REUSED_BUFFER, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(segment, key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
                if (lockedEntry == null) {
@@ -339,11 +432,18 @@ class Compactor implements Consumer<Object> {
                   log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, indexedOffset,
                         logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
                }
-               // entryFile cannot be used as we have to report the file due to free space statistics
-               IndexRequest moveRequest = IndexRequest.moved(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength,
-                     scheduledFile, indexedOffset);
-               index.handleRequest(moveRequest);
-               aggregateCompletionStage.dependsOn(moveRequest);
+               IndexRequest indexRequest;
+               if (isLogFile) {
+                  // When it is a log file we are still keeping the original entry, we are just updating it to say
+                  // it was expired
+                  indexRequest = IndexRequest.update(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength);
+               } else {
+                  // entryFile cannot be used as we have to report the file due to free space statistics
+                  indexRequest = IndexRequest.moved(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength,
+                        scheduledFile, indexedOffset);
+               }
+               index.handleRequest(indexRequest);
+               aggregateCompletionStage.dependsOn(indexRequest);
 
                currentOffset += writtenLength;
             }
@@ -365,16 +465,20 @@ class Compactor implements Consumer<Object> {
       } finally {
          handle.close();
       }
-      if (!terminateSignal && clearSignal.get() == 0) {
+      if (isLogFile) {
+         log.tracef("Finished expiring entries in log file %d, leaving file as is", scheduledFile);
+      } else if (terminateSignal && clearSignal.get() == 0) {
          // The deletion must be executed only after the index is fully updated.
-         log.debugf("Finished compacting %d, scheduling delete", scheduledFile);
+         log.tracef("Finished compacting %d, scheduling delete", scheduledFile);
          index.deleteFileAsync(scheduledFile);
       }
    }
 
+
    private static class Stats {
       private final AtomicInteger free;
       private volatile int total;
+      private final long nextExpirationTime;
       /* File is not 'completed' when we have not loaded that yet completely.
          Files created by log appender/compactor are completed as soon as it closes them.
          File cannot be scheduled for compaction until it's completed.
@@ -382,9 +486,10 @@ class Compactor implements Consumer<Object> {
       private volatile boolean completed = false;
       private volatile boolean scheduled = false;
 
-      private Stats(int total, int free) {
+      private Stats(int total, int free, long nextExpirationTime) {
          this.free = new AtomicInteger(free);
          this.total = total;
+         this.nextExpirationTime = nextExpirationTime;
       }
 
       public int getTotal() {
@@ -406,7 +511,7 @@ class Compactor implements Consumer<Object> {
 
       public boolean readyToBeScheduled(double compactionThreshold, int free) {
          int total = this.total;
-         return completed && !scheduled && total >= 0 && free > total * compactionThreshold;
+         return completed && !scheduled && total >= 0 && free >= total * compactionThreshold;
       }
 
       public boolean isScheduled() {

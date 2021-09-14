@@ -85,7 +85,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
       // even keys stored, odd keys removed
       beforeStartCache();
 
-      cacheManager.defineConfiguration(cacheName(), cacheConfiguration(false).build());
+      cacheManager.defineConfiguration(cacheName(), cacheConfiguration(true).build());
       Cache<String, T> cache = cacheManager.getCache(cacheName());
 
       for (int i = 0; i < NUMBER_KEYS; ++i) {
@@ -187,7 +187,12 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().nonClusteredDefault();
       builder.globalState().persistentLocation(tmpDirectory);
       builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      amendGlobalConfigurationBuilder(builder);
       return TestCacheManagerFactory.createCacheManager(builder, null);
+   }
+
+   protected void amendGlobalConfigurationBuilder(GlobalConfigurationBuilder builder) {
+      //no-op by default. To set SerializationContextInitializer (for example)
    }
 
    protected abstract String cacheName();
