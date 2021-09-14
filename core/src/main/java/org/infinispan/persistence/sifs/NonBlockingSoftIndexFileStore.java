@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheException;
@@ -26,11 +26,13 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -50,6 +52,8 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Local file-based cache store, optimized for write-through use with strong consistency guarantees
@@ -153,7 +157,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public Set<Characteristic> characteristics() {
       // Does not support segmented or expiration yet
-      return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE);
+      return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE, Characteristic.EXPIRATION);
    }
 
    @Override
@@ -192,7 +196,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());
-      compactor = new Compactor(fileProvider, temporaryTable, marshaller, timeService, keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
+      compactor = new Compactor(ctx.getNonBlockingManager(), fileProvider, temporaryTable, marshaller, timeService,
+            keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
             blockingManager.asExecutor("sifs-compactor"));
       try {
          index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), configuration.indexSegments(),
@@ -246,13 +251,55 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       return CompletableFutures.completedNull();
    }
 
+   @Override
+   public Publisher<MarshallableEntry<K, V>> purgeExpired() {
+      return Flowable.defer(() -> {
+         log.tracef("Purging expired contents from soft index file store");
+         UnicastProcessor<MarshallableEntry<K, V>> unicastProcessor = UnicastProcessor.create();
+         // Compactor is ran asynchronously
+         compactor.performExpirationCompaction(new CompactorSubscriber(unicastProcessor));
+         return unicastProcessor;
+      });
+   }
+
+   private class CompactorSubscriber implements Compactor.CompactionExpirationSubscriber {
+      private final FlowableProcessor<MarshallableEntry<K, V>> processor;
+
+      private CompactorSubscriber(FlowableProcessor<MarshallableEntry<K, V>> processor) {
+         this.processor = processor;
+      }
+
+      @Override
+      public void onEntryPosition(EntryPosition entryPosition) throws IOException {
+         MarshallableEntry<K, V> entry = readValueFromFileOffset(null, entryPosition, true);
+         assert entry != null : "EntryPosition didn't return a value: " + entryPosition;
+         processor.onNext(entry);
+      }
+
+      @Override
+      public void onEntryEntryRecord(EntryRecord entryRecord) {
+         MarshallableEntry<K, V> entry = entryFromRecord(entryRecord);
+         processor.onNext(entry);
+      }
+
+      @Override
+      public void onComplete() {
+         processor.onComplete();
+      }
+
+      @Override
+      public void onError(Throwable t) {
+         processor.onError(t);
+      }
+   }
+
    private void migrateFromOldFormat(FileProvider oldFileProvider) {
       String cacheName = ctx.getCache().getName();
       PERSISTENCE.startMigratingPersistenceData(cacheName);
       try {
-         index.clear();
-      } catch (IOException e) {
-         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e);
+         CompletionStages.join(index.clear());
+      } catch (CompletionException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(cacheName, e.getCause());
       }
       // Only update the key/value/meta bytes if the default marshaller is configured
       boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
@@ -281,7 +328,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                            } catch (ClassNotFoundException | IOException e) {
                               throw new MarshallingException(e);
                            }
-                        });
+                        }, false);
                   int segment = keyPartitioner.getSegment(entry.getKey());
                   // entry is null if expired or removed (tombstone), in both case, we can ignore it.
                   //noinspection ConstantConditions (entry is not null!)
@@ -322,27 +369,31 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    private void buildIndex(final AtomicLong maxSeqId) {
       Flowable<Integer> filePublisher = filePublisher();
-      CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(file -> compactor.completeFile(file, -1)), false, false,
-            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
-               long prevSeqId;
-               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
-               }
-               Object key = marshaller.objectFromByteBuffer(serializedKey);
-               if (log.isTraceEnabled()) {
-                  log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
-               }
-               int segment = keyPartitioner.getSegment(key);
-               // We may check the seqId safely as we are the only thread writing to index
-               if (isSeqIdOld(seqId, segment, key, serializedKey)) {
-                  index.handleRequest(IndexRequest.foundOld(segment, key, serializedKey, file, offset));
+      CompletionStage<Void> stage = filePublisher.flatMap(outerFile -> {
+         ByRef.Long nextExpirationTime = new ByRef.Long(-1);
+         return handleFilePublisher(filePublisher, false, false,
+               (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
+                  long prevSeqId;
+                  while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+                  }
+                  Object key = marshaller.objectFromByteBuffer(serializedKey);
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+                  }
+                  // Make sure to keep track of the lowest expiration that isn't -1
+                  nextExpirationTime.set(ExpiryHelper.mostRecentExpirationTime(nextExpirationTime.get(), expiration));
+                  int segment = keyPartitioner.getSegment(key);
+                  // We may check the seqId safely as we are the only thread writing to index
+                  if (isSeqIdOld(seqId, segment, key, serializedKey)) {
+                     index.handleRequest(IndexRequest.foundOld(segment, key, serializedKey, file, offset));
+                     return null;
+                  }
+                  if (temporaryTable.set(segment, key, file, offset)) {
+                     index.handleRequest(IndexRequest.update(segment, key, serializedKey, file, offset, size));
+                  }
                   return null;
-               }
-               if (temporaryTable.set(segment, key, file, offset)) {
-                  index.handleRequest(IndexRequest.update(segment, key, serializedKey, file, offset, size));
-               }
-               return null;
-            }).ignoreElements()
-            .toCompletionStage(null);
+               }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get()));
+      }).ignoreElements().toCompletionStage(null);
       CompletionStages.join(stage);
    }
 
@@ -431,23 +482,20 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Void> clear() {
       return sizeAndClearSequencer.orderOnKey(this, () -> {
-               CompletionStage<CompletionStage<Void>> compactorSubStage = blockingManager.thenApplyBlocking(logAppender.clearAndPause(),
-                     ignore -> compactor.clearAndPause(), "soft-index-clear-compactor");
-               return blockingManager.thenRunBlocking(compactorSubStage.thenCompose(Function.identity()), () -> {
-                  try {
-                     index.clear();
-                  } catch (IOException e) {
-                     throw log.cannotClearIndex(e);
-                  }
+         CompletionStage<Void> chainedStage = logAppender.clearAndPause();
+         chainedStage = chainedStage.thenCompose(ignore -> compactor.clearAndPause());
+         chainedStage = chainedStage.thenCompose(ignore -> index.clear());
+
+         return blockingManager.thenRunBlocking(chainedStage, () -> {
                   try {
                      fileProvider.clear();
                   } catch (IOException e) {
                      throw log.cannotClearData(e);
                   }
                   temporaryTable.clear();
-                  compactor.resumeAfterPause();
-               }, "soft-index-clear")
-                     .thenCompose(v -> logAppender.resume());
+                  compactor.resumeAfterClear();
+               }, "soft-index-file-clear")
+               .thenCompose(v -> logAppender.resume());
             }
       );
    }
@@ -544,9 +592,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   }
                } else {
                   EntryRecord record = index.getRecord(key, marshaller.objectToByteBuffer(key));
-                  if (record == null) return null;
-                  return marshallableEntryFactory.create(toBuffer(record.getKey()), toBuffer(record.getValue()),
-                        toBuffer(record.getMetadata()), toBuffer(record.getInternalMetadata()), record.getCreated(), record.getLastUsed());
+                  if (record == null) {
+                     log.tracef("Entry for key=%s not found in index, returning null", key);
+                     return null;
+                  }
+                  return entryFromRecord(record);
                }
             }
          } catch (Exception e) {
@@ -555,7 +605,16 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       }, "soft-index-load");
    }
 
+   private MarshallableEntry<K, V> entryFromRecord(EntryRecord record) {
+      return marshallableEntryFactory.create(toBuffer(record.getKey()), toBuffer(record.getValue()),
+            toBuffer(record.getMetadata()), toBuffer(record.getInternalMetadata()), record.getCreated(), record.getLastUsed());
+   }
+
    private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry) throws IOException {
+      return readValueFromFileOffset(key, entry, false);
+   }
+
+   private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry, boolean includeExpired) throws IOException {
       FileProvider.Handle handle = fileProvider.getFile(entry.file);
       if (handle != null) {
          try {
@@ -565,7 +624,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
             return readEntry(handle, header, entry.offset, key, false,
                   (serializedKey, value, meta, internalMeta, created, lastUsed) ->
-                        marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed));
+                        marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed),
+                  includeExpired);
          } finally {
             handle.close();
          }
@@ -574,9 +634,9 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    }
 
    private MarshallableEntry<K, V> readEntry(FileProvider.Handle handle, EntryHeader header, int offset,
-                                                       Object key, boolean nonNull, EntryCreator<K, V> entryCreator)
+         Object key, boolean nonNull, EntryCreator<K, V> entryCreator, boolean includeExpired)
          throws IOException {
-      if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+      if (!includeExpired && header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, handle.getFileId(), offset);
          }
@@ -652,12 +712,12 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          // Unbox here once
          int file = f;
          return Flowable.using(() -> {
-                  log.debugf("Loading entries from file %d", file);
+                  log.tracef("Loading entries from file %d", file);
                   return Optional.ofNullable(fileProvider.getFile(file));
                },
                optHandle -> {
                   if (!optHandle.isPresent()) {
-                     log.debugf("File %d was deleted during iteration", file);
+                     log.tracef("File %d was deleted during iteration", file);
                      return Flowable.empty();
                   }
 
@@ -691,7 +751,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          if (filter != null) {
             tableFlowable = tableFlowable.filter(entry -> filter.test((K) entry.getKey()));
          }
-         // TODO: add in filter here
          Flowable<MarshallableEntry<K, V>> entryFlowable = tableFlowable.flatMapMaybe(entry -> {
             EntryPosition position = entry.getValue();
             if (position.offset < 0) {

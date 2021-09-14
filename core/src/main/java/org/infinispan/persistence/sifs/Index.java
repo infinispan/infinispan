@@ -103,10 +103,21 @@ class Index {
     * Get record or null if expired
     */
    public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
+      return getRecord(key, serializedKey, IndexNode.ReadOperation.GET_RECORD);
+   }
+
+   /**
+    * Get record (even if expired) or null if not present
+    */
+   public EntryRecord getRecordEvenIfExpired(Object key, byte[] serializedKey) throws IOException {
+      return getRecord(key, serializedKey, IndexNode.ReadOperation.GET_EXPIRED_RECORD);
+   }
+
+   private EntryRecord getRecord(Object key, byte[] serializedKey, IndexNode.ReadOperation readOperation) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
-         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_RECORD);
+         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), readOperation);
       } finally {
          lock.readLock().unlock();
       }
@@ -138,7 +149,7 @@ class Index {
       }
    }
 
-   public CompletionStage<Void> clear() throws IOException {
+   public CompletionStage<Void> clear() {
       lock.writeLock().lock();
       try {
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
