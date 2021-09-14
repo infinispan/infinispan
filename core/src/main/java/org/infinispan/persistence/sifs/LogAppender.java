@@ -10,6 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
@@ -47,6 +48,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private int receivedCount = 0;
    private List<LogRequest> delayedLogRequests;
    private FileProvider.Log logFile;
+   private long nextExpirationTime = -1;
 
    // This is volatile as it can be read from different threads when submitting
    private volatile FlowableProcessor<LogRequest> requestProcessor;
@@ -224,6 +226,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          if (actualRequest.isClear()) {
             logFile.close();
             completePendingLogRequests();
+            nextExpirationTime = -1;
             currentOffset = 0;
             logFile = null;
             completeRequest(actualRequest);
@@ -233,14 +236,16 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          if (currentOffset != 0 && currentOffset + actualLength > maxFileSize) {
             // switch to next file
             logFile.close();
-            compactor.completeFile(logFile.fileId, currentOffset);
+            compactor.completeFile(logFile.fileId, currentOffset, nextExpirationTime);
             completePendingLogRequests();
             logFile = fileProvider.getFileForLog();
+            nextExpirationTime = -1;
             currentOffset = 0;
             log.tracef("Appending records to %s", logFile.fileId);
          }
          long seqId = nextSeqId();
-         log.tracef("Apppending record to %s:%s", logFile.fileId, currentOffset);
+         log.tracef("Appending record to %s:%s", logFile.fileId, currentOffset);
+         nextExpirationTime = ExpiryHelper.mostRecentExpirationTime(nextExpirationTime, actualRequest.getExpiration());
          EntryRecord.writeEntry(logFile.fileChannel, REUSED_BUFFER, writeOperation.serializedKey,
                writeOperation.serializedMetadata, writeOperation.serializedInternalMetadata,
                writeOperation.serializedValue, seqId, actualRequest.getExpiration(), actualRequest.getCreated(),

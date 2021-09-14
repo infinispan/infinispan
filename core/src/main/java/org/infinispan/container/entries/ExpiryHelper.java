@@ -21,4 +21,20 @@ public class ExpiryHelper {
       return isExpiredTransient(maxIdle, lastUsed, now) || isExpiredMortal(lifespan, created, now);
    }
 
+   /**
+    * Returns the most recent (i.e. smallest number) that is not negative or if both are negative it returns a negative
+    * number
+    *
+    * @param firstTime  one of the times
+    * @param secondTime one of the times
+    * @return the lowest time of each, that is not negative unless both are negative
+    */
+   public static long mostRecentExpirationTime(long firstTime, long secondTime) {
+      if (firstTime < 0) {
+         return secondTime;
+      } else if (secondTime < 0) {
+         return firstTime;
+      }
+      return Math.min(firstTime, secondTime);
+   }
 }

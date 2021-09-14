@@ -39,7 +39,7 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
 
    @Override
    public <T> void complete(CompletableFuture<? super T> future, T value) {
-      // This is just a best effort to eliminate context switch if there no dependents.
+      // This is just best effort to eliminate context switch if there are no dependents.
       if (future.getNumberOfDependents() > 0) {
          executor.execute(() -> future.complete(value));
       } else {

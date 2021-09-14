@@ -204,6 +204,7 @@
             <filtering>true</filtering>
             <excludes>
                <exclude>sfs/**</exclude>
+               <exclude>sifs/**</exclude>
             </excludes>
          </testResource>
          <!-- Make sure the filtering is disabled for 10.1.x SFS data, otherwise the file gets "corrupted" -->
@@ -212,6 +213,7 @@
             <filtering>false</filtering>
             <includes>
                <include>sfs/**</include>
+               <include>sifs/**</include>
             </includes>
          </testResource>
       </testResources>

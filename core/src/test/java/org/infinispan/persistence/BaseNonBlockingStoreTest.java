@@ -564,6 +564,9 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    public void testReplaceEntry() {
       assertIsEmpty();
+      InternalCacheEntry tmpIce = internalCacheEntry("ok", "v1", -1);
+      store.write(marshalledEntry(tmpIce));
+
       InternalCacheEntry<Object, Object> ice = internalCacheEntry("k1", "v1", -1);
       store.write(marshalledEntry(ice));
       assertEquals(valueToStorage("v1"), store.loadEntry(keyToStorage("k1")).getValue());
