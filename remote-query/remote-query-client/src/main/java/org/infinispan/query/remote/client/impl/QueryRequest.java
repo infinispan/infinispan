@@ -124,7 +124,8 @@ public final class QueryRequest implements JsonSerialization {
          queryRequest.setStartOffset(reader.readLong(START_OFFSET_FIELD));
          queryRequest.setMaxResults(reader.readInt(MAX_RESULTS_FIELD));
          queryRequest.setNamedParameters(reader.readCollection(NAMED_PARAMETERS_FIELD, new ArrayList<>(), NamedParameter.class));
-         queryRequest.setLocal(reader.readBoolean(LOCAL_FIELD));
+         Boolean localField = reader.readBoolean(LOCAL_FIELD);
+         if (localField != null) queryRequest.setLocal(localField);
          return queryRequest;
       }
 
