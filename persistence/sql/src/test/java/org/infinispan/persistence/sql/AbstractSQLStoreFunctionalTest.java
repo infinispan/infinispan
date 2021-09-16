@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sql;
 
+import static org.infinispan.persistence.jdbc.common.DatabaseType.H2;
+import static org.infinispan.persistence.jdbc.common.DatabaseType.SQLITE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -7,10 +9,16 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
@@ -28,6 +36,7 @@ import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.sql.configuration.AbstractSchemaJdbcConfigurationBuilder;
 import org.infinispan.test.data.Address;
@@ -40,6 +49,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import util.JdbcConnection;
 
 public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctionalTest {
 
@@ -49,6 +59,18 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    protected String tmpDirectory;
    protected Consumer<AbstractSchemaJdbcConfigurationBuilder<?, ?>> schemaConsumer;
+
+   protected static final String DATABASE = System.getProperty("org.infinispan.test.sqlstore.database");
+   protected static final String JDBC_URL = System.getProperty("org.infinispan.test.sqlstore.jdbc.url");
+   protected static final String JDBC_USERNAME = System.getProperty("org.infinispan.test.sqlstore.jdbc.username");
+   protected static final String JDBC_PASSWORD = System.getProperty("org.infinispan.test.sqlstore.jdbc.password");
+   protected static Map<DatabaseType, JdbcConnection> databasesFromSystemProperty = new HashMap<>();
+
+   static {
+      if(DATABASE != null) {
+         databasesFromSystemProperty = getDatabases();
+      }
+   }
 
    public AbstractSQLStoreFunctionalTest(DatabaseType databaseType, boolean transactionalCache,
          boolean transactionalStore) {
@@ -258,41 +280,31 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
          schemaConsumer.accept(builder);
       }
 
+      PooledConnectionFactoryConfigurationBuilder<?> connectionPool = null;
+      if(!(DB_TYPE == SQLITE || DB_TYPE == H2)) {
+         connectionPool = addJdbcConnection(builder);
+      }
+
       switch (DB_TYPE) {
          case POSTGRES:
-            builder.connectionPool()
-                  .driverClass(Driver.class)
-                  .connectionUrl("jdbc:postgresql://172.17.0.1:5432/test1")
-                  .username("postgres")
-                  .password("example");
+            connectionPool
+                  .driverClass(Driver.class);
             break;
          case ORACLE:
-            builder.connectionPool()
-                  .driverClass("oracle.jdbc.OracleDriver")
-                  .connectionUrl("jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=oracle-19c-rac-01.hosts.mwqe.eng.bos.redhat.com)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=oracle-19c-rac-02.hosts.mwqe.eng.bos.redhat.com)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=dballo)))")
-                  .username("dballo10")
-                  .password("dballo10");
+            connectionPool
+                  .driverClass("oracle.jdbc.OracleDriver");
             break;
          case MARIA_DB:
-            builder.connectionPool()
-                  .driverClass("org.mariadb.jdbc.Driver")
-                  .connectionUrl("jdbc:mariadb://mariadb-101.hosts.mwqe.eng.bos.redhat.com:3306/dballo12")
-                  .username("dballo12")
-                  .password("dballo12");
+            connectionPool
+                  .driverClass("org.mariadb.jdbc.Driver");
             break;
          case DB2:
-            builder.connectionPool()
-                  .driverClass("com.ibm.db2.jcc.DB2Driver")
-                  .connectionUrl("jdbc:db2://db2-111.hosts.mwqe.eng.bos.redhat.com:50000/dballo")
-                  .username("dballo16")
-                  .password("dballo16");
+            connectionPool
+                  .driverClass("com.ibm.db2.jcc.DB2Driver");
             break;
          case MYSQL:
-            builder.connectionPool()
-                  .driverClass("com.mysql.cj.jdbc.Driver")
-                  .connectionUrl("jdbc:mysql://mysql-80.hosts.mwqe.eng.bos.redhat.com:3306/dballo09")
-                  .username("dballo09")
-                  .password("dballo09");
+            connectionPool
+                  .driverClass("com.mysql.cj.jdbc.Driver");
             break;
          case SQLITE:
             builder.connectionPool()
@@ -301,18 +313,12 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                   .username("sa");
             break;
          case SQL_SERVER:
-            builder.connectionPool()
-                  .driverClass("com.microsoft.sqlserver.jdbc.SQLServerDriver")
-                  .connectionUrl("jdbc:sqlserver://mssql-2019.msdomain.mw.lab.eng.bos.redhat.com:1433;DatabaseName=dballo04")
-                  .username("dballo04")
-                  .password("dballo04");
+            connectionPool
+                  .driverClass("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             break;
          case SYBASE:
-            builder.connectionPool()
-                  .driverClass("com.sybase.jdbc4.jdbc.SybDriver")
-                  .connectionUrl("jdbc:sybase:Tds:sybase-160.hosts.mwqe.eng.bos.redhat.com:5000/dballo13")
-                  .username("dballo13")
-                  .password("dballo13");
+            connectionPool
+                  .driverClass("com.sybase.jdbc4.jdbc.SybDriver");
             break;
          case H2:
          default:
@@ -447,4 +453,35 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       if (DB_TYPE == DatabaseType.POSTGRES) return tableName.toLowerCase();
       return tableName.toUpperCase();
    }
+
+   private PooledConnectionFactoryConfigurationBuilder<?> addJdbcConnection(AbstractSchemaJdbcConfigurationBuilder<?, ?> builder) {
+      if(JDBC_URL != null && JDBC_PASSWORD != null && JDBC_USERNAME != null) {
+         JdbcConnection jdbcConnection = databasesFromSystemProperty.get(DB_TYPE);
+         return builder.connectionPool()
+                 .connectionUrl(jdbcConnection.getJdbcUrl())
+                 .username(jdbcConnection.getUsername())
+                 .password(jdbcConnection.getPassword());
+      }
+      throw new IllegalArgumentException("JDBC connection wasn't provided through System Properties");
+   }
+
+   protected static HashMap<DatabaseType, JdbcConnection> getDatabases() {
+      Objects.requireNonNull(JDBC_URL);
+      Objects.requireNonNull(JDBC_USERNAME);
+      Objects.requireNonNull(JDBC_PASSWORD);
+      Objects.requireNonNull(DATABASE);
+      List<DatabaseType> databaseTypes = Arrays.stream(DATABASE.split(",")).map(DatabaseType::guessDialect).collect(Collectors.toList());
+      HashMap<DatabaseType, JdbcConnection> map = new HashMap<>();
+      for (int i = 0; i < databaseTypes.size(); i++) {
+         String jdbcURL = JDBC_URL.split(",")[i];
+         String username = JDBC_USERNAME.split(",")[i];
+         String password = JDBC_PASSWORD.split(",")[i];
+
+         JdbcConnection jdbcConnection = new JdbcConnection(jdbcURL, username, password);
+         DatabaseType databaseType = databaseTypes.get(i);
+         map.put(databaseType, jdbcConnection);
+      }
+      return map;
+   }
+
 }

@@ -18,17 +18,18 @@ public class TableJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTest
 
    @Factory
    public static Object[] factory() {
-      return Arrays.stream(new DatabaseType[]{
-            DatabaseType.H2,
-//            DatabaseType.POSTGRES,
-//            DatabaseType.ORACLE,
-//            DatabaseType.MARIA_DB,
-//            DatabaseType.DB2,
-//            DatabaseType.SQL_SERVER,
-            DatabaseType.SQLITE,
-//            DatabaseType.SYBASE,
-//            DatabaseType.MYSQL
-      })
+
+      DatabaseType[] databases;
+      if(DATABASE == null) {
+         databases = new DatabaseType[]{
+                 DatabaseType.H2,
+                 DatabaseType.SQLITE
+         };
+      } else {
+         databases = databasesFromSystemProperty.keySet().stream().toArray(DatabaseType[] :: new);
+      }
+
+      return Arrays.stream(databases)
             .flatMap(dt -> Stream.of(
                   new TableJdbcStoreFunctionalTest(dt, true, true),
                   new TableJdbcStoreFunctionalTest(dt, true, false),
