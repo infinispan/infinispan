@@ -35,10 +35,6 @@ public class DataConfigurationBuilder implements Builder<DataConfiguration> {
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public DataConfiguration create() {
       return new DataConfiguration(attributes.protect());
    }

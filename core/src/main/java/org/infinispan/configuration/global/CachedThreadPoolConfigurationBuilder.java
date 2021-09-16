@@ -39,10 +39,6 @@ public class CachedThreadPoolConfigurationBuilder extends AbstractGlobalConfigur
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public CachedThreadPoolConfiguration create() {
       return new CachedThreadPoolConfiguration(attributes.protect());
    }

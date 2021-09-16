@@ -150,10 +150,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public void validate(GlobalConfiguration globalConfig) {
    }
 

@@ -38,26 +38,4 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
       template.corsRules().forEach(r -> addNewRule().read(r));
       return this;
    }
-
-   @Override
-   public void validate() {
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      CorsConfigurationBuilder that = (CorsConfigurationBuilder) o;
-
-      if (!corsRules.equals(that.corsRules)) return false;
-      return extraConfigs.equals(that.extraConfigs);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = corsRules.hashCode();
-      result = 31 * result + extraConfigs.hashCode();
-      return result;
-   }
 }

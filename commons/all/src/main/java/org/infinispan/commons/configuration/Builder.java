@@ -10,7 +10,7 @@ public interface Builder<T> {
    /**
     * Validate the data in this builder before building the configuration bean
     */
-   void validate();
+   default void validate() {}
 
    /**
     * Create the configuration bean

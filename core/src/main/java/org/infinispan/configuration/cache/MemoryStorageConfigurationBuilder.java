@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 10.0
@@ -15,14 +14,6 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
    MemoryStorageConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = MemoryStorageConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

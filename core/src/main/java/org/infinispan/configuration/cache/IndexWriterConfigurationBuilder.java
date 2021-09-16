@@ -11,7 +11,6 @@ import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 12.0
@@ -100,13 +99,4 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
             ", indexMergeConfigurationBuilder=" + indexMergeConfigurationBuilder +
             '}';
    }
-
-   @Override
-   public void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
-   }
-
 }

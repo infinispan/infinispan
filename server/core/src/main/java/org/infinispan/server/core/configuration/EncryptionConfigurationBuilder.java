@@ -48,10 +48,6 @@ public class EncryptionConfigurationBuilder implements Builder<EncryptionConfigu
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public EncryptionConfiguration create() {
       List<SniConfiguration> snis = sniConfigurations.stream().map(SniConfigurationBuilder::create).collect(toList());
       return new EncryptionConfiguration(attributes.protect(), snis);

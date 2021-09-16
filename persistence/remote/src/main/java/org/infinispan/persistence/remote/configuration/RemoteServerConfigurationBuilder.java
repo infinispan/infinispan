@@ -5,7 +5,6 @@ import static org.infinispan.persistence.remote.configuration.RemoteServerConfig
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<RemoteServerConfiguration> {
@@ -26,14 +25,6 @@ public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigu
    public RemoteServerConfigurationBuilder port(int port) {
       this.attributes.attribute(PORT).set(port);
       return this;
-   }
-
-   @Override
-   public void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

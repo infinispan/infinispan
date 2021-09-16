@@ -36,10 +36,6 @@ public class RocksDBExpirationConfigurationBuilder implements Builder<RocksDBExp
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public RocksDBExpirationConfiguration create() {
       return new RocksDBExpirationConfiguration(attributes.protect());
    }

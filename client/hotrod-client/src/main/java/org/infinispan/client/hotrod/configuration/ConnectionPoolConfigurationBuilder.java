@@ -140,10 +140,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ConnectionPoolConfiguration create() {
       return new ConnectionPoolConfiguration(exhaustedAction, maxActive, maxWait, minIdle, minEvictableIdleTime, maxPendingRequests);
    }

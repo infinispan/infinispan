@@ -88,10 +88,6 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public Role create() {
       return new CacheRoleImpl(name, inheritable, permissions);
    }

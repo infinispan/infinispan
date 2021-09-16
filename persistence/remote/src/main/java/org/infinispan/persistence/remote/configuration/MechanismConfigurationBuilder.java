@@ -55,8 +55,4 @@ public class MechanismConfigurationBuilder extends AbstractSecurityConfiguration
       this.attributes.read(template.attributes());
       return this;
    }
-
-   @Override
-   public void validate() {
-   }
 }

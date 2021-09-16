@@ -34,10 +34,6 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
       return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_PROTOSTREAM);
    }
 
-   @Override
-   public void validate() {
-   }
-
    public ContentTypeConfigurationBuilder mediaType(String mediaType) {
       attributes.attribute(MEDIA_TYPE).set(mediaType);
       return this;

@@ -73,10 +73,6 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public CorsRuleConfiguration create() {
       CorsConfig corsConfig = createCors();
       return new CorsRuleConfiguration(attributes.protect(), corsConfig);
@@ -117,20 +113,5 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
    public CorsRuleConfigurationBuilder read(CorsRuleConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      CorsRuleConfigurationBuilder that = (CorsRuleConfigurationBuilder) o;
-
-      return attributes.equals(that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes.hashCode();
    }
 }

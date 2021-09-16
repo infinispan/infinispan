@@ -39,10 +39,6 @@ public class TrustStoreConfigurationBuilder extends AbstractSecurityConfiguratio
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public TrustStoreConfiguration create() {
       return new TrustStoreConfiguration(attributes.protect());
    }

@@ -120,10 +120,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ThreadsConfigurationBuilder read(ThreadsConfiguration template) {
       this.asyncThreadPool.read(template.asyncThreadPool());
       this.expirationThreadPool.read(template.expirationThreadPool());

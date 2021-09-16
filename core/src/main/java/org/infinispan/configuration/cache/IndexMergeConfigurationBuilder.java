@@ -94,10 +94,6 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public void validate(GlobalConfiguration globalConfig) {
    }
 
