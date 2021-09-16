@@ -74,6 +74,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -161,7 +162,8 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(cacheManager.getCacheManagerInfo().toJson(), responseBuilder);
+      Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
+      return asJsonResponseFuture(cacheManagerInfo, responseBuilder);
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
@@ -257,7 +259,20 @@ public class ContainerResource implements ResourceHandler {
          cachesHealth.put(ch.getCacheName(), ch.getStatus());
       }
 
+      LocalTopologyManager localTopologyManager = null;
+      Boolean clusterRebalancingEnabled = null;
+      try {
+         localTopologyManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager();
+         if (localTopologyManager != null) {
+            clusterRebalancingEnabled = localTopologyManager.isRebalancingEnabled();
+         }
+      } catch (Exception e) {
+         // Unable to get the component. Just ignore.
+      }
+
       // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
+      LocalTopologyManager finalLocalTopologyManager = localTopologyManager;
+      Boolean finalClusterRebalancingEnabled = clusterRebalancingEnabled;
       return Flowable.fromIterable(cachesHealth.entrySet())
             .map(chHealth -> {
                CacheInfo cacheInfo = new CacheInfo();
@@ -295,6 +310,25 @@ public class ContainerResource implements ResourceHandler {
                      cacheInfo.status = ComponentStatus.FAILED.toString();
                   }
                }
+
+               // if any of those are null, don't keep trying to retrieve the rebalancing status
+               if (finalLocalTopologyManager != null && finalClusterRebalancingEnabled != null) {
+                  Boolean perCacheRebalancing = null;
+                  if (finalClusterRebalancingEnabled) {
+                     // if the global rebalancing is enabled, retrieve each cache status
+                     try {
+                        perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
+                     } catch (Exception ex) {
+                        // There was an error retrieving this value. Just ignore
+                     }
+                  } else {
+                     // set all to false. global disabled rebalancing disables all caches rebalancing
+                     perCacheRebalancing = Boolean.FALSE;
+                  }
+
+                  cacheInfo.rebalancing_enabled = perCacheRebalancing;
+               }
+
                return cacheInfo;
             })
             .collectInto(new HashSet<CacheInfo>(), Set::add)
@@ -458,10 +492,11 @@ public class ContainerResource implements ResourceHandler {
       public boolean secured;
       public boolean hasRemoteBackup;
       public HealthStatus health;
+      public Boolean rebalancing_enabled;
 
       @Override
       public Json toJson() {
-         return Json.object()
+         Json payload = Json.object()
                .set("status", status)
                .set("name", name)
                .set("type", type)
@@ -473,6 +508,12 @@ public class ContainerResource implements ResourceHandler {
                .set("indexed", indexed)
                .set("has_remote_backup", hasRemoteBackup)
                .set("health", health);
+
+         if (rebalancing_enabled != null) {
+            payload.set("rebalancing_enabled", rebalancing_enabled);
+         }
+
+         return payload;
       }
    }
 

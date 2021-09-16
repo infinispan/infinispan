@@ -217,6 +217,9 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       List<String> health = find(jsonNode, "health");
 
       assertTrue(health.contains("HEALTHY"));
+
+      List<String> isRebalancingEnabled = find(jsonNode, "rebalancing_enabled");
+      assertTrue(isRebalancingEnabled.contains("true"));
    }
 
    @Test
@@ -293,6 +296,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertEquals(1, cmInfo.at("site_coordinators_address").asList().size());
       assertEquals(1, cmInfo.at("sites_view").asList().size());
       assertEquals("LON-1", cmInfo.at("sites_view").asList().get(0));
+      assertTrue(cmInfo.at("rebalancing_enabled").asBoolean());
    }
 
    @Test

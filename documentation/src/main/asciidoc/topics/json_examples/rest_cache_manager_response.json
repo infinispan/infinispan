@@ -50,5 +50,6 @@
     "sites_view": [
         "LON",
         "NYC"
-    ]
+    ],
+    "rebalancing_enabled": true
 }
