@@ -24,10 +24,6 @@ public class JGroupsProtocolConfigurationBuilder extends AbstractGlobalConfigura
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public JGroupsProtocolConfiguration create() {
       return new JGroupsProtocolConfiguration(attributes.protect());
    }

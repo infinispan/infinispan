@@ -108,10 +108,6 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public GlobalJmxConfiguration create() {
       if (enabled() && attributes.attribute(MBEAN_SERVER_LOOKUP).isNull()) {
          mBeanServerLookup(new PlatformMBeanServerLookup());

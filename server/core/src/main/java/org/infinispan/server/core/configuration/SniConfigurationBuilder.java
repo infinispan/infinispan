@@ -34,10 +34,6 @@ public class SniConfigurationBuilder implements Builder<SniConfiguration> {
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public SniConfiguration create() {
       return new SniConfiguration(attributes.protect());
    }

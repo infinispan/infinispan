@@ -46,10 +46,6 @@ public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public StackConfiguration create() {
       List<JGroupsProtocolConfiguration> protocolConfigurations = protocols.stream()
             .map(JGroupsProtocolConfigurationBuilder::create).collect(Collectors.toList());
@@ -60,14 +56,6 @@ public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    public StackConfigurationBuilder read(StackConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   @Override
-   public String toString() {
-      return "StackConfigurationBuilder{" +
-            "attributes=" + attributes +
-            ", protocols=" + protocols +
-            '}';
    }
 
    @Override

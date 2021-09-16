@@ -39,10 +39,6 @@ public class ScheduledThreadPoolConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ScheduledThreadPoolConfiguration create() {
       return new ScheduledThreadPoolConfiguration(attributes.protect());
    }

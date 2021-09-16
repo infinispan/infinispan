@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 /**
@@ -82,14 +81,6 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       groupers.add(grouper);
       attributes.attribute(GROUPERS).set(groupers);
       return this;
-   }
-
-   @Override
-   public void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

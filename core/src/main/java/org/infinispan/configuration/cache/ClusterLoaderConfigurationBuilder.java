@@ -42,10 +42,6 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ClusterLoaderConfiguration create() {
       return new ClusterLoaderConfiguration(attributes.protect(), async.create());
    }

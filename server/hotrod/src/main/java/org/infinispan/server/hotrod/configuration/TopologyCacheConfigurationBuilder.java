@@ -31,10 +31,6 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public TopologyCacheConfiguration create() {
       return new TopologyCacheConfiguration(attributes.protect());
    }

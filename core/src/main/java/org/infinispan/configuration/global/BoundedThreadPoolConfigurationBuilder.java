@@ -85,10 +85,6 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public BoundedThreadPoolConfiguration create() {
       return new BoundedThreadPoolConfiguration(attributes.protect());
    }

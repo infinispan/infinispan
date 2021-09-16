@@ -41,10 +41,6 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public StackFileConfiguration create() {
       return new StackFileConfiguration(attributes.protect());
    }
@@ -53,13 +49,6 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
    public StackFileConfigurationBuilder read(StackFileConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   @Override
-   public String toString() {
-      return "StackFileConfigurationBuilder{" +
-            "attributes=" + attributes +
-            '}';
    }
 
    @Override

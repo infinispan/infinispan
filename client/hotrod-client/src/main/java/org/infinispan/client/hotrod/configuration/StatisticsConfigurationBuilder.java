@@ -107,10 +107,6 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public StatisticsConfiguration create() {
       return new StatisticsConfiguration(attributes.protect());
    }
