@@ -17,6 +17,7 @@ import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.topology.LocalTopologyManager;
 
 /**
  * @since 10.0
@@ -27,13 +28,16 @@ public class CacheManagerInfo implements JsonSerialization {
    private final DefaultCacheManager cacheManager;
    private final ConfigurationManager configurationManager;
    private final InternalCacheRegistry internalCacheRegistry;
+   private final LocalTopologyManager localTopologyManager;
 
    public CacheManagerInfo(DefaultCacheManager cacheManager,
-                           ConfigurationManager configurationManager, InternalCacheRegistry internalCacheRegistry) {
+                           ConfigurationManager configurationManager,
+                           InternalCacheRegistry internalCacheRegistry,
+                           LocalTopologyManager localTopologyManager) {
       this.cacheManager = cacheManager;
       this.configurationManager = configurationManager;
       this.internalCacheRegistry = internalCacheRegistry;
-
+      this.localTopologyManager = localTopologyManager;
    }
 
    public String getCoordinatorAddress() {
@@ -127,6 +131,15 @@ public class CacheManagerInfo implements JsonSerialization {
       return transport != null && transport.isSiteCoordinator();
    }
 
+   public Boolean isRebalancingEnabled() {
+      try {
+         return localTopologyManager.isRebalancingEnabled();
+      } catch (Exception e) {
+         // Ignore the error
+         return null;
+      }
+   }
+
    public Collection<String> getSiteCoordinatorsAddress() {
       Transport transport = cacheManager.getTransport();
       if (transport == null) {
@@ -137,7 +150,7 @@ public class CacheManagerInfo implements JsonSerialization {
 
    @Override
    public Json toJson() {
-      return Json.object()
+     Json result = Json.object()
             .set("version", getVersion())
             .set("name", getName())
             .set("coordinator", isCoordinator())
@@ -157,6 +170,13 @@ public class CacheManagerInfo implements JsonSerialization {
             .set("site_coordinator", isSiteCoordinator())
             .set("site_coordinators_address", getSiteCoordinatorsAddress())
             .set("sites_view", Json.make(getSites()));
+
+      Boolean rebalancingEnabled = isRebalancingEnabled();
+      if (rebalancingEnabled != null) {
+         result.set("rebalancing_enabled", rebalancingEnabled);
+      }
+
+     return result;
    }
 
    static class BasicCacheInfo implements JsonSerialization {

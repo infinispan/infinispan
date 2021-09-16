@@ -540,12 +540,24 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Boolean rehashInProgress = null;
       Boolean indexingInProgress = null;
       Boolean queryable = null;
+
       try {
          stats = cache.getAdvancedCache().getStats();
          DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
          rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
       } catch (SecurityException ex) {
          // Admin is needed
+      }
+
+      Boolean rebalancingEnabled = null;
+      try {
+         LocalTopologyManager localTopologyManager = SecurityActions.getComponentRegistry(cache.getAdvancedCache())
+               .getComponent(LocalTopologyManager.class);
+         if (localTopologyManager != null) {
+            rebalancingEnabled = localTopologyManager.isCacheRebalancingEnabled(cache.getName());
+         }
+      } catch (Exception ex) {
+         // Getting rebalancing status might raise an exception
       }
 
       Integer size = null;
@@ -581,6 +593,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
       fullDetail.statistics = statistics;
       fullDetail.queryable = queryable;
+      fullDetail.rebalancingEnabled = rebalancingEnabled;
 
       return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder()).build();
    }
@@ -728,6 +741,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public Boolean indexingInProgress;
       public boolean statistics;
       public Boolean queryable;
+      public Boolean rebalancingEnabled;
 
       @Override
       public Json toJson() {
@@ -751,6 +765,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
          if (queryable != null) {
             json.set("queryable", queryable);
+         }
+
+         if (rebalancingEnabled != null) {
+            json.set("rebalancing_enabled", rebalancingEnabled);
          }
 
          return json

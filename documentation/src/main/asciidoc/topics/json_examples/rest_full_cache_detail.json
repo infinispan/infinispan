@@ -33,6 +33,7 @@
     }
   },
   "rehash_in_progress": false,
+  "rebalancing_enabled": true,
   "bounded": false,
   "indexed": false,
   "persistent": false,

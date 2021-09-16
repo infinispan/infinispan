@@ -413,6 +413,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(body).contains("secured");
       assertThat(body).contains("indexing_in_progress");
       assertThat(body).contains("queryable");
+      assertThat(body).contains("rebalancing_enabled");
    }
 
    public void testCacheQueryable() {

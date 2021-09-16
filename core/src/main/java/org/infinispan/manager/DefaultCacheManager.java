@@ -86,6 +86,7 @@ import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -287,7 +288,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
 
       health = new HealthImpl(this, globalComponentRegistry.getComponent(InternalCacheRegistry.class));
-      cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry);
+      cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry, globalComponentRegistry.getComponent(
+            LocalTopologyManager.class));
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
       this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
@@ -382,7 +384,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
 
          health = new HealthImpl(this, internalCacheRegistry);
-         cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry);
+         cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry, globalComponentRegistry.getComponent(LocalTopologyManager.class));
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
          authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
