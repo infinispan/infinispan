@@ -83,10 +83,6 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ExecutorFactoryConfiguration create() {
       if (factory != null)
          return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));

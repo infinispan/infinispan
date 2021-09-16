@@ -28,10 +28,6 @@ public class GlobalStatePathConfigurationBuilder extends AbstractGlobalConfigura
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public GlobalStatePathConfiguration create() {
       return new GlobalStatePathConfiguration(attributes.protect(), elementName);
    }

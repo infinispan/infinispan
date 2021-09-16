@@ -52,7 +52,7 @@ public interface ConfigurationChildBuilder {
       return this;
    }
 
-   void validate(GlobalConfiguration globalConfig);
+   default void validate(GlobalConfiguration globalConfig) {}
 
    Configuration build();
 }

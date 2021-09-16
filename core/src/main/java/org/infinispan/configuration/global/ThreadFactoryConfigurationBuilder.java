@@ -66,10 +66,6 @@ public class ThreadFactoryConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public ThreadFactoryConfiguration create() {
       return new ThreadFactoryConfiguration(attributes.protect(), nodeName);
    }
@@ -78,12 +74,5 @@ public class ThreadFactoryConfigurationBuilder extends AbstractGlobalConfigurati
    public ThreadFactoryConfigurationBuilder read(ThreadFactoryConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   @Override
-   public String toString() {
-      return "ThreadFactoryConfigurationBuilder{" +
-            "attributes=" + attributes +
-            '}';
    }
 }

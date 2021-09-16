@@ -71,10 +71,6 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public void validate(GlobalConfiguration globalConfig) {
       if (attributes.attribute(ENABLED).get() && !globalConfig.security().authorization().enabled()) {
          throw CONFIG.globalSecurityAuthShouldBeEnabled();

@@ -5,7 +5,6 @@ import static org.infinispan.configuration.cache.TakeOfflineConfiguration.MIN_TI
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea Markus
@@ -64,14 +63,6 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
-   }
-
-   @Override
    public TakeOfflineConfiguration create() {
       return new TakeOfflineConfiguration(attributes.protect());
    }
@@ -80,10 +71,5 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    public TakeOfflineConfigurationBuilder read(TakeOfflineConfiguration template) {
       this.attributes.read(template.attributes());
       return this;
-   }
-
-   @Override
-   public String toString() {
-      return this.getClass().getSimpleName() + attributes;
    }
 }

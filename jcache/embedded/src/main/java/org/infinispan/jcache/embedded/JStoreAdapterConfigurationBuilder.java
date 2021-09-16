@@ -21,10 +21,6 @@ public class JStoreAdapterConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public JStoreAdapterConfiguration create() {
       return new JStoreAdapterConfiguration(attributes.protect(), async.create());
    }

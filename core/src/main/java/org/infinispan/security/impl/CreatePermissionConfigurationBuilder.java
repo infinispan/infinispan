@@ -15,10 +15,6 @@ public class CreatePermissionConfigurationBuilder extends AbstractModuleConfigur
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public CreatePermissionConfiguration create() {
       return new CreatePermissionConfiguration();
    }

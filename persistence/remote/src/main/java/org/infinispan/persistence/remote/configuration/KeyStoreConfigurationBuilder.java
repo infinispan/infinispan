@@ -51,10 +51,6 @@ public class KeyStoreConfigurationBuilder extends AbstractSecurityConfigurationC
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public KeyStoreConfiguration create() {
       return new KeyStoreConfiguration(attributes.protect());
    }

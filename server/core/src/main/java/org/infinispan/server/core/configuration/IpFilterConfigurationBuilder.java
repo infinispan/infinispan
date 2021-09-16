@@ -35,10 +35,6 @@ public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration,
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public IpFilterConfiguration create() {
       return new IpFilterConfiguration(rules);
    }

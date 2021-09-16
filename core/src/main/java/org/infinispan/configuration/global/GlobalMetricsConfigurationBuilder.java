@@ -91,10 +91,6 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public GlobalMetricsConfiguration create() {
       return new GlobalMetricsConfiguration(attributes.protect());
    }

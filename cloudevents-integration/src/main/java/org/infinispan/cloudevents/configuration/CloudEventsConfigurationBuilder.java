@@ -31,10 +31,6 @@ public class CloudEventsConfigurationBuilder implements Builder<CloudEventsConfi
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public CloudEventsConfiguration create() {
       return new CloudEventsConfiguration(attributes);
    }

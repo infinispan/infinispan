@@ -22,10 +22,6 @@ public class TemporaryGlobalStatePathConfigurationBuilder extends AbstractGlobal
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public TemporaryGlobalStatePathConfiguration create() {
       return new TemporaryGlobalStatePathConfiguration(attributes.protect(), location);
    }

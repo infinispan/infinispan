@@ -120,10 +120,6 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    @Override
-   public void validate() {
-   }
-
-   @Override
    public RestClientConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
