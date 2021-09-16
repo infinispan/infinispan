@@ -129,6 +129,7 @@ include::json_examples/rest_full_cache_detail.json[]
 * `configuration` the cache configuration.
 * `rehash_in_progress` true when a rehashing is in progress.
 * `indexing_in_progress` true when indexing is in progress.
+* `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property won't be present in the payload.
 * `bounded` when expiration is enabled.
 * `indexed` true if the cache is indexed.
 * `persistent` true if the cache is persisted.
