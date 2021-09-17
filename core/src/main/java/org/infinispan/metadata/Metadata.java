@@ -45,10 +45,10 @@ public interface Metadata {
     * <p>
     * Created entries always update the creation timestamp.
     * <p>
-    * This feature is experimental and all Infinispan implementation returns {@code true}. If you want o use this
-    * feature, you have to create a custom {@link Metadata} implementation.
+    * This capability is experimental and all Infinispan implementations return {@code true}. To update creation
+    * timestamps you must create a custom {@link Metadata} implementation.
     *
-    * @return {@code true} to update the creation timestamp for modified.
+    * @return {@code true} to update the creation timestamp when entries are modified.
     */
    @Experimental
    default boolean updateCreationTimestamp() {
@@ -112,19 +112,20 @@ public interface Metadata {
       Builder version(EntryVersion version);
 
       /**
-       * Set how the creation timestamp is updated.
+       * Sets how the creation timestamp is updated.
        * <p>
-       * It only affects mortal entries; in other words, where {@link Metadata#lifespan()} is greater than zero.
+       * Affects mortal entries only; in other words, for entries where {@link Metadata#lifespan()} is greater than
+       * zero.
        * <p>
        * When {@code true} (default), the creation timestamp is updated when an entry is created or modified. When set
-       * to {@code false}, the creation timestamp is only updated when the entry is created.
+       * to {@code false}, the creation timestamp is updated only when the entry is created.
        * <p>
-       * The feature is experimental and Infinispan {@link Metadata} and {@link Builder} does not implement this method.
-       * If you want to use this feature, you have to create your own {@link Metadata} and {@link Builder}
+       * The capability is experimental and Infinispan {@link Metadata} and {@link Builder} does not implement this
+       * method. To not update creation timestamps you must create a custom {@link Metadata} and {@link Builder}
        * implementation.
        *
-       * @param enabled {@code false} to disable creation timestamp update when modifying an entry.
-       * @return a builder instance with the version applied
+       * @param enabled {@code false} to disable creation timestamp update when modifying entries.
+       * @return a builder instance with the version applied.
        */
       @Experimental
       default Builder updateCreationTimestamp(boolean enabled) {
