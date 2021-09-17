@@ -48,24 +48,26 @@
                 <xs:attribute name="lower-bound" type="xs:int">
                     <xs:annotation>
                         <xs:documentation>
-                            Sets the counter's lower bound (inclusive). It makes the strong consistent counter bounded.
+                            Sets the counter's lower bound (inclusive). It makes the strong consistent counter bounded
+                            and it must be less or equals than "initial-value"
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="upper-bound" type="xs:int">
                     <xs:annotation>
                         <xs:documentation>
-                            Sets the counter's upper bound (inclusive). it makes the strong consistent
-                            counter bounded.
+                            Sets the counter's upper bound (inclusive). It makes the strong consistent counter bounded
+                            and must be greater or equals than "initial-value".
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="lifespan" type="xs:long" default="${StrongCounter.lifespan}">
                     <xs:annotation>
                         <xs:documentation>
-                            Specifies the maximum amount of time, in milliseconds, that the strong counter can exist.
-                            After reaching their lifespan, the counter is removed from the cluster. A 0 (zero) or -1
-                            value disables this.
+                            (Experimental) Specifies the maximum amount of time, in milliseconds, that strong counters
+                            can stay in
+                            cluster. Counters are removed from the cluster when they exceed the lifespan and are reset
+                            to their initial values. Setting a value of 0 (zero) or -1 means counters are never removed.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
@@ -117,7 +119,9 @@
             <xs:enumeration value="VOLATILE">
                 <xs:annotation>
                     <xs:documentation>
-                        The counter value is lost when the cluster is restarted/stopped.
+                        The counter value is lost when the cluster is restarted/stopped. On-demand counters will lose
+                        its value and configuration after a cluster shutdown. They must be defined again after the
+                        restart
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
