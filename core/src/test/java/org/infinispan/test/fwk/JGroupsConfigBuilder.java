@@ -47,7 +47,7 @@ public class JGroupsConfigBuilder {
    private static final Map<String, ProtocolStackConfigurator> protocolStackConfigurator = new HashMap<>();
 
    private static final ThreadLocal<Integer> threadTcpIndex = new ThreadLocal<Integer>() {
-      private final AtomicInteger counter = new AtomicInteger(BASE_TCP_PORT);
+      private final AtomicInteger counter = new AtomicInteger(0);
 
       @Override
       protected Integer initialValue() {
