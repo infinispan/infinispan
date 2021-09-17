@@ -12,7 +12,7 @@ POST /v2/caches/{cacheName}/rolling-upgrade/source-connection
 You must provide a `remote-store` definition in JSON format as the body:
 
 .JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::config_examples/remote-store.json[]
 ----
@@ -22,8 +22,7 @@ The configuration must contain minimally the cache name, the `raw-values` set to
 host/ip of the single port in the source cluster. For details about the `remote-store` configuration,
 consult the link:https://infinispan.org/schemas/infinispan-cachestore-remote-config-12.0.xsd[XSD Schema].
 
-If the operation successfully completes, the service returns 204 (No Content). If the target cluster
-is already connected to the source cluster, it returns status 304 (Not Modified).
+If the operation successfully completes, the service returns 204 (No Content). If the target cluster is already connected to the source cluster, it returns status 304 (Not Modified).
 
 = Obtaining Source Cluster connection details
 
