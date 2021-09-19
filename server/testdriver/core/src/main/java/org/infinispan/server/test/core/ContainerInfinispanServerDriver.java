@@ -76,7 +76,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
-   public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-11";
+   public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-11-runtime";
    public static final String IMAGE_USER = "200";
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
