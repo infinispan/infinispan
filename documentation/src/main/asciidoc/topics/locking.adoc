@@ -1,5 +1,5 @@
 [[locking_concurrency]]
-=  Locking and Concurrency
+= Locking and Concurrency
 {brandname} makes use of multi-versioned concurrency control (link:http://en.wikipedia.org/wiki/Multiversion_concurrency_control[MVCC]) - a concurrency scheme popular with relational databases and other data stores.
 MVCC offers many advantages over coarse-grained Java synchronization and even JDK Locks for access to shared data, including:
 
@@ -21,30 +21,20 @@ To allow concurrent reads, writers make a copy of the entry they intend to modif
 This copy isolates concurrent readers from seeing partially modified state.
 Once a write has completed, `MVCCEntry.commit()` will flush changes to the data container and subsequent readers will see the changes written.
 
-=== How does it work in clustered caches?
+=== Clustered caches and locks
 
-In clustered caches, each key has a node responsible to lock the key. This node is called primary owner.
+In {brandname} clusters, primary owner nodes are responsible for locking keys.
 
-==== Non Transactional caches
+For non-transactional caches, {brandname} forwards the write operation to the primary owner of the key so it can attempt to lock it.
+{brandname} either then forwards the write operation to the other owners or throws an exception if it cannot lock the key.
 
-. The write operation is sent to the primary owner of the key.
-. The primary owner tries to lock the key.
-.. If it succeeds, it forwards the operation to the other owners;
-.. Otherwise, an exception is thrown.
+[NOTE]
+====
+If the operation is conditional and fails on the primary owner, {brandname} does not forward it to the other owners.
+====
 
-NOTE: If the operation is conditional and it fails on the primary owner, it is not forwarded to the other owners.
-
-NOTE: If the operation is executed locally in the primary owner, the first step is skipped.
-
-=== Transactional caches
-
-The transactional cache supports optimistic and pessimistic locking mode.
-Refer to Transaction Locking for more information.
-
-=== Isolation levels
-
-Isolation level affects what transactions can read when running concurrently with other transaction.
-Refer to Isolation Levels for more information.
+For transactional caches, primary owners can lock keys with optimistic and pessimistic locking modes.
+{brandname} also supports different isolation levels to control concurrent reads between transactions.
 
 === The LockManager
 The `LockManager` is a component that is responsible for locking an entry for writing.
