@@ -117,9 +117,15 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected abstract void createSites();
 
-   protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
+   protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb,
+                                 ConfigurationBuilder cb) {
+      return createSite(siteName, numNodes, gcb, null, cb);
+   }
+
+   protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb,
+                                 String cacheName, ConfigurationBuilder cb) {
       TestSite testSite = addSite(siteName);
-      testSite.createClusteredCaches(numNodes, null, gcb, defaultCacheConfig);
+      testSite.createClusteredCaches(numNodes, cacheName, gcb, cb);
       return testSite;
    }
 
@@ -307,7 +313,13 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          builder.read(cacheTemplate.build());
          decorateCacheConfiguration(builder, siteIndex, i);
 
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
+
+         ConfigurationBuilder defaultBuilder = cacheName == null ? builder : null;
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, defaultBuilder);
+         if (cacheName != null) {
+            cm.defineConfiguration(cacheName, builder.build());
+            cm.getCache(cacheName);
+         }
          if (waitForCluster) {
             waitForClusterToForm(cacheName);
          }
