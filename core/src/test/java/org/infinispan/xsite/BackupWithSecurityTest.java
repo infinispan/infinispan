@@ -56,8 +56,11 @@ public class BackupWithSecurityTest extends AbstractMultipleSitesTest {
    }
 
    @Override
-   protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
-      return Security.doAs(ADMIN, (PrivilegedAction<TestSite>) () -> BackupWithSecurityTest.super.createSite(siteName, numNodes, gcb, defaultCacheConfig));
+   protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, String cacheName,
+                                 ConfigurationBuilder cb) {
+      return Security.doAs(ADMIN, (PrivilegedAction<TestSite>) () -> {
+         return BackupWithSecurityTest.super.createSite(siteName, numNodes, gcb, cacheName, cb);
+      });
    }
 
    @Override

@@ -38,8 +38,8 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       clientA = client(SITE_A, Optional.of(SITE_B));
       clientB = client(SITE_B, Optional.empty());
 
-      RemoteCache<Integer, String> cacheA = clientA.getCache();
-      RemoteCache<Integer, String> cacheB = clientB.getCache();
+      RemoteCache<Integer, String> cacheA = clientA.getCache(CACHE_NAME);
+      RemoteCache<Integer, String> cacheB = clientB.getCache(CACHE_NAME);
 
       assertNoHits();
       assertSingleSiteHit(SITE_A, SITE_B, () -> assertNull(cacheA.put(1, "v1")));
@@ -56,7 +56,6 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       assertSingleSiteHit(SITE_A, SITE_B, () -> assertEquals("v4", cacheA.get(4)));
    }
 
-   @Test(enabled = false)
    public void testManualClusterSwitchViaJMX() throws Exception {
       clientA = client(SITE_A, Optional.of(SITE_B));
       clientB = client(SITE_B, Optional.empty());
@@ -64,8 +63,8 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       MBeanServer mbeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName objectName = remoteCacheManagerObjectName(clientA);
 
-      RemoteCache<Integer, String> cacheA = clientA.getCache();
-      RemoteCache<Integer, String> cacheB = clientB.getCache();
+      RemoteCache<Integer, String> cacheA = clientA.getCache(CACHE_NAME);
+      RemoteCache<Integer, String> cacheB = clientB.getCache(CACHE_NAME);
 
       assertNoHits();
 
