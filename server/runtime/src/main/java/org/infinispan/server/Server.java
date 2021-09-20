@@ -48,6 +48,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -400,6 +401,7 @@ public class Server implements ServerManagement, AutoCloseable {
          blockingManager = bcr.getComponent(BlockingManager.class).running();
          serverStateManager = new ServerStateManagerImpl(this, cm, bcr.getComponent(GlobalConfigurationManager.class).running());
          bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
+         ScheduledExecutorService timeoutExecutor = bcr.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class).running();
 
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
@@ -427,7 +429,7 @@ public class Server implements ServerManagement, AutoCloseable {
                      protocolServer.setServerManagement(this);
                   }
                   if (configuration instanceof HotRodServerConfiguration) {
-                     ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration);
+                     ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
                      ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
                   }

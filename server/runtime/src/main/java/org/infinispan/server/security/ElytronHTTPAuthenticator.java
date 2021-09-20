@@ -73,7 +73,6 @@ public class ElytronHTTPAuthenticator implements Authenticator {
       mechRealmBuilder.setRealmName(name);
       mechConfigurationBuilder.addMechanismRealm(mechRealmBuilder.build());
       httpBuilder.setMechanismConfigurationSelector(MechanismConfigurationSelector.constantSelector(mechConfigurationBuilder.build()));
-
       factory = httpBuilder.build();
    }
 
