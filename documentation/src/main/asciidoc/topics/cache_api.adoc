@@ -1,5 +1,5 @@
 [[cache_api]]
-= {brandname} Cache Interface
+= Cache Interface
 
 {brandname} provides a link:{javadocroot}/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
@@ -45,7 +45,6 @@ In addition to the simple Cache interface, {brandname} offers an link:{javadocro
 ----
 include::code_examples/GetAdvancedCache.java[]
 ----
-
 
 === Flags
 Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:{javadocroot}/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
