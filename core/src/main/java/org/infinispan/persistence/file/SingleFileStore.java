@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -1224,7 +1225,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    /**
     * @return The entries of a segment, or {@code null} if the segment is not owned
     */
-   @GuardedBy("resizeLock.readLock()")
+   @GuardedBy("resizeLock")
    private Map<K, FileEntry> getSegmentEntries(int segment) {
       if (!segmented) {
          return entries[0];
@@ -1311,7 +1312,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       }));
    }
 
-   public Flowable<MarshallableEntry<K, V>> blockingPublishSegmentEntries(int segment, Predicate<? super K> filter,
+   private Flowable<MarshallableEntry<K, V>> blockingPublishSegmentEntries(int segment, Predicate<? super K> filter,
                                                                           boolean includeValues, long stamp) {
       List<KeyValuePair<K, FileEntry>> keysToLoad;
       long now = ctx.getTimeService().wallClockTime();
@@ -1507,8 +1508,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          if (fe.isExpired(now)) {
             it.set(null);
 
-            // Already "locked" by being removed from the segmentEntries map
-            // FIXME We cannot load the metadata here or the lifespan check in CallInterceptor will fail
+            // Safe to unlock because the entry was locked collectExpiredEntries
+            // TODO We cannot load the metadata here or the lifespan check in CallInterceptor will fail, see ISPN-13295
             MarshallableEntry<K, V> entry = readFromDisk(fe, next.getKey(), false, false);
             processor.onNext(entry);
 
@@ -1530,6 +1531,9 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             FileEntry fe = next.getValue();
             if (fe.isExpired(now)) {
                it.remove();
+               // We don't have to worry about other operations freeing the entry while we are reading it,
+               // but we have to lock because readFromDisk() unlocks
+               fe.lock();
                entriesToPurge.add(new KeyValuePair<>(next.getKey(), fe));
             }
          }
@@ -1545,18 +1549,23 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
       if (!segmented && segments.size() < ctx.getCache().getCacheConfiguration().clustering().hash().numSegments()) {
-         return Flowable.fromPublisher(publishKeys(segments, null)).count().toCompletionStage();
+         return size(segments);
       }
       return blockingManager.supplyBlocking(() -> blockingApproximateSize(segments), "sfs-approximateSize");
    }
 
    private long blockingApproximateSize(IntSet segments) {
-      long stamp = resizeLock.readLock();
       long size = 0;
+      long stamp = resizeLock.readLock();
       try {
-         for (int segment = 0; segment < actualNumSegments; segment++) {
+         if (!segmented) {
+            return getSegmentEntries(0).size();
+         }
+
+         for (PrimitiveIterator.OfInt iterator = segments.iterator(); iterator.hasNext(); ) {
+            int segment = iterator.next();
             Map<K, FileEntry> segmentEntries = getSegmentEntries(segment);
-            if (segmentEntries != null && segments.contains(segment)) {
+            if (segmentEntries != null) {
                size += segmentEntries.size();
             }
          }
