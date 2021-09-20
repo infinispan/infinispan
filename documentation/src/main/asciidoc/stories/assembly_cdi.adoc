@@ -1,6 +1,6 @@
 [id='cdi_support']
 :context: cdi
-= Using the {brandname} CDI Extension
+= Using the CDI Extension
 {brandname} provides an extension that integrates with the CDI (Contexts and
 Dependency Injection) programming model and allows you to:
 
