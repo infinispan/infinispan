@@ -30,6 +30,12 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    public abstract ConfigurationBuilder getCacheConfiguration();
 
+   @Override
+   protected int maxRetries() {
+      // We kill one node in many tests - let it failover in that case
+      return 1;
+   }
+
    @Test(groups = "functional")
    public void testFailOver() throws InterruptedException {
       int cacheSize = 10000;
