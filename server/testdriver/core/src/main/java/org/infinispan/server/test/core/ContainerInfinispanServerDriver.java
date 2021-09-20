@@ -78,6 +78,16 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final int JMX_PORT = 9999;
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-11-runtime";
    public static final String IMAGE_USER = "200";
+   public static final Integer[] EXPOSED_PORTS = {
+         11222, // Protocol endpoint
+         11221, // Memcached endpoint
+         11223, // Alternate Hot Rod endpoint
+         11224, // Alternate REST endpoint
+         11225, // Alternate single port endpoint
+         7800,  // JGroups TCP
+         46655, // JGroups UDP
+         9999
+   };
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
    private String name;
@@ -154,7 +164,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       libDir.mkdirs();
       copyArtifactsToUserLibDir(libDir);
 
-      image = new ImageFromDockerfile("testcontainers/" + Base58.randomString(16).toLowerCase(), !preserveImageAfterTest)
+      image = new ImageFromDockerfile("localhost/testcontainers/" + Base58.randomString(16).toLowerCase(), !preserveImageAfterTest)
             .withFileFromPath("test", rootDir.toPath())
             .withFileFromPath("tmp", tmp)
             .withFileFromPath("lib", libDir.toPath());
@@ -223,14 +233,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .workDir(INFINISPAN_SERVER_HOME)
                .entryPoint(args.toArray(new String[]{}))
                .expose(
-                     11222, // Protocol endpoint
-                     11221, // Memcached endpoint
-                     11223, // Alternate Hot Rod endpoint
-                     11224, // Alternate REST endpoint
-                     11225, // Alternate single port endpoint
-                     7800,  // JGroups TCP
-                     46655, // JGroups UDP
-                     9999   // JMX Remoting
+                     EXPOSED_PORTS   // JMX Remoting
                );
 
          builder
@@ -292,6 +295,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       GenericContainer<?> container = new GenericContainer<>(image)
+            //.withExposedPorts(EXPOSED_PORTS)
             .withCreateContainerCmdModifier(cmd -> {
                cmd.getHostConfig().withMounts(
                      Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
