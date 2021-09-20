@@ -47,18 +47,12 @@ public final class TopologyInfo {
 
    private final ConcurrentMap<WrappedBytes, CacheInfo> caches = new ConcurrentHashMap<>();
    private volatile ClusterInfo cluster;
-   // Topology age provides a way to avoid concurrent cluster view changes,
-   // affecting a cluster switch. After a cluster switch, the topology age is
-   // increased and so any old requests that might have received topology
-   // updates won't be allowed to apply since they refer to older views.
-   private int topologyAge;
 
    public TopologyInfo(Configuration configuration, ClusterInfo clusterInfo) {
       this.balancerFactory = configuration.balancingStrategyFactory();
       this.hashFactory.init(configuration);
 
-      this.topologyAge = 0;
-      this.cluster = clusterInfo;
+      this.cluster = clusterInfo.withTopologyAge(0);
    }
 
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(byte[] cacheName) {
@@ -108,10 +102,12 @@ public final class TopologyInfo {
 
    public CacheInfo getOrCreateCacheInfo(WrappedBytes cacheName) {
       return caches.computeIfAbsent(cacheName, cn -> {
-         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), topologyAge, cluster.getInitialServers());
+         // TODO Do we still need locking, in case the cluster switch iteration misses this cache?
+         ClusterInfo cluster = this.cluster;
+         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), cluster.getTopologyAge(), cluster.getInitialServers());
          cacheInfo.updateBalancerServers();
          if (log.isTraceEnabled()) log.tracef("Creating cache info %s with topology age %d",
-                                              cacheInfo.getCacheName(), topologyAge);
+                                              cacheInfo.getCacheName(), cluster.getTopologyAge());
          return cacheInfo;
       });
    }
@@ -124,12 +120,16 @@ public final class TopologyInfo {
     * and </p>
     */
    public void switchCluster(ClusterInfo newCluster) {
-      if (log.isTraceEnabled())
-         log.tracef("Switching cluster: %s -> %s", cluster.getName(), newCluster.getName());
+      ClusterInfo oldCluster = this.cluster;
+
+      int newTopologyAge = oldCluster.getTopologyAge() + 1;
+      if (log.isTraceEnabled()) {
+         log.tracef("Switching cluster: %s -> %s", oldCluster.getName(), newCluster.getName());
+      }
 
       // Stop accepting topology updates from old requests
       caches.replaceAll((name, oldInfo) -> {
-         CacheInfo newInfo = oldInfo.withNewServers(topologyAge + 1, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
+         CacheInfo newInfo = oldInfo.withNewServers(newTopologyAge, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
                                                     newCluster.getInitialServers());
          // Updates the balancer in both infos
          newInfo.updateBalancerServers();
@@ -138,10 +138,10 @@ public final class TopologyInfo {
          return newInfo;
       });
 
-      // Actual cluster switch
-      cluster = newCluster;
-      // Increment the topology age for new requests so that the topology updates from their responses are accepted
-      topologyAge++;
+      // Update the topology age for new requests so that the topology updates from their responses are accepted
+      this.cluster = newCluster.withTopologyAge(newTopologyAge);
+
+      // TODO Check for new caches?
    }
 
    /**
@@ -154,7 +154,7 @@ public final class TopologyInfo {
       if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
                                            cacheName, cluster.getName());
       caches.computeIfPresent(cacheName, (name, oldInfo) -> {
-         CacheInfo newInfo = oldInfo.withNewServers(topologyAge, HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+         CacheInfo newInfo = oldInfo.withNewServers(cluster.getTopologyAge(), HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
                                                     cluster.getInitialServers());
          // Updates the balancer in both infos
          newInfo.updateBalancerServers();
@@ -169,7 +169,7 @@ public final class TopologyInfo {
    }
 
    public int getTopologyAge() {
-      return topologyAge;
+      return cluster.getTopologyAge();
    }
 
    public void updateCacheInfo(WrappedBytes cacheName, CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
