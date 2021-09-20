@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -39,14 +40,14 @@ public class ElytronSASLAuthenticationProvider implements ServerAuthenticationPr
       this.mechanisms = mechanisms;
    }
 
-   public static void init(HotRodServerConfiguration configuration, ServerConfiguration serverConfiguration) {
+   public static void init(HotRodServerConfiguration configuration, ServerConfiguration serverConfiguration, ScheduledExecutorService timeoutExecutor) {
       ElytronSASLAuthenticationProvider authenticator = (ElytronSASLAuthenticationProvider) configuration.authentication().serverAuthenticationProvider();
       if (authenticator != null) {
-         authenticator.init(serverConfiguration);
+         authenticator.init(serverConfiguration, timeoutExecutor);
       }
    }
 
-   public void init(ServerConfiguration serverConfiguration) {
+   public void init(ServerConfiguration serverConfiguration, ScheduledExecutorService timeoutExecutor) {
       ServerSecurityRealm realm = serverConfiguration.security().realms().getRealm(name).serverSecurityRealm();
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
       SecurityProviderSaslServerFactory all = SaslFactories.getProviderSaslServerFactory();
@@ -59,6 +60,7 @@ public class ElytronSASLAuthenticationProvider implements ServerAuthenticationPr
       mechRealmBuilder.setRealmName(name);
       mechConfigurationBuilder.addMechanismRealm(mechRealmBuilder.build());
       builder.setMechanismConfigurationSelector(MechanismConfigurationSelector.constantSelector(mechConfigurationBuilder.build()));
+      builder.setScheduledExecutorService(timeoutExecutor);
       saslAuthenticationFactory = builder.build();
    }
 
