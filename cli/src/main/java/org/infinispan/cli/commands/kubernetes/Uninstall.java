@@ -3,7 +3,6 @@ package org.infinispan.cli.commands.kubernetes;
 import static org.infinispan.cli.commands.kubernetes.Kube.OPERATOR_SUBSCRIPTION_CRD;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
@@ -38,8 +37,8 @@ public class Uninstall extends CliCommand {
       namespace = Kube.getNamespaceOrDefault(client, namespace);
 
       try {
-         Map<String, Object> deleted = client.customResource(OPERATOR_SUBSCRIPTION_CRD).delete(namespace, "infinispan");
-         return deleted != null && deleted.isEmpty() ? CommandResult.SUCCESS : CommandResult.FAILURE;
+         boolean deleted = client.customResource(OPERATOR_SUBSCRIPTION_CRD).delete(namespace, "infinispan");
+         return deleted ? CommandResult.SUCCESS : CommandResult.FAILURE;
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
