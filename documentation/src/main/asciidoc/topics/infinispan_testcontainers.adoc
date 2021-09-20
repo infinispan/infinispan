@@ -1,0 +1,42 @@
+= Testing {brandname} with test containers
+
+Run link:https://infinispan.org[{brandname} Server] instances using link:https://www.testcontainers.org[Testcontainers] for faster, simpler JUnit tests.
+
+The {brandname} Server test container is based on the link:https://github.com/infinispan/infinispan-images/[official container image] provided by {brandname}.
+
+== Starting the {brandname} test container
+
+You can start the {brandname} Server container instance from any Java application as follows:
+
+[source,java]
+----
+include::code_examples/InfinispanContainer.java[]
+----
+
+== Changing credentials
+
+{brandname} Server is configured with the following default credentials:
+
+* Username: `admin`
+* Password: `secret`
+
+Add custom credentials with the `withUser()` and `withPassword()` methods before starting the container:
+
+[source,java]
+----
+include::code_examples/InfinispanContainerCredentials.java[]
+----
+
+== Adding the test container to your project dependencies
+
+Add the following dependency to your `pom.xml` file:
+
+[source,xml,options="nowrap"]
+----
+<dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-server-testdriver-core</artifactId>
+    <version>{{latest_version}}</version>
+    <scope>test</scope>
+</dependency>
+----
