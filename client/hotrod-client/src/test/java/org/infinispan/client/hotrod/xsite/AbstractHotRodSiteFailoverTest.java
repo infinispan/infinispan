@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,15 +29,15 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.testng.annotations.AfterClass;
 
 abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
-   static String SITE_A = "LON-1";
-   static String SITE_B = "NYC-2";
-   static int NODES_PER_SITE = 2;
+   static final String SITE_A = "LON-1";
+   static final String SITE_B = "NYC-2";
+   static final int NODES_PER_SITE = 2;
+   static final String CACHE_NAME = "testCache";
 
    protected final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
@@ -109,7 +110,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       backup.site(backupSiteName).strategy(BackupStrategy.SYNC);
 
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, builder);
+      TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, CACHE_NAME, builder);
       Collection<EmbeddedCacheManager> cacheManagers = site.cacheManagers();
       List<HotRodServer> servers = cacheManagers.stream().map(cm -> serverPort
          .map(port -> HotRodClientTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder()))
@@ -124,7 +125,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       siteServers.forEach((name, servers) ->
          servers.forEach(server -> {
             HitCountInterceptor interceptor = new HitCountInterceptor();
-            server.getCacheManager().getCache().getAdvancedCache().getAsyncInterceptorChain()
+            server.getCacheManager().getCache(CACHE_NAME).getAdvancedCache().getAsyncInterceptorChain()
                   .addInterceptor(interceptor, 1);
          })
       );
@@ -133,7 +134,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    protected void assertNoHits() {
       siteServers.forEach((name, servers) ->
          servers.forEach(server -> {
-            Cache<?, ?> cache = server.getCacheManager().getCache();
+            Cache<?, ?> cache = server.getCacheManager().getCache(CACHE_NAME);
             HitCountInterceptor interceptor = getHitCountInterceptor(cache);
             assertEquals(0, interceptor.getHits());
          })
@@ -143,7 +144,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    protected void resetHitCounters() {
       siteServers.forEach((name, servers) ->
          servers.forEach(server -> {
-            Cache<?, ?> cache = server.getCacheManager().getCache();
+            Cache<?, ?> cache = server.getCacheManager().getCache(CACHE_NAME);
             HitCountInterceptor interceptor = getHitCountInterceptor(cache);
             interceptor.reset();
          })
@@ -152,7 +153,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
    protected void assertSiteHit(String siteName, int expectedHits) {
       Stream<HotRodServer> serversHit = siteServers.get(siteName).stream().filter(server -> {
-         Cache<?, ?> cache = server.getCacheManager().getCache();
+         Cache<?, ?> cache = server.getCacheManager().getCache(CACHE_NAME);
          HitCountInterceptor interceptor = getHitCountInterceptor(cache);
          return interceptor.getHits() == expectedHits;
       });
@@ -161,7 +162,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
    protected void assertSiteNotHit(String siteName) {
       siteServers.get(siteName).forEach(server -> {
-         Cache<?, ?> cache = server.getCacheManager().getCache();
+         Cache<?, ?> cache = server.getCacheManager().getCache(CACHE_NAME);
          HitCountInterceptor interceptor = getHitCountInterceptor(cache);
          assertEquals(0, interceptor.getHits());
       });

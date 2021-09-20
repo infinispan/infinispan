@@ -20,8 +20,8 @@ public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
    public void testFailoverAfterSiteShutdown() {
       clientA = client(SITE_A, Optional.of(SITE_B));
       clientB = client(SITE_B, Optional.empty());
-      RemoteCache<Integer, String> cacheA = clientA.getCache();
-      RemoteCache<Integer, String> cacheB = clientB.getCache();
+      RemoteCache<Integer, String> cacheA = clientA.getCache(CACHE_NAME);
+      RemoteCache<Integer, String> cacheB = clientB.getCache(CACHE_NAME);
 
       assertNull(cacheA.put(1, "v1"));
       assertEquals("v1", cacheA.get(1));
