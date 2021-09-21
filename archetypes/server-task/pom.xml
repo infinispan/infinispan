@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.infinispan.archetypes</groupId>
 		<artifactId>infinispan-archetypes</artifactId>
-		<version>13.0.0.CR1</version>
+		<version>13.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>server-task</artifactId>
 	<packaging>jar</packaging>
