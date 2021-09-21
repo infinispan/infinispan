@@ -77,6 +77,7 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
 
       memory(registry);
       averages(registry);
+      averagesNanos(registry);
    }
 
    private void memory(MeterRegistry registry) {
@@ -117,4 +118,25 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
             .description("Cache removes")
             .register(registry);
    }
+
+   private void averagesNanos(MeterRegistry registry) {
+      Gauge.builder("cache.puts.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageWriteTimeNanos())
+            .baseUnit(TimeUnit.NANOSECONDS.name())
+            .tags(getTagsWithCacheName())
+            .description("Cache puts")
+            .register(registry);
+
+      Gauge.builder("cache.gets.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageReadTimeNanos())
+            .baseUnit(TimeUnit.NANOSECONDS.name())
+            .tags(getTagsWithCacheName())
+            .description("Cache gets")
+            .register(registry);
+
+      Gauge.builder("cache.removes.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageRemoveTimeNanos())
+            .baseUnit(TimeUnit.NANOSECONDS.name())
+            .tags(getTagsWithCacheName())
+            .description("Cache removes")
+            .register(registry);
+   }
+
 }
