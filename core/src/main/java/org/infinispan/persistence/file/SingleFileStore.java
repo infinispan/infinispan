@@ -319,12 +319,14 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private void blockingStop() {
+      if (log.isTraceEnabled() && channel != null) {
+         // Must compute the size before acquiring resizeLock
+         Long size = CompletionStages.join(approximateSize(IntSets.immutableRangeSet(actualNumSegments)));
+         log.tracef("Stopping store %s, size = %d, file size = %d", cacheName(), size, filePos);
+      }
+      long stamp = resizeLock.writeLock();
       try {
          if (channel != null) {
-            if (log.isTraceEnabled()) {
-               Long size = CompletionStages.join(approximateSize(IntSets.immutableRangeSet(actualNumSegments)));
-               log.tracef("Stopping store %s, size = %d, file size = %d", cacheName(), size, channel.size());
-            }
             // reset state
             channel.close();
             channel = null;
@@ -333,6 +335,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          }
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         resizeLock.unlockWrite(stamp);
       }
    }
 
@@ -1045,7 +1049,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
          // All readers are done, reset file
          if (log.isTraceEnabled()) log.tracef("Truncating file, current size is %d", filePos);
-         channel.truncate(0);
+         channel.truncate(4);
          channel.write(ByteBuffer.wrap(MAGIC_LATEST), 0);
          filePos = MAGIC_LATEST.length;
       } catch (Exception e) {
