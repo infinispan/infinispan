@@ -120,22 +120,22 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
    }
 
    private void averagesNanos(MeterRegistry registry) {
-      Gauge.builder("cache.puts.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageWriteTimeNanos())
+      Gauge.builder("cache.puts.nlatency", cache, cache -> cache.getAdvancedCache().getStats().getAverageWriteTimeNanos())
             .baseUnit(TimeUnit.NANOSECONDS.name())
             .tags(getTagsWithCacheName())
-            .description("Cache puts")
+            .description("Cache puts in nanos")
             .register(registry);
 
-      Gauge.builder("cache.gets.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageReadTimeNanos())
+      Gauge.builder("cache.gets.nlatency", cache, cache -> cache.getAdvancedCache().getStats().getAverageReadTimeNanos())
             .baseUnit(TimeUnit.NANOSECONDS.name())
             .tags(getTagsWithCacheName())
-            .description("Cache gets")
+            .description("Cache gets in nanos")
             .register(registry);
 
-      Gauge.builder("cache.removes.latency", cache, cache -> cache.getAdvancedCache().getStats().getAverageRemoveTimeNanos())
+      Gauge.builder("cache.removes.nlatency", cache, cache -> cache.getAdvancedCache().getStats().getAverageRemoveTimeNanos())
             .baseUnit(TimeUnit.NANOSECONDS.name())
             .tags(getTagsWithCacheName())
-            .description("Cache removes")
+            .description("Cache removes in nanos")
             .register(registry);
    }
 
