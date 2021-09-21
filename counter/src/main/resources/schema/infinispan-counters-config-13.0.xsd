@@ -12,15 +12,22 @@
                 <xs:element name="strong-counter" type="tns:strong-counter">
                     <xs:annotation>
                         <xs:documentation>
-                            Configures a strong consistent counter. Its state is well know before and after an update.
+                            Configures strong consistent counters.
+                            The value of a strong counter is stored in a single key for consistency.
+                            During updates to the counter, the value is known. Updates to the counter value are performed under the key lock.
+                            Reads of the current value of the counter do not acquire any lock.
+                            Strong counters allow bounded values and atomic operations.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="weak-counter" type="tns:weak-counter">
                     <xs:annotation>
                         <xs:documentation>
-                            Configures a weak consistent counter. Its state before and after an update is not knows and
-                            it is calculated when the counter is read.
+                            Configures weak consistent counters.
+                            The value of a weak counter is stored in multiple keys.
+                            Each key stores a partial state of the counter value and can be updated concurrently.
+                            During updates to the counter, the value is not known.
+                            Retrieving values for weak counters does not always return the most current value.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
@@ -29,14 +36,16 @@
         <xs:attribute name="num-owners" type="xs:positiveInteger" default="${CounterManager.num-owners}">
             <xs:annotation>
                 <xs:documentation>
-                    Sets the number of copies of the counter's value available in the cluster.
+                    Specifies how many copies of the counter's value to create on the cluster.
+                    A smaller number results in faster update operations but supports a lower number of node crashes.
+                    You must specify a positive number as the value.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="reliability" type="tns:reliability" default="${CounterManager.reliability}">
             <xs:annotation>
                 <xs:documentation>
-                    Sets the reliability mode for the partitions when the cluster splits.
+                    Controls how to handle counters when network partitions split clusters.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
@@ -48,26 +57,25 @@
                 <xs:attribute name="lower-bound" type="xs:int">
                     <xs:annotation>
                         <xs:documentation>
-                            Sets the counter's lower bound (inclusive). It makes the strong consistent counter bounded
-                            and it must be less or equals than "initial-value"
+                            Sets the lower bound, inclusively, for strong consistent counters.
+                            You must specify a value that is less than or equal to the "initial-value".
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="upper-bound" type="xs:int">
                     <xs:annotation>
                         <xs:documentation>
-                            Sets the counter's upper bound (inclusive). It makes the strong consistent counter bounded
-                            and must be greater or equals than "initial-value".
+                            Sets the upper bound, inclusively, for strong consistent counters.
+                            You must specify a value that is greater than or equal to the "initial-value".
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="lifespan" type="xs:long" default="${StrongCounter.lifespan}">
                     <xs:annotation>
                         <xs:documentation>
-                            (Experimental) Specifies the maximum amount of time, in milliseconds, that strong counters
-                            can stay in
-                            cluster. Counters are removed from the cluster when they exceed the lifespan and are reset
-                            to their initial values. Setting a value of 0 (zero) or -1 means counters are never removed.
+                          (Experimental) Specifies the maximum amount of time, in milliseconds, that strong counters can remain in the cluster.
+                          Counters are removed from the cluster when they exceed the lifespan and are reset to their initial values.
+                          Setting a value of 0 (zero) or -1 means counters are never removed.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
@@ -81,8 +89,8 @@
                 <xs:attribute name="concurrency-level" type="xs:positiveInteger" default="${WeakCounter.concurrency-level}">
                     <xs:annotation>
                         <xs:documentation>
-                            Sets the weak consistent counter's concurrency level. The concurrency level configures the
-                            number of concurrent updates allowed in the counter.
+                            Sets the maximum number of concurrent updates to weak counter values.
+                            You must specify a positive number as the value.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
@@ -94,21 +102,22 @@
         <xs:attribute name="name" type="xs:ID" use="required">
             <xs:annotation>
                 <xs:documentation>
-                    Sets the counter's name. It must be unique.
+                    Specifies a unique name for each counter.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="initial-value" type="xs:int" default="${AbstractCounter.initial-value}">
             <xs:annotation>
                 <xs:documentation>
-                    Sets the counter's initial value.
+                    Specifies the initial value for counters.
+                    For bounded counters, the initial value must be between the upper-bound and lower-bound.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="storage" type="tns:storage" default="${AbstractCounter.storage}">
             <xs:annotation>
                 <xs:documentation>
-                    Sets the counter's storage mode.
+                    Controls how to store counters when you restart and stop clusters.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
@@ -119,16 +128,15 @@
             <xs:enumeration value="VOLATILE">
                 <xs:annotation>
                     <xs:documentation>
-                        The counter value is lost when the cluster is restarted/stopped. On-demand counters will lose
-                        its value and configuration after a cluster shutdown. They must be defined again after the
-                        restart
+                        Counter values are permanently deleted when clusters restart or stop.
+                        Both the value and configuration of on-demand counters are deleted and must be created again.
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="PERSISTENT">
                 <xs:annotation>
                     <xs:documentation>
-                        The counter value is stored persistently and survives a cluster restart/stop.
+                        Counter values are saved in persistent storage and are available after clusters restart or stop.
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
@@ -140,16 +148,15 @@
             <xs:enumeration value="AVAILABLE">
                 <xs:annotation>
                     <xs:documentation>
-                        All partitions are allowed to read and update the counters.
+                        All partitions can read and update counter values.
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CONSISTENT">
                 <xs:annotation>
                     <xs:documentation>
-                        Only the majority partition is allowed to read and update the counter if it is available on that
-                        partition. The remaining partitions are only allowed to read if the counter is available on that
-                        partition.
+                        The primary partition can read and update counter values.
+                        Other partitions can read values only if the counters are available in the partition.
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
