@@ -3,6 +3,8 @@ package org.infinispan.persistence.file;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSets;
@@ -108,5 +110,22 @@ public class SingleFileStoreTest extends BaseNonBlockingStoreTest {
       store.write(me);
 
       assertTrue(store.contains(key));
+   }
+
+   public void testStopDuringClear() {
+      InternalCacheEntry entry = TestInternalCacheEntryFactory.create("key", "value");
+      MarshallableEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
+
+      store.write(me);
+      CompletionStage<Void> clearStage = store.clear();
+      store.stopAndWait();
+      CompletionStages.join(clearStage);
+
+      // The store must be able to start
+      startStore(store);
+
+      // But because clear does its work on a separate thread, it may run after stop
+      long size = CompletionStages.join(store.size(IntSets.immutableRangeSet(segmentCount)));
+      assertTrue(size == 0 || size == 1);
    }
 }
