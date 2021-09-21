@@ -118,7 +118,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   private void startStore(EnsureNonBlockingStore<?, ?> store) {
+   protected void startStore(EnsureNonBlockingStore<?, ?> store) {
       // Reuse the same configuration between restarts
       if (configuration == null) {
          ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
