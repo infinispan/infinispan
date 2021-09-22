@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -115,9 +116,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       if (configuration.rawValues() && iceFactory == null) {
          iceFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
-
-      // Make sure threads are marked as non blocking if user didn't specify
-      configuration.properties().putIfAbsent("blocking", "false");
 
       ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
 
@@ -475,7 +473,18 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          ;
       }
 
-      builder.withProperties(configuration.properties());
+      Properties propertiesToUse;
+      Properties actualProperties = configuration.properties();
+      if (!actualProperties.contains("blocking")) {
+         // Need to make a copy to not change the actual configuration properties
+         propertiesToUse = new Properties(actualProperties);
+         // Make sure threads are marked as non blocking if user didn't specify
+         propertiesToUse.put("blocking", "false");
+      } else {
+         propertiesToUse = actualProperties;
+      }
+
+      builder.withProperties(propertiesToUse);
       return builder;
    }
 
