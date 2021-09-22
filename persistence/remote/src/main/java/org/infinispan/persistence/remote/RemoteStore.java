@@ -163,10 +163,12 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                      storageConfigurationManager.getValueStorageMediaType() : MediaType.APPLICATION_OBJECT;
 
                // Older servers don't provide media type information
-               if (serverKeyStorageType == null && localKeyStorageType.isBinary()) {
+               if ((serverKeyStorageType == null || serverKeyStorageType.match(MediaType.APPLICATION_UNKNOWN))
+                     && localKeyStorageType.isBinary()) {
                   dataFormatBuilder.keyMarshaller(IdentityMarshaller.INSTANCE);
                }
-               if (serverValueStorageType == null && localValueStorageType.isBinary()) {
+               if ((serverValueStorageType == null || serverValueStorageType.match(MediaType.APPLICATION_UNKNOWN))
+                     && localValueStorageType.isBinary()) {
                   dataFormatBuilder.valueMarshaller(IdentityMarshaller.INSTANCE);
                }
                supportsSegmentation = localKeyStorageType.equals(serverKeyStorageType);
