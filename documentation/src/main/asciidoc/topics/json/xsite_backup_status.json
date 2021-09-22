@@ -9,6 +9,9 @@
       ],
       "offline":[
          "CACHE_2"
+      ],
+      "mixed": [
+         "CACHE_3"
       ]
    }
 }
