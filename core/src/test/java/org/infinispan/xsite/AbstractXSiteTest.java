@@ -302,6 +302,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          return siteName;
       }
 
+      public int getSiteIndex() {
+         return siteIndex;
+      }
+
       public EmbeddedCacheManager addCacheManager(String cacheName, GlobalConfigurationBuilder globalTemplate, ConfigurationBuilder cacheTemplate, boolean waitForCluster) {
          final int i = cacheManagers.size();
          final TransportFlags flags = transportFlags();

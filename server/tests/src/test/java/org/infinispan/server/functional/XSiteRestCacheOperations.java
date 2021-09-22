@@ -93,14 +93,14 @@ public class XSiteRestCacheOperations {
       assertNull(bodyOf(nycCache.backupStatus(LON)));
 
       Json lonXsiteBackups = Json.read(bodyOf(lonCache.xsiteBackups()));
-      assertEquals("online", lonXsiteBackups.asJsonMap().get(NYC).asString());
+      assertEquals("online", lonXsiteBackups.asJsonMap().get(NYC).asJsonMap().get("status").asString());
 
       CompletionStages.join(lonCache.takeSiteOffline(NYC));
       lonXsiteBackups = Json.read(bodyOf(lonCache.xsiteBackups()));
-      assertTrue(lonXsiteBackups.asJsonMap().get(NYC).asString().contains("offline"));
+      assertTrue(lonXsiteBackups.asJsonMap().get(NYC).asJsonMap().get("status").asString().contains("offline"));
       CompletionStages.join(lonCache.bringSiteOnline(NYC));
       lonXsiteBackups = Json.read(bodyOf(lonCache.xsiteBackups()));
-      assertTrue(lonXsiteBackups.asJsonMap().get(NYC).asString().contains("online"));
+      assertTrue(lonXsiteBackups.asJsonMap().get(NYC).asJsonMap().get("status").asString().contains("online"));
    }
 
    @Test
