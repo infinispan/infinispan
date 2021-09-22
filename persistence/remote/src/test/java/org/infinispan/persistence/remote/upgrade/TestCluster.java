@@ -13,12 +13,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -52,6 +57,24 @@ class TestCluster {
 
    <K, V> RemoteCache<K, V> getRemoteCache(String cacheName) {
       return remoteCacheManager.getCache(cacheName);
+   }
+
+   <K, V> RemoteCache<K, V> getRemoteCache(String cacheName, MediaType mediaType) {
+      if (mediaType == null) return getRemoteCache(cacheName);
+
+      Marshaller marshaller;
+      switch (mediaType.toString()) {
+         case MediaType.TEXT_PLAIN_TYPE:
+            marshaller = new UTF8StringMarshaller();
+            break;
+         case MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE:
+            marshaller = new JavaSerializationMarshaller();
+            break;
+         default:
+            marshaller = new ProtoStreamMarshaller();
+      }
+      DataFormat dataFormat = DataFormat.builder().keyMarshaller(marshaller).valueMarshaller(marshaller).build();
+      return remoteCacheManager.getCache(cacheName).withDataFormat(dataFormat);
    }
 
    <K, V> RemoteCache<K, V> getRemoteCache(String cacheName, boolean transactional) {
