@@ -170,6 +170,11 @@
          <artifactId>infinispan-client-rest</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

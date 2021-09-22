@@ -13,8 +13,18 @@ in the following example:
 [source,json,options="nowrap",subs=attributes+]
 ----
 {
-  "NYC": "online",
-  "LON": "offline"
+  "NYC": {
+    "status": "online"
+  },
+  "LON": {
+    "status": "mixed",
+    "online": [
+      "NodeA"
+    ],
+    "offline": [
+      "NodeB"
+    ]
+  }
 }
 ----
 

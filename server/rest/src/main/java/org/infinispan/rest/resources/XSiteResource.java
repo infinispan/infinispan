@@ -12,10 +12,8 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
-import static org.infinispan.xsite.XSiteAdminOperations.siteStatusToString;
 
 import java.security.PrivilegedAction;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -28,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.JsonUtils;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -44,6 +43,7 @@ import org.infinispan.security.Security;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.status.AbstractMixedSiteStatus;
+import org.infinispan.xsite.status.ContainerMixedSiteStatus;
 import org.infinispan.xsite.status.OfflineSiteStatus;
 import org.infinispan.xsite.status.OnlineSiteStatus;
 import org.infinispan.xsite.status.SiteStatus;
@@ -62,12 +62,9 @@ public class XSiteResource implements ResourceHandler {
    private static final BiFunction<XSiteAdminOperations, String, String> PUSH_STATE = XSiteAdminOperations::pushState;
    private static final BiFunction<XSiteAdminOperations, String, String> CANCEL_PUSH_STATE = XSiteAdminOperations::cancelPushState;
    private static final BiFunction<XSiteAdminOperations, String, String> CANCEL_RECEIVE_STATE = XSiteAdminOperations::cancelReceiveState;
-   private static final Function<XSiteAdminOperations, Map<String, String>> SITES_STATUS = xSiteAdminOperations -> {
-      Map<String, SiteStatus> statuses = xSiteAdminOperations.clusterStatus();
-      return statuses.entrySet()
-            .stream()
-            .collect(Collectors.toMap(Entry::getKey, e -> siteStatusToString(e.getValue())));
-   };
+   private static final Function<XSiteAdminOperations, Map<String, GlobalStatus>> SITES_STATUS =
+         xSiteAdminOperations -> xSiteAdminOperations.clusterStatus().entrySet().stream()
+               .collect(Collectors.toMap(Entry::getKey, GlobalStatus::fromSiteStatus));
    private static final Function<XSiteAdminOperations, Map<String, String>> PUSH_STATE_STATUS = XSiteAdminOperations::getPushStateStatus;
    private static final Function<XSiteAdminOperations, String> CLEAR_PUSH_STATUS = XSiteAdminOperations::clearPushStateStatus;
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> BRING_ALL_CACHES_ONLINE = GlobalXSiteAdminOperations::bringAllCachesOnline;
@@ -165,16 +162,7 @@ public class XSiteResource implements ResourceHandler {
 
       return supplyAsync(() -> {
          Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) globalXSiteAdmin::globalStatus);
-         Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
-            SiteStatus status = e.getValue();
-            if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
-            if (status instanceof OfflineSiteStatus) return GlobalStatus.OFFLINE;
-            if (status instanceof AbstractMixedSiteStatus<?>) {
-               AbstractMixedSiteStatus<?> mixedSiteStatus = (AbstractMixedSiteStatus<?>) status;
-               return GlobalStatus.mixed(mixedSiteStatus.getOnline(), mixedSiteStatus.getOffline());
-            }
-            return GlobalStatus.UNKNOWN;
-         }));
+         Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, GlobalStatus::fromSiteStatus));
          return addEntityAsJson(Json.make(collect), responseBuilder).build();
       }, invocationHelper.getExecutor());
    }
@@ -400,34 +388,53 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private static class GlobalStatus implements JsonSerialization {
-      static final GlobalStatus OFFLINE = new GlobalStatus("offline", null, null);
-      static final GlobalStatus ONLINE = new GlobalStatus("online", null, null);
-      static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null);
+      static final GlobalStatus OFFLINE = new GlobalStatus("offline", null, null, null);
+      static final GlobalStatus ONLINE = new GlobalStatus("online", null, null, null);
+      static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null, null);
 
       private final String status;
-      private final List<?> online;
-      private final List<?> offline;
+      private final Json online;
+      private final Json offline;
+      private final Json mixed;
 
-      GlobalStatus(String status, List<?> online, List<?> offline) {
+      GlobalStatus(String status, Json online, Json offline, Json mixed) {
          this.status = status;
          this.online = online;
          this.offline = offline;
+         this.mixed = mixed;
       }
 
-      static GlobalStatus mixed(List<?> online, List<?> offline) {
-         return new GlobalStatus("mixed", online, offline);
+      static GlobalStatus mixed(Json online, Json offline, Json mixed) {
+         return new GlobalStatus("mixed", online, offline, mixed);
+      }
+
+      static GlobalStatus fromSiteStatus(Map.Entry<String, SiteStatus> entry) {
+         SiteStatus status = entry.getValue();
+         if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
+         if (status instanceof OfflineSiteStatus) return GlobalStatus.OFFLINE;
+         Json mixed = null;
+         if (status instanceof ContainerMixedSiteStatus) {
+            mixed = JsonUtils.createJsonArray(((ContainerMixedSiteStatus) status).getMixedCaches());
+         }
+         if (status instanceof AbstractMixedSiteStatus<?>) {
+            Json online = JsonUtils.createJsonArray(((AbstractMixedSiteStatus<?>) status).getOnline().stream().map(String::valueOf));
+            Json offline =JsonUtils.createJsonArray(((AbstractMixedSiteStatus<?>) status).getOffline().stream().map(String::valueOf));
+            return GlobalStatus.mixed(online, offline, mixed);
+         }
+         return GlobalStatus.UNKNOWN;
       }
 
       @Override
       public Json toJson() {
          Json json = Json.object().set("status", this.status);
          if (online != null) {
-            List<String> onLines = online.stream().map(Object::toString).collect(Collectors.toList());
-            json.set("online", Json.make(onLines));
+            json.set("online", online);
          }
          if (offline != null) {
-            List<String> offLines = offline.stream().map(Object::toString).collect(Collectors.toList());
-            json.set("offline", Json.make(offLines));
+            json.set("offline", offline);
+         }
+         if (mixed != null) {
+            json.set("mixed", mixed);
          }
          return json;
       }

@@ -1,24 +1,32 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.rest.helper.RestResponses.assertNoContent;
 import static org.infinispan.rest.helper.RestResponses.assertStatus;
 import static org.infinispan.rest.helper.RestResponses.assertSuccessful;
 import static org.infinispan.rest.helper.RestResponses.jsonResponseBody;
 import static org.infinispan.rest.helper.RestResponses.responseBody;
 import static org.infinispan.rest.helper.RestResponses.responseStatus;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.infinispan.xsite.XSiteAdminOperations.OFFLINE;
 import static org.infinispan.xsite.XSiteAdminOperations.ONLINE;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
@@ -28,17 +36,29 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.ControlledTransport;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @since 10.0
@@ -73,7 +93,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
          String siteName = site.getSiteName();
          EmbeddedCacheManager cm = site.cacheManagers().iterator().next();
          RestServerHelper restServerHelper = new RestServerHelper(cm);
-            restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
+         restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
          restServerPerSite.put(siteName, restServerHelper);
          RestClientConfiguration clientConfig = new RestClientConfigurationBuilder()
                .addServer().host("127.0.0.1")
@@ -98,24 +118,31 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
    @AfterClass(alwaysRun = true)
    public void clean() {
-      restServerPerSite.values().forEach(RestServerHelper::stop);
       clientPerSite.values().forEach(cli -> {
          try {
             cli.close();
          } catch (IOException ignored) {
          }
       });
+      restServerPerSite.values().forEach(RestServerHelper::stop);
    }
 
    @AfterMethod(alwaysRun = true)
    public void cleanCache() {
+      while (site(LON).cacheManagers().size() > 1) {
+         site(LON).kill(1);
+         site(LON).waitForClusterToForm(CACHE_1);
+         site(LON).waitForClusterToForm(CACHE_2);
+      }
       assertNoContent(getCacheClient(LON).clear());
       assertNoContent(getCacheClient(NYC).clear());
    }
 
    @Override
    protected ConfigurationBuilder defaultConfigurationForSite(int siteIndex) {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.clustering().hash().numSegments(2);
+      return builder;
    }
 
    @Test
@@ -150,7 +177,39 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       RestCacheClient cache = getCacheClient(LON);
 
       Json status = jsonResponseBody(cache.xsiteBackups());
-      assertEquals(ONLINE, status.at(NYC).asString());
+      assertEquals(ONLINE, status.at(NYC).at("status").asString());
+
+      // add a second node
+      TestSite site = site(LON);
+      EmbeddedCacheManager cm = site.addCacheManager(null, defaultGlobalConfigurationForSite(site.getSiteIndex()), defaultConfigurationForSite(site.getSiteIndex()), false);
+      site.waitForClusterToForm(CACHE_1);
+      site.waitForClusterToForm(CACHE_2);
+
+      TakeOfflineManager takeOfflineManager = TestingUtil.extractComponent(cm.getCache(CACHE_1), TakeOfflineManager.class);
+      takeOfflineManager.takeSiteOffline(NYC);
+
+      String node1 = String.valueOf(site.cacheManagers().get(0).getAddress());
+      String node2 = String.valueOf(cm.getAddress());
+
+      status = jsonResponseBody(cache.xsiteBackups());
+      assertEquals("mixed", status.at(NYC).at("status").asString());
+      assertEquals(status.at(NYC).at("online").asJsonList().iterator().next().asString(), node1);
+      assertEquals(status.at(NYC).at("offline").asJsonList().iterator().next().asString(), node2);
+      assertFalse(status.at(NYC).has("mixed"));
+
+      status = jsonResponseBody(cache.backupStatus(NYC));
+      assertEquals(ONLINE, status.at(node1).asString());
+      assertEquals(OFFLINE, status.at(node2).asString());
+
+      // bring NYC online
+      takeOfflineManager.bringSiteOnline(NYC);
+
+      status = jsonResponseBody(cache.xsiteBackups());
+      assertEquals(ONLINE, status.at(NYC).at("status").asString());
+
+      status = jsonResponseBody(cache.backupStatus(NYC));
+      assertEquals(ONLINE, status.at(node1).asString());
+      assertEquals(ONLINE, status.at(node2).asString());
    }
 
    @Test
@@ -192,15 +251,15 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertEquals(0, getCacheSize(backupCache));
 
       // Start state push
-      ControlledTransport controllerTransport = ControlledTransport.replace(cache(LON, 0));
-      controllerTransport.blockBefore(XSiteStatePushCommand.class);
+      BlockXSitePushStateTransport transport = BlockXSitePushStateTransport.replace(cache(LON, 0));
+      transport.startBlocking();
       assertSuccessful(cache.pushSiteState(NYC));
-      controllerTransport.waitForCommandToBlock();
+      transport.waitForCommand();
 
       // Cancel push
       assertSuccessful(cache.cancelPushState(NYC));
 
-      controllerTransport.stopBlocking();
+      transport.stopBlocking();
 
       Json status = jsonResponseBody(cache.pushStateStatus());
       assertEquals("CANCELED", status.at(NYC).asString());
@@ -256,6 +315,23 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertSuccessful(restClient.cache(CACHE_2).bringSiteOnline(NYC));
 
       assertAllSitesOnline(restClient);
+
+      // add a second node
+      TestSite site = site(LON);
+      EmbeddedCacheManager cm = site.addCacheManager(null, defaultGlobalConfigurationForSite(site.getSiteIndex()), defaultConfigurationForSite(site.getSiteIndex()), true);
+      site.waitForClusterToForm(CACHE_1);
+      site.waitForClusterToForm(CACHE_2);
+
+      TakeOfflineManager takeOfflineManager = TestingUtil.extractComponent(cm.getCache(CACHE_1), TakeOfflineManager.class);
+      takeOfflineManager.takeSiteOffline(NYC);
+
+      json = jsonResponseBody(restClient.cacheManager(CACHE_MANAGER).backupStatuses());
+      assertEquals(json.at(NYC).at("status").asString(), "mixed");
+      assertEquals(json.at(NYC).at("online").asJsonList().iterator().next().asString(), CACHE_2);
+      assertTrue(json.at(NYC).at("offline").asJsonList().isEmpty());
+      assertEquals(json.at(NYC).at("mixed").asJsonList().iterator().next().asString(), CACHE_1);
+
+      takeOfflineManager.bringSiteOnline(NYC);
    }
 
 
@@ -333,16 +409,16 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertNoContent(cache2Lon.put("k2", "v2"));
 
       // Block before pushing state on both caches
-      ControlledTransport controlledTransport = ControlledTransport.replace(cache(LON, CACHE_1, 0));
-      controlledTransport.blockBefore(XSiteStatePushCommand.class);
+      BlockXSitePushStateTransport transport = BlockXSitePushStateTransport.replace(cache(LON, CACHE_1, 0));
+      transport.startBlocking();
 
       // Trigger a state push
       assertSuccessful(restClientLon.cacheManager(CACHE_MANAGER).pushSiteState(SFO));
-      controlledTransport.waitForCommandToBlock();
+      transport.waitForCommand();
 
       // Cancel state push
       assertSuccessful(restClientLon.cacheManager(CACHE_MANAGER).cancelPushState(SFO));
-      controlledTransport.stopBlocking();
+      transport.stopBlocking();
 
       // Verify that push was cancelled for both caches
       Json pushStatusCache1 = jsonResponseBody(cache1Lon.pushStateStatus());
@@ -423,10 +499,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
             .stateTransfer().chunkSize(5);
       builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC)
             .stateTransfer().chunkSize(5);
-      defineInSite(site(0), CACHE_1, builder.build());
-      defineInSite(site(0), CACHE_2, builder.build());
-      defineInSite(site(2), CACHE_1, builder.build());
-      defineInSite(site(2), CACHE_2, builder.build());
+      defineCaches(0, builder.build());
+      defineCaches(2, builder.build());
       site(0).waitForClusterToForm(CACHE_1);
       site(0).waitForClusterToForm(CACHE_2);
       site(2).waitForClusterToForm(CACHE_1);
@@ -438,9 +512,98 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
             .stateTransfer().chunkSize(5);
       builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC)
             .stateTransfer().chunkSize(5);
-      defineInSite(site(1), CACHE_1, builder.build());
-      defineInSite(site(1), CACHE_2, builder.build());
+      defineCaches(1, builder.build());
       site(1).waitForClusterToForm(CACHE_1);
       site(1).waitForClusterToForm(CACHE_2);
+   }
+
+   private void defineCaches(int siteIndex, Configuration configuration) {
+      EmbeddedCacheManagerAdmin admin = manager(siteIndex, 0).administration().withFlags(VOLATILE);
+      admin.getOrCreateCache(CACHE_1, configuration);
+      admin.getOrCreateCache(CACHE_2, configuration);
+   }
+
+   // unable to use org.infinispan.remoting.transport.ControlledTransport since it blocks non-blocking threads and the test hangs
+   // the non-blocking threads are shared with Netty and channel read-writes hangs in there.
+   public static class BlockXSitePushStateTransport extends AbstractDelegatingTransport {
+
+      @GuardedBy("this")
+      private final List<Runnable> pendingCommands;
+      @GuardedBy("this")
+      private boolean enabled;
+
+      private BlockXSitePushStateTransport(Transport actual) {
+         super(actual);
+         this.pendingCommands = new ArrayList<>(2);
+         this.enabled = false;
+      }
+
+      public static BlockXSitePushStateTransport replace(Cache<?, ?> cache) {
+         return replace(cache.getCacheManager());
+      }
+
+      public static BlockXSitePushStateTransport replace(EmbeddedCacheManager manager) {
+         log.tracef("Replacing transport on %s", manager.getAddress());
+         Transport t = extractGlobalComponent(manager, Transport.class);
+         if (t instanceof BlockXSitePushStateTransport) {
+            return (BlockXSitePushStateTransport) t;
+         }
+         return wrapGlobalComponent(manager, Transport.class, BlockXSitePushStateTransport::new, true);
+      }
+
+      @Override
+      public void start() {
+         //avoid starting again
+      }
+
+      @Override
+      public void stop() {
+         log.trace("Stopping BlockXSitePushStateTransport");
+         super.stop();
+      }
+
+      public synchronized void startBlocking() {
+         log.trace("Start blocking XSiteStatePushCommand");
+         this.enabled = true;
+      }
+
+      public void stopBlocking() {
+         log.trace("Stop blocking XSiteStatePushCommand");
+         List<Runnable> copy;
+         synchronized (this) {
+            this.enabled = false;
+            copy = new ArrayList<>(pendingCommands);
+            pendingCommands.clear();
+         }
+         copy.forEach(Runnable::run);
+      }
+
+      public synchronized void waitForCommand() throws InterruptedException, TimeoutException {
+         log.trace("Waiting for XSiteStatePushCommand");
+         long endTime = TIME_SERVICE.expectedEndTime(30, TimeUnit.SECONDS);
+         long timeLeftMillis;
+         while (pendingCommands.isEmpty() && (timeLeftMillis = TIME_SERVICE.remainingTime(endTime, TimeUnit.MILLISECONDS)) > 0) {
+            this.wait(timeLeftMillis);
+         }
+         if (pendingCommands.isEmpty()) {
+            throw new TimeoutException();
+         }
+      }
+
+      @Override
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+         synchronized (this) {
+            if (enabled && rpcCommand instanceof XSiteStatePushCommand) {
+               XSiteResponseImpl<O> toReturn = new XSiteResponseImpl<>(TIME_SERVICE, backup);
+               pendingCommands.add(() -> {
+                  XSiteResponse<O> real = super.backupRemotely(backup, rpcCommand);
+                  real.whenComplete((o, throwable) -> toReturn.accept(SuccessfulResponse.create(o), throwable));
+               });
+               this.notifyAll();
+               return toReturn;
+            }
+         }
+         return super.backupRemotely(backup, rpcCommand);
+      }
    }
 }
