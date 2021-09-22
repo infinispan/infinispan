@@ -113,18 +113,15 @@ public final class TopologyInfo {
    }
 
    /**
-    * Switch the cluster or reset to the initial server list of the current cluster.
-    *
-    * <p>Does not itself reset the topology id and server list of individual caches.
-    * New operations will send the incremented topology age to the server,
-    * and </p>
+    * Switch to another cluster and update the topologies of all caches with its initial server list.
     */
    public void switchCluster(ClusterInfo newCluster) {
       ClusterInfo oldCluster = this.cluster;
-
       int newTopologyAge = oldCluster.getTopologyAge() + 1;
+
       if (log.isTraceEnabled()) {
-         log.tracef("Switching cluster: %s -> %s", oldCluster.getName(), newCluster.getName());
+         log.tracef("Switching cluster: %s -> %s with servers %s", oldCluster.getName(),
+                    newCluster.getName(), newCluster.getInitialServers());
       }
 
       // Stop accepting topology updates from old requests
@@ -140,8 +137,6 @@ public final class TopologyInfo {
 
       // Update the topology age for new requests so that the topology updates from their responses are accepted
       this.cluster = newCluster.withTopologyAge(newTopologyAge);
-
-      // TODO Check for new caches?
    }
 
    /**
