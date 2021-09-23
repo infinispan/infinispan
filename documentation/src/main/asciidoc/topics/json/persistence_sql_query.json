@@ -1,0 +1,31 @@
+{
+  "distributed-cache": {
+    "persistence": {
+      "query-jdbc-store": {
+        "dialect": "POSTGRES",
+        "shared": "true",
+        "key-columns": "isbn",
+        "queries": {
+          "select-single": "SELECT isbn, title FROM books WHERE isbn = :isbn",
+          "select-all": "SELECT isbn, title FROM books",
+          "delete-single": "DELETE FROM books WHERE isbn = :key",
+          "delete-all": "DELETE FROM books",
+          "upsert": "INSERT INTO books (isbn, title) VALUES (:key, :value) ON CONFLICT (ispn) DO UPDATE SET title = :value",
+          "size": "SELECT COUNT(*) FROM books"
+        },
+        "schema": {
+          "message-name": "books_value",
+          "key-message-name": "books_key",
+          "package": "library",
+          "embedded-key": "true"
+        },
+        "connection-pool": {
+          "connection-url": "jdbc:postgresql://localhost:5432/postgres",
+          "driver": "org.postgresql.Driver",
+          "username": "postgres",
+          "password": "changeme"
+        }
+      }
+    }
+  }
+}

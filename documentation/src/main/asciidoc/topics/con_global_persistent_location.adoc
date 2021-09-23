@@ -1,0 +1,32 @@
+[id='global-persistent-location_{context}']
+= Global persistent location
+
+{brandname} preserves global state so that it can restore cluster topology and cached data after restart.
+
+[discrete]
+== Remote caches
+
+{brandname} Server saves cluster state to the `{server_home}/server/data` directory.
+
+[IMPORTANT]
+====
+You should never delete or modify the `server/data` directory or its content.
+{brandname} restores cluster state from this directory when you restart your server instances.
+
+Changing the default configuration or directly modifying the `server/data` directory can cause unexpected behavior and lead to data loss.
+====
+
+[discrete]
+== Embedded caches
+
+{brandname} defaults to the `user.dir` system property as the global persistent location.
+In most cases this is the directory where your application starts.
+
+For clustered embedded caches, such as replicated or distributed, you should always enable and configure a global persistent location to restore cluster topology.
+
+You should never configure an absolute path for a file-based cache store that is outside the global persistent location.
+If you do, {brandname} writes the following exception to logs:
+
+----
+ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"
+----

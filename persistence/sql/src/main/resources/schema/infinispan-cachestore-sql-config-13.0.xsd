@@ -12,10 +12,11 @@
     <xs:complexType>
       <xs:extension base="abstract-sql-store">
         <xs:attribute name="table-name" type="xs:string">
-          <xs:documentation>Defines the Table Name to load and store from. The store will generate statements
-            automatically based upon the determined dialect to perform all of its operations. Every field in the key
-            schema must be readable from the table columns. However, the table may have more columns than the key and
-            schema define if the store does not allow modifications.
+          <xs:documentation>
+            Specifies a database table that loads entries to the cache and stores data from the cache.
+            The SQL cache store automatically generates statements based on the database dialect to perform all operations.
+            Every field in the schema must be readable from the columns in the database table.
+            If the SQL cache store does not allow modifications to the database, is read only, then tables can have more columns than the schema defines.
           </xs:documentation>
         </xs:attribute>
       </xs:extension>
@@ -28,8 +29,9 @@
         <xs:element name="queries" type="queries"/>
         <xs:attribute name="key-columns" type="xs:string">
           <xs:annotation>
-            <xs:documentation>Defines the column(s) for the query that should be used as the key(s), separated by commas
-              as necessary.
+            <xs:documentation>
+              Specifies the columns from the database table that correspond to key(s).
+              Use commas (,) to separate multiple columns.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -47,31 +49,33 @@
   <xs:complexType name="schema">
     <xs:attribute name="message-name" type="xs:string">
       <xs:annotation>
-        <xs:documentation>The protobuf message name to use for the value in the cache. This can be null if there is only
-          one value column in the database, in which case an appropriate type will be used (i.e. Integer, String, Double
-          etc.)
+        <xs:documentation>
+          Specifies the Protobuf message name to use for the value of the cache entry.
+          If the database table contains only one column for the value, you do not need to specify a message name and an appropriate data type is automatically used.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="key-message-name" type="xs:string">
       <xs:annotation>
-        <xs:documentation>The protobuf message name to use for the key in the cache. This can be null if there is only
-          one key column in the database, in which case an appropriate type will be used (i.e. Integer, String, Double
-          etc.)
+        <xs:documentation>
+          Specifies the Protobuf message name to use for the key of the cache entry.
+          If the database table contains only one column for the key, you do not need to specify a message name and an appropriate data type is automatically used.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="package" type="xs:string">
       <xs:annotation>
-        <xs:documentation>The package used for the key and value message names. This is required if key-message-name or
-          message-name is provided
+        <xs:documentation>
+          Specifies the package for key and value message names.
+          You must specify a package if you set the 'key-message-name' or
+          'message-name' attributes.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="embedded-key" type="xs:boolean" default="false">
       <xs:annotation>
-        <xs:documentation>Configures if the key field(s) are also part of the value schema. Note a single key column
-          still does not require a schema when this is true
+        <xs:documentation>
+          Specifies if key field(s) are also part of the value schema.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -81,53 +85,58 @@
     <xs:sequence>
       <xs:attribute name="select-all" type="xs:string" use="required">
         <xs:annotation>
-          <xs:documentation>The query to use when bulk-loading into the cache. The asterisk operator is allowed in the
-            select clause. This query cannot take any parameters, unless they are explicitly defined in the statement
-            (e.g. WHERE FOO = 'BAR'). The columns returned MUST match the columns returned from the select-single query.
-            The columns returned MUST also match the key and value proto schema exactly, any less or more will not be
-            allowed.
+          <xs:documentation>
+            Defines a SQL query that bulk loads cache entries from a database.
+            You can use an asterisk operator in the SELECT clause.
+            You can use parameters only if you explicitly define them in the statement, for example "WHERE FOO = 'BAR'"".
+            Columns that this query returns must match the columns that the 'select-single' query returns.
+            Columns must also match Protobuf schema for composite keys and values exactly.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="select-single" type="xs:string" use="required">
         <xs:annotation>
-          <xs:documentation>The query to use when loading into the cache. The asterisk operator is allowed in the
-            select clause. This query must have every field from the key schema as a named parameter (e.g. FOO = :bar).
-            The columns returned MUST match the columns returned from the select-all query.
-            The columns returned MUST also match the key and value proto schema exactly, any less or more will not be
-            allowed.
+          <xs:documentation>
+            Defines a SQL query that loads cache entries from a database.
+            You can use an asterisk operator in the SELECT clause.
+            You must include every field from the key schema as a named parameter, for example "FOO = :bar".
+            Columns that this query returns must match the columns that the 'select-all' query returns.
+            Columns must also match Protobuf schema for composite keys and values exactly.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="delete-all" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The query to use when clearing the cache. This query cannot take any parameters, unless
-            they are explicitly defined in the statement itself (e.g. WHERE FOO = 'BAR'). If the store is configured to
-            allow modifications, this attribute is required.
+          <xs:documentation>
+            Defines a SQL query to clear the cache.
+            This attribute is required if you configure the SQL cache store to allow modifications to the database.
+            You can use parameters only if you explicitly define them in the statement, for example "WHERE FOO = 'BAR'"".
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="delete-single" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The query to use when deleting a single entry from the cache. This query must have every
-            field from the key schema as a named parameter (e.g. FOO = :bar). If the store is configured to allow
-            modifications, this attribute is required.
+          <xs:documentation>
+            Defines a SQL query to delete specific entries from the cache.
+            This attribute is required if you configure the SQL cache store to allow modifications to the database.
+            You must include every field from the key schema as a named parameter, for example "FOO = :bar".
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="upsert" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The query to use when inserting/updating entries into the cache. This query must have every
-            field from the key and value schema as a named parameter (e.g. FOO = :bar). If the store is configured to
-            allow modifications, this attribute is required.
+          <xs:documentation>
+            Defines a SQL query to modify entries in the cache.
+            This attribute is required if you configure the SQL cache store to allow modifications to the database.
+            You must include every field from the key and value schema as a named parameter, for example "FOO = :bar".
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="size" type="xs:string" use="required">
         <xs:annotation>
-          <xs:documentation>The query to use to count the number of entries. This query cannot take any parameters,
-            unless
-            they are explicitly defined in the statement itself (e.g. WHERE FOO = 'BAR').
+          <xs:documentation>
+            Defines a SQL query to count the number of entries in the cache.
+            You can use parameters only if you explicitly define them in the statement, for example "WHERE FOO = 'BAR'"".
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>

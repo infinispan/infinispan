@@ -1,5 +1,5 @@
-[id='migrating_stores-{context}']
-= Migrating Cache Stores
+[id='migrating-cache-stores_{context}']
+= Migrating {brandname} cache stores
 Run `StoreMigrator` to migrate data from one cache store to another.
 
 .Prerequisites

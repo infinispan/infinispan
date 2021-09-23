@@ -73,6 +73,16 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc-common</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-sql</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jpa</artifactId>
       </dependency>
 

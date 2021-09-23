@@ -1,5 +1,6 @@
-[id='persistent_spi']
+[id='persistent-spi_{context}']
 = {brandname} Persistence SPI
+
 The {brandname} Service Provider Interface (SPI) enables read and write
 operations to external storage through the `NonBlockingStore` interface and has
 the following features:
@@ -26,8 +27,8 @@ transmitted remotely. For this reason, {brandname} does not need to deserialize
 entries that it retrieves from persistent storage and then serialize again when
 writing to the wire.
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/persistence/spi/package-summary.html[Persistence SPI]
 * link:{javadocroot}/org/infinispan/persistence/spi/NonBlockingStore.html[NonBlockingStore]
 * link:http://jcp.org/en/jsr/detail?id=107[JSR-107]

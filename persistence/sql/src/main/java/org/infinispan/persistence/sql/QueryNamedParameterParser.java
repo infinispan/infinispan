@@ -6,9 +6,6 @@ import java.util.List;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-/**
- * Most of this class is copied from NamedParameterUtils in spring commit is 634c7710f9517d02971b7b3e6beb593be061e391
- */
 public class QueryNamedParameterParser {
    private static final Log log = LogFactory.getLog(QueryNamedParameterParser.class, Log.class);
 

@@ -1,0 +1,8 @@
+<distributed-cache>
+  <persistence>
+     <connection-pool connection-url="jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1"
+                      username="sa"
+                      password="changeme"
+                      driver="org.h2.Driver"/>
+  </persistence>
+</distributed-cache>

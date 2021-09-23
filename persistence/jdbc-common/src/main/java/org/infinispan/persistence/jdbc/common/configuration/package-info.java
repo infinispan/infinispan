@@ -1,5 +1,5 @@
 /**
- * Configuration for the JDBC CacheStore.
+ * Common configuration for JDBC cache stores.
  *
  * @public
  */

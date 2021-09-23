@@ -1,0 +1,11 @@
+package library;
+
+message books_key {
+    required string isbn = 1;
+    required int32 reprint = 2;
+}
+
+message books_value {
+    optional string title = 1;
+    optional string author = 2;
+}

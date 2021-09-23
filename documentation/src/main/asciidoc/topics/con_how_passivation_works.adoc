@@ -1,0 +1,60 @@
+[id='how-passivation-works_{context}']
+= How passivation works
+
+.Passivation disabled
+Writes to data in memory result in writes to persistent storage.
+
+If {brandname} evicts data from memory, then data in persistent storage
+includes entries that are evicted from memory. In this way persistent storage
+is a superset of the in-memory cache.
+
+If you do not configure eviction, then data in persistent storage provides a
+copy of data in memory.
+
+.Passivation enabled
+{brandname} adds data to persistent storage only when it evicts data from
+memory.
+
+When {brandname} activates entries, it restores data in memory and deletes data
+from persistent storage. In this way, data in memory and data in persistent
+storage form separate subsets of the entire data set, with no intersection
+between the two.
+
+[NOTE]
+====
+Entries in persistent storage can become stale when using shared cache stores. This occurs because {brandname} does not delete passivated entries from shared cache stores when they are activated.
+
+Values are updated in memory but previously passivated entries remain in persistent storage with out of date values.
+====
+
+The following table shows data in memory and in persistent storage after a
+series of operations:
+
+[options="header"]
+|===============
+|Operation|Passivation disabled|Passivation enabled|Passivation enabled with shared cache store
+|Insert k1.|*Memory:* k1 +
+*Disk:* k1|*Memory:* k1 +
+*Disk:* -|*Memory:* k1 +
+*Disk:* -
+|Insert k2.|*Memory:* k1, k2 +
+*Disk:* k1, k2|*Memory:* k1, k2 +
+*Disk:* -|*Memory:* k1, k2 +
+*Disk:* -
+|Eviction thread runs and evicts k1.|*Memory:* k2 +
+*Disk:* k1, k2|*Memory:* k2 +
+*Disk:* k1|*Memory:* k2 +
+*Disk:* k1
+|Read k1.|*Memory:* k1, k2 +
+*Disk:* k1, k2|*Memory:* k1, k2 +
+*Disk:* -|*Memory:* k1, k2 +
+*Disk:* k1
+|Eviction thread runs and evicts k2.|*Memory:* k1 +
+*Disk:* k1, k2|*Memory:* k1 +
+*Disk:* k2|*Memory:* k1 +
+*Disk:* k1, k2
+|Remove k2.|*Memory:* k1 +
+*Disk:* k1|*Memory:* k1 +
+*Disk:* -|*Memory:* k1 +
+*Disk:* k1
+|===============

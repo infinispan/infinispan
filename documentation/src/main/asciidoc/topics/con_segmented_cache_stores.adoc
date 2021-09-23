@@ -1,5 +1,5 @@
-[id='segmented_cache_stores']
-= Segmented Cache Stores
+[id='segmented-cache-stores_{context}']
+= Segmented cache stores
 Cache stores can organize data into hash space segments to which keys map.
 
 Segmented stores increase read performance for bulk operations; for example,
@@ -23,7 +23,3 @@ segments you define in the {brandname} configuration with the
 If you change the `numSegments` parameter in the configuration after you add a
 segmented cache store, {brandname} cannot read data from that cache store.
 ====
-
-.Reference
-
-link:#key_ownership[Key Ownership]

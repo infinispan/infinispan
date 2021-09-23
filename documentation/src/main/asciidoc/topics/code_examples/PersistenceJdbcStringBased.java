@@ -1,0 +1,16 @@
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+      .dialect(DatabaseType.H2)
+      .table()
+         .dropOnExit(true)
+         .createOnStart(true)
+         .tableNamePrefix("ISPN_STRING_TABLE")
+         .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
+         .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
+         .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
+         .segmentColumnName("SEGMENT_COLUMN").segmentColumnType("INT")
+      .connectionPool()
+         .connectionUrl("jdbc:h2:mem:infinispan")
+         .username("sa")
+         .password("changeme")
+         .driverClass("org.h2.Driver");

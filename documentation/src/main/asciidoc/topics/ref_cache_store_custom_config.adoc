@@ -1,18 +1,28 @@
-[id='configure_custom_cache_store']
-= Configuring {brandname} to Use Custom Stores
-After you create your custom cache store implementation, configure {brandname}
-to use it.
+[id='custom-cache-store-configuration_{context}']
+= Examples of custom cache store configuration
 
-.Declarative configuration
+The following are examples show how to configure {brandname} with custom cache store implementations:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/persistence_store_class.xml[]
 ----
 
-.Programmatic configuration
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_store_class.json[]
+----
 
-[source,java]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_store_class.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/PersistenceCustomStore.java[]
 ----

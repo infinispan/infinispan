@@ -1,0 +1,101 @@
+[id='sql-store-protobuf-schema_{context}']
+= Protobuf schema for SQL store
+
+{brandname} loads keys and values from columns in database tables via SQL cache stores.
+If the tables in your database have composite primary keys or composite values, you need to provide {brandname} with Protobuf schema (`.proto` files) that provide a structured representation of your data.
+
+[NOTE]
+====
+To create Protobuf schema, {brandname} recommends annotating your Java classes and creating serialization context initializers.
+
+For more information about creating serialization context initializers for remote and embedded caches, see the _Cache encoding and marshalling_ documentation.
+====
+
+.Keys and values with single column
+
+The following `CREATE` statement adds a table named "books" that has two columns, `isbn` and `title`:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_simple.sql[]
+----
+
+When you use this table with a SQL cache store, {brandname} adds an entry to the cache using the `isbn` column as the key and the `title` column as the value.
+
+.Composite values
+
+Database tables can have composite values, such as the following example where the value is composed of the `title` and `author` columns:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_composite_values.sql[]
+----
+
+When you use this table with a SQL cache store, {brandname} adds an entry to the cache using the `isbn` column as the key.
+For the value of the entry, {brandname} requires a Protobuf schema that maps   and the `title` column and the `author` column such as the following:
+
+[source,protobuf,options="nowrap",subs=attributes+]
+----
+include::protobuf/books_composite_values.protobuf[]
+----
+
+.Composite keys and values
+
+Database tables can have composite keys and values, such as the following example:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_composite_keys_values.sql[]
+----
+
+To use this table with a SQL cache store, you must provide {brandname} with a Protobuf schema that maps the columns to keys and values such as the following:
+
+[source,protobuf,options="nowrap",subs=attributes+]
+----
+include::protobuf/books_composite_keys_values.protobuf[]
+----
+
+[discrete]
+== SQL types to Protobuf types
+
+The following table contains default mappings of SQL data types to Protobuf data types:
+
+[%header%autowidth,cols="1,1,1",stripes=even]
+|===
+|SQL type |Protobuf type
+
+|`int4`
+|`int32`
+
+|`int8`
+|`int64`
+
+|`float4`
+|`float`
+
+|`float8`
+|`double`
+
+|`numeric`
+|`double`
+
+|`bool`
+|`bool`
+
+|`char`
+|`string`
+
+|`varchar`
+|`string`
+
+|`text`, `tinytext`, `mediumtext`, `longtext`
+|`string`
+
+|`bytea`, `tinyblob`, `blob`, `mediumblob`, `longblob`
+|`bytes`
+
+|===
+
+[role="_additional-resources"]
+.Additional resources
+* link:{encoding_docs}[Cache encoding and marshalling]

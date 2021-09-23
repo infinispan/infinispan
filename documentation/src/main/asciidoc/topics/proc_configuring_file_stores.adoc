@@ -1,11 +1,10 @@
 [id='configuring-file-stores_{context}']
-= Configuring File-Based Cache Stores
+= Configuring file-based cache stores
 Add file-based cache stores to {brandname} to persist data on the host filesystem.
 
 .Prerequisites
 
-* Install {brandname} Server if you use remote caches.
-* Enable global state and configure a global persistent location if you use embedded caches.
+* Enable global state and configure a global persistent location if you are configuring embedded caches.
 
 .Procedure
 
@@ -18,23 +17,31 @@ File-based cache stores should always be unique to each {brandname} instance.
 If you want to use the same persistent across a cluster, configure shared storage such as a JDBC string-based cache store .
 +
 . Configure the `index` and `data` elements to specify the location where {brandname} creates indexes and stores data.
-. Include the `write-behind` element to configure the cache store as write behind instead of as write through.
+. Include the `write-behind` element if you want to configure the cache store with write-behind mode.
 
-.Directory location
+[discrete]
+== File-based cache store configuration
 
-{brandname} creates file-based cache stores in the directory that you configure, relative to the global persistent location.
-For {brandname} this is the `{server_home}/server/data` directory.
-For embedded caches, {brandname} defaults to the `user.dir` system property.
-
-You should never configure an absolute path for a file-based cache store that is outside the global persistent location.
-If you do, {brandname} writes the following exception to logs:
-
-----
-ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"
-----
-
-.File-based cache store configuration
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/persistence_file_store.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_file_store.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_file_store.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceFileStore.java[]
 ----
