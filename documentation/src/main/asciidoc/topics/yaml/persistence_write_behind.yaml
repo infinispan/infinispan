@@ -1,0 +1,14 @@
+distributed-cache:
+  persistence:
+    table-jdbc-store:
+      dialect: "H2"
+      shared: "true"
+      table-name: "books"
+      connection-pool:
+        connection-url: "jdbc:h2:mem:infinispan"
+        driver: "org.h2.Driver"
+        username: "sa"
+        password: "changeme"
+      writeBehind:
+        modificationQueueSize: "2048"
+        failSilently: "true"

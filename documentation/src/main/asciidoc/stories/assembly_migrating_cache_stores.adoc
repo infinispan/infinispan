@@ -1,6 +1,6 @@
-[id='cache_store_migration']
-:context: configure
-= Migrating Between Cache Stores
+[id='cache-store-migrator']
+:context: cache-store-migrator
+= Migrating data between cache stores
 {brandname} provides a utility to migrate data from one cache store to another.
 
 include::{topics}/con_store_migrator.adoc[leveloffset=+1]

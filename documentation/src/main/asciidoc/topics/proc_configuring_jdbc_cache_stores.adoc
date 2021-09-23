@@ -1,0 +1,71 @@
+[id='configuring-jdbc-cache-stores_{context}']
+= Configuring JDBC string-based cache stores
+
+Configure {brandname} caches with JDBC string-based cache stores that can connect to databases.
+
+.Prerequisites
+
+* Remote caches: Copy database drivers to the `server/lib` directory in your {brandname} Server installation.
+* Embedded caches: Add the `infinispan-cachestore-jdbc` dependency to your `pom` file.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/persistence_jdbc_store.xml[]
+----
+
+.Procedure
+
+. Create a JDBC string-based cache store configuration in one of the following ways:
++
+* Declaratively, add the `persistence` element or field then add `string-keyed-jdbc-store` with the following schema namespace:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+----
++
+* Programmatically, add the following methods to your `ConfigurationBuilder`:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+----
+
+. Specify the dialect of the database with either the `dialect` attribute or the `dialect()` method.
+. Configure any properties for the JDBC string-based cache store as appropriate.
++
+For example, specify if the cache store is shared with multiple cache instances with either the `shared` attribute or the `shared()` method.
++
+. Add a JDBC connection factory so that {brandname} can connect to the database.
+. Add a database table that stores cache entries.
+
+[discrete]
+== JDBC string-based cache store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_jdbc_string_based.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_jdbc_string_based.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_jdbc_string_based.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceJdbcStringBased.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{config_docs}#jdbc-connection-factories_persistence[JDBC connection factories]

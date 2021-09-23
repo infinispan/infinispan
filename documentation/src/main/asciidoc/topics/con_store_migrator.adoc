@@ -1,19 +1,14 @@
-[id='store_migrator-{context}']
-= Cache Store Migrator
-{brandname} provides the `StoreMigrator.java` utility that recreates data for
-the latest {brandname} cache store implementations.
+[id='store-migrator_{context}']
+= Cache store migrator
+{brandname} provides the `StoreMigrator.java` utility that recreates data for the latest {brandname} cache store implementations.
 
-`StoreMigrator` takes a cache store from a previous version of {brandname} as
-source and uses a cache store implementation as target.
+`StoreMigrator` takes a cache store from a previous version of {brandname} as source and uses a cache store implementation as target.
 
-When you run `StoreMigrator`, it creates the target cache with the cache store
-type that you define using the `EmbeddedCacheManager` interface. `StoreMigrator`
-then loads entries from the source store into memory and then puts them into
-the target cache.
+When you run `StoreMigrator`, it creates the target cache with the cache store type that you define using the `EmbeddedCacheManager` interface.
+`StoreMigrator` then loads entries from the source store into memory and then puts them into the target cache.
 
-`StoreMigrator` also lets you migrate data from one type of cache store to
-another. For example, you can migrate from a JDBC String-Based cache store to a
-Single File cache store.
+`StoreMigrator` also lets you migrate data from one type of cache store to another.
+For example, you can migrate from a JDBC string-based cache store to a RocksDB cache store.
 
 [IMPORTANT]
 ====

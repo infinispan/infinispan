@@ -1,0 +1,49 @@
+[id='configuring-jdbc-agroal-properties_{context}']
+= Configuring JDBC connection pools with Agroal properties
+
+You can use a properties file to configure pooled connection factories for JDBC string-based cache stores.
+
+.Procedure
+
+. Specify JDBC connection pool configuration with `org.infinispan.agroal.*` properties, as in the following example:
++
+[source,properties,options="nowrap",subs=attributes+]
+----
+include::properties/example_agroal.properties[]
+----
++
+. Configure {brandname} to use your properties file with the `properties-file` attribute or the `PooledConnectionFactoryConfiguration.propertyFile()` method.
++
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<connection-pool properties-file="path/to/agroal.properties"/>
+----
++
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+"persistence": {
+  "connection-pool": {
+    "properties-file": "path/to/agroal.properties"
+  }
+}
+----
++
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+persistence:
+  connectionPool:
+    propertiesFile: path/to/agroal.properties
+----
++
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+.connectionPool().propertyFile("path/to/agroal.properties")
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://agroal.github.io/[Agroal]

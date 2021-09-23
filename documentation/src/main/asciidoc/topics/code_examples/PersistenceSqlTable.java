@@ -1,0 +1,15 @@
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.persistence().addStore(TableJdbcStoreConfigurationBuilder.class)
+      .dialect(DatabaseType.H2)
+      .shared("true")
+      .tableName(tableToSearch("books"))
+      .connectionPool()
+         .connectionUrl("jdbc:h2:mem:infinispan")
+         .username("sa")
+         .password("changeme")
+         .driverClass("org.h2.Driver")
+      .schemaJdbcConfigurationBuilder()
+         .messageName("Books")
+         .keyMessageName("BooksID")
+         .packageName("library")
+         .embeddedKey(true);

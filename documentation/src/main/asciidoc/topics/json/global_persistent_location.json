@@ -1,0 +1,12 @@
+{
+  "infinispan" : {
+    "cache-container" : {
+      "global-state": {
+        "persistent-location" : {
+          "path" : "global/state",
+          "relative-to" : "my.data"
+        }
+      }
+    }
+  }
+}

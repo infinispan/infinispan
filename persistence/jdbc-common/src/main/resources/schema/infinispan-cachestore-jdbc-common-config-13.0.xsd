@@ -18,27 +18,27 @@
         </xs:sequence>
         <xs:attribute name="dialect" type="tns:dialect" use="optional">
           <xs:annotation>
-            <xs:documentation>Defines the JDBC dialect.</xs:documentation>
+            <xs:documentation>Specifies the JDBC dialect of the database.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="db-major-version" type="xs:nonNegativeInteger" use="optional">
           <xs:annotation>
-            <xs:documentation>Defines the major version of the database.</xs:documentation>
+            <xs:documentation>Specifies the major version of the database.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="db-minor-version" type="xs:nonNegativeInteger" use="optional">
           <xs:annotation>
-            <xs:documentation>Defines the minor version of the database.</xs:documentation>
+            <xs:documentation>Specifies the minor version of the database.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="read-query-timeout" type="xs:nonNegativeInteger" use="optional">
           <xs:annotation>
-            <xs:documentation>Defines the timeout in seconds for read queries. The default is 0 which indicates no timeout.</xs:documentation>
+            <xs:documentation>Defines the timeout, in seconds, for read queries. The default is 0 which indicates no timeout.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="write-query-timeout" type="xs:nonNegativeInteger" use="optional">
           <xs:annotation>
-            <xs:documentation>Defines the timeout in seconds for write queries. The default is 0 which indicates no timeout.</xs:documentation>
+            <xs:documentation>Defines the timeout, in seconds, for write queries. The default is 0 which indicates no timeout.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
       </xs:extension>
@@ -50,35 +50,35 @@
     <xs:attribute name="properties-file" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The path of a properties file that provides additional configuration for the connection pool.
+          Sets the path of a properties file that provides additional configuration for the connection pool.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="connection-url" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          A JDBC driver-specific connection URL
+          Sets a connection url specific to a JDBC driver.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="driver" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The class name of the driver used for connecting to the database.
+          Specifies the class name of the driver that connects to the database.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="password" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The password to use when connecting via connectionUrl
+          Specifies the password for the database connection.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="username" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The username to use when connecting via connectionUrl
+          Specifies the username for the database connection.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -88,7 +88,7 @@
     <xs:attribute name="jndi-url" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The address of a datasource to use when connecting
+          Specifies the address of a datasource for the JDBC connection.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -98,28 +98,28 @@
     <xs:attribute name="connection-url" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          A JDBC driver-specific connection URL
+          Sets a connection url specific to a JDBC driver.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="driver" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The class name of the driver used for connecting to the database.
+          Specifies the class name of the driver that connects to the database.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="password" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The password to use when connecting via connectionUrl
+          Specifies the password for the database connection.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="username" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The username to use when connecting via connectionUrl
+          Specifies the username for the database connection.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

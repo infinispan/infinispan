@@ -1,0 +1,98 @@
+[id='jdbc-connection-factories_{context}']
+= JDBC connection factories
+
+{brandname} provides different `ConnectionFactory` implementations that allow you to connect to databases.
+You use JDBC connections with SQL cache stores and JDBC string-based caches stores.
+
+[discrete]
+== Connection pools
+
+Connection pools are suitable for standalone {brandname} deployments and are based on Agroal.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_jdbc_connection_pool.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_jdbc_connection_pool.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_jdbc_connection_pool.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceJdbcConnectionPool.java[]
+----
+
+[discrete]
+== Managed datasources
+
+Datasource connections are suitable for managed environments such as application servers.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_jdbc_connection_datasource.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_jdbc_connection_datasource.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_jdbc_connection_datasource.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceJdbcConnectionDatasource.java[]
+----
+
+[discrete]
+== Simple connections
+
+Simple connection factories create database connections on a per invocation basis and are intended for use with test or development environments only.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_jdbc_connection_simple.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_jdbc_connection_simple.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_jdbc_connection_simple.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceJdbcConnectionSimple.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/PooledConnectionFactoryConfigurationBuilder.html[PooledConnectionFactoryConfigurationBuilder]
+*  link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/ManagedConnectionFactoryConfigurationBuilder.html[ManagedConnectionFactoryConfigurationBuilder]
+*  link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/SimpleConnectionFactoryConfigurationBuilder.html[SimpleConnectionFactoryConfigurationBuilder]

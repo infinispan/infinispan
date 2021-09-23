@@ -1,8 +1,13 @@
-[id='cluster_cache_loader']
-= Cluster Cache Loaders
+[id='cluster-cache-loader_{context}']
+= Cluster cache loaders
 `ClusterCacheLoader` retrieves data from other {brandname} cluster members but
 does not persist data. In other words, `ClusterCacheLoader` is not a cache
 store.
+
+[WARNING]
+====
+`ClusterLoader` is deprecated and planned for removal in a future version.
+====
 
 `ClusterCacheLoader` provides a non-blocking partial alternative to state
 transfer. `ClusterCacheLoader` fetches keys from other nodes on demand if those
@@ -15,24 +20,35 @@ The following points also apply to `ClusterCacheLoader`:
 * Fetching persistent state is not supported (`fetch-state=true`).
 * Segmentation is not supported.
 
-WARNING: The `ClusterLoader` has been deprecated and will be removed in a future release.
+[discrete]
+== Cluster cache loader configuration
 
-.Declarative configuration
-
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/persistence_cluster_loader.xml[]
 ----
 
-.Programmatic configuration
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_cluster_loader.json[]
+----
 
-[source,java]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_cluster_loader.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/PersistenceClusterLoader.java[]
 ----
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}infinispan-config-{schemaversion}.html[{brandname} configuration schema]
 * link:{javadocroot}/org/infinispan/persistence/cluster/ClusterLoader.html[ClusterLoader]
 * link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[ClusterLoaderConfiguration]

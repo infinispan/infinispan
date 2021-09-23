@@ -1,0 +1,4 @@
+distributed-cache:
+  persistence:
+    dataSource:
+      jndiUrl: "java:/StringStoreWithManagedConnectionTest/DS"

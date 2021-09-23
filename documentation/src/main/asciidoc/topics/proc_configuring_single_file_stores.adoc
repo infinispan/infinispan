@@ -1,13 +1,17 @@
 [id='configuring-single-file-stores_{context}']
-= Configuring Single File Cache Stores
-Single file stores are deprecated and replaced by soft-index file stores.
-Soft-index file stores provide better performance and data consistency in comparison with single file stores.
-However, if you still want to configure {brandname} to create single file stores for persistence, you can complete the following procedure.
+= Configuring single file cache stores
+
+If required, you can configure {brandname} to create single file stores.
+
+[IMPORTANT]
+====
+Single file stores are deprecated.
+You should use soft-index file stores for better performance and data consistency in comparison with single file stores.
+====
 
 .Prerequisites
 
-* Install {brandname} Server if you use remote caches.
-* Enable global state and configure a global persistent location if you use embedded caches.
+* Enable global state and configure a global persistent location if you are configuring embedded caches.
 
 .Procedure
 
@@ -18,7 +22,29 @@ However, if you still want to configure {brandname} to create single file stores
 . Configure any other attributes as appropriate.
 . Include the `write-behind` element to configure the cache store as write behind instead of as write through.
 
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== Single file cache store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/persistence_file_store.xml[]
+include::xml/persistence_single_file_store.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_single_file_store.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_single_file_store.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceSingleFileStore.java[]
 ----

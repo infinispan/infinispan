@@ -1,4 +1,4 @@
-[id='passivation']
+[id='passivation_{context}']
 = Passivation
 Passivation configures {brandname} to write entries to cache stores when it
 evicts those entries from memory. In this way, passivation ensures that only a

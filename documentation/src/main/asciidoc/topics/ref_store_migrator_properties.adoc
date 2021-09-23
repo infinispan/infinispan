@@ -1,5 +1,5 @@
-[id='store_migrator_properties-{context}']
-= Store Migrator Properties
+[id='store-migrator-properties_{context}']
+= Configuration properties for the cache store migrator
 Configure source and target cache stores in a `StoreMigrator` properties.
 
 .Cache Store Type Property

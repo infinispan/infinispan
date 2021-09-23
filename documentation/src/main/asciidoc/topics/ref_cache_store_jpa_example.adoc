@@ -1,12 +1,11 @@
-= JPA Cache Store Usage Example
+[id='jpa-cache-store-example_{context}']
+= JPA cache store example
+
 This section provides an example for using JPA cache stores.
 
 .Prerequistes
 
-* Configure {brandname} to marshall your JPA entities. By default, {brandname}
-uses ProtoStream for marshalling Java objects. To marshall JPA entities, you
-must create a `SerializationContextInitializer` implementation that registers a
-`.proto` schema and marshaller with a `SerializationContext`.
+* Configure {brandname} to marshall your JPA entities.
 
 .Procedure
 

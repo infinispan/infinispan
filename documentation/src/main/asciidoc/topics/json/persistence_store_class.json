@@ -1,0 +1,9 @@
+{
+  "distributed-cache": {
+    "persistence" : {
+      "store" : {
+        "class" : "org.infinispan.persistence.example.MyInMemoryStore"
+      }
+    }
+  }
+}

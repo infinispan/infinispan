@@ -1,0 +1,35 @@
+{
+  "distributed-cache": {
+    "persistence": {
+      "string-keyed-jdbc-store": {
+        "dialect": "H2",
+        "string-keyed-table": {
+          "prefix": "ISPN_STRING_TABLE",
+          "create-on-start": true,
+          "id-column": {
+            "name": "ID_COLUMN",
+            "type": "VARCHAR(255)"
+          },
+          "data-column": {
+            "name": "DATA_COLUMN",
+            "type": "BINARY"
+          },
+          "timestamp-column": {
+            "name": "TIMESTAMP_COLUMN",
+            "type": "BIGINT"
+          },
+          "segment-column": {
+            "name": "SEGMENT_COLUMN",
+            "type": "INT"
+          }
+        },
+        "connection-pool": {
+          "connection-url": "jdbc:h2:mem:infinispan",
+          "driver": "org.h2.Driver",
+          "username": "sa",
+          "password": "changeme"
+        }
+      }
+    }
+  }
+}
