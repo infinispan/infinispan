@@ -16,7 +16,7 @@ For example, the following configuration allows unauthenticated access to
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/endpoints_authentication_disabled.xml[]
+include::xml/endpoints_authentication_disabled.xml[]
 ----
 +
 . Remove any `authorization` elements from the `security` configuration for the `cache-container` and each cache configuration.

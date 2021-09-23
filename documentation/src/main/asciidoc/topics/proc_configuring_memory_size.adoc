@@ -21,7 +21,7 @@ entries.
 .Declarative configuration
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/max_count_memory.xml[]
+include::xml/max_count_memory.xml[]
 ----
 
 .Programmatic configuration

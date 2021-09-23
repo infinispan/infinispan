@@ -12,7 +12,7 @@ At runtime Spring looks for a `CacheManager` implementation that has a bean name
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/spring_cache_manager_bean.xml[]
+include::xml/spring_cache_manager_bean.xml[]
 ----
 .Programmatic
 [source,java,options=nowrap,subs=attributes+,role="secondary"]

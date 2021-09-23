@@ -97,7 +97,7 @@ Then, modify the persistence.xml to include these properties:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_second_level_cache.xml[]
+include::xml/ispn_second_level_cache.xml[]
 ----
 
 By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
@@ -158,7 +158,7 @@ Clustering the {brandname} second-level cache provider is as simple as adding th
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_second_level_cache_multinode.xml[]
+include::xml/ispn_second_level_cache_multinode.xml[]
 ----
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
@@ -308,7 +308,7 @@ See examples below on how entity/collection specific configurations can be appli
 .Use custom {brandname} configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_caching_provider.xml[]
+include::xml/ispn_caching_provider.xml[]
 ----
 
 NOTE: If the cache is configured as transactional, {brandname} cache provider automatically sets transaction manager so that the TM used by {brandname} is the same as TM used by Hibernate.
@@ -338,7 +338,7 @@ For specifying cache template for specific region, use region name instead of th
 .Use custom cache template
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_caching_provider_custom.xml[]
+include::xml/ispn_caching_provider_custom.xml[]
 ----
 
 .Use custom cache template in WildFly
@@ -346,7 +346,7 @@ When applying entity/collection level changes inside JPA applications deployed i
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_caching_provider_wfly.xml[]
+include::xml/ispn_caching_provider_wfly.xml[]
 ----
 
 IMPORTANT: Cache configurations are used only as a template for the cache created for given region.
@@ -374,7 +374,7 @@ Example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hibernate_cache_properties.xml[]
+include::xml/hibernate_cache_properties.xml[]
 ----
 
 With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the {brandname} cache configuration used.
@@ -393,7 +393,7 @@ Example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hibernate_cache_eviction.xml[]
+include::xml/hibernate_cache_eviction.xml[]
 ----
 
 Inside of WildFly, same as with the entity/collection configuration override, eviction/expiration settings would also require deployment name and persistence unit information
@@ -403,7 +403,7 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hiberna
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hibernate_cache_deployment.xml[]
+include::xml/hibernate_cache_deployment.xml[]
 ----
 
 == Cache strategies

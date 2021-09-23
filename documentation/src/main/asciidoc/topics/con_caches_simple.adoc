@@ -34,7 +34,7 @@ Declarative configuration::
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/simple_cache.xml[]
+include::xml/simple_cache.xml[]
 ----
 
 Programmatic configuration::

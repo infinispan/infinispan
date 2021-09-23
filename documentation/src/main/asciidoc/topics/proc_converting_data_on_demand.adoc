@@ -15,7 +15,7 @@ include::code_examples/EncodeMediaTypeOverride.java[]
 .Value returned in JSON format
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/john_doe.json[]
+include::json/john_doe.json[]
 ----
 
 [role="_additional-resources"]

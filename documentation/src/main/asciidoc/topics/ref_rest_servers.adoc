@@ -12,7 +12,7 @@ as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_server_response.json[]
+include::json/rest_server_response.json[]
 ----
 
 
@@ -88,7 +88,7 @@ GET /rest/v2/server/config
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_server_config_response.json[]
+include::json/rest_server_config_response.json[]
 ----
 
 

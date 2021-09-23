@@ -218,7 +218,7 @@ provide the possibility to cluster caches using the standard API. Given a
 .infinispan.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jcache_clustering.xml[]
+include::xml/jcache_clustering.xml[]
 ----
 
 You can create a cluster of caches using this code:

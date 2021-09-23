@@ -6,7 +6,7 @@ By default, {brandname} servers provide the following socket bindings:
 
 [source,xml]
 ----
-include::config_examples/server_network_socket_bindings.xml[]
+include::xml/server_network_socket_bindings.xml[]
 ----
 
 * `socket-bindings` declares the default interface and port offset.

@@ -3,7 +3,7 @@ REST connector declarations enable REST servers.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/endpoints_rest_connector.xml[]
+include::xml/endpoints_rest_connector.xml[]
 ----
 
 * `name="rest"` logically names the REST connector. By default the name is derived from the socket binding name, for example _rest-default_.

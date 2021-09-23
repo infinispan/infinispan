@@ -26,7 +26,7 @@ These counters are started eagerly and they are available in all the cluster's n
 .configuration.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/clustered_counters_config.xml[]
+include::xml/clustered_counters_config.xml[]
 ----
 
 or programmatically, in the `GlobalConfigurationBuilder`:

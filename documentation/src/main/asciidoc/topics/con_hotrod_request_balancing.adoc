@@ -26,7 +26,7 @@ include::code_examples/HotRodCustomRequestBalancing.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-custom-balancing.properties[]
+include::properties/hotrod-custom-balancing.properties[]
 ----
 
 [role="_additional-resources"]

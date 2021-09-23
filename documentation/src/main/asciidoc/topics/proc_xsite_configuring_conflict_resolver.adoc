@@ -15,7 +15,7 @@ The following example configuration uses the `ALWAYS_REMOVE` algorithm that dele
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_resolver_provided.xml[]
+include::xml/xsite_resolver_provided.xml[]
 ----
 
 .Using custom implementations
@@ -31,7 +31,7 @@ include::code_examples/XSiteEntryMergePolicy.java[]
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_resolver_custom.xml[]
+include::xml/xsite_resolver_custom.xml[]
 ----
 
 [role="_additional-resources"]

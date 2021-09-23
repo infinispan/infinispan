@@ -30,7 +30,7 @@ The cache is configured in a similar way as the other cache modes, here is an ex
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/scattered_cache.xml[]
+include::xml/scattered_cache.xml[]
 ----
 
 And this is how you can configure it programmatically:

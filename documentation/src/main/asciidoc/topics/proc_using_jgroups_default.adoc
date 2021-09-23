@@ -13,7 +13,7 @@ Do one of the following to use one of the default JGroups stacks:
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_cluster_transport.xml[]
+include::xml/jgroups_cluster_transport.xml[]
 ----
 
 ifdef::embedded_caches[]

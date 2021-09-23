@@ -17,7 +17,7 @@ You should use it only as a temporary measure while migrating your applications 
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/jboss_user_marshaller.xml[]
+include::xml/jboss_user_marshaller.xml[]
 ----
 
 .Programmatic

@@ -12,6 +12,13 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :toclevels: 3
 :numbered:
 :stem: asciimath
+:context: configuration
+
+//
+// Conditional statements
+//
+:remote_caches:
+:embedded_caches:
 
 //Title
 = Configuring {brandname} {infinispanversion}

@@ -27,7 +27,7 @@ Alternatively to providing trust stores you can use shared system certificates.
 .{brandname} Server trust store realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_truststore_realm.xml[]
+include::xml/server_truststore_realm.xml[]
 ----
 
 .Next steps

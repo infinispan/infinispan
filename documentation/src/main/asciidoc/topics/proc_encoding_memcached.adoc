@@ -17,7 +17,7 @@ or Hot Rod clients to interact on the same data set as Memcached clients.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/encoding_memcached.xml[]
+include::xml/encoding_memcached.xml[]
 ----
 
 .Encoding
@@ -31,7 +31,7 @@ JSON, you can use the following configuration:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/encoding_memcached_clients.xml[]
+include::xml/encoding_memcached_clients.xml[]
 ----
 
 [role="_additional-resources"]

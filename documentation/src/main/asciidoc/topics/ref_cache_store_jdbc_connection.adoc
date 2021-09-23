@@ -11,7 +11,7 @@ Alternatively, you can specify configuration properties prefixed with `org.infin
 
 [source,properties,options="nowrap",subs=attributes+]
 ----
-include::config_examples/example_agroal.properties[]
+include::properties/example_agroal.properties[]
 ----
 
 You then configure {brandname} to use your properties file via

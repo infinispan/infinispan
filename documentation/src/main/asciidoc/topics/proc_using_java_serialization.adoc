@@ -16,7 +16,7 @@ You should use Java serialization only if there is a strict requirement to do so
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/serialization_marshaller.xml[]
+include::xml/serialization_marshaller.xml[]
 ----
 
 .Programmatic

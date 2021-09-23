@@ -11,7 +11,7 @@ You inject the address (`IP:PORT`) of the Gossip router into {brandname} nodes a
 .Gossip router configuration example
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/tcpgossip.xml[]
+include::xml/tcpgossip.xml[]
 ----
 
 [role="_additional-resources"]

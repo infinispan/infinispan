@@ -21,7 +21,7 @@ WARNING: The `ClusterLoader` has been deprecated and will be removed in a future
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_cluster_loader.xml[]
+include::xml/persistence_cluster_loader.xml[]
 ----
 
 .Programmatic configuration

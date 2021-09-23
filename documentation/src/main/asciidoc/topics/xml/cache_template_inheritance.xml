@@ -1,0 +1,14 @@
+<infinispan>
+  <cache-container>
+    <!-- Creates a cache template. -->
+    <local-cache-configuration name="base-template">
+      <expiration interval="10000" lifespan="10" max-idle="10"/>
+    </local-cache-configuration>
+    <!-- Creates another template that inherits configuration. -->
+    <local-cache-configuration name="extended-template"
+                               configuration="base-template">
+      <expiration lifespan="20"/>
+      <memory max-size="2GB" />
+    </local-cache-configuration>
+  </cache-container>
+</infinispan>

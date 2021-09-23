@@ -1,0 +1,26 @@
+[id='configuring-embedded-caches_{context}']
+= Configuring embedded caches
+
+{brandname} provides a `GlobalConfigurationBuilder` API that controls the Cache Manager and a `ConfigurationBuilder` API that configures embedded caches.
+
+.Prerequisites
+
+* Add the `infinispan-core` artifact as a dependency in your `pom.xml`.
+
+.Procedure
+
+. Initialize the default Cache Manager so you can add embedded caches.
+. Add at least one embedded cache with the `ConfigurationBuilder` API.
+. Invoke the `getOrCreateCache()` method that either creates embedded caches on all nodes in the cluster or returns caches that already exist.
+
+[source,java,options="nowrap"]
+----
+include::code_examples/EmbeddedCacheConfiguration.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager]
+* link:{javadocroot}/org/infinispan/configuration/global/package-summary.html[EmbeddedCacheManager Configuration]
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration]
+* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

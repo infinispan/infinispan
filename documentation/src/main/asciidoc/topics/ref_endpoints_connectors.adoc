@@ -7,7 +7,7 @@ The default endpoint connector configuration is as follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/endpoints_connectors.xml[]
+include::xml/endpoints_connectors.xml[]
 ----
 
 * `endpoints` contains endpoint connector declarations and defines global
@@ -27,7 +27,7 @@ Additionally, the `public` endpoint disables administrative features, such as th
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/endpoints_connectors_multiple.xml[]
+include::xml/endpoints_connectors_multiple.xml[]
 ----
 
 .Reference

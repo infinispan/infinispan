@@ -1,37 +1,34 @@
-[id='create_cache_cli']
-= Creating Caches with the {brandname} Command Line Interface (CLI)
-Use the {brandname} CLI to add caches from templates or configuration files in
-XML or JSON format.
+[id='creating-caches-cli_{context}']
+= Creating remote caches with the {brandname} CLI
+Use the {brandname} Command Line Interface (CLI) to add remote caches on {brandname} Server.
 
 .Prerequisites
 
-Create a user and start at least one {brandname} server instance.
+* Create a {brandname} user with `admin` permissions.
+* Start at least one {brandname} Server instance.
+* Have a {brandname} cache configuration.
 
 .Procedure
 
-. Create a CLI connection to {brandname}.
-. Add cache definitions with the [command]`create cache` command.
-+
-* Add a cache definition from an XML or JSON file with the [command]`--file` option.
+. Start the CLI and enter your credentials when prompted.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create cache --file=configuration.xml mycache
+include::cmd_examples/cli_nix.adoc[]
 ----
 +
-* Add a cache definition from a template with the [command]`--template` option.
+. Use the [command]`create cache` command to create remote caches.
++
+For example, create a cache named "mycache" from a file named `mycache.xml` as follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create cache --template=org.infinispan.DIST_SYNC mycache
+[//containers/default]> create cache --file=mycache.xml mycache
 ----
-+
-[TIP]
-====
-Press the tab key after the `--template=` argument to list available cache templates.
-====
-+
-. Verify the cache exists with the [command]`ls` command.
+
+.Verification
+
+. List all remote caches with the [command]`ls` command.
 +
 [source,options="nowrap",subs=attributes+]
 ----
@@ -39,14 +36,9 @@ Press the tab key after the `--template=` argument to list available cache templ
 mycache
 ----
 +
-. Retrieve the cache configuration with the [command]`describe` command.
+. View cache configuration with the [command]`describe` command.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> describe caches/mycache
 ----
-
-.Reference
-
-* link:{cli_docs}#cli_start-cli[Creating {brandname} CLI Connections]
-* link:{cli_docs}#cache_operations[Performing Cache Operations with the {brandname} CLI]

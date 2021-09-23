@@ -1,6 +1,6 @@
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.statistics().enable()
-         //Register JMX MBeans for RemoteCacheManager and each RemoteCache.
+         //Register JMX MBeans for the Cache Manager and remote caches.
          .jmxEnable()
          //Set the JMX domain name to which MBeans are exposed.
          .jmxDomain("org.example")

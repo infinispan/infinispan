@@ -267,7 +267,7 @@ handling strategy is ALLOW_READ_WRITES and the default EntryMergePolicy is Merge
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/partition_handling.xml[]
+include::xml/partition_handling.xml[]
 ----
 
 The same can be achieved programmatically:
@@ -282,7 +282,7 @@ It's also possible to provide custom implementations of the EntryMergePolicy
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/custom_merge_policy.xml[]
+include::xml/custom_merge_policy.xml[]
 ----
 
 [source,java]

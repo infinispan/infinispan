@@ -18,7 +18,7 @@ other words if `shared="true"` in your configuration then you must set
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_remote_store.xml[]
+include::xml/persistence_remote_store.xml[]
 ----
 
 .Programmatic configuration

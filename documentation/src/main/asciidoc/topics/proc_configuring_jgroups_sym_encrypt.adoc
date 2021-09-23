@@ -13,7 +13,7 @@ For {brandname} Server, you put the keystore in the {server_home} directory.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_sym_encrypt.xml[]
+include::xml/jgroups_sym_encrypt.xml[]
 ----
 
 .Verification

@@ -5,5 +5,5 @@ The following example configures Kerberos identities for {brandname} Server:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_identities_kerberos.xml[]
+include::xml/server_identities_kerberos.xml[]
 ----

@@ -18,7 +18,7 @@ An object called `Book` will be stored in a {brandname} cache called "books". Bo
 .infinispan.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_repl_cache_books.xml[]
+include::xml/indexing_repl_cache_books.xml[]
 ----
 
 Alternatively, if the cache is not indexed, we configure the `<encoding>` as `application/x-protostream` to make sure the storage is queryable:
@@ -26,7 +26,7 @@ Alternatively, if the cache is not indexed, we configure the `<encoding>` as `ap
 .infinispan.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_proto_cache_books.xml[]
+include::xml/indexing_proto_cache_books.xml[]
 ----
 
 Each `Book` will be defined as in the following example: we use `@Protofield` annotations to identify the message fields and the `@ProtoDoc` annotation on the fields to configure indexing attributes:

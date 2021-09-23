@@ -1,5 +1,5 @@
-[id='mvn_settings']
-= Adding {RedHat} Maven Repositories
+[id='adding-maven-repository_{context}']
+= Adding {RedHat} Maven repositories
 Include the {RedHat} GA repository in your Maven build environment to get {brandname} artifacts and dependencies.
 
 .Procedure

@@ -12,7 +12,7 @@ GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/xsite_backup_status.json[]
+include::json/xsite_backup_status.json[]
 ----
 
 .Returned Status

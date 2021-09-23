@@ -1,16 +1,20 @@
-[id='create_cache_console']
-= Creating Caches with the {brandname} Console
-Dynamically add caches from templates or configuration files through the
-{brandname} console.
+[id='creating-caches-console_{context}']
+= Creating caches with {brandname} Console
+Use {brandname} Console to create remote caches in an intuitive visual interface from any web browser.
 
 .Prerequisites
 
-Create a user and start at least one {brandname} server instance.
+* Create a {brandname} user with `admin` permissions.
+* Start at least one {brandname} Server instance.
+* Have a {brandname} cache configuration.
++
+[NOTE]
+====
+If you are getting started, you can use an `org.infinispan` template configuration.
+These templates provide example caches and are intended for demonstration purposes only.
+====
 
 .Procedure
 
-. Navigate to `<server_hostname>:11222/console/` in any browser.
-. Log in to the console.
-. Open the *Data Container* view.
-. Select *Create Cache* and then add a cache from a template or with {brandname} configuration in XML or JSON format.
-. Return to the *Data Container* view and verify your {brandname} cache.
+. Open `127.0.0.1:11222/console/` in any browser.
+. Select *Create Cache* and follow the steps as {brandname} Console guides you through the process.

@@ -128,7 +128,7 @@ threads to the number of concurrent client requests:
 [source,xml,options="nowrap",subs=attributes+]
 .Hot Rod Server worker thread pool size
 ----
-include::config_examples/hotrod_worker_threads.xml[]
+include::xml/hotrod_worker_threads.xml[]
 ----
 
 = SSL provider
@@ -188,7 +188,7 @@ The Externalizer must be registered in cache configuration. See configuration ex
 .Adding Externalizer using XML
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/advanced_externalizer_book_example.xml[]
+include::xml/advanced_externalizer_book_example.xml[]
 ----
 
 .Adding Externalizer using Java

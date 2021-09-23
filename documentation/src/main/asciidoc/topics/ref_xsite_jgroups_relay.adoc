@@ -4,7 +4,7 @@
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_relay.xml[]
+include::xml/jgroups_relay.xml[]
 ----
 
 [TIP]

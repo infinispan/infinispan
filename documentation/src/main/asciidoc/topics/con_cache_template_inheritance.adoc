@@ -1,0 +1,16 @@
+[id='cache-templates_{context}']
+= Cache template inheritance
+
+Cache configuration templates can inherit from other templates to extend and override settings.
+
+Cache template inheritance is hierarchical.
+For a child configuration template to inherit from a parent, you must include it after the parent template.
+
+Additionally, template inheritance is additive for elements that have multiple values.
+A cache that inherits from another template merges the values from that template, which can override properties.
+
+.Cache template inheritance
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/cache_template_inheritance.xml[]
+----

@@ -8,14 +8,14 @@ HTTP mechanism.
 
 [source,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_users.properties[]
+include::properties/server_users.properties[]
 ----
 
 `groups.properties` maps users to roles.
 
 [source,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_groups.properties[]
+include::properties/server_groups.properties[]
 ----
 
 .Endpoint authentication mechanisms
@@ -28,5 +28,5 @@ When you configure {brandname} Server to use a property realm, you can configure
 .Property realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_properties_realm.xml[]
+include::xml/server_properties_realm.xml[]
 ----

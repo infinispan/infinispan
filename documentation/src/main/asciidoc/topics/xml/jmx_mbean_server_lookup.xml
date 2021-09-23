@@ -1,0 +1,4 @@
+<cache-container>
+  <jmx enabled="true"
+       mbean-server-lookup="com.acme.MyMBeanServerLookup" />
+</cache-container>

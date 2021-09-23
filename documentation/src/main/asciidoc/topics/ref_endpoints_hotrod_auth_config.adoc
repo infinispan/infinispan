@@ -5,12 +5,12 @@
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hotrod_connector_sasl.xml[]
+include::xml/hotrod_connector_sasl.xml[]
 ----
 
 .Hot Rod connector with Kerberos authentication
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hotrod_connector_sasl_kerberos.xml[]
+include::xml/hotrod_connector_sasl_kerberos.xml[]
 ----

@@ -12,7 +12,7 @@ them as failures.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_backup_timeout.xml[]
+include::xml/xsite_backup_timeout.xml[]
 ----
 
 .Number of failures
@@ -24,7 +24,7 @@ failed operations before it goes offline:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_backup_number_failures.xml[]
+include::xml/xsite_backup_number_failures.xml[]
 ----
 
 .Time to wait
@@ -34,7 +34,7 @@ operations fail. If a backup request succeeds before the wait time runs out,
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_backup_time_wait.xml[]
+include::xml/xsite_backup_time_wait.xml[]
 ----
 
 [TIP]

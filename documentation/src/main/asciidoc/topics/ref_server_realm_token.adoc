@@ -14,5 +14,5 @@ When you configure {brandname} Server to use a token realm, you must configure e
 .Token realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_token_realm_oauth.xml[]
+include::xml/server_token_realm_oauth.xml[]
 ----

@@ -1,1 +1,1 @@
-$ bin\cli.bat user create myuser -p "qwer1234!"
+$ bin\cli.bat user create admin -p changeme

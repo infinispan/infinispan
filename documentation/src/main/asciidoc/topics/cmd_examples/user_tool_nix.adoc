@@ -1,1 +1,1 @@
-$ bin/cli.sh user create myuser -p "qwer1234!"
+$ bin/cli.sh user create admin -p changeme

@@ -5,7 +5,7 @@ upgrades, as follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/rolling_upgrade_remote_store.xml[]
+include::xml/rolling_upgrade_remote_store.xml[]
 ----
 
 .Reference

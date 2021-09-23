@@ -23,18 +23,20 @@ For this reason you should create a user with `admin` permissions the first time
 .Procedure
 
 . Open a terminal in `{server_home}`.
-. Create an `admin` user with the [command]`user create` command in the CLI.
+. Create an `admin` user with the [command]`user create` command.
++
+* Add a user assigned to the `admin` group.
 +
 [source,sh,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh user create myuser -p changeme -g admin
+include::cmd_examples/user_create_group.adoc[]
 ----
 +
-Alternatively, the username "admin" automatically gets `admin` permissions.
+* Use implicit authorization to gain `admin` permissions.
 +
 [source,sh,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh user create admin -p changeme
+include::cmd_examples/user_tool_nix.adoc[]
 ----
 +
 . Open `user.properties` and `groups.properties` with any text editor to verify users and groups.
