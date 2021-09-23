@@ -1,0 +1,13 @@
+security:
+  security-realms:
+    - name: default
+      properties-realm:
+        groups-attribute: Roles
+        user-properties:
+          digest-realm-name: digest
+          path: 'ServerConfigurationParserTest-user.properties'
+          relative-to: 'infinispan.server.config.path'
+          plain-text: true
+        group-properties:
+          path: 'ServerConfigurationParserTest-group.properties'
+          relative-to: 'infinispan.server.config.path'

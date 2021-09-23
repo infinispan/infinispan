@@ -5,9 +5,22 @@
 * A `connection factory` that defines how to connect to the database.
 * A `connection pool` that defines how to pool and reuse connections.
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_datasources.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_datasources.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_datasources.yaml[]
 ----
 
 Connection pools can be tuned using the following parameters:

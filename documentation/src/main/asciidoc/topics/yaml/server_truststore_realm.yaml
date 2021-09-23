@@ -1,0 +1,32 @@
+security:
+  security-realms:
+    - name: "default"
+      server-identities:
+        ssl:
+          keystore:
+            path: "server.p12"
+            relative-to: "infinispan.server.config.path"
+            keystore-password: "secret"
+            alias: "server"
+          truststore:
+            path: "trust.p12"
+            relative-to: "infinispan.server.config.path"
+            password: "secret"
+      truststore-realm: ~
+# Configures {brandname} Server to require client certificates with the "require-ssl-client-auth" attribute
+endpoints:
+  socket-binding: "default"
+  security-realm: "default"
+  require-ssl-client-auth: "true"
+  connectors:
+    - hotrod:
+        hotrod-connector:
+          authentication:
+            sasl:
+              mechanisms: "EXTERNAL"
+              server-name: "infinispan"
+              qop: "auth"
+    - rest:
+        rest-connector:
+          authentication:
+            mechanisms: "CLIENT_CERT"

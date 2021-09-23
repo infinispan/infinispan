@@ -4,7 +4,20 @@ Some SASL authentication mechanisms, such as `GSSAPI`, `GS2-KRB5` and
 `Negotiate`, supply a username that needs to be _cleaned up_ before you can use
 it to search LDAP servers.
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_ldap_realm_rewriter.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_ldap_realm_rewriter.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_ldap_realm_rewriter.yaml[]
 ----
