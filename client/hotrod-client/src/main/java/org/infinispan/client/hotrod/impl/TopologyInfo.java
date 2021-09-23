@@ -144,12 +144,11 @@ public final class TopologyInfo {
    public void reset(WrappedBytes cacheName) {
       if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
                                            cacheName, cluster.getName());
-      caches.forEach((name, oldCacheInfo) -> {
-         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(cluster.getTopologyAge(),
-                                                              HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
-                                                              cluster.getInitialServers());
-         updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
-      });
+      CacheInfo oldCacheInfo = caches.get(cacheName);
+      CacheInfo newCacheInfo = oldCacheInfo.withNewServers(cluster.getTopologyAge(),
+                                                           HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+                                                           cluster.getInitialServers());
+      updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
    }
 
    public ClusterInfo getCluster() {
