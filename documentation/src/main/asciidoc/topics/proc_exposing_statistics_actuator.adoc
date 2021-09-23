@@ -22,7 +22,7 @@ include::code_examples/EnableJmxStatisticsSpringBoot.java[]
 .Declaratively
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jmx_statistics.xml[]
+include::xml/jmx_statistics.xml[]
 ----
 
 The Spring Boot Actuator registry binds cache instances when your application starts.

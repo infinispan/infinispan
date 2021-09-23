@@ -13,7 +13,7 @@ Create indexes of values in your caches to improve query performance and use ful
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_enable.xml[]
+include::xml/indexing_enable.xml[]
 ----
 +
 Adding an `<indexing>` element automatically enables indexing. You do not need to include the `enabled` attribute, even though the default value of the `enabled` attribute is `false` in the configuration schema.
@@ -22,7 +22,7 @@ Adding an `<indexing>` element automatically enables indexing. You do not need t
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_entities.xml[]
+include::xml/indexing_entities.xml[]
 ----
 
 .Plain Old Java Objects
@@ -31,7 +31,7 @@ For caches that store POJOs, you specify the fully qualified class name that is 
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_entities_pojo.xml[]
+include::xml/indexing_entities_pojo.xml[]
 ----
 
 .Protobuf
@@ -49,5 +49,5 @@ You should then specify the following value for the `indexed-entity` element:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_entities_proto.xml[]
+include::xml/indexing_entities_proto.xml[]
 ----

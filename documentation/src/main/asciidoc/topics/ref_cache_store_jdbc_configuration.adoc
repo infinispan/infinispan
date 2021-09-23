@@ -8,14 +8,14 @@ You can configure `JdbcStringBasedStore` programmatically or declaratively.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_example_jdbc.xml[]
+include::xml/persistence_example_jdbc.xml[]
 ----
 
 * Using `ManagedConnectionFactory`
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_example_ds_jndi.xml[]
+include::xml/persistence_example_ds_jndi.xml[]
 ----
 
 .Programmatic configuration

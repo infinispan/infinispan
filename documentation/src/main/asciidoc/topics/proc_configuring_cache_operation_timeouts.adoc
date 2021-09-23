@@ -29,5 +29,5 @@ The following example shows the timeout properties in the context XML for `Sprin
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/spring_remote_cache_manager_factory_bean.xml[]
+include::xml/spring_remote_cache_manager_factory_bean.xml[]
 ----

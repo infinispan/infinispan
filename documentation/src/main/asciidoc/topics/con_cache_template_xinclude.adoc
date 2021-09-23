@@ -1,0 +1,30 @@
+[id='cache-template-xinclude_{context}']
+= Multiple cache templates from file
+
+Split cache configuration templates into multiple files for granular flexibility and reference them with XML inclusions (XInclude).
+
+[NOTE]
+====
+{brandname} provides minimal support for the XInclude specification.
+This means you cannot use the `xpointer` attribute, the `xi:fallback` element, text processing, or content negotiation.
+
+You must also add the `xmlns:xi="http://www.w3.org/2001/XInclude"` namespace to `infinispan.xml` to use XInclude.
+====
+
+.Xinclude cache template
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan_xinclude_tempates.xml[]
+----
+
+{brandname} also provides an `infinispan-config-fragment-{schemaversion}.xsd` schema that you can use with configuration fragments.
+
+.Configuration fragment schema
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/config_xincluded_with_schema.xml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://www.w3.org/TR/xinclude/[XInclude specification]

@@ -1,0 +1,4 @@
+<cache-container statistics="true">
+  <!-- Enables gauge and histogram metrics for {brandname} statistics. -->
+  <metrics gauges="true" histograms="true" />
+</cache-container>

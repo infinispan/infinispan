@@ -1,6 +1,0 @@
-<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
-    <cache-container default-cache="cache-1">
-        <!-- Includes a local.xml file that contains a cache configuration. -->
-        <xi:include href="local.xml" />
-    </cache-container>
-</infinispan>

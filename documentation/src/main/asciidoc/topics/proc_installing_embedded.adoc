@@ -2,6 +2,10 @@
 = Adding {brandname} to your project
 Add {brandname} to your project to create embedded caches in your applications.
 
+.Prerequisites
+
+* Configure your project to get {brandname} artifacts from the Maven repository.
+
 .Procedure
 
 * Add the `infinispan-core` artifact as a dependency in your `pom.xml` as

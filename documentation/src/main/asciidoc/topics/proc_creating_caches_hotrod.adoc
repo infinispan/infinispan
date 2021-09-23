@@ -1,11 +1,20 @@
 [id='creating-caches-hotrod_{context}']
-= Creating Remote Caches with Hot Rod Clients
-When Hot Rod Java clients attempt to access caches that do not exist, they return `null` for `remoteCacheManager.getCache("myCache")` invocations.
-To avoid this scenario, you can configure Hot Rod clients to create caches on first access using cache configuration.
+= Creating remote caches from Hot Rod clients
+Use the {brandname} Hot Rod API to create remote caches on {brandname} Server from Java, C{plusplus}, .NET/C{hash}, JS clients and more.
+
+This procedure shows you how to use Hot Rod Java clients that create remote caches on first access.
+You can find code examples for other Hot Rod clients in the link:{code_tutorials}[{brandname} Tutorials].
+
+.Prerequisites
+
+* Create a {brandname} user with `admin` permissions.
+* Start at least one {brandname} Server instance.
+* Have a {brandname} cache configuration.
 
 .Procedure
 
-* Use the `remoteCache()` method in the `ConfigurationBuilder` or use the `configuration` and `configuration_uri` properties in `hotrod-client.properties`.
+* Invoke the `remoteCache()` method as part of your the `ConfigurationBuilder`.
+* Set the `configuration` or `configuration_uri` properties in the `hotrod-client.properties` file on your classpath.
 
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
@@ -16,30 +25,13 @@ include::code_examples/HotRodCreatePerCache.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-infinispan.client.hotrod.cache.another-cache.configuration=<distributed-cache name=\"another-cache\"/>
-infinispan.client.hotrod.cache.[my.other.cache].configuration_uri=file:///path/to/infinispan.xml
+include::properties/hotrod-client-cache-configuration.properties[]
 ----
 
 [IMPORTANT]
 ====
-When using `hotrod-client.properties` with cache names that contain the `.` character, you must enclose the cache name in square brackets as in the preceding example.
+If the name of your remote cache contains the `.` character, you must enclose it in square brackets when using `hotrod-client.properties` files.
 ====
-
-You can also create remote caches through the `RemoteCacheManager` API in other ways, such as the following example that adds a cache configuration with the `XMLStringConfiguration()` method and then calls the `getOrCreateCache()` method.
-
-However, {brandname} does not recommend this approach because it can more difficult to ensure XML validity and is generally a more cumbersome way to create caches.
-If you are creating complex cache configurations, you should save them to separate files in your project and reference them in your Hot Rod client configuration.
-
-[source,java,options="nowrap",subs=attributes+]
-----
-include::code_examples/HotRodCreateCacheWithXML.java[]
-----
-
-.Hot Rod code examples
-
-Try some {brandname} code tutorials that show you how to create remote caches in different ways with the Hot Rod Java client.
-
-Visit link:{code_tutorials}[{brandname} code examples].
 
 [role="_additional-resources"]
 .Additional resources

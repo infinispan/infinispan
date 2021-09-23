@@ -13,7 +13,7 @@ We're going to store `Book` instances in an {brandname} cache called "books". `B
 .infinispan.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_dist_cache_books.xml[]
+include::xml/indexing_dist_cache_books.xml[]
 ----
 
 Obtaining the cache:
@@ -98,7 +98,7 @@ Use the `key-transformers` xml element in both embedded and server config:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_key_transformer.xml[]
+include::xml/indexing_key_transformer.xml[]
 ----
 
 Alternatively, use the Java configuration API (embedded mode):

@@ -1,5 +1,5 @@
 [id='enabling-jmx-port_{context}']
-= Enabling JMX Remote Ports
+= Enabling JMX remote ports
 Provide unique remote JMX ports to expose {brandname} MBeans through connections in JMXServiceURL format.
 
 //Server Guide

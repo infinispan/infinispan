@@ -10,5 +10,5 @@ For example, the following configuration automatically performs cross-site state
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/xsite_state_transfer.xml[]
+include::xml/xsite_state_transfer.xml[]
 ----

@@ -9,7 +9,7 @@ Eviction is not enabled, which is the default configuration. {brandname} stores 
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_memory.xml[]
+include::xml/infinispan_memory.xml[]
 ----
 
 .Eviction based on the total number of entries
@@ -18,7 +18,7 @@ include::config_examples/infinispan_memory.xml[]
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_max_count.xml[]
+include::xml/infinispan_max_count.xml[]
 ----
 
 .Eviction based maximum size in bytes
@@ -29,7 +29,7 @@ In the following example, {brandname} performs eviction when the size of the dat
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_binary_storage.xml[]
+include::xml/infinispan_binary_storage.xml[]
 ----
 
 .Off-heap storage
@@ -39,7 +39,7 @@ Eviction happens when there are 100 entries in the data container and {brandname
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_off_heap.xml[]
+include::xml/infinispan_off_heap.xml[]
 ----
 
 .Off-heap storage with the exception strategy
@@ -49,7 +49,7 @@ When there are 100 entries in the data container, and {brandname} gets a request
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_off_heap_exception.xml[]
+include::xml/infinispan_off_heap_exception.xml[]
 ----
 
 .Manual eviction
@@ -63,7 +63,7 @@ This configuration prevents a warning message when you enable passivation but do
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_manual_eviction.xml[]
+include::xml/infinispan_manual_eviction.xml[]
 ----
 
 .Passivation with eviction
@@ -73,7 +73,7 @@ You should always enable eviction if you enable passivation, for example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_eviction_passivation.xml[]
+include::xml/infinispan_eviction_passivation.xml[]
 ----
 
 .References

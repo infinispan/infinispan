@@ -7,7 +7,7 @@ If necessary, you can disable the ACL cache or configure it with the `cache-size
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/authorization_acl_cache.xml[]
+include::xml/authorization_acl_cache.xml[]
 ----
 
 .Reference

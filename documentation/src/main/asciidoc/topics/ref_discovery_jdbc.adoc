@@ -9,7 +9,7 @@ When nodes leave {brandname} clusters, they delete their IP addresses from the s
 .JDBC_PING configuration example
 [source, xml]
 ----
-include::config_examples/jdbc_ping.xml[]
+include::xml/jdbc_ping.xml[]
 ----
 
 [IMPORTANT]

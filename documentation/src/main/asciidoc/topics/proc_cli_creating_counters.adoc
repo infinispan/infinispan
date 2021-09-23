@@ -36,7 +36,7 @@ my-weak-counter
 ----
 [//containers/default]> describe counters/my-weak-counter
 
-include::json_examples/weak_counter.json[]
+include::json/weak_counter.json[]
 ----
 +
 .. Describe `my-strong-counter`.
@@ -45,5 +45,5 @@ include::json_examples/weak_counter.json[]
 ----
 [//containers/default]> describe counters/my-strong-counter
 
-include::json_examples/strong_counter.json[]
+include::json/strong_counter.json[]
 ----

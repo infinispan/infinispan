@@ -17,7 +17,7 @@
 
     <properties>
         <download.url>https://infinispan.org/download/</download.url>
-        <infinispan.tutorials>https://github.com/infinispan/infinispan-simple-tutorials/</infinispan.tutorials>
+        <infinispan.tutorials>https://infinispan.org/tutorials/simple/simple_tutorials.html</infinispan.tutorials>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>

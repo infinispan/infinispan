@@ -9,5 +9,5 @@ clients when establishing connections.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_endpoint_require_client_cert.xml[]
+include::xml/server_endpoint_require_client_cert.xml[]
 ----

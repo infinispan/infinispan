@@ -15,5 +15,5 @@ configuration of your cache configuration, as in the following example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_jdbc_cache_stores.xml[]
+include::xml/server_jdbc_cache_stores.xml[]
 ----

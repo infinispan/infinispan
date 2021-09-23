@@ -8,7 +8,7 @@ Memcached connector declarations enable Memcached servers.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/endpoints_memcached_connector.xml[]
+include::xml/endpoints_memcached_connector.xml[]
 ----
 
 * `name="memcached"` logically names the Memcached connector.

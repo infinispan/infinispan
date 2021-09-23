@@ -35,7 +35,7 @@ If you plan to use a file-based cache store for persistence, you can specify a d
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/global_persistent_location.xml[]
+include::xml/global_persistent_location.xml[]
 ----
 
 .Programmatic

@@ -6,5 +6,5 @@ Cache containers declare one or more local or clustered caches that a Cache Mana
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ispn_subsystem_containers.xml[]
+include::xml/ispn_subsystem_containers.xml[]
 ----

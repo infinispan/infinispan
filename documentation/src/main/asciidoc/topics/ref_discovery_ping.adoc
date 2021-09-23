@@ -9,7 +9,7 @@ If no nodes respond to the PING request, the joining node becomes the coordinato
 .PING configuration example
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/ping.xml[]
+include::xml/ping.xml[]
 ----
 
 [role="_additional-resources"]

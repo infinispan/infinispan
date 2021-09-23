@@ -17,7 +17,7 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/custom_marshaller.xml[]
+include::xml/custom_marshaller.xml[]
 ----
 
 .Programmatic

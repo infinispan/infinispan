@@ -12,7 +12,7 @@ The list includes the principals of the user, and a list of resources and the pe
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_security_user_acl.json[]
+include::json/rest_security_user_acl.json[]
 ----
 
 [id='rest_v2_flush_acl_cache']
@@ -38,7 +38,7 @@ If authorization is enabled, only a user with the `ADMIN` permission can call th
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_security_roles.json[]
+include::json/rest_security_roles.json[]
 ----
 
 [id='rest_v2_get_principal_roles']
@@ -55,7 +55,7 @@ The principal need not exist in the realm in use.
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_security_roles_principal.json[]
+include::json/rest_security_roles_principal.json[]
 ----
 
 [id='rest_v2_grant_principal_roles']

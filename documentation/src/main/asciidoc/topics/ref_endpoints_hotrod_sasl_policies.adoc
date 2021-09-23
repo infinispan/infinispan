@@ -44,7 +44,7 @@ logic to cache authorization.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hotrod_connector_policies.xml[]
+include::xml/hotrod_connector_policies.xml[]
 ----
 
 As a result of the preceding configuration, the Hot Rod connector uses the

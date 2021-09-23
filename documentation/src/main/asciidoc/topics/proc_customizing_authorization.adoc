@@ -12,5 +12,5 @@ The following configuration example shows how to configure security authorizatio
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_authz_custom.xml[]
+include::xml/infinispan_authz_custom.xml[]
 ----

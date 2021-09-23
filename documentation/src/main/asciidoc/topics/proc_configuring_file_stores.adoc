@@ -36,5 +36,5 @@ ISPN000558: "The store location 'foo' is not a child of the global persistent lo
 .File-based cache store configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_file_store.xml[]
+include::xml/persistence_file_store.xml[]
 ----

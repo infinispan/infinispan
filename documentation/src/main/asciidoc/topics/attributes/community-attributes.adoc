@@ -17,6 +17,7 @@
 // Special characters
 //
 :plusplus: ++
+:hash: #
 :underscores: ___
 
 //
@@ -25,6 +26,12 @@
 :server_home: $ISPN_HOME
 :server_root: ${infinispan.server.root}
 :server_config: ${infinispan.server.configuration}
+
+//
+// Hot Rod clients
+//
+:hr_dotnet: 
+:hr_cpp: C{plusplus}
 
 //
 // Operator

@@ -31,7 +31,7 @@ include::code_examples/HotRodTLS.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-client-tls.properties[]
+include::properties/hotrod-client-tls.properties[]
 ----
 
 .Next steps

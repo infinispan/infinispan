@@ -35,14 +35,14 @@ should not fetch state or purge on startup.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_file_store.xml[]
+include::xml/persistence_file_store.xml[]
 ----
 
 .Custom, shared cache store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_custom_file_store.xml[]
+include::xml/persistence_custom_file_store.xml[]
 ----
 
 [role="_additional-resources"]

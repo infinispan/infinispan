@@ -35,7 +35,7 @@ clm1.defineLock("lock");
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/clustered_lock_manager.xml[]
+include::xml/clustered_lock_manager.xml[]
 ----
 
 .Reference

@@ -10,7 +10,7 @@ For example, the following procedure shows you how to configure the `application
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_person_cache.xml[]
+include::xml/indexing_person_cache.xml[]
 ----
 +
 . Create `pcache` from `pcache.xml` with the [command]`--file=` option.

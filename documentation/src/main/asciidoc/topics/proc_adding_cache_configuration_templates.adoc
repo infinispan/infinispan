@@ -1,0 +1,29 @@
+[id='adding-cache-configuration-templates_{context}']
+= Adding cache templates
+
+The {brandname} schema includes `*-cache-configuration` elements that you can use to create templates.
+You can then create caches on demand, using the same configuration multiple times.
+
+.Procedure
+
+. Open `infinispan.xml` for editing.
+. Add the cache configuration with the appropriate `*-cache-configuration` element to the `cache-container`.
+. Save and close `infinispan.xml`.
+
+.Example template for a distributed cache
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan_distributed_template.xml[]
+----
+
+To create caches using the template, specify the name of the template as the value of the `configuration` attribute as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan_distributed_template.xml[]
+----
+
+[TIP]
+====
+Cache templates that you add to `infinispan.xml` are available from the **Cache templates** menu in {brandname} Console.
+====

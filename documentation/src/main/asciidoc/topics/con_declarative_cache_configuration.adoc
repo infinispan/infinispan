@@ -1,0 +1,19 @@
+[id='declarative-cache-configuration_{context}']
+= Declarative cache configuration
+
+You can configure caches declaratively, in XML or JSON format, according to the {brandname} schema.
+
+Declarative cache configuration has the following advantages over programmatic configuration:
+
+Portability:: Define each configuration in a standalone file that you can use to create embedded and remote caches. +
+You can also use declarative configuration to create caches with {ispn_operator} for clusters running on {k8s}.
+Simplicity:: Keep markup languages separate to programming languages. +
+For example, to create remote caches it is generally better to not add complex XML directly to Java code.
+
+[NOTE]
+====
+{brandname} Server configuration extends `infinispan.xml` to include cluster transport mechanisms, security realms, and endpoint configuration.
+If you declare caches as part of your {brandname} Server configuration you should use management tooling, such as Ansible or Chef, to keep it synchronized across the cluster.
+
+To dynamically synchronize remote caches across {brandname} clusters, create them at runtime.
+====

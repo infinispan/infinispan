@@ -6,7 +6,7 @@ in Kubernetes environments such as OKD and {openshift}.
 .DNS_PING configuration example
 [source, xml]
 ----
-include::config_examples/dnsping.xml[]
+include::xml/dnsping.xml[]
 ----
 
 [role="_additional-resources"]

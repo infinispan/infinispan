@@ -1,19 +1,57 @@
 [id='configuring-metrics_{context}']
-= Configuring {brandname} Metrics
-Configure {brandname} to export gauges and histograms via the `metrics` endpoint.
+= Configuring {brandname} metrics
+
+{brandname} generates metrics that are compatible with the MicroProfile Metrics API.
+
+* Gauges provide values such as the average number of nanoseconds for write operations or JVM uptime.
+* Histograms provide details about operation execution times such as read,
+write, and remove times.
+
+By default, {brandname} generates gauges when you enable statistics but you can also configure it to generate histograms.
 
 .Procedure
 
-* Turn gauges and histograms on or off in the `metrics` configuration as appropriate.
-
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+* Enable gauges and histograms as appropriate in the Cache Manager configuration.
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/metrics_cache_container.xml[]
+include::xml/metrics_cache_container.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ifdef::embedded_caches[]
+For embedded caches, you can configure metrics programmatically with the `GlobalMetricsConfigurationBuilder` API as follows:
+
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----
+endif::embedded_caches[]
+
+.Verification
+
+ifdef::remote_caches[]
+{brandname} Server exposes statistics through the `metrics` endpoint.
+You can collect metrics with any monitoring tool that supports the OpenMetrics format, such as Prometheus.
+
+{brandname} metrics are provided at the `vendor` scope.
+Metrics related to the JVM are provided in the `base` scope.
+
+You can retrieve metrics from {brandname} Server as follows:
+
+----
+$ curl -v http://localhost:11222/metrics
+----
+
+To retrieve metrics in MicroProfile JSON format, do the following:
+
+----
+$ curl --header "Accept: application/json" http://localhost:11222/metrics
+----
+endif::remote_caches[]
+ifdef::embedded_caches[]
+For embedded caches, you must add the necessary MicroProfile API and provider JARs to your classpath to export {brandname} metrics.
+endif::embedded_caches[]
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse MicroProfile Metrics]

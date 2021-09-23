@@ -145,7 +145,7 @@ The following example restores all counters from a backup archive on the server:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_backup_restore_request_body.json[]
+include::json/rest_backup_restore_request_body.json[]
 ----
 
 == Restoring from Local Backup Archives

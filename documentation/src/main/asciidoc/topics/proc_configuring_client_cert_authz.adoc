@@ -14,5 +14,5 @@ Enabling client certificate authentication means you do not need to specify {bra
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_authz_cn_role_mapper.xml[]
+include::xml/infinispan_authz_cn_role_mapper.xml[]
 ----

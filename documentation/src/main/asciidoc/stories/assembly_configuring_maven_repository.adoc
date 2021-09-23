@@ -1,7 +1,7 @@
 ifdef::context[:parent-context: {context}]
-[id='mvn']
-:context: install
-= Configuring the {brandname} Maven Repository
+[id='configuring-maven-repository']
+:context: configuring-maven-repository
+= Configuring the {brandname} Maven repository
 {brandname} Java distributions are available from Maven.
 
 //Community content

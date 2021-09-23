@@ -5,21 +5,21 @@ The following configuration adds a custom RELAY2 stack that extends the default 
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_custom_relay_extends.xml[]
+include::xml/jgroups_custom_relay_extends.xml[]
 ----
 
 You can also reference externally defined JGroups stack files, for example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_custom_relay_external.xml[]
+include::xml/jgroups_custom_relay_external.xml[]
 ----
 
 Where `jgroups-relay.xml` references a JGroups stack file such as:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_custom_relay.xml[]
+include::xml/jgroups_custom_relay.xml[]
 ----
 
 .Reference

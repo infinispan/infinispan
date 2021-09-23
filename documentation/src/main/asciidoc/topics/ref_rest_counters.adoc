@@ -11,14 +11,14 @@ POST /rest/v2/counters/{counterName}
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/weak_counter.json[]
+include::json/weak_counter.json[]
 ----
 
 .Example Strong Counter
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/strong_counter.json[]
+include::json/strong_counter.json[]
 ----
 
 [id='rest_server_counters_delete']

@@ -11,7 +11,7 @@ GET /rest/v2/logging/appenders
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_logging_appenders_response.json[]
+include::json/rest_logging_appenders_response.json[]
 ----
 
 
@@ -28,7 +28,7 @@ GET /rest/v2/logging/loggers
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_logging_loggers_response.json[]
+include::json/rest_logging_loggers_response.json[]
 ----
 
 [id='rest_v2_logging_set_logger']

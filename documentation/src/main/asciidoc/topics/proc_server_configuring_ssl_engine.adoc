@@ -30,5 +30,5 @@ You must ensure that you set a cipher suite that supports any protocol features 
 .SSL engine configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_ssl_identity_engine.xml[]
+include::xml/server_ssl_identity_engine.xml[]
 ----

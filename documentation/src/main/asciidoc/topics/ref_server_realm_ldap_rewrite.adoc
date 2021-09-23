@@ -6,5 +6,5 @@ it to search LDAP servers.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_ldap_realm_rewriter.xml[]
+include::xml/server_ldap_realm_rewriter.xml[]
 ----
