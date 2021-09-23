@@ -125,14 +125,10 @@ public final class TopologyInfo {
       }
 
       // Stop accepting topology updates from old requests
-      caches.replaceAll((name, oldInfo) -> {
-         CacheInfo newInfo = oldInfo.withNewServers(newTopologyAge, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
-                                                    newCluster.getInitialServers());
-         // Updates the balancer in both infos
-         newInfo.updateBalancerServers();
-         // Update the topology ref for both infos and ongoing operations
-         newInfo.getTopologyIdRef().set(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
-         return newInfo;
+      caches.forEach((name, oldCacheInfo) -> {
+         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(newTopologyAge, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
+                                                              newCluster.getInitialServers());
+         updateCacheInfo(name, oldCacheInfo, newCacheInfo);
       });
 
       // Update the topology age for new requests so that the topology updates from their responses are accepted
@@ -148,14 +144,11 @@ public final class TopologyInfo {
    public void reset(WrappedBytes cacheName) {
       if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
                                            cacheName, cluster.getName());
-      caches.computeIfPresent(cacheName, (name, oldInfo) -> {
-         CacheInfo newInfo = oldInfo.withNewServers(cluster.getTopologyAge(), HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
-                                                    cluster.getInitialServers());
-         // Updates the balancer in both infos
-         newInfo.updateBalancerServers();
-         // Update the topology ref for both infos and ongoing operations
-         newInfo.getTopologyIdRef().set(newInfo.getTopologyId());
-         return newInfo;
+      caches.forEach((name, oldCacheInfo) -> {
+         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(cluster.getTopologyAge(),
+                                                              HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+                                                              cluster.getInitialServers());
+         updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
       });
    }
 
@@ -175,6 +168,8 @@ public final class TopologyInfo {
 
       // The new CacheInfo doesn't have a new balancer instance, so the server update affects both
       newCacheInfo.updateBalancerServers();
+      // Update the topology id for new requests
+      newCacheInfo.getTopologyIdRef().set(newCacheInfo.getTopologyId());
    }
 
    public void forEachCache(BiConsumer<WrappedBytes, CacheInfo> action) {
