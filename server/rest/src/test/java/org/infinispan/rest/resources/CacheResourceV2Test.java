@@ -400,20 +400,27 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheFullDetail() {
       RestResponse response = join(client.cache("default").details());
-      String body = response.getBody();
+      Json document = Json.read(response.getBody());
       assertThat(response).isOk();
-      assertThat(body).contains("stats");
-      assertThat(body).contains("size");
-      assertThat(body).contains("configuration");
-      assertThat(body).contains("rehash_in_progress");
-      assertThat(body).contains("persistent");
-      assertThat(body).contains("bounded");
-      assertThat(body).contains("indexed");
-      assertThat(body).contains("has_remote_backup");
-      assertThat(body).contains("secured");
-      assertThat(body).contains("indexing_in_progress");
-      assertThat(body).contains("queryable");
-      assertThat(body).contains("rebalancing_enabled");
+      assertThat(document.at("stats")).isNotNull();
+      assertThat(document.at("size")).isNotNull();
+      assertThat(document.at("configuration")).isNotNull();
+      assertThat(document.at("rehash_in_progress")).isNotNull();
+      assertThat(document.at("persistent")).isNotNull();
+      assertThat(document.at("bounded")).isNotNull();
+      assertThat(document.at("indexed")).isNotNull();
+      assertThat(document.at("has_remote_backup")).isNotNull();
+      assertThat(document.at("secured")).isNotNull();
+      assertThat(document.at("indexing_in_progress")).isNotNull();
+      assertThat(document.at("queryable")).isNotNull();
+      assertThat(document.at("rebalancing_enabled")).isNotNull();
+      assertThat(document.at("key_storage").asString()).isEqualTo("application/unknown");
+      assertThat(document.at("value_storage").asString()).isEqualTo("application/unknown");
+
+      response = join(client.cache("proto").details());
+      document = Json.read(response.getBody());
+      assertThat(document.at("key_storage").asString()).isEqualTo("application/x-protostream");
+      assertThat(document.at("value_storage").asString()).isEqualTo("application/x-protostream");
    }
 
    public void testCacheQueryable() {

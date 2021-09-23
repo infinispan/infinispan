@@ -594,6 +594,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.statistics = statistics;
       fullDetail.queryable = queryable;
       fullDetail.rebalancingEnabled = rebalancingEnabled;
+      fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
+      fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
 
       return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder()).build();
    }
@@ -742,6 +744,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean statistics;
       public Boolean queryable;
       public Boolean rebalancingEnabled;
+      public MediaType keyStorage;
+      public MediaType valueStorage;
 
       @Override
       public Json toJson() {
@@ -779,7 +783,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("transactional", transactional)
                .set("secured", secured)
                .set("has_remote_backup", hasRemoteBackup)
-               .set("statistics", statistics);
+               .set("statistics", statistics)
+               .set("key_storage", keyStorage)
+               .set("value_storage", valueStorage);
       }
    }
 
