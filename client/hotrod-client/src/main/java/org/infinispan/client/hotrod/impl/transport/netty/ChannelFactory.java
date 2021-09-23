@@ -263,13 +263,21 @@ public class ChannelFactory {
       return operation;
    }
 
-   private void closeChannelPools(Set<? extends SocketAddress> failedServers) {
-      for (SocketAddress failedServer : failedServers) {
-         HOTROD.removingServer(failedServer);
-         ChannelPool pool = channelPoolMap.remove(failedServer);
+   private void closeChannelPools(Set<? extends SocketAddress> servers) {
+      for (SocketAddress server : servers) {
+         HOTROD.removingServer(server);
+         ChannelPool pool = channelPoolMap.remove(server);
          if (pool != null) {
             pool.close();
          }
+      }
+
+      // We don't care if the server is failed any more
+      lock.writeLock().lock();
+      try {
+         this.failedServers.removeAll(servers);
+      } finally {
+         lock.writeLock().unlock();
       }
    }
 
@@ -466,7 +474,7 @@ public class ChannelFactory {
             log.tracef("Connection attempt failed, we now have %d servers with no established connections: %s",
                        failedServers.size(), failedServers);
          allInitialServersFailed = failedServers.containsAll(topologyInfo.getCluster().getInitialServers());
-         if (!allInitialServersFailed) {
+         if (!allInitialServersFailed || clusters.isEmpty()) {
             resetCachesWithFailedServers();
          }
       } finally {
@@ -474,11 +482,11 @@ public class ChannelFactory {
       }
 
       if (allInitialServersFailed && !clusters.isEmpty()) {
-         trySwitchCluster(allInitialServersFailed);
+         trySwitchCluster();
       }
    }
 
-   private void trySwitchCluster(boolean allInitialServersFailed) {
+   private void trySwitchCluster() {
       int ageBeforeSwitch;
       ClusterInfo cluster;
       lock.writeLock().lock();
@@ -521,7 +529,10 @@ public class ChannelFactory {
       List<WrappedBytes> failedCaches = new ArrayList<>();
       List<String> nameStrings = new ArrayList<>();
       topologyInfo.forEachCache((cacheNameBytes, cacheInfo) -> {
-         if (failedServers.containsAll(cacheInfo.getServers())) {
+         List<InetSocketAddress> cacheServers = cacheInfo.getServers();
+         boolean currentServersHaveFailed = failedServers.containsAll(cacheServers);
+         boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers());
+         if (currentServersHaveFailed && canReset) {
             failedCaches.add(cacheNameBytes);
             nameStrings.add(cacheInfo.getCacheName());
          }
