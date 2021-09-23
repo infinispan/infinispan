@@ -20,5 +20,5 @@ However, if you still want to configure {brandname} to create single file stores
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_file_store.xml[]
+include::xml/persistence_file_store.xml[]
 ----

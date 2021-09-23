@@ -8,5 +8,5 @@ You can insert complete JGroups stack definitions into `infinispan.xml` files.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_inline_stack.xml[]
+include::xml/jgroups_inline_stack.xml[]
 ----

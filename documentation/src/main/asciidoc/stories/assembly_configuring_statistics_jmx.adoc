@@ -1,0 +1,24 @@
+[id='statistics-jmx']
+:context: statistics-jmx
+= Enabling and configuring {brandname} statistics and JMX monitoring
+
+{brandname} can provide Cache Manager and cache statistics as well as export JMX MBeans.
+
+ifdef::embedded_caches[]
+include::{topics}/proc_enabling_statistics_embedded.adoc[leveloffset=+1]
+endif::embedded_caches[]
+
+ifdef::remote_caches[]
+include::{topics}/proc_enabling_statistics_remote.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_hotrod_client_statistics.adoc[leveloffset=+1]
+endif::remote_caches[]
+
+include::{topics}/proc_configuring_metrics.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_jmx_port.adoc[leveloffset=+2]
+include::{topics}/ref_jmx_mbeans.adoc[leveloffset=+2]
+include::{topics}/proc_registering_jmx_mbean_servers.adoc[leveloffset=+2]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

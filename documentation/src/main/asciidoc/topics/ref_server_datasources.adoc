@@ -7,7 +7,7 @@
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_datasources.xml[]
+include::xml/server_datasources.xml[]
 ----
 
 Connection pools can be tuned using the following parameters:

@@ -7,7 +7,7 @@ With TCPPING, you manually specify the IP address or hostname of each node in th
 .TCPPING configuration example
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/tcpping.xml[]
+include::xml/tcpping.xml[]
 ----
 
 [role="_additional-resources"]

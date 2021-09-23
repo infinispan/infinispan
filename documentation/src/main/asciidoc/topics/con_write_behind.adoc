@@ -30,7 +30,7 @@ write to the cache and the write to the cache store is as small as possible.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_write_through_async.xml[]
+include::xml/persistence_write_through_async.xml[]
 ----
 
 The preceding configuration example uses the `fail-silently` parameter to

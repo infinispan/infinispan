@@ -15,7 +15,7 @@ The following is an example `settings.xml` to get you started:
 .settings.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::../config_examples/settings.xml[]
+include::../xml/settings.xml[]
 ----
 
 === Quick command reference
@@ -45,7 +45,7 @@ To be able to publish releases to Maven, you need to have the following in your 
 .settings.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::../config_examples/settings_credentials.xml[]
+include::../xml/settings_credentials.xml[]
 ----
 
 ==== Publishing snapshots

@@ -15,7 +15,7 @@ The POST body must contain JSON document with a `remote-store` configuration, fo
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/remote_store_minimal.json[]
+include::json/remote_store_minimal.json[]
 ----
 
 .Reference

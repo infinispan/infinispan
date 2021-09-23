@@ -10,5 +10,5 @@ To record Hot Rod and REST endpoint access messages, you need to enable the logg
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_endpoint_access_logs.xml[]
+include::xml/server_endpoint_access_logs.xml[]
 ----

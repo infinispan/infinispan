@@ -7,7 +7,7 @@ As an alternative to rolling upgrades, you can do a rolling update on Kubernetes
 .Example DeploymentConfiguration for Rolling Updates
 [source,yaml]
 ----
-include::config_examples/rolling_updates.yaml[]
+include::xml/rolling_updates.yaml[]
 ----
 
 [TIP]

@@ -9,7 +9,7 @@ The following example configures the storage format for entries:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/encoding_keys_values.xml[]
+include::xml/encoding_keys_values.xml[]
 ----
 
 If you do not configure a MediaType, {brandname} defaults to

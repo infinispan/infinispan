@@ -1,0 +1,18 @@
+[id='cache-wildcards-{context}']
+= Cache template wildcards
+
+You can add wildcards to cache configuration template names.
+If you then create caches where the name matches the wildcard, {brandname} applies the configuration template.
+
+[NOTE]
+====
+{brandname} throws exceptions if cache names match more than one wildcard.
+====
+
+.Cache template wildcard
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan_distributed_wildcard_template.xml[]
+----
+
+Using the preceding example, if you create a cache named "async-dist-cache-prod" then {brandname} uses the configuration from the `async-dist-cache-*` template.

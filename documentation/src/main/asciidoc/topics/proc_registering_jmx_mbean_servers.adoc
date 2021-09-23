@@ -1,0 +1,23 @@
+[id='registering-jmx-mbean-servers-{context}']
+= Registering MBeans in custom MBean servers
+{brandname} includes an `MBeanServerLookup` interface that you can use to
+register MBeans in custom MBeanServer instances.
+
+.Procedure
+
+. Create an implementation of `MBeanServerLookup` so that the `getMBeanServer()` method returns the custom MBeanServer instance.
+. Configure {brandname} with the fully qualified name of your class, as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/jmx_mbean_server_lookup.xml[]
+----
+
+ifdef::embedded_caches[]
+For embedded caches, you can use the `mBeanServerLookup()` method to programmatically specify the fully qualified name of your class.
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/JmxGlobalConfigurationBuilder.java[]
+----
+endif::embedded_caches[]

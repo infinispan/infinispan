@@ -1,22 +1,26 @@
-[id='cache_configuration']
-= Cache Configuration
-You can provide cache configuration in XML or JSON format.
+[id='cache-configuration_{context}']
+= Cache configuration
+
+The following example shows a distributed {brandname} cache in XML and JSON:
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/infinispan_distributed_cache.xml[]
+include::xml/infinispan_distributed_cache.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/infinispan_distributed_cache.json[]
+include::json/infinispan_distributed_cache.json[]
 ----
 
-[discrete]
-== JSON format
-
 Cache configuration in JSON format must follow the structure of an XML configuration.
+
 * XML elements become JSON objects.
 * XML attributes become JSON fields.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} schema reference]
+* link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[infinispan-config-{infinispanversion}.xsd]

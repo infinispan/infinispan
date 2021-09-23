@@ -21,7 +21,7 @@ Write-Behind mode on cache stores.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_write_through_sync.xml[]
+include::xml/persistence_write_through_sync.xml[]
 ----
 
 .Reference

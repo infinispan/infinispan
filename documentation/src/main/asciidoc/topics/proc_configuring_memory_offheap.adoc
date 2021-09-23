@@ -18,7 +18,7 @@ heap space.
 .Declarative configuration
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/max_size_offheap.xml[]
+include::xml/max_size_offheap.xml[]
 ----
 
 .Programmatic configuration
@@ -33,7 +33,7 @@ include::code_examples/MaxSizeOffHeap.java[]
 .Declarative configuration
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/max_count_offheap.xml[]
+include::xml/max_count_offheap.xml[]
 ----
 
 .Programmatic configuration

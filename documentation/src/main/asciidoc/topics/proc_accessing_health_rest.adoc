@@ -13,7 +13,7 @@ GET /rest/v2/cache-managers/{cacheManagerName}/health
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_cache_health_response.json[]
+include::json/rest_cache_health_response.json[]
 ----
 
 [TIP]

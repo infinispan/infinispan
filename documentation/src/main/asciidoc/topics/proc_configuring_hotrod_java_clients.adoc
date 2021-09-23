@@ -16,7 +16,7 @@ include::code_examples/HotRodClientInstance.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-client.properties[]
+include::properties/hotrod-client.properties[]
 ----
 
 [discrete]
@@ -33,7 +33,7 @@ include::code_examples/HotRodUri.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-uri.properties[]
+include::properties/hotrod-uri.properties[]
 ----
 
 [discrete]

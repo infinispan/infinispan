@@ -8,7 +8,7 @@ However, you can also use MPING with UDP stacks.
 .MPING configuration example
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/mping.xml[]
+include::xml/mping.xml[]
 ----
 
 [role="_additional-resources"]

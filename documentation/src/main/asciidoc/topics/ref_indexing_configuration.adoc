@@ -13,13 +13,13 @@ You should store indexes in JVM heap memory only for small datasets.
 .File system
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_file_system.xml[]
+include::xml/indexing_file_system.xml[]
 ----
 
 .JVM heap memory
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_jvm_heap.xml[]
+include::xml/indexing_jvm_heap.xml[]
 ----
 
 == Index Reader
@@ -30,7 +30,7 @@ By default {brandname} reads the index before each query if the index changed si
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_index_reader.xml[]
+include::xml/indexing_index_reader.xml[]
 ----
 
 == Index Writer
@@ -50,7 +50,7 @@ The defaults should work for most cases and custom configurations should only be
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/indexing_index_writer.xml[]
+include::xml/indexing_index_writer.xml[]
 ----
 
 .Index writer configuration attributes

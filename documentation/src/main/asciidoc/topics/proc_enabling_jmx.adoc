@@ -1,24 +1,24 @@
 [id='enabling-jmx_{context}']
-= Configuring {brandname} to Register JMX MBeans
+= Registering JMX MBeans
 {brandname} can register JMX MBeans that you can use to collect statistics and
 perform administrative operations.
-You must enable statistics separately to JMX otherwise {brandname} provides `0` values for all statistic attributes.
+You must also enable statistics otherwise {brandname} provides `0` values for all statistic attributes in JMX MBeans.
 
 .Procedure
 
-Modify your cache container configuration to enable JMX in one of the following ways:
-
-* Declarative: Add the `<jmx enabled="true" />` element to the cache container.
-* Programmatic: Call the `.jmx().enable()` method.
-
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+. Open `infinispan.xml` for editing.
+. Add the `<jmx enabled="true" />` element to the cache container.
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jmx_enabled_cache_container.xml[]
+include::xml/jmx_enabled_cache_container.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ifdef::embedded_caches[]
+For embedded caches, you can invoke the `.jmx().enable()` method to programmatically enable JMX.
+
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/JmxGlobalConfigurationBuilder.java[]
 ----
+endif::embedded_caches[]

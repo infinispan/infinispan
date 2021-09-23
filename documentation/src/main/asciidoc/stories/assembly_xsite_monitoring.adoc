@@ -1,23 +1,13 @@
 [id='xsite_monitoring']
 :context: xsite
 = Monitoring and Troubleshooting Global {brandname} Clusters
-{brandname} provides statistics for cross-site replication operations via JMX
-or the `/metrics` endpoint for {brandname} server.
-
-Cross-site replication statistics are available at cache level so you must
-explicitly enable statistics for your caches. Likewise, if you want to collect
-statistics via JMX you must configure {brandname} to register MBeans.
+{brandname} provides cache-level statistics for cross-site replication operations via JMX or the `/metrics` endpoint for {brandname} Server.
 
 {brandname} also includes an `org.infinispan.XSITE` logging category so you can
 monitor and troubleshoot common issues with networking and state transfer
 operations.
 
-include::{topics}/proc_enabling_statistics.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_metrics.adoc[leveloffset=+1]
-include::{topics}/proc_collecting_metrics.adoc[leveloffset=+2]
-include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
-include::{topics}/ref_jmx_xsite_components.adoc[leveloffset=+2]
-
+include::{topics}/ref_jmx_xsite_components.adoc[leveloffset=+1]
 include::{topics}/proc_troubleshooting_xsite.adoc[leveloffset=+1]
 include::{topics}/ref_logs_xsite.adoc[leveloffset=+2]
 

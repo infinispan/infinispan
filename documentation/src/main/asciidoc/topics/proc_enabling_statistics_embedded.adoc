@@ -1,0 +1,23 @@
+[id='enabling-statistics-embedded_{context}']
+= Enabling statistics in embedded caches
+
+Configure {brandname} to export statistics for Cache Managers and caches.
+
+.Procedure
+
+Enable {brandname} statistics in your cache configuration in one of the following ways:
+
+* Declarative: Add the `statistics="true"` attribute.
+* Programmatic: Call the `.statistics()` method.
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/statistics.xml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/StatisticsGlobalConfigurationBuilder.java[]
+----

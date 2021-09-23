@@ -20,7 +20,7 @@ When you configure {brandname} Server to use an LDAP realm, you can configure en
 .LDAP realm configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_ldap_realm.xml[]
+include::xml/server_ldap_realm.xml[]
 ----
 
 [IMPORTANT]

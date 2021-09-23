@@ -14,7 +14,7 @@ must create a `SerializationContextInitializer` implementation that registers a
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_unit_example.xml[]
+include::xml/persistence_unit_example.xml[]
 ----
 +
 . Create a user entity class.

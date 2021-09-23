@@ -52,7 +52,7 @@ Below is the configuration that affects a transaction behaviour and a small desc
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/transaction_config.xml[]
+include::xml/transaction_config.xml[]
 ----
 
 or programmatically:

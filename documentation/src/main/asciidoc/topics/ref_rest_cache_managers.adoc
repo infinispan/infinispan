@@ -12,7 +12,7 @@ example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_cache_manager_response.json[]
+include::json/rest_cache_manager_response.json[]
 ----
 
 * `version` contains the {brandname} version
@@ -53,7 +53,7 @@ following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_cache_health_response.json[]
+include::json/rest_cache_health_response.json[]
 ----
 
 * `cluster_health` contains the health of the cluster
@@ -140,7 +140,7 @@ configuration, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_cache_config_response.json[]
+include::json/rest_cache_config_response.json[]
 ----
 
 [id='rest_v2_cache_manager_cache_templates']
@@ -171,7 +171,7 @@ cache, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_caches_info_response.json[]
+include::json/rest_caches_info_response.json[]
 ----
 
 
@@ -188,7 +188,7 @@ GET /rest/v2/cache-managers/{cacheManagerName}/stats
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_cache_stats_response.json[]
+include::json/rest_cache_stats_response.json[]
 ----
 
 * `statistics_enabled` is `true` if statistics collection is enabled for the Cache Manager.
@@ -271,7 +271,7 @@ named `[cache1,cache2]` in a specified directory:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_backup_create_request_body.json[]
+include::json/rest_backup_create_request_body.json[]
 ----
 
 [id='rest_v2_backup_manager_list']
@@ -374,7 +374,7 @@ The following example restores all counters from a backup archive on the server:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_backup_restore_request_body.json[]
+include::json/rest_backup_restore_request_body.json[]
 ----
 
 == Restoring from Local Backup Archives

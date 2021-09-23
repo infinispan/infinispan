@@ -1,21 +1,19 @@
-[id='create_remote_cache']
-:context: server
-= Remotely Creating {brandname} Caches
-Add caches to {brandname} Server so you can store data.
+[id='creating-remote-caches']
+:context: creating-remote-caches
+= Creating remote caches
 
-include::{topics}/con_remote_cache.adoc[leveloffset=+1]
-include::{topics}/ref_default_cm_remote.adoc[leveloffset=+1]
+When you create remote caches at runtime, {brandname} Server synchronizes your configuration across the cluster so that all nodes have a copy.
+For this reason you should always create remote caches dynamically with the following mechanisms:
 
-//Console
+* {brandname} Console
+* {brandname} Command Line Interface (CLI)
+* Hot Rod or HTTP clients
+
+include::{topics}/con_default_cache_manager.adoc[leveloffset=+1]
 include::{topics}/proc_creating_caches_console.adoc[leveloffset=+1]
-//CLI
 include::{topics}/proc_creating_caches_cli.adoc[leveloffset=+1]
-//Hot Rod
 include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
-//REST
 include::{topics}/proc_creating_caches_rest.adoc[leveloffset=+1]
-
-include::{topics}/ref_infinispan_caches.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

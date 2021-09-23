@@ -17,7 +17,7 @@ For example, you might evaluate using a Gossip router and symmetric encryption w
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_stack_extends.xml[]
+include::xml/jgroups_stack_extends.xml[]
 ----
 +
 . Check {brandname} logs to ensure it uses the stack.

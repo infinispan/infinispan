@@ -15,5 +15,5 @@ include::code_examples/HotRodConnectionPools.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-client-connection-pool.properties[]
+include::properties/hotrod-client-connection-pool.properties[]
 ----

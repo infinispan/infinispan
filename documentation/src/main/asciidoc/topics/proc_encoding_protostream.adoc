@@ -9,7 +9,7 @@ Configure {brandname} to use the ProtoStream library to store cache entries as P
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/encoding_protostream.xml[]
+include::xml/encoding_protostream.xml[]
 ----
 
 .Programmatic

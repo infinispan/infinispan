@@ -15,7 +15,7 @@ The deserialization allow list applies to the Cache Manager so your Java classes
 .Declarative
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/deserialization_allowlist.xml[]
+include::xml/deserialization_allowlist.xml[]
 ----
 
 .System properties

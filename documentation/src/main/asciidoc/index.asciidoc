@@ -8,7 +8,7 @@ Written and maintained by the {brandname} community
 ++++
 
 [discrete]
-== Get Up and Running
+== Getting Started
 
 [unstyled]
 * link:titles/getting_started/getting_started.html[Getting Started with {brandname}]
@@ -29,6 +29,14 @@ Written and maintained by the {brandname} community
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
 
 [discrete]
+== Administrator
+
+[unstyled]
+* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
+* link:titles/security/security.html[Security]
+* link:titles/tuning/tuning.html[Tuning {brandname} Performance]
+
+[discrete]
 == Developer
 
 [unstyled]
@@ -37,20 +45,9 @@ Written and maintained by the {brandname} community
 * link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
 * link:titles/developing/developing.html[Developer's Guide]
 * link:titles/xsite/xsite.html[Using Cross-Site Replication]
-* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
-* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-* link:titles/rest/rest.html[REST API]
 * link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
-
-[discrete]
-== Administrator
-
-[unstyled]
-* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
-* link:titles/security/security.html[Security]
-* link:titles/tuning/tuning.html[Performance Tuning]
 
 [discrete]
 == Additional Resources

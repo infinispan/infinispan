@@ -5,12 +5,12 @@
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/rest_connector_authentication.xml[]
+include::xml/rest_connector_authentication.xml[]
 ----
 
 .REST connector with Kerberos authentication
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/rest_connector_authentication_spnego.xml[]
+include::xml/rest_connector_authentication_spnego.xml[]
 ----

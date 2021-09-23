@@ -33,7 +33,7 @@ include::code_examples/HotRodClientIntelligence.java[]
 .hotrod-client.properties
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/hotrod-client-intelligence.properties[]
+include::properties/hotrod-client-intelligence.properties[]
 ----
 
 [role="_additional-resources"]

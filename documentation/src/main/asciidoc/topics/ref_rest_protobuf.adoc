@@ -16,7 +16,7 @@ If the schema is not valid, either because of syntax errors, or because some of 
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_protobuf_create_update_schema_response.json[]
+include::json/rest_protobuf_create_update_schema_response.json[]
 ----
 
 * `name` is the name of the Protobuf schema.
@@ -47,7 +47,7 @@ If the schema is not valid, either because of syntax errors, or because some of 
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_protobuf_create_update_schema_response.json[]
+include::json/rest_protobuf_create_update_schema_response.json[]
 ----
 
 * `name` is the name of the Protobuf schema.
@@ -76,7 +76,7 @@ GET /rest/v2/schemas/
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_protobuf_schemas_response.json[]
+include::json/rest_protobuf_schemas_response.json[]
 ----
 
 * `name` is the name of the Protobuf schema.

@@ -157,7 +157,7 @@ This is how you declare a zero capacity node:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/zero_capacity_node.xml[]
+include::xml/zero_capacity_node.xml[]
 ----
 
 [source, java]
@@ -170,7 +170,7 @@ This is how you configure hashing declaratively, via XML:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/hashing_configuration.xml[]
+include::xml/hashing_configuration.xml[]
 ----
 
 And this is how you can configure it programmatically, in Java:
@@ -190,7 +190,7 @@ properties. The declarative XML configuration:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/initial_cluster_size.xml[]
+include::xml/initial_cluster_size.xml[]
 ----
 
 The programmatic Java configuration:
@@ -248,7 +248,7 @@ The hints are configured at transport level:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/transport_level_server_hint.xml[]
+include::xml/transport_level_server_hint.xml[]
 ----
 
 [[key_affinity_service]]
@@ -336,7 +336,7 @@ Or, if you are using XML:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/enable_groups.xml[]
+include::xml/enable_groups.xml[]
 ----
 
 If you have control of the key class (you can alter the class definition, it's not part of
@@ -384,7 +384,7 @@ Or, if you are using XML:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/grouper_registration.xml[]
+include::xml/grouper_registration.xml[]
 ----
 
 === Advanced Interface

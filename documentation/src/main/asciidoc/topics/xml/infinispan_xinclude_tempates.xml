@@ -1,0 +1,7 @@
+<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
+  <cache-container default-cache="cache-1">
+    <!-- References files that contain cache configuration templates. -->
+    <xi:include href="distributed-cache-template.xml" />
+    <xi:include href="replicated-cache-template.xml" />
+  </cache-container>
+</infinispan>

@@ -13,7 +13,7 @@ To add caching support to your application, with the following annotations:
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/spring_annotation_driven.xml[]
+include::xml/spring_annotation_driven.xml[]
 ----
 +
 .Programmatic

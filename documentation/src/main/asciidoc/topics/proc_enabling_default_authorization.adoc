@@ -16,5 +16,5 @@ The following configuration example shows how to use implicit authorization conf
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/infinispan_authz_default.xml[]
+include::xml/infinispan_authz_default.xml[]
 ----

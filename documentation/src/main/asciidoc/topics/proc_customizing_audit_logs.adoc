@@ -15,7 +15,7 @@ For example, the following configuration defines `my.package.CustomAuditLogger` 
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_audit_custom.xml[]
+include::xml/server_audit_custom.xml[]
 ----
 
 [role="_additional-resources"]

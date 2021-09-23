@@ -28,7 +28,7 @@ You must then manually register all other implementations.
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/protostream_marshaller.xml[]
+include::xml/protostream_marshaller.xml[]
 ----
 
 .Programmatic

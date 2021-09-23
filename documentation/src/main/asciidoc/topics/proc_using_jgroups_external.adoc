@@ -17,7 +17,7 @@ Alternatively you can specify an absolute path when you declare the external sta
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_external_stack.xml[]
+include::xml/jgroups_external_stack.xml[]
 ----
 
 ifdef::embedded_caches[]
@@ -33,7 +33,7 @@ In this example, `my-jgroups-udp.xml` references a UDP stack with custom propert
 .Custom UDP stack example
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jgroups_custom_udp.xml[]
+include::xml/jgroups_custom_udp.xml[]
 ----
 
 [role="_additional-resources"]

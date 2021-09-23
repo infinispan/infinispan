@@ -1,30 +1,17 @@
-[id='create_cache_rest']
-= Creating {brandname} Caches with HTTP Clients
-Add cache definitions to {brandname} servers through the REST endpoint with any
-suitable HTTP client.
+[id='creating-caches-rest_{context}']
+= Creating remote caches with the REST API
+Use the {brandname} REST API to create remote caches on {brandname} Server from any suitable HTTP client.
 
 .Prerequisites
 
-Create a user and start at least one {brandname} server instance.
+* Create a {brandname} user with `admin` permissions.
+* Start at least one {brandname} Server instance.
+* Have a {brandname} cache configuration.
 
 .Procedure
 
-* Create caches with `POST` requests to `/rest/v2/caches/$cacheName`.
+* Invoke `POST` requests to `/rest/v2/caches/<cache_name>` with cache configuration in the payload.
 
-Use XML or JSON configuration by including it in the request payload.
-
-[source,options="nowrap",subs=attributes+]
-----
-POST /rest/v2/caches/mycache
-----
-
-Use the `?template=` parameter to create caches from `org.infinispan` templates.
-
-[source,options="nowrap",subs=attributes+]
-----
-POST /rest/v2/caches/mycache?template=org.infinispan.DIST_SYNC
-----
-
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{rest_docs}#rest_v2_cache_operations[Creating and Managing Caches with the REST API]

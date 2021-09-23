@@ -10,5 +10,5 @@ To record security audit messages, you need to enable the logging category in `l
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/server_audit_logging.xml[]
+include::xml/server_audit_logging.xml[]
 ----

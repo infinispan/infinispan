@@ -17,7 +17,7 @@ When using `JpaStore`, you should take the following into consideration:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_jpa_store.xml[]
+include::xml/persistence_jpa_store.xml[]
 ----
 
 [options="header"]

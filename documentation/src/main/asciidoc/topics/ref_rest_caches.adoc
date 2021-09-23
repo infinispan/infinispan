@@ -121,7 +121,7 @@ GET /rest/v2/caches/{name}
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_full_cache_detail.json[]
+include::json/rest_full_cache_detail.json[]
 ----
 
 * `stats` current stats of the cache.
@@ -390,7 +390,7 @@ When content-negotiation is used, the response will contain two headers: `key-co
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_caches_all_entries.json[]
+include::json/rest_caches_all_entries.json[]
 ----
 
 * `key` The key for the entry.
@@ -450,7 +450,7 @@ GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_query_results.json[]
+include::json/rest_query_results.json[]
 ----
 
 * `total_results` displays the total number of results from the query.
@@ -496,7 +496,7 @@ The following example shows a query in the request body:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_query_request_body.json[]
+include::json/rest_query_request_body.json[]
 ----
 
 
@@ -566,7 +566,7 @@ GET /v2/caches/{cacheName}/search/stats
 {brandname} provides a JSON response such as the following:
 
 ----
-include::json_examples/rest_search_stats.json[]
+include::json/rest_search_stats.json[]
 ----
 
 In the ```query``` section:
@@ -613,7 +613,7 @@ GET /v2/caches/{cacheName}/search/indexes/stats
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_index_stats.json[]
+include::json/rest_index_stats.json[]
 ----
 
 * `indexed_class_names` Provides the class names of the indexes present in the cache. For Protobuf the value is always `org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper`.
@@ -636,7 +636,7 @@ GET /v2/caches/{cacheName}/search/query/stats
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json_examples/rest_query_stats.json[]
+include::json/rest_query_stats.json[]
 ----
 
 * `search_query_execution_count` Provides the number of queries that have been run.

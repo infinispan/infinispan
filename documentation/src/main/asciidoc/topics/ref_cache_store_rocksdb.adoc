@@ -11,7 +11,7 @@ a primary cache store for data in memory; the other database holds entries that
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_rocksdb_example.xml[]
+include::xml/persistence_rocksdb_example.xml[]
 ----
 
 .Programmatic configuration

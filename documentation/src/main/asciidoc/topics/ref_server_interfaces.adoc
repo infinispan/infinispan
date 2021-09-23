@@ -7,37 +7,37 @@ You can configure how {brandname} Server binds to network interfaces to listen f
 .Internet Protocol (IP) address
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/server_network_default.xml[]
+include::xml/server_network_default.xml[]
 ----
 
 .Loopback address
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_loopback.xml[]
+include::xml/server_network_loopback.xml[]
 ----
 
 .Non-loopback address
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_nonloopback.xml[]
+include::xml/server_network_nonloopback.xml[]
 ----
 
 .Any address
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_anyaddress.xml[]
+include::xml/server_network_anyaddress.xml[]
 ----
 
 .Link local
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_linklocal.xml[]
+include::xml/server_network_linklocal.xml[]
 ----
 
 .Site local
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_sitelocal.xml[]
+include::xml/server_network_sitelocal.xml[]
 ----
 
 [discrete]
@@ -48,23 +48,23 @@ include::config_examples/server_network_sitelocal.xml[]
 .Match host
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::config_examples/server_network_matchhost.xml[]
+include::xml/server_network_matchhost.xml[]
 ----
 
 .Match interface
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_matchinterface.xml[]
+include::xml/server_network_matchinterface.xml[]
 ----
 
 .Match address
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_matchaddress.xml[]
+include::xml/server_network_matchaddress.xml[]
 ----
 
 .Fallback
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::config_examples/server_network_fallback.xml[]
+include::xml/server_network_fallback.xml[]
 ----

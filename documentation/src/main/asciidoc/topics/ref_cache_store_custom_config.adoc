@@ -7,7 +7,7 @@ to use it.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_store_class.xml[]
+include::xml/persistence_store_class.xml[]
 ----
 
 .Programmatic configuration
