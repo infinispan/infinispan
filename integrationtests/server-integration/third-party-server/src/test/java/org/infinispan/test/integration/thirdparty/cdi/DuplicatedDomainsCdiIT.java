@@ -9,7 +9,6 @@ import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 /**
@@ -18,7 +17,6 @@ import org.junit.runner.RunWith;
  *
  * @author Sebastian Laskawiec
  */
-@Ignore("ISPN-12712")
 @RunWith(Arquillian.class)
 public class DuplicatedDomainsCdiIT extends AbstractDuplicatedDomainsCdiIT {
 

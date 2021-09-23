@@ -1,6 +1,6 @@
 package org.infinispan.test.integration.cdi;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import javax.inject.Inject;
 
@@ -26,8 +26,13 @@ public abstract class AbstractDuplicatedDomainsCdiIT {
    @Test
    public void testIfCreatingDefaultCacheManagerSucceeds() {
       greetingCache.put("test-key", "test-value");
+
+      String cdiName = greetingCache.getCacheManager().getCacheManagerInfo().getName();
+
       DefaultCacheManager cacheManager = new DefaultCacheManager();
-      assertEquals("test-value", cacheManager.getCache("default").get("test-key"));
+      String defaultName = cacheManager.getName();
       cacheManager.stop();
+
+      assertNotEquals(defaultName, cdiName);
    }
 }
