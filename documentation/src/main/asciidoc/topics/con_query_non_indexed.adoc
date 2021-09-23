@@ -2,9 +2,7 @@
 = Non-indexed queries
 
 {brandname} recommends indexing caches for the best performance for queries.
-However you can query caches that are non-indexed but you must configure them to use ProtoStream encoding, as follows:
+However you can query caches that are non-indexed.
 
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/indexing_proto_cache_books.xml[]
-----
+* For embedded caches, you can perform non-indexed queries on Plain Old Java Objects (POJOs).
+* For remote caches, you must use ProtoStream encoding with the `application/x-protostream` media type to perform non-indexed queries.
