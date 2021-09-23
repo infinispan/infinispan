@@ -1,6 +1,6 @@
-[id='write_behind']
-= Write-Behind
-Write-Behind is a cache writing mode where writes to memory are synchronous
+[id='write-behind_{context}']
+= Write-behind cache stores
+Write-behind is a cache writing mode where writes to memory are synchronous
 and writes to cache stores are asynchronous.
 
 When clients send write requests, {brandname} adds those operations to a
@@ -18,24 +18,45 @@ modification queue is full, or if {brandname} is currently processing a batch
 of write operations, then `Cache.putAsync` returns immediately and the Stage
 completes later.
 
-Write-Behind mode provides a performance advantage over Write-Through mode
+Write-behind mode provides a performance advantage over write-through mode
 because cache operations do not need to wait for updates to the underlying cache
 store to complete. However, data in the cache store remains inconsistent with
 data in the cache until the modification queue is processed. For this reason,
-Write-Behind mode is suitable for cache stores with low latency, such as
-unshared and local filesystem-based cache stores, where the time between the
+write-behind mode is suitable for cache stores with low latency, such as
+unshared and local file-based cache stores, where the time between the
 write to the cache and the write to the cache store is as small as possible.
 
-.Write-behind configuration
+[discrete]
+== Write-behind configuration
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/persistence_write_through_async.xml[]
+include::xml/persistence_write_behind.xml[]
 ----
 
-The preceding configuration example uses the `fail-silently` parameter to
-control what happens when either the cache store is unavailable or the
-modification queue is full.
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_write_behind.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_write_behind.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceWriteBehind.java[]
+----
+
+[discrete]
+== Failing silently
+
+Write-behind configuration includes a `fail-silently` parameter that controls what happens when either the cache store is unavailable or the modification queue is full.
 
 * If `fail-silently="true"` then {brandname} logs WARN messages and rejects
 write operations.
@@ -50,7 +71,3 @@ operations are added to the modification queue because it is not full. If
 {brandname} restarts or otherwise becomes unavailable before the cache store
 comes back online, then the write operations in the modification queue are lost
 because they were not persisted.
-
-.Reference
-
-link:#write_through[Write-Through]

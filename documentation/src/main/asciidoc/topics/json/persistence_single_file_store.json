@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "persistence" : {
+      "passivation" : true,
+      "single-file-store" : {
+        "shared" : false,
+        "preload" : true,
+        "fetch-state" : true
+      }
+    }
+  }
+}

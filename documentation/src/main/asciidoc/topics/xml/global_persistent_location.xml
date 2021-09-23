@@ -1,7 +1,7 @@
 <infinispan>
   <cache-container>
     <global-state>
-      <persistent-location path="example" relative-to="my.data"/>
+      <persistent-location path="global/state" relative-to="my.data"/>
     </global-state>
   </cache-container>
 </infinispan>

@@ -1,5 +1,5 @@
-[id='rocksdb_cache_store']
-= RocksDB Cache Stores
+[id='rocksdb-cache-store_{context}']
+= RocksDB cache stores
 RocksDB provides key-value filesystem-based storage with high performance and
 reliability for highly concurrent environments.
 
@@ -7,27 +7,7 @@ RocksDB cache stores, `RocksDBStore`, use two databases. One database provides
 a primary cache store for data in memory; the other database holds entries that
 {brandname} expires from memory.
 
-.Declarative configuration
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/persistence_rocksdb_example.xml[]
-----
-
-.Programmatic configuration
-
-[source,java]
-----
-include::code_examples/ConfigRocksDb.java[]
-----
-
-[source,java]
-----
-include::code_examples/ConfigRocksDbProperties.java[]
-----
-
-.`RocksDBStore` configuration parameters
-
+.Configuration parameters
 |===
 | Parameter | Description
 
@@ -53,7 +33,7 @@ method.
 
 |===
 
-.RocksDB tuning parameters
+.Tuning parameters
 
 You can also specify the following RocksDB tuning parameters:
 
@@ -61,7 +41,7 @@ You can also specify the following RocksDB tuning parameters:
 * `blockSize`
 * `cacheSize`
 
-.RocksDB configuration properties
+.Configuration properties
 
 Optionally set properties in the configuration as follows:
 
@@ -86,6 +66,39 @@ You should not configure more than a few hundred segments. RocksDB is not
 designed to have an unlimited number of column families. Too many segments also
 significantly increases cache store start time.
 ====
+
+[discrete]
+== RocksDB cache store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_rocksdb_store.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_rocksdb_store.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_rocksdb_store.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ConfigRocksDb.java[]
+----
+
+.ConfigurationBuilder with properties
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ConfigRocksDbProperties.java[]
+----
 
 .Reference
 

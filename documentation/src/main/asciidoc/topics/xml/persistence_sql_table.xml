@@ -1,0 +1,17 @@
+<distributed-cache>
+  <persistence>
+    <table-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
+                      dialect="H2"
+                      shared="true"
+                      table-name="books">
+      <connection-pool connection-url="jdbc:h2:mem:infinispan"
+                       username="sa"
+                       password="changeme"
+                       driver="org.h2.Driver"/>
+      <schema message-name="books_value"
+              key-message-name="books_key"
+              package="library"
+              embedded-key="true"/>
+    </table-jdbc-store>
+  </persistence>
+</distributed-cache>

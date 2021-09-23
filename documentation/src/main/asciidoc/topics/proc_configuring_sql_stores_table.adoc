@@ -1,0 +1,79 @@
+[id='configuring-sql-cache-stores-table_{context}']
+= Configuring SQL table stores
+
+Add SQL table cache stores so {brandname} can preload your caches from database tables.
+When it connects to the database, {brandname} uses metadata from the table to detect column names and data types.
+{brandname} also automatically determines which columns in the database are part of the primary key.
+
+.Prerequisites
+
+* Provide {brandname} with Protobuf schema that describe any composite keys and values in your database tables.
++
+{brandname} recommends annotating your Java classes and creating serialization context initializers.
+* Remote caches: Copy database drivers to the `server/lib` directory in your {brandname} Server installation.
+* Embedded caches: Add the `infinispan-cachestore-sql` dependency to your `pom` file.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/persistence_sql_store.xml[]
+----
+
+.Procedure
+
+. Create a SQL cache store configuration in one of the following ways:
++
+* Declaratively, add the `persistence` element or field then add `table-jdbc-store` with the following schema namespace:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+xmlns="urn:infinispan:config:store:sql:{schemaversion}"
+----
++
+* Programmatically, add the following methods to your `ConfigurationBuilder`:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+persistence().addStore(TableJdbcStoreConfigurationBuilder.class)
+----
+
+. Specify the dialect of the database with either the `dialect` attribute or the `dialect()` method.
+. Configure any properties for the SQL cache store as appropriate.
++
+For example, specify if the cache store is shared between multiple cache instances with either the `shared` attribute or the `shared()` method.
++
+. Specify the name of the database table with either the `table-name="<name>"` attribute or the `table.name("<name>")` method.
+. Add a JDBC connection factory so that {brandname} can connect to the database.
+. Configure a Protobuf schema if database tables contain composite keys or values.
+.. Add the `schema` element or the `.schemaJdbcConfigurationBuilder()` method and specify parameters for your Protobuf schema.
+.. Set the `embedded-key="true"` attribute or `.embeddedKey(true)` method if values also contain keys.
+
+[discrete]
+== SQL table store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_sql_table.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_sql_table.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_sql_table.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceSqlTable.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{config_docs}#jdbc-connection-factories_persistence[JDBC connection factories]

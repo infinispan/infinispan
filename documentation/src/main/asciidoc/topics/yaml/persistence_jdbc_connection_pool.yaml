@@ -1,0 +1,7 @@
+distributed-cache:
+  persistence:
+    connectionPool:
+      connectionUrl: "jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1"
+      driver: org.h2.Driver
+      username: sa
+      password: changeme

@@ -1,6 +1,9 @@
-[id='create_custom_store']
-= Creating Cache Stores
-Create custom cache stores by implementing the `NonBlockingStore` interface.
+[id='creating-custom-cache-stores_{context}']
+= Creating cache stores
+
+Create custom cache stores with implementations of the `NonBlockingStore` API.
+
+.Procedure
 
 . Implement the appropriate {brandname} persistent SPIs.
 . Annotate your store class with the `@ConfiguredBy` annotation if it has a custom configuration.

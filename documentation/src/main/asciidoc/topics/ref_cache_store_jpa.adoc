@@ -1,54 +1,56 @@
-[id='jpa_cache_store']
-= JPA Cache Stores
-JPA (Java Persistence API) cache stores, `JpaStore`, use formal schema to
-persist data. Other applications can then read from persistent storage to load
-data from {brandname}. However, other applications should not use persistent
-storage concurrently with {brandname}.
+[id='jpa-cache-store_{context}']
+= JPA cache stores
 
-When using `JpaStore`, you should take the following into consideration:
+JPA (Java Persistence API) cache stores, `JpaStore`, use formal schema to persist data.
+
+Other applications can then read from persistent storage to load data from {brandname}.
+However, other applications should not use persistent storage concurrently with {brandname}.
+
+When using JPA cache stores, you should take the following into consideration:
 
 * Keys should be the ID of the entity. Values should be the entity object.
 * Only a single `@Id` or `@EmbeddedId` annotation is allowed.
 * Auto-generated IDs with the `@GeneratedValue` annotation are not supported.
 * All entries are stored as immortal.
-* `JpaStore` does not support segmentation.
+* JPA cache stores do not support segmentation.
 
-.Declarative configuration
+[NOTE]
+====
+You should use JPA cache stores with embedded {brandname} caches only.
+====
 
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== JPA cache store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/persistence_jpa_store.xml[]
 ----
 
-[options="header"]
-|===
-| Parameter | Description
-| `persistence-unit`
-| Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
-
-| `entity-class`
-| Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
-|===
-
-.Programmatic configuration
-
-[source,java]
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/ConfigJpaStore.java[]
 ----
 
-[options="header"]
+[discrete]
+== Configuration parameters
+
+[%header%autowidth,cols="1,1,1",stripes=even]
 |===
-| Parameter | Description
-| `persistenceUnitName`
-| Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
+|Declarative |Programmatic |Description
+|`persistence-unit`
+|`persistenceUnitName`
+|Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
 
-| `entityClass`
-| Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
+|`entity-class`
+|`entityClass`
+|Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
 |===
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{configdocroot}infinispan-cachestore-jpa-config-{schemaversion}.html[JPA cache store configuration schema]
 * link:{javadocroot}/org/infinispan/persistence/jpa/JpaStore.html[JpaStore]
 * link:{javadocroot}/org/infinispan/persistence/jpa/configuration/JpaStoreConfiguration.html[JpaStoreConfiguration]

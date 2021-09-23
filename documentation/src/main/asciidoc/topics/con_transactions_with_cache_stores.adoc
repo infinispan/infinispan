@@ -1,0 +1,8 @@
+[id='cache-loaders-transactional_{context}']
+= Transactions with persistent cache stores
+{brandname} supports transactional operations with JDBC-based cache stores only.
+To configure caches as transactional, you set `transactional=true` to keep data in persistent storage synchronized with data in memory.
+
+For all other cache stores, {brandname} does not enlist cache loaders in transactional operations.
+This can result in data inconsistency if transactions succeed in modifying data in memory but do not completely apply changes to data in the cache store.
+In these cases manual recovery is not possible with cache stores.

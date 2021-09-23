@@ -1,0 +1,22 @@
+<distributed-cache>
+  <persistence>
+    <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+                             dialect="H2">
+      <connection-pool connection-url="jdbc:h2:mem:infinispan"
+                       username="sa"
+                       password="changeme"
+                       driver="org.h2.Driver"/>
+      <string-keyed-table create-on-start="true"
+                          prefix="ISPN_STRING_TABLE">
+        <id-column name="ID_COLUMN"
+                   type="VARCHAR(255)" />
+        <data-column name="DATA_COLUMN"
+                     type="BINARY" />
+        <timestamp-column name="TIMESTAMP_COLUMN"
+                          type="BIGINT" />
+        <segment-column name="SEGMENT_COLUMN"
+                        type="INT"/>
+      </string-keyed-table>
+    </string-keyed-jdbc-store>
+  </persistence>
+</distributed-cache>

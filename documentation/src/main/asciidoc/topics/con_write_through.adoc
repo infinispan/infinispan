@@ -1,29 +1,28 @@
-[id='write_through']
-= Write-Through
-Write-Through is a cache writing mode where writes to memory and writes to
+[id='write-through_{context}']
+= Write-through cache stores
+Write-through is a cache writing mode where writes to memory and writes to
 cache stores are synchronous. When a client application updates a cache entry,
 in most cases by invoking `Cache.put()`, {brandname} does not return the call
 until it updates the cache store. This cache writing mode results in updates to
 the cache store concluding within the boundaries of the client thread.
 
-The primary advantage of Write-Through mode is that the cache and cache store
+The primary advantage of write-through mode is that the cache and cache store
 are updated simultaneously, which ensures that the cache store is always
 consistent with the cache.
 
-However, Write-Through mode can potentially decrease performance because the
+However, write-through mode can potentially decrease performance because the
 need to access and update cache stores directly adds latency to cache
 operations.
 
-{brandname} defaults to Write-Through mode unless you explicitly configure
-Write-Behind mode on cache stores.
+[discrete]
+== Write-through configuration
 
-.Write-through configuration
+{brandname} uses write-through mode unless you explicitly add write-behind configuration to your caches.
+There is no separate element or method for configuring write-through mode.
+
+For example, the following configuration adds a file-based store to the cache that implicitly uses write-through mode:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/persistence_write_through_sync.xml[]
+include::xml/persistence_write_through.xml[]
 ----
-
-.Reference
-
-link:#write_behind[Write-Behind]

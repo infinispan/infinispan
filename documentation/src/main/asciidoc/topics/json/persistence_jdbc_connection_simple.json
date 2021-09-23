@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "persistence": {
+      "simple-connection": {
+        "connection-url": "jdbc:h2://localhost",
+        "driver": "org.h2.Driver",
+        "username": "sa",
+        "password": "changeme"
+      }
+    }
+  }
+}

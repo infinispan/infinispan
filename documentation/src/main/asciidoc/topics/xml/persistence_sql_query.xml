@@ -1,0 +1,24 @@
+<distributed-cache>
+  <persistence>
+    <query-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+                      dialect="POSTGRES"
+                      shared="true">
+      <connection-pool connection-url="jdbc:postgresql://localhost:5432/postgres"
+                       username="postgres"
+                       password="changeme"
+                       driver="org.postgresql.Driver"/>
+      <queries key-columns="isbn">
+        <select-single>SELECT isbn, title FROM books WHERE isbn = :isbn</select-single>
+        <select-all>SELECT isbn, title FROM books</select-all>
+        <delete>DELETE FROM books WHERE isbn = :key</delete>
+        <delete-all>DELETE FROM books</delete-all>
+        <upsert>INSERT INTO books (isbn, title) VALUES (:key, :value) ON CONFLICT (ispn) DO UPDATE SET title = :value</upsert>
+        <size>SELECT COUNT(*) FROM books</size>
+      </queries>
+      <schema message-name="books_value"
+              key-message-name="books_key"
+              package="library"
+              embedded-key="true"/>
+    </query-jdbc-store>
+  </persistence>
+<distributed-cache>

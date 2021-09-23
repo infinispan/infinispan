@@ -1,15 +1,17 @@
 [id='configuring-global-persistent-location_{context}']
-= Configuring Global Persistent Location
+= Configuring the global persistent location
 
-{brandname} preserves global state so that it can restore cluster topology and cached data after restart.
-If you enable global state in your {brandname} configuration, you should also configure a suitable location for {brandname} to persist global state.
+Enable and configure the location where {brandname} stores global state for clustered embedded caches.
 
-Global state is enabled by default with {brandname} Server, which persists cluster state to the `{server_home}/server/data` directory so it can perform graceful shutdowns.
-You do not need to configure a global persistent location for {brandname} Server deployments in most cases.
+[NOTE]
+====
+{brandname} Server enables global persistence and configures a default location.
+You should not disable global persistence or change the default configuration for remote caches.
+====
 
-For embedded caches, {brandname} defaults to the `user.dir` system property as the global persistent location, which is generally the directory where your application starts.
-If your embedded caches are clustered then you should enable global state as a best practice so you can always restore cluster topology.
-You should also configure a sensible global persistent location that is unique to each {brandname} node in the cluster.
+.Prerequisites
+
+* Add {brandname} to your project.
 
 .Procedure
 
@@ -17,28 +19,57 @@ You should also configure a sensible global persistent location that is unique t
 +
 * Add the `global-state` element to your {brandname} configuration.
 * Call the `globalState().enable()` methods in the `GlobalConfigurationBuilder` API.
-+
-. Specify a global persistent location.
-+
-* If the global persistent location is unique to each {brandname} instance, specify the `persistent-location` element or call the `persistentLocation()` method.
-* If the global persistent location is available to all {brandname} instances, specify the `shared-persistent-location` element or call the `sharedPersistentLocation(String)` method on the `GlobalStateConfigurationBuilder`.
-+
-.. Set a value for `path` to define the persistent location for global state.
-+
-[TIP]
-====
-If you plan to use a file-based cache store for persistence, you can specify a directory on the host filesystem as the path.
-====
-+
-.. Set a value for `relative-to` to configure the directory to which the path is relative.
 
-.Declarative
+. Define whether the global persistent location is unique to each node or shared between the cluster.
++
+[%header%autowidth,cols="1,1",stripes=even]
+|===
+|Location type |Configuration
+
+|Unique to each node
+|`persistent-location` element or `persistentLocation()` method
+
+|Shared between the cluster
+|`shared-persistent-location` element or `sharedPersistentLocation(String)` method
+|===
+
+. Set the path where {brandname} stores cluster state.
++
+For example, file-based cache stores the path is a directory on the host filesystem.
++
+Values can be:
++
+* Absolute and contain the full location including the root.
+* Relative to a root location.
+
+. If you specify a relative value for the path, you must also specify a system property that resolves to a root location.
++
+For example, on a Linux host system you set `global/state` as the path.
+You also set the `my.data` property that resolves to the `/opt/data` root location.
+In this case {brandname} uses `/opt/data/global/state` as the global persistent location.
+
+[discrete]
+== Global persistent location configuration
+
+.XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/global_persistent_location.xml[]
 ----
 
-.Programmatic
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/global_persistent_location.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/global_persistent_location.yaml[]
+----
+
+.GlobalConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/GlobalPersistentLocation.java[]

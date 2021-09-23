@@ -1,32 +1,13 @@
-[id='remote_cache_store']
-= Remote Cache Stores
+[id='remote-cache-store_{context}']
+= Remote cache stores
 Remote cache stores, `RemoteStore`, use the Hot Rod protocol to store data on
 {brandname} clusters.
 
-The following is an example `RemoteStore` configuration that stores data in a
-cache named "mycache" on two {brandname} Server instances, named "one" and
-"two":
-
 [NOTE]
 ====
-If you configure remote cache stores as shared you cannot preload data. In
-other words if `shared="true"` in your configuration then you must set 
-`preload="false"`.
+If you configure remote cache stores as shared you cannot preload data.
+In other words if `shared="true"` in your configuration then you must set `preload="false"`.
 ====
-
-.Declarative configuration
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/persistence_remote_store.xml[]
-----
-
-.Programmatic configuration
-
-[source,java]
-----
-include::code_examples/ConfigRemoteStore.java[]
-----
 
 .Segmentation
 
@@ -43,6 +24,33 @@ If the source cache is segmented and uses a different number of segments than
 `RemoteStore`, then incorrect values are returned for bulk operations. In this
 case, you should disable segmentation for `RemoteStore`.
 ====
+
+[discrete]
+== Remote cache store configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_remote_store.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_remote_store.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_remote_store.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ConfigRemoteStore.java[]
+----
 
 .Reference
 

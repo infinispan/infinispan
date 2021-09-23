@@ -1,5 +1,5 @@
-<local-cache name="customStoreExample">
+<distributed-cache>
   <persistence>
-    <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
+    <store class="org.infinispan.persistence.example.MyInMemoryStore" />
   </persistence>
-</local-cache>
+</distributed-cache>

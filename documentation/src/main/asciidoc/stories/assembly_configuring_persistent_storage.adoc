@@ -1,0 +1,51 @@
+[id='persistence']
+:context: persistence
+= Configuring persistent storage
+
+{brandname} uses cache stores and loaders to interact with persistent storage.
+
+Durability::
+Adding cache stores allows you to persist data to non-volatile storage so it
+survives restarts.
+Write-through caching::
+Configuring {brandname} as a caching layer in front of persistent storage
+simplifies data access for applications because {brandname} handles all
+interactions with the external storage.
+Data overflow::
+Using eviction and passivation techniques ensures that {brandname} keeps only
+frequently used data in-memory and writes older entries to persistent storage.
+
+include::{topics}/con_passivation.adoc[leveloffset=+1]
+include::{topics}/con_how_passivation_works.adoc[leveloffset=+2]
+include::{topics}/con_write_through.adoc[leveloffset=+1]
+include::{topics}/con_write_behind.adoc[leveloffset=+1]
+include::{topics}/con_segmented_cache_stores.adoc[leveloffset=+1]
+include::{topics}/con_shared_cache_stores.adoc[leveloffset=+1]
+include::{topics}/con_transactions_with_cache_stores.adoc[leveloffset=+1]
+
+include::{topics}/con_global_persistent_location.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_global_persistent_location.adoc[leveloffset=+2]
+include::{topics}/con_file_based_cache_stores.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_file_stores.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_single_file_stores.adoc[leveloffset=+2]
+
+include::{topics}/con_cache_store_jdbc_connection_factories.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_jdbc_agroal_properties.adoc[leveloffset=+2]
+//JDBC string based cache store
+include::{topics}/con_cache_store_jdbc.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_jdbc_cache_stores.adoc[leveloffset=+2]
+//SQL cache store
+include::{topics}/con_cache_store_sql.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_sql_protobuf_schema.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_sql_stores_table.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_sql_stores_query.adoc[leveloffset=+2]
+include::{topics}/ref_cache_store_sql_query_parameters.adoc[leveloffset=+3]
+include::{topics}/ref_cache_store_rocksdb.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_remote.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_jpa.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_jpa_example.adoc[leveloffset=+2]
+include::{topics}/ref_cache_store_cluster.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

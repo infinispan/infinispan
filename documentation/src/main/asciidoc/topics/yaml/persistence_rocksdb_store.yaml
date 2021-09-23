@@ -1,0 +1,6 @@
+local-cache:
+  persistence:
+    rocksdb-store:
+      path: "rocksdb/data"
+      expiration:
+        path: "rocksdb/expired"

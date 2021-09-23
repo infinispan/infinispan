@@ -1,0 +1,7 @@
+distributed-cache:
+  persistence:
+    passivation: "true"
+    singleFileStore:
+      shared: "false"
+      preload: "true"
+      fetchState: "true"

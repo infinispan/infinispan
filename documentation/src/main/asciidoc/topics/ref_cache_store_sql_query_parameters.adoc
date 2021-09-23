@@ -1,0 +1,33 @@
+[id='sql-cache-stores-query-parameters_{context}']
+= Parameters and statements for SQL query stores
+
+SQL query cache stores use the `:key` or `:value` parameters for both simple and composite keys or values, respectively.
+
+.Statements
+[%header%autowidth,cols="1,1",stripes=even]
+|===
+|Query statement |Description
+
+|`SELECT`
+|Loads a single entry into caches.
+You can use wildcards but must specify parameters for keys.
+You can use labelled expressions.
+
+|`SELECT ALL`
+|Loads multiple entries into caches.
+You can use the `*` wildcard if the number of columns returned match the key and value columns.
+You can use labelled expressions.
+
+|`SIZE`
+|Counts the number of entries in the cache.
+
+|`DELETE`
+|Deletes a single entry from the cache.
+
+|`DELETE ALL`
+|Deletes all entries from the cache.
+
+|`UPSERT`
+|Modifies entries in the cache.
+
+|===

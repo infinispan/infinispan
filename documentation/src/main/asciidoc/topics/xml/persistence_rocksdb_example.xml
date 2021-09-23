@@ -1,7 +1,0 @@
-<local-cache name="vehicleCache">
-   <persistence>
-      <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:{schemaVersion}" path="rocksdb/data">
-         <expiration path="rocksdb/expired"/>
-      </rocksdb-store>
-   </persistence>
-</local-cache>

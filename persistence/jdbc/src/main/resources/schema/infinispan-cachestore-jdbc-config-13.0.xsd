@@ -40,7 +40,8 @@
       <xs:extension base="tns:table">
         <xs:attribute name="prefix" type="xs:string" default="ispn_entry">
           <xs:annotation>
-            <xs:documentation>Defines the prefix prepended to the cache name used when composing the name of the cache entry table.</xs:documentation>
+            <xs:documentation>Defines the prefix prepended to the cache name used when composing the name of the cache entry table.
+            </xs:documentation>
           </xs:annotation>
         </xs:attribute>
       </xs:extension>
@@ -72,12 +73,14 @@
     </xs:sequence>
     <xs:attribute name="fetch-size" type="xs:int" default="${TableManipulation.fetchSize}">
       <xs:annotation>
-        <xs:documentation>The fetch size used when querying from this table.  Used to avoid heap memory exhaustion when query is large.</xs:documentation>
+        <xs:documentation>The fetch size used when querying from this table.  Used to avoid heap memory exhaustion when query is large.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="batch-size" type="xs:int" default="${TableManipulation.batchSize}">
       <xs:annotation>
-        <xs:documentation>Deprecated, use the max-batch-size store property instead. The statement batch size used when modifying this table.</xs:documentation>
+        <xs:documentation>Deprecated, use the max-batch-size store property instead. The statement batch size used when modifying this table.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="create-on-start" type="xs:boolean" default="${TableManipulation.createOnStart}">

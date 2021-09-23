@@ -6,5 +6,5 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 				.addStore(RocksDBStoreConfigurationBuilder.class)
 				.location("rocksdb/data")
 				.expiredLocation("rocksdb/expired")
-        .properties(props)
+				.properties(props)
 				.build();

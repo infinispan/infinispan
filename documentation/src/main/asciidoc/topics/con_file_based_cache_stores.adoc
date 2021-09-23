@@ -1,5 +1,5 @@
 [id='file-stores_{context}']
-= File-Based Cache Stores
+= File-based cache stores
 
 File-based cache stores provide persistent storage on the local host filesystem where {brandname} is running.
 For clustered caches, file-based cache stores are unique to each {brandname} node.

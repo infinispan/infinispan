@@ -1,10 +1,9 @@
-<persistence passivation="false">
-   <file-store shared="false"
-               preload="true"
-               fetch-state="true"
-               read-only="false">
-      <data path="data"/>
-      <index path="index"/>
-      <write-behind modification-queue-size="123" />
-   </file-store>
-</persistence>
+<distributed-cache>
+  <persistence passivation="true">
+     <file-store shared="false">
+        <data path="data"/>
+        <index path="index"/>
+        <write-behind modification-queue-size="2048" />
+     </file-store>
+  </persistence>
+</distributed-cache>
