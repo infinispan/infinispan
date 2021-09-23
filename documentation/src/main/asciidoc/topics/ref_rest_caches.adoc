@@ -136,6 +136,12 @@ include::json_examples/rest_full_cache_detail.json[]
 * `transactional` true if the cache is transactional.
 * `secured` true if the cache is secured.
 * `has_remote_backup` true if the cache has remote backups.
+* `key_storage` the media type of the cache keys.
+* `value_storage` the media type of the cache values.
+
+[NOTE]
+`key_storage` and `value_storage` matches encoding configuration of the cache.
+For server caches with no encoding, {brandname} assumes `application/x-protostream` when a cache is indexed and `application/unknown` otherwise.
 
 
 [id='rest_v2_add_entries']
