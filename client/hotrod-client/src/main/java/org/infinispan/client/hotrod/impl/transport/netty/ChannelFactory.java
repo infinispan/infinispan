@@ -327,7 +327,6 @@ public class ChannelFactory {
                newCacheInfo = cacheInfo.withNewServers(responseTopologyAge, responseTopologyId, addressList);
             }
             updateCacheInfo(wrappedCacheName, newCacheInfo, false);
-            newCacheInfo.getTopologyIdRef().set(responseTopologyId);
          } else {
             if (log.isTraceEnabled())
                log.tracef("[%s] Ignoring outdated topology: topology id = %s, topology age = %s, servers = %s",
