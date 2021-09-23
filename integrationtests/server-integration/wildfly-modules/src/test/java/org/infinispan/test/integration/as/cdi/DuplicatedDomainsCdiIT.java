@@ -13,7 +13,6 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,14 +21,14 @@ import org.junit.runner.RunWith;
  *
  * @author Sebastian Laskawiec
  */
-@Ignore("ISPN-12712")
 @RunWith(Arquillian.class)
 public class DuplicatedDomainsCdiIT extends AbstractDuplicatedDomainsCdiIT {
 
    @Deployment
    public static Archive<?> deployment() {
       WebArchive webArchive = ShrinkWrap
-            .create(WebArchive.class, "cdi.war")
+            .create(WebArchive.class, "cdi-dd.war")
+            .addClass(DuplicatedDomainsCdiIT.class)
             .addClass(AbstractDuplicatedDomainsCdiIT.class)
             .addClass(CdiConfig.class)
             .add(manifest(), "META-INF/MANIFEST.MF");
@@ -38,7 +37,7 @@ public class DuplicatedDomainsCdiIT extends AbstractDuplicatedDomainsCdiIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services meta-inf").exportAsString();
       return new StringAsset(manifest);
    }
 }
