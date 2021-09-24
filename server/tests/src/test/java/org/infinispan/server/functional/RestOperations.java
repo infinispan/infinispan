@@ -11,11 +11,19 @@ import java.util.List;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestCounterClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.api.CounterType;
+import org.infinispan.counter.configuration.AbstractCounterConfiguration;
+import org.infinispan.counter.configuration.ConvertUtil;
+import org.infinispan.rest.resources.AbstractRestResourceTest;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -97,5 +105,27 @@ public class RestOperations {
       List<Json> taskListNode = Json.read(tasks.getBody()).asJsonList();
 
       taskListNode.forEach(n -> assertFalse(n.at("name").asString().startsWith("@@")));
+   }
+
+   @Test
+   public void testCounter() {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+
+      CounterConfiguration configuration = CounterConfiguration
+            .builder(CounterType.WEAK)
+            .initialValue(5)
+            .concurrencyLevel(1)
+            .build();
+
+      AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig("test-counter", configuration);
+      String configJson = AbstractRestResourceTest.counterConfigToJson(config);
+      RestCounterClient counter = client.counter("test");
+      RestResponse rsp = sync(counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
+      assertEquals(HttpResponseStatus.OK.code(), rsp.getStatus());
+
+      rsp = sync(counter.get());
+      assertEquals("5", rsp.getBody());
    }
 }
