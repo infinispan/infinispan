@@ -6,6 +6,9 @@ You can index and query remote caches on {brandname} Server.
 
 include::{topics}/proc_query_querying_hot_rod.adoc[leveloffset=+1]
 include::{topics}/proc_query_querying_console_cli.adoc[leveloffset=+1]
+include::{topics}/proc_query_using_analyzers.adoc[leveloffset=+1]
+include::{topics}/ref_query_default_analyzers.adoc[leveloffset=+2]
+include::{topics}/proc_query_creating_analyzers.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
