@@ -19,6 +19,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.ExceptionRunnable;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -27,7 +29,6 @@ import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -35,6 +36,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -78,7 +80,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       return Arrays.stream(DeliveryGuarantee.values())
             .flatMap(dg -> Stream.of(Boolean.TRUE, Boolean.FALSE)
                   .flatMap(parallel -> Stream.of(Boolean.TRUE, Boolean.FALSE)
-                        .map(entry -> new Object[]{dg, parallel, entry })))
+                        .map(entry -> new Object[]{dg, parallel, entry})))
             .toArray(Object[][]::new);
    }
 
@@ -116,9 +118,12 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       CheckPoint checkPoint = new CheckPoint();
       // Always let it finish once released
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
-      // Block on the checkpoint when it is requesting segment 2 from node 2
+      // Block on the checkpoint when it is requesting segment 2 from node 2 (need both as different methods are invoked
+      // if the invocation is parallel)
       Mocks.blockingMock(checkPoint, InternalDataContainer.class, cache2,
             (stub, m) -> stub.when(m).publisher(Mockito.eq(2)));
+      Mocks.blockingMock(checkPoint, InternalDataContainer.class, cache2,
+            (stub, m) -> stub.when(m).publisher(Mockito.eq(IntSets.immutableSet(2))));
 
       int expectedAmount = caches().size();
       // If it is at most once, we don't retry the segment so the count will be off by 1
@@ -198,10 +203,13 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       InternalDataContainer internalDataContainer = TestingUtil.extractComponent(cache2, InternalDataContainer.class);
       InternalDataContainer spy = spy(internalDataContainer);
 
-      doAnswer(invocation -> {
+      Answer blockingAnswer = invocation -> {
          Publisher result = (Publisher) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
-      }).when(spy).publisher(eq(2));
+      };
+      // Depending upon if it is parallel or not, it can invoke either method
+      doAnswer(blockingAnswer).when(spy).publisher(eq(2));
+      doAnswer(blockingAnswer).when(spy).publisher(eq(IntSets.immutableSet(2)));
 
       TestingUtil.replaceComponent(cache2, InternalDataContainer.class, spy, true);
 

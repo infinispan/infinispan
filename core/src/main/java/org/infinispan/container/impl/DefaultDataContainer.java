@@ -1,9 +1,12 @@
 package org.infinispan.container.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Policy;
-import net.jcip.annotations.ThreadSafe;
+import java.lang.invoke.MethodHandles;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.ObjIntConsumer;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
@@ -16,13 +19,14 @@ import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
+import org.reactivestreams.Publisher;
 
-import java.lang.invoke.MethodHandles;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Spliterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.ObjIntConsumer;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
+
+import io.reactivex.rxjava3.core.Flowable;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -163,6 +167,11 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    public void clear() {
       log.tracef("Clearing data container");
       entries.clear();
+   }
+
+   @Override
+   public Publisher<InternalCacheEntry<K, V>> publisher(IntSet segments) {
+      return Flowable.fromIterable(() -> iterator(segments));
    }
 
    @Override

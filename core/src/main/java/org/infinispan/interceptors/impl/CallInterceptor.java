@@ -1249,8 +1249,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
-         return Flowable.fromStream(segments.intStream().mapToObj(dataContainer::publisher))
-               .concatMap(RxJavaInterop.identityFunction());
+         // Cast is required since nested generic can't handle sub types properly
+         return (Publisher) dataContainer.publisher(segments);
       }
    }
 
@@ -1321,8 +1321,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       @Override
       public Publisher<K> localPublisher(IntSet segments) {
-         return Flowable.fromStream(segments.intStream().mapToObj(dataContainer::publisher))
-               .concatMap(RxJavaInterop.identityFunction())
+         return Flowable.fromPublisher(dataContainer.publisher(segments))
                .map(RxJavaInterop.entryToKeyFunction());
       }
    }

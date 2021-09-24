@@ -86,12 +86,27 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    @Override
    public Publisher<InternalCacheEntry<K, V>> publisher(int segment) {
+      return Flowable.defer(() -> {
+         long accessTime = timeService.wallClockTime();
+         return innerPublisher(segment, accessTime);
+      });
+   }
+
+   private Publisher<InternalCacheEntry<K, V>> innerPublisher(int segment, long accessTime) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> mapForSegment = maps.get(segment);
       if (mapForSegment == null) {
          return Flowable.empty();
       }
-      long accessTime = timeService.wallClockTime();
       return Flowable.fromIterable(mapForSegment.values()).filter(e -> !e.isExpired(accessTime));
+   }
+
+   @Override
+   public Publisher<InternalCacheEntry<K, V>> publisher(IntSet segments) {
+      return Flowable.defer(() -> {
+         long accessTime = timeService.wallClockTime();
+         return Flowable.fromIterable(segments)
+               .flatMap(segment -> innerPublisher(segment, accessTime));
+      });
    }
 
    @Override
