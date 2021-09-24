@@ -203,6 +203,11 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
       return Flowable.fromIterable(() -> iterator(IntSets.immutableSet(segment)));
    }
 
+   default Publisher<InternalCacheEntry<K, V>> publisher(IntSet segments) {
+      return Flowable.fromIterable(segments)
+            .flatMap(this::publisher);
+   }
+
    /**
     * Performs the given action for each element of the container that maps to the given set of segments
     * until all elements have been processed or the action throws an exception.  Unless otherwise specified by the
