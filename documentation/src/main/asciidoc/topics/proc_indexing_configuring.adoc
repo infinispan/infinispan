@@ -30,7 +30,7 @@ include::xml/indexing_entities.xml[]
 
 
 [discrete]
-== Protobuf
+== Protobuf messages
 
 * Specify the message declared in the schema as the value of the `indexed-entity` element, for example:
 +
@@ -49,9 +49,20 @@ include::protobuf/library.proto[]
 [discrete]
 == Java objects
 
-* Specify the fully qualified name (FQN) of the class that uses the `@Indexed` annotation, for example:
-+
-[source,xml,options="nowrap",subs=attributes+]
+* Specify the fully qualified name (FQN) of each class that includes the `@Indexed` annotation.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/indexing_entities_proto.xml[]
 ----
+
+.`ConfigurationBuilder`
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/IndexBasicConfiguration.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]

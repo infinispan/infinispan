@@ -1,22 +1,28 @@
 [id='creating-analyzers_{context}']
 = Creating custom analyzer definitions
-You can create custom analyzer definitions and add them to {brandname}.
+
+Create custom analyzer definitions and add them to your {brandname} Server installations.
+
+.Prerequisites
+
+* Stop {brandname} Server if it is running.
++
+{brandname} Server loads classes at startup only.
 
 .Procedure
 
-. Create an implementation of the `ProgrammaticSearchMappingProvider` interface packaged in a `JAR` file.
-. Provide a file named `org.infinispan.query.spi.ProgrammaticSearchMappingProvider` in the `META-INF/services/` directory of your `JAR`. This file should contain the fully qualified class name of your implementation.
+. Implement the `ProgrammaticSearchMappingProvider` API.
+. Package your implementation in a JAR with the fully qualified class (FQN) in the following file:
++
+[source,options="nowrap",subs=attributes+]
+----
+META-INF/services/org.infinispan.query.spi.ProgrammaticSearchMappingProvider
+----
++
+. Copy your JAR file to the `server/lib` directory of your {brandname} Server installation.
+. Start {brandname} Server.
 
-For remote caches, you must copy the `JAR` to the `lib/` directory of your {brandname} Server installation.
-
-[IMPORTANT]
-====
-Your JAR must be available to {brandname} Server during startup.
-You cannot add libraries to running servers.
-====
-
-The following is an example implementation of the `ProgrammaticSearchMappingProvider` interface:
-
+.`ProgrammaticSearchMappingProvider` example
 [source,java,options="nowrap"]
 ----
 include::code_examples/MyAnalyzerProvider.java[]

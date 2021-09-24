@@ -1,7 +1,7 @@
 [id='using-analyzers_{context}']
-= Using analyzers
+= Using analyzers with remote caches
 Analyzers convert input data into terms that you can index and query.
-You specify analyzer definitions with the `@Field` annotation in Protobuf schema or Java classes.
+You specify analyzer definitions with the `@Field` annotation in your Java classes or directly in Protobuf schema.
 
 .Procedure
 
