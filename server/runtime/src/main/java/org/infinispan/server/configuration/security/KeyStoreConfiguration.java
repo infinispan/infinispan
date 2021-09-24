@@ -26,7 +26,6 @@ import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
-import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.ssl.SSLContextBuilder;
 
 /**
@@ -65,7 +64,7 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
                KeyStoreUtils.generateSelfSignedCertificate(keyStoreFileName, provider, keyStorePassword,
                      keyPassword, keyAlias, generateSelfSignedHost);
             }
-            KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider,
+            KeyStore keyStore = KeyStoreUtils.loadKeyStore(INSTALLED_PROVIDERS, provider,
                   new FileInputStream(keyStoreFileName), keyStoreFileName, keyStorePassword);
             if (keyAlias != null) {
                keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));

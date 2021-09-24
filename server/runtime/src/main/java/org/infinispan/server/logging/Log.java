@@ -1,6 +1,7 @@
 package org.infinispan.server.logging;
 
 import java.io.IOException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -241,4 +242,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unknown realm '%s'", id = 80064)
    CacheConfigurationException unknownRealm(String realmName);
+
+   @Message(value = "Invalid keystore '%s'", id = 80065)
+   KeyStoreException invalidKeyStore(String filename);
 }

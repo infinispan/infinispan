@@ -42,7 +42,7 @@
                <!-- server-identities>
                   <ssl>
                      <keystore path="application.keystore"
-                               keystore-password="password" alias="server" key-password="password"
+                               password="password" alias="server"
                                generate-self-signed-certificate-host="localhost"/>
                   </ssl>
                </server-identities-->

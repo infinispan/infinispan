@@ -957,15 +957,15 @@
       <xs:attribute name="relative-to" type="xs:string">
          <xs:annotation>
             <xs:documentation>
-               A reference to a previously defined path that the file name is
-               relative to.
+               A property name whose value will be used to resolve relative paths.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="path" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               File name of credential store storage.
+               File name of credential store storage. If the path is relative, the full path will be resolved using
+               the 'relative-to' attribute.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1063,23 +1063,119 @@
       <xs:sequence>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="path" use="required"/>
-      <xs:attribute type="xs:string" name="relative-to"/>
-      <xs:attribute type="xs:string" name="keystore-password"/>
-      <xs:attribute type="xs:string" name="password"/>
-      <xs:attribute type="xs:string" name="alias"/>
-      <xs:attribute type="xs:string" name="key-password"/>
-      <xs:attribute type="xs:string" name="generate-self-signed-certificate-host"/>
-      <xs:attribute type="xs:string" name="provider"/>
+      <xs:attribute type="xs:string" name="path" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the location of the keystore on the host file system. You can set a relative or absolute value.
+               If you set a relative value, configure a value for the 'relative-to' attribute.
+               The type of the keystore will be auto-detected among JKS, JCEKS, PKCS12 or PEM.
+               BKS, BCFKS and UBER are also supported if the `bouncycastle` libary is present.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies a property name that resolves to a directory on the host file system.
+               Any files that you specify with the 'path' attribute, unless absolute, must be relative to this directory.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="keystore-password">
+         <xs:annotation>
+            <xs:documentation>
+               Deprecated: use the 'password' attribute instead.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="password">
+         <xs:annotation>
+            <xs:documentation>
+               The password required to open the keystore. If the keystore is a PEM file, this should be specified as an
+               empty string.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="alias">
+         <xs:annotation>
+            <xs:documentation>
+               The alias of the entry in the keystore to use as the server identity.
+               Only required if there are multiple entries in the keystore.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="key-password">
+         <xs:annotation>
+            <xs:documentation>
+               A password required to access a specific entry within the keystore. Only needed if the keystore type
+               supports it and the entries have been protected by an additional password.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="generate-self-signed-certificate-host">
+         <xs:annotation>
+            <xs:documentation>
+               If this attribute is set and if the file that backs the KeyStore does not exist, then
+               a self-signed certificate will be generated on first use and it will be persisted to
+               the file that backs the KeyStore. The value of this attribute will be used for the
+               Common Name value in the self-signed certificate.
+
+               The use of this attribute is intended for testing purposes only. This attribute is not
+               intended for production use.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="provider">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the provider to use to instantiate the KeyManagerFactory. If the provider is not
+               specified, and OpenSSL is available and supported on the platform and architecture, the
+               'openssl' provider will be used. Otherwise the first provider found that can create an instance of the
+               specified 'type' will be used.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
    <xs:complexType name="security-realm-truststore">
       <xs:sequence>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="path" use="required"/>
-      <xs:attribute type="xs:string" name="relative-to"/>
-      <xs:attribute type="xs:string" name="password"/>
-      <xs:attribute type="xs:string" name="provider"/>
+      <xs:attribute type="xs:string" name="path" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the location of the truststore on the host file system. You can set a relative or absolute value.
+               If you set a relative value, configure a value for the 'relative-to' attribute.
+               The type of the keystore will be auto-detected among JKS, JCEKS, PKCS12 or PEM.
+               BKS, BCFKS and UBER are also supported if the `bouncycastle` libary is present.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path">
+      <xs:annotation>
+         <xs:documentation>
+            Specifies a property name that resolves to a directory on the host file system.
+            Any files that you specify with the 'path' attribute, unless absolute, must be relative to this directory.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:attribute>
+      <xs:attribute type="xs:string" name="password">
+         <xs:annotation>
+            <xs:documentation>
+               The password required to open the truststore. If the truststore is a PEM file, this should be specified as an
+               empty string.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="provider">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the provider to use to instantiate the KeyManagerFactory. If the provider is not
+               specified, and OpenSSL is available and supported on the platform and architecture, the
+               'openssl' provider will be used. Otherwise the first provider found that can create an instance of the
+               specified 'type' will be used.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
    <xs:complexType name="security-realm-ssl-engine">
       <xs:attribute type="tns:name-list" name="enabled-protocols"/>
