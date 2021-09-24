@@ -56,28 +56,43 @@ The following HTTP authentication mechanisms apply to REST endpoints:
 property realm with plain text credentials defined in `{server_home}/server/
 conf/users.properties`, as shown in the following snippet:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-<security-realm name="default">
-  <properties-realm groups-attribute="Roles">
-    <user-properties path="users.properties"
-                     relative-to="infinispan.server.config.path"
-                     plain-text="true"/>
-    <group-properties path="groups.properties"
-                      relative-to="infinispan.server.config.path" />
-  </properties-realm>
-</security-realm>
+include::xml/server_authentication.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_authentication.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_authentication.yaml[]
 ----
 
 The `endpoints` configuration assigns the "default" security realm to the Hot
 Rod and REST connectors, as follows:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-<endpoints socket-binding="default" security-realm="default">
-  <hotrod-connector name="hotrod"/>
-  <rest-connector name="rest"/>
-</endpoints>
+include::xml/server_authentication_endpoints.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_authentication_endpoints.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_authentication_endpoints.yaml[]
 ----
 
 As a result of the preceding configuration, {brandname} servers require

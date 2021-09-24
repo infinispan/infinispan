@@ -25,8 +25,23 @@ When you configure {brandname} Server to use a property realm, you can configure
 * Hot Rod (SASL): `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
 * REST (HTTP): `Basic` and `Digest`
 
-.Property realm configuration
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== Property realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_properties_realm.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_properties_realm.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_properties_realm.yaml[]
 ----

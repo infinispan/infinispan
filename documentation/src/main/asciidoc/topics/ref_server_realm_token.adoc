@@ -11,8 +11,23 @@ When you configure {brandname} Server to use a token realm, you must configure e
 * Hot Rod (SASL): `OAUTHBEARER`
 * REST (HTTP): `Bearer`
 
-.Token realm configuration
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== Token realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_token_realm_oauth.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_token_realm_oauth.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_token_realm_oauth.yaml[]
 ----

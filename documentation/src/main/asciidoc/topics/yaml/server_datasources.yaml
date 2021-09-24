@@ -1,0 +1,21 @@
+data-sources:
+  - name: ds
+    jndi-name: 'jdbc/datasource'
+    statistics: true
+    connection-factory:
+      driver: "org.database.Driver"
+      username: "db_user"
+      password: "secret"
+      url: "jdbc:db://database-host:10000/dbname"
+      new-connection-sql: "SELECT 1"
+      transaction-isolation: "READ_COMMITTED"
+      connection-properties:
+        name: value
+    connection-pool:
+      initial-size: 1
+      max-size: 10
+      min-size: 3
+      background-validation: 1000
+      idle-removal: 1
+      blocking-timeout: 1000
+      leak-detection: 10000

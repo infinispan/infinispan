@@ -17,10 +17,25 @@ When you configure {brandname} Server to use an LDAP realm, you can configure en
 * Hot Rod (SASL): `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
 * REST (HTTP): `Basic` and `Digest`
 
-.LDAP realm configuration
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== LDAP realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_ldap_realm.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_ldap_realm.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_ldap_realm.yaml[]
 ----
 
 [IMPORTANT]
