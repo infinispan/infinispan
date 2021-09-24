@@ -2,6 +2,7 @@ package org.infinispan.lock.configuration;
 
 import java.util.Map;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
@@ -14,6 +15,7 @@ import org.infinispan.lock.logging.Log;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.4
  */
+@BuiltBy(ClusteredLockManagerConfigurationBuilder.class)
 public class ClusteredLockManagerConfiguration {
 
    private static final Log log = LogFactory.getLog(ClusteredLockManagerConfiguration.class, Log.class);
@@ -36,7 +38,7 @@ public class ClusteredLockManagerConfiguration {
 
    private final AttributeSet attributes;
 
-   private Map<String, ClusteredLockConfiguration> locks;
+   private final Map<String, ClusteredLockConfiguration> locks;
 
    ClusteredLockManagerConfiguration(AttributeSet attributes, Map<String, ClusteredLockConfiguration> locks) {
       this.attributes = attributes;

@@ -95,7 +95,7 @@ public class CounterResource implements ResourceHandler {
          responseBuilder.entity("Configuration not provided");
          return completedFuture(responseBuilder.build());
       }
-      CounterConfiguration configuration = createCounterConfiguration(counterName, contents);
+      CounterConfiguration configuration = createCounterConfiguration(contents);
       if (configuration == null) {
          responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity("Invalid configuration");
          return completedFuture(responseBuilder.build());
@@ -197,13 +197,10 @@ public class CounterResource implements ResourceHandler {
       return executeCounterCAS(request, StrongCounter::compareAndSwap);
    }
 
-   private CounterConfiguration createCounterConfiguration(String name, String json) {
+   private CounterConfiguration createCounterConfiguration(String json) {
       try (ConfigurationReader reader = ConfigurationReader.from(json).withType(APPLICATION_JSON).build()) {
-         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
-         holder.getGlobalConfigurationBuilder().read(invocationHelper.getRestCacheManager().getInstance().getCacheManagerConfiguration());
-         invocationHelper.getParserRegistry().parse(reader, holder);
+         ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(reader, new ConfigurationBuilderHolder());
          CounterManagerConfigurationBuilder counterModule = holder.getGlobalConfigurationBuilder().module(CounterManagerConfigurationBuilder.class);
-         counterModule.counters().get(0).name(name);
          CounterManagerConfiguration configuration = counterModule.create();
          return ConvertUtil.parsedConfigToConfig(configuration.counters().values().iterator().next());
       }
