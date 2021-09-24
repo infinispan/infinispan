@@ -1,0 +1,23 @@
+security:
+  security-realms:
+    - name: default
+      ldap-realm:
+        name: ldap
+        url: 'ldap://my-ldap-server:10389'
+        principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
+        credential: strongPassword
+        name-rewriter:
+          regex-principal-transformer:
+            name: 'domain-remover'
+            pattern: (.*)@INFINISPAN\.ORG
+            replacement: $1
+        identity-mapping:
+          rdn-identifier: uid
+          search-dn: 'ou=People,dc=infinispan,dc=org'
+          attribute-mapping:
+            - filter: '(&(objectClass=groupOfNames)(member={1}))'
+              filter-dn: 'ou=Roles,dc=infinispan,dc=org'
+              from: cn
+              to: Roles
+          user-password-mapper:
+            from: userPassword

@@ -1,0 +1,18 @@
+{
+  "security": {
+    "security-realms": [
+      {
+        "name": "default",
+        "token-realm": {
+          "name": "token",
+          "auth-server-url": "https://oauth-server/auth/",
+          "oauth2-introspection": {
+            "client-id": "infinispan-server",
+            "client-secret": "1fdca4ec-c416-47e0-867a-3d471af7050f",
+            "introspection-url": "https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -18,8 +18,23 @@ When you configure {brandname} Server to use a client trust store, you must conf
 * Hot Rod (SASL): `EXTERNAL`
 * REST (HTTP): `CLIENT_CERT`
 
-.Trust store realm configuration
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== Trust store realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_truststore_realm.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_truststore_realm.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_truststore_realm.yaml[]
 ----

@@ -1,0 +1,35 @@
+{
+  "security": {
+    "security-realms": [
+      {
+        "name": "default",
+        "ldap-realm": {
+          "url": "ldap://my-ldap-server:10389",
+          "principal": "uid=admin,ou=People,dc=infinispan,dc=org",
+          "credential": "strongPassword",
+          "identity-mapping": {
+            "rdn-identifier": "uid",
+            "search-dn": "ou=People,dc=infinispan,dc=org",
+            "name-rewriter": {
+              "regex-principal-transformer": {
+                "pattern": "(.*)@INFINISPAN\\.ORG",
+                "replacement": "$1"
+              }
+            },
+            "attribute-mapping": [
+              {
+                "from": "cn",
+                "to": "Roles",
+                "filter": "(&(objectClass=groupOfNames)(member={1}))",
+                "filter-dn": "ou=Roles,dc=infinispan,dc=org"
+              }
+            ],
+            "user-password-mapper": {
+              "from": "userPassword"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

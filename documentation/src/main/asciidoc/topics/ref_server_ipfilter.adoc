@@ -22,17 +22,22 @@ or equivalently, its subnet mask `255.255.255.0`, which has 24 leading 1-bits.
 `2001:db8:0:ffff:ffff:ffff:ffff:ffff`.
 * `::1/128` represents the IPv6 loopback address. Its prefix length is 128 which is the number of bits in the address.
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-<endpoints socket-binding="default" security-realm="default">
-  <ip-filter>
-    <accept from="192.168.0.0/16"/>
-    <accept from="10.0.0.0/8"/>
-    <reject from="/0"/>
-  </ip-filter>
-  <hotrod-connector name="hotrod"/>
-  <rest-connector name="rest"/>
-</endpoints>
+include::xml/server_ipfilter.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_ipfilter.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_ipfilter.yaml[]
 ----
 
 As a result of the preceding configuration, {brandname} servers accept connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
