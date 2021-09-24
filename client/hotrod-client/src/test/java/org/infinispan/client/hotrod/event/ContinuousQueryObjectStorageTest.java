@@ -435,4 +435,5 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
          assertNull("No more elements expected in queue!", queue.poll());
       }
    }
+
 }
