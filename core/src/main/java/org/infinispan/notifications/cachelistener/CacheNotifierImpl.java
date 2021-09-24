@@ -283,6 +283,9 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    public void stop() {
       super.stop();
 
+      // The other nodes will remove the listener automatically
+      clusterListenerIDs.clear();
+
       if (filterIndexingServiceProviders != null) {
          for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
             provider.stop();
