@@ -59,7 +59,7 @@ include::json/rest_query_request_body.json[]
 ----
 
 [id='rest_v2_query_reindex']
-= Re-indexing Data
+== Re-indexing Data
 Re-index all data in caches with `POST` requests and the `?action=mass-index` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -88,7 +88,7 @@ the link:#rest_v2_query_index_stats[Index Statistics] REST call.
 |===
 
 [id='rest_v2_query_purge_index']
-= Purging Indexes
+== Purging Indexes
 Delete all indexes from caches with `POST` requests and the `?action=clear`
 parameter.
 
@@ -100,7 +100,7 @@ POST  /v2/caches/{cacheName}/search/indexes?action=clear
 If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_search_stats']
-= Retrieving Query and Index Statistics
+== Retrieving Query and Index Statistics
 
 Obtain information about queries and indexes in caches with `GET` requests.
 
@@ -151,7 +151,7 @@ In the ```index``` section:
 * `reindexing` If the value is `true`, the `Indexer` is running in the cache.
 
 [id='rest_v2_search_stats_clear']
-= Clearing Query Statistics
+== Clearing Query Statistics
 
 Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
@@ -164,7 +164,7 @@ POST /v2/caches/{cacheName}/search/stats?action=clear
 This operation does not clear index statistics.
 
 [id='rest_v2_query_index_stats']
-= Retrieving Index Statistics (Deprecated)
+== Retrieving Index Statistics (Deprecated)
 Obtain information about indexes in caches with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -185,7 +185,7 @@ include::json/rest_index_stats.json[]
 
 
 [id='rest_v2_query_stats']
-= Retrieving Query Statistics (Deprecated)
+== Retrieving Query Statistics (Deprecated)
 Get information about the queries that have been run in caches with `GET`
 requests.
 
@@ -211,7 +211,7 @@ include::json/rest_query_stats.json[]
 * `search_query_execution_max_time_query_string` Provides the slowest query executed.
 
 [id='rest_v2_query_stats_clear']
-= Clearing Query Statistics (Deprecated)
+== Clearing Query Statistics (Deprecated)
 Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]
