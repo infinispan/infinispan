@@ -17,6 +17,12 @@ Alternatively to providing trust stores you can use shared system certificates.
 * Create a client trust store that contains either the CA certificate or all public certificates.
 * Create a keystore for {brandname} Server and configure an SSL/TLS identity.
 
+[NOTE]
+====
+PEM files can be used as trust stores provided they contain one or more certificates.
+These trust stores should be configured with an empty password: `password=""`.
+====
+
 .Procedure
 
 . Add the `require-ssl-client-auth="true"` parameter to your `endpoints` configuration.
