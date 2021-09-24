@@ -2218,4 +2218,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Max idle is not supported when using a store", id = 652)
    void maxIdleNotTestedWithPassivation();
+
+   @LogMessage(level = WARN)
+   @Message(value = "The '%s' attribute on the '%s' element has been deprecated. Please use the '%s' attribute instead", id = 653)
+   void attributeDeprecatedUseOther(Enum<?> attr, Enum<?> element, Enum<?> other);
 }

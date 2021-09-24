@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration;
 
 import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -1068,8 +1069,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case RELATIVE_TO:
                keyStoreBuilder.relativeTo(value);
                break;
-            case PASSWORD:
             case KEYSTORE_PASSWORD:
+               CONFIG.attributeDeprecatedUseOther(Attribute.KEYSTORE_PASSWORD, Element.KEYSTORE, Attribute.PASSWORD);
+            case PASSWORD:
                keyStoreBuilder.keyStorePassword(value.toCharArray());
                credentialSet = true;
                break;

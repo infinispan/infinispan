@@ -9,7 +9,7 @@
                     that provide SSL/TLS identities to clients. -->
                <keystore path="server.pfx"
                          relative-to="infinispan.server.config.path"
-                         keystore-password="secret"
+                         password="secret"
                          alias="rhdg-server"/>
             </ssl>
          </server-identities>
