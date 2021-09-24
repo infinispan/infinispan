@@ -258,9 +258,11 @@
       <versionx.com.google.guava.guava>30.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.15</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>1.4.200</versionx.com.h2database.h2>
+      <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
+      <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
+      <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>8.0.16</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.2.5</versionx.com.postgresqldatabase.postgresql>
-      <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
       <versionx.com.thoughtworks.xstream.xstream>1.4.18</versionx.com.thoughtworks.xstream.xstream>
@@ -376,11 +378,13 @@
       <versionx.org.jsoup>1.14.2</versionx.org.jsoup>
       <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
       <versionx.org.latencyutils.LatencyUtils>2.0.2</versionx.org.latencyutils.LatencyUtils>
+      <versionx.org.mariadb.jdbc>2.7.3</versionx.org.mariadb.jdbc>
       <versionx.org.mockito.mockito-core>${version.mockito}</versionx.org.mockito.mockito-core>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.openjdk.jmh.jmh-core>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-core>
       <versionx.org.openjdk.jmh.jmh-generator-annprocess>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-generator-annprocess>
       <versionx.org.openjdk.nashorn>${version.nashorn}</versionx.org.openjdk.nashorn>
+      <versionx.org.postgresql>42.2.18</versionx.org.postgresql>
       <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
       <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
@@ -417,6 +421,7 @@
       <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
+      <versionx.org.xerial>3.36.0.1</versionx.org.xerial>
       <versionx.org.yaml.snakeyaml>1.28</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
@@ -557,9 +562,21 @@
             <version>${versionx.com.h2database.h2}</version>
          </dependency>
          <dependency>
+            <groupId>com.ibm.db2</groupId>
+            <artifactId>jcc</artifactId>
+            <version>${versionx.com.ibm.db2}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-storage</artifactId>
             <version>${versionx.com.microsoft.azure.azure-storage}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>${versionx.com.microsoft.sqlserver}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>com.puppycrawl.tools</groupId>
@@ -1567,6 +1584,12 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${versionx.org.mariadb.jdbc}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${versionx.org.mockito.mockito-core}</version>
@@ -1594,6 +1617,12 @@
             <groupId>org.openjdk.nashorn</groupId>
             <artifactId>nashorn-core</artifactId>
             <version>${versionx.org.openjdk.nashorn}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${versionx.org.postgresql}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.reactivestreams</groupId>
@@ -1807,6 +1836,12 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron</artifactId>
             <version>${versionx.org.wildfly.security.wildfly-elytron}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>${versionx.org.xerial}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.yaml</groupId>
