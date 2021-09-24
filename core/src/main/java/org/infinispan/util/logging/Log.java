@@ -2212,4 +2212,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Read invalid data in SingleFileStore file %s, please remove the file and retry", id = 650)
    PersistenceException invalidSingleFileStoreData(String path);
+
+   @Message(value = "Max idle is not allowed while using a store without passivation", id = 651)
+   CacheConfigurationException maxIdleNotAllowedWithoutPassivation();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Max idle is not supported when using a store", id = 652)
+   void maxIdleNotTestedWithPassivation();
 }
