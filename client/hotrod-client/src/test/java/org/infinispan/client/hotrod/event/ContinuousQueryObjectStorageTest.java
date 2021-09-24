@@ -159,12 +159,14 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue().getAge(), 32, 22);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       user3.setAge(30);
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 1, (kv) -> kv.getValue().getAge(), 30);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       user1.setAge(40);
       user2.setAge(40);
@@ -175,6 +177,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 3);
+      expectNoMoreElementsInQueues(joined, left);
 
       remoteCache.clear();
       user1.setAge(21);
@@ -184,6 +187,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 2);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       timeService.advance(6);
       assertNull(remoteCache.get("expiredUser1"));
@@ -191,6 +195,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 2);
+      expectNoMoreElementsInQueues(joined, left);
 
       continuousQuery.removeContinuousQueryListener(listener);
 
@@ -199,9 +204,10 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
    }
 
-   public void testContinuousQueryWithProjections() {
+   public void testContinuousQueryWithProjections() throws InterruptedException {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -258,12 +264,14 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       user3.setAge(30);
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 1, (kv) -> kv.getValue()[0], 30);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       user1.setAge(40);
       user2.setAge(40);
@@ -300,7 +308,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       expectElementsInQueue(left, 0);
    }
 
-   public void testContinuousQueryChangingParameter() {
+   public void testContinuousQueryChangingParameter() throws InterruptedException {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -357,6 +365,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);
       expectElementsInQueue(left, 0);
+      expectNoMoreElementsInQueues(joined, left);
 
       joined.clear();
       left.clear();
@@ -416,13 +425,14 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
             assertTrue("Expectation failed on element number " + i + ", unexpected value: " + v, found);
          }
       }
+   }
 
-      try {
-         // no more elements expected here
-         Object o = queue.poll(5, TimeUnit.SECONDS);
-         assertNull("No more elements expected in queue!", o);
-      } catch (InterruptedException e) {
-         throw new AssertionError("Interrupted while waiting for condition", e);
+   private void expectNoMoreElementsInQueues(BlockingQueue<?>... queues) {
+      // A short delay gives unexpected events in transit a chance to appear in the queue
+      TestingUtil.sleepThread(100);
+
+      for (BlockingQueue<?> queue : queues) {
+         assertNull("No more elements expected in queue!", queue.poll());
       }
    }
 }
