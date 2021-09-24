@@ -2,6 +2,7 @@ package org.infinispan.persistence.manager;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.util.logging.Log.CONFIG;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.lang.invoke.MethodHandles;
@@ -201,6 +202,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          // Blocks here waiting for stores and availability task to start if needed
          storeStartup.blockingAwait();
+         // If a store is not writeable, then max idle works fine as it only expires in memory, thus refreshing
+         // the value that can be read from the store
+         // Max idle is not currently supported with stores, it sorta works with passivation though
+         if (configuration.expiration().maxIdle() > 0 &&
+               stores.stream().anyMatch(status -> !status.characteristics.contains(Characteristic.READ_ONLY))) {
+            if (!configuration.persistence().passivation()) {
+               throw CONFIG.maxIdleNotAllowedWithoutPassivation();
+            }
+            CONFIG.maxIdleNotTestedWithPassivation();
+         }
          allSegmentedOrShared = allStoresSegmentedOrShared();
       } catch (Throwable t) {
          log.debug("PersistenceManagerImpl encountered an exception during startup of stores", t);

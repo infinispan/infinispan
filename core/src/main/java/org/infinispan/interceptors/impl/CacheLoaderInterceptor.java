@@ -436,6 +436,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
                      (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
                   return oldEntry;
                }
+               if (ice.canExpire()) {
+                  ice.touch(timeService.wallClockTime());
+               }
                return ice;
             };
 

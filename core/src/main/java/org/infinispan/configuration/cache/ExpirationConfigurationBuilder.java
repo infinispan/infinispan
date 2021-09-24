@@ -64,11 +64,21 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
     * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
-    *
+    * <p>
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder maxIdle(long l, TimeUnit unit) {
       return maxIdle(unit.toMillis(l));
+   }
+
+   /**
+    * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
+    * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
+    *
+    * @return the max idle setting, default is -1 for disabled
+    */
+   public long maxIdle() {
+      return attributes.attribute(MAX_IDLE).get();
    }
 
    /**

@@ -2,7 +2,9 @@ package org.infinispan.expiration.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,17 +115,22 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       assertEquals(0, cache.size());
    }
 
+   protected int maxInMemory() {
+      return SIZE;
+   }
+
    public void testSimpleExpirationMaxIdle() throws Exception {
       for (int i = 0; i < SIZE; i++) {
-         cache.put("key-" + i, "value-" + i,-1, null, 1, TimeUnit.MILLISECONDS);
+         cache.put("key-" + i, "value-" + i, -1, null, 1, TimeUnit.MILLISECONDS);
       }
       timeService.advance(2);
 
       assertEquals(0, cache.size());
 
       // Only processExpiration actually removes the entries
-      assertEquals(SIZE, cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+      assertEquals(maxInMemory(), cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
       processExpiration();
+      assertEquals(0, cache.size());
       assertEquals(0, cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
    }
 
@@ -148,27 +155,35 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
    public void testExpirationLifespanInOps() throws Exception {
       for (int i = 0; i < SIZE; i++) {
-         cache.put("key-" + i, "value-" + i, 1, TimeUnit.MILLISECONDS);
+         long expirationTime = i % 2 == 0 ? 1 : 1000;
+         cache.put("key-" + i, "value-" + i, expirationTime, TimeUnit.MILLISECONDS);
       }
       timeService.advance(2);
 
-      for (int i = 0; i < SIZE; i++) {
-         assertFalse(cache.containsKey("key-" + i));
-         assertNull(cache.get("key-" + i));
-         assertNull(cache.remove("key-" + i));
-      }
+      checkOddExist(SIZE);
    }
 
    public void testExpirationMaxIdleInOps() throws Exception {
       for (int i = 0; i < SIZE; i++) {
-         cache.put("key-" + i, "value-" + i,-1, null, 1, TimeUnit.MILLISECONDS);
+         long expirationTime = i % 2 == 0 ? 1 : 1000;
+         cache.put("key-" + i, "value-" + i, -1, null, expirationTime, TimeUnit.MILLISECONDS);
       }
       timeService.advance(2);
 
+      checkOddExist(SIZE);
+   }
+
+   protected void checkOddExist(int SIZE) {
       for (int i = 0; i < SIZE; i++) {
-         assertFalse(cache.containsKey("key-" + i));
-         assertNull(cache.get("key-" + i));
-         assertNull(cache.remove("key-" + i));
+         if (i % 2 == 0) {
+            assertFalse(cache.containsKey("key-" + i));
+            assertNull(cache.get("key-" + i));
+            assertNull(cache.remove("key-" + i));
+         } else {
+            assertTrue(cache.containsKey("key-" + i));
+            assertNotNull(cache.get("key-" + i));
+            assertNotNull(cache.remove("key-" + i));
+         }
       }
    }
 
@@ -179,10 +194,10 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       timeService.advance(2);
 
       cache.getAdvancedCache().getDataContainer()
-           .forEach(ice -> {
-              throw new RuntimeException(
-                 "No task should be executed on expired entry");
-           });
+            .forEach(ice -> {
+               throw new RuntimeException(
+                     "No task should be executed on expired entry");
+            });
    }
 
    public void testExpirationMaxIdleDataContainerIterator() throws Exception {
@@ -203,7 +218,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
       AtomicInteger invocationCount = new AtomicInteger();
       cache.getAdvancedCache().getDataContainer().iteratorIncludingExpired().forEachRemaining(ice -> invocationCount.incrementAndGet());
-      assertEquals(SIZE, invocationCount.get());
+      assertEquals(maxInMemory(), invocationCount.get());
 
       processExpiration();
       cache.getAdvancedCache().getDataContainer()
