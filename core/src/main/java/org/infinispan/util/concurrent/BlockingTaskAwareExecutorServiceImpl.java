@@ -169,9 +169,11 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
          executorService.execute(runnable);
          return true;
       } catch (RejectedExecutionException rejected) {
-         //put it back!
-         blockedTasks.offer(runnable);
-         requestCounter.incrementAndGet();
+         if (!shutdown) {
+            //put it back!
+            blockedTasks.offer(runnable);
+            requestCounter.incrementAndGet();
+         }
          return false;
       }
    }
