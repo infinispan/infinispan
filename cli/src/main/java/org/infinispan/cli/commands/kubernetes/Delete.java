@@ -3,8 +3,6 @@ package org.infinispan.cli.commands.kubernetes;
 import static org.infinispan.cli.commands.kubernetes.Kube.DEFAULT_CLUSTER_NAME;
 import static org.infinispan.cli.commands.kubernetes.Kube.INFINISPAN_CLUSTER_CRD;
 
-import java.io.IOException;
-
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
@@ -13,7 +11,7 @@ import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
-import org.infinispan.cli.impl.KubernetesContextImpl;
+import org.infinispan.cli.impl.KubernetesContext;
 import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -24,7 +22,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  **/
 @GroupCommandDefinition(
       name = "delete",
-      description = "Deletes a resource",
+      description = "Deletes resources.",
       groupCommands = {
             Delete.Cluster.class,
       })
@@ -47,10 +45,10 @@ public class Delete extends CliCommand {
    @CommandDefinition(name = "cluster", description = "Deletes a cluster")
    public static class Cluster extends CliCommand {
 
-      @Option(shortName = 'n', description = "Select the namespace")
+      @Option(shortName = 'n', description = "Specifies the namespace of the cluster to delete. Uses the default namespace if you do not specify one.")
       String namespace;
 
-      @Argument(description = "The name of the service to delete", defaultValue = DEFAULT_CLUSTER_NAME)
+      @Argument(description = "Specifies the name of the cluster to delete. Defaults to '" + DEFAULT_CLUSTER_NAME + "'", defaultValue = DEFAULT_CLUSTER_NAME)
       String name;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -63,13 +61,9 @@ public class Delete extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         KubernetesClient client = ((KubernetesContextImpl)invocation.getContext()).getKubernetesClient();
-         try {
-            client.customResource(INFINISPAN_CLUSTER_CRD).delete(Kube.getNamespaceOrDefault(client, namespace), name);
-            return CommandResult.SUCCESS;
-         } catch (IOException e) {
-            return CommandResult.FAILURE;
-         }
+         KubernetesClient client = KubernetesContext.getClient(invocation);
+         client.genericKubernetesResources(INFINISPAN_CLUSTER_CRD).inNamespace(Kube.getNamespaceOrDefault(client, namespace)).withName(name).delete();
+         return CommandResult.SUCCESS;
       }
    }
 }

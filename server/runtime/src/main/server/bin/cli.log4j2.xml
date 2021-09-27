@@ -16,6 +16,12 @@
       <Logger name="org.aesh" additivity="false" level="WARN">
          <AppenderRef ref="STDOUT"/>
       </Logger>
+      <Logger name="org.aesh.readline.alias.AliasManager" additivity="false" level="ERROR">
+         <AppenderRef ref="STDOUT"/>
+      </Logger>
+      <Logger name="io.fabric8.kubernetes.client.internal.VersionUsageUtils" additivity="false" level="ERROR">
+         <AppenderRef ref="STDOUT"/>
+      </Logger>
 
       <Root level="INFO">
          <AppenderRef ref="STDOUT" level="WARN"/>

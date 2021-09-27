@@ -29,33 +29,6 @@ public interface Messages {
    @Message(value = "Password: ")
    String password();
 
-   @Message(value = "Displays usage information and exits.")
-   String cliHelpHelp();
-
-   @Message("Displays version information and exits.")
-   String cliHelpVersion();
-
-   @Message("File '%s' doesn't exist or is not a file")
-   String fileNotExists(String inputFile);
-
-   @Message("Connects to a remote %s instance\n")
-   String cliHelpConnect(String brandName);
-
-   @Message("Server HTTP http://[username[:password]]@host:port")
-   String cliHelpConnectHTTP();
-
-   @Message("Reads input from the specified file instead of using interactive mode. If FILE is '-', then commands will be read from stdin.")
-   String cliHelpFile();
-
-   @Message("The password of an optional truststore to be used for SSL/TLS connections.")
-   String cliHelpTruststorePassword();
-
-   @Message("The path of an optional truststore to be used for SSL/TLS connections.")
-   String cliHelpTruststore();
-
-   @Message("Trusts all certificates in SSL/TLS connections.")
-   String cliHelpTrustAll();
-
    @Message("Not Found: %s")
    IOException notFound(String s);
 
@@ -64,9 +37,6 @@ public interface Messages {
 
    @Message("Error: %s")
    IOException error(String s);
-
-   @Message("Error: %s")
-   RuntimeException genericError(String s, @Cause Throwable t);
 
    @Message("The user is not allowed to access the server resource: %s")
    AccessDeniedException forbidden(String s);
@@ -173,9 +143,6 @@ public interface Messages {
    @Message(value = "User `%s` already exists")
    IllegalStateException userToolUserExists(String username);
 
-   @Message(value = "Cannot add user `%s` without a password.")
-   String userToolNoPassword(String username);
-
    @Message("Error accessing file '%s'")
    RuntimeException userToolIOError(Path path, @Cause IOException e);
 
@@ -206,20 +173,8 @@ public interface Messages {
    @Message(value = "Wrong argument count: %d.")
    IllegalArgumentException wrongArgumentCount(int size);
 
-   @Message(value = "Backup path on the server must be absolute")
-   IllegalArgumentException backupAbsolutePathRequired();
-
-   @Message("No services found")
-   NoSuchElementException noServicesFound();
-
-   @Message("The service must be specified")
-   IllegalStateException specifyService();
-
-   @Message("The service '%s' is of the wrong type")
-   IllegalArgumentException wrongServiceType(String serviceName);
-
-   @Message("Cannot find service '%s'")
-   IllegalArgumentException noSuchService(String serviceName);
+   @Message("Cannot find service '%s' in namespace '%s'")
+   IllegalArgumentException noSuchService(String serviceName, String namespace);
 
    @Message("Cannot find generated secrets for service '%s'")
    IllegalStateException noGeneratedSecret(String serviceName);
@@ -250,4 +205,28 @@ public interface Messages {
 
    @Message("The cache name is required")
    IllegalArgumentException missingCacheName();
+
+   @Message("Could not determine catalog source")
+   IllegalStateException noCatalog();
+
+   @Message("Target namespaces must be specified when not installing globally")
+   IllegalArgumentException noTargetNamespaces();
+
+   @Message("Could not find a default operator namespace")
+   IllegalStateException noDefaultOperatorNamespace();
+
+   @Message("Kubernetes client is unavailable in this mode")
+   IllegalStateException noKubernetes();
+
+   @Message("Could not find an operator subscription in namespace '%s'")
+   IllegalStateException noOperatorSubscription(String namespace);
+
+   @Message("Expose type '%s' requires a port")
+   IllegalArgumentException exposeTypeRequiresPort(String exposeType);
+
+   @Message("Encryption type '%s' requires a secret name")
+   IllegalArgumentException encryptionTypeRequiresSecret(String encryptionType);
+
+   @Message("No running pods available in service %s")
+   IllegalStateException noRunningPodsInService(String name);
 }

@@ -43,13 +43,14 @@ public class Version {
    private final String majorMinor;
    private final String major;
    private final String minor;
+   private final Properties properties;
 
    private Version() {
       this(Version.class.getResourceAsStream("/META-INF/infinispan-version.properties"));
    }
 
    private Version(InputStream is) {
-      Properties properties = new Properties();
+      properties = new Properties();
       try {
          properties.load(is);
          // Closing it here is harmless
@@ -179,6 +180,10 @@ public class Version {
       int major = (version & MAJOR_MASK) >> MAJOR_SHIFT;
       int minor = (version & MINOR_MASK) >> MINOR_SHIFT;
       return major + "." + minor;
+   }
+
+   public static String getProperty(String name) {
+      return INSTANCE.properties.getProperty(name);
    }
 
    /**
