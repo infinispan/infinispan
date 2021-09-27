@@ -197,7 +197,7 @@ public class RestConnection implements Connection, Closeable {
             break;
          case FILE:
             String contentDisposition = parseHeaders(r).get("Content-Disposition").get(0);
-            String filename = contentDisposition.split("filename=")[1];
+            String filename = Util.unquote(contentDisposition.split("filename=")[1]);
             Path file = workingDir.resolve(filename);
 
             try (OutputStream os = Files.newOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
@@ -419,7 +419,7 @@ public class RestConnection implements Connection, Closeable {
          localSite = (String) cacheManagerInfo.get("local_site");
          sitesView = new ArrayList<>((Collection<String>) cacheManagerInfo.get("sites_view"));
          Collections.sort(sitesView);
-         relayNode = (Boolean) cacheManagerInfo.get("relay_node");
+         relayNode = cacheManagerInfo.containsKey("relay_node") ? (boolean) cacheManagerInfo.get("relay_node") : false;
          relayNodes = (List<String>) cacheManagerInfo.get("relay_nodes_address");
          clusterMembers = (Collection<String>) cacheManagerInfo.get("cluster_members");
          if (nodeAddress != null) {

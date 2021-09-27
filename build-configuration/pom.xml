@@ -100,6 +100,9 @@
       <infinispan.base.version>13.0</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
+      <infinispan.olm.openshift.source>community-operators</infinispan.olm.openshift.source>
+      <infinispan.olm.k8s.source>operatorhubio-catalog</infinispan.olm.k8s.source>
+      <infinispan.olm.name>infinispan</infinispan.olm.name>
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 

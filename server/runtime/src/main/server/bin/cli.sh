@@ -28,7 +28,7 @@ do
           break;;
       -D*)
           JAVA_OPTS_EXTRA="$JAVA_OPTS_EXTRA '$1'"
-          break;;
+          ;;
       -P)
           if [ ! -f "$2" ]; then
             echo "Could not load property file: $2"

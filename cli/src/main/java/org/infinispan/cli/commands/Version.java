@@ -5,7 +5,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
-import org.infinispan.cli.impl.KubernetesContextImpl;
+import org.infinispan.cli.impl.KubernetesContext;
 import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -32,8 +32,8 @@ public class Version extends CliCommand {
       if (invocation.getContext().isConnected()) {
          invocation.println("Server: " + invocation.getContext().getConnection().getServerVersion());
       }
-      if (invocation.getContext() instanceof KubernetesContextImpl) {
-         KubernetesClient client = ((KubernetesContextImpl) invocation.getContext()).getKubernetesClient();
+      if (invocation.getContext() instanceof KubernetesContext) {
+         KubernetesClient client = ((KubernetesContext) invocation.getContext()).getKubernetesClient();
          invocation.printf("Kubernetes %s.%s\n", client.getVersion().getMajor(), client.getVersion().getMinor());
       }
       return CommandResult.SUCCESS;
