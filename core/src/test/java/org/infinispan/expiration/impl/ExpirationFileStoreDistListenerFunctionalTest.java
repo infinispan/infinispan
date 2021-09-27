@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static org.infinispan.expiration.impl.ExpirationFileStoreListenerFunctionalTest.FileStoreToUse.SINGLE;
+import static org.infinispan.expiration.impl.ExpirationFileStoreListenerFunctionalTest.FileStoreToUse.SOFT_INDEX;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
 import java.util.concurrent.TimeUnit;
@@ -19,22 +21,35 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "expiration.impl.ExpirationSingleFileStoreDistListenerFunctionalTest")
-public class ExpirationSingleFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
+@Test(groups = "functional", testName = "expiration.impl.ExpirationFileStoreDistListenerFunctionalTest")
+public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
 
-   private static final String PERSISTENT_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationSingleFileStoreDistListenerFunctionalTest.class);
-   private static final String EXTRA_MANAGER_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationSingleFileStoreDistListenerFunctionalTest.class + "2");
+   private static final String PERSISTENT_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class);
+   private static final String EXTRA_MANAGER_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class + "2");
 
    private EmbeddedCacheManager extraManager;
    private Cache<Object, Object> extraCache;
+
+   private ExpirationFileStoreListenerFunctionalTest.FileStoreToUse fileStoreToUse;
+
+   ExpirationStoreFunctionalTest fileStoreToUse(ExpirationFileStoreListenerFunctionalTest.FileStoreToUse fileStoreToUse) {
+      this.fileStoreToUse = fileStoreToUse;
+      return this;
+   }
 
    @Factory
    @Override
    public Object[] factory() {
       return new Object[]{
             // Test is for single file store with a listener in a dist cache and we don't care about memory storage types
-            new ExpirationSingleFileStoreDistListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC),
+            new ExpirationFileStoreDistListenerFunctionalTest().fileStoreToUse(SINGLE).cacheMode(CacheMode.DIST_SYNC),
+            new ExpirationFileStoreDistListenerFunctionalTest().fileStoreToUse(SOFT_INDEX).cacheMode(CacheMode.DIST_SYNC),
       };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[ " + fileStoreToUse + "]";
    }
 
    @Override
@@ -42,8 +57,16 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
       config
             // Prevent the reaper from running, reaperEnabled(false) doesn't work when a store is present
             .expiration().wakeUpInterval(Long.MAX_VALUE)
-            .clustering().cacheMode(cacheMode)
-            .persistence().addSingleFileStore();
+            .clustering().cacheMode(cacheMode);
+      switch (fileStoreToUse) {
+         case SINGLE:
+            config.persistence().addSingleFileStore();
+            break;
+         case SOFT_INDEX:
+            config.persistence().addSoftIndexFileStore();
+            break;
+      }
+
    }
 
    @AfterClass(alwaysRun = true)
