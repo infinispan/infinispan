@@ -34,6 +34,7 @@ import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
 import org.infinispan.cli.commands.rest.Add;
+import org.infinispan.cli.commands.rest.Alter;
 import org.infinispan.cli.commands.rest.Backup;
 import org.infinispan.cli.commands.rest.Cas;
 import org.infinispan.cli.commands.rest.ClearCache;
@@ -44,6 +45,7 @@ import org.infinispan.cli.commands.rest.Logging;
 import org.infinispan.cli.commands.rest.Migrate;
 import org.infinispan.cli.commands.rest.Put;
 import org.infinispan.cli.commands.rest.Query;
+import org.infinispan.cli.commands.rest.Rebalance;
 import org.infinispan.cli.commands.rest.Remove;
 import org.infinispan.cli.commands.rest.Reset;
 import org.infinispan.cli.commands.rest.Schema;
@@ -82,6 +84,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
       description = "",
       groupCommands = {
             Add.class,
+            Alter.class,
             Backup.class,
             Benchmark.class,
             Cache.class,
@@ -107,6 +110,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Patch.class,
             Put.class,
             Query.class,
+            Rebalance.class,
             Remove.class,
             Reset.class,
             Run.class,
