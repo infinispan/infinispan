@@ -5,6 +5,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.rest.Add;
+import org.infinispan.cli.commands.rest.Alter;
 import org.infinispan.cli.commands.rest.Backup;
 import org.infinispan.cli.commands.rest.Cas;
 import org.infinispan.cli.commands.rest.ClearCache;
@@ -14,6 +15,7 @@ import org.infinispan.cli.commands.rest.Get;
 import org.infinispan.cli.commands.rest.Migrate;
 import org.infinispan.cli.commands.rest.Put;
 import org.infinispan.cli.commands.rest.Query;
+import org.infinispan.cli.commands.rest.Rebalance;
 import org.infinispan.cli.commands.rest.Remove;
 import org.infinispan.cli.commands.rest.Reset;
 import org.infinispan.cli.commands.rest.Schema;
@@ -33,6 +35,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
       description = "",
       groupCommands = {
             Add.class,
+            Alter.class,
             Backup.class,
             Cache.class,
             Cas.class,
@@ -55,6 +58,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Patch.class,
             Put.class,
             Query.class,
+            Rebalance.class,
             Remove.class,
             Reset.class,
             Run.class,
