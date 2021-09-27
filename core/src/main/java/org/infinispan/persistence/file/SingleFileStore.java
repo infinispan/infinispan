@@ -1515,8 +1515,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             it.set(null);
 
             // Safe to unlock because the entry was locked collectExpiredEntries
-            // TODO We cannot load the metadata here or the lifespan check in CallInterceptor will fail, see ISPN-13295
-            MarshallableEntry<K, V> entry = readFromDisk(fe, next.getKey(), false, false);
+            MarshallableEntry<K, V> entry = readFromDisk(fe, next.getKey(), true, true);
             processor.onNext(entry);
 
             try {

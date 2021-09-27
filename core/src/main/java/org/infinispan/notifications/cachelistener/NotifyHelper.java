@@ -31,7 +31,11 @@ public class NotifyHelper {
       boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
       if (removed) {
          if (command instanceof RemoveExpiredCommand) {
-            stage = notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, entry.getMetadata(), ctx);
+            // It is possible this command was generated from a store and the value is not in memory, thus we have
+            // to fall back to the command value and metadata if not present
+            Object expiredValue = previousValue != null ? previousValue : ((RemoveExpiredCommand) command).getValue();
+            Metadata expiredMetadata = entry.getMetadata() != null ? entry.getMetadata() : ((RemoveExpiredCommand) command).getMetadata();
+            stage = notifier.notifyCacheEntryExpired(entry.getKey(), expiredValue, expiredMetadata, ctx);
          } else if (command instanceof EvictCommand) {
             stage = evictionManager.onEntryEviction(Collections.singletonMap(entry.getKey(), entry), command);
          } else if (command instanceof RemoveCommand) {

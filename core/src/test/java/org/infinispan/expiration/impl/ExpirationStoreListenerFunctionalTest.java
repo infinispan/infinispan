@@ -55,7 +55,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    @Override
    public void testSimpleExpirationMaxIdle() throws Exception {
       for (int i = 0; i < SIZE; i++) {
-         cache.put("key-" + i, "value-" + i,-1, null, 1, TimeUnit.MILLISECONDS);
+         cache.put("key-" + i, "value-" + i, -1, null, 1, TimeUnit.MILLISECONDS);
       }
       timeService.advance(2);
       // We have to process expiration for store and max idle
@@ -83,9 +83,9 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       assertEquals(cache, event.getCache());
       assertFalse(event.isPre());
       assertNotNull(event.getKey());
-      // The dummy store produces value and metadata so lets make sure
+      assertEquals("v", event.getValue());
+      // Metadata only currently works with dummy in memory store
       if (TestingUtil.getFirstStore(cache) instanceof DummyInMemoryStore) {
-         assertEquals("v", event.getValue());
          assertNotNull(event.getMetadata());
       }
    }

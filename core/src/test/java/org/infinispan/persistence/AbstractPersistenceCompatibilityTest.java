@@ -85,7 +85,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
       // even keys stored, odd keys removed
       beforeStartCache();
 
-      cacheManager.defineConfiguration(cacheName(), cacheConfiguration(true).build());
+      cacheManager.defineConfiguration(cacheName(), cacheConfiguration(false).build());
       Cache<String, T> cache = cacheManager.getCache(cacheName());
 
       for (int i = 0; i < NUMBER_KEYS; ++i) {
