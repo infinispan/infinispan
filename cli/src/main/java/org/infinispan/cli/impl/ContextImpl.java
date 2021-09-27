@@ -177,6 +177,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
       try {
          connection.connect(username, password);
       } catch (IOException e) {
+         disconnect();
          if (shell != null) {
             shell.writeln(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
          } else {
