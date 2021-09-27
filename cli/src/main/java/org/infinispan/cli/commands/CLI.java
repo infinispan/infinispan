@@ -64,7 +64,7 @@ import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.impl.DefaultShell;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
-import org.infinispan.cli.impl.KubernetesContextImpl;
+import org.infinispan.cli.impl.KubernetesContext;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
@@ -298,11 +298,11 @@ public class CLI extends CliCommand {
       }
    }
 
-   private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell, Properties properties) throws CommandRegistryException {
+   private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell, Properties properties, boolean kube) throws CommandRegistryException {
       AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder();
       Context context;
-      if (isKubernetesMode()) {
-         context = new KubernetesContextImpl(properties);
+      if (kube) {
+         context = new KubernetesContext(properties);
          registryBuilder.command(Kube.class);
       } else {
          context = new ContextImpl(properties);
@@ -324,12 +324,12 @@ public class CLI extends CliCommand {
       return ProcessInfo.getInstance().getName().contains("kubectl") || Boolean.getBoolean("infinispan.cli.kubernetes");
    }
 
-   public static int main(Shell shell, String[] args, Properties properties) {
+   public static int main(Shell shell, String[] args, Properties properties, boolean kube) {
       CommandRuntime runtime = null;
       try {
          SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
-         runtime = initialCommandRuntimeBuilder(shell, properties).build();
-         int exitCode = new CliRuntimeRunner(isKubernetesMode() ? "kube" : "cli", runtime).args(args).execute();
+         runtime = initialCommandRuntimeBuilder(shell, properties, kube).build();
+         int exitCode = new CliRuntimeRunner(kube ? "kube" : "cli", runtime).args(args).execute();
          return exitCode;
       } catch (Exception e) {
          throw new RuntimeException(e);
@@ -338,6 +338,10 @@ public class CLI extends CliCommand {
             Util.close((AutoCloseable) runtime.getAeshContext());
          }
       }
+   }
+
+   public static int main(Shell shell, String[] args, Properties properties) {
+      return main(shell, args, properties, isKubernetesMode());
    }
 
    public static void main(String[] args) {
