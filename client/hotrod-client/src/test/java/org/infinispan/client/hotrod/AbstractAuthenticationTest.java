@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -11,18 +10,22 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterMethod;
 
 /**
  * @author vjuranek
  * @since 9.0
  */
+@CleanupAfterTest
 public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(AuthenticationTest.class);
+   // Each method should open its own RemoteCacheManager
    protected RemoteCacheManager remoteCacheManager;
-
+   // All the methods should use the same HotRodServer
    protected HotRodServer hotrodServer;
 
    @Override
@@ -30,11 +33,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
 
    protected abstract SimpleServerAuthenticationProvider createAuthenticationProvider();
 
-   protected ConfigurationBuilder initServerAndClient() {
-      return initServerAndClient(Collections.emptyMap());
-   }
-
-   ConfigurationBuilder initServerAndClient(Map<String, String> mechProperties) {
+   protected HotRodServer initServer(Map<String, String> mechProperties, int index) {
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder.authentication()
          .enable()
@@ -42,13 +41,21 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .addAllowedMech("CRAM-MD5")
          .serverAuthenticationProvider(createAuthenticationProvider());
       serverBuilder.authentication().mechProperties(mechProperties);
-      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
-      log.info("Started server on port: " + hotrodServer.getPort());
+      int port = HotRodTestingUtil.serverPort() + index;
+      HotRodServer server = HotRodTestingUtil.startHotRodServer(cacheManager, port, serverBuilder);
+      log.info("Started server on port: " + server.getPort());
+      return server;
+   }
 
+   protected ConfigurationBuilder newClientBuilder() {
+      return newClientBuilder(0);
+   }
+
+   protected ConfigurationBuilder newClientBuilder(int index) {
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
          .addServer()
-         .host("127.0.0.1")
+         .host(hotrodServer.getHost())
          .port(hotrodServer.getPort())
          .socketTimeout(3000)
          .maxRetries(3)
@@ -65,11 +72,18 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
 
    @Override
    protected void teardown() {
-      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
-      remoteCacheManager = null;
       HotRodClientTestingUtil.killServers(hotrodServer);
       hotrodServer = null;
+
       super.teardown();
    }
 
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void destroyAfterMethod() {
+      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
+
+      super.destroyAfterMethod();
+   }
 }

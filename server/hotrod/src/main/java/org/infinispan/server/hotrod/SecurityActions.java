@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -19,7 +20,7 @@ import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.actions.RemoveListenerAction;
+import org.infinispan.security.actions.RemoveListenerAsyncAction;
 import org.infinispan.security.impl.SecureCacheImpl;
 
 /**
@@ -73,9 +74,9 @@ final class SecurityActions {
       doPrivileged(new AddCacheManagerListenerAction(cacheManager, listener));
    }
 
-   static void removeListener(Listenable listenable, Object listener) {
-      RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
-      doPrivileged(action);
+   static CompletionStage<Void> removeListenerAsync(Listenable listenable, Object listener) {
+      RemoveListenerAsyncAction action = new RemoveListenerAsyncAction(listenable, listener);
+      return doPrivileged(action);
    }
 
    static <K, V> AdvancedCache<K, V> getUnwrappedCache(final AdvancedCache<K, V> cache) {

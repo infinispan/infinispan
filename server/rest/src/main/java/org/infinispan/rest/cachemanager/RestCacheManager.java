@@ -34,6 +34,7 @@ import org.infinispan.security.Security;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -192,7 +193,7 @@ public class RestCacheManager<V> {
 
    public void stop() {
       if (removeCacheListener != null) {
-         SecurityActions.removeListener(instance, removeCacheListener);
+         CompletionStages.join(SecurityActions.removeListenerAsync(instance, removeCacheListener));
       }
    }
 

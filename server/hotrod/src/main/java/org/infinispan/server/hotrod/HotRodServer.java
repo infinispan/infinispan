@@ -83,6 +83,8 @@ import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -504,15 +506,17 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (log.isDebugEnabled())
          log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
 
+      AggregateCompletionStage<Void> removeAllStage = CompletionStages.aggregateCompletionStage();
       if (removeCacheListener != null) {
-         SecurityActions.removeListener(cacheManager, removeCacheListener);
+         removeAllStage.dependsOn(SecurityActions.removeListenerAsync(cacheManager, removeCacheListener));
       }
       if (viewChangeListener != null) {
-         SecurityActions.removeListener(cacheManager, viewChangeListener);
+         removeAllStage.dependsOn(SecurityActions.removeListenerAsync(cacheManager, viewChangeListener));
       }
       if (topologyChangeListener != null) {
-         SecurityActions.removeListener(addressCache, topologyChangeListener);
+         removeAllStage.dependsOn(SecurityActions.removeListenerAsync(addressCache, topologyChangeListener));
       }
+      CompletionStages.join(removeAllStage.freeze());
       if (cacheManager != null && Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {
          InternalCacheRegistry internalCacheRegistry =
             SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);

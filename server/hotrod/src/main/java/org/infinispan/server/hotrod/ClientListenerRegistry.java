@@ -161,12 +161,18 @@ class ClientListenerRegistry {
             converter = null;
          }
       }
-      Object clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache, listenerId,
-            eventType, h.messageId, bloomFilter);
+      BaseClientEventSender clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache,
+                                                                     listenerId, eventType, h.messageId, bloomFilter);
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
-      return addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
+      return addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData)
+            .whenComplete((__, t) -> {
+               if (t != null) {
+                  // Don't try to remove the listener when
+                  eventSenders.remove(new WrappedByteArray(listenerId));
+               }
+            });
    }
 
    private CompletionStage<Void> addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
@@ -234,10 +240,12 @@ class ClientListenerRegistry {
    }
 
    CompletionStage<Boolean> removeClientListener(byte[] listenerId, Cache cache) {
-      Object sender = eventSenders.get(new WrappedByteArray(listenerId));
+      Object sender = eventSenders.remove(new WrappedByteArray(listenerId));
       if (sender != null) {
-         return cache.removeListenerAsync(sender)
-               .thenCompose(ignore -> CompletableFutures.completedTrue());
+         // No permission check needed: Either the client had the LISTEN permission to add the listener,
+         // or the listener was never added and removing it is a no-op
+         return SecurityActions.removeListenerAsync(cache, sender)
+                               .thenCompose(ignore -> CompletableFutures.completedTrue());
       } else return CompletableFutures.completedFalse();
    }
 
@@ -333,7 +341,7 @@ class ClientListenerRegistry {
       void init() {
          ch.closeFuture().addListener(f -> {
             log.debug("Channel disconnected, removing event sender listener for id: " + Util.printArray(listenerId));
-            cache.removeListenerAsync(this)
+            removeClientListener(listenerId, cache)
                   .whenComplete((ignore, t) -> unblockCommands());
          });
       }
@@ -501,15 +509,17 @@ class ClientListenerRegistry {
       }
    }
 
-   private Object getClientEventSender(boolean includeState, Channel ch, VersionedEncoder encoder, byte version,
-                                       Cache cache, byte[] listenerId, ClientEventType eventType, long messageId,
-                                       BloomFilter<byte[]> bloomFilter) {
+   private BaseClientEventSender getClientEventSender(boolean includeState, Channel ch, VersionedEncoder encoder,
+                                                      byte version, Cache cache, byte[] listenerId,
+                                                      ClientEventType eventType, long messageId,
+                                                      BloomFilter<byte[]> bloomFilter) {
       BaseClientEventSender bces;
       if (includeState) {
          bces = new StatefulClientEventSender(cache, ch, encoder, listenerId, version, eventType, messageId);
       } else {
          if (bloomFilter != null) {
-            bces = new BloomAwareStatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType, bloomFilter);
+            bces = new BloomAwareStatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType,
+                                                            bloomFilter);
          } else {
             bces = new StatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType);
          }
