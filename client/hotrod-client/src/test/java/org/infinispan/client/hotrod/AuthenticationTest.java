@@ -14,8 +14,9 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.test.ServerTestingUtil;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -24,13 +25,14 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(testName = "client.hotrod.AuthenticationTest", groups = "functional")
-@CleanupAfterMethod
 public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cacheManager.getCache();
+
+      hotrodServer = initServer(Collections.emptyMap(), 0);
 
       return cacheManager;
    }
@@ -44,8 +46,8 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test
    public void testAuthentication() {
-      ConfigurationBuilder clientBuilder = initServerAndClient();
-      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
+      ConfigurationBuilder clientBuilder = newClientBuilder();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password"));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
@@ -54,7 +56,6 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test
    public void testAuthenticationViaURI() {
-      initServerAndClient();
       remoteCacheManager = new RemoteCacheManager("hotrod://user:password@127.0.0.1:" + hotrodServer.getPort() + "?auth_realm=realm&socket_timeout=3000&max_retries=3&connection_pool.max_active=1&sasl_mechanism=CRAM-MD5&default_executor_factory.threadname_prefix=" + TestResourceTracker.getCurrentTestShortName() + "-Client-Async");
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
@@ -64,24 +65,29 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test(expectedExceptions = TransportException.class)
    public void testAuthenticationFailWrongAuth() {
-      ConfigurationBuilder clientBuilder = initServerAndClient();
-      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar".toCharArray()));
+      ConfigurationBuilder clientBuilder = newClientBuilder();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar"));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCacheManager.getCache();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")
    public void testAuthenticationFailNoAuth() {
-      ConfigurationBuilder clientBuilder = initServerAndClient(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "true"));
-      clientBuilder.security().authentication().disable();
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-      RemoteCache<String, String> cache = remoteCacheManager.getCache();
-      cache.put("a", "a");
+      HotRodServer noAnonymousServer = initServer(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "true"), 1);
+      try {
+         ConfigurationBuilder clientBuilder = newClientBuilder(1);
+         clientBuilder.security().authentication().disable();
+         remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+         RemoteCache<String, String> cache = remoteCacheManager.getCache();
+         cache.put("a", "a");
+      } finally {
+         ServerTestingUtil.killServer(noAnonymousServer);
+      }
    }
 
    @Test
    public void testAuthenticationUsername() {
-      ConfigurationBuilder clientBuilder = initServerAndClient();
+      ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().username("user").realm("realm").password("password");
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
@@ -91,8 +97,9 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*ISPN004067.*")
    public void testAuthenticationUsernameWithCallbackFail() {
-      ConfigurationBuilder clientBuilder = initServerAndClient();
-      clientBuilder.security().authentication().username("user").realm("realm").password("password").callbackHandler(new TestCallbackHandler("user", "realm", "foobar".toCharArray()));
+      ConfigurationBuilder clientBuilder = newClientBuilder();
+      clientBuilder.security().authentication().username("user").realm("realm").password("password")
+                   .callbackHandler(new TestCallbackHandler("user", "realm", "foobar"));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
