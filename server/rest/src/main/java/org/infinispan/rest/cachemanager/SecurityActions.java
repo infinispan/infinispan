@@ -22,7 +22,7 @@ import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAsyncAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.actions.RemoveListenerAction;
+import org.infinispan.security.actions.RemoveListenerAsyncAction;
 
 /**
  * SecurityActions for the org.infinispan.rest.cachemanager package.
@@ -44,9 +44,9 @@ final class SecurityActions {
       doPrivileged(new AddCacheManagerListenerAction(cacheManager, listener));
    }
 
-   static void removeListener(Listenable listenable, Object listener) {
-      RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
-      doPrivileged(action);
+   static CompletionStage<Void> removeListenerAsync(Listenable listenable, Object listener) {
+      RemoveListenerAsyncAction action = new RemoveListenerAsyncAction(listenable, listener);
+      return doPrivileged(action);
    }
 
    static DistributionManager getDistributionManager(final Cache<?, ?> cache) {

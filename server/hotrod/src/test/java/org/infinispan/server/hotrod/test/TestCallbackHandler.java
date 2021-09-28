@@ -21,6 +21,10 @@ public class TestCallbackHandler implements CallbackHandler {
    final private char[] password;
    final private String realm;
 
+   public TestCallbackHandler(String username, String realm, String password) {
+      this(username, realm, password.toCharArray());
+   }
+
    public TestCallbackHandler(String username, String realm, char[] password) {
       this.username = username;
       this.password = password;

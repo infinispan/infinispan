@@ -52,7 +52,7 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
    public void testAuth(Method m) throws SaslException {
       HashMap<String, String> props = new HashMap<>();
       SaslClient sc = Sasl.createSaslClient(new String[]{"CRAM-MD5"}, null, "hotrod", "localhost", props,
-                                            new TestCallbackHandler("user", "realm", "password".toCharArray()));
+                                            new TestCallbackHandler("user", "realm", "password"));
       TestAuthResponse res = client().auth(sc);
       assertTrue(res.complete);
       assertEquals(1, server().getTransport().getNumberOfLocalConnections());
