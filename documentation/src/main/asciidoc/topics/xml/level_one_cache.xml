@@ -1,0 +1,3 @@
+<distributed-cache l1-lifespan="5000"
+                   l1-cleanup-interval="60000">
+</distributed-cache>

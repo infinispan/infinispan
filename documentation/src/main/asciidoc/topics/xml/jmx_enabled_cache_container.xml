@@ -1,3 +1,4 @@
-<cache-container>
-  <jmx enabled="true" />
+<cache-container statistics="true">
+  <jmx enabled="true"
+       domain="my.domain.org"/>
 </cache-container>

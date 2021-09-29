@@ -1,4 +1,4 @@
-[id='partition_handling-{context}']
+[id='partition-handling_{context}']
 = Partition handling
 
 An {brandname} cluster is built out of a number of nodes where data is stored. In order
@@ -63,16 +63,19 @@ two or more partitions, since the partitions are unaware of each other.
 Instead, we assume the cluster has split when one or more nodes
 disappear from the JGroups cluster without sending an explicit leave message.
 
-=== Split Strategies
+[discrete]
+=== Split strategies
 
 In this section, we detail how each partition handling strategy behaves in the event of split brain occurring.
 
+[discrete]
 ==== ALLOW_READ_WRITES
 Each partition continues to function as an independent cluster, with all partitions remaining in AVAILABLE mode.
 This means that each partition may only see a part of the data, and each partition could write conflicting updates in
 the cache. During a partition merge these conflicts are automatically resolved by utilising the link:#conflict_manager[ConflictManager]
 and the configured link:#merge_policies[EntryMergePolicy].
 
+[discrete]
 ==== DENY_READ_WRITES
 When a split is detected each partition does not start a rebalance immediately, but first it checks whether it should
 enter *DEGRADED* mode instead:
@@ -136,17 +139,18 @@ operation with an `AvailabilityException`.
 If afterwards partitions `O1` and `O2` merge back into `M`, then the link:#conflict_manager[ConflictManager]
 attempts to resolve any conflicts and `D` once again becomes fully available.
 
+[discrete]
 ==== ALLOW_READS
 Partitions are handled in the same manner as DENY_READ_WRITES, except that when a partition is in DEGRADED mode read
 operations on a partially owned key WILL not throw an AvailabilityException.
 
+[discrete]
 === Current limitations
 Two partitions could start up isolated, and as long as they don't merge they
 can read and write inconsistent data. In the future, we will allow custom
 availability strategies (e.g. check that a certain node is part of the cluster,
 or check that an external machine is accessible) that could handle that
 situation as well.
-
 
 [[successive_node_failures]]
 == Successive nodes stopped
@@ -181,14 +185,15 @@ If the application can handle losing some of the data in the cache, the
 administrator can force the availability mode back to AVAILABLE via JMX.
 
 [[conflict_manager]]
-== Conflict Manager
+== Conflict manager
 The conflict manager is a tool that allows users to retrieve all stored replica values for a given key. In addition to
 allowing users to process a stream of cache entries whose stored replicas have conflicting values. Furthermore, by
 utilising implementations of the link:#merge_policies[EntryMergePolicy] interface it is possible for said conflicts to
 be resolved automatically.
 
 [[detecting_conflicts]]
-=== Detecting Conflicts
+[discrete]
+=== Detecting conflicts
 Conflicts are detected by retrieving each of the stored values for a given key. The conflict manager retrieves the value stored
 from each of the key's write owners defined by the current consistent hash. The .equals method of the stored values is
 then used to determine whether all values are equal. If all values are equal then no conflicts exist for the key, otherwise
@@ -196,7 +201,8 @@ a conflict has occurred. Note that null values are returned if no entry exists o
 to have occurred if both a null and non-null value exists for a given key.
 
 [[merge_policies]]
-=== Merge Policies
+[discrete]
+=== Merge policies
 In the event of conflicts arising between one or more replicas of a given CacheEntry, it is necessary for a conflict
 resolution algorithm to be defined, therefore we provide the
 link:{javadocroot}/org/infinispan/conflict/EntryMergePolicy.html[EntryMergePolicy] interface. This interface consists
@@ -245,6 +251,7 @@ Currently {brandname} provides the following implementations of EntryMergePolicy
 |===
 
 [[conflict_manager_usage]]
+[discrete]
 == Usage
 During a partition merge the ConflictManager automatically attempts to resolve conflicts utilising the configured
 EntryMergePolicy, however it is also possible to manually search for/resolve conflicts as required by your application.
@@ -277,7 +284,8 @@ include::code_examples/PartitionHandling.java[]
 ----
 
 [[partition_handling_custom_merge_policy]]
-=== Implement a custom merge policy
+[discrete]
+=== Implementing a custom merge policy
 It's also possible to provide custom implementations of the EntryMergePolicy
 
 [source,xml,options="nowrap",subs=attributes+]
@@ -295,7 +303,8 @@ include::code_examples/CustomMergePolicy.java[]
 include::code_examples/CustomMergePolicyEntryMerge.java[]
 ----
 
-=== Deploy custom merge policies to a Infinispan server instance
+[discrete]
+=== Deploying custom merge policies to {brandname} Server
 To utilise a custom EntryMergePolicy implementation on the server, it's necessary for the implementation class(es) to be deployed to the server. This is accomplished by utilising the java service-provider convention and packaging the class files in a jar which has a META-INF/services/org.infinispan.conflict.EntryMergePolicy file containing the fully qualified class name of the EntryMergePolicy implementation.
 
 ----

@@ -2,9 +2,7 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_cache_modes.adoc[leveloffset=+1]
-include::{stories}/assembly_cache_local.adoc[leveloffset=+2]
-include::{stories}/assembly_cache_clustered.adoc[leveloffset=+2]
-include::{stories}/assembly_cache_clustered_async.adoc[leveloffset=+3]
+include::{stories}/assembly_clustered_caches.adoc[leveloffset=+1]
 include::{stories}/assembly_cache_configuration.adoc[leveloffset=+1]
 include::{stories}/assembly_creating_remote_caches.adoc[leveloffset=+2]
 include::{stories}/assembly_creating_embedded_caches.adoc[leveloffset=+2]

@@ -1,0 +1,37 @@
+[id='eviction-manual_{context}']
+= Manual eviction
+
+If you choose the manual eviction strategy, {brandname} does not perform eviction.
+You must do so manually with the `evict()` method.
+
+You should use manual eviction with embedded caches only.
+For remote caches, you should always configure {brandname} with the `REMOVE` or `EXCEPTION` eviction strategy.
+
+[NOTE]
+====
+This configuration prevents a warning message when you enable passivation but do not configure eviction.
+====
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/manual_eviction.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/manual_eviction.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/manual_eviction.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/MaxSizeMemory.java[]
+----

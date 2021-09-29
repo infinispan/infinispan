@@ -1,0 +1,20 @@
+infinispan:
+  cacheContainer:
+    distributedCacheConfiguration:
+      name: "base-template"
+      mode: "SYNC"
+      statistics: "true"
+      encoding:
+        mediaType: "application/x-protostream"
+      expiration:
+        lifespan: "5000"
+        maxIdle: "1000"
+      memory:
+        maxCount: "1000000"
+        whenFull: "REMOVE"
+    distributedCacheConfiguration:
+      name: "extended-template"
+      expiration:
+        lifespan: "10000"
+        memory:
+          maxSize: "1.5GB"

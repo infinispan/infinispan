@@ -1,4 +1,4 @@
-<!-- Creates a Cache Manager named "default" and exports metrics. -->
+<!-- Creates a cache manager named "default" and exports metrics. -->
 <cache-container name="default"
                  statistics="true">
   <!-- Adds cluster transport that uses the default JGroups TCP stack. -->

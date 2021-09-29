@@ -1,0 +1,5 @@
+distributedCache:
+  memory:
+    maxCount: "100"
+  persistence:
+    passivation: "true"

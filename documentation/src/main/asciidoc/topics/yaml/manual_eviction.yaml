@@ -1,0 +1,4 @@
+distributedCache:
+  memory:
+    maxCount: "500"
+    whenFull: "MANUAL"

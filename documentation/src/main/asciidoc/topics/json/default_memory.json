@@ -1,0 +1,5 @@
+"distributed-cache" : {
+  "memory" : {
+    "storage": "HEAP"
+  }
+}

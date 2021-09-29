@@ -1,0 +1,59 @@
+[id='distributed-caches_{context}']
+= Distributed caches
+
+{brandname} attempts to keep a fixed number of copies of any entry in the cache,
+configured as `numOwners`.
+This allows distributed caches to scale linearly, storing more data as nodes are added to the cluster.
+
+As nodes join and leave the cluster, there will be times when a key has more or less than `numOwners` copies.
+In particular, if `numOwners` nodes leave in quick succession, some entries will be lost, so we say that a distributed cache tolerates `numOwners - 1` node failures.
+
+The number of copies represents a trade-off between performance and durability of data.
+The more copies you maintain, the lower performance will be, but also the lower the risk of losing data due to server or network failures.
+Regardless of how many copies are maintained, distribution still scales linearly, and this is key to {brandname} scalability.
+
+{brandname} splits the owners of a key into one *primary owner*, which coordinates writes to the key, and zero or more *backup owners*.
+
+The following diagram shows a write operation that a client sends to a backup owner.
+In this case the backup node forwards the write to the primary owner, which then replicates the write to the backup.
+
+ifdef::community[]
+image::replication_ispn.png[align="center", title="Cluster replication"]
+endif::community[]
+ifdef::downstream[]
+image::replication_rhdg.png[align="center", title="Cluster replication"]
+endif::downstream[]
+
+ifdef::community[]
+image::distributed_cache_ispn.png[align="center", title="Distributed cache"]
+endif::community[]
+ifdef::downstream[]
+image::distributed_cache_rhdg.png[align="center", title="Distributed cache"]
+endif::downstream[]
+
+.Read operations
+
+Read operations request the value from the primary owner.
+If the primary owner does not respond in a reasonable amount of time, {brandname} requests the value from the backup owners as well.
+
+A read operation may require `0` messages if the key is present in the local cache, or up to `2 * numOwners` messages if all the owners are slow.
+
+.Write operations
+
+Write operations result in at most `2 * numOwners` messages.
+One message from the originator to the primary owner and `numOwners - 1` messages from the primary to the backup nodes along with the corresponding acknowledgment messages.
+
+[NOTE]
+====
+Cache topology changes may cause retries and additional messages for both read and write operations.
+====
+
+.Synchronous or asynchronous replication
+
+Asynchronous replication is not recommended because it can lose updates.
+In addition to losing updates, asynchronous distributed caches can also see a stale value when a thread writes to a key and then immediately reads the same key.
+
+.Transactions
+
+Transactional distributed caches send lock/prepare/commit/unlock messages to the affected nodes only, meaning all nodes that own at least one key affected by the transaction.
+As an optimization, if the transaction writes to a single key and the originator is the primary owner of the key, lock messages are not replicated.

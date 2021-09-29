@@ -1,0 +1,4 @@
+replicatedCache:
+  memory:
+    storage: "OFF_HEAP"
+    maxCount: "500"

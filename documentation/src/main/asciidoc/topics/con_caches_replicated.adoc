@@ -1,5 +1,6 @@
-[id='replicated-{context}']
-= Replicated Caches
+[id='replicated-caches_{context}']
+= Replicated caches
+
 Entries written to a replicated cache on any node will be replicated to all other nodes
 in the cluster, and can be retrieved locally from any node.
 Replicated mode provides a quick and easy way to share state across a cluster,
@@ -13,10 +14,15 @@ provide consistency.
 To find more about how primary owners are assigned, please read the
 link:#key_ownership[Key Ownership] section.
 
-.Replicated mode
-image::clustering-replicated.svg[align="center", title="Replicated mode"]
+.Replicated cache
+ifdef::community[]
+image::replicated_cache_ispn.png[align="center", title="Replicated mode"]
+endif::community[]
+ifdef::downstream[]
+image::replicated_cache_rhdg.png[align="center", title="Replicated mode"]
+endif::downstream[]
 
-Replicated mode can be synchronous or asynchronous.
+Replicated caches can be synchronous or asynchronous.
 
 * Synchronous replication blocks the caller (e.g. on a `cache.put(key, value)`) until
 the modifications have been replicated successfully to all the nodes in the cluster.

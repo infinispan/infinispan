@@ -1,5 +1,0 @@
-<distributed-cache name="off_heap" mode="SYNC">
-  <memory storage="OFF_HEAP"
-          max-count="500"
-          when-full="REMOVE"/>
-</distributed-cache>

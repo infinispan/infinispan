@@ -1,0 +1,4 @@
+replicatedCache:
+  expiration:
+    lifespan: "5000"
+    maxIdle: "1000"

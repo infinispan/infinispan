@@ -1,3 +1,0 @@
-<distributed-cache name="eviction_manual">
-  <memory when-full="MANUAL"/>
-</distributed-cache>

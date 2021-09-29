@@ -1,0 +1,41 @@
+[id='configuring-initial-cluster-size_{context}']
+= Configuring initial cluster size
+
+{brandname} handles cluster topology changes dynamically.
+This means that nodes do not need to wait for other nodes to join the cluster before {brandname} initializes the caches.
+
+If your applications require a specific number of nodes in the cluster before caches start, you can configure the initial cluster size as part of the transport.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Set the minimum number of nodes required before caches start with the `initial-cluster-size` attribute or `initialClusterSize()` method.
+. Set the timeout, in milliseconds, after which the cache manager does not start with the `initial-cluster-timeout` attribute or `initialClusterTimeout()` method.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== Initial cluster size configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/initial_cluster_size.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/initial_cluster_size.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/initial_cluster_size.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/InitialClusterSize.java[]
+----

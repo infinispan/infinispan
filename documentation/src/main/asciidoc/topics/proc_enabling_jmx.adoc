@@ -6,18 +6,35 @@ You must also enable statistics otherwise {brandname} provides `0` values for al
 
 .Procedure
 
-. Open `infinispan.xml` for editing.
-. Add the `<jmx enabled="true" />` element to the cache container.
-+
-[source,xml,options="nowrap",subs=attributes+]
+. Open your {brandname} configuration for editing.
+. Add the `jmx` element or object to the cache container and specify `true` as the value for the `enabled` attribute or field.
+. Add the `domain` attribute or field and specify the domain where JMX MBeans are exposed, if required.
+. Save and close your client configuration.
+
+[discrete]
+== JMX configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/jmx_enabled_cache_container.xml[]
 ----
 
-ifdef::embedded_caches[]
-For embedded caches, you can invoke the `.jmx().enable()` method to programmatically enable JMX.
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/jmx_enabled_cache_container.json[]
+----
 
-[source,java,options="nowrap",subs=attributes+]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/jmx_enabled_cache_container.yaml[]
+----
+
+ifdef::embedded_caches[]
+.GlobalConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/JmxGlobalConfigurationBuilder.java[]
 ----

@@ -1,0 +1,6 @@
+cacheContainer:
+  statistics: "true"
+  jmx:
+    enabled: "true"
+    domain: "my.domain.org"
+    mbeanServerLookup: "com.acme.MyMBeanServerLookup"

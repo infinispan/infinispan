@@ -1,7 +1,7 @@
 [id='configuring-embedded-caches_{context}']
 = Configuring embedded caches
 
-{brandname} provides a `GlobalConfigurationBuilder` API that controls the Cache Manager and a `ConfigurationBuilder` API that configures embedded caches.
+{brandname} provides a `GlobalConfigurationBuilder` API that controls the cache manager and a `ConfigurationBuilder` API that configures embedded caches.
 
 .Prerequisites
 
@@ -9,7 +9,7 @@
 
 .Procedure
 
-. Initialize the default Cache Manager so you can add embedded caches.
+. Initialize the default cache manager so you can add embedded caches.
 . Add at least one embedded cache with the `ConfigurationBuilder` API.
 . Invoke the `getOrCreateCache()` method that either creates embedded caches on all nodes in the cluster or returns caches that already exist.
 

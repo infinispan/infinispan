@@ -1,0 +1,59 @@
+[id='configuring-eviction-maximum-size_{context}']
+= Configuring maximum size eviction
+
+Limit the size of {brandname} caches to a maximum amount of memory.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify `application/x-protostream` as the media type for cache encoding.
++
+You must specify a binary media type to use maximum size eviction.
++
+. Configure the maximum amount of memory, in bytes, that caches can use before
+{brandname} performs eviction with the `max-size` attribute or `maxSize()` method.
+. Optionally specify a byte unit of measurement.
++
+The default is B (bytes). Refer to the configuration schema for supported units.
+. Set one of the following as the eviction strategy to control how {brandname} removes entries with either the `when-full` attribute or `whenFull()` method.
++
+* `REMOVE` {brandname} performs eviction. This is the default strategy.
+* `MANUAL` You perform eviction manually for embedded caches.
+* `EXCEPTION` {brandname} throws an exception instead of evicting entries.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== Maximum size eviction
+
+In the following example, {brandname} removes an entry when the size of the cache reaches 1.5 GB (gigabytes) and a new entry is created:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/max_size_memory.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/max_size_memory.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/max_size_memory.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/MaxSizeMemory.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]
+* link:{javadocroot}/org/infinispan/configuration/cache/EncodingConfiguration.html[org.infinispan.configuration.cache.EncodingConfiguration]
+* link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]
+* link:{encoding_docs}[Cache Encoding and Marshalling]

@@ -1,48 +1,47 @@
-[id='configure_off_heap-{context}']
-= Using Off-Heap Memory
+[id='configuring-memory-off-heap_{context}']
+= Configuring off-heap memory
+
 Configure {brandname} to store cache entries in native memory outside the JVM
 heap space.
 
 .Procedure
 
-. Modify your cache configuration to use off-heap memory.
-+
-* Declarative: Add the `storage="OFF_HEAP"` attribute to the `memory` element.
-* Programmatic: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
-+
-. Limit the amount of off-heap memory that the cache can use by configuring either `max-count` or `max-size` eviction.
+. Open your {brandname} configuration for editing.
+. Set `OFF_HEAP` as the value for the `storage` attribute or `storage()` method.
+. Set a boundary for the size of the cache by configuring eviction.
+. Save and close your {brandname} configuration.
 
 [discrete]
-== Off-heap memory bounded by size
+== Off-heap storage
 
-.Declarative configuration
+{brandname} stores cache entries as bytes in native memory.
+Eviction happens when there are 100 entries in the data container and {brandname} gets a request to create a new entry:
+
+.XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/max_size_offheap.xml[]
+include::xml/off_heap_memory.xml[]
 ----
 
-.Programmatic configuration
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/off_heap_memory.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/off_heap_memory.yaml[]
+----
+
+.ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::code_examples/MaxSizeOffHeap.java[]
-----
-
-[discrete]
-== Off-heap memory bounded by total number of entries
-
-.Declarative configuration
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
-----
-include::xml/max_count_offheap.xml[]
-----
-
-.Programmatic configuration
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::code_examples/MaxCountOffHeap.java[]
+include::code_examples/OffHeapMemory.java[]
 ----
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} Configuration Schema Reference]
+* link:{configdocroot}[{brandname} configuration schema reference]
 * link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

@@ -1,0 +1,34 @@
+[id='simple-caches_{context}']
+= Simple caches
+
+A simple cache is a type of local cache that disables support for the following capabilities:
+
+* Transactions and invocation batching
+* Persistent storage
+* Custom interceptors
+* Indexing
+* Transcoding
+
+However, you can use other {brandname} capabilities with simple caches such as expiration, eviction, statistics, and security features.
+If you configure a capability that is not compatible with a simple cache, {brandname} throws an exception.
+
+[discrete]
+== Simple cache configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/simple_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/simple_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/simple_cache.yaml[]
+----

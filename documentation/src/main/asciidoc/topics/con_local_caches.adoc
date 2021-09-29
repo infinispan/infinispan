@@ -1,0 +1,30 @@
+[id='local-caches_{context}']
+= Local caches
+
+{brandname} offers a local cache mode that is similar to a `ConcurrentHashMap`.
+
+Caches offer more capabilities than simple maps, including write-through and
+write-behind to persistent storage as well as management capabilities such as eviction and expiration.
+
+The {brandname} `Cache` API extends the `ConcurrentMap` API in Java, making it easy to migrate from a map to a {brandname} cache.
+
+[discrete]
+== Local cache configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/local_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/local_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/local_cache.yaml[]
+----

@@ -1,0 +1,40 @@
+[id='creating-caches-templates_{context}']
+= Creating caches from templates
+
+Create caches from configuration templates.
+
+[TIP]
+====
+Templates for remote caches are available from the **Cache templates** menu in {brandname} Console.
+====
+
+.Prerequisites
+
+* Add at least one cache template to the cache manager.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify the template from which the cache inherits with the `configuration` attribute or field.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== Cache configuration inherited from a template
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/distributed_cache_from_template.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/distributed_cache_from_template.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/distributed_cache_from_template.yaml[]
+----

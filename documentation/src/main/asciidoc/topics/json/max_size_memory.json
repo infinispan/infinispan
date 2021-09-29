@@ -1,0 +1,9 @@
+"distributed-cache" : {
+  "encoding" : {
+    "media-type" : "application/x-protostream"
+  },
+  "memory" : {
+    "max-size" : "1.5GB",
+    "when-full" : "REMOVE"
+  }
+}

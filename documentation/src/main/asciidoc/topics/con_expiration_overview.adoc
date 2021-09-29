@@ -1,5 +1,5 @@
-[id='how_expiration_works-{context}']
-= How Expiration Works
+[id='how-expiration-works_{context}']
+= How expiration works
 When you configure expiration, {brandname} stores keys with metadata that
 determines when entries expire.
 

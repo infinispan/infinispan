@@ -1,0 +1,8 @@
+infinispan:
+  cacheContainer:
+    distributedCacheConfiguration:
+      name: "async-dist-cache-*"
+      mode: "ASYNC"
+      statistics: "true"
+      encoding:
+        mediaType: "application/x-protostream"

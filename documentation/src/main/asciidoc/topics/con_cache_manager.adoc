@@ -1,22 +1,17 @@
-[id='cache_managers-{context}']
-= Cache Managers
-{brandname} provides a `CacheManager` interface that lets you create, modify,
-and manage local or clustered caches. Cache Managers are the starting point for
-using {brandname} caches.
+[id='cache-managers_{context}']
+= Cache managers
 
-There are two `CacheManager` implementations:
+The `CacheManager` API is the starting point for interacting with {brandname} caches.
+Cache managers control cache lifecycle; creating, modifying, and deleting cache instances.
 
-`EmbeddedCacheManager`::
-Entry point for caches when running {brandname} inside the same Java Virtual
-Machine (JVM) as the client application, which is also known as Library Mode.
+{brandname} provides two `CacheManager` implementations:
 
-`RemoteCacheManager`::
-Entry point for caches when running {brandname} as a remote server in its own
-JVM. When it starts running, `RemoteCacheManager` establishes a persistent TCP connection to a Hot Rod endpoint on a {brandname} server.
+`EmbeddedCacheManager`:: Entry point for caches when running {brandname} inside the same Java Virtual Machine (JVM) as the client application.
+
+`RemoteCacheManager`:: Entry point for caches when running {brandname} Server in its own JVM. When you instantiate a `RemoteCacheManager` it establishes a persistent TCP connection to {brandname} Server through the Hot Rod endpoint.
 
 [NOTE]
 ====
-Both embedded and remote `CacheManager` implementations share some methods and
-properties. However, semantic differences do exist between
-`EmbeddedCacheManager` and `RemoteCacheManager`.
+Both embedded and remote `CacheManager` implementations share some methods and properties.
+However, semantic differences do exist between `EmbeddedCacheManager` and `RemoteCacheManager`.
 ====
