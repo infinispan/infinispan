@@ -1,1 +1,1 @@
-bin\server.bat -b 127.0.0.2
+bin\server.bat -b 192.0.2.0

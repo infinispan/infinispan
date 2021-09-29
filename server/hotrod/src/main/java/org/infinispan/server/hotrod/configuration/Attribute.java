@@ -18,6 +18,7 @@ public enum Attribute {
    LOCK_TIMEOUT,
    MECHANISMS,
    NAME,
+   NETWORK_PREFIX_OVERRIDE,
    POLICY,
    QOP,
    REPLICATION_TIMEOUT,

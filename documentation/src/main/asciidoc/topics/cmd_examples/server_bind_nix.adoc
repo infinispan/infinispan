@@ -1,1 +1,1 @@
-$ bin/server.sh -b 127.0.0.2
+$ bin/server.sh -b 192.0.2.0

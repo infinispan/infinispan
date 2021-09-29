@@ -30,6 +30,11 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
       return this;
    }
 
+   public TopologyCacheConfigurationBuilder networkPrefixOverride(boolean networkPrefixOverride) {
+      attributes.attribute(TopologyCacheConfiguration.NETWORK_PREFIX_OVERRIDE).set(networkPrefixOverride);
+      return this;
+   }
+
    @Override
    public TopologyCacheConfiguration create() {
       return new TopologyCacheConfiguration(attributes.protect());

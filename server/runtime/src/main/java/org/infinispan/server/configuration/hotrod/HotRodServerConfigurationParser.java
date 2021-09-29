@@ -94,6 +94,10 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                builder.authentication().securityRealm(value);
                break;
             }
+            case NETWORK_PREFIX_OVERRIDE: {
+               builder.topologyNetworkPrefixOverride(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
