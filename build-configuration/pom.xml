@@ -147,7 +147,7 @@
       <version.jackson.databind>2.12.4</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.transaction>1.3.3</version.jakarta.transaction>
-      <version.jakarta.enterprise.cdi>2.0.1</version.jakarta.enterprise.cdi>
+      <version.jakarta.enterprise.cdi>2.0.2</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>2.2.3</version.jakarta.persistence>
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.jboss.logging>3.4.1.Final</version.jboss.logging>
