@@ -208,6 +208,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    @Override
    public void validate() {
       Attribute<Long> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
