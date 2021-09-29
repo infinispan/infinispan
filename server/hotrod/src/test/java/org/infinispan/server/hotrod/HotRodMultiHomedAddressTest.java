@@ -56,6 +56,7 @@ public class HotRodMultiHomedAddressTest extends HotRodMultiNodeTest {
    @Override
    protected HotRodServer startTestHotRodServer(EmbeddedCacheManager cacheManager, int port) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.topologyNetworkPrefixOverride(false);
       return startHotRodServer(cacheManager, "0.0.0.0", port, builder);
    }
 }

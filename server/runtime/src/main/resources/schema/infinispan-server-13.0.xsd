@@ -408,6 +408,14 @@
                   <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="network-prefix-override" type="xs:boolean" default="true">
+               <xs:annotation>
+                  <xs:documentation>
+                     Configures whether to use the netmask that the host system provides for interfaces or override with netmasks that follow IANA private address conventions.
+                     Defaults to overriding host netmasks and using IANA conventions.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>

@@ -72,6 +72,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return topologyCache.awaitInitialTransfer();
    }
 
+   public boolean networkPrefixOverride() {
+      return topologyCache.networkPrefixOverride();
+   }
+
    /**
     * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */

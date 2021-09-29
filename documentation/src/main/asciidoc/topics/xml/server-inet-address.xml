@@ -1,0 +1,7 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <interfaces>
+    <interface name="custom">
+      <inet-address value="${infinispan.bind.address:192.0.2.0}"/>
+    </interface>
+  </interfaces>
+</server>

@@ -30,14 +30,14 @@ public class MultiHomedServerAddress implements ServerAddress {
    /**
     * @param port
     */
-   public MultiHomedServerAddress(int port) {
+   public MultiHomedServerAddress(int port, boolean networkPrefixOverride) {
       this.port = port;
       addresses = new ArrayList<>();
       try {
          for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
             NetworkInterface intf = en.nextElement();
             for (InterfaceAddress address : intf.getInterfaceAddresses()) {
-               addresses.add(new InetAddressWithNetMask(address));
+               addresses.add(new InetAddressWithNetMask(address, networkPrefixOverride));
             }
          }
       } catch (IOException e) {
@@ -91,10 +91,13 @@ public class MultiHomedServerAddress implements ServerAddress {
    public String getHost(InetAddress localAddress) {
       for (InetAddressWithNetMask address : addresses) {
          if (inetAddressMatchesInterfaceAddress(localAddress.getAddress(), address.address.getAddress(), address.prefixLength)) {
+            if (HotRodServer.log.isDebugEnabled()) {
+               HotRodServer.log.debugf("Matched incoming address '%s' with '%s'", localAddress, address);
+            }
             return address.address.getHostAddress();
          }
       }
-      throw new IllegalArgumentException("No interface address matching " + localAddress);
+      throw new IllegalArgumentException("No interface address matching '" + localAddress + "' in " + this);
    }
 
    static byte[] netMaskByPrefix = {(byte) 128, (byte) 192, (byte) 224, (byte) 240, (byte) 248, (byte) 252, (byte) 254};
@@ -108,6 +111,9 @@ public class MultiHomedServerAddress implements ServerAddress {
     * @return
     */
    public static boolean inetAddressMatchesInterfaceAddress(byte[] inetAddress, byte[] interfaceAddress, int prefixLength) {
+      if (HotRodServer.log.isDebugEnabled()) {
+         HotRodServer.log.debugf("Matching incoming address '%s' with '%s'/%d", inetAddress, interfaceAddress, prefixLength);
+      }
       for (int i = 0; i < inetAddress.length; i++) {
          byte a = inetAddress[i];
          byte b = interfaceAddress[i];
@@ -118,7 +124,8 @@ public class MultiHomedServerAddress implements ServerAddress {
                prefixLength -= 8;
             }
          } else if (prefixLength > 0) {
-            if ((a & netMaskByPrefix[prefixLength - 1]) != (b & netMaskByPrefix[prefixLength - 1])) {
+            byte mask = MultiHomedServerAddress.netMaskByPrefix[prefixLength - 1];
+            if ((a & mask) != (b & mask)) {
                return false;
             } else {
                prefixLength = 0;
@@ -132,9 +139,36 @@ public class MultiHomedServerAddress implements ServerAddress {
       final InetAddress address;
       final short prefixLength;
 
-      public InetAddressWithNetMask(InterfaceAddress address) {
+      public InetAddressWithNetMask(InterfaceAddress address, boolean networkPrefixOverride) {
          this.address = address.getAddress();
-         this.prefixLength = address.getNetworkPrefixLength();
+         if (networkPrefixOverride) {
+            byte[] a = address.getAddress().getAddress();
+            if (a.length == 4) { // IPv4
+               if (a[0] == 10) {
+                  this.prefixLength = 8;
+               } else if (a[0] == (byte) 192 && a[1] == (byte) 168) {
+                  this.prefixLength = 16;
+               } else if (a[0] == (byte) 172 && a[1] >= 16 && a[1] <= 31) {
+                  this.prefixLength = 20;
+               } else if (a[0] == (byte) 169 && a[1] == (byte) 254) {
+                  this.prefixLength = 16;
+               } else {
+                  this.prefixLength = address.getNetworkPrefixLength();
+               }
+            } else { // IPv6
+               if (a[0] == (byte) 0xfd && a[1] == 0) {
+                  this.prefixLength = 8;
+               } else if (a[0] == (byte) 0xfc && a[1] == 0) {
+                  this.prefixLength = 7;
+               } else if (a[0] == (byte) 0xfe && a[1] == (byte)80) {
+                  this.prefixLength = 10;
+               } else {
+                  this.prefixLength = address.getNetworkPrefixLength();
+               }
+            }
+         } else {
+            this.prefixLength = address.getNetworkPrefixLength();
+         }
       }
 
       public InetAddressWithNetMask(InetAddress address, short prefixLength) {

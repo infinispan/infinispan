@@ -12,6 +12,7 @@ By default, {brandname} Server exposes a single port that automatically detects 
 include::{topics}/ref_server_interfaces.adoc[leveloffset=+1]
 include::{topics}/ref_server_socket_bindings.adoc[leveloffset=+1]
 include::{topics}/proc_server_changing_bind_address.adoc[leveloffset=+1]
+include::{topics}/con_listening_all_addresses.adoc[leveloffset=+2]
 include::{topics}/proc_server_changing_port_offset.adoc[leveloffset=+1]
 
 include::{topics}/con_endpoints.adoc[leveloffset=+1]

@@ -48,4 +48,8 @@ public abstract class AbstractHotRodServerChildConfigurationBuilder implements H
       return builder.topologyStateTransfer(topologyStateTransfer);
    }
 
+   @Override
+   public HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride) {
+      return builder.topologyNetworkPrefixOverride(topologyNetworkPrefixOverride);
+   }
 }
