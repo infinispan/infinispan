@@ -1,9 +1,5 @@
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  //Enables statistics for the Cache Manager.
-  .cacheContainer().statistics(true)
-  .build();
+GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder().cacheContainer().statistics(true);
+DefaultCacheManager cacheManager = new DefaultCacheManager(global.build());
 
-Configuration config = new ConfigurationBuilder()
-  //Enables statistics for the named cache.
-  .statistics().enable()
-  .build();
+Configuration builder = new ConfigurationBuilder();
+builder.statistics().enable();

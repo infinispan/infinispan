@@ -1,0 +1,21 @@
+<replicated-cache segments="256"
+                  mode="SYNC"
+                  statistics="true">
+  <encoding media-type="application/x-protostream"/>
+  <locking isolation="REPEATABLE_READ"/>
+  <transaction mode="FULL_XA"
+               locking="OPTIMISTIC"/>
+  <expiration lifespan="5000"
+              max-idle="1000" />
+  <memory max-count="1000000"
+          when-full="REMOVE"/>
+  <indexing enabled="true"
+            storage="local-heap">
+    <index-reader refresh-interval="1000"/>
+  </indexing>
+  <partition-handling when-split="ALLOW_READ_WRITES"
+                      merge-policy="PREFERRED_NON_NULL"/>
+  <persistence passivation="false">
+    <!-- Persistent storage configuration. -->
+  </persistence>
+</replicated-cache>

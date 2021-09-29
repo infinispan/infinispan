@@ -1,0 +1,32 @@
+[id='zero-capacity-nodes_{context}']
+= Zero capacity nodes
+
+You can configure nodes where the capacity factor is `0` for every cache, user defined caches, and internal caches.
+When defining a zero capacity node, the node does not hold any data.
+
+[discrete]
+== Zero capacity node configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/zero_capacity_node.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/zero_capacity_node.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/zero_capacity_node.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ZeroCapacityNode.java[]
+----

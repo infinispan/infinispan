@@ -1,0 +1,29 @@
+[id='eviction-strategies_{context}']
+= Eviction strategies
+
+When you configure {brandname} eviction you specify:
+
+* The maximum size of the data container.
+* A strategy for removing entries when the cache reaches the threshold.
+
+You can either perform eviction manually or configure {brandname} to do one of the following:
+
+* Remove old entries to make space for new ones.
+* Throw `ContainerFullException` and prevent new entries from being created.
++
+The exception eviction strategy works only with transactional caches that use 2 phase commits; not with 1 phase commits or synchronization optimizations.
+
+Refer to the schema reference for more details about the eviction strategies.
+
+[NOTE]
+====
+{brandname} includes the Caffeine caching library that implements a variation
+of the Least Frequently Used (LFU) cache replacement algorithm known as
+TinyLFU. For off-heap storage, {brandname} uses a custom implementation of the
+Least Recently Used (LRU) algorithm.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://github.com/ben-manes/caffeine[Caffeine]
+* link:{configdocroot}[{brandname} configuration schema reference]

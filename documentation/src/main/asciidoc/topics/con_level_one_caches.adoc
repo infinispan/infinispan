@@ -1,0 +1,42 @@
+[id='level-one-caches_{context}']
+= Level one (L1) caches
+
+When L1 is enabled, a node will keep the result of remote reads locally for a configurable period of time  and repeated lookups will return the local L1 value instead of asking the owners again.
+
+ifdef::community[]
+image::l1_cache_ispn.png[align="center", title="L1 cache"]
+endif::community[]
+ifdef::downstream[]
+image::l1_cache_rhdg.png[align="center", title="L1 cache"]
+endif::downstream[]
+
+Enabling L1 caching comes at a cost, and this cost is that every entry update must broadcast an invalidation message to all the nodes.
+L1 entries can be evicted just like any other entry when the the cache is configured with a maximum size.
+Enabling L1 will improve performance for repeated reads of non-local keys, but it will slow down writes and it will increase memory consumption to some degree.
+
+[discrete]
+== L1 cache configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/level_one_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/level_one_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/level_one_cache.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/LevelOneCache.java[]
+----

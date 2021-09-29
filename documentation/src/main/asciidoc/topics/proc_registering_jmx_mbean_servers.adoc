@@ -3,21 +3,43 @@
 {brandname} includes an `MBeanServerLookup` interface that you can use to
 register MBeans in custom MBeanServer instances.
 
+.Prerequisites
+
+* Create an implementation of `MBeanServerLookup` so that the `getMBeanServer()` method returns the custom MBeanServer instance.
+* Configure {brandname} to register JMX MBeans.
+
 .Procedure
 
-. Create an implementation of `MBeanServerLookup` so that the `getMBeanServer()` method returns the custom MBeanServer instance.
-. Configure {brandname} with the fully qualified name of your class, as in the following example:
+. Open your {brandname} configuration for editing.
+. Add the `mbean-server-lookup` attribute or field to the JMX configuration for the cache manager.
+. Specify fully qualified name (FQN) of your `MBeanServerLookup` implementation.
+. Save and close your client configuration.
 
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== JMX MBean server lookup configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/jmx_mbean_server_lookup.xml[]
 ----
 
-ifdef::embedded_caches[]
-For embedded caches, you can use the `mBeanServerLookup()` method to programmatically specify the fully qualified name of your class.
-
-[source,java,options="nowrap",subs=attributes+]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::code_examples/JmxGlobalConfigurationBuilder.java[]
+include::json/jmx_mbean_server_lookup.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/jmx_mbean_server_lookup.yaml[]
+----
+
+ifdef::embedded_caches[]
+.GlobalConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/JmxMBeanServerLookup.java[]
 ----
 endif::embedded_caches[]

@@ -1,28 +1,36 @@
-[id='memory']
-:context: config
-= Managing Memory
-Configure the data container where {brandname} stores entries. Specify the
-encoding for cache entries, store data in off-heap memory, and use eviction or
-expiration policies to keep only active entries in memory.
+[id='configuring-memory-usage']
+:context: configuring-memory-usage
+= Configuring JVM memory usage
+
+Control how {brandname} stores data in JVM memory by:
+
+* Managing JVM memory usage with eviction that automatically removes data from caches.
+* Adding lifespan and maximum idle times to expire entries and prevent stale data.
+* Configuring {brandname} to store data in off-heap, native memory.
 
 //Overview
+include::{topics}/con_default_memory.adoc[leveloffset=+1]
 include::{topics}/con_evict_vs_expire.adoc[leveloffset=+1]
 
 //Eviction
-include::{topics}/con_eviction.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_memory_size.adoc[leveloffset=+3]
-include::{topics}/proc_configuring_memory_size_bytes.adoc[leveloffset=+3]
-include::{topics}/ref_eviction_examples.adoc[leveloffset=+3]
+include::{topics}/con_eviction.adoc[leveloffset=+1]
+include::{topics}/con_eviction_strategies.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_eviction_maximum_count.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_eviction_maximum_size.adoc[leveloffset=+2]
+include::{topics}/ref_eviction_manual.adoc[leveloffset=+2]
+include::{topics}/ref_eviction_passivation.adoc[leveloffset=+2]
 
 //Expiration
-include::{topics}/con_expiration.adoc[leveloffset=+2]
-include::{topics}/con_expiration_overview.adoc[leveloffset=+3]
-include::{topics}/con_expiration_reaper.adoc[leveloffset=+3]
-include::{topics}/con_expiration_maxidle.adoc[leveloffset=+3]
-include::{topics}/ref_expiration_examples.adoc[leveloffset=+3]
+include::{topics}/con_expiration.adoc[leveloffset=+1]
+include::{topics}/con_expiration_overview.adoc[leveloffset=+2]
+include::{topics}/con_expiration_reaper.adoc[leveloffset=+2]
+include::{topics}/con_expiration_maxidle.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_expiration_caches.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_expiration_entries.adoc[leveloffset=+2]
 
 //Off Heap
 include::{topics}/con_off_heap_memory.adoc[leveloffset=+1]
+include::{topics}/con_off_heap_storage.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_memory_offheap.adoc[leveloffset=+2]
 
 // Restore the parent context.

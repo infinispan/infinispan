@@ -1,0 +1,3 @@
+distributedCache:
+  memory:
+    storage: "HEAP"

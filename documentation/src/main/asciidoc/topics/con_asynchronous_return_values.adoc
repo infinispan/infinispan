@@ -1,0 +1,31 @@
+[id='asynchronous-return-values_{context}']
+= Return values with asynchronous replication
+
+Because the `Cache` interface extends `java.util.Map`, write methods like
+`put(key, value)` and `remove(key)` return the previous value by default.
+
+In some cases, the return value may not be correct:
+
+1. When using `AdvancedCache.withFlags()` with `Flag.IGNORE_RETURN_VALUE`,
+`Flag.SKIP_REMOTE_LOOKUP`, or `Flag.SKIP_CACHE_LOAD`.
+2. When the cache is configured with `unreliable-return-values="true"`.
+3. When using asynchronous communications.
+4. When there are multiple concurrent writes to the same key, and the cache topology
+changes.
+The topology change will make {brandname} retry the write operations, and a retried
+operation's return value is not reliable.
+
+Transactional caches return the correct previous value in cases 3 and 4.
+However, transactional caches also have a gotcha: in distributed mode, the
+read-committed isolation level is implemented as repeatable-read.
+That means this example of "double-checked locking" won't work:
+
+[source,java]
+----
+include::code_examples/TransactionDoubleCheckedLocking.java[]
+----
+
+The correct way to implement this is to use
+`cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(k)`.
+
+In caches with optimistic locking, writes can also return stale previous values. Write skew checks can avoid stale previous values.

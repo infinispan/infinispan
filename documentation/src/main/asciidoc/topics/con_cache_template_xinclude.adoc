@@ -1,7 +1,7 @@
 [id='cache-template-xinclude_{context}']
-= Multiple cache templates from file
+= Cache templates from multiple XML files
 
-Split cache configuration templates into multiple files for granular flexibility and reference them with XML inclusions (XInclude).
+Split cache configuration templates into multiple XML files for granular flexibility and reference them with XML inclusions (XInclude).
 
 [NOTE]
 ====
@@ -14,7 +14,7 @@ You must also add the `xmlns:xi="http://www.w3.org/2001/XInclude"` namespace to 
 .Xinclude cache template
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/infinispan_xinclude_tempates.xml[]
+include::xml/xinclude_cache_templates.xml[]
 ----
 
 {brandname} also provides an `infinispan-config-fragment-{schemaversion}.xsd` schema that you can use with configuration fragments.
@@ -22,7 +22,7 @@ include::xml/infinispan_xinclude_tempates.xml[]
 .Configuration fragment schema
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/config_xincluded_with_schema.xml[]
+include::xml/xincluded_configuration_schema.xml[]
 ----
 
 [role="_additional-resources"]

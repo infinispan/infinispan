@@ -1,0 +1,35 @@
+[id='replicated-caches_{context}']
+= Replicated caches
+
+{brandname} replicates all entries in the cache to all nodes in the cluster.
+Each node can perform read operations locally.
+
+Replicated caches provide a quick and easy way to share state across a cluster, but is suitable for clusters of less than ten nodes.
+Because the number of replication requests scales linearly with the number of nodes in the cluster, using replicated caches with larger clusters reduces performance.
+However you can use UDP multicasting for replication requests to improve performance.
+
+Each key has a primary owner, which serializes data container updates in order to provide consistency.
+
+ifdef::community[]
+image::replicated_cache_ispn.png[align="center", title="Replicated cache"]
+endif::community[]
+ifdef::downstream[]
+image::replicated_cache_rhdg.png[align="center", title="Replicated cache"]
+endif::downstream[]
+
+.Synchronous or asynchronous replication
+
+* Synchronous replication blocks the caller (e.g. on a `cache.put(key, value)`) until the modifications have been replicated successfully to all the nodes in the cluster.
+* Asynchronous replication performs replication in the background, and write operations return immediately.
+Asynchronous replication is not recommended, because communication errors, or errors that happen on remote nodes are not reported to the caller.
+
+.Transactions
+
+If transactions are enabled, write operations are not replicated through the primary owner.
+
+With pessimistic locking, each write triggers a lock message, which is broadcast to all the nodes.
+During transaction commit, the originator broadcasts a one-phase prepare message and an unlock message (optional).
+Either the one-phase prepare or the unlock message is fire-and-forget.
+
+With optimistic locking, the originator broadcasts a prepare message, a commit message, and an unlock message (optional).
+Again, either the one-phase prepare or the unlock message is fire-and-forget.

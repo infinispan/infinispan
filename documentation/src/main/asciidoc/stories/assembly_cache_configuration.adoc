@@ -13,6 +13,7 @@ For instance, you can configure how {brandname} encodes entries in your caches, 
 include::{topics}/con_declarative_cache_configuration.adoc[leveloffset=+1]
 include::{topics}/ref_infinispan_caches.adoc[leveloffset=+2]
 include::{topics}/proc_adding_cache_configuration_templates.adoc[leveloffset=+1]
+include::{topics}/proc_creating_caches_templates.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_inheritance.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_wildcards.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_xinclude.adoc[leveloffset=+2]

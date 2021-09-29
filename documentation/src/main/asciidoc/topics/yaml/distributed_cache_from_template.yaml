@@ -1,0 +1,2 @@
+distributedCache:
+  configuration: "my-dist-template"

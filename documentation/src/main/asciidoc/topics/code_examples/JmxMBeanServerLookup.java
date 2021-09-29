@@ -1,3 +1,4 @@
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .jmx().enable().mBeanServerLookup(new com.acme.MyMBeanServerLookup())
-  .build();
+GlobalConfiguration global = GlobalConfigurationBuilder.defaultClusteredBuilder()
+   .jmx().enable()
+   .domain("org.mydomain")
+   .mBeanServerLookup(new com.acme.MyMBeanServerLookup());

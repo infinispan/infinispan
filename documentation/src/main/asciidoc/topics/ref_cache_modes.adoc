@@ -1,38 +1,23 @@
-[id='cache_modes-{context}']
-= Cache Modes
+[id='cache-modes_{context}']
+= Cache modes
 
 [TIP]
 ====
-{brandname} Cache Managers can create and control multiple caches that use
-different modes. For example, you can use the same Cache Manager for local
+{brandname} cache managers can create and control multiple caches that use
+different modes. For example, you can use the same cache manager for local
 caches, distributes caches, and caches with invalidation mode.
 ====
 
+Local:: {brandname} runs as a single node and never replicates read or write operations on cache entries.
 
-Local Caches::
-{brandname} runs as a single node and never replicates read or write operations on cache entries.
+Replicated:: {brandname} replicates all cache entries on all nodes in a cluster and performs local read operations only.
 
-Clustered Caches::
-{brandname} instances running on the same network can automatically discover
-each other and form clusters to handle cache operations.
+Distributed:: {brandname} replicates cache entries on a subset of nodes in a cluster and assigns entries to fixed owner nodes. +
+{brandname} requests read operations from owner nodes to ensure it returns the correct value.
 
-Invalidation Mode::
-Rather than replicating cache entries across the cluster, {brandname} evicts
-stale data from all nodes whenever operations modify entries in the cache.
-{brandname} performs local read operations only.
+Invalidation:: {brandname} evicts stale data from all nodes whenever operations modify entries in the cache. {brandname} performs local read operations only.
 
-Replicated Caches::
-{brandname} replicates each cache entry on all nodes and performs local read operations only.
-
-Distributed Caches::
-{brandname} stores cache entries across a subset of nodes and assigns
-entries to fixed owner nodes. {brandname} requests read operations from owner
-nodes to ensure it returns the correct value.
-
-Scattered Caches::
-{brandname} stores cache entries across a subset of nodes. By default
-{brandname} assigns a primary owner and a backup owner to each cache entry in
-scattered caches. {brandname} assigns primary owners in the same way as with
-distributed caches, while backup owners are always the nodes that initiate the
-write operations. {brandname} requests read operations from at least one owner
-node to ensure it returns the correct value.
+Scattered:: {brandname} stores cache entries across a subset of nodes. +
+By default {brandname} assigns a primary owner and a backup owner to each cache entry in scattered caches. +
+{brandname} assigns primary owners in the same way as with distributed caches, while backup owners are always the nodes that initiate the write operations. +
+{brandname} requests read operations from at least one owner node to ensure it returns the correct value.

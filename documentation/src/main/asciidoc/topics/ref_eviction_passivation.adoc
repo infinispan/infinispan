@@ -1,0 +1,29 @@
+[id='eviction-passivation_{context}']
+= Passivation with eviction
+
+Passivation persists data to cache stores when {brandname} evicts entries.
+You should always enable eviction if you enable passivation, as in the following examples:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/eviction_passivation.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/eviction_passivation.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/eviction_passivation.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/EvictionPassivation.java[]
+----

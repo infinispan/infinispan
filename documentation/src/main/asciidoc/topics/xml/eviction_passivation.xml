@@ -1,0 +1,6 @@
+<distributed-cache>
+  <persistence passivation="true">
+    <!-- Persistent storage configuration. -->
+  </persistence>
+  <memory max-count="100"/>
+</distributed-cache>

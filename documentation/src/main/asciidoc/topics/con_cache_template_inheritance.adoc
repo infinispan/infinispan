@@ -9,8 +9,23 @@ For a child configuration template to inherit from a parent, you must include it
 Additionally, template inheritance is additive for elements that have multiple values.
 A cache that inherits from another template merges the values from that template, which can override properties.
 
-.Cache template inheritance
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== Template inheritance example
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/cache_template_inheritance.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/cache_template_inheritance.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/cache_template_inheritance.yaml[]
 ----

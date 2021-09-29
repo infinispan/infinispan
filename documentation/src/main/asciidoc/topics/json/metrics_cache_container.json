@@ -1,0 +1,7 @@
+"cache-container" : {
+  "statistics" : "true",
+  "metrics" : {
+    "gauges" : "true",
+    "histograms" : "true"
+  }
+}

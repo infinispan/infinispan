@@ -1,0 +1,40 @@
+[id='configuring-expiration-for-caches_{context}']
+= Configuring lifespan and maximum idle times for caches
+
+Set lifespan and maximum idle times for all entries in a cache.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify the amount of time, in milliseconds, that entries can stay in the cache with the `lifespan` attribute or `lifespan()` method.
+. Specify the amount of time, in milliseconds, that entries can remain idle after last access with the `max-idle` attribute or `maxIdle()` method.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== Expiration for {brandname} caches
+
+In the following example, {brandname} expires all cache entries after 5 seconds or 1 second after the last access time, whichever happens first:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/expiration_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/expiration_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/expiration_cache.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ExpirationCache.java[]
+----

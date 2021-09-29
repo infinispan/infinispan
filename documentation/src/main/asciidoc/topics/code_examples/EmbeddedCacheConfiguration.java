@@ -1,8 +1,8 @@
-// Set up a clustered Cache Manager.
+// Set up a clustered cache manager.
 GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-// Initialize the default Cache Manager.
+// Initialize the default cache manager.
 DefaultCacheManager cacheManager = new DefaultCacheManager(global.build());
-// Create an embedded cache configuration.
+// Create a distributed cache with synchronous replication.
 ConfigurationBuilder builder = new ConfigurationBuilder();
                      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
 // Obtain a volatile cache.

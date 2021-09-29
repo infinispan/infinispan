@@ -1,0 +1,27 @@
+[id='read-consistency_{context}']
+= Read consistency
+
+Even with synchronous replication, distributed caches are not linearizable.
+For transactional caches, they do not support serialization/snapshot isolation.
+
+For example, a thread is carrying out a single put request:
+
+[source,java]
+----
+cache.get(k) -> v1
+cache.put(k, v2)
+cache.get(k) -> v2
+----
+
+But another thread might see the values in a different order:
+
+[source,java]
+----
+cache.get(k) -> v2
+cache.get(k) -> v1
+----
+
+The reason is that read can return the value from any owner, depending on how fast the primary owner replies.
+The write is not atomic across all the owners.
+In fact, the primary commits the update only after it receives a confirmation from the backup.
+While the primary is waiting for the confirmation message from the backup, reads from the backup will see the new value, but reads from the primary will see the old one.
