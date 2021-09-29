@@ -1,4 +1,0 @@
-<distributed-cache name="myCache" mode="SYNC" statistics="true">
-  <encoding media-type="application/x-protostream"/>
-  <memory max-count="1000000" when-full="REMOVE"/>
-</distributed-cache>

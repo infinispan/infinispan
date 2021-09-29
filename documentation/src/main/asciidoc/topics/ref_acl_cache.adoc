@@ -12,4 +12,4 @@ include::xml/authorization_acl_cache.xml[]
 
 .Reference
 
-* link:{configdocroot}[{brandname} Configuration Schema Reference]
+* link:{configdocroot}[{brandname} configuration schema reference]

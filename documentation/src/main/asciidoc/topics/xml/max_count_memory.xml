@@ -1,4 +1,3 @@
-<local-cache name="maximum_count">
-  <encoding media-type="application/x-protostream"/>
+<distributed-cache>
   <memory max-count="500" when-full="REMOVE"/>
-</local-cache>
+</distributed-cache>

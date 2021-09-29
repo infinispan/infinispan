@@ -1,0 +1,9 @@
+{
+  "local-cache": {
+    "name": "mycache",
+    "statistics": "true",
+    "encoding": {
+      "media-type": "application/x-protostream"
+    }
+  }
+}

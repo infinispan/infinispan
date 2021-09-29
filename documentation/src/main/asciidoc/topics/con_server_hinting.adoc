@@ -1,0 +1,45 @@
+[id='server-hinting_{context}']
+= Server hinting
+
+The following topology hints can be specified:
+
+Machine::
+  This is probably the most useful, when multiple JVM instances run on the
+  same node, or even when multiple virtual machines run on the same physical machine.
+Rack::
+  In larger clusters, nodes located on the same rack are more likely to experience a
+  hardware or network failure at the same time.
+Site::
+  Some clusters may have nodes in multiple physical locations for extra resilience.
+  Note that Cross site replication is another alternative for
+  clusters that need to span two or more data centres.
+
+All of the above are optional.
+When provided, the distribution algorithm will try to spread the ownership of each segment across as many sites, racks, and machines (in this order) as possible.
+
+[discrete]
+== Server hinting configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_hinting.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_hinting.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_hinting.yaml[]
+----
+
+.GlobalConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ServerHinting.java[]
+----

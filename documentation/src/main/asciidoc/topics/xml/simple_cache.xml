@@ -1,3 +1,2 @@
-<local-cache name="mySimpleCache" simple-cache="true">
-    <!-- Additional cache configuration goes here. -->
+<local-cache simple-cache="true">
 </local-cache>

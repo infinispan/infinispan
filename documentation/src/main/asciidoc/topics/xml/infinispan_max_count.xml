@@ -1,3 +1,0 @@
-<distributed-cache name="total_number">
-  <memory max-count="100"/>
-</distributed-cache>

@@ -1,0 +1,50 @@
+[id='configuring-eviction-total-entries_{context}']
+= Configuring maximum count eviction
+
+Limit the size of {brandname} caches to a total number of entries.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify the total number of entries that caches can contain before
+{brandname} performs eviction with either the `max-count` attribute or `maxCount()` method.
+. Set one of the following as the eviction strategy to control how {brandname} removes entries with the `when-full` attribute or `whenFull()` method.
++
+* `REMOVE` {brandname} performs eviction. This is the default strategy.
+* `MANUAL` You perform eviction manually for embedded caches.
+* `EXCEPTION` {brandname} throws an exception instead of evicting entries.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== Maximum count eviction
+
+In the following example, {brandname} removes an entry when the cache contains a total of 500 entries and a new entry is created:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/max_count_memory.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/max_count_memory.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/max_count_memory.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/MaxCountMemory.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]
+* link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

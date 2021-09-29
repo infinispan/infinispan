@@ -1,0 +1,3 @@
+distributedCache:
+  l1Lifespan: "5000"
+  l1-cleanup-interval: "60000"

@@ -1,0 +1,5 @@
+localCache:
+  name: "mycache"
+  statistics: "true"
+  encoding:
+    mediaType: "application/x-protostream"

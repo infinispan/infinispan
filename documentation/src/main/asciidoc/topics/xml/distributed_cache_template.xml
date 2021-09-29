@@ -1,0 +1,13 @@
+<infinispan>
+   <cache-container>
+      <distributed-cache-configuration name="my-dist-template"
+                                       mode="SYNC"
+                                       statistics="true">
+        <encoding media-type="application/x-protostream"/>
+        <memory max-count="1000000"
+                when-full="REMOVE"/>
+        <expiration lifespan="5000"
+                    max-idle="1000"/>
+      </distributed-cache-configuration>
+   </cache-container>
+</infinispan>

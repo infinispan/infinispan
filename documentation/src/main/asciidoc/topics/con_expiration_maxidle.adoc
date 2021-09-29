@@ -1,5 +1,5 @@
-[id='maxidle_expiration-{context}']
-= Maximum Idle and Clustered Caches
+[id='expiration-maxidle_{context}']
+= Maximum idle and clustered caches
 Because maximum idle expiration relies on the last access time for cache
 entries, it has some limitations with clustered cache modes.
 

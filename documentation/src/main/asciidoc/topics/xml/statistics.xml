@@ -1,5 +1,3 @@
-<!-- Enable Cache Manager statistics. -->
 <cache-container statistics="true">
-  <!-- Enables cache statistics. -->
-  <local-cache name="mycache" statistics="true"/>
+  <local-cache statistics="true"/>
 </cache-container>

@@ -1,5 +1,5 @@
-[id='expiration_reaper-{context}']
-= Expiration Reaper
+[id='expiration-reaper_{context}']
+= Expiration reaper
 {brandname} uses a reaper thread that runs periodically to detect and remove
 expired entries. The expiration reaper ensures that expired entries that are no
 longer accessed are removed.
@@ -21,7 +21,7 @@ reaper.
 case you cannot disable it.
 ====
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/configuration/cache/ExpirationConfigurationBuilder.html[org.infinispan.configuration.cache.ExpirationConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/expiration/ExpirationManager.html[org.infinispan.expiration.ExpirationManager]

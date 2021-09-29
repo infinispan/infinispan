@@ -1,6 +1,6 @@
-[id='partition_handling']
-:context: admin
-= Setting Up Partition Handling
+[id='partition-handling']
+:context: partition-handling
+= Setting up partition handling
 
 include::{topics}/con_partition_handling.adoc[leveloffset=+1]
 

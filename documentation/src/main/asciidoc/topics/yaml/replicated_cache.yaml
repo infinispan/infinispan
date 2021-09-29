@@ -1,0 +1,28 @@
+replicatedCache:
+  mode: "SYNC"
+  segments: "256"
+  statistics: "true"
+  encoding:
+    mediaType: "application/x-protostream"
+  locking:
+    isolation: "REPEATABLE_READ"
+  transaction:
+    mode: "FULL_XA"
+    locking: "OPTIMISTIC"
+  expiration:
+    lifespan: "5000"
+    maxIdle: "1000"
+  memory:
+    maxCount: "1000000"
+    whenFull: "REMOVE"
+  indexing:
+    enabled: "true"
+    storage: "local-heap"
+    indexReader:
+      refreshInterval: "1000"
+  partitionHandling:
+    whenSplit: "ALLOW_READ_WRITES"
+    mergePolicy: "PREFERRED_NON_NULL"
+  persistence:
+    passivation: "false"
+    # Persistent storage configuration.

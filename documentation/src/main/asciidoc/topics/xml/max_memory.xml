@@ -1,4 +1,0 @@
-<local-cache name="maximum_size">
-  <encoding media-type="application/x-protostream"/>
-  <memory max-size="1.5GB" when-full="REMOVE"/>
-</local-cache>

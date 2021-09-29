@@ -4,7 +4,13 @@ Hot Rod Java clients can provide statistics that include remote cache and near-c
 
 .Procedure
 
-* Enable and configure Hot Rod client statistics as in the following examples:
+. Open your Hot Rod Java client configuration for editing.
+. Set `true` as the value for the `statistics` property or invoke the `statistics().enable()` methods.
+. Export JMX MBeans for your Hot Rod client with the `jmx` and `jmx_domain` properties or invoke the `jmxEnable()` and `jmxDomain()` methods.
+. Save and close your client configuration.
+
+[discrete]
+== Hot Rod Java client statistics
 
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]

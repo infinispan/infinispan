@@ -40,4 +40,4 @@ A user named `admin` gets `admin` permissions automatically, a user named `deplo
 .Reference
 
 * link:{javadocroot}[org.infinispan.security.AuthorizationPermission Enumeration]
-* link:{configdocroot}[{brandname} Configuration Schema Reference]
+* link:{configdocroot}[{brandname} configuration schema reference]

@@ -1,26 +1,54 @@
 [id='cache-configuration_{context}']
 = Cache configuration
 
-The following example shows a distributed {brandname} cache in XML and JSON:
+You can create declarative cache configuration in XML, JSON, and YAML format.
+
+All declarative caches must conform to the {brandname} schema.
+Configuration in JSON format must follow the structure of an XML configuration, elements correspond to objects and attributes correspond to fields.
+
+[discrete]
+== Distributed caches
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/infinispan_distributed_cache.xml[]
+include::xml/distributed_cache.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::json/infinispan_distributed_cache.json[]
+include::json/distributed_cache.json[]
 ----
 
-Cache configuration in JSON format must follow the structure of an XML configuration.
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/distributed_cache.yaml[]
+----
 
-* XML elements become JSON objects.
-* XML attributes become JSON fields.
+[discrete]
+== Replicated caches
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/replicated_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/replicated_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/replicated_cache.yaml[]
+----
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} schema reference]
+* link:{configdocroot}[{brandname} configuration schema reference]
 * link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[infinispan-config-{infinispanversion}.xsd]

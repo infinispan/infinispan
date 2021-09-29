@@ -1,0 +1,29 @@
+[id='configuring-expiration-per-entry_{context}']
+= Configuring lifespan and maximum idle times per entry
+
+Specify lifespan and maximum idle times for individual entries.
+When you add lifespan and maximum idle times to entries, those values take priority over expiration configuration for caches.
+
+[NOTE]
+====
+When you explicitly define lifespan and maximum idle time values for cache entries, {brandname} replicates those values across the cluster along with the cache entries.
+Likewise, {brandname} writes expiration values along with the entries to persistent storage.
+====
+
+.Procedure
+
+* For remote caches, you can add lifespan and maximum idle times to entries interactively with the {brandname} Console.
++
+With the {brandname} Command Line Interface (CLI), use the `--max-idle=` and `--ttl=` arguments with the [command]`put` command.
+
+* For both remote and embedded caches, you can add lifespan and maximum idle times with `cache.put()` invocations.
++
+[source,java]
+----
+include::code_examples/CachePutWithExpiration.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/cache/ExpirationConfigurationBuilder.html[org.infinispan.configuration.cache.ExpirationConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/expiration/ExpirationManager.html[org.infinispan.expiration.ExpirationManager]

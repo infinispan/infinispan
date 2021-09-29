@@ -1,5 +1,6 @@
-[id='cache_mode_comparison-{context}']
-= Cache Mode Comparison
+[id='cache-mode-comparison_{context}']
+= Comparison of cache modes
+
 The cache mode that you should choose depends on the qualities and guarantees you need for your data.
 
 The following table summarizes the primary differences between cache modes:

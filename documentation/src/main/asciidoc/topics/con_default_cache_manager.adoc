@@ -1,19 +1,19 @@
 [id='default-cache-manager-{context}']
-= Default Cache Manager
-{brandname} Server provides a default Cache Manager to control the lifecycle of remote caches.
-Starting {brandname} Server automatically instantiates the Cache Manager so you can create and delete remote caches and other resources like Protobuf schema.
+= Default cache manager
+{brandname} Server provides a default cache manager to control the lifecycle of remote caches.
+Starting {brandname} Server automatically instantiates the cache manager so you can create and delete remote caches and other resources like Protobuf schema.
 
-.Default Cache Manager
+.Default cache manager
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/default_cache_container.xml[]
 ----
 
-After you start {brandname} Server and add user credentials, you can view details about the Cache Manager and get cluster information from {brandname} Console.
+After you start {brandname} Server and add user credentials, you can view details about the cache manager and get cluster information from {brandname} Console.
 
 * Open `127.0.0.1:11222` in any browser.
 
-You can also get information about the Cache Manager through the Command Line Interface (CLI) or REST API:
+You can also get information about the cache manager through the Command Line Interface (CLI) or REST API:
 
 CLI:: Run the [command]`describe` command in the default container.
 +

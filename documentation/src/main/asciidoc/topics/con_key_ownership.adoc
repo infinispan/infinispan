@@ -1,0 +1,65 @@
+[id='key-ownership_{context}']
+= Key ownership
+
+Distributed caches split entries into a fixed number of segments and assign
+each segment to a list of owner nodes.
+Replicated caches do the same, with the exception that every node is an owner.
+
+The first node in the list of owners is the *primary owner*.
+The other nodes in the list are *backup owners*.
+When the cache topology changes, because a node joins or leaves the cluster, the segment ownership table is broadcast to every node.
+This allows nodes to locate keys without making multicast requests or maintaining metadata for each key.
+
+The `numSegments` property configures the number of segments available.
+However, the number of segments cannot change unless the cluster is restarted.
+
+Likewise the key-to-segment mapping cannot change.
+Keys must always map to the same segments regardless of cluster topology changes.
+It is important that the key-to-segment mapping evenly distributes the number of segments allocated to each node while minimizing the number of segments that must move when the cluster topology changes.
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Consistent hash factory implementation |Description
+
+|`SyncConsistentHashFactory`
+|Uses an algorithm based on link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing]. Selected by default when server hinting is disabled.
+
+This implementation always assigns keys to the same nodes in every cache as
+long as the cluster is symmetric. In other words, all caches run on all nodes.
+This implementation does have some negative points in that the load distribution is slightly uneven. It also moves more segments than strictly necessary on a join or leave.
+
+|`TopologyAwareSyncConsistentHashFactory`
+|Equivalent to `SyncConsistentHashFactory` but used with server hinting to distribute data across the topology so that backed up copies of data are stored on different nodes in the topology than the primary owners. This is the default consistent hashing implementation with server hinting.
+
+|`DefaultConsistentHashFactory`
+|Achieves a more even distribution than `SyncConsistentHashFactory`, but with one disadvantage. The order in which nodes join the cluster determines which nodes own which segments. As a result, keys might be assigned to different nodes in different caches.
+
+|`TopologyAwareConsistentHashFactory`
+|Equivalent to `DefaultConsistentHashFactory` but used with server hinting to distribute data across the topology so that backed up copies of data are stored on different nodes in the topology than the primary owners.
+
+|`ReplicatedConsistentHashFactory`
+|Used internally to implement replicated caches. You should never explicitly
+select this algorithm in a distributed cache.
+
+|===
+
+[discrete]
+== Hashing configuration
+
+You can configure `ConsistentHashFactory` implementations, including custom ones, with embedded caches only.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/hashing_configuration.xml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/HashingConfiguration.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]

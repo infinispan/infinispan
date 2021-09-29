@@ -1,0 +1,9 @@
+<infinispan>
+   <cache-container>
+      <distributed-cache-configuration name="async-dist-cache-*"
+                                       mode="ASYNC"
+                                       statistics="true">
+        <encoding media-type="application/x-protostream"/>
+      </distributed-cache-configuration>
+   </cache-container>
+</infinispan>

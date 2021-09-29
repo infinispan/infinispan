@@ -1,3 +1,0 @@
-<distributed-cache name="off_heap">
-  <memory storage="OFF_HEAP" max-count="100"/>
-</distributed-cache>

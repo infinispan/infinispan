@@ -1,8 +1,8 @@
-[id='evict_expire']
-= Configuring Eviction and Expiration
+[id='eviction-and-expiration_{context}']
+= Eviction and expiration
 Eviction and expiration are two strategies for cleaning the data container by
-removing old, unused entries. Although eviction and expiration are similar,
-they have some important differences.
+removing old, unused entries.
+Although eviction and expiration are similar, they have some important differences.
 
 * [*] Eviction lets {brandname} control the size of the data container by removing entries when the container becomes larger than a configured threshold.
 

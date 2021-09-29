@@ -1,9 +1,2 @@
-ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-cfg
-  .encoding()
-    .mediaType("application/x-protostream")
-  .memory()
-    .maxCount(500)
-    .whenFull(EvictionStrategy.REMOVE)
-  .build());
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.memory().maxCount(500).whenFull(EvictionStrategy.REMOVE);

@@ -11,17 +11,36 @@ By default, {brandname} generates gauges when you enable statistics but you can 
 
 .Procedure
 
-* Enable gauges and histograms as appropriate in the Cache Manager configuration.
-+
-[source,xml,options="nowrap",subs=attributes+]
+. Open your {brandname} configuration for editing.
+. Add the `metrics` element or object to the cache container.
+. Enable or disable gauges with the `gauges` attribute or field.
+. Enable or disable histograms with the `histograms` attribute or field.
+. Save and close your client configuration.
+
+[discrete]
+== Metrics configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/metrics_cache_container.xml[]
 ----
 
-ifdef::embedded_caches[]
-For embedded caches, you can configure metrics programmatically with the `GlobalMetricsConfigurationBuilder` API as follows:
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/metrics_cache_container.json[]
+----
 
-[source,java,options="nowrap",subs=attributes+]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/metrics_cache_container.yaml[]
+----
+
+ifdef::embedded_caches[]
+.GlobalConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----

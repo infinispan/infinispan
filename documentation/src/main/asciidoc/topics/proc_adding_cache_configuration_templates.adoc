@@ -6,24 +6,27 @@ You can then create caches on demand, using the same configuration multiple time
 
 .Procedure
 
-. Open `infinispan.xml` for editing.
-. Add the cache configuration with the appropriate `*-cache-configuration` element to the `cache-container`.
-. Save and close `infinispan.xml`.
+. Open your {brandname} configuration for editing.
+. Add the cache configuration with the appropriate `*-cache-configuration` element or object to the cache manager.
+. Save and close your {brandname} configuration.
 
-.Example template for a distributed cache
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/infinispan_distributed_template.xml[]
-----
+[discrete]
+== Cache template example
 
-To create caches using the template, specify the name of the template as the value of the `configuration` attribute as in the following example:
-
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/infinispan_distributed_template.xml[]
+include::xml/distributed_cache_template.xml[]
 ----
 
-[TIP]
-====
-Cache templates that you add to `infinispan.xml` are available from the **Cache templates** menu in {brandname} Console.
-====
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/distributed_cache_template.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/distributed_cache_template.yaml[]
+----
