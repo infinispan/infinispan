@@ -1,0 +1,42 @@
+[id='listening-on-all-addresses_{context}']
+= Listening on all addresses
+
+If you specify the `0.0.0.0` meta-address, or `INADDR_ANY`, as the bind address in your {brandname} Server configuration, it listens for incoming client connections on all available network interfaces.
+
+.Client intelligence
+
+Configuring {brandname} to listen on all addresses affects how it provides Hot Rod clients with cluster topology.
+If there are multiple interfaces to which {brandname} Server binds, then it sends a list of IP addresses for each interface.
+
+For example, a cluster where each server node binds to:
+
+* `10.0.0.0/8` subnet
+* `192.168.0.0/16` subnet
+* `127.0.0.1` loopback
+
+Hot Rod clients receive IP addresses for server nodes that belong to the interface through which the clients connect.
+If a client connects to `192.168.0.0`, for example, it does not receive any cluster topology details for nodes that listen on `10.0.0.0`.
+
+.Netmask override
+
+Kubernetes, and some other environments, divide the IP address space into subnets and use those different subnets as a single network.
+For example, `10.129.2.100/23` and `10.129.4.100/23` are in different subnets but belong to the `10.0.0.0/8` network.
+
+For this reason, {brandname} Server overrides netmasks that the host system provides with netmasks that follow IANA conventions for private networks:
+
+* IPv4: `10.0.0.0/8`, `192.168.0.0/16`, `172.16.0.0/16`, and `169.254.0.0/16`
+* IPv6: `fc00::/7` and `fe80::/10`
+
+See `RFC 1918` for IPv4 or `RFC 4193` and `RFC 3513` for IPv6.
+
+[NOTE]
+====
+You can optionally configure the Hot Rod connector to use the netmask that the host system provides for interfaces with the `network-prefix-override` attribute in your {brandname} Server configuration.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}infinispan-server-{schemaversion}.html[{brandname} Server schema reference]
+* link:https://datatracker.ietf.org/doc/html/rfc1918[RFC 1918]
+* link:https://datatracker.ietf.org/doc/html/rfc4193[RFC 4193]
+* link:https://www.rfc-editor.org/rfc/rfc3513.html[RFC 3513]

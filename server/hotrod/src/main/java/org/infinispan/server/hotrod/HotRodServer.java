@@ -98,7 +98,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  * @since 4.1
  */
 public class HotRodServer extends AbstractProtocolServer<HotRodServerConfiguration> {
-   private static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
+   static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
 
    private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
@@ -310,7 +310,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private void addSelfToTopologyView(EmbeddedCacheManager cacheManager) {
       addressCache = cacheManager.getCache(configuration.topologyCacheName());
       clusterAddress = cacheManager.getAddress();
-      address = ServerAddress.forAddress(configuration.publicHost(), configuration.publicPort());
+      address = ServerAddress.forAddress(configuration.publicHost(), configuration.publicPort(), configuration.networkPrefixOverride());
       clusterExecutor = cacheManager.executor();
 
       viewChangeListener = new CrashedMemberDetectorListener(addressCache, this);

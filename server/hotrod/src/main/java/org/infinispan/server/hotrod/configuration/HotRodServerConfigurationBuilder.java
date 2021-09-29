@@ -96,6 +96,12 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   @Override
+   public HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride) {
+      topologyCache.networkPrefixOverride(topologyNetworkPrefixOverride);
+      return this;
+   }
+
    /**
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
     * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the

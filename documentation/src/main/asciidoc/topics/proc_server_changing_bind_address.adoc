@@ -1,17 +1,33 @@
 [id='changing_bind_address-{context}']
-= Changing the Default Bind Address for {brandname} Servers
-You can use the server `-b` switch or the `infinispan.bind.address`
-system property to bind to a different address.
+= Changing the bind address for {brandname} Server
 
-For example, bind the `public` interface to `127.0.0.2` as follows:
+{brandname} Server binds to a network IP address to listen for inbound client connections on the Hot Rod and REST endpoints.
+You can specify that IP address directly in your {brandname} Server configuration or when starting server instances.
 
-Linux::
+.Prerequisites
+
+* Have at least one {brandname} Server installation.
+
+.Procedure
+
+Specify the IP address to which {brandname} Server binds in one of the following ways:
+
+* Open your {brandname} Server configuration and set the value for the `inet-address` element, for example:
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::xml/server-inet-address.xml[]
+----
+
+* Use the `-b` option or the `infinispan.bind.address` system property.
++
+.Linux
 [source,bash,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_bind_nix.adoc[]
 ----
-
-Windows::
++
+.Windows
 [source,bash,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_bind_win.adoc[]

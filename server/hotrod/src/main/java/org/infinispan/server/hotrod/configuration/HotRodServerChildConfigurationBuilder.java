@@ -45,6 +45,12 @@ public interface HotRodServerChildConfigurationBuilder {
    HotRodServerChildConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer);
 
    /**
+    * Configures whether to honor or override the network prefix returned for the available interfaces.
+    * Defaults to override and to use the IANA private address conventions defined in RFC 1918
+    */
+   HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride);
+
+   /**
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
     * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the
     * other nodes. Defaults to true.
