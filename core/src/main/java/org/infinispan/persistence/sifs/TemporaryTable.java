@@ -30,7 +30,7 @@ public class TemporaryTable {
    }
 
    public void addSegments(IntSet segments) {
-      segments.forEach((IntConsumer) segment -> table.set(segment, new ConcurrentHashMap<>()));
+      segments.forEach((IntConsumer) segment -> table.compareAndSet(segment, null, new ConcurrentHashMap<>()));
    }
 
    public void removeSegments(IntSet segments) {
