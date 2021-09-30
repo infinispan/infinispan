@@ -190,9 +190,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
       temporaryTable = new TemporaryTable(cacheConfig.clustering().hash().numSegments());
-      if (!cacheConfig.clustering().cacheMode().needsStateTransfer()) {
-         temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
-      }
+      temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
 
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());

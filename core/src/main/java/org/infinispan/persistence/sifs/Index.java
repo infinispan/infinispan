@@ -262,7 +262,7 @@ class Index {
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
-         int gracefulValue, segmentValue;
+         int gracefulValue = -1, segmentValue = -1;
          if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
                && (gracefulValue = buffer.getInt(0)) == GRACEFULLY && (segmentValue = buffer.getInt(4)) == segmentMax) {
             long rootOffset = buffer.getLong(8);
@@ -274,6 +274,7 @@ class Index {
             indexFileSize = freeBlocksOffset;
             loaded = true;
          } else {
+            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d", id, gracefulValue, segmentValue);
             this.indexFile.truncate(0);
             root = IndexNode.emptyWithLeaves(this);
             loaded = false;
