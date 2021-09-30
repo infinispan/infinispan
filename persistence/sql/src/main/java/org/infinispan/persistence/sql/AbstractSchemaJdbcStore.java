@@ -64,10 +64,10 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       assert Arrays.stream(primaryParameters).allMatch(Parameter::isPrimaryIdentifier);
 
       // We have to use the user serialization context as it will have the schemas they registered
-      ImmutableSerializationContext serializationContext = ctx.getCache().getCacheManager().getGlobalComponentRegistry()
-            .getComponent(SerializationContextRegistry.class).getUserCtx();
+      SerializationContextRegistry ctxRegistry = ctx.getCache().getCacheManager().
+            getGlobalComponentRegistry().getComponent(SerializationContextRegistry.class);
 
-      ProtoSchemaOptions<K, V, C> options = verifySchemaAndCreateOptions(serializationContext,
+      ProtoSchemaOptions<K, V, C> options = verifySchemaAndCreateOptions(ctxRegistry.getUserCtx(), ctxRegistry.getGlobalCtx(),
             config.getSchemaJdbcConfiguration(), parameters, primaryParameters, keyDataConversion, valueDataConversion,
             ctx.getMarshallableEntryFactory());
 
@@ -111,7 +111,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       return sqlType;
    }
 
-   ProtoSchemaOptions<K, V, C> verifySchemaAndCreateOptions(ImmutableSerializationContext ctx,
+   ProtoSchemaOptions<K, V, C> verifySchemaAndCreateOptions(ImmutableSerializationContext userCtx, ImmutableSerializationContext globalCtx,
          SchemaJdbcConfiguration schemaJdbcConfiguration, Parameter[] parameters, Parameter[] primaryParameters,
          DataConversion keyConversion, DataConversion valueConversion, MarshallableEntryFactory<K, V> marshallableEntryFactory) {
       // Keys should all be upper case to provide case insensitivity
@@ -134,7 +134,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             throw log.primaryKeyMultipleColumnWithoutSchema();
          }
          String fullMessageName = packageName + "." + keyMessageName;
-         verifyParametersPresentForMessage(ctx, fullMessageName, parameterMap, true);
+         verifyParametersPresentForMessage(userCtx, globalCtx, fullMessageName, parameterMap, true);
          fullKeyMessageName = fullMessageName;
       } else {
          updatePrimitiveJsonConsumer(primaryParameters[0], true);
@@ -147,7 +147,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             throw log.valueMultipleColumnWithoutSchema();
          }
          String fullMessageName = packageName + "." + valueMessageName;
-         verifyParametersPresentForMessage(ctx, fullMessageName, parameterMap, false);
+         verifyParametersPresentForMessage(userCtx, globalCtx, fullMessageName, parameterMap, false);
          fullValueMessageName = fullMessageName;
       } else {
          // This variable is only for assertion - it should be that we can only have 1 non primary parameter,
@@ -214,12 +214,17 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       };
    }
 
-   void verifyParametersPresentForMessage(ImmutableSerializationContext ctx, String fullTypeName, Map<String, Parameter> parameterMap, boolean key) {
+   void verifyParametersPresentForMessage(ImmutableSerializationContext userContext, ImmutableSerializationContext globalCtx,
+         String fullTypeName, Map<String, Parameter> parameterMap, boolean key) {
       GenericDescriptor genericDescriptor;
       try {
-         genericDescriptor = ctx.getDescriptorByName(fullTypeName);
+         genericDescriptor = userContext.getDescriptorByName(fullTypeName);
       } catch (IllegalArgumentException t) {
-         throw log.schemaNotFound(fullTypeName);
+         try {
+            genericDescriptor = globalCtx.getDescriptorByName(fullTypeName);
+         } catch (IllegalArgumentException innerT) {
+            throw log.schemaNotFound(fullTypeName);
+         }
       }
       Set<String> seenNames = new HashSet<>();
       if (genericDescriptor instanceof Descriptor) {
