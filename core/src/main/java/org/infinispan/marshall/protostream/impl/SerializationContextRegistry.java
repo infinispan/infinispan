@@ -30,6 +30,7 @@ public interface SerializationContextRegistry {
 
    enum MarshallerType {
       GLOBAL,
-      PERSISTENCE
+      PERSISTENCE,
+      USER
    }
 }
