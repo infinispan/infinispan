@@ -199,7 +199,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    private void registerWithContextRegistry(FileDescriptorSource source) {
       try {
-         serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.GLOBAL, source);
+         serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.USER, source);
       } catch (Exception ignore) {
          // Ignore any exceptions here, as they will be reported in the protobuf cache
       }

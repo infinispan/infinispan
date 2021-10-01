@@ -39,16 +39,13 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
    private final MarshallerContext global = new MarshallerContext();
    private final MarshallerContext persistence = new MarshallerContext();
-   private final SerializationContext user = ProtobufUtil.newSerializationContext();
+   private final MarshallerContext user = new MarshallerContext();
 
    @Start
    public void start() {
-      CommonTypesSchema commonTypesSchema = new CommonTypesSchema();
-      register(commonTypesSchema, user);
-      CommonContainerTypesSchema commonContainerTypesSchema = new CommonContainerTypesSchema();
-      register(commonContainerTypesSchema, user);
-      UserContextInitializerImpl userContextInitializer = new UserContextInitializerImpl();
-      register(userContextInitializer, user);
+      user.addContextInitializer(new CommonTypesSchema());
+      user.addContextInitializer(new CommonContainerTypesSchema());
+      user.addContextInitializer(new UserContextInitializerImpl());
 
       // Add user configured SCIs
       Collection<SerializationContextInitializer> initializers = globalConfig.serialization().contextInitializers();
@@ -56,7 +53,8 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
          // If no SCIs have been explicitly configured, then load all available SCI services
          initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfig.classLoader());
       }
-      initializers.forEach(sci -> register(sci, user));
+      initializers.forEach(user::addContextInitializer);
+      user.update();
 
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
@@ -85,7 +83,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
    @Override
    public ImmutableSerializationContext getUserCtx() {
-      return user;
+      return user.ctx;
    }
 
    @Override
@@ -104,14 +102,9 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    }
 
    private void update(MarshallerType type, Consumer<MarshallerContext> consumer) {
-      if (type == GLOBAL) {
-         synchronized (global) {
-            consumer.accept(global);
-         }
-      } else {
-         synchronized (persistence) {
-            consumer.accept(persistence);
-         }
+      MarshallerContext ctx = type == GLOBAL ? global : type == PERSISTENCE ? persistence : user;
+      synchronized (ctx) {
+         consumer.accept(ctx);
       }
    }
 
