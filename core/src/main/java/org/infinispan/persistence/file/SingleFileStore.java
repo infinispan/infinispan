@@ -288,8 +288,17 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    private void copyEntriesFromOldFile(byte[] magicHeader, FileChannel destChannel, FileChannel sourceChannel,
                                        String sourcePath) throws Exception {
-      if (Arrays.equals(MAGIC_12_0, magicHeader)) {
+      if (magicHeader == null) {
+         // The segment file has the 12.1 magic header
          copyEntriesFromV12_0(destChannel, sourceChannel, sourcePath);
+      } else if (Arrays.equals(MAGIC_12_0, magicHeader)) {
+         if (ctx.getGlobalConfiguration().serialization().marshaller() == null) {
+            // ISPN-13128 Upgrading to 12.0 with the default marshaller might have corrupted the file data
+            copyCorruptDataV12_0(destChannel, sourceChannel, sourcePath);
+         } else {
+            // Data is not corrupt
+            copyEntriesFromV12_0(destChannel, sourceChannel, sourcePath);
+         }
       } else if (Arrays.equals(MAGIC_11_0, magicHeader)) {
          copyEntriesFromV11(destChannel, sourceChannel);
       } else if (Arrays.equals(MAGIC_BEFORE_11, magicHeader)) {
@@ -492,13 +501,6 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private void copyEntriesFromV12_0(FileChannel destChannel, FileChannel sourceChannel, String sourcePath) throws Exception {
-      // ISPN-13128 Corrupt migration data can only be created with default marshaller
-      if (ctx.getGlobalConfiguration().serialization().marshaller() == null) {
-         copyCorruptDataV12_0(destChannel, sourceChannel, sourcePath);
-         return;
-      }
-
-      // Data is not corrupt
       try {
          long currentTs = timeService.wallClockTime();
          ByteBuffer buf = ByteBuffer.allocate(KEY_POS_LATEST);

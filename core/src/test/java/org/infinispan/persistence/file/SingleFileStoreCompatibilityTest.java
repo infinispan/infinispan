@@ -36,12 +36,15 @@ public class SingleFileStoreCompatibilityTest extends AbstractPersistenceCompati
    static {
       files.put(Version._10_1, "sfs/10_1/sfs-store-cache.dat");
       files.put(Version._11_0, "sfs/11_0/sfs-store-cache.dat");
+      files.put(Version._12_1, "sfs/12_1/sfs-store-cache.dat");
    }
 
    private static final Map<Version, byte[]> magic = new HashMap<>();
    static {
       magic.put(Version._10_1, SingleFileStore.MAGIC_BEFORE_11);
       magic.put(Version._11_0, SingleFileStore.MAGIC_11_0);
+      magic.put(Version._12_0, SingleFileStore.MAGIC_12_0);
+      magic.put(Version._12_1, SingleFileStore.MAGIC_12_1);
    }
 
    public SingleFileStoreCompatibilityTest() {
@@ -71,6 +74,13 @@ public class SingleFileStoreCompatibilityTest extends AbstractPersistenceCompati
    @Test(dataProvider = "segmented")
    public void testReadWriteFrom11(boolean oldSegmented, boolean newSegmented) throws Exception {
       setParameters(Version._11_0, oldSegmented, newSegmented);
+
+      doTestReadWrite();
+   }
+
+   @Test(dataProvider = "segmented")
+   public void testReadWriteFrom121(boolean oldSegmented, boolean newSegmented) throws Exception {
+      setParameters(Version._12_1, oldSegmented, newSegmented);
 
       doTestReadWrite();
    }
