@@ -142,7 +142,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
    public void testClientDisconnectListenerCleanup(Method m) throws InterruptedException {
       HotRodClient client1 = clients().get(0);
       HotRodClient
-            newClient = new HotRodClient("127.0.0.1", servers().get(1).getPort(), cacheName(), 60, protocolVersion());
+            newClient = new HotRodClient("127.0.0.1", servers().get(1).getPort(), cacheName(), protocolVersion());
       EventLogListener listener = new EventLogListener();
       assertStatus(newClient.addClientListener(listener, false, Optional.empty(), Optional.empty(), true), Success);
       byte[] key = k(m);
@@ -168,7 +168,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
          client2.remove(key);
          listener1.expectOnlyRemovedEvent(anyCache(), key);
          HotRodServer newServer = startClusteredServer(servers().get(2).getPort() + 50);
-         HotRodClient client4 = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), 60, protocolVersion());
+         HotRodClient client4 = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), protocolVersion());
          try {
             withClientListener(client4, listener2, Optional.empty(), Optional.empty(), false, true, () -> {
                byte[] newKey = k(m, "k2-");

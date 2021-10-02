@@ -73,8 +73,7 @@ public class TestCounterManager implements CounterManager {
    @Override
    public boolean defineCounter(String name, CounterConfiguration configuration) {
       CreateCounterOp op = new CreateCounterOp(client.protocolVersion(), name, configuration);
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       return response.getStatus() == Success;
    }
 
@@ -85,16 +84,14 @@ public class TestCounterManager implements CounterManager {
    @Override
    public boolean isDefined(String name) {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_IS_DEFINED, name);
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       return response.getStatus() == Success;
    }
 
    @Override
    public CounterConfiguration getConfiguration(String counterName) {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_GET_CONFIGURATION, counterName);
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       return response.getStatus() == Success ?
              ((CounterConfigurationTestResponse) response).getConfiguration() :
              null;
@@ -103,15 +100,13 @@ public class TestCounterManager implements CounterManager {
    @Override
    public void remove(String counterName) {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_REMOVE, counterName);
-      client.writeOp(op);
-      client.getResponse(op);
+      client.execute(op);
    }
 
    public Collection<String> getCounterNames() {
       Op op = new Op(0xA0, client.protocolVersion(), (byte) COUNTER_GET_NAMES.getRequestOpCode(), "", null, 0, 0, null,
             0, 0, (byte) 0, 0);
-      client.writeOp(op);
-      CounterNamesTestResponse response = (CounterNamesTestResponse) client.getResponse(op);
+      CounterNamesTestResponse response = client.execute(op);
       return response.getCounterNames();
    }
 }

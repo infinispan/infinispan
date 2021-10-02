@@ -7,8 +7,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 
-import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.server.hotrod.test.HotRodClient;
 import org.testng.annotations.Test;
 
 /**
@@ -61,7 +61,7 @@ public class HotRodConcurrentTest extends HotRodSingleNodeTest {
          this.numOpsPerClient = numOpsPerClient;
       }
 
-      private HotRodClient client = new HotRodClient("127.0.0.1", server().getPort(), cacheName, 60, (byte) 20);
+      private HotRodClient client = new HotRodClient("127.0.0.1", server().getPort(), cacheName, (byte) 20);
 
       @Override
       public Void call() throws Exception {

@@ -77,7 +77,7 @@ public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
          }
 
          try (HotRodClient client = new HotRodClient(servers.get(0).getHost(), servers.get(0).getPort(),
-                                                     CACHE_NAME, 10, HotRodConstants.VERSION_30)) {
+                                                     CACHE_NAME, HotRodConstants.VERSION_30)) {
             client.assertPut(m);
          }
       } finally {

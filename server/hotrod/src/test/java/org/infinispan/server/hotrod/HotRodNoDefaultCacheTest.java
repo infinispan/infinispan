@@ -38,7 +38,7 @@ public class HotRodNoDefaultCacheTest extends SingleCacheManagerTest {
       // super() creates the default cache and we do not want that
       cacheManager = createCacheManager();
       server = startHotRodServer(cacheManager, (String)null);
-      client = new HotRodClient("127.0.0.1", server.getPort(), "", 60, HotRodVersion.HOTROD_21.getVersion());
+      client = new HotRodClient("127.0.0.1", server.getPort(), "", HotRodVersion.HOTROD_21.getVersion());
    }
 
    @Override

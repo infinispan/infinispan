@@ -51,7 +51,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
       hotRodServer = startHotRodServer(cacheManagers.get(0));
-      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort(), cacheName, 60, (byte) 20);
+      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort(), cacheName, (byte) 20);
    }
 
    @AfterClass(alwaysRun = true)

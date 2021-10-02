@@ -56,7 +56,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       NetworkInterface iface = nonLoopInterfaces.iterator().next();
       String address = iface.getInetAddresses().nextElement().getHostAddress();
       hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
-      hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, 60, (byte) 20);
+      hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, (byte) 20);
    }
 
    @AfterClass(alwaysRun = true)
