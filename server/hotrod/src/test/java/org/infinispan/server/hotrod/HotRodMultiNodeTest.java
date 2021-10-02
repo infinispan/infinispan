@@ -80,7 +80,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    protected HotRodClient createClient(HotRodServer server, String cacheName, String address) {
-      return new HotRodClient(address, server.getPort(), cacheName, 60, protocolVersion());
+      return new HotRodClient(address, server.getPort(), cacheName, protocolVersion());
    }
 
    protected HotRodServer startTestHotRodServer(EmbeddedCacheManager cacheManager, int port) {

@@ -1,6 +1,10 @@
 package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.counter.util.EncodeUtil.decodeConfiguration;
+import static org.infinispan.server.hotrod.HotRodConstants.CONTAINS_KEY_REQUEST;
+import static org.infinispan.server.hotrod.HotRodConstants.GET_REQUEST;
+import static org.infinispan.server.hotrod.HotRodConstants.GET_WITH_METADATA;
+import static org.infinispan.server.hotrod.HotRodConstants.GET_WITH_VERSION;
 import static org.infinispan.server.hotrod.OperationStatus.NotExecutedWithPrevious;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.OperationStatus.SuccessWithPrevious;
@@ -18,6 +22,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,7 +67,6 @@ import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
 import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.TimeoutException;
 
@@ -92,6 +100,8 @@ import io.netty.util.concurrent.Future;
  * @since 4.1
  */
 public class HotRodClient implements Closeable {
+   public static final int DEFAULT_TIMEOUT_SECONDS = 60;
+
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
    final static AtomicLong idCounter = new AtomicLong();
 
@@ -103,12 +113,12 @@ public class HotRodClient implements Closeable {
    final SSLEngine sslEngine;
    final Channel ch;
 
-   Map<Long, Op> idToOp = new ConcurrentHashMap<>();
-   private EventLoopGroup eventLoopGroup =
+   final Map<Long, Op> idToOp = new ConcurrentHashMap<>();
+   private final EventLoopGroup eventLoopGroup =
          new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
 
-   public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion) {
-      this(host, port, defaultCacheName, rspTimeoutSeconds, protocolVersion, null);
+   public HotRodClient(String host, int port, String defaultCacheName, byte protocolVersion) {
+      this(host, port, defaultCacheName, DEFAULT_TIMEOUT_SECONDS, protocolVersion, null);
    }
 
    public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion,
@@ -133,11 +143,6 @@ public class HotRodClient implements Closeable {
 
    public String defaultCacheName() {
       return defaultCacheName;
-   }
-
-   public TestResponse getResponse(Op op) {
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
    }
 
    private Channel initializeChannel() {
@@ -192,9 +197,7 @@ public class HotRodClient implements Closeable {
    }
 
    private byte[] k(Method m, String prefix) {
-      byte[] bytes = (prefix + m.getName()).getBytes();
-      log.tracef("String %s is converted to %s bytes", prefix + m.getName(), Util.printArray(bytes, true));
-      return bytes;
+      return (prefix + m.getName()).getBytes();
    }
 
    private byte[] v(Method m) {
@@ -278,7 +281,7 @@ public class HotRodClient implements Closeable {
                                byte[] v, long dataVersion, byte clientIntelligence, int topologyId) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, dataVersion,
             clientIntelligence, topologyId);
-      return execute(op, op.id);
+      return execute(op);
    }
 
    public TestErrorResponse executeExpectBadMagic(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
@@ -290,19 +293,28 @@ public class HotRodClient implements Closeable {
    public TestErrorResponse executePartial(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
                                            byte[] v, long version) {
       Op op = new PartialOp(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, version, (byte) 1, 0);
-      return (TestErrorResponse) execute(op, op.id);
+      return execute(op);
    }
 
    public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
                                byte[] v, long dataVersion, int flags) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, flags, dataVersion, (byte) 1, 0);
-      return execute(op, op.id);
+      return execute(op);
    }
 
    private TestResponse execute(Op op, long expectedResponseMessageId) {
-      writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(expectedResponseMessageId);
+      CompletionStage<TestResponse> responseStage = handler.waitForResponse(expectedResponseMessageId);
+      writeOp(op);
+      try {
+         return responseStage.toCompletableFuture().get(rspTimeoutSeconds, TimeUnit.SECONDS);
+      } catch (ExecutionException e) {
+         throw new CompletionException(e.getCause());
+      } catch (InterruptedException e) {
+         throw new CompletionException(e);
+      } catch (java.util.concurrent.TimeoutException e) {
+         throw new TimeoutException("No response from server in " + rspTimeoutSeconds + "s", e);
+      }
    }
 
    public boolean writeOp(Op op) {
@@ -310,6 +322,7 @@ public class HotRodClient implements Closeable {
    }
 
    public boolean writeOp(Op op, boolean assertSuccess) {
+      log.tracef("Sending request %s", op);
       idToOp.put(op.id, op);
       ChannelFuture future = ch.writeAndFlush(op);
       if (!future.awaitUninterruptibly(30, TimeUnit.SECONDS))
@@ -350,15 +363,10 @@ public class HotRodClient implements Closeable {
    }
 
    private TestResponse get(byte code, byte[] k, int flags) {
+      assertTrue(code == GET_REQUEST || code == GET_WITH_VERSION || code == CONTAINS_KEY_REQUEST || code == GET_WITH_METADATA);
+
       Op op = new Op(0xA0, protocolVersion, code, defaultCacheName, k, 0, 0, null, flags, 0, (byte) 1, 0);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      if (code == 0x03 || code == 0x11 || code == 0x0F || code == 0x1B) {
-         return handler.getResponse(op.id);
-      } else {
-         return null;
-      }
+      return execute(op);
    }
 
    public TestResponse clear() {
@@ -367,10 +375,7 @@ public class HotRodClient implements Closeable {
 
    public Map<String, String> stats() {
       StatsOp op = new StatsOp(0xA0, protocolVersion, (byte) 0x15, defaultCacheName, (byte) 1, 0, null);
-      writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      TestStatsResponse resp = (TestStatsResponse) handler.getResponse(op.id);
+      TestStatsResponse resp = execute(op);
       return resp.stats;
    }
 
@@ -412,15 +417,12 @@ public class HotRodClient implements Closeable {
 
    public TestAuthResponse auth(SaslClient sc) throws SaslException {
       byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(Util.EMPTY_BYTE_ARRAY) : Util.EMPTY_BYTE_ARRAY;
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
       AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, sc.getMechanismName(), saslResponse);
-      writeOp(op);
-      TestAuthResponse response = (TestAuthResponse) handler.getResponse(op.id);
+      TestAuthResponse response = execute(op);
       while (!sc.isComplete() || !response.complete) {
          saslResponse = sc.evaluateChallenge(response.challenge);
          op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, "", saslResponse);
-         writeOp(op);
-         response = (TestAuthResponse) handler.getResponse(op.id);
+         response = execute(op);
       }
       sc.dispose();
       return response;
@@ -433,16 +435,16 @@ public class HotRodClient implements Closeable {
             (byte) 1, 0, listener.getId(), includeState, filterFactory, converterFactory, useRawData);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       handler.addClientListener(listener);
-      writeOp(op);
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse removeClientListener(byte[] listenerId) {
       RemoveClientListenerOp op = new RemoveClientListenerOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, listenerId);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      TestResponse response = handler.getResponse(op.id);
-      if (response.getStatus() == Success) handler.removeClientListener(listenerId);
+      TestResponse response = execute(op);
+      if (response.getStatus() == Success) {
+         ClientHandler handler = (ClientHandler) ch.pipeline().last();
+         handler.removeClientListener(listenerId);
+      }
       return response;
    }
 
@@ -503,19 +505,9 @@ public class HotRodClient implements Closeable {
       return execute(op);
    }
 
-   <T> T execute(Op op) {
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (T)handler.getResponse(op.id);
+    public <T> T execute(Op op) {
+      return (T) execute(op, op.id);
    }
-
-   /*public TestPutStreamResponse putStream(byte[] k, int lifespan, int maxIdle, byte[] v, long dataVersion) {
-      PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, k, lifespan, maxIdle, v, dataVersion);
-      writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestPutStreamResponse) handler.getResponse(op.id);
-   }*/
 
    public void registerCounterNotificationManager(TestCounterNotificationManager manager) {
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
@@ -559,7 +551,6 @@ class Encoder extends MessageToByteEncoder<Object> {
 
    @Override
    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) {
-      log.tracef("Encode %s so that it's sent to the server", msg);
       if (msg instanceof PartialOp) {
          PartialOp partial = (PartialOp) msg;
          buffer.writeByte((byte) partial.magic); // magic
@@ -744,14 +735,13 @@ class Decoder extends ReplayingDecoder<Void> {
 
    @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) {
-      log.trace("Decode response from server");
       buf.readUnsignedByte(); // magic byte
       long id = ExtendedByteBuf.readUnsignedLong(buf);
       HotRodOperation opCode = HotRodOperation.fromResponseOpCode((byte) buf.readUnsignedByte());
       OperationStatus status = OperationStatus.fromCode((byte) buf.readUnsignedByte());
       short topologyChangeMarker = buf.readUnsignedByte();
       Op op = client.idToOp.get(id);
-      log.tracef("messageId=%d opCode=%s status=%s topologyChange=%d", id, opCode, status, topologyChangeMarker);
+      log.tracef("Decoding response messageId=%d opCode=%s status=%s topologyChange=%d", id, opCode, status, topologyChangeMarker);
 
       AbstractTestTopologyAwareResponse topologyChangeResponse;
       if (topologyChangeMarker == 1) {
@@ -1021,7 +1011,7 @@ class Decoder extends ReplayingDecoder<Void> {
                new String(ByteBufUtil.getBytes(buf, buf.readerIndex(), buf.writerIndex() - buf.readerIndex())));
       }
       if (resp != null) {
-         log.tracef("Got response from server: %s", resp);
+         log.tracef("Got response: %s", resp);
          out.add(resp);
       }
    }
@@ -1135,7 +1125,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
       this.rspTimeoutSeconds = rspTimeoutSeconds;
    }
 
-   private Map<Long, TestResponse> responses = new ConcurrentHashMap<>();
+   private Map<Long, CompletableFuture<TestResponse>> responses = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, TestClientListener> clientListeners = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, TestCounterNotificationManager> clientCounterListeners = new ConcurrentHashMap<>();
 
@@ -1155,12 +1145,17 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
    public void channelRead(ChannelHandlerContext ctx, Object msg) {
       if (msg instanceof TestKeyWithVersionEvent) {
          TestKeyWithVersionEvent e = (TestKeyWithVersionEvent) msg;
+         TestClientListener listener = clientListeners.get(new WrappedByteArray(e.listenerId));
+         if (listener == null) {
+            log.errorf("Could not find listener for event %s", msg);
+            return;
+         }
          switch (e.getOperation()) {
             case CACHE_ENTRY_CREATED_EVENT:
-               clientListeners.get(new WrappedByteArray(e.listenerId)).onCreated(e);
+               listener.onCreated(e);
                break;
             case CACHE_ENTRY_MODIFIED_EVENT:
-               clientListeners.get(new WrappedByteArray(e.listenerId)).onModified(e);
+               listener.onModified(e);
                break;
          }
       } else if (msg instanceof TestKeyEvent) {
@@ -1170,31 +1165,36 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
          TestCustomEvent e = (TestCustomEvent) msg;
          clientListeners.get(new WrappedByteArray(e.listenerId)).onCustom(e);
       } else if (msg instanceof TestCounterEventResponse) {
-         log.tracef("Put %s in counter events", msg);
-         clientCounterListeners.get(((TestCounterEventResponse) msg).getListenerId()).accept((TestCounterEventResponse) msg);
+         TestCounterNotificationManager listener =
+               clientCounterListeners.get(((TestCounterEventResponse) msg).getListenerId());
+         if (listener == null) {
+            log.errorf("Could not find listener for event %s", msg);
+            return;
+         }
+         listener.accept((TestCounterEventResponse) msg);
       } else if (msg instanceof TestResponse) {
          TestResponse resp = (TestResponse) msg;
-         log.tracef("Put %s in responses", resp);
-         responses.put(resp.getMessageId(), resp);
+         CompletableFuture<TestResponse> cf = responses.remove(resp.getMessageId());
+         if (cf == null) {
+            log.errorf("Could not find request for response %s", resp);
+            return;
+         }
+         cf.complete(resp);
       } else {
-         throw new IllegalArgumentException("Unsupport object: " + msg);
+         throw new IllegalArgumentException("Unsupported object: " + msg);
       }
    }
 
-   TestResponse getResponse(long messageId) {
-      // Very TODO very primitive way of waiting for a response. Convert to a Future
-      int i = 0;
-      TestResponse v;
-      do {
-         v = responses.get(messageId);
-         if (v == null) {
-            TestingUtil.sleepThread(100);
-            i += 1;
-         }
-      }
-      while (v == null && i < (rspTimeoutSeconds * 10));
+   @Override
+   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+      super.channelInactive(ctx);
+      responses.forEach((messageId, responseFuture) -> responseFuture.completeExceptionally(new ClosedChannelException()));
+   }
 
-      return v;
+   CompletionStage<TestResponse> waitForResponse(long expectedResponseMessageId) {
+      CompletableFuture<TestResponse> cf = new CompletableFuture<>();
+      responses.put(expectedResponseMessageId, cf);
+      return cf;
    }
 }
 

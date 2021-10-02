@@ -33,7 +33,6 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestBulkGetKeysResponse;
 import org.infinispan.server.hotrod.test.TestBulkGetResponse;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
-import org.infinispan.server.hotrod.test.TestGetResponse;
 import org.infinispan.server.hotrod.test.TestGetWithVersionResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.test.TestResponseWithPrevious;
@@ -73,8 +72,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    public void testPutOnUndefinedCache(Method m) {
-      TestErrorResponse
-            resp =
+      TestErrorResponse resp =
             ((TestErrorResponse) client().execute(0xA0, (byte) 0x01, "boomooo", k(m), 0, 0, v(m), 0, (byte) 1, 0));
       assertTrue(resp.msg.contains("CacheNotFoundException"));
       assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, resp.status, ParseError);
@@ -92,14 +90,12 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testPutWithLifespan(Method m) throws InterruptedException {
       client().assertPut(m, 1, 0);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), 1000, -1);
    }
 
    public void testPutWithMaxIdle(Method m) throws InterruptedException {
       client().assertPut(m, 0, 1);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), -1, 1000);
    }
 
    public void testPutWithPreviousValue(Method m) {
@@ -132,15 +128,13 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
    public void testPutIfAbsentWithLifespan(Method m) throws InterruptedException {
       TestResponse resp = client().putIfAbsent(k(m), 1, 0, v(m));
       assertStatus(resp, Success);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), 1000, -1);
    }
 
    public void testPutIfAbsentWithMaxIdle(Method m) throws InterruptedException {
       TestResponse resp = client().putIfAbsent(k(m), 0, 1, v(m));
       assertStatus(resp, Success);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), -1, 1000);
    }
 
    public void testPutIfAbsentWithPreviousValue(Method m) {
@@ -166,16 +160,14 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client().assertPut(m);
       TestResponse resp = client().replace(k(m), 1, 0, v(m, "v1-"));
       assertStatus(resp, Success);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), 1000, -1);
    }
 
    public void testReplaceWithMaxIdle(Method m) throws InterruptedException {
       client().assertPut(m);
       TestResponse resp = client().replace(k(m), 0, 1, v(m, "v1-"));
       assertStatus(resp, Success);
-      Thread.sleep(1100);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), -1, 1000);
    }
 
    public void testReplaceWithPreviousValue(Method m) {
@@ -264,27 +256,13 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       TestResponse resp2 = client().replaceIfUnmodified(k(m), lifespanSecs, 0, v(m, "v1-"), resp.dataVersion);
       assertStatus(resp2, Success);
 
-      while (System.currentTimeMillis() < startTime + lifespan) {
-         TestGetResponse getResponse = client().assertGet(m);
-         // The entry could have expired before our request got to the server
-         // Scala doesn't support break, so we need to test the current time twice
-         if (System.currentTimeMillis() < startTime + lifespan) {
-            assertSuccess(getResponse, v(m, "v1-"));
-            Thread.sleep(100);
-         }
-      }
-
-      waitNotFound(startTime, lifespan, m);
-      assertKeyDoesNotExist(client().assertGet(m));
+      assertEntryExpiration(k(m), lifespan, -1);
    }
 
-   private void waitNotFound(long startTime, long lifespan, Method m) throws InterruptedException {
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
-         if (Success != client().assertGet(m).getStatus())
-            break;
-
-         Thread.sleep(50);
-      }
+   private void assertEntryExpiration(byte[] key, long lifespan, int maxIdle) {
+      CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(key);
+      assertEquals(lifespan, entry.getLifespan());
+      assertEquals(maxIdle, entry.getMaxIdle());
    }
 
    public void testRemoveBasic(Method m) {
@@ -412,8 +390,10 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testBulkGet(Method m) {
       int size = 100;
+      byte[][] keys = new byte[size][];
       for (int i = 0; i < size; i++) {
-         TestResponse resp = client().put(k(m, i + "k-"), 0, 0, v(m, i + "v-"));
+         keys[i] = k(m, i + "k-");
+         TestResponse resp = client().put(keys[i], 0, 0, v(m, i + "v-"));
          assertStatus(resp, Success);
       }
       TestBulkGetResponse resp = client().bulkGet();
@@ -421,7 +401,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       Map<byte[], byte[]> bulkData = resp.bulkData;
       assertEquals(size, bulkData.size());
       for (int i = 0; i < size; i++) {
-         byte[] key = k(m, i + "k-");
+         byte[] key = keys[i];
          List<Map.Entry<byte[], byte[]>> filtered = bulkData.entrySet().stream()
                                                             .filter(entry -> Arrays.equals(entry.getKey(), key))
                                                             .collect(Collectors.toList());
@@ -434,20 +414,22 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData;
       assertEquals(size, bulkData.size());
       for (int i = 0; i < size; i++) {
-         byte[] key = k(m, i + "k-");
+         byte[] key = keys[i];
          List<Map.Entry<byte[], byte[]>> filtered = bulkData.entrySet().stream()
                                                             .filter(entry -> Arrays.equals(entry.getKey(), key))
                                                             .collect(Collectors.toList());
          if (!filtered.isEmpty()) {
-            assertTrue(java.util.Arrays.equals(filtered.get(0).getValue(), v(m, i + "v-")));
+            assertEquals(filtered.get(0).getValue(), v(m, i + "v-"));
          }
       }
    }
 
    public void testBulkGetKeys(Method m) {
       int size = 100;
+      byte[][] keys = new byte[size][];
       for (int i = 0; i < size; i++) {
-         TestResponse resp = client().put(k(m, i + "k-"), 0, 0, v(m, i + "v-"));
+         keys[i] = k(m, i + "k-");
+         TestResponse resp = client().put(keys[i], 0, 0, v(m, i + "v-"));
          assertStatus(resp, Success);
       }
       TestBulkGetKeysResponse resp = client().bulkGetKeys();
@@ -455,8 +437,9 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       Set<byte[]> bulkData = resp.bulkData;
       assertEquals(size, bulkData.size());
       for (int i = 0; i < size; i++) {
-         int finalI = i;
-         List<byte[]> filtered = bulkData.stream().filter(bytes -> Arrays.equals(bytes, k(m, finalI + "k-")))
+         byte[] key = keys[i];
+         List<byte[]> filtered = bulkData.stream()
+                                         .filter(bytes -> Arrays.equals(bytes, key))
                                          .collect(Collectors.toList());
          assertEquals(1, filtered.size());
       }
@@ -466,8 +449,9 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData;
       assertEquals(size, bulkData.size());
       for (int i = 0; i < size; i++) {
-         int finalI = i;
-         List<byte[]> filtered = bulkData.stream().filter(bytes -> java.util.Arrays.equals(bytes, k(m, finalI + "k-")))
+         byte[] key = keys[i];
+         List<byte[]> filtered = bulkData.stream()
+                                         .filter(bytes -> java.util.Arrays.equals(bytes, key))
                                          .collect(Collectors.toList());
          assertEquals(1, filtered.size());
       }
@@ -477,8 +461,9 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       bulkData = resp.bulkData;
       assertEquals(size, bulkData.size());
       for (int i = 0; i < size; i++) {
-         int finalI = i;
-         List<byte[]> filtered = bulkData.stream().filter(bytes -> Arrays.equals(bytes, k(m, finalI + "k-")))
+         byte[] key = keys[i];
+         List<byte[]> filtered = bulkData.stream()
+                                         .filter(bytes -> Arrays.equals(bytes, key))
                                          .collect(Collectors.toList());
          assertEquals(1, filtered.size());
       }

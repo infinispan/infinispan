@@ -91,8 +91,7 @@ class TestStrongCounter implements StrongCounter {
    @Override
    public CompletableFuture<Void> remove() {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_REMOVE, name);
-      client.writeOp(op);
-      client.getResponse(op);
+      client.execute(op);
       return CompletableFutures.completedNull();
    }
 
@@ -111,8 +110,7 @@ class TestStrongCounter implements StrongCounter {
 
    private <T> CompletableFuture<T> executeOp(CounterOp op,
          BiConsumer<CompletableFuture<T>, TestResponse> responseHandler, BooleanSupplier canReachUpperBound) {
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       CompletableFuture<T> future = new CompletableFuture<>();
       switch (response.getStatus()) {
          case Success:
