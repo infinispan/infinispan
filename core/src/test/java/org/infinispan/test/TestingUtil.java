@@ -1777,6 +1777,12 @@ public class TestingUtil {
       }
    }
 
+   public static void assertBetween(long lowerBound, long upperBound, long actual) {
+      if (actual < lowerBound || upperBound < actual) {
+         fail("Expected between:<" + lowerBound + "> and:<" + upperBound + "> but was:<" + actual + ">");
+      }
+   }
+
    public static MBeanServer getMBeanServer(Cache<?, ?> cache) {
       return extractComponent(cache, CacheJmxRegistration.class).getMBeanServer();
    }
