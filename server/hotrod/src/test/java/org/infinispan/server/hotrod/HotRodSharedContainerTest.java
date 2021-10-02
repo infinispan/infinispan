@@ -57,9 +57,9 @@ public class HotRodSharedContainerTest extends MultipleCacheManagersTest {
       hotRodServer2 =
             startHotRodServer(cacheManagers.get(0), basePort + 50, new HotRodServerConfigurationBuilder().name("2"));
 
-      hotRodClient1 = new HotRodClient("127.0.0.1", hotRodServer1.getPort(), cacheName, 60, (byte) 20);
+      hotRodClient1 = new HotRodClient("127.0.0.1", hotRodServer1.getPort(), cacheName, (byte) 20);
 
-      hotRodClient2 = new HotRodClient("127.0.0.1", hotRodServer2.getPort(), cacheName, 60, (byte) 20);
+      hotRodClient2 = new HotRodClient("127.0.0.1", hotRodServer2.getPort(), cacheName, (byte) 20);
       hotRodClient1.put(k(m), 0, 0, v(m));
       assertSuccess(hotRodClient2.get(k(m), 0), v(m));
    }

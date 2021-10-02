@@ -148,7 +148,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
    }
 
    private HotRodClient createClient(String cacheName) {
-      return new HotRodClient("127.0.0.1", servers().get(0).getPort(), cacheName, 60, protocolVersion());
+      return new HotRodClient("127.0.0.1", servers().get(0).getPort(), cacheName, protocolVersion());
    }
 
 }

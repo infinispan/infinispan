@@ -49,8 +49,7 @@ class TestWeakCounter implements WeakCounter {
    @Override
    public long getValue() {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_GET, name);
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       switch (response.getStatus()) {
          case Success:
             return ((CounterValueTestResponse) response).getValue();
@@ -86,8 +85,7 @@ class TestWeakCounter implements WeakCounter {
    @Override
    public CompletableFuture<Void> remove() {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_REMOVE, name);
-      client.writeOp(op);
-      client.getResponse(op);
+      client.execute(op);
       return CompletableFutures.completedNull();
    }
 
@@ -97,8 +95,7 @@ class TestWeakCounter implements WeakCounter {
    }
 
    private CompletableFuture<Void> executeOp(CounterOp op) {
-      client.writeOp(op);
-      TestResponse response = client.getResponse(op);
+      TestResponse response = client.execute(op);
       CompletableFuture<Void> future = new CompletableFuture<>();
       switch (response.getStatus()) {
          case Success:

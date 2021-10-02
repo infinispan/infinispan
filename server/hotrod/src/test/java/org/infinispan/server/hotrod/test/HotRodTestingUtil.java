@@ -199,9 +199,7 @@ public class HotRodTestingUtil {
    }
 
    public static byte[] k(Method m, String prefix) {
-      byte[] bytes = (prefix + m.getName()).getBytes();
-      log.tracef("String %s is converted to %s bytes", prefix + m.getName(), Util.printArray(bytes, true));
-      return bytes;
+      return (prefix + m.getName()).getBytes();
    }
 
    public static byte[] v(Method m, String prefix) {

@@ -52,6 +52,7 @@ public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
             .trustStoreType("pkcs12")
             .getContext();
       SSLEngine sslEngine = SslContextFactory.getEngine(sslContext, true, false);
-      return new HotRodClient(host(), hotRodServer.getPort(), cacheName, 60, protocolVersion, sslEngine);
+      return new HotRodClient(hotRodServer.getHost(), hotRodServer.getPort(), cacheName,
+                              HotRodClient.DEFAULT_TIMEOUT_SECONDS, protocolVersion, sslEngine);
    }
 }

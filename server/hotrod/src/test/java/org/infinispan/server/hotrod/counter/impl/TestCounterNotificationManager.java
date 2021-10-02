@@ -61,8 +61,7 @@ public class TestCounterNotificationManager {
    private List<UserListener<?>> add(String counterName, List<UserListener<?>> list, UserListener<?> listener) {
       if (list == null) {
          CounterListenerOp op = createListener(client.protocolVersion(), counterName, listenerId.getBytes());
-         client.writeOp(op);
-         TestResponse response = client.getResponse(op);
+         TestResponse response = client.execute(op);
          switch (response.getStatus()) {
             case Success:
                break;
@@ -84,8 +83,7 @@ public class TestCounterNotificationManager {
          list.remove(listener);
          if (list.isEmpty()) {
             CounterListenerOp op = removeListener(client.protocolVersion(), counterName, listenerId.getBytes());
-            client.writeOp(op);
-            TestResponse response = client.getResponse(op);
+            TestResponse response = client.execute(op);
             switch (response.getStatus()) {
                case Success:
                   break;

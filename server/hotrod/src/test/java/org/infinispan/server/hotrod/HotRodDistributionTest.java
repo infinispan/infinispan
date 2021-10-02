@@ -90,7 +90,7 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
       assertSuccess(client2.get(k(m), 0), v(m, "v5-"));
 
       HotRodServer newServer = startClusteredServer(servers().get(1).getPort() + 25);
-      HotRodClient newClient = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), 60, protocolVersion());
+      HotRodClient newClient = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), protocolVersion());
       List<HotRodServer> allServers =
             Stream.concat(Stream.of(newServer), servers().stream()).collect(Collectors.toList());
       try {
