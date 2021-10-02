@@ -14,6 +14,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.test.TestingUtil.assertBetween;
 import static org.infinispan.test.TestingUtil.generateRandomString;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -511,25 +512,32 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testLifespan2x(Method m) {
       try (HotRodClient client2x = connectClient(HotRodVersion.HOTROD_29.getVersion())) {
-         long now = System.currentTimeMillis();
-         int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
-         assertStatus(client2x.put(k(m), seconds, seconds, v(m)), Success);
+         // Expire in 1 day by setting the lifespan in seconds since the Unix epoch
+         long startMillis = System.currentTimeMillis();
+         long lifespanMillis = TimeUnit.MINUTES.toMillis(1);
+         int expirationUnixTime = (int) ((startMillis + lifespanMillis) / 1000);
+         assertStatus(client2x.put(k(m), expirationUnixTime, expirationUnixTime, v(m)), Success);
+
          CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
-         // Use rounding to accommodate for processing delays
-         assertEquals(seconds / 100, (entry.getLifespan() + now) / 100_000);
-         assertEquals(seconds / 100, (entry.getMaxIdle() + now) / 100_000);
+         // The lifespan is set to expirationUnixTime * 1000 - <current time on the server>
+         long endMillis = System.currentTimeMillis();
+         long lowerBound = expirationUnixTime * 1000L - endMillis;
+         long upperBound = expirationUnixTime * 1000L - startMillis;
+         assertBetween(lowerBound, upperBound, entry.getLifespan());
+         assertBetween(lowerBound, upperBound, entry.getMaxIdle());
       }
    }
 
    public void testLifespan3x(Method m) {
       try (HotRodClient client3x = connectClient(HotRodVersion.HOTROD_30.getVersion())) {
-         long now = System.currentTimeMillis();
-         int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
-         assertStatus(client3x.put(k(m), seconds, seconds, v(m)), Success);
+         // Set a lifespan that would be interpreted as seconds since the Unix epoch in previous versions
+         int expirationSeconds = (int) TimeUnit.DAYS.toSeconds(90);
+         assertStatus(client3x.put(k(m), expirationSeconds, expirationSeconds, v(m)), Success);
+
          CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
-         // Ensure we get the same value
-         assertEquals(seconds, entry.getLifespan() / 1000);
-         assertEquals(seconds, entry.getMaxIdle() / 1000);
+         // The lifespan is interpreted as seconds since inserted, not since the Unix epoch
+         assertEquals(expirationSeconds * 1000L, entry.getLifespan());
+         assertEquals(expirationSeconds * 1000L, entry.getMaxIdle());
       }
    }
 }
