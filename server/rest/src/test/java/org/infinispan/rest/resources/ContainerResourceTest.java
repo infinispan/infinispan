@@ -292,8 +292,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertEquals(2, cmInfo.at("cluster_members").asList().size());
       assertEquals(2, cmInfo.at("cluster_members_physical_addresses").asList().size());
       assertEquals("LON-1", cmInfo.at("local_site").asString());
-      assertTrue(cmInfo.at("site_coordinator").asBoolean());
-      assertEquals(1, cmInfo.at("site_coordinators_address").asList().size());
+      assertTrue(cmInfo.at("relay_node").asBoolean());
+      assertEquals(1, cmInfo.at("relay_nodes_address").asList().size());
       assertEquals(1, cmInfo.at("sites_view").asList().size());
       assertEquals("LON-1", cmInfo.at("sites_view").asList().get(0));
       assertTrue(cmInfo.at("rebalancing_enabled").asBoolean());

@@ -44,7 +44,9 @@ import org.kohsuke.MetaInfServices;
             Site.ClearPushStateStatus.class,
             Site.View.class,
             Site.Name.class,
-            Site.StateTransferMode.class
+            Site.StateTransferMode.class,
+            Site.IsRelayNode.class,
+            Site.RelayNodes.class
       }
 )
 public class Site extends CliCommand {
@@ -365,6 +367,54 @@ public class Site extends CliCommand {
       @Override
       public Optional<String> getCacheName(Resource activeResource) {
          return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
+      }
+   }
+
+   @CommandDefinition(name = "relay-nodes", description = "Returns the list of relay nodes.", activator = ConnectionActivator.class)
+   public static class RelayNodes extends CliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         try {
+            Connection connection = invocation.getContext().getConnection();
+            connection.refreshServerInfo();
+            invocation.println(String.valueOf(connection.getRelayNodes()));
+            return CommandResult.SUCCESS;
+         } catch (IOException e) {
+            throw new CommandException(e);
+         }
+      }
+   }
+
+   @CommandDefinition(name = "is-relay-node", description = "Returns true if this node is a relay node.", activator = ConnectionActivator.class)
+   public static class IsRelayNode extends CliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         try {
+            Connection connection = invocation.getContext().getConnection();
+            connection.refreshServerInfo();
+            invocation.println(String.valueOf(connection.isRelayNode()));
+            return CommandResult.SUCCESS;
+         } catch (IOException e) {
+            throw new CommandException(e);
+         }
       }
    }
 }

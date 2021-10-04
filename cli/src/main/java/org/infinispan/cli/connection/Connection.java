@@ -77,6 +77,10 @@ public interface Connection extends Closeable {
 
    String getLocalSiteName();
 
+   boolean isRelayNode();
+
+   Collection<String> getRelayNodes();
+
    Collection<String> getConnectorNames() throws IOException;
 
    MediaType getEncoding();

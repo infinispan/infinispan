@@ -295,7 +295,7 @@ public class MockTransport implements Transport {
    }
 
    @Override
-   public Collection<Address> getSiteCoordinatorsAddress() {
+   public Collection<Address> getRelayNodesAddress() {
       return Collections.emptyList();
    }
 
