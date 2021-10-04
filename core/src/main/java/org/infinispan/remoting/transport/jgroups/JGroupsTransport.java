@@ -678,7 +678,7 @@ public class JGroupsTransport implements Transport {
          }
       }
 
-      if (props.containsKey(SOCKET_FACTORY) && !props.containsKey(CHANNEL_CONFIGURATOR)) {
+      if (props != null && props.containsKey(SOCKET_FACTORY) && !props.containsKey(CHANNEL_CONFIGURATOR)) {
          Protocol protocol = channel.getProtocolStack().getTopProtocol();
          protocol.setSocketFactory((SocketFactory) props.get(SOCKET_FACTORY));
       }
@@ -906,7 +906,7 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public Collection<Address> getSiteCoordinatorsAddress() {
+   public Collection<Address> getRelayNodesAddress() {
       RELAY2 relay2 = findRelay2();
       if (relay2 == null) {
          return Collections.emptyList();

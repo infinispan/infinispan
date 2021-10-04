@@ -1,9 +1,15 @@
 package org.infinispan.server.cli;
 
 import java.io.File;
+import java.util.List;
 import java.util.Properties;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -44,6 +50,7 @@ public class XSiteCliOperations {
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(XSiteCliOperations.class));
       Util.recursiveFileRemove(workingDir);
+      //noinspection ResultOfMethodCallIgnored
       workingDir.mkdirs();
       properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
@@ -150,6 +157,26 @@ public class XSiteCliOperations {
       });
    }
 
+   @Test
+   public void testRelayNodeInfo() {
+      doWithTerminal(terminal -> {
+         connect(terminal, XSiteIT.LON);
+
+         terminal.readln("site is-relay-node");
+         terminal.assertContains("true");
+         terminal.clear();
+
+         // max_site_master is 3 so the relay-nodes is the same as cluster_members
+         // method has side effects, invoke before "site relay-nodes"
+         List<String> view = extractView(terminal);
+
+         terminal.readln("site relay-nodes");
+         view.forEach(terminal::assertContains);
+
+         terminal.clear();
+      });
+   }
+
    private void connect(AeshTestConnection terminal, String site) {
       // connect
       terminal.readln("connect " + hostAndPort(site));
@@ -172,6 +199,26 @@ public class XSiteCliOperations {
          }
       }
       throw new IllegalStateException("Site " + site + " not found.");
+   }
+
+   private static List<String> extractView(AeshTestConnection terminal) {
+      terminal.readln("describe");
+      // make sure the command succeed
+      terminal.assertContains("//containers/default");
+      String allOutput = terminal.getOutputBuffer();
+      Pattern pattern = Pattern.compile("^\\s*\"cluster_members\"\\s*:\\s*\\[\\s+(.*)\\s+],\\s*$");
+      for (String line : allOutput.split(Config.getLineSeparator())) {
+         line = line.trim();
+         Matcher matcher = pattern.matcher(line);
+         if (matcher.matches()) {
+            terminal.clear();
+            return Stream.of(matcher.group(1).split(","))
+                  .map(s -> s.replaceAll("[\\[\\]\"]", ""))
+                  .collect(Collectors.toList());
+         }
+      }
+      terminal.clear();
+      throw new IllegalStateException("Unable to find 'cluster_members' in:\n" + allOutput);
    }
 
    private void doWithTerminal(Consumer<AeshTestConnection> consumer) {

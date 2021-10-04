@@ -1069,6 +1069,26 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return cacheManagerInfo.getClusterName();
    }
 
+   @ManagedAttribute(description = "Returns the local site name", displayName = "Local site name", dataType = DataType.TRAIT)
+   public String getSite() {
+      return cacheManagerInfo.getLocalSite();
+   }
+
+   @ManagedAttribute(description = "List of all online sites", displayName = "Online Sites", dataType = DataType.TRAIT)
+   public String getSiteView() {
+      return String.valueOf(cacheManagerInfo.getSites());
+   }
+
+   @ManagedAttribute(description = "Indicates whether this node is a relay node", displayName = "Is relay node?", dataType = DataType.TRAIT)
+   public boolean isRelayNode() {
+      return cacheManagerInfo.isRelayNode();
+   }
+
+   @ManagedAttribute(description = "List of relay nodes in the local site", displayName = "Relay nodes", dataType = DataType.TRAIT)
+   public String getRelayNodesAddress() {
+      return String.valueOf(cacheManagerInfo.getRelayNodesAddress());
+   }
+
    String getLogicalAddressString() {
       return getAddress() == null ? "local" : getAddress().toString();
    }

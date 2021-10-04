@@ -56,6 +56,8 @@ public class RestConnection implements Connection, Closeable {
    private String serverInfo;
    private List<String> sitesView;
    private String localSite;
+   private boolean relayNode;
+   private List<String> relayNodes;
    private final Path workingDir;
 
    public RestConnection(RestClientConfigurationBuilder builder) {
@@ -368,6 +370,16 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public boolean isRelayNode() {
+      return relayNode;
+   }
+
+   @Override
+   public Collection<String> getRelayNodes() {
+      return relayNodes;
+   }
+
+   @Override
    public Collection<String> getConnectorNames() throws IOException {
       return parseBody(fetch(client.server().connectorNames()), List.class);
    }
@@ -407,6 +419,8 @@ public class RestConnection implements Connection, Closeable {
          localSite = (String) cacheManagerInfo.get("local_site");
          sitesView = new ArrayList<>((Collection<String>) cacheManagerInfo.get("sites_view"));
          Collections.sort(sitesView);
+         relayNode = (Boolean) cacheManagerInfo.get("relay_node");
+         relayNodes = (List<String>) cacheManagerInfo.get("relay_nodes_address");
          clusterMembers = (Collection<String>) cacheManagerInfo.get("cluster_members");
          if (nodeAddress != null) {
             serverInfo = nodeAddress + "@" + clusterName;

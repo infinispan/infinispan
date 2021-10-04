@@ -184,8 +184,8 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public Collection<Address> getSiteCoordinatorsAddress() {
-      return actual.getSiteCoordinatorsAddress();
+   public Collection<Address> getRelayNodesAddress() {
+      return actual.getRelayNodesAddress();
    }
 
    @Override

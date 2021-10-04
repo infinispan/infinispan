@@ -314,7 +314,7 @@ public interface Transport extends Lifecycle {
    /**
     * @return The current site coordinators {@link Address}.
     */
-   Collection<Address> getSiteCoordinatorsAddress();
+   Collection<Address> getRelayNodesAddress();
 
    /**
     * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.

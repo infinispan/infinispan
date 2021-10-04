@@ -30,6 +30,10 @@ SYNOPSIS
 
 *site view*
 
+*site is-relay-node*
+
+*site relay-nodes*
+
 
 OPTIONS
 -------
@@ -87,3 +91,9 @@ Returns the name of the local site. If cross-site replication is not configured,
 
 `site view` +
 Returns a list of names for all sites or an empty list ("[]") if cross-site replication is not configured.
+
+`site is-relay-node` +
+Returns true if this node is a relay node.
+
+`site relay-nodes` +
+Returns a list of relay nodes (logical names).

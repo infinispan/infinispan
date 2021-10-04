@@ -126,7 +126,7 @@ public class CacheManagerInfo implements JsonSerialization {
             .orElseGet(Collections::emptySet);
    }
 
-   public boolean isSiteCoordinator() {
+   public boolean isRelayNode() {
       Transport transport = cacheManager.getTransport();
       return transport != null && transport.isSiteCoordinator();
    }
@@ -140,12 +140,12 @@ public class CacheManagerInfo implements JsonSerialization {
       }
    }
 
-   public Collection<String> getSiteCoordinatorsAddress() {
+   public Collection<String> getRelayNodesAddress() {
       Transport transport = cacheManager.getTransport();
       if (transport == null) {
          return LOCAL_NODE;
       }
-      return transport.getSiteCoordinatorsAddress().stream().map(Objects::toString).collect(Collectors.toList());
+      return transport.getRelayNodesAddress().stream().map(Objects::toString).collect(Collectors.toList());
    }
 
    @Override
@@ -167,8 +167,8 @@ public class CacheManagerInfo implements JsonSerialization {
             .set("cluster_size", getClusterSize())
             .set("defined_caches", Json.make(getDefinedCaches()))
             .set("local_site", getLocalSite())
-            .set("site_coordinator", isSiteCoordinator())
-            .set("site_coordinators_address", getSiteCoordinatorsAddress())
+            .set("relay_node", isRelayNode())
+            .set("relay_nodes_address", Json.make(getRelayNodesAddress()))
             .set("sites_view", Json.make(getSites()));
 
       Boolean rebalancingEnabled = isRebalancingEnabled();
