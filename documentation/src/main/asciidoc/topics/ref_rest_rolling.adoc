@@ -14,7 +14,7 @@ You must provide a `remote-store` definition in JSON format as the body:
 .JSON
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::xml/remote-store.json[]
+include::json/remote_store.json[]
 ----
 
 Several elements are optional such as `security`, `async-executor` and `connection-pool`.

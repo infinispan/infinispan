@@ -1,4 +1,5 @@
-cache-container:
-  transport:
-    initial-cluster-size: "4"
-    initial-cluster-timeout: "30000"
+infinispan:
+  cache-container:
+    transport:
+      initial-cluster-size: "4"
+      initial-cluster-timeout: "30000"

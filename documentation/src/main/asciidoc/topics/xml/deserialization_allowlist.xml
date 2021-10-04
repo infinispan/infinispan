@@ -1,9 +1,11 @@
-<cache-container>
-  <serialization version="1.0"
-                 marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
-    <allow-list>
-      <class>org.infinispan.test.data.Person</class>
-      <regex>org.infinispan.test.data.*</regex>
-    </allow-list>
-  </serialization>
-</cache-container>
+<infinispan>
+  <cache-container>
+    <serialization version="1.0"
+                   marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
+      <allow-list>
+        <class>org.infinispan.test.data.Person</class>
+        <regex>org.infinispan.test.data.*</regex>
+      </allow-list>
+    </serialization>
+  </cache-container>
+</infinispan>

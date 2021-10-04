@@ -1,3 +1,5 @@
-"local-cache" : {
-  "simple-cache" : "true"
+{
+  "local-cache" : {
+    "simple-cache" : "true"
+  }
 }

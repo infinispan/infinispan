@@ -1,5 +1,5 @@
 {
-  "directory": "/some/path/accessible/to/the/server",
+  "directory": "/path/accessible/to/the/server",
   "resources": {
     "caches": ["cache1", "cache2"],
     "counters": ["*"]

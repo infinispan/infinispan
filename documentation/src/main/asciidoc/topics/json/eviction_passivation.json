@@ -1,8 +1,10 @@
-"distributed-cache" : {
-  "memory" : {
-    "max-count" : "100"
-  },
-  "persistence" : {
-    "passivation" : true
+{
+  "distributed-cache": {
+    "memory" : {
+      "max-count" : "100"
+    },
+    "persistence" : {
+      "passivation" : true
+    }
   }
 }

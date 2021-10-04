@@ -1,6 +1,8 @@
-"replicated-cache" : {
-  "expiration" : {
-    "lifespan" : "5000",
-    "max-idle" : "1000"
+{
+  "replicated-cache" : {
+    "expiration" : {
+      "lifespan" : "5000",
+      "max-idle" : "1000"
+    }
   }
 }

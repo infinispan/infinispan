@@ -1,4 +1,4 @@
-<distributed-cache name="my-cache">
+<distributed-cache>
   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
     <index-writer commit-interval="2000"
                   low-level-trace="false"

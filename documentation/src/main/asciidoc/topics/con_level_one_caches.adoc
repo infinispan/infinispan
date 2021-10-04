@@ -1,7 +1,10 @@
 [id='level-one-caches_{context}']
 = Level one (L1) caches
 
-When L1 is enabled, a node will keep the result of remote reads locally for a configurable period of time  and repeated lookups will return the local L1 value instead of asking the owners again.
+{brandname} nodes create local replicas when they retrieve entries from another node in the clsuter.
+L1 caches avoid repeatedly looking up entries on primary owner nodes and adds performance.
+
+The following diagram illustrates how L1 caches work:
 
 ifdef::community[]
 image::l1_cache_ispn.png[align="center", title="L1 cache"]
@@ -10,9 +13,25 @@ ifdef::downstream[]
 image::l1_cache_rhdg.png[align="center", title="L1 cache"]
 endif::downstream[]
 
-Enabling L1 caching comes at a cost, and this cost is that every entry update must broadcast an invalidation message to all the nodes.
-L1 entries can be evicted just like any other entry when the the cache is configured with a maximum size.
-Enabling L1 will improve performance for repeated reads of non-local keys, but it will slow down writes and it will increase memory consumption to some degree.
+In the "L1 cache" diagram:
+
+. A client invokes `cache.get()` to read an entry for which another node in the cluster is the primary owner.
+. The originator node forwards the read operation to the primary owner.
+. The primary owner returns the key/value entry.
+. The originator node creates a local copy.
+. Subsequent `cache.get()` invocations return the local entry instead of forwarding to the primary owner.
+
+[discrete]
+== L1 caching performance
+
+Enabling L1 improves performance for read operations but requires primary owner nodes to broadcast invalidation messages when entries are modified.
+This ensures that {brandname} removes any out of date replicas across the cluster.
+However this also decreases performance of write operations and increases memory usage, reducing overall capacity of caches.
+
+[NOTE]
+====
+{brandname} evicts and expires local replicas, or L1 entries, like any other cache entry.
+====
 
 [discrete]
 == L1 cache configuration

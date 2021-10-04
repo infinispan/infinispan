@@ -1,6 +1,8 @@
-"replicated-cache" : {
-  "memory" : {
-    "storage" : "OBJECT",
-    "max-count" : "500"
+{
+  "replicated-cache" : {
+    "memory" : {
+      "storage" : "OBJECT",
+      "max-count" : "500"
+    }
   }
 }

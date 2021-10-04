@@ -1,8 +1,12 @@
-"cache-container" : {
-  "statistics" : "true",
-  "jmx" : {
-    "enabled" : "true",
-    "domain" : "my.domain.org",
-    "mbean-server-lookup" : "com.acme.MyMBeanServerLookup"
+{
+  "infinispan" : {
+    "cache-container" : {
+      "statistics" : "true",
+      "jmx" : {
+        "enabled" : "true",
+        "domain" : "example.com",
+        "mbean-server-lookup" : "com.example.MyMBeanServerLookup"
+      }
+    }
   }
 }
