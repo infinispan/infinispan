@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -115,7 +116,7 @@ public class Bootstrap extends Main {
          case "-P":
             parameter = args.next();
          case "--properties":
-            try(Reader r = Files.newBufferedReader(Paths.get(parameter))) {
+            try (Reader r = Files.newBufferedReader(Paths.get(parameter))) {
                Properties loaded = new Properties();
                loaded.load(r);
                loaded.forEach(properties::putIfAbsent);
@@ -200,10 +201,17 @@ public class Bootstrap extends Main {
       logger.info("JVM arguments = " + process.getArguments());
       logger.info("PID = " + process.getPid());
       if (logger.isLoggable(Level.FINE)) {
+         StringBuilder sb = new StringBuilder("Classpath JARs:" + System.lineSeparator());
          URLClassLoader cl = (URLClassLoader) this.getClass().getClassLoader();
-         for(URL url : cl.getURLs()) {
-            logger.fine("JAR: " + url);
+         for (URL url : cl.getURLs()) {
+            sb.append("    ").append(url).append(System.lineSeparator());
          }
+         logger.fine(sb.toString());
+         sb = new StringBuilder("System properties:" + System.lineSeparator());
+         for (Map.Entry<Object, Object> p : System.getProperties().entrySet()) {
+            sb.append("    ").append(p.getKey()).append('=').append(p.getValue()).append(System.lineSeparator());
+         }
+         logger.fine(sb.toString());
       }
    }
 }
