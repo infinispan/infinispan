@@ -1,4 +1,8 @@
-<indexed-entities>
-  <indexed-entity>org.infinispan.sample.Car</indexed-entity>
-  <indexed-entity>org.infinispan.sample.Truck</indexed-entity>
-</indexed-entities>
+<distributed-cache>
+  <indexing>
+    <indexed-entities>
+      <indexed-entity>org.infinispan.sample.Car</indexed-entity>
+      <indexed-entity>org.infinispan.sample.Truck</indexed-entity>
+    </indexed-entities>
+  </indexing>
+</distributed-cache>

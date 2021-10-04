@@ -1,4 +1,6 @@
-<cache-container statistics="true">
-  <jmx enabled="true"
-       domain="my.domain.org"/>
-</cache-container>
+<infinispan>
+  <cache-container statistics="true">
+    <jmx enabled="true"
+         domain="example.com"/>
+  </cache-container>
+</infinispan>

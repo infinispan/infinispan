@@ -1,4 +1,4 @@
-<distributed-cache name="my-cache">
+<distributed-cache>
   <indexing>
     <indexed-entities>
       <indexed-entity>...</indexed-entity>

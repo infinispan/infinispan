@@ -1,3 +1,7 @@
-<indexed-entities>
-  <indexed-entity>book_sample.Book</indexed-entity>
-</indexed-entities>
+<distributed-cache>
+  <indexing>
+    <indexed-entities>
+      <indexed-entity>book_sample.Book</indexed-entity>
+    </indexed-entities>
+  </indexing>
+</distributed-cache>

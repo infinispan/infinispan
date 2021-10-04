@@ -13,7 +13,6 @@ security:
             relative-to: "infinispan.server.config.path"
             password: "secret"
       truststore-realm: ~
-# Configures {brandname} Server to require client certificates with the "require-ssl-client-auth" attribute
 endpoints:
   socket-binding: "default"
   security-realm: "default"

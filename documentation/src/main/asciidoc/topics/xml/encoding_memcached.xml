@@ -1,4 +1,4 @@
-<distributed-cache name="mycache">
+<distributed-cache>
   <encoding>
     <key media-type="text/plain"/>
     <value media-type="application/x-protostream"/>

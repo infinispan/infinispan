@@ -15,7 +15,7 @@ Configure {brandname} to export statistics for the cache manager and embedded ca
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/statistics.xml[]
+include::xml/statistics_embedded.xml[]
 ----
 
 .GlobalConfigurationBuilder

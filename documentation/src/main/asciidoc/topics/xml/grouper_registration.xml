@@ -1,5 +1,5 @@
 <distributed-cache>
    <groups enabled="true">
-      <grouper class="com.acme.KXGrouper" />
+      <grouper class="com.example.KXGrouper" />
    </groups>
 </distributed-cache>
