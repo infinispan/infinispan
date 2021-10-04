@@ -1074,7 +1074,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return cacheManagerInfo.getLocalSite();
    }
 
-   @ManagedAttribute(description = "List of all online sites", displayName = "Online Sites", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Lists all online sites", displayName = "Online Sites", dataType = DataType.TRAIT)
    public String getSiteView() {
       return String.valueOf(cacheManagerInfo.getSites());
    }
@@ -1084,7 +1084,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return cacheManagerInfo.isRelayNode();
    }
 
-   @ManagedAttribute(description = "List of relay nodes in the local site", displayName = "Relay nodes", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Lists relay nodes in the local site", displayName = "Relay nodes", dataType = DataType.TRAIT)
    public String getRelayNodesAddress() {
       return String.valueOf(cacheManagerInfo.getRelayNodesAddress());
    }
