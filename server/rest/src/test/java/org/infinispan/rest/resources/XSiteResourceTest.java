@@ -361,7 +361,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
    private void assertXSiteView(Json rsp) {
       Map<String, Json> json = rsp.asJsonMap();
-      assertTrue(json.get("site_coordinator").asBoolean());
+      assertTrue(json.get("relay_node").asBoolean());
       List<Object> view = json.get("sites_view").asList();
       assertTrue(view.contains(LON));
       assertTrue(view.contains(NYC));

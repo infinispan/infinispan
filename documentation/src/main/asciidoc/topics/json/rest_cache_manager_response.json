@@ -43,8 +43,8 @@
         }
     ],
     "local_site": "LON",
-    "site_coordinator": true,
-    "site_coordinators_address": [
+    "relay_node": true,
+    "relay_nodes_address": [
       "CacheManagerResourceTest-NodeA-49696"
     ],
     "sites_view": [
