@@ -1,6 +1,6 @@
 <infinispan>
   <cache-container statistics="true">
-    <metrics gauges="true"
-             histograms="true" />
+    <distributed-cache statistics="true"/>
+    <replicated-cache statistics="true"/>
   </cache-container>
 </infinispan>

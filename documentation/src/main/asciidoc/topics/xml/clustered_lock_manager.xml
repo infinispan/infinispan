@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:{schemaversion} https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd"

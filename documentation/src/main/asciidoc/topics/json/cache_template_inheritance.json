@@ -16,7 +16,7 @@
           "max-count": "1000000",
           "when-full": "REMOVE"
         }
-      }
+      },
       "distributed-cache-configuration" : {
         "name" : "extended-template",
         "expiration" : {

@@ -1,5 +1,7 @@
-"distributed-cache" : {
-  "memory" : {
-    "storage": "HEAP"
+{
+  "distributed-cache": {
+    "memory" : {
+      "storage": "HEAP"
+    }
   }
 }

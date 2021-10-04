@@ -1,4 +1,4 @@
-<distributed-cache name="mycache">
+<distributed-cache>
    <encoding>
       <key media-type="text/plain; charset=UTF-8"/>
       <value media-type="text/plain; charset=UTF-8"/>

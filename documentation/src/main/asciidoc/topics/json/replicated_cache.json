@@ -10,7 +10,7 @@
       "isolation": "REPEATABLE_READ"
     },
     "transaction": {
-      "mode": "FULL_XA"
+      "mode": "FULL_XA",
       "locking": "OPTIMISTIC"
     },
     "expiration" : {

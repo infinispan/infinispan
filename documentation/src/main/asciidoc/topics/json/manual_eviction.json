@@ -1,6 +1,8 @@
-"distributed-cache" : {
-  "memory" : {
-    "max-count" : "500",
-    "when-full" : "MANUAL"
+{
+  "distributed-cache" : {
+    "memory" : {
+      "max-count" : "500",
+      "when-full" : "MANUAL"
+    }
   }
-}
+ }

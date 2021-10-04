@@ -1,7 +1,11 @@
-"cache-container" : {
-  "statistics" : "true",
-  "jmx" : {
-    "enabled" : "true",
-    "domain" : "my.domain.org"
+{
+  "infinispan" : {
+    "cache-container" : {
+      "statistics" : "true",
+      "jmx" : {
+        "enabled" : "true",
+        "domain" : "example.com"
+      }
+    }
   }
 }

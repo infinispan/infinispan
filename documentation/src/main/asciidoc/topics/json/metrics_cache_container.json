@@ -1,7 +1,11 @@
-"cache-container" : {
-  "statistics" : "true",
-  "metrics" : {
-    "gauges" : "true",
-    "histograms" : "true"
+{
+  "infinispan" : {
+    "cache-container" : {
+      "statistics" : "true",
+      "metrics" : {
+        "gauges" : "true",
+        "histograms" : "true"
+      }
+    }
   }
 }

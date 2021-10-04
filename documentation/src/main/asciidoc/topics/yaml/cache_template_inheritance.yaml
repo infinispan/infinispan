@@ -1,6 +1,6 @@
 infinispan:
   cacheContainer:
-    distributedCacheConfiguration:
+    - distributedCacheConfiguration:
       name: "base-template"
       mode: "SYNC"
       statistics: "true"
@@ -12,7 +12,7 @@ infinispan:
       memory:
         maxCount: "1000000"
         whenFull: "REMOVE"
-    distributedCacheConfiguration:
+    - distributedCacheConfiguration:
       name: "extended-template"
       expiration:
         lifespan: "10000"

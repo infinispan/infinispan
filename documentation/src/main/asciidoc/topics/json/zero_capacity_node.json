@@ -1,3 +1,7 @@
-"cache-container" : {
-  "zero-capacity-node" : "true"
+{
+  "infinispan" : {
+    "cache-container" : {
+      "zero-capacity-node" : "true"
+    }
+  }
 }
