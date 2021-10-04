@@ -32,8 +32,8 @@ For possible values, check the https://docs.jboss.org/infinispan/9.4/apidocs/org
 * `defined_caches` A list of all caches defined in the cache manager, excluding private caches but including internal caches that are accessible
 * `local_site` The name of the local site. +
 If cross-site replication is not configured, {brandname} returns "local".
-* `relay_node` is true if the node is a relay node.
-* `relay_nodes_address` is an array of logical addresses of relay nodes.
+* `relay_node` is true if the node handles RELAY messages between clusters.
+* `relay_nodes_address` is an array of logical addresses for relay nodes.
 * `sites_view` The list of sites that participate in cross-site replication. +
 If cross-site replication is not configured, {brandname} returns an empty list.
 * `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property won't be present in the payload.

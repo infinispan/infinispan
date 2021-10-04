@@ -93,7 +93,7 @@ Returns the name of the local site. If cross-site replication is not configured,
 Returns a list of names for all sites or an empty list ("[]") if cross-site replication is not configured.
 
 `site is-relay-node` +
-Returns true if this node is a relay node.
+Returns true if the node handles RELAY messages between clusters.
 
 `site relay-nodes` +
-Returns a list of relay nodes (logical names).
+Returns a list of relay nodes by their logical names.

@@ -394,7 +394,7 @@ public class Site extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "is-relay-node", description = "Returns true if this node is a relay node.", activator = ConnectionActivator.class)
+   @CommandDefinition(name = "is-relay-node", description = "Returns true if the node handles relay messages between clusters.", activator = ConnectionActivator.class)
    public static class IsRelayNode extends CliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
