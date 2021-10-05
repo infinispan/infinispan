@@ -46,12 +46,9 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.tx.TransactionImpl;
-import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -96,6 +93,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.impl.FakeJTATransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -692,13 +690,12 @@ public class StateConsumerImpl implements StateConsumer {
       boolean transactional = transactionManager != null;
       if (transactional) {
          Object key = NO_KEY;
-         Transaction transaction = new ApplyStateTransaction();
+         Transaction transaction = new FakeJTATransaction();
          InvocationContext ctx = icf.createInvocationContext(transaction, false);
          LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
          try {
             localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
             for (InternalCacheEntry<?, ?> e : cacheEntries) {
-               // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
                key = e.getKey();
                CompletableFuture<?> future = invokePut(segmentId, ctx, e);
                if (!future.isDone()) {
@@ -770,7 +767,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (!cache.wired().getStatus().allowInvocations()) {
          log.tracef("Cache %s is shutting down, stopping state transfer", cacheName);
       } else {
-         log.problemApplyingStateForKey(t.getMessage(), key, t);
+         log.problemApplyingStateForKey(key, t);
       }
    }
 
@@ -1275,16 +1272,4 @@ public class StateConsumerImpl implements StateConsumer {
       void beforeInvalidation(IntSet removedSegments, IntSet staleL1Segments);
    }
 
-   private static class ApplyStateTransaction extends TransactionImpl {
-      // Make it different from embedded txs (1)
-      static final int FORMAT_ID = 2;
-      AtomicLong id = new AtomicLong(0);
-
-      ApplyStateTransaction() {
-         byte[] bytes = new byte[8];
-         Util.longToBytes(id.incrementAndGet(), bytes, 0);
-         XidImpl xid = XidImpl.create(FORMAT_ID, bytes, bytes);
-         setXid(xid);
-      }
-   }
 }
