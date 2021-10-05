@@ -1,0 +1,8 @@
+<distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" segments="2">
+   <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED"/>
+   <transaction mode="FULL_XA" locking="OPTIMISTIC"/>
+   <memory>
+      <object size="20"/>
+   </memory>
+   <state-transfer enabled="true" timeout="60500" chunk-size="10500"/>
+</distributed-cache>

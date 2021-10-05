@@ -166,4 +166,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Rejected connection from '%s' using rule '%s'", id = 5052)
    void ipFilterConnectionRejection(InetSocketAddress remoteAddress, IpFilterRule rule);
+
+   @Message(value = "The supplied configuration for cache '%s' must contain a single cache configuration for it: %s", id = 5053)
+   CacheConfigurationException configurationMustContainSingleCache(String name, String configuration);
 }

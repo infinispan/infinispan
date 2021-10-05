@@ -3,11 +3,9 @@ package org.infinispan.server.tasks.admin;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 
 /**
- * Admin operation to create a cache. This
- * Parameters:
+ * Admin operation to create a cache. This Parameters:
  * <ul>
  *    <li><strong>name</strong> the name of the cache to create</li>
  *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
@@ -23,17 +21,12 @@ public class CacheCreateTask extends org.infinispan.server.core.admin.embeddedse
       this.defaultsHolder = defaultsHolder;
    }
 
-   protected Configuration getConfiguration(String name, String configuration) {
-      ParserRegistry parser = new ParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parser.parse(configuration);
-      if (!builderHolder.getNamedConfigurationBuilders().containsKey(name)) {
-         throw log.missingCacheConfiguration(name, configuration);
-      }
+   protected ConfigurationBuilder getConfigurationBuilder(String name, String configuration) {
+      Configuration cfg = super.getConfigurationBuilder(name, configuration).build();
       // Rebase the configuration on top of the defaults
-      Configuration cfg = builderHolder.getNamedConfigurationBuilders().get(name).build();
       ConfigurationBuilder defaultCfg = defaultsHolder.getNamedConfigurationBuilders().get("org.infinispan." + cfg.clustering().cacheMode().name());
       ConfigurationBuilder rebased = new ConfigurationBuilder().read(defaultCfg.build());
       rebased.read(cfg);
-      return rebased.build();
+      return rebased;
    }
 }

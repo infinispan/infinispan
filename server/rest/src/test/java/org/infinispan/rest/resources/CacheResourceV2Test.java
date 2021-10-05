@@ -334,8 +334,15 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCreateDeleteCache() throws Exception {
-      String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
+      createDeleteCache(getResourceAsString("cache.xml", getClass().getClassLoader()));
+   }
 
+   @Test
+   public void testCreateDeleteCacheFromFragment() throws Exception {
+      createDeleteCache(getResourceAsString("cache-fragment.xml", getClass().getClassLoader()));
+   }
+
+   private void createDeleteCache(String xml) {
       RestEntity xmlEntity = RestEntity.create(APPLICATION_XML, xml);
 
       RestCacheClient cacheClient = client.cache("cacheCRUD");
