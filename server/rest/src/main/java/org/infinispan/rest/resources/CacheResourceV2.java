@@ -151,7 +151,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .handleWith(queryAction::search)
 
             // Misc
-            .invocation().methods(POST).path("/v2/caches").withAction("toJSON").handleWith(this::convertToJson)
+            .invocation().methods(POST).path("/v2/caches").withAction("toJSON").deprecated().handleWith(this::convertToJson)
+            .invocation().methods(POST).path("/v2/caches").withAction("convert").handleWith(this::convert)
 
             // All details
             .invocation().methods(GET).path("/v2/caches/{cacheName}").handleWith(this::getAllDetails)
@@ -309,25 +310,33 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
+   private CompletionStage<RestResponse> convert(RestRequest request, MediaType toType) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      String contents = restRequest.contents().asString();
+      String contents = request.contents().asString();
 
       if (contents == null || contents.isEmpty()) {
          responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
       ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents);
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents, request.contentType());
       Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
       Configuration configuration = entry.getValue().build();
 
       StringBuilderWriter out = new StringBuilderWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(APPLICATION_JSON).build()) {
+      try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).build()) {
          parserRegistry.serialize(writer, entry.getKey(), configuration);
       }
-      responseBuilder.contentType(APPLICATION_JSON).entity(out.toString());
+      responseBuilder.contentType(toType).entity(out.toString());
       return completedFuture(responseBuilder.build());
+   }
+
+   private CompletionStage<RestResponse> convertToJson(RestRequest request) {
+      return convert(request, APPLICATION_JSON);
+   }
+
+   private CompletionStage<RestResponse> convert(RestRequest request) {
+      return convert(request, negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML));
    }
 
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
