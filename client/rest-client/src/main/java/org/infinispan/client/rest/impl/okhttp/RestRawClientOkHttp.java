@@ -57,6 +57,15 @@ public class RestRawClientOkHttp implements RestRawClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> post(String url, Map<String, String> headers, String body, String bodyMediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.post(RequestBody.create(MediaType.parse(bodyMediaType), body));
+      return restClient.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> putValue(String url, Map<String, String> headers, String body, String bodyMediaType) {
       Request.Builder builder = new Request.Builder();
       builder.url(restClient.getBaseURL() + url);

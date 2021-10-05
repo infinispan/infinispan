@@ -25,6 +25,8 @@ public interface RestRawClient {
 
    CompletionStage<RestResponse> post(String path, Map<String, String> headers);
 
+   CompletionStage<RestResponse> post(String path, Map<String, String> headers, String body, String bodyMediaType);
+
    CompletionStage<RestResponse> putValue(String path, Map<String, String> headers, String body, String bodyMediaType);
 
    default CompletionStage<RestResponse> get(String path) {

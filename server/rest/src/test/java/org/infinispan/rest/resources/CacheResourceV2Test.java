@@ -9,6 +9,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_T
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
@@ -28,8 +29,10 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +44,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
@@ -68,6 +73,10 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.yaml.snakeyaml.Yaml;
 
 @Test(groups = "functional", testName = "rest.CacheResourceV2Test")
 public class CacheResourceV2Test extends AbstractRestResourceTest {
@@ -819,7 +828,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testJSONConversion() {
+   public void testConversionFromXML() {
       RestRawClient rawClient = client.raw();
 
       String xml = "<infinispan>\n" +
@@ -832,15 +841,87 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             "    </cache-container>\n" +
             "</infinispan>";
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=toJSON", xml, APPLICATION_XML_TYPE);
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), xml, APPLICATION_XML_TYPE);
       assertThat(response).isOk();
+      checkJSON(response);
 
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), xml, APPLICATION_XML_TYPE);
+      assertThat(response).isOk();
+      checkYaml(response);
+   }
+
+   @Test
+   public void testConversionFromJSON() throws Exception {
+      RestRawClient rawClient = client.raw();
+
+      String json = "{\"distributed-cache\":{\"mode\":\"SYNC\",\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}";
+
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), json, APPLICATION_JSON_TYPE);
+      assertThat(response).isOk();
+      checkXML(response);
+
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), json, APPLICATION_JSON_TYPE);
+      assertThat(response).isOk();
+      checkYaml(response);
+   }
+
+   @Test
+   public void testConversionFromYAML() throws Exception {
+      RestRawClient rawClient = client.raw();
+
+      String yaml = "distributedCache:\n" +
+            "  mode: 'SYNC'\n" +
+            "  memory:\n" +
+            "    storage: 'OBJECT'\n" +
+            "    maxCount: 20";
+
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), yaml, APPLICATION_YAML_TYPE);
+      assertThat(response).isOk();
+      checkXML(response);
+
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), yaml, APPLICATION_YAML_TYPE);
+      assertThat(response).isOk();
+      checkJSON(response);
+   }
+
+   private void checkJSON(CompletionStage<RestResponse> response) {
       Json jsonNode = Json.read(join(response).getBody());
 
       Json distCache = jsonNode.at("distributed-cache");
       Json memory = distCache.at("memory");
       assertEquals("SYNC", distCache.at("mode").asString());
       assertEquals(20, memory.at("max-count").asInteger());
+   }
+
+   private void checkXML(CompletionStage<RestResponse> response) throws Exception {
+      String xml = join(response).getBody();
+      Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+      Element root = doc.getDocumentElement();
+      assertEquals("distributed-cache", root.getTagName());
+      assertEquals("SYNC", root.getAttribute("mode"));
+      NodeList children = root.getElementsByTagName("memory");
+      assertEquals(1, children.getLength());
+      Element memory = (Element) children.item(0);
+      assertEquals("OBJECT", memory.getAttribute("storage"));
+      assertEquals("20", memory.getAttribute("max-count"));
+   }
+
+   private void checkYaml(CompletionStage<RestResponse> response) {
+      Yaml yaml = new Yaml();
+      Map<String, Object> config = yaml.load(join(response).getBody());
+      assertEquals("SYNC", getYamlProperty(config, "distributedCache", "mode"));
+      assertEquals("OBJECT", getYamlProperty(config, "distributedCache", "memory", "storage"));
+      assertEquals("20", getYamlProperty(config, "distributedCache", "memory", "maxCount"));
+   }
+
+   public static <T> T getYamlProperty(Map<String, Object> yaml, String... names) {
+      for (int i = 0; i < names.length - 1; i++) {
+         yaml = (Map<String, Object>) yaml.get(names[i]);
+         if (yaml == null) {
+            return null;
+         }
+      }
+      return (T) yaml.get(names[names.length -1 ]);
    }
 
    @Test
