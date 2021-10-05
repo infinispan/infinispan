@@ -1909,6 +1909,9 @@ public class TestingUtil {
 
    @SafeVarargs
    public static <T> Set<T> setOf(T... elements) {
+      if (elements == null)
+         return Collections.emptySet();
+
       return new HashSet<>(Arrays.asList(elements));
    }
 
