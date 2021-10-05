@@ -40,12 +40,39 @@ public class HotRodAdmin {
    }
 
    @Test
+   public void testCreateDeleteCacheFragment() {
+      RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
+      String cacheName = "testCreateDeleteCacheFragment";
+      String config = String.format("<distributed-cache name=\"%s\"/>", cacheName);
+      RemoteCache<String, String> cache = rcm.administration().createCache(cacheName, new XMLStringConfiguration(config));
+      cache.put("k", "v");
+      assertNotNull(cache.get("k"));
+
+      rcm.administration().removeCache(cacheName);
+      assertNull(rcm.getCache(cacheName));
+   }
+
+   @Test
    public void testCreateDeleteTemplate() {
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       String templateName = "template";
       String template = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", templateName);
       rcm.administration().createTemplate(templateName, new XMLStringConfiguration(template));
       RemoteCache<String, String> cache = rcm.administration().createCache("testCreateDeleteTemplate", templateName);
+      cache.put("k", "v");
+      assertNotNull(cache.get("k"));
+
+      rcm.administration().removeTemplate(templateName);
+      Exceptions.expectException(HotRodClientException.class, () -> rcm.administration().createCache("anotherCache", templateName));
+   }
+
+   @Test
+   public void testCreateDeleteTemplateFragment() {
+      RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
+      String templateName = "templateFragment";
+      String template = String.format("<distributed-cache name=\"%s\"/>", templateName);
+      rcm.administration().createTemplate(templateName, new XMLStringConfiguration(template));
+      RemoteCache<String, String> cache = rcm.administration().createCache("testCreateDeleteTemplateFragment", templateName);
       cache.put("k", "v");
       assertNotNull(cache.get("k"));
 

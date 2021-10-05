@@ -9,10 +9,7 @@ import java.util.Set;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
  *  * Admin operation to create a template
@@ -26,7 +23,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @author Ryan Emerson
  * @since 12.0
  */
-public class TemplateCreateTask extends AdminServerTask<Void> {
+public class TemplateCreateTask extends CacheCreateTask {
    private static final Set<String> PARAMETERS;
 
    static {
@@ -56,20 +53,11 @@ public class TemplateCreateTask extends AdminServerTask<Void> {
                           EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String configuration = requireParameter(parameters, "configuration");
-      Configuration config = getConfiguration(name, configuration);
+      Configuration config = getConfigurationBuilder(name, configuration).build();
       if (!cacheManager.getCacheManagerConfiguration().isClustered() && config.clustering().cacheMode().isClustered()) {
          throw log.cannotCreateClusteredCache();
       }
       cacheManager.administration().withFlags(flags).createTemplate(name, config);
       return null;
-   }
-
-   protected Configuration getConfiguration(String name, String configuration) {
-      ParserRegistry parserRegistry = new ParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
-      if (!builderHolder.getNamedConfigurationBuilders().containsKey(name)) {
-         throw log.missingCacheConfiguration(name, configuration);
-      }
-      return builderHolder.getNamedConfigurationBuilders().get(name).build();
    }
 }
