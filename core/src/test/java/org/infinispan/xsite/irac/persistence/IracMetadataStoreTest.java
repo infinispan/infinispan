@@ -27,7 +27,7 @@ import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.TestDataSCI;
@@ -274,8 +274,8 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
 
    private void preload() {
       for (Cache<String, String> cache : this.<String, String>caches(LON)) {
-         PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
-         pm.preload().toCompletableFuture().join();
+         PreloadManager pm = TestingUtil.extractComponent(cache, PreloadManager.class);
+         pm.start();
       }
    }
 

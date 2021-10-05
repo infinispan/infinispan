@@ -23,27 +23,16 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
-import org.infinispan.cache.impl.InvocationHelper;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -55,7 +44,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.InterceptorChainFactory;
 import org.infinispan.factories.KnownComponentNames;
@@ -72,7 +60,6 @@ import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
@@ -107,7 +94,6 @@ import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
 public class PersistenceManagerImpl implements PersistenceManager {
-
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject Configuration configuration;
@@ -115,19 +101,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject ComponentRef<AdvancedCache<Object, Object>> cache;
    @Inject KeyPartitioner keyPartitioner;
    @Inject TimeService timeService;
-   @Inject TransactionManager transactionManager;
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
    PersistenceMarshaller persistenceMarshaller;
    @Inject ByteBufferFactory byteBufferFactory;
    @Inject CacheNotifier<Object, Object> cacheNotifier;
    @Inject InternalEntryFactory internalEntryFactory;
    @Inject MarshallableEntryFactory<?, ?> marshallableEntryFactory;
-   @Inject ComponentRef<CommandsFactory> commandsFactory;
    @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    @Inject Executor nonBlockingExecutor;
    @Inject BlockingManager blockingManager;
    @Inject NonBlockingManager nonBlockingManager;
-   @Inject ComponentRef<InvocationHelper> invocationHelper;
    @Inject ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
    @Inject DistributionManager distributionManager;
    @Inject InterceptorChainFactory interceptorChainFactory;
@@ -136,7 +119,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final StampedLock lock = new StampedLock();
    // making it volatile as it might change after @Start, so it needs the visibility.
    private volatile boolean enabled;
-   private volatile boolean preloaded;
    private volatile boolean clearOnStop;
    private volatile AutoCloseable availabilityTask;
    private volatile String unavailableExceptionMessage;
@@ -185,7 +167,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (!enabled)
          return;
 
-      preloaded = false;
       segmentCount = configuration.clustering().hash().numSegments();
 
       isInvalidationCache = configuration.clustering().cacheMode().isInvalidation();
@@ -389,7 +370,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // Wait until it completes
          blockingSubscribe(flowable);
          stores.clear();
-         preloaded = false;
       } finally {
          lock.unlockWrite(stamp);
       }
@@ -430,150 +410,23 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public boolean isPreloaded() {
-      return preloaded;
+   public boolean hasStore(Predicate<StoreConfiguration> test) {
+      return getStore(storeStatus -> test.test(storeStatus.config)) != null;
    }
 
    @Override
-   public CompletionStage<Void> preload() {
+   public Flowable<MarshallableEntry<Object, Object>> preloadPublisher() {
       long stamp = acquireReadLock();
       NonBlockingStore<Object, Object> nonBlockingStore = getStoreLocked(status -> status.config.preload());
       if (nonBlockingStore == null) {
          releaseReadLock(stamp);
-         return CompletableFutures.completedNull();
+         return Flowable.empty();
       }
       Publisher<MarshallableEntry<Object, Object>> publisher = nonBlockingStore.publishEntries(
             IntSets.immutableRangeSet(segmentCount), null, true);
 
-      long start = timeService.time();
-
-      final long maxEntries = getMaxEntries();
-      final long flags = getFlagsForStateInsertion();
-      AdvancedCache<?,?> tmpCache = this.cache.wired().withStorageMediaType();
-      DataConversion keyDataConversion = tmpCache.getKeyDataConversion();
-      DataConversion valueDataConversion = tmpCache.getValueDataConversion();
-
       return Flowable.fromPublisher(publisher)
-            .doFinally(() -> releaseReadLock(stamp))
-            .take(maxEntries)
-            .concatMapSingle(me -> preloadEntry(flags, me, keyDataConversion, valueDataConversion))
-            .count()
-            .toCompletionStage()
-            .thenAccept(insertAmount -> {
-               this.preloaded = insertAmount < maxEntries;
-               log.debugf("Preloaded %d keys in %s", insertAmount, Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
-            });
-   }
-
-   private Single<?> preloadEntry(long flags, MarshallableEntry<Object, Object> me, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
-      InternalMetadataImpl metadata = new InternalMetadataImpl(me.getMetadata(), me.created(), me.lastUsed());
-      Object key = keyDataConversion.toStorage(me.getKey());
-      Object value = valueDataConversion.toStorage(me.getValue());
-      PutKeyValueCommand cmd = commandsFactory.wired().buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key), metadata, flags);
-      cmd.setInternalMetadata(me.getInternalMetadata());
-
-      CompletionStage<?> stage;
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         final Transaction transaction = suspendIfNeeded();
-         CompletionStage<Transaction> putStage;
-         try {
-            beginIfNeeded();
-            putStage = invocationHelper.wired().invokeAsync(cmd, 1)
-                  .thenApply(ignore -> {
-                     try {
-                        return transactionManager.suspend();
-                     } catch (SystemException e) {
-                        throw new PersistenceException("Unable to preload!", e);
-                     }
-                  });
-         } catch (Exception e) {
-            throw new PersistenceException("Unable to preload!", e);
-         }
-         stage = blockingManager.whenCompleteBlocking(putStage, (pendingTransaction, t) -> {
-            try {
-               transactionManager.resume(pendingTransaction);
-               commitIfNeeded(t == null);
-            } catch (InvalidTransactionException | SystemException e) {
-               throw new PersistenceException("Unable to preload!", e);
-            } finally {
-               resumeIfNeeded(transaction);
-            }
-         }, me.getKey());
-      } else {
-         stage = invocationHelper.wired().invokeAsync(cmd, 1);
-      }
-      // The return value doesn't matter, but it cannot be null
-      return Completable.fromCompletionStage(stage).toSingleDefault(me);
-   }
-
-   private void resumeIfNeeded(Transaction transaction) {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null &&
-            transaction != null) {
-         try {
-            transactionManager.resume(transaction);
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         }
-      }
-   }
-
-   private Transaction suspendIfNeeded() {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         try {
-            return transactionManager.suspend();
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         }
-      }
-      return null;
-   }
-
-   private void beginIfNeeded() throws SystemException, NotSupportedException {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         transactionManager.begin();
-      }
-   }
-
-   private void commitIfNeeded(boolean success) {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         try {
-            if (success) {
-               transactionManager.commit();
-            } else {
-               transactionManager.rollback();
-            }
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         }
-      }
-   }
-
-   private long getMaxEntries() {
-      long maxCount;
-      if (configuration.memory().isEvictionEnabled() && (maxCount = configuration.memory().maxCount()) > 0) {
-         return maxCount;
-      }
-      return Long.MAX_VALUE;
-   }
-
-   @GuardedBy("lock#readLock")
-   private long getFlagsForStateInsertion() {
-      long flags = FlagBitSets.CACHE_MODE_LOCAL |
-            FlagBitSets.SKIP_OWNERSHIP_CHECK |
-            FlagBitSets.IGNORE_RETURN_VALUES |
-            FlagBitSets.SKIP_CACHE_STORE |
-            FlagBitSets.SKIP_LOCKING |
-            FlagBitSets.SKIP_XSITE_BACKUP |
-            FlagBitSets.IRAC_STATE;
-
-      boolean hasSharedStore = getStoreLocked(storeStatus -> storeStatus.config.shared()) != null;
-
-      if (!hasSharedStore  || !configuration.indexing().isVolatile()) {
-         flags = EnumUtil.mergeBitSets(flags, FlagBitSets.SKIP_INDEXING);
-      }
-
-      return flags;
+                     .doFinally(() -> releaseReadLock(stamp));
    }
 
    @Override
@@ -836,7 +689,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
             release = false;
             return stage.handle((removed, throwable) -> {
                releaseReadLock(stamp);
-               CompletableFutures.rethrowExceptionIfPresent(throwable);
+               if (throwable != null) {
+                  throw CompletableFutures.asCompletionException(throwable);
+               }
 
                return removed.get();
             });

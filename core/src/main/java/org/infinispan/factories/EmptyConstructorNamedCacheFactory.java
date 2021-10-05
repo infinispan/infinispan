@@ -52,6 +52,7 @@ import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.scattered.impl.BiasManagerImpl;
+import org.infinispan.scattered.impl.ScatteredPreloadManager;
 import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -131,7 +132,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(ActivationManager.class.getName())) {
          return new ActivationManagerImpl();
       } else if (componentName.equals(PreloadManager.class.getName())) {
-         return new PreloadManager();
+         if (configuration.clustering().cacheMode().isScattered()) {
+            return new ScatteredPreloadManager();
+         } else {
+            return new PreloadManager();
+         }
       } else if (componentName.equals(BatchContainer.class.getName())) {
          return new BatchContainer();
       } else if (componentName.equals(TransactionCoordinator.class.getName())) {

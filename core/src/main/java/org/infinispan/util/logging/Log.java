@@ -2222,4 +2222,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The '%s' attribute on the '%s' element has been deprecated. Please use the '%s' attribute instead", id = 653)
    void attributeDeprecatedUseOther(Enum<?> attr, Enum<?> element, Enum<?> other);
+
+   @Message(value = "Problem encountered when preloading key %s!", id = 654)
+   PersistenceException problemPreloadingKey(Object key, @Cause Throwable t);
 }
