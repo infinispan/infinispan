@@ -568,6 +568,12 @@ public class Server implements ServerManagement, AutoCloseable {
       // Stop the OpenTracing integration
       RequestTracer.stop();
 
+      shutdownLog4jLogManager();
+   }
+
+   // This method is here for Quarkus to replace. If this method is moved or modified Infinispan Quarkus will also
+   // be required to be updated
+   private void shutdownLog4jLogManager() {
       // Shutdown Log4j's context manually as we set shutdownHook="disable"
       // Log4j's shutdownHook may run concurrently with our shutdownHook,
       // disabling logging before the server has finished stopping.
