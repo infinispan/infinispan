@@ -20,6 +20,8 @@ import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Flowable;
+
 /**
  * Defines the logic for interacting with the chain of external storage.
  *
@@ -35,16 +37,13 @@ public interface PersistenceManager extends Lifecycle {
     * Returns whether the manager is enabled and has at least one store
     */
    boolean hasWriter();
-   /**
-    * @return true if all entries from the store have been inserted to the cache. If the persistence/preload
-    * is disabled or eviction limit was reached when preloading, returns false.
-    */
-   boolean isPreloaded();
+
+   boolean hasStore(Predicate<StoreConfiguration> test);
 
    /**
     * Loads the data from the external store into memory during cache startup.
     */
-   CompletionStage<Void> preload();
+   Flowable<MarshallableEntry<Object, Object>> preloadPublisher();
 
    /**
     * Marks the given storage as disabled.

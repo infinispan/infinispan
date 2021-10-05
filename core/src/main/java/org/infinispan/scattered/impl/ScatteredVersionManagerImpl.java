@@ -9,7 +9,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongArray;
@@ -34,23 +33,16 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
-import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.reactivestreams.Publisher;
 
-import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -70,9 +62,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
    @Inject InternalDataContainer<K, ?> dataContainer;
-   @Inject PersistenceManager persistenceManager;
    @Inject DistributionManager distributionManager;
-   @Inject ClusterTopologyManager clusterTopologyManager;
    @Inject OrderedUpdatesManager orderedUpdatesManager;
 
    private int invalidationBatchSize;
@@ -122,38 +112,6 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       scheduledKeys = new ConcurrentHashMap<>(invalidationBatchSize);
       invalidationBatchSize = configuration.clustering().invalidationBatchSize();
       removedKeys = new ConcurrentHashMap<>(invalidationBatchSize);
-   }
-
-   @Start(priority = 57) // just after preload
-   public void initTopologyId() {
-      if (persistenceManager.isPreloaded()) {
-         // We don't have to do the preload, already done
-         if (preloadedTopologyId > 0) {
-            clusterTopologyManager.setInitialCacheTopologyId(componentRegistry.getCacheName(), preloadedTopologyId + 1);
-         }
-         return;
-      }
-      // An alternative (not implemented) approach is storing the max versions as a part of the persisted global state
-      // in ScatteredConsistentHash, but that works only for the orderly shutdown.
-      // TODO: implement start after shutdown
-      AtomicInteger maxTopologyId = new AtomicInteger(preloadedTopologyId);
-      Publisher<MarshallableEntry<Object, Object>> publisher = persistenceManager.publishEntries(false, true);
-      CompletionStage<Void> stage = Flowable.fromPublisher(publisher)
-            .doOnNext(me -> {
-               Metadata metadata = me.getMetadata();
-               EntryVersion entryVersion = metadata.version();
-               if (entryVersion instanceof SimpleClusteredVersion) {
-                  int entryTopologyId = ((SimpleClusteredVersion) entryVersion).getTopologyId();
-                  if (maxTopologyId.get() < entryTopologyId) {
-                     maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
-                  }
-               }
-            }).ignoreElements()
-            .toCompletionStage(null);
-      CompletionStages.join(stage);
-      if (maxTopologyId.get() > 0) {
-         clusterTopologyManager.setInitialCacheTopologyId(componentRegistry.getCacheName(), maxTopologyId.get() + 1);
-      }
    }
 
    @Stop
@@ -344,6 +302,11 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          int topologyId = ((SimpleClusteredVersion) version).getTopologyId();
          preloadedTopologyId = Math.max(preloadedTopologyId, topologyId);
       }
+   }
+
+   @Override
+   public int getPreloadedTopologyId() {
+      return preloadedTopologyId;
    }
 
    @Override

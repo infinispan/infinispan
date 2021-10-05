@@ -25,6 +25,8 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Flowable;
+
 @Scope(Scopes.NAMED_CACHE)
 public class DelegatingPersistenceManager implements PersistenceManager, Lifecycle {
    protected final PersistenceManager persistenceManager;
@@ -65,13 +67,13 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public boolean isPreloaded() {
-      return persistenceManager.isPreloaded();
+   public boolean hasStore(Predicate<StoreConfiguration> test) {
+      return persistenceManager.hasStore(test);
    }
 
    @Override
-   public CompletionStage<Void> preload() {
-      return persistenceManager.preload();
+   public Flowable<MarshallableEntry<Object, Object>> preloadPublisher() {
+      return persistenceManager.preloadPublisher();
    }
 
    @Override
