@@ -3,7 +3,6 @@ package org.infinispan.server.core.admin.embeddedserver;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,27 +52,13 @@ public class CacheCreateTask extends AdminServerTask<Void> {
       return PARAMETERS;
    }
 
-   protected Configuration getConfiguration(String name, String configuration) {
-      ParserRegistry parserRegistry = new ParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
-      Iterator<Map.Entry<String, ConfigurationBuilder>> it = builderHolder.getNamedConfigurationBuilders().entrySet().iterator();
-      if (!it.hasNext()) {
-         throw log.missingCacheConfiguration(name, configuration);
-      }
-      Map.Entry<String, ConfigurationBuilder> entry = it.next();
-      if (entry.getKey() != null && !entry.getKey().equals(name)) {
-         throw log.missingCacheConfiguration(name, configuration);
-      }
-      return entry.getValue().build();
-   }
-
    @Override
    protected Void execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
       String configuration = getParameter(parameters, "configuration");
       if (configuration != null) {
-         Configuration config = getConfiguration(name, configuration);
+         Configuration config = getConfigurationBuilder(name, configuration).build();
          if (!cacheManager.getCacheManagerConfiguration().isClustered() && config.clustering().cacheMode().isClustered()) {
             throw log.cannotCreateClusteredCache();
          }
@@ -82,5 +67,17 @@ public class CacheCreateTask extends AdminServerTask<Void> {
          cacheManager.administration().withFlags(flags).createCache(name, template);
       }
       return null;
+   }
+
+   protected ConfigurationBuilder getConfigurationBuilder(String name, String configuration) {
+      ParserRegistry parser = new ParserRegistry();
+      ConfigurationBuilderHolder builderHolder = parser.parse(configuration);
+      Map<String, ConfigurationBuilder> builders = builderHolder.getNamedConfigurationBuilders();
+      if (builders.size() == 0) {
+         throw log.missingCacheConfiguration(name, configuration);
+      } else if (builders.size() > 1) {
+         throw log.configurationMustContainSingleCache(name, configuration);
+      }
+      return builders.values().iterator().next();
    }
 }

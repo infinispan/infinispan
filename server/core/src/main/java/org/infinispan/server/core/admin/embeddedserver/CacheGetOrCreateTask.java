@@ -38,7 +38,7 @@ public class CacheGetOrCreateTask extends CacheCreateTask {
       String template = getParameter(parameters, "template");
       String configuration = getParameter(parameters, "configuration");
       if (configuration != null) {
-         Configuration config = getConfiguration(name, configuration);
+         Configuration config = getConfigurationBuilder(name, configuration).build();
          cacheManager.administration().withFlags(flags).getOrCreateCache(name, config);
       } else {
          cacheManager.administration().withFlags(flags).getOrCreateCache(name, template);
