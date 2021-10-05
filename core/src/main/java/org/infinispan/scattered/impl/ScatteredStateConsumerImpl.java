@@ -522,7 +522,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
                break;
             } else {
-               log.problemApplyingStateForKey(e.getMessage(), key, e);
+               log.problemApplyingStateForKey(key, e);
             }
          }
       }
