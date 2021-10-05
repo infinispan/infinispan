@@ -25,6 +25,7 @@ import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -54,13 +55,13 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public boolean isPreloaded() {
+   public boolean hasStore(Predicate<StoreConfiguration> test) {
       return false;
    }
 
    @Override
-   public CompletionStage<Void> preload() {
-      return CompletableFutures.completedNull();
+   public @NonNull Flowable<MarshallableEntry<Object, Object>> preloadPublisher() {
+      return Flowable.empty();
    }
 
    @Override

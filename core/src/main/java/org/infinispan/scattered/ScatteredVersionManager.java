@@ -120,6 +120,8 @@ public interface ScatteredVersionManager<K> {
     */
    void updatePreloadedEntryVersion(EntryVersion version);
 
+   int getPreloadedTopologyId();
+
    enum SegmentState {
       NOT_OWNED('N'),      // Not owned and request to new version ends with failure
       BLOCKED('B'),        // Owned but we're waiting for the previous owner to revoke the segment
