@@ -35,7 +35,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classAllowList);
 
       encoderRegistry.registerTranscoder(jsonTranscoder);
-      encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classAllowList));
+      registerXmlTranscoder(encoderRegistry, classLoader, classAllowList);
 
       // Allow transcoding between JBoss Marshalling and JSON
       if (encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JBOSS_MARSHALLING)) {
@@ -43,5 +43,11 @@ public class LifecycleCallbacks implements ModuleLifecycle {
                encoderRegistry.getTranscoder(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JBOSS_MARSHALLING);
          encoderRegistry.registerTranscoder(new TwoStepTranscoder(jbossMarshallingTranscoder, jsonTranscoder));
       }
+   }
+
+   // This method is here for Quarkus to replace. If this method is moved or modified Infinispan Quarkus will also
+   // be required to be updated
+   private void registerXmlTranscoder(EncoderRegistry encoderRegistry, ClassLoader classLoader, ClassAllowList classAllowList) {
+      encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classAllowList));
    }
 }
