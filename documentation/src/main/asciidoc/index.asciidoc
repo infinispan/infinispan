@@ -41,9 +41,9 @@ Written and maintained by the {brandname} community
 
 [unstyled]
 * link:titles/embedding/embedding.html[Embedding {brandname}]
-* link:titles/configuring/configuring.html[Configuring {brandname}]
+* link:titles/configuring/configuring.html[Configuring {brandname} Caches]
 * link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
-* link:titles/query/query.html[Querying {brandname} caches]
+* link:titles/query/query.html[Querying {brandname} Caches]
 * link:titles/developing/developing.html[Developer's Guide]
 * link:titles/xsite/xsite.html[Using Cross-Site Replication]
 * link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]

@@ -21,7 +21,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :embedded_caches:
 
 //Title
-= Configuring {brandname} {infinispanversion}
+= Configuring {brandname} Caches
 
 //User stories
 include::stories.adoc[]
