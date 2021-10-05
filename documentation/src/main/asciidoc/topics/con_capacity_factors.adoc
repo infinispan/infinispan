@@ -1,15 +1,14 @@
 [id='capacity-factors_{context}']
 = Capacity factors
-Capacity factors allocate segment-to-node mappings based on resources available
-to nodes.
 
-To configure capacity factors, you specify any non-negative number and the
-{brandname} hashing algorithm assigns each node a load weighted by its
-capacity factor (both as a primary owner and as a backup owner).
+Capacity factors allocate the number of segments based on resources available to each node in the cluster.
 
-For example, nodeA has 2x the memory available than nodeB in the same
-{brandname} cluster. In this case, setting `capacityFactor` to a value of `2`
-configures {brandname} to allocate 2x the number of segments to nodeA.
+The capacity factor for a node applies to segments for which that node is both the primary owner and backup owner.
+In other words, the capacity factor specifies is the total capacity that a node has in comparison to other nodes in the cluster.
 
-Setting a capacity factor of `0` is possible but is recommended only in cases
-where nodes are not joined to the cluster long enough to be useful data owners.
+The default value is `1` which means that all nodes in the cluster have an equal capacity and {brandname} allocates the same number of segments to all nodes in the cluster.
+
+However, if nodes have different amounts of memory available to them, you can configure the capacity factor so that the {brandname} hashing algorithm assigns each node a number of segments weighted by its capacity.
+
+The value for the capacity factor configuration must be a positive number and can be a fraction such as 1.5.
+You can also configure a capacity factor of `0` but is recommended only for nodes that join the cluster temporarily and should use the zero capacity configuration instead.

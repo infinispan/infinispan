@@ -1712,8 +1712,10 @@
         </xs:attribute>
         <xs:attribute name="capacity-factor" type="xs:double" default="${Hash.capacity}">
           <xs:annotation>
-            <xs:documentation>Controls the proportion of entries that will reside on the local node,
-              compared to the other nodes in the cluster. Value must be positive. The default is 1</xs:documentation>
+            <xs:documentation>
+              Controls the proportion of entries that reside on the local node in comparison to other nodes in the cluster.
+              You must specify a positive number as the value.
+              The value can also be a fraction such as 1.5.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="l1-lifespan" type="xs:long">
