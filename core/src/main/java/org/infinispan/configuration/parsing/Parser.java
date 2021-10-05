@@ -164,7 +164,7 @@ public class Parser extends CacheParser {
                if (reader.getSchema().since(12, 0)) {
                   throw ParseUtils.elementRemoved(reader, Element.ALLOW_LIST.getLocalName());
                }
-               CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
+               CONFIG.configDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
                parseAllowList(reader, builder.serialization().allowList(), Element.WHITE_LIST);
                break;
             case ALLOW_LIST: {

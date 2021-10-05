@@ -37,7 +37,6 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -1482,8 +1481,8 @@ public interface Log extends BasicLogger {
    TimeoutException timeoutWaitingForAcks(String timeout, long id);
 
    @LogMessage(level = WARN)
-   @Message(value = "The '%s' element has been deprecated. Please use the '%s' element instead", id = 428)
-   void elementDeprecatedUseOther(Element element, Element other);
+   @Message(value = "'%s' has been deprecated. Please use '%s' instead", id = 428)
+   void configDeprecatedUseOther(Enum<?> element, Enum<?> other);
 
    @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
    WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);
