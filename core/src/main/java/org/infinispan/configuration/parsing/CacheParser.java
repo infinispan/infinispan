@@ -698,7 +698,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseStoreAsBinary(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      CONFIG.elementDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY);
+      CONFIG.configDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY);
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Boolean binaryKeys = null;
       Boolean binaryValues = null;
@@ -969,7 +969,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseEviction(ConfigurationReader reader, ConfigurationBuilder builder) {
-      CONFIG.elementDeprecatedUseOther(Element.EVICTION, Element.MEMORY);
+      CONFIG.configDeprecatedUseOther(Element.EVICTION, Element.MEMORY);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -1207,6 +1207,11 @@ public class CacheParser implements ConfigurationParser {
                builder.clustering().l1().cleanupTaskFrequency(Long.parseLong(value));
                break;
             }
+            case CAPACITY:
+               if (reader.getSchema().since(13, 0)) {
+                  throw CONFIG.attributeRemoved(Attribute.CAPACITY.getLocalName());
+               }
+               CONFIG.configDeprecatedUseOther(Attribute.CAPACITY, Attribute.CAPACITY_FACTOR);
             case CAPACITY_FACTOR: {
                builder.clustering().hash().capacityFactor(Float.parseFloat(value));
                break;
