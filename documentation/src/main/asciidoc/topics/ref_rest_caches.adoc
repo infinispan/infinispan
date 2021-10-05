@@ -98,14 +98,14 @@ GET /rest/v2/caches/{name}?action=config
 |===
 
 [id='rest_v2_cache_config_convert']
-= Converting Cache Configurations to JSON
-Invoke a `POST` request with valid XML configuration and the `?action=toJSON`
-parameter. {brandname} responds with the equivalent JSON representation of the
-configuration.
+= Converting Cache Configurations between XML, JSON and YAML
+Invoke a `POST` request with valid configuration and the `?action=convert`
+parameter. {brandname} responds with the equivalent representation of the
+configuration in the type specified by the `Accept` header.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/caches?action=toJSON
+POST /rest/v2/caches?action=convert
 ----
 
 [id='rest_v2_cache_detail']
