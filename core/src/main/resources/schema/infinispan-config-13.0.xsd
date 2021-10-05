@@ -1710,7 +1710,7 @@
             <xs:documentation>Sets the number of hash space segments per cluster. The default value is 256. The value should be at least 20 * the cluster size.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="capacity-factor" type="xs:double" default="${Hash.capacity}">
+        <xs:attribute name="capacity-factor" type="xs:double" default="${Hash.capacity-factor}">
           <xs:annotation>
             <xs:documentation>Controls the proportion of entries that will reside on the local node,
               compared to the other nodes in the cluster. Value must be positive. The default is 1</xs:documentation>
@@ -1727,15 +1727,6 @@
           <xs:annotation>
             <xs:documentation>
               Controls how often a cleanup task to prune L1 tracking data is run. Defaults to 10 minutes.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="capacity" type="xs:float" default="${Hash.capacity}">
-          <xs:annotation>
-            <xs:documentation>
-              Controls the proportion of entries that will reside on the local node, compared to the other nodes
-              in the cluster. This is just a suggestion, there is no guarantee that a node with a capacity
-              factor of 2 will have twice as many entries as a node with a capacity factor of 1.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

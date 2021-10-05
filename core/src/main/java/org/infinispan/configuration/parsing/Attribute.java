@@ -38,7 +38,9 @@ public enum Attribute {
     CACHE_SIZE,
     CACHE_TIMEOUT,
     CALIBRATE_BY_DELETES,
-    CAPACITY_FACTOR("capacity"),
+    @Deprecated
+    CAPACITY,
+    CAPACITY_FACTOR,
     CHUNK_SIZE,
     CLASS,
     CLUSTER,
