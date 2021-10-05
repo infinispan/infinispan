@@ -152,8 +152,8 @@ public interface Log extends BasicLogger {
 //   void distributionManagerNotStarted();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Problem %s encountered when applying state for key %s!", id = 16)
-   void problemApplyingStateForKey(String msg, Object key, @Cause Throwable t);
+   @Message(value = "Problem encountered when applying state for key %s!", id = 16)
+   void problemApplyingStateForKey(Object key, @Cause Throwable t);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to apply prepare %s", id = 18)

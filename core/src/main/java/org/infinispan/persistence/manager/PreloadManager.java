@@ -5,9 +5,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
@@ -20,8 +17,10 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
@@ -32,8 +31,10 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.transaction.impl.FakeJTATransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
-import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -66,12 +67,12 @@ public class PreloadManager {
    @Inject protected ComponentRef<AdvancedCache<?, ?>> cache;
    @Inject CommandsFactory commandsFactory;
    @Inject KeyPartitioner keyPartitioner;
-
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject InvocationHelper invocationHelper;
    @Inject TransactionCoordinator transactionCoordinator;
    @Inject TransactionManager transactionManager;
-   @Inject BlockingManager blockingManager;
+   @Inject TransactionTable transactionTable;
+
    private volatile boolean fullyPreloaded;
 
    @Start
@@ -114,41 +115,38 @@ public class PreloadManager {
       // TODO If the storage media type is application/x-protostream, this will convert to POJOs and back
       Object key = keyDataConversion.toStorage(me.getKey());
       Object value = valueDataConversion.toStorage(me.getValue());
-      PutKeyValueCommand cmd = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key), metadata, flags);
+      PutKeyValueCommand cmd = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
+                                                                       metadata, flags);
       cmd.setInternalMetadata(me.getInternalMetadata());
 
       CompletionStage<?> stage;
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         final Transaction transaction = suspendIfNeeded();
-         CompletionStage<Transaction> putStage;
+      if (configuration.transaction().transactionMode().isTransactional()) {
          try {
-            beginIfNeeded();
-            putStage = invocationHelper.invokeAsync(cmd, 1)
-                                       .thenApply(ignore -> {
-                                          try {
-                                             return transactionManager.suspend();
-                                          } catch (SystemException e) {
-                                             throw new PersistenceException("Unable to preload!", e);
-                                          }
-                                       });
+            Transaction transaction = new FakeJTATransaction();
+            InvocationContext ctx = invocationContextFactory.createInvocationContext(transaction, false);
+            LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
+            stage = CompletionStages.handleAndCompose(invocationHelper.invokeAsync(ctx, cmd),
+                                                      (__, t) -> completeTransaction(key, localTransaction, t))
+                  .whenComplete((__, t) -> transactionTable.removeLocalTransaction(localTransaction));
          } catch (Exception e) {
-            throw new PersistenceException("Unable to preload!", e);
+            throw log.problemPreloadingKey(key, e);
          }
-         stage = blockingManager.whenCompleteBlocking(putStage, (pendingTransaction, t) -> {
-            try {
-               transactionManager.resume(pendingTransaction);
-               commitIfNeeded(t == null);
-            } catch (InvalidTransactionException | SystemException e) {
-               throw new PersistenceException("Unable to preload!", e);
-            } finally {
-               resumeIfNeeded(transaction);
-            }
-         }, me.getKey());
       } else {
          stage = invocationHelper.invokeAsync(cmd, 1);
       }
       // The return value doesn't matter, but it cannot be null
       return Completable.fromCompletionStage(stage).toSingleDefault(me);
+   }
+
+   private CompletionStage<?> completeTransaction(Object key, LocalTransaction localTransaction, Throwable t) {
+      if (t != null) {
+         return transactionCoordinator.rollback(localTransaction)
+                                      .whenComplete((__1, t1) -> {
+                                         throw log.problemPreloadingKey(key, t);
+                                      });
+      }
+
+      return transactionCoordinator.commit(localTransaction, true);
    }
 
    private void resumeIfNeeded(Transaction transaction) {
@@ -171,25 +169,6 @@ public class PreloadManager {
          }
       }
       return null;
-   }
-
-   private void beginIfNeeded() throws SystemException, NotSupportedException {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         transactionManager.begin();
-      }
-   }
-
-   private void commitIfNeeded(boolean success) {
-      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
-         try {
-            if (success) {
-               transactionManager.commit();
-            } else {
-               transactionManager.rollback();
-            }
-         } catch (Exception e) {
-            throw new PersistenceException(e);}
-      }
    }
 
    private long getMaxEntries() {
