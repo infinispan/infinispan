@@ -89,6 +89,13 @@
          <scope>test</scope>
       </dependency>
 
+      <!-- for testing against Oracle -->
+      <dependency>
+         <groupId>com.oracle.ojdbc</groupId>
+         <artifactId>ojdbc8</artifactId>
+         <scope>test</scope>
+      </dependency>
+
       <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
       <dependency>
          <groupId>org.xerial</groupId>
