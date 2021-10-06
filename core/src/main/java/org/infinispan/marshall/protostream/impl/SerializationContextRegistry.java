@@ -18,6 +18,8 @@ public interface SerializationContextRegistry {
 
    void addProtoFile(MarshallerType type, FileDescriptorSource fileDescriptorSource);
 
+   void removeProtoFile(MarshallerType type, String fileName);
+
    void addMarshaller(MarshallerType type, BaseMarshaller marshaller);
 
    void addContextInitializer(MarshallerType type, SerializationContextInitializer sci);
