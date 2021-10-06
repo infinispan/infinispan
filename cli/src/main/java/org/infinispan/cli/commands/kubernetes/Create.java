@@ -42,6 +42,8 @@ public class Create extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
       return CommandResult.FAILURE;
    }
 
