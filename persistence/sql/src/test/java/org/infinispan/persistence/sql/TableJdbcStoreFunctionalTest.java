@@ -46,9 +46,10 @@ public class TableJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTest
             .preload(preload);
       configureCommonConfiguration(storeBuilder);
 
-      storeBuilder.tableName(tableToSearch(cacheName));
+      String tableName = tableToSearch(getClass().getSimpleName().subSequence(0, 1) + cacheName);
+      storeBuilder.tableName(tableName);
 
-      createTable(tableToSearch(cacheName), storeBuilder.getConnectionFactory());
+      createTable(cacheName, tableName, storeBuilder.getConnectionFactory());
 
       return persistence;
    }
