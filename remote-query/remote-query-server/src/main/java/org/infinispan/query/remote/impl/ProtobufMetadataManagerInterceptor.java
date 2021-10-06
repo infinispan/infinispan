@@ -121,7 +121,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
-            registerProtoFile(key, (String) command.getValue());
+            registerProtoFile(key, (String) command.getValue(), EMPTY_CALLBACK);
          }
          return null;
       }
@@ -130,19 +130,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          final Map<Object, Object> map = command.getMap();
          FileDescriptorSource source = new FileDescriptorSource().withProgressCallback(EMPTY_CALLBACK);
-         FileDescriptorSource ctxRegistrySource = new FileDescriptorSource();
          for (Object key : map.keySet()) {
             if (shouldIntercept(key)) {
                source.addProtoFile((String) key, (String) map.get(key));
-               ctxRegistrySource.addProtoFile((String) key, (String) map.get(key));
             }
          }
-         try {
-            serializationContext.registerProtoFiles(source);
-            registerWithContextRegistry(ctxRegistrySource);
-         } catch (DescriptorParserException e) {
-            throw log.failedToParseProtoFile(e);
-         }
+         registerFileDescriptorSource(source, source.getFiles().keySet().toString());
          return null;
       }
 
@@ -150,7 +143,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
-            registerProtoFile(key, (String) command.getNewValue());
+            registerProtoFile(key, (String) command.getNewValue(), EMPTY_CALLBACK);
          }
          return null;
       }
@@ -175,34 +168,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
    };
 
-   private void registerProtoFile(String name, String content) {
-      registerProtoFile(name, content, EMPTY_CALLBACK);
-   }
-
    private void registerProtoFile(String name, String content, FileDescriptorSource.ProgressCallback callback) {
-      try {
-         // Register protoFiles with remote-query context
-         serializationContext.registerProtoFiles(
-               new FileDescriptorSource()
-                     .withProgressCallback(callback)
-                     .addProtoFile(name, content)
-         );
-
-         // Register schema with global context to allow transcoding to json
-         registerWithContextRegistry(new FileDescriptorSource().addProtoFile(name, content));
-      } catch (DescriptorParserException e) {
-         if (name == null)
-            throw log.failedToParseProtoFile(e);
-         throw log.failedToParseProtoFile(name, e);
-      }
-   }
-
-   private void registerWithContextRegistry(FileDescriptorSource source) {
-      try {
-         serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.USER, source);
-      } catch (Exception ignore) {
-         // Ignore any exceptions here, as they will be reported in the protobuf cache
-      }
+      FileDescriptorSource source = new FileDescriptorSource()
+            .withProgressCallback(callback)
+            .addProtoFile(name, content);
+      registerFileDescriptorSource(source, source.getFiles().keySet().toString());
    }
 
    @Inject
@@ -274,7 +244,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             InvocationStage updateStage = updateSchemaErrorsIterator(ctx, flagsBitSet, errorUpdates.iterator());
             return makeStage(updateStage.thenReturn(ctx, putKeyValueCommand, rv));
          }
-         registerProtoFile((String) key, (String) value);
+         registerProtoFile((String) key, (String) value, EMPTY_CALLBACK);
       }
       return makeStage(rv);
    }
@@ -318,7 +288,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       final Map<Object, Object> map = command.getMap();
 
-      FileDescriptorSource ctxRegistrySource = new FileDescriptorSource();
       FileDescriptorSource source = new FileDescriptorSource();
       for (Object key : map.keySet()) {
          final Object value = map.get(key);
@@ -333,7 +302,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                throw log.keyMustBeStringEndingWithProto(key);
             }
             source.addProtoFile((String) key, (String) value);
-            ctxRegistrySource.addProtoFile((String) key, (String) value);
          }
       }
 
@@ -350,12 +318,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          } else {
             source.withProgressCallback(EMPTY_CALLBACK);
          }
-         try {
-            serializationContext.registerProtoFiles(source);
-            registerWithContextRegistry(ctxRegistrySource);
-         } catch (DescriptorParserException e) {
-            throw log.failedToParseProtoFile(e);
-         }
+         registerFileDescriptorSource(source, source.getFiles().keySet().toString());
 
          if (progressCallback != null) {
             List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
@@ -363,6 +326,18 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
          return InvocationStage.completedNullStage();
       });
+   }
+
+   private void registerFileDescriptorSource(FileDescriptorSource source, String fileNameString) {
+      try {
+         // Register protoFiles with remote-query context
+         serializationContext.registerProtoFiles(source);
+
+         // Register schema with user context to allow transcoding
+         serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.USER, source);
+      } catch (DescriptorParserException e) {
+         throw log.failedToParseProtoFile(fileNameString, e);
+      }
    }
 
    @Override
@@ -385,6 +360,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       stage = stage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, __) -> {
          if (serializationContext.getFileDescriptors().containsKey(key)) {
             serializationContext.unregisterProtoFile(key);
+         }
+         if (serializationContextRegistry.getUserCtx().getFileDescriptors().containsKey(key)) {
+            serializationContextRegistry.removeProtoFile(SerializationContextRegistry.MarshallerType.USER, key);
          }
 
          // put error key for all unresolved files and remove error key for all resolved files
@@ -477,7 +455,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
                return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
             }
-            registerProtoFile((String) key, (String) value);
+            registerProtoFile((String) key, (String) value, EMPTY_CALLBACK);
          }
          return InvocationStage.completedNullStage();
       });

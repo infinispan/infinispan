@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -48,7 +47,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
       TestingUtil.withCacheManager(new CacheManagerCallable(createCacheManager(persistentStateLocation)) {
          @Override
          public void call() {
-            insertSchemas(this.cm);
+            insertSchemas(cm);
 
             verifySchemas(cm);
          }
@@ -92,30 +91,47 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
 
    private void insertSchemas(EmbeddedCacheManager cm) {
       Cache<String, String> protobufMetadaCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      // Valid schemas
-      protobufMetadaCache.put("A.proto", "package A;");
-      protobufMetadaCache.put("B.proto", "import \"A.proto\";\npackage B;");
-      protobufMetadaCache.put("C.proto", "import \"A.proto\";\nimport \"B.proto\";\npackage C;");
+      // Schemas that are invalid until A.proto is inserted
       protobufMetadaCache.put("D.proto", "import \"B.proto\";\nimport \"C.proto\";\npackage D;\n" +
                                          "message M {\nrequired string s = 1;\n}");
+      assertFilesWithErrors(cm, "D.proto");
+      protobufMetadaCache.put("C.proto", "import \"A.proto\";\nimport \"B.proto\";\npackage C;");
+      assertFilesWithErrors(cm, "D.proto", "C.proto");
+      protobufMetadaCache.put("B.proto", "import \"A.proto\";\npackage B;");
+      assertFilesWithErrors(cm, "D.proto", "C.proto", "B.proto");
+      protobufMetadaCache.put("A.proto", "package A;");
+      assertFilesWithErrors(cm);
+
       // Schemas with errors
       protobufMetadaCache.put("E.proto", "import \"E.proto\";\npackage E;");
       protobufMetadaCache.put("F.proto", "import \"E.proto\";\nimport \"X.proto\";\npackage E;");
+      assertFilesWithErrors(cm, "E.proto", "F.proto");
    }
 
    private void verifySchemas(CacheContainer manager) {
-      ProtobufMetadataManager pmm = extractGlobalComponent(manager, ProtobufMetadataManager.class);
-      assertEquals(setOf("E.proto", "F.proto"), setOf(pmm.getFilesWithErrors()));
-      Set<String> protoNames = setOf("A.proto", "B.proto", "C.proto", "D.proto", "E.proto", "F.proto");
-      assertEquals(protoNames, setOf(pmm.getProtofileNames()));
+      assertFiles(manager, "A.proto", "B.proto", "C.proto", "D.proto", "E.proto", "F.proto");
+      assertFilesWithErrors(manager, "E.proto", "F.proto");
 
       SerializationContextRegistry scr = extractGlobalComponent(manager, SerializationContextRegistry.class);
-      ImmutableSerializationContext serializationContext = scr.getGlobalCtx();
+      ImmutableSerializationContext serializationContext = scr.getUserCtx();
       Descriptor mDescriptor = serializationContext.getMessageDescriptor("D.M");
       assertNotNull(mDescriptor);
       List<String> fields = mDescriptor.getFields().stream()
                                        .map(AnnotatedDescriptorImpl::getName)
                                        .collect(Collectors.toList());
       assertEquals(singletonList("s"), fields);
+   }
+
+   private void assertFilesWithErrors(CacheContainer manager, String... expectedFileNames) {
+      ProtobufMetadataManager pmm = extractGlobalComponent(manager, ProtobufMetadataManager.class);
+      assertEquals(setOf(expectedFileNames), setOf(pmm.getFilesWithErrors()));
+      for (String fileName : expectedFileNames) {
+         assertNotNull(pmm.getFileErrors(fileName));
+      }
+   }
+
+   private void assertFiles(CacheContainer manager, String... expectedFileNames) {
+      ProtobufMetadataManager pmm = extractGlobalComponent(manager, ProtobufMetadataManager.class);
+      assertEquals(setOf(expectedFileNames), setOf(pmm.getProtofileNames()));
    }
 }
