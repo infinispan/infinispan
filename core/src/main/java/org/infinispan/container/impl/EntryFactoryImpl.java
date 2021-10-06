@@ -299,9 +299,11 @@ public class EntryFactoryImpl implements EntryFactory {
       Metadata metadata = null;
       PrivateMetadata internalMetadata = null;
       if (cacheEntry != null) {
-         value = cacheEntry.getValue();
-         metadata = cacheEntry.getMetadata();
-         internalMetadata = cacheEntry.getInternalMetadata();
+         synchronized (cacheEntry) {
+            value = cacheEntry.getValue();
+            metadata = cacheEntry.getMetadata();
+            internalMetadata = cacheEntry.getInternalMetadata();
+         }
       }
 
       if (log.isTraceEnabled()) log.tracef("Creating new entry for key %s", toStr(key));
