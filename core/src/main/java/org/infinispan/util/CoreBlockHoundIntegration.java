@@ -147,6 +147,6 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // Unfortunately retrieving the protobuf schema reads from a separately generated file - We hope this can be changed
       // so instead the generated context initializer can just store the schema as a String.
-      builder.allowBlockingCallsInside(SerializationContextRegistryImpl.class.getName() + "$MarshallerContext", "update");
+      builder.allowBlockingCallsInside(SerializationContextRegistryImpl.class.getName(), "register");
    }
 }

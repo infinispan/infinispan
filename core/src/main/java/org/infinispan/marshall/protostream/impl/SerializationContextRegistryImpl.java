@@ -54,7 +54,6 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
          initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfig.classLoader());
       }
       initializers.forEach(user::addContextInitializer);
-      user.update();
 
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
@@ -62,12 +61,10 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
             // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
             .addContextInitializer(new org.infinispan.commons.GlobalContextInitializerImpl())
             .addMarshaller(userObjectMarshaller)
-            .update()
       );
 
       update(PERSISTENCE, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
             .addMarshaller(userObjectMarshaller)
-            .update()
       );
    }
 
@@ -88,17 +85,29 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
    @Override
    public void addContextInitializer(MarshallerType type, SerializationContextInitializer sci) {
-      update(type, ctx -> ctx.addContextInitializer(sci).update());
+      update(type, ctx -> {
+         ctx.addContextInitializer(sci);
+
+         // Replay any marshaller overrides, e.g. MarshalledUserObject
+         // Necessary because adding a new SCI re-registers the schemas/marshallers of all its dependencies
+         ctx.marshallers.forEach(ctx.ctx::registerMarshaller);
+      });
    }
 
    @Override
    public void addProtoFile(MarshallerType type, FileDescriptorSource fileDescriptorSource) {
-      update(type, ctx -> ctx.addProtoFile(fileDescriptorSource).update());
+      update(type, ctx -> ctx.addProtoFile(fileDescriptorSource));
+
+   }
+
+   @Override
+   public void removeProtoFile(MarshallerType type, String fileName) {
+      update(type, ctx -> ctx.removeProtoFile(fileName));
    }
 
    @Override
    public void addMarshaller(MarshallerType type, BaseMarshaller marshaller) {
-      update(type, ctx -> ctx.addMarshaller(marshaller).update());
+      update(type, ctx -> ctx.addMarshaller(marshaller));
    }
 
    private void update(MarshallerType type, Consumer<MarshallerContext> consumer) {
@@ -116,30 +125,28 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    // Required until IPROTO-136 is resolved to ensure that custom marshaller implementations are not overridden by
    // non-core modules registering their SerializationContextInitializer(s) which depend on a core initializer.
    private static final class MarshallerContext {
-      private final List<SerializationContextInitializer> initializers = new ArrayList<>();
-      private final List<FileDescriptorSource> schemas = new ArrayList<>();
       private final List<BaseMarshaller<?>> marshallers = new ArrayList<>();
       private final SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       MarshallerContext addContextInitializer(SerializationContextInitializer sci) {
-         initializers.add(sci);
+         register(sci, ctx);
          return this;
       }
 
       MarshallerContext addProtoFile(FileDescriptorSource fileDescriptorSource) {
-         schemas.add(fileDescriptorSource);
+         ctx.registerProtoFiles(fileDescriptorSource);
+         return this;
+      }
+
+      MarshallerContext removeProtoFile(String fileName) {
+         ctx.unregisterProtoFile(fileName);
          return this;
       }
 
       MarshallerContext addMarshaller(BaseMarshaller marshaller) {
          marshallers.add(marshaller);
+         ctx.registerMarshaller(marshaller);
          return this;
-      }
-
-      void update() {
-         initializers.forEach(sci -> register(sci, ctx));
-         schemas.forEach(ctx::registerProtoFiles);
-         marshallers.forEach(ctx::registerMarshaller);
       }
    }
 }
