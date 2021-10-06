@@ -48,85 +48,88 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
             .preload(preload);
       configureCommonConfiguration(storeBuilder);
 
-      SqlManager manager = SqlManager.fromDatabaseType(DB_TYPE, cacheName, true);
+      // Just prepend the first letter of the Test to make the tables unique so we can run them in parallel
+      String tableName = getClass().getSimpleName().subSequence(0, 1) + cacheName;
+
+      SqlManager manager = SqlManager.fromDatabaseType(DB_TYPE, tableName, true);
 
       String KEY_COLUMN = "keycolumn";
       storeBuilder.queriesJdbcConfigurationBuilder()
-            .deleteAll("DELETE FROM " + cacheName)
-            .size("SELECT COUNT(*) FROM " + cacheName);
+            .deleteAll("DELETE FROM " + tableName)
+            .size("SELECT COUNT(*) FROM " + tableName);
       storeBuilder.keyColumns(KEY_COLUMN);
       if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", value1 FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "value1")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASMOREVALUECOLUMNS")) {
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, value2, value3 FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, value2, value3 FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, value2, value3 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, value2, value3 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "value2", "value3")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASMOREKEYCOLUMNS")) {
          // The colum has to be value to match our Key proto schema
          KEY_COLUMN = "value";
          storeBuilder.keyColumns(KEY_COLUMN + ", keycolumn2");
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "value1")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN + " AND keycolumn2 = :keycolumn2");
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN + " AND keycolumn2 = :keycolumn2");
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASLESSVALUECOLUMNS")) {
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", name, STREET FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", name, street FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", name, STREET FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", name, street FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTEMBEDDEDKEY")) {
          storeBuilder.keyColumns("name");
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT name, STREET, city, ZIP, picture, sex, birthdate FROM " + cacheName + " WHERE name = :name")
-               .selectAll("SELECT name, street, city, zip, picture, sex, birthdate FROM " + cacheName)
+               .select("SELECT name, STREET, city, ZIP, picture, sex, birthdate FROM " + tableName + " WHERE name = :name")
+               .selectAll("SELECT name, street, city, zip, picture, sex, birthdate FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("name"),
                      Arrays.asList("name", "street", "CITY", "zip", "picture", "sex", "birthdate")))
-               .delete("DELETE FROM " + cacheName + " WHERE name = :name");
+               .delete("DELETE FROM " + tableName + " WHERE name = :name");
       } else if (cacheName.toUpperCase().startsWith("TESTENUMFORVALUE")) {
          storeBuilder.keyColumns("name");
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT name, sex FROM " + cacheName + " WHERE name = :name")
-               .selectAll("SELECT name, sex FROM " + cacheName)
+               .select("SELECT name, sex FROM " + tableName + " WHERE name = :name")
+               .selectAll("SELECT name, sex FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("name"),
                      Arrays.asList("name", "sex")))
-               .delete("DELETE FROM " + cacheName + " WHERE name = :name");
+               .delete("DELETE FROM " + tableName + " WHERE name = :name");
       } else if (cacheName.toUpperCase().startsWith("TESTENUMFORKEY")) {
          storeBuilder.keyColumns("sex");
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT name, sex FROM " + cacheName + " WHERE sex = :sex")
-               .selectAll("SELECT name, sex FROM " + cacheName)
+               .select("SELECT name, sex FROM " + tableName + " WHERE sex = :sex")
+               .selectAll("SELECT name, sex FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("sex"),
                      Arrays.asList("name", "sex")))
-               .delete("DELETE FROM " + cacheName + " WHERE sex = :sex");
+               .delete("DELETE FROM " + tableName + " WHERE sex = :sex");
       } else {
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", value1 FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + cacheName)
+               .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "value1")))
-               .delete("DELETE FROM " + cacheName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       }
 
-      createTable(cacheName, storeBuilder.getConnectionFactory());
+      createTable(cacheName, tableName, storeBuilder.getConnectionFactory());
 
       return persistence;
    }

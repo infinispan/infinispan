@@ -9,8 +9,8 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +49,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import util.JdbcConnection;
 
 public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctionalTest {
@@ -353,11 +354,11 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       }
    }
 
-   protected void createTable(String cacheName, ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> builder) {
+   protected void createTable(String cacheName, String tableName, ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> builder) {
       String tableCreation;
       String upperCaseCacheName = cacheName.toUpperCase();
       if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
                "street VARCHAR(255), " +
@@ -368,12 +369,12 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "birthdate " + dateTimeType() + ", " +
                "PRIMARY KEY (keycolumn))";
       } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn " + binaryType() + " NOT NULL, " +
                "value1 " + binaryType() + " NOT NULL, " +
                "PRIMARY KEY (keycolumn))";
       } else if (upperCaseCacheName.startsWith("TESTDBHASMOREVALUECOLUMNS")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
                "street VARCHAR(255), " +
@@ -386,20 +387,20 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "value3 VARCHAR(255), " +
                "PRIMARY KEY (keycolumn))";
       } else if (upperCaseCacheName.startsWith("TESTDBHASMOREKEYCOLUMNS")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                // The name of the field for the Key schema is "value"
                "value VARCHAR(255) NOT NULL, " +
                "keycolumn2 VARCHAR(255) NOT NULL," +
                "value1 VARCHAR(255) NOT NULL, " +
                "PRIMARY KEY (value, keycolumn2))";
       } else if (upperCaseCacheName.startsWith("TESTDBHASLESSVALUECOLUMNS")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
                "street VARCHAR(255), " +
                "PRIMARY KEY (keycolumn))";
       } else if (upperCaseCacheName.startsWith("TESTEMBEDDED")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "NAME VARCHAR(255) NOT NULL, " +
                "street VARCHAR(255), " +
                "city VARCHAR(255), " +
@@ -409,17 +410,17 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "birthdate " + dateTimeType() + ", " +
                "PRIMARY KEY (name))";
       } else if (upperCaseCacheName.startsWith("TESTENUMFORVALUE")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "NAME VARCHAR(255) NOT NULL, " +
                "sex VARCHAR(255), " +
                "PRIMARY KEY (name))";
       } else if (upperCaseCacheName.startsWith("TESTENUMFORKEY")) {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "sex VARCHAR(255) NOT NULL, " +
                "name VARCHAR(255), " +
                "PRIMARY KEY (sex))";
       } else {
-         tableCreation = "CREATE TABLE " + cacheName + " (" +
+         tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "value1 VARCHAR(255) NOT NULL, " +
                "PRIMARY KEY (keycolumn))";
@@ -431,12 +432,12 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       Connection connection = null;
       try {
          connection = factory.getConnection();
-         String tableName = tableToSearch(cacheName);
-         try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName,
+         String modifiedTableName = tableToSearch(tableName);
+         try (ResultSet rs = connection.getMetaData().getTables(null, null, modifiedTableName,
                new String[]{"TABLE"})) {
             if (!rs.next()) {
                try (Statement stmt = connection.createStatement()) {
-                  log.debugf("Table: %s doesn't exist, creating via %s%n", tableName, tableCreation);
+                  log.debugf("Table: %s doesn't exist, creating via %s%n", modifiedTableName, tableCreation);
                   stmt.execute(tableCreation);
                }
             }
