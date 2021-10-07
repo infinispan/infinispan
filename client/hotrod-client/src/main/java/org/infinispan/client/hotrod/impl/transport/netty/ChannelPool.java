@@ -149,17 +149,21 @@ class ChannelPool {
          newChannelInvoker.createChannel().whenComplete((channel, throwable) -> {
             if (throwable != null) {
                int currentActive = active.decrementAndGet();
-               assert currentActive >= 0;
+               if (currentActive < 0) {
+                  HOTROD.warnf("Invalid active count after closing channel %s", channel);
+               }
                int currentCreated = created.decrementAndGet();
-               assert currentCreated >= 0;
+               if (currentCreated < 0) {
+                  HOTROD.warnf("Invalid created count after closing channel %s", channel);
+               }
                if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
                                      address, currentCreated, currentActive, connected.get());
                callback.cancel(address, throwable);
                connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
             } else {
                int currentConnected = connected.incrementAndGet();
-               if (log.isTraceEnabled()) log.tracef(throwable, "Channel connected, created = %d, active = %d, connected = %d",
-                                                    created.get(), active.get(), currentConnected);
+               if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel connected, created = %d, active = %d, connected = %d",
+                                                    address, created.get(), active.get(), currentConnected);
                callback.invoke(channel);
                connectionFailureListener.accept(this, ChannelEventType.CONNECTED);
             }
