@@ -1,5 +1,6 @@
 [id='ref_relay-{context}']
 = JGroups RELAY2 Stacks
+
 {brandname} clusters use JGroups RELAY2 for inter-cluster discovery and communication.
 
 [source,xml,options="nowrap",subs=attributes+]

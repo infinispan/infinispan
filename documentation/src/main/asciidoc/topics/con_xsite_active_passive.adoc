@@ -15,7 +15,7 @@ In the preceding image:
 
 . Client connects to the {brandname} cluster at **LON**.
 . Client writes "k1" to the cache.
-. The site master at **LON**, "n1", sends the request to replicate "k1" to the site master at **NYC**, "nA".
+. The relay node at **LON**, "n1", sends the request to replicate "k1" to the relay node at **NYC**, "nA".
 
 With Active/Passive, **NYC** provides data redundancy. If the {brandname}
 cluster at **LON** goes offline for any reason, clients can start sending
@@ -36,7 +36,7 @@ In the preceding image:
 . Client A writes "k1" to the cache.
 . Client B connects to the {brandname} cluster at **NYC**.
 . Client B writes "k2" to the cache.
-. Site masters at **LON** and **NYC** send requests so that "k1" is replicated to **NYC** and "k2" is replicated to **LON**.
+. Relay nodes at **LON** and **NYC** send requests so that "k1" is replicated to **NYC** and "k2" is replicated to **LON**.
 
 With Active/Active both **NYC** and **LON** replicate data to remote caches
 while handling client requests. If either **NYC** or **LON** go offline,
