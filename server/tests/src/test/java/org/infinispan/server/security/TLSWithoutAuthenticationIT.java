@@ -1,6 +1,8 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.channels.ClosedChannelException;
 
@@ -9,7 +11,6 @@ import javax.net.ssl.SSLHandshakeException;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -50,7 +51,15 @@ public class TLSWithoutAuthenticationIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca");
       builder.security().ssl().protocol("TLSv1.1");
-      Exceptions.expectException(TransportException.class, SSLHandshakeException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
+      try {
+         SERVER_TEST.hotrod().withClientConfiguration(builder)
+                    .withCacheMode(CacheMode.DIST_SYNC)
+                    .create();
+      } catch (Throwable t) {
+         assertEquals(TransportException.class, t.getClass());
+         assertTrue("Unexpected exception: " + t.getCause(),
+                    t.getCause() instanceof SSLHandshakeException || t.getCause() instanceof ClosedChannelException);
+      }
    }
 
    @Test
@@ -58,7 +67,10 @@ public class TLSWithoutAuthenticationIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca");
       builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
-      Exceptions.expectException(TransportException.class, ClosedChannelException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
+      expectException(TransportException.class, ClosedChannelException.class,
+                      () -> SERVER_TEST.hotrod().withClientConfiguration(builder)
+                                       .withCacheMode(CacheMode.DIST_SYNC)
+                                       .create());
    }
 
    @Test

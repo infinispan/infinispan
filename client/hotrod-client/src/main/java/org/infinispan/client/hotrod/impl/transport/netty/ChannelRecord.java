@@ -43,8 +43,12 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
 
    @Override
    public boolean complete(Channel channel) {
-      channel.closeFuture().addListener(this);
-      return super.complete(channel);
+      // Only add the listener once (or never, if completed exceptionally)
+      boolean complete = super.complete(channel);
+      if (complete) {
+         channel.closeFuture().addListener(this);
+      }
+      return complete;
    }
 
    @Override
