@@ -176,7 +176,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      super.putForExternalRead(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      super.putForExternalRead(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
