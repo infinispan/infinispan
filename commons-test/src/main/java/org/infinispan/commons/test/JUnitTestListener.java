@@ -7,14 +7,39 @@ import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.InitializationError;
 
 /**
  * Logs JUnit test progress.
+ *
+ * <p>To enable when running a test in the IDE, annotate the test class with
+ * {@code @RunWith(JUnitTestListener.Runner.class)}.</p>
+ *
+ * <p>To enable in Maven, set the {@code listener} property in the surefire/failsafe plugin.</p>
  *
  * @author Dan Berindei
  * @since 9.0
  */
 public class JUnitTestListener extends RunListener {
+   /**
+    * Use this runner to add the listener to your test
+    */
+   public static class Runner extends BlockJUnit4ClassRunner {
+      public Runner(Class<?> klass) throws InitializationError {
+         super(klass);
+      }
+
+      @Override
+      protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
+         notifier.addListener(new JUnitTestListener());
+
+         super.runChild(method, notifier);
+      }
+   }
+
    private ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
 
    private final TestSuiteProgress progressLogger;
