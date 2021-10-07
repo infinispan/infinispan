@@ -72,14 +72,15 @@ public class PersistenceIT {
    //Some jdbc drivers are not available through maven (like sybase), in this case we can pass the jdbc driver location
    private static JavaArchive[] getJavaArchive() {
       List<JavaArchive> externalJdbcDriver = new ArrayList<>();
-      if(EXTERNAL_JDBC_DRIVER == null) {
-         //adding sybase jar
-         externalJdbcDriver.add(ShrinkWrap.createFromZipFile(JavaArchive.class, Paths.get("src/test/resources/database/jconn4.jar").toFile()));
-      } else {
+      //adding sybase jar
+      externalJdbcDriver.add(ShrinkWrap.createFromZipFile(JavaArchive.class, Paths.get("src/test/resources/database/jconn4.jar").toFile()));
+
+      if(EXTERNAL_JDBC_DRIVER != null) {
          Arrays.stream(EXTERNAL_JDBC_DRIVER.split(","))
                  .map(File::new)
                  .forEach( it -> externalJdbcDriver.add(ShrinkWrap.createFromZipFile(JavaArchive.class, it)));
       }
+
       return externalJdbcDriver.toArray(new JavaArchive[0]);
    }
 }
