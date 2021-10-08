@@ -63,6 +63,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
@@ -132,6 +133,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(POST, PUT).path("/v2/caches/{cacheName}").handleWith(this::createOrUpdate)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}").handleWith(this::removeCache)
             .invocation().method(HEAD).path("/v2/caches/{cacheName}").handleWith(this::cacheExists)
+
+            .invocation().method(GET).path("/v2/caches/{cacheName}").withAction("get-availability").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheAvailability)
+            .invocation().method(POST).path("/v2/caches/{cacheName}").withAction("set-availability").permission(AuthorizationPermission.ADMIN).handleWith(this::setCacheAvailability)
 
             // Operations
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
@@ -633,6 +637,40 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       responseBuilder.entity(entity);
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
+   }
+
+   private CompletionStage<RestResponse> getCacheAvailability(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      // Use EmbeddedCacheManager directly to allow internal caches to be updated
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getInstance().getCache(cacheName).getAdvancedCache();
+      if (cache == null) {
+         return notFoundResponseFuture();
+      }
+      AvailabilityMode availability = cache.getAvailability();
+      return CompletableFuture.completedFuture(
+            new NettyRestResponse.Builder()
+                  .entity(availability)
+                  .contentType(TEXT_PLAIN)
+                  .status(OK)
+                  .build()
+      );
+   }
+
+   private CompletionStage<RestResponse> setCacheAvailability(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      String availability = request.getParameter("availability");
+      // Use EmbeddedCacheManager directly to allow internal caches to be updated
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getInstance().getCache(cacheName).getAdvancedCache();
+      if (cache == null) {
+         return notFoundResponseFuture();
+      }
+      try {
+         AvailabilityMode availabilityMode = AvailabilityMode.valueOf(availability.toUpperCase());
+         cache.setAvailability(availabilityMode);
+         return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
+      } catch (IllegalArgumentException e) {
+         return badRequestResponseFuture(String.format("Unknown AvailabilityMode '%s'", availability));
+      }
    }
 
    private CompletionStage<RestResponse> getCacheConfigMutableAttributes(RestRequest request) {

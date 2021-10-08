@@ -63,9 +63,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.ResponseHeader;
@@ -112,6 +114,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
+      cm.defineConfiguration("denyReadWritesCache", getDefaultCacheBuilder().clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES).build());
    }
 
    public ConfigurationBuilder getProtoCacheBuilder() {
@@ -1161,6 +1164,33 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestCacheClient cacheClient = client.cache("default");
       RestResponse restResponse = join(cacheClient.sourceConnected());
       ResponseAssertion.assertThat(restResponse).isNotFound();
+   }
+
+   @Test
+   public void testCacheAvailability() {
+      RestCacheClient cacheClient = client.cache("denyReadWritesCache");
+      RestResponse restResponse = join(cacheClient.getAvailability());
+      ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
+
+      restResponse = join(cacheClient.setAvailability("DEGRADED_MODE"));
+      ResponseAssertion.assertThat(restResponse).isOk();
+
+      restResponse = join(cacheClient.getAvailability());
+      ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("DEGRADED_MODE");
+
+      // Ensure that the endpoints can be utilised with internal caches
+      cacheClient = client.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
+      restResponse = join(cacheClient.getAvailability());
+      ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
+
+      // No-op in core as the cache uses the PreferAvailabilityStategy
+      // Call to ensure that accessing internal cache doesn't throw an exception
+      restResponse = join(cacheClient.setAvailability("DEGRADED_MODE"));
+      ResponseAssertion.assertThat(restResponse).isOk();
+
+      // The availability will always be AVAILABLE
+      restResponse = join(cacheClient.getAvailability());
+      ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {

@@ -573,4 +573,18 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       builder.get().url(cacheUrl + "?action=get-mutable-attributes");
       return client.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> getAvailability() {
+      return client.execute(new Request.Builder().url(cacheUrl + "?action=get-availability"));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> setAvailability(String availability) {
+      return client.execute(
+            new Request.Builder()
+               .post(EMPTY_BODY)
+               .url(cacheUrl + "?action=set-availability&availability=" + availability)
+      );
+   }
 }
