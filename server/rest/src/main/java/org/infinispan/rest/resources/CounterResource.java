@@ -51,11 +51,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class CounterResource implements ResourceHandler {
    private final InvocationHelper invocationHelper;
-   private final EmbeddedCounterManager counterManager;
 
    public CounterResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
-      this.counterManager = invocationHelper.getCounterManager();
    }
 
    @Override
@@ -100,7 +98,10 @@ public class CounterResource implements ResourceHandler {
          responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity("Invalid configuration");
          return completedFuture(responseBuilder.build());
       }
-      return counterManager.defineCounterAsync(counterName, configuration).thenApply(r -> responseBuilder.build());
+
+      return invocationHelper.getCounterManager()
+            .defineCounterAsync(counterName, configuration)
+            .thenApply(r -> responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> deleteCounter(RestRequest request) {
@@ -136,6 +137,7 @@ public class CounterResource implements ResourceHandler {
       String accept = request.getAcceptHeader();
       MediaType contentType = accept == null ? MediaType.TEXT_PLAIN : negotiateMediaType(accept);
 
+      EmbeddedCounterManager counterManager = invocationHelper.getCounterManager();
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
          if (configuration == null) return notFoundResponseFuture();
 
@@ -145,10 +147,10 @@ public class CounterResource implements ResourceHandler {
 
          CompletionStage<Long> response;
          if (configuration.type() == CounterType.WEAK) {
-            response = getWeakCounter(counterName)
+            response = getWeakCounter(counterName, counterManager)
                   .thenApply(WeakCounter::getValue);
          } else {
-            response = getStrongCounter(counterName)
+            response = getStrongCounter(counterName, counterManager)
                   .thenCompose(StrongCounter::getValue);
          }
 
@@ -159,6 +161,7 @@ public class CounterResource implements ResourceHandler {
    private CompletionStage<RestResponse> resetCounter(RestRequest request) throws RestResponseException {
       String counterName = request.variables().get("counterName");
 
+      EmbeddedCounterManager counterManager = invocationHelper.getCounterManager();
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
          if (configuration == null) return notFoundResponseFuture();
          CompletionStage<Void> result = configuration.type() == CounterType.WEAK ?
@@ -170,7 +173,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getCounterNames(RestRequest request) throws RestResponseException {
-      return asJsonResponseFuture(Json.make(counterManager.getCounterNames()));
+      return asJsonResponseFuture(Json.make(invocationHelper.getCounterManager().getCounterNames()));
    }
 
    private CompletionStage<RestResponse> incrementCounter(RestRequest request) {
@@ -211,7 +214,7 @@ public class CounterResource implements ResourceHandler {
                                                                 Function<StrongCounter, CompletableFuture<Long>> strongOp) {
       String counterName = request.variables().get("counterName");
 
-      CompletableFuture<CounterConfiguration> counterConfigAsync = counterManager.getConfigurationAsync(counterName);
+      CompletableFuture<CounterConfiguration> counterConfigAsync = invocationHelper.getCounterManager().getConfigurationAsync(counterName);
 
       return counterConfigAsync.thenCompose(configuration -> {
          if (configuration == null) return notFoundResponseFuture();
@@ -233,7 +236,7 @@ public class CounterResource implements ResourceHandler {
       Long update = checkForNumericParam("update", request, responseBuilder);
       if (update == null) return completedFuture(responseBuilder.build());
 
-      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName);
+      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName, invocationHelper.getCounterManager());
       return strongCounter.thenCompose(counter -> {
          if (counter == null) {
             responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
@@ -253,7 +256,7 @@ public class CounterResource implements ResourceHandler {
    private CompletionStage<RestResponse> executeStrongCounterOp(String counterName, Function<StrongCounter, CompletableFuture<Long>> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName);
+      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName, invocationHelper.getCounterManager());
       return strongCounter.thenCompose(counter -> {
          if (counter == null) {
             responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
@@ -264,7 +267,7 @@ public class CounterResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<WeakCounter> getWeakCounter(String name) {
+   private CompletionStage<WeakCounter> getWeakCounter(String name, EmbeddedCounterManager counterManager) {
       WeakCounter weakCounter = counterManager.getCreatedWeakCounter(name);
       if (weakCounter != null) {
          return CompletableFuture.completedFuture(weakCounter);
@@ -273,7 +276,7 @@ public class CounterResource implements ResourceHandler {
             .exceptionally(ignore -> null);
    }
 
-   private CompletionStage<StrongCounter> getStrongCounter(String name) {
+   private CompletionStage<StrongCounter> getStrongCounter(String name, EmbeddedCounterManager counterManager) {
       StrongCounter strongCounter = counterManager.getCreatedStrongCounter(name);
       if (strongCounter != null) {
          return CompletableFuture.completedFuture(strongCounter);
@@ -302,7 +305,7 @@ public class CounterResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       responseBuilder.status(NO_CONTENT);
 
-      CompletionStage<WeakCounter> weakCounter = getWeakCounter(counterName);
+      CompletionStage<WeakCounter> weakCounter = getWeakCounter(counterName, invocationHelper.getCounterManager());
       return weakCounter.thenCompose(counter -> {
          if (counter == null) {
             responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Weak counter '%s' not found", counterName));

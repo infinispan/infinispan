@@ -70,7 +70,7 @@ public class RestServerHelper {
 
    public RestServerHelper start(String name) {
       restServerConfigurationBuilder.name(name);
-      restServer.setServerManagement(new DummyServerManagement());
+      restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(restServerConfigurationBuilder.build(), cacheManager);
       return this;
    }

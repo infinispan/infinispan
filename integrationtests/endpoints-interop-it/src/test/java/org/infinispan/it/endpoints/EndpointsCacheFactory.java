@@ -35,6 +35,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -170,6 +171,7 @@ public class EndpointsCacheFactory<K, V> {
          RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
          builder.port(p);
          rest = new RestServer();
+         rest.setServerManagement(new DummyServerManagement(), true);
          rest.start(builder.build(), cacheManager);
          return rest;
       });

@@ -41,6 +41,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -96,6 +97,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
       builder.port(findFreePort());
       restServer = new RestServer();
+      restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(builder.build(), cacheManager);
       RestClientConfigurationBuilder clientBuilder = new RestClientConfigurationBuilder();
       RestClientConfiguration configuration = clientBuilder.addServer().host(restServer.getHost()).port(restServer.getPort()).build();

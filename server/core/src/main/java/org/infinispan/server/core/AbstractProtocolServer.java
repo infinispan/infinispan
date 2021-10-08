@@ -49,6 +49,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private CacheManagerMetricsRegistration metricsRegistration;
    private Set<MetricID> metricIds;
    private ProtocolServer<?> enclosingProtocolServer;
+   protected boolean adminEndpoint = false;
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
@@ -80,8 +81,9 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
    }
 
-   public void setServerManagement(ServerManagement server) {
+   public void setServerManagement(ServerManagement server, boolean adminEndpoint) {
       this.server = server;
+      this.adminEndpoint = adminEndpoint;
    }
 
    protected boolean isCacheIgnored(String cache) {
