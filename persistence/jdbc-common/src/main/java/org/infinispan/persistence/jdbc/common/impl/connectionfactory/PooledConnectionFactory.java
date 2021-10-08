@@ -6,9 +6,9 @@ import java.time.Duration;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
-import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
@@ -83,9 +83,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
    @Override
    public Connection getConnection() throws PersistenceException {
       try {
-         logBefore(true);
          Connection connection = dataSource.getConnection();
-         logAfter(connection, true);
+         log(connection, true);
          return connection;
       } catch (SQLException e) {
          throw new PersistenceException("Failed obtaining connection from PooledDataSource", e);
@@ -94,9 +93,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
 
    @Override
    public void releaseConnection(Connection conn) {
-      logBefore(false);
+      log(conn, false);
       JdbcUtil.safeClose(conn);
-      logAfter(conn, false);
    }
 
    public int getMaxPoolSize() {
@@ -108,22 +106,10 @@ public class PooledConnectionFactory extends ConnectionFactory {
       return dataSource.getMetrics().activeCount();
    }
 
-   private void logBefore(boolean checkout) {
-      log(null, checkout, true);
-   }
-
-   private void logAfter(Connection connection, boolean checkout) {
-      log(connection, checkout, false);
-   }
-
-   private void log(Connection connection, boolean checkout, boolean before) {
+   private void log(Connection connection, boolean checkout) {
       if (log.isTraceEnabled()) {
-         String stage = before ? "before" : "after";
          String operation = checkout ? "checkout" : "release";
-         log.tracef("DataSource %s %s (Active Connections) : %d", stage, operation, getActiveConnections());
-
-         if (connection != null)
-            log.tracef("Connection %s : %s", operation, connection);
+         log.tracef("Connection %s (active=%d): %s", operation, getActiveConnections(), connection);
       }
    }
 }
