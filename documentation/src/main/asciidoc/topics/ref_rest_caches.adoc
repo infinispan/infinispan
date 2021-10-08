@@ -488,3 +488,40 @@ Turn off automatic rebalancing for a specific cache.
 ----
 POST /v2/caches/{cacheName}?action=disable-rebalancing
 ----
+
+[id='rest_v2_caches_get_availability']
+= Getting Cache Availability
+Retrieve the availability of a cache.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}?action=get-availability
+----
+
+[NOTE]
+You can get the availability of internal caches but this is subject to change in future {brandname} versions.
+
+[id='rest_v2_caches_set_availability']
+= Setting Cache Availability
+Change the availability of clustered caches when using either the DENY_READ_WRITES or ALLOW_READS partition handling strategy.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}?action=set-availability&availability={AVAILABILITY}
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`availability`
+|REQUIRED
+|AVAILABLE or DEGRADED_MODE
+|===
+
+* `AVAILABLE` makes caches available to all nodes in a network partition.
+* `DEGRADED_MODE` prevents read and write operations on caches when network partitions occur.
+
+[NOTE]
+You can set the availability of internal caches but this is subject to change in future {brandname} versions.

@@ -493,4 +493,14 @@ public interface RestCacheClient {
     * Retrieves all available configuration attributes for this cache
     */
    CompletionStage<RestResponse> configurationAttributes();
+
+   /**
+    * Retrieves the Cache's Availability status.
+    */
+   CompletionStage<RestResponse> getAvailability();
+
+   /**
+    * Sets the Cache's Avaialability
+    */
+   CompletionStage<RestResponse> setAvailability(String availability);
 }
