@@ -1,13 +1,9 @@
 [id='ref_relay-{context}']
 = JGroups RELAY2 Stacks
+
 {brandname} clusters use JGroups RELAY2 for inter-cluster discovery and communication.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jgroups_relay.xml[]
 ----
-
-[TIP]
-====
-Set `max_site_masters` >= the number of nodes in the {brandname} cluster for optimal performance with backup requests.
-====
