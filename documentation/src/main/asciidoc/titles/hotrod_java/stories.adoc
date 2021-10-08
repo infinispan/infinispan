@@ -4,3 +4,6 @@
 include::{stories}/assembly_hotrod_clients.adoc[leveloffset=+1]
 include::{stories}/assembly_hotrod_client_configuration.adoc[leveloffset=+1]
 include::{stories}/assembly_hotrod_client_api.adoc[leveloffset=+1]
+ifdef::community[]
+include::{stories}/assembly_junit_testing.adoc[leveloffset=+1]
+endif::community[]
