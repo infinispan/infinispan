@@ -1,9 +1,9 @@
 [id='xsite_configure']
 :context: xsite
-= Configuring {brandname} for Cross-Site Replication
+= Configuring {brandname} Cross-Site Replication
 
-Configuring {brandname} to replicate data across sites, you first set up cluster transport so {brandname} clusters can discover each other and relay node can communicate.
-You then add backup locations to cache definitions in your {brandname} configuration.
+Set up cluster transport so {brandname} clusters can discover each other and relay nodes can send messages for cross-site replication.
+You can then add backup locations to {brandname} caches.
 
 include::{topics}/proc_xsite_configuring_jgroups.adoc[leveloffset=+1]
 include::{topics}/ref_xsite_jgroups_relay.adoc[leveloffset=+2]

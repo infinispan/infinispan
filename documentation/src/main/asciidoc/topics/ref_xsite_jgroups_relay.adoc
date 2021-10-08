@@ -7,8 +7,3 @@
 ----
 include::xml/jgroups_relay.xml[]
 ----
-
-[TIP]
-====
-Set `max_site_masters` >= the number of nodes in the {brandname} cluster for optimal performance with backup requests.
-====
