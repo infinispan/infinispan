@@ -791,6 +791,42 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
    }
 
+   /*
+    * Shutdown cluster-wide resources of the CacheManager, calling {@link Cache#shutdown()} on both user and internal caches
+    * to ensure that they are safely terminated.
+    */
+   public void shutdownAllCaches() {
+      log.tracef("Attempting to shutdown cache manager: " + getAddress());
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+      Set<String> cachesToShutdown = new LinkedHashSet<>(this.caches.size());
+      // stop ordered caches first
+      try {
+         List<String> ordered = cacheDependencyGraph.topologicalSort();
+         cachesToShutdown.addAll(ordered);
+      } catch (CyclicDependencyException e) {
+         CONTAINER.stopOrderIgnored();
+      }
+      // The caches map includes the default cache
+      cachesToShutdown.addAll(caches.keySet());
+
+      log.tracef("Cache shutdown order: %s", cachesToShutdown);
+      for (String cacheName : cachesToShutdown) {
+         try {
+            CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
+            if (cacheFuture != null) {
+               Cache<?, ?> cache = cacheFuture.join();
+               if (cache.getStatus().isTerminated()) {
+                  log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
+                  continue;
+               }
+               cache.shutdown();
+            }
+         } catch (Throwable t) {
+            CONTAINER.componentFailedToStop(t);
+         }
+      }
+   }
+
    @Override
    public void stop() {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);

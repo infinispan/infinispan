@@ -140,7 +140,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          }));
          resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome", true));
       }
-      if (server != null) {
+      if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
          resourceManager.registerResource(restContext, new  SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));

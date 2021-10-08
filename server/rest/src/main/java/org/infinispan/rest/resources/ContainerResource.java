@@ -88,7 +88,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class ContainerResource implements ResourceHandler {
 
    private final InvocationHelper invocationHelper;
-   private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
@@ -97,7 +96,7 @@ public class ContainerResource implements ResourceHandler {
 
    public ContainerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
-      this.cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       this.restCacheManager = invocationHelper.getRestCacheManager();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       this.cacheManagerName = globalConfiguration.cacheManagerName();
@@ -120,6 +119,10 @@ public class ContainerResource implements ResourceHandler {
 
             // Cache Manager config
             .invocation().methods(GET).path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
+
+            // Shutdown the container content
+            .invocation().methods(POST).path("/v2/container").withAction("shutdown").name("SHUTDOWN CONTAINER")
+               .auditContext(AuditContext.CACHEMANAGER).handleWith(this::shutdown)
 
             // Container configuration listener
             .invocation().methods(GET).path("/v2/container/config").withAction("listen")
@@ -162,6 +165,7 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
       return asJsonResponseFuture(cacheManagerInfo, responseBuilder);
    }
@@ -173,6 +177,7 @@ public class ContainerResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(()-> {
          try {
+            EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
             SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager().setRebalancingEnabled(enable);
             responseBuilder.status(NO_CONTENT);
          } catch (Exception e) {
@@ -186,7 +191,8 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      EmbeddedCacheManager embeddedCacheManager = cacheManager.withSubject(request.getSubject());
+
+      EmbeddedCacheManager embeddedCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
 
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(embeddedCacheManager);
 
@@ -210,6 +216,7 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder);
    }
 
@@ -226,8 +233,13 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      if (restRequest.method() == HEAD) return completedFuture(new NettyRestResponse.Builder().status(OK).build());
+      // If /v2/containers?action=shutdown has been executed, we must still return OK so that the k8s probes don't fail
+      // before the StatefulSet has been scaled down
+      boolean isStopping = anon && invocationHelper.getServer().getStatus().isStopping();
+      if (restRequest.method() == HEAD || isStopping)
+         return completedFuture(new NettyRestResponse.Builder().status(OK).build());
 
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Health health = cacheManager.withSubject(restRequest.getSubject()).getHealth();
       HealthInfo healthInfo = new HealthInfo(health.getClusterHealth(), health.getCacheHealth());
 
@@ -247,6 +259,7 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
       Map<String, HealthStatus> cachesHealth = new HashMap<>();
       // Remove internal caches
@@ -344,7 +357,7 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
-      EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
+      EmbeddedCacheManager subjectCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
 
       Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
 
@@ -363,6 +376,7 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
 
       Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
@@ -515,6 +529,11 @@ public class ContainerResource implements ResourceHandler {
 
          return payload;
       }
+   }
+
+   private CompletionStage<RestResponse> shutdown(RestRequest restRequest) {
+      Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().containerStop());
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
    }
 
    private CompletionStage<RestResponse> listenConfig(RestRequest request) {

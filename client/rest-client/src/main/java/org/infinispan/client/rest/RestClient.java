@@ -41,6 +41,11 @@ public interface RestClient extends Closeable {
    RestCacheManagerClient cacheManager(String name);
 
    /**
+    * Operations on the server's Container
+    */
+   RestContainerClient container();
+
+   /**
     * Returns a list of available caches
     */
    CompletionStage<RestResponse> caches();

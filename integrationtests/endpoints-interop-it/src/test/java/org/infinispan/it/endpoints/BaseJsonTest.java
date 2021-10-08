@@ -29,6 +29,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -72,6 +73,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       builder.port(restPort);
 
       restServer = new RestServer();
+      restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(builder.build(), cacheManager);
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
       restCacheClient = restClient.cache(CACHE_NAME);

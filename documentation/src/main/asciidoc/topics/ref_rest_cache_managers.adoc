@@ -214,6 +214,25 @@ include::json/rest_cache_stats_response.json[]
 * `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
 * `retrievals` shows the total number of `get()` operations.
 
+[id='rest_v2_cache_manager_shutdown']
+= Shutdown all container caches
+Shut down the {brandname} container on the server with `POST` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/container?action=shutdown
+----
+
+{brandname} responds with `204 (No Content)` and then shutdowns all caches in the container. The servers remain running with active endpoints
+and clustering, however REST calls to container resources will result in a 503 Service Unavailable response.
+
+[NOTE]
+====
+This method is primarily intended for use by the {brandname} Operator. The expectation is that the Server processes will
+be manually terminated shortly after this endpoint is invoked. Once this method has been called, it's not possible to
+restart the container state.
+====
+
 [id='rest_v2_cache_manager_enable_rebalancing']
 = Enabling rebalancing for all caches
 Turn on automatic rebalancing for all caches.

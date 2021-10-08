@@ -6,6 +6,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.router.Router;
 
 public class RestTestingUtil {
@@ -29,6 +30,7 @@ public class RestTestingUtil {
         for (String cache : definedCaches) {
             cacheManager.defineConfiguration(cache, cacheConfiguration);
         }
+        nettyRestServer.setServerManagement(new DummyServerManagement(), true);
         nettyRestServer.start(configuration.build(), cacheManager);
         return nettyRestServer;
     }

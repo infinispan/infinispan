@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.tasks.TaskManager;
 
@@ -17,11 +18,16 @@ import org.infinispan.tasks.TaskManager;
  * @since 10.0
  */
 public interface ServerManagement {
+
+   ComponentStatus getStatus();
+
    void serializeConfiguration(ConfigurationWriter writer);
 
    void serverStop(List<String> servers);
 
    void clusterStop();
+
+   void containerStop();
 
    /**
     * @deprecated Multiple Cache Managers are not supported in the server

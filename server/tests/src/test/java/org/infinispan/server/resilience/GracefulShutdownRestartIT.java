@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -44,8 +46,11 @@ public class GracefulShutdownRestartIT {
          hotRod.put(String.format("k%03d", i), String.format("v%03d", i));
       }
 
-      RestClient rest = SERVER_TEST.rest().get();
-      sync(rest.cluster().stop());
+      RestClientConfigurationBuilder restClientBuilder = new RestClientConfigurationBuilder()
+            .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
+            .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
+      RestClient rest = SERVER_TEST.rest().withClientConfiguration(restClientBuilder).get();
+      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES);
       ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
       Eventually.eventually(
             "Cluster did not shutdown within timeout",
