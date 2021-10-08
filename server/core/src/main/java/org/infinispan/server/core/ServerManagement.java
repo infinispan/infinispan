@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +23,24 @@ public interface ServerManagement {
 
    void clusterStop();
 
-   Set<String> cacheManagerNames();
+   /**
+    * @deprecated Multiple Cache Managers are not supported in the server
+    */
+   @Deprecated
+   default Set<String> cacheManagerNames() {
+      return Collections.singleton(getCacheManager().getName());
+   }
 
-   DefaultCacheManager getCacheManager(String name);
+   /**
+    * @deprecated Multiple Cache Managers are not supported in the server. Use {@link #getCacheManager()} instead.
+    */
+   @Deprecated
+   default DefaultCacheManager getCacheManager(String name) {
+      DefaultCacheManager cm = getCacheManager();
+      return cm.getName().equals(name) ? cm : null;
+   }
+
+   DefaultCacheManager getCacheManager();
 
    ServerStateManager getServerStateManager();
 
