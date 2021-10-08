@@ -1,0 +1,23 @@
+[id='xsite_relay_nodes-{context}']
+= Relay Nodes
+
+Relay nodes are the nodes in {brandname} clusters that are responsible for sending and receiving requests from backup locations.
+
+If a node is not a relay node, it must forward backup requests to a local relay node.
+Only relay nodes can send requests to backup locations.
+
+For optimal performance, you should configure all nodes as relay nodes.
+This increases the speed of backup requests because each node in the cluster can backup to remote sites directly without having to forward backup requests to local relay nodes.
+
+
+[NOTE]
+====
+Diagrams in this document illustrate {brandname} clusters with one relay node because this is the default for the JGroups RELAY2 protocol.
+Likewise, a single relay node is easier to illustrate because each relay node in a cluster communicates with each relay node in the remote cluster.
+====
+
+[NOTE]
+====
+JGroups configuration refers to relay nodes as "site master" nodes.
+{brandname} uses relay node instead because it is more descriptive and presents a more intuitive choice for our users.
+====

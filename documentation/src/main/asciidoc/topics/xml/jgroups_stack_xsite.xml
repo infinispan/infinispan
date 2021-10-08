@@ -2,10 +2,12 @@
   <jgroups>
     <!-- Extends the default UDP stack. -->
     <stack name="xsite" extends="udp">
-      <!-- Adds RELAY2 for cross-site replication. -->
+      <!-- Adds the RELAY2 protocol for cross-site replication. -->
       <!-- Names the local site as LON. -->
-      <!-- Specifies 1000 nodes as the maximum number of site masters. -->
-      <relay.RELAY2 site="LON" xmlns="urn:org:jgroups" max_site_masters="1000"/>
+      <!-- Specifies a maximum of 1000 nodes that can send cross-site replication requests. -->
+      <relay.RELAY2 site="LON"
+                    xmlns="urn:org:jgroups"
+                    max_site_masters="1000"/>
       <!-- Uses the default TCP stack for inter-cluster communication. -->
       <!-- Names all sites that act as backup locations. -->
       <remote-sites default-stack="tcp">
