@@ -3,7 +3,6 @@ package org.infinispan.server.core;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import javax.sql.DataSource;
@@ -33,12 +32,7 @@ public class DummyServerManagement implements ServerManagement {
    }
 
    @Override
-   public Set<String> cacheManagerNames() {
-      return null;
-   }
-
-   @Override
-   public DefaultCacheManager getCacheManager(String name) {
+   public DefaultCacheManager getCacheManager() {
       return null;
    }
 

@@ -70,7 +70,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          servers.add(server);
       }
       // Ensure that the cluster has formed if we start more than one server
-      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
+      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(Server::getCacheManager).collect(Collectors.toList());
       if(cacheManagers.size() > 1) {
          blockUntilViewsReceived(cacheManagers);
       }
@@ -142,7 +142,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    @Override
    public MBeanServerConnection getJmxConnection(int server) {
-      DefaultCacheManager cacheManager = servers.get(server).getCacheManagers().values().iterator().next();
+      DefaultCacheManager cacheManager = servers.get(server).getCacheManager();
       return cacheManager.getCacheManagerConfiguration().jmx().mbeanServerLookup().getMBeanServer();
    }
 

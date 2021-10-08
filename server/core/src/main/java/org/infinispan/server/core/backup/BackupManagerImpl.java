@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -50,12 +51,11 @@ public class BackupManagerImpl implements BackupManager {
    final Map<String, BackupRequest> backupMap;
    final Map<String, CompletionStage<Void>> restoreMap;
 
-   public BackupManagerImpl(BlockingManager blockingManager, EmbeddedCacheManager cm,
-                            Map<String, DefaultCacheManager> cacheManagers, Path dataRoot) {
+   public BackupManagerImpl(BlockingManager blockingManager, DefaultCacheManager cm, Path dataRoot) {
       this.blockingManager = blockingManager;
       this.rootDir = dataRoot.resolve(WORKING_DIR);
       this.cacheManager = cm;
-      this.cacheManagers = cacheManagers;
+      this.cacheManagers = Collections.singletonMap(cm.getName(), cm);
       this.parserRegistry = new ParserRegistry();
       this.reader = new BackupReader(blockingManager, cacheManagers, parserRegistry);
       this.backupLock = new Lock("backup", cm);
