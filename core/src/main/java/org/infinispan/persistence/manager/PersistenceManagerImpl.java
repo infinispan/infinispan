@@ -463,25 +463,27 @@ public class PersistenceManagerImpl implements PersistenceManager {
       boolean usingAsync = false;
       boolean usingFetchPersistentState = false;
       boolean usingReadOnly = false;
+      boolean usingTransactionalStore = false;
       for (StoreStatus storeStatus : stores) {
          if (storeStatus.config.async().enabled()) {
             usingSharedAsync |= storeStatus.config.shared();
             usingAsync = true;
          }
-         if (storeStatus.characteristics.contains(Characteristic.SEGMENTABLE)) {
+         if (storeStatus.config.segmented()) {
             usingSegments = true;
          }
-
          if (storeStatus.config.fetchPersistentState()) {
             usingFetchPersistentState = true;
          }
-
-         if (storeStatus.characteristics.contains(Characteristic.READ_ONLY)) {
+         if (storeStatus.config.ignoreModifications()) {
             usingReadOnly = true;
          }
-
+         if (storeStatus.config.transactional()) {
+            usingTransactionalStore = true;
+         }
       }
-      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingFetchPersistentState, usingSharedAsync, usingReadOnly);
+      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingFetchPersistentState, usingSharedAsync,
+                                   usingReadOnly, usingTransactionalStore);
    }
 
    @Override

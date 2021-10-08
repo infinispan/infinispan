@@ -24,6 +24,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -36,6 +37,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -85,8 +87,10 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Inject MarshallableEntryFactory<?, ?> marshalledEntryFactory;
 
    final AtomicLong cacheStores = new AtomicLong(0);
+   private volatile boolean usingTransactionalStores;
 
    protected final InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
+   private final InvocationSuccessFunction<AbstractTransactionBoundaryCommand> afterCommit = this::afterCommit;
 
    protected Log getLog() {
       return log;
@@ -95,30 +99,48 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Start(priority = 15)
    protected void start() {
       this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
+
+      if (cacheConfiguration.transaction().transactionMode().isTransactional()) {
+         persistenceManager.addStoreListener(persistenceStatus -> {
+            usingTransactionalStores = persistenceStatus.usingTransactionalStore();
+         });
+         usingTransactionalStores = persistenceManager.hasStore(StoreConfiguration::transactional);
+      }
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (usingTransactionalStores) {
+         // Handled by TransactionalStoreInterceptor
+         return invokeNext(ctx, command);
+      }
       //note: commit the data after invoking next interceptor.
       //The IRAC interceptor will set the versions in the context entries and it is placed later in the chain.
-      return invokeNextThenApply(ctx, command, this::afterCommit);
+      return invokeNextThenApply(ctx, command, afterCommit);
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (usingTransactionalStores) {
+         // Handled by TransactionalStoreInterceptor
+         return invokeNext(ctx, command);
+      }
+
       if (command.isOnePhaseCommit()) {
          //note: commit the data after invoking next interceptor.
          //The IRAC interceptor will set the versions in the context entries and it is placed later in the chain.
-         return invokeNextThenApply(ctx, command, this::afterCommit);
+         return invokeNextThenApply(ctx, command, afterCommit);
       }
+
       return invokeNext(ctx, command);
    }
 
-   protected InvocationStage commitCommand(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
-      if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
-         // this is a commit call.
+   protected InvocationStage commitModifications(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
+      List<WriteCommand> allModifications = ctx.getCacheTransaction().getAllModifications();
+      if (!allModifications.isEmpty()) {
          GlobalTransaction tx = ctx.getGlobalTransaction();
-         if (log.isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
+         if (log.isTraceEnabled()) getLog().tracef("Persisting transaction %s modifications: %s",
+                                                   tx, allModifications);
 
          Transaction xaTx = null;
          try {
@@ -128,13 +150,12 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             resumeRunningTx(xaTx);
          }
       } else {
-         if (log.isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
          return null;
       }
    }
 
    private Object afterCommit(InvocationContext context, VisitableCommand command, Object rv) throws Throwable {
-      InvocationStage stage = commitCommand((TxInvocationContext<AbstractCacheTransaction>) context);
+      InvocationStage stage = commitModifications((TxInvocationContext<AbstractCacheTransaction>) context);
       return stage == null ? rv : stage.thenReturn(context, command, rv);
    }
 
@@ -389,15 +410,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    protected final InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
-      List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
-      int modificationSize = modifications.size();
-      if (modificationSize == 0) {
-         if (log.isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
-         return null;
-      }
-
-      if (log.isTraceEnabled()) getLog().tracef("Cache store modification list: %s", modifications);
-
       CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, o) -> isProperWriter(ctx, writeCommand, o)));
       if (getStatisticsEnabled()) {
          batchStage.thenAccept(cacheStores::addAndGet);
