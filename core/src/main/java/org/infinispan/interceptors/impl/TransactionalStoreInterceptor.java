@@ -27,7 +27,18 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, BOTH));
+         if (!command.isOnePhaseCommit()) {
+            return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, BOTH));
+         } else {
+            return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+               if (command.isSuccessful())
+                  return null;
+
+               // Persist the modifications in one phase
+               // After they were successfully applied in the data container
+               return asyncValue(persistenceManager.performBatch(ctx, (writeCommand, o) -> true));
+            });
+         }
       }
       return invokeNext(ctx, command);
    }
