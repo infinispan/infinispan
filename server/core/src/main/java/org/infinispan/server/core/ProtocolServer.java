@@ -66,7 +66,7 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
    /**
     * Sets the {@link ServerManagement} instance for this protocol server
     */
-   void setServerManagement(ServerManagement server);
+   void setServerManagement(ServerManagement server, boolean adminEndpoint);
 
    /**
     * Sets the enclosing {@link ProtocolServer}. Used by the single port server

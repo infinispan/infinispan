@@ -25,6 +25,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -136,6 +137,7 @@ public class SinglePortTest {
         RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
         restServerConfigurationBuilder.startTransport(false);
         restServerConfigurationBuilder.name(TestResourceTracker.getCurrentTestName());
+        restServer.setServerManagement(new DummyServerManagement(), true);
         restServer.start(restServerConfigurationBuilder.build(), cacheManager);
         // Initialize a Single Port server with routes to the Hot Rod and REST servers
         HotRodServerRouteDestination hotrodDestination = new HotRodServerRouteDestination("hotrod", hotrodServer);

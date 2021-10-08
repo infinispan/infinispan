@@ -14,6 +14,8 @@ SYNOPSIS
 
 *shutdown cluster*
 
+*shutdown container*
+
 
 EXAMPLES
 --------
@@ -25,6 +27,10 @@ Stops the server with hostname `my_server01`.
 
 `shutdown cluster` +
 Stores cluster state, persists entries if you use a cache store, and stops all nodes.
+
+`shutdown container` +
+Stores cluster state and persists entries if you use a cache store. The servers remain running with active endpoints
+and clustering, however REST calls to container resources will result in a 503 Service Unavailable response.
 
 
 SEE ALSO

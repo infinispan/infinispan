@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.tasks.TaskManager;
 
@@ -16,6 +17,11 @@ import org.infinispan.tasks.TaskManager;
  * @since 13.0
  **/
 public class DummyServerManagement implements ServerManagement {
+
+   @Override
+   public ComponentStatus getStatus() {
+      return ComponentStatus.RUNNING;
+   }
 
    @Override
    public void serializeConfiguration(ConfigurationWriter writer) {
@@ -29,6 +35,10 @@ public class DummyServerManagement implements ServerManagement {
    @Override
    public void clusterStop() {
 
+   }
+
+   @Override
+   public void containerStop() {
    }
 
    @Override

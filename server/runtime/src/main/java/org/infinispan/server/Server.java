@@ -422,9 +422,7 @@ public class Server implements ServerManagement, AutoCloseable {
                try {
                   Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                   ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
-                  if (endpoint.admin()) {
-                     protocolServer.setServerManagement(this);
-                  }
+                  protocolServer.setServerManagement(this, endpoint.admin());
                   if (configuration instanceof HotRodServerConfiguration) {
                      ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
@@ -526,8 +524,15 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public void clusterStop() {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
-      cacheManager.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cacheManager, name));
+      cacheManager.getCacheNames().forEach(name -> SecurityActions.shutdownAllCaches(cacheManager));
       sendExitStatusToServers(SecurityActions.getClusterExecutor(cacheManager), ExitStatus.CLUSTER_SHUTDOWN);
+   }
+
+   @Override
+   public void containerStop() {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
+      this.status = ComponentStatus.STOPPING;
+      SecurityActions.shutdownAllCaches(cacheManager);
    }
 
    private void sendExitStatusToServers(ClusterExecutor clusterExecutor, ExitStatus exitStatus) {

@@ -13,6 +13,7 @@ import javax.naming.spi.NamingManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -93,9 +94,9 @@ final class SecurityActions {
       return doPrivileged(new GetCacheManagerConfigurationAction(manager));
    }
 
-   static void shutdownCache(EmbeddedCacheManager manager, String name) {
+   static void shutdownAllCaches(DefaultCacheManager manager) {
       PrivilegedAction<Void> action = () -> {
-         manager.getCache(name).shutdown();
+         manager.shutdownAllCaches();
          return null;
       };
       doPrivileged(action);

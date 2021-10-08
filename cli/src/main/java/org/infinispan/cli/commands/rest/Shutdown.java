@@ -23,7 +23,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "shutdown", description = "Shuts down individual servers or the entire cluster", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class})
+@GroupCommandDefinition(name = "shutdown", description = "Shuts down individual servers or the entire cluster", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
 public class Shutdown extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -75,6 +75,23 @@ public class Shutdown extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cluster().stop();
+      }
+   }
+
+   @CommandDefinition(name = "container", description = "Shuts down the container without terminating the server processes", activator = ConnectionActivator.class)
+   public static class Container extends RestCliCommand {
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.container().shutdown();
       }
    }
 }
