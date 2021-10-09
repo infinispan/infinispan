@@ -132,7 +132,7 @@
       <version.bouncycastle>1.69</version.bouncycastle>
       <version.byteman>4.0.9</version.byteman>
       <version.caffeine>2.8.4</version.caffeine>
-      <version.console>0.15.2.Final</version.console>
+      <version.console>0.15.3.Final</version.console>
       <version.fabric8.kubernetes-client>5.7.3</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
