@@ -1,13 +1,11 @@
 package org.infinispan.server.router.router.impl.singleport;
 
-import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -30,12 +28,10 @@ import io.netty.channel.group.ChannelMatcher;
 
 public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortRouterConfiguration> implements EndpointRouter {
 
-   private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
-
    private RoutingTable routingTable;
 
    public SinglePortEndpointRouter(SinglePortRouterConfiguration configuration) {
-      super(Protocol.SINGLE_PORT.toString());
+      super("SinglePort");
       this.configuration = configuration;
    }
 
@@ -47,7 +43,18 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
-      transport.start();
+
+      registerServerMBeans();
+      try {
+         transport.start();
+      } catch (Throwable re) {
+         try {
+            unregisterServerMBeans();
+         } catch (Exception e) {
+            re.addSuppressed(e);
+         }
+         throw re;
+      }
       RouterLogger.SERVER.debugf("REST EndpointRouter listening on %s:%d", transport.getHostName(), transport.getPort());
    }
 
