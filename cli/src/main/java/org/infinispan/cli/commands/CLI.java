@@ -35,6 +35,7 @@ import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
 import org.infinispan.cli.commands.rest.Add;
 import org.infinispan.cli.commands.rest.Alter;
+import org.infinispan.cli.commands.rest.Availability;
 import org.infinispan.cli.commands.rest.Backup;
 import org.infinispan.cli.commands.rest.Cas;
 import org.infinispan.cli.commands.rest.ClearCache;
@@ -85,6 +86,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
       groupCommands = {
             Add.class,
             Alter.class,
+            Availability.class,
             Backup.class,
             Benchmark.class,
             Cache.class,
