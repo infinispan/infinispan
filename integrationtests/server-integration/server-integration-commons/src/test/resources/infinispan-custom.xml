@@ -16,6 +16,7 @@
    <cache-container default-cache="default" statistics="true">
       <transport cluster="${infinispan.cluster.name:wildfly-modules-it}" stack="test-tcp"/>
       <global-state/>
+      <metrics accurate-size="true"/>
       <local-cache name="default"/>
    </cache-container>
 

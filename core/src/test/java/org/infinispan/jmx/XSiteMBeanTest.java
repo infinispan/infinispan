@@ -351,7 +351,8 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       builder.cacheContainer()
              .statistics(true)
-             .jmx().enable().domain("xsite-mbean-" + siteIndex).mBeanServerLookup(mBeanServerLookup);
+             .jmx().enable().domain("xsite-mbean-" + siteIndex).mBeanServerLookup(mBeanServerLookup)
+            .metrics().accurateSize(true);
       return builder;
    }
 

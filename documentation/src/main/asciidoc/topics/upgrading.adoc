@@ -118,6 +118,26 @@ Instead you should use `SoftIndexFileStore` for file-based cache stores because 
 
 Find out more details about configuring file-based cache stores in the _Configuration Guide_.
 
+== Accurate size metrics
+
+The `currentNumberOfEntries` statistics now return `-1` by default as the calculation is expensive. Accurate values can be restored using the following configuration:
+
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<cache-container>
+  <metrics accurate-size="true"/>
+</cache-container>
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+GlobalConfigurationBuilder b = new GlobalConfigurationBuilder();
+b.metrics()
+    .accurateSize(true);
+----
+
 = Upgrading from 11.x or 12.0 to 12.1
 
   If you are upgrading from 11.x to 12.1, you should also review the 11.0 to 12.0 upgrade notes.

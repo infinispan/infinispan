@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.GlobalMetricsConfiguration.ACCURATE_SIZE;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.GAUGES;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.HISTOGRAMS;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.NAMES_AS_TAGS;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.PREFIX;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -87,6 +89,15 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
     */
    public GlobalMetricsConfigurationBuilder namesAsTags(boolean namesAsTags) {
       attributes.attribute(NAMES_AS_TAGS).set(namesAsTags);
+      return this;
+   }
+
+   /**
+    * Enables accurate size computation for numberOfEntries statistics. Note that this doesn't affect invocations of
+    * the {@link Cache#size()} method.
+    */
+   public GlobalMetricsConfigurationBuilder accurateSize(boolean accurateSize) {
+      attributes.attribute(ACCURATE_SIZE).set(accurateSize);
       return this;
    }
 

@@ -41,7 +41,8 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.cacheContainer().statistics(true)
-          .jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
+          .jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup)
+            .metrics().accurateSize(true);
       CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
             new TransportFlags());
       TestingUtil.replaceComponent(cacheManager1, TimeService.class, timeService, true);
