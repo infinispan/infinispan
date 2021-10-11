@@ -1,9 +1,5 @@
 <persistence passivation="false">
    <file-store shared="false"
-               preload="true"
-               fetch-state="true"
-               read-only="false"
-               purge="true"
                path="${java.io.tmpdir}">
       <write-behind modification-queue-size="123" />
    </file-store>

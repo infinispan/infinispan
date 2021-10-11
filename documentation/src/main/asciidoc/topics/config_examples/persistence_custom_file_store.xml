@@ -2,11 +2,7 @@
    <persistence passivation="false">
       <!-- Specifies the fully qualified class name of a custom cache store. -->
       <store class="org.acme.CustomStore"
-             fetch-state="false"
-             preload="true"
-             shared="false"
-             purge="true"
-             read-only="false"
+             shared="true"
              segmented="true">
          <write-behind modification-queue-size="123" />
          <!-- Sets system properties for the custom cache store. -->
