@@ -15,20 +15,18 @@ public class GlobalMetricsConfiguration {
    public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder("histograms", false).immutable().build();
    public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder("prefix", "").immutable().build();
    public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder("namesAsTags", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS);
+      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS, ACCURATE_SIZE);
    }
 
    private final AttributeSet attributes;
-
    private final Attribute<Boolean> gauges;
-
    private final Attribute<Boolean> histograms;
-
    private final Attribute<String> prefix;
-
    private final Attribute<Boolean> namesAsTags;
+   private final Attribute<Boolean> accurateSize;
 
    GlobalMetricsConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
@@ -36,6 +34,7 @@ public class GlobalMetricsConfiguration {
       this.histograms = attributes.attribute(HISTOGRAMS);
       this.prefix = attributes.attribute(PREFIX);
       this.namesAsTags = attributes.attribute(NAMES_AS_TAGS);
+      this.accurateSize = attributes.attribute(ACCURATE_SIZE);
    }
 
    public AttributeSet attributes() {
@@ -75,6 +74,14 @@ public class GlobalMetricsConfiguration {
     */
    public boolean namesAsTags() {
       return namesAsTags.get();
+   }
+
+   /**
+    * Whether cache sizes should be computed
+    * @return
+    */
+   public boolean accurateSize() {
+      return accurateSize.get();
    }
 
    @Override

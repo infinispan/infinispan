@@ -15,11 +15,14 @@ import java.util.Map;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodMagicKeyGenerator;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.stats.impl.AbstractClusterStats;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.hotrod.HotRodStatsClusterTest")
@@ -33,6 +36,13 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
    @Override
    protected String cacheName() {
       return "hotRodClusterStats";
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.metrics().accurateSize(true);
+      return TestCacheManagerFactory.createClusteredCacheManager(global, hotRodCacheConfiguration());
    }
 
    @Override

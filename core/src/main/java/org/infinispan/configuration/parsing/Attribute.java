@@ -217,7 +217,8 @@ public enum Attribute {
     ZERO_CAPACITY_NODE,
     INVALIDATION_THRESHOLD,
     CONTEXT_INITIALIZERS,
-    GROUPER;
+    GROUPER,
+    ACCURATE_SIZE;
 
     private final String name;
 

@@ -45,6 +45,7 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       cfg.statistics().enable();
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.configureJmx(globalCfg, getClass().getSimpleName(), mBeanServerLookup);
+      globalCfg.metrics().accurateSize(true);
       cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);

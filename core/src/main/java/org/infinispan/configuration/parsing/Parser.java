@@ -1017,6 +1017,10 @@ public class Parser extends CacheParser {
                builder.metrics().namesAsTags(Boolean.parseBoolean(value));
                break;
             }
+            case ACCURATE_SIZE: {
+               builder.metrics().accurateSize(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
