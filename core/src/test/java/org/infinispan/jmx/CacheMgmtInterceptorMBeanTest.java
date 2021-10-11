@@ -53,7 +53,8 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       globalConfiguration
             .jmx().enabled(true)
             .domain(JMX_DOMAIN)
-            .mBeanServerLookup(mBeanServerLookup);
+            .mBeanServerLookup(mBeanServerLookup)
+            .metrics().accurateSize(true);
 
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
       configuration.memory().size(1)

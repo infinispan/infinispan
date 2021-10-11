@@ -9,6 +9,6 @@
          <regex>.*</regex>
       </allow-list>
    </serialization>
-   <metrics gauges="true" histograms="true"/>
+   <metrics gauges="true" histograms="true" accurate-size="true"/>
    <locks:clustered-locks num-owners="-1"/>
 </cache-container>

@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -66,9 +67,15 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cfgBuilder.jmxStatistics().enable();
       cfgBuilder.clustering().hash().numOwners(1);
-      cfgBuilder.memory().storageType(storageType);
+      cfgBuilder.memory().storage(storageType);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);
       waitForClusterToForm();
+   }
+
+   @Override
+   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      super.modifyGlobalConfiguration(builder);
+      builder.metrics().accurateSize(true);
    }
 
    @Override

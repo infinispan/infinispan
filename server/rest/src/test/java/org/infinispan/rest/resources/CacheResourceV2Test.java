@@ -153,7 +153,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
       config.globalState().enable()
             .configurationStorage(ConfigurationStorage.OVERLAY)
-            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString());
+            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString())
+            .metrics().accurateSize(true);
       return config;
    }
 

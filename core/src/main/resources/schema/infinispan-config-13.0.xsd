@@ -726,6 +726,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="accurate-size" type="xs:boolean" default="${GlobalMetrics.accurate-size}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables accurate size computation for numberOfEntries statistics. Note that this doesn't affect invocations of
+          Cache#size() method.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="jmx">

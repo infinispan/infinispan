@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
@@ -57,7 +58,9 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       configure(cfg);
-      addClusterEnabledCacheManager(cfg);
+      GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
+      global.metrics().accurateSize(true);
+      addClusterEnabledCacheManager(global, cfg);
       cache = cache(0);
       refreshStats();
    }

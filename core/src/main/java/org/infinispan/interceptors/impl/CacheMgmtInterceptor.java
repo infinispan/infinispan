@@ -42,6 +42,7 @@ import org.infinispan.commons.util.concurrent.StripedCounters;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
@@ -76,6 +77,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Inject TimeService timeService;
    @Inject OffHeapMemoryAllocator allocator;
    @Inject ComponentRegistry componentRegistry;
+   @Inject GlobalConfiguration globalConfiguration;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -677,7 +679,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of current cache entries"
    )
    public int getNumberOfEntries() {
-      return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
+      return globalConfiguration.metrics().accurateSize() ? cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size() : -1;
    }
 
    @ManagedAttribute(
@@ -685,7 +687,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of in-memory cache entries"
    )
    public int getNumberOfEntriesInMemory() {
-      return dataContainer.size();
+      return globalConfiguration.metrics().accurateSize() ? dataContainer.size() : -1;
    }
 
    @ManagedAttribute(

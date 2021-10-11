@@ -36,7 +36,7 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.statistics().enable();
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalCfg.cacheContainer().statistics(true);
+      globalCfg.cacheContainer().statistics(true).metrics().accurateSize(true);
       configureJmx(globalCfg, jmxDomain(), mBeanServerLookup);
       return TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
    }

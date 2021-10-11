@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -29,10 +30,12 @@ public class ClusteredStatsTest extends SingleStatsTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
+      global.metrics().accurateSize(true);
       ConfigurationBuilder configBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       configure(configBuilder);
       Configuration config = configBuilder.build();
-      createCluster(CLUSTER_SIZE);
+      createCluster(global, new ConfigurationBuilder(), CLUSTER_SIZE);
       // ISPN-13022 Define the configuration on a subset of nodes to ensure an exception is not thrown if a cluster member
       // does not contain a cache definition
       for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
