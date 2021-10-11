@@ -10,7 +10,6 @@ import javax.management.ObjectName;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
@@ -109,7 +108,6 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       bcr.replaceComponent(getQualifiedName(), this, false);
 
       executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
-
       manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(executor);
 
       try {
@@ -148,13 +146,14 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    }
 
    protected void registerServerMBeans() {
-      GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      if (globalCfg.jmx().enabled()) {
+      if (cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).jmx().enabled()) {
          jmxRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
          String groupName = String.format("type=Server,name=%s-%d", getQualifiedName(), configuration.port());
          try {
             transportObjName = jmxRegistration.registerExternalMBean(transport, groupName);
-            executorObjName = jmxRegistration.registerExternalMBean(manageableThreadPoolExecutorService, groupName);
+            if (manageableThreadPoolExecutorService != null) {
+               executorObjName = jmxRegistration.registerExternalMBean(manageableThreadPoolExecutorService, groupName);
+            }
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
