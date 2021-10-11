@@ -1,0 +1,31 @@
+AVAILABILITY(1)
+==============
+:doctype: manpage
+
+
+NAME
+----
+availability - manage availability of clustered caches in network partitions.
+
+
+SYNOPSIS
+--------
+*availability* ['OPTIONS'] ['CACHE_NAME']
+
+
+OPTIONS
+-------
+*--mode*='[AVAILABLE|DEGRADED_MODE]'::
+Sets cache availability to AVAILABLE or DEGRADED_MODE when using either the DENY_READ_WRITES or ALLOW_READS partition handling strategy.
+
+AVAILABLE makes caches available to all nodes in a network partition.
+DEGRADED_MODE prevents read and write operations on caches when network partitions occur.
+
+
+EXAMPLES
+--------
+`availability cache1` +
+Gets the current availability of the cache 'cache1'.
+
+`availability --mode=AVAILABLE cache1` +
+Sets the availability of the cache 'cache1' to AVAILABLE.

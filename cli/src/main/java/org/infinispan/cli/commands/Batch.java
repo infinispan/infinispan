@@ -6,6 +6,7 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.rest.Add;
 import org.infinispan.cli.commands.rest.Alter;
+import org.infinispan.cli.commands.rest.Availability;
 import org.infinispan.cli.commands.rest.Backup;
 import org.infinispan.cli.commands.rest.Cas;
 import org.infinispan.cli.commands.rest.ClearCache;
@@ -36,6 +37,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
       groupCommands = {
             Add.class,
             Alter.class,
+            Availability.class,
             Backup.class,
             Cache.class,
             Cas.class,

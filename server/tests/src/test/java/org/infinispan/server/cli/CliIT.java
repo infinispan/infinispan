@@ -1,5 +1,7 @@
 package org.infinispan.server.cli;
 
+import static org.infinispan.lock.impl.ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -258,6 +260,23 @@ public class CliIT {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          terminal.assertContains("//containers/default]>");
          terminal.readln("config set autoconnect-url");
+      }
+   }
+
+   @Test
+   public void testCliCacheAvailability() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+
+         connect(terminal);
+         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.assertContains("AVAILABLE");
+         terminal.readln("availability --mode=DEGRADED_MODE " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.assertContains("DEGRADED_MODE");
+         terminal.readln("availability --mode=AVAILABILITY " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.assertContains("AVAILABLE");
       }
    }
 
