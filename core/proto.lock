@@ -238,6 +238,17 @@
                 "id": 7,
                 "name": "counterConfiguration",
                 "type": "org.infinispan.persistence.commons.CounterConfiguration"
+              },
+              {
+                "id": 8,
+                "name": "updateCreationTimestamp",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
