@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.metadata.Metadata;
 import org.testng.annotations.Test;
 
 /**
@@ -34,5 +35,11 @@ public class SoftIndexFileStoreParallelIterationTest extends ParallelIterationTe
    @Override
    protected boolean hasMetadata(boolean fetchValues, int i) {
       return fetchValues && super.hasMetadata(fetchValues, i);
+   }
+
+   @Override
+   protected void assertMetadataEmpty(Metadata metadata, Object key) {
+      // SoftIndexFileStore may return metadata even when not requested as it may already be in memory and there is
+      // no real reason to skip it
    }
 }
