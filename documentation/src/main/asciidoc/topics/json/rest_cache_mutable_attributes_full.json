@@ -1,0 +1,42 @@
+{
+  "jmx-statistics.statistics": {
+    "value": true,
+    "type": "boolean"
+  },
+  "locking.acquire-timeout": {
+    "value": 15000,
+    "type": "long"
+  },
+  "transaction.single-phase-auto-commit": {
+    "value": false,
+    "type": "boolean"
+  },
+  "expiration.max-idle": {
+    "value": -1,
+    "type": "long"
+  },
+  "transaction.stop-timeout": {
+    "value": 30000,
+    "type": "long"
+  },
+  "clustering.remote-timeout": {
+    "value": 17500,
+    "type": "long"
+  },
+  "expiration.lifespan": {
+    "value": -1,
+    "type": "long"
+  },
+  "expiration.interval": {
+    "value": 60000,
+    "type": "long"
+  },
+  "memory.max-count": {
+    "value": -1,
+    "type": "long"
+  },
+  "memory.max-size": {
+    "value": null,
+    "type": "string"
+  }
+}

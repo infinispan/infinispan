@@ -309,6 +309,19 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testMutableAttributes() {
+      String cacheName = "mutable-attributes";
+      String json = "{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}";
+      RestCacheClient cacheClient = createCache(json, cacheName);
+      CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
+      assertThat(response).isOk();
+      Json attributes = Json.read(join(response).getBody());
+      assertEquals(10, attributes.asJsonMap().size());
+      assertEquals("long", attributes.at("clustering.remote-timeout").at("type").asString());
+      assertEquals(15000, attributes.at("clustering.remote-timeout").at("value").asLong());
+   }
+
+   @Test
    public void testCacheV2LifeCycle() throws Exception {
       String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
       String json = getResourceAsString("cache.json", getClass().getClassLoader());
@@ -497,15 +510,17 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isNotFound();
    }
 
-   private void createCache(ConfigurationBuilder builder, String name) {
-      createCache(cacheConfigToJson(name, builder.build()), name);
+   private RestCacheClient createCache(ConfigurationBuilder builder, String name) {
+      return createCache(cacheConfigToJson(name, builder.build()), name);
    }
 
-   private void createCache(String json, String name) {
+   private RestCacheClient createCache(String json, String name) {
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
 
-      CompletionStage<RestResponse> response = client.cache(name).createWithConfiguration(jsonEntity);
+      RestCacheClient cache = client.cache(name);
+      CompletionStage<RestResponse> response = cache.createWithConfiguration(jsonEntity);
       assertThat(response).isOk();
+      return cache;
    }
 
    private Json getCacheDetail(String name) {

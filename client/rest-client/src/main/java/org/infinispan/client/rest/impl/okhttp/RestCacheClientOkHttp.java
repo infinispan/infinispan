@@ -569,8 +569,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> configurationAttributes() {
+      return configurationAttributes(false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> configurationAttributes(boolean full) {
       Request.Builder builder = new Request.Builder();
-      builder.get().url(cacheUrl + "?action=get-mutable-attributes");
+      builder.get().url(cacheUrl + "?action=get-mutable-attributes" + (full ? "&full=true" : ""));
       return client.execute(builder);
    }
 
@@ -583,8 +588,8 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    public CompletionStage<RestResponse> setAvailability(String availability) {
       return client.execute(
             new Request.Builder()
-               .post(EMPTY_BODY)
-               .url(cacheUrl + "?action=set-availability&availability=" + availability)
+                  .post(EMPTY_BODY)
+                  .url(cacheUrl + "?action=set-availability&availability=" + availability)
       );
    }
 }
