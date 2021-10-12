@@ -143,6 +143,39 @@ include::json/rest_full_cache_detail.json[]
 `key_storage` and `value_storage` matches encoding configuration of the cache.
 For server caches with no encoding, {brandname} assumes `application/x-protostream` when a cache is indexed and `application/unknown` otherwise.
 
+[id='rest_v2_cache_mutable_attributes']
+= Retrieving all mutable cache configuration attributes
+Invoke a `GET` request to retrieve all mutable cache configuration attributes for {brandname} caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{name}?action=get-mutable-attributes
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_cache_mutable_attributes.json[]
+----
+
+Add the `full` parameter to obtain values and type information:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_cache_mutable_attributes_full.json[]
+----
+
+For attributes of type `enum`, an additional `universe` property will contain the set of possible values.
+
+[id='rest_v2_cache_mutable_attribute_set']
+= Updating cache configuration attributes
+Invoke a `POST` request to change a mutable cache configuration attribute.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{name}?action=set-mutable-attributes&attribute-name={attributeName}&attribute-value={attributeValue}
+----
 
 [id='rest_v2_add_entries']
 = Adding Entries
