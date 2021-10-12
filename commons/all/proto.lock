@@ -151,6 +151,17 @@
                 "id": 6,
                 "name": "storage",
                 "type": "Storage"
+              },
+              {
+                "id": 7,
+                "name": "lifespan",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
               }
             ]
           },
@@ -167,6 +178,19 @@
         ],
         "package": {
           "name": "org.infinispan.persistence.commons"
+        }
+      }
+    },
+    {
+      "protopath": "generated:/:user.commons.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "NullValue"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.commons"
         }
       }
     }
