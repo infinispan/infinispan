@@ -27,7 +27,7 @@ public class AsyncStoreParallelIterationTest extends ParallelIterationTest {
    }
 
    @Override
-   protected void assertMetadataEmpty(Metadata metadata) {
+   protected void assertMetadataEmpty(Metadata metadata, Object key) {
       // Async store always returns the metadata
    }
 }

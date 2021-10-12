@@ -18,7 +18,7 @@ public class DummyStoreParallelIterationTest extends ParallelIterationTest {
    }
 
    @Override
-   protected void assertMetadataEmpty(Metadata metadata) {
+   protected void assertMetadataEmpty(Metadata metadata, Object key) {
       // Do nothing for now as keys require metadata - this can be fixed later
    }
 }
