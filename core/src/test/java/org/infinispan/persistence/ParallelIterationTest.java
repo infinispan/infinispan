@@ -151,7 +151,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
             assertEquals(metadata.get(i).lifespan(), lifespan(i), "For key " + i);
             assertEquals(metadata.get(i).maxIdle(), maxIdle(i), "For key " + i);
          } else {
-            assertMetadataEmpty(metadata.get(i));
+            assertMetadataEmpty(metadata.get(i), i);
          }
       }
    }
@@ -165,8 +165,8 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       }
    }
 
-   protected void assertMetadataEmpty(Metadata metadata) {
-      assertNull(metadata);
+   protected void assertMetadataEmpty(Metadata metadata, Object key) {
+      assertNull(metadata, "For key " + key);
    }
 
    protected boolean insertMetadata(int i) {
