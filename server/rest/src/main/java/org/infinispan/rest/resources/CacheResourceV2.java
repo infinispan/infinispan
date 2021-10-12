@@ -29,12 +29,15 @@ import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -676,6 +679,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> getCacheConfigMutableAttributes(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
+      boolean full = Boolean.parseBoolean(request.getParameter("full"));
 
       responseBuilder.contentType(APPLICATION_JSON);
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
@@ -686,16 +690,30 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return notFoundResponseFuture();
 
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
-      List<String> attributes = new ArrayList<>();
+      Map<String, Attribute> attributes = new LinkedHashMap<>();
       mutableAttributes(cacheConfiguration, attributes, null);
-      return asJsonResponseFuture(Json.make(attributes));
+      if (full) {
+         Json all = Json.object();
+         for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
+            Attribute attribute = entry.getValue();
+            Class<?> type = attribute.getAttributeDefinition().getType();
+            Json object = Json.object("value", attribute.get(), "type", type.getSimpleName().toLowerCase());
+            if (type.isEnum()) {
+               object.set("universe", Arrays.stream(type.getEnumConstants()).map(Object::toString).collect(Collectors.toList()));
+            }
+            all.set(entry.getKey(), object);
+         }
+         return asJsonResponseFuture(all);
+      } else {
+         return asJsonResponseFuture(Json.make(attributes.keySet()));
+      }
    }
 
-   private static void mutableAttributes(ConfigurationElement<?> element, List<String> attributes, String prefix) {
+   private static void mutableAttributes(ConfigurationElement<?> element, Map<String, Attribute> attributes, String prefix) {
       prefix = prefix == null ? "" : element.elementName();
       for (Attribute<?> attribute : element.attributes().attributes()) {
          if (!attribute.isImmutable()) {
-            attributes.add(prefix + "." + attribute.getAttributeDefinition().name());
+            attributes.put(prefix + "." + attribute.getAttributeDefinition().name(), attribute);
          }
       }
       for (ConfigurationElement<?> child : element.children()) {

@@ -495,6 +495,11 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> configurationAttributes();
 
    /**
+    * Retrieves all available configuration attributes for this cache optionally including values and types
+    */
+   CompletionStage<RestResponse> configurationAttributes(boolean full);
+
+   /**
     * Retrieves the Cache's Availability status.
     */
    CompletionStage<RestResponse> getAvailability();

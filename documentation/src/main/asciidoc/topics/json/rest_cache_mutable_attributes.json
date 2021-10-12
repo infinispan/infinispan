@@ -1,0 +1,12 @@
+[
+  "jmx-statistics.statistics",
+  "locking.acquire-timeout",
+  "transaction.single-phase-auto-commit",
+  "expiration.max-idle",
+  "transaction.stop-timeout",
+  "clustering.remote-timeout",
+  "expiration.lifespan",
+  "expiration.interval",
+  "memory.max-count",
+  "memory.max-size"
+]
