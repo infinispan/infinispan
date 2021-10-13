@@ -16,7 +16,6 @@ The parser syntax has some notable rules:
 * `!=` is accepted instead of `<>`.
 * Boosting cannot be applied to `>`,`>=`,`<`,`<=` operators. Ranges may be used to achieve the same result.
 
-[discrete]
 == Filtering operators
 
 Ickle support many filtering operators that can be used for both indexed and non-indexed fields.
@@ -36,7 +35,6 @@ Ickle support many filtering operators that can be used for both indexed and non
 |between| Checks that the left argument is between the given range limits.  | FROM Book WHERE price BETWEEN 50 AND 100
 |==============================================================================
 
-[discrete]
 == Boolean conditions
 
 Combining multiple attribute conditions with logical conjunction (`and`) and disjunction (`or`) operators in order to
@@ -60,7 +58,6 @@ Boolean negation has highest precedence among logical operators and applies only
 FROM org.infinispan.sample.Book WHERE title != 'Data Grid' AND author.name = 'Manik'
 ----
 
-[discrete]
 == Nested conditions
 Changing the precedence of logical operators is achieved with parenthesis:
 
@@ -71,8 +68,7 @@ Changing the precedence of logical operators is achieved with parenthesis:
 FROM org.infinispan.sample.Book WHERE author.name = 'Manik' AND ( title like '%Data Grid%' OR description like '% clustering%')
 ----
 
-[discrete]
-== Selecting attributes
+== Projections with SELECT statements
 In some use cases returning the whole domain object is overkill if only a small subset of the attributes are actually
 used by the application, especially if the domain entity has embedded entities. The query language allows you to specify
 a subset of attributes (or attribute paths) to return - the projection. If projections are used then the `QueryResult.list()`
@@ -98,8 +94,7 @@ are specified, then the order will dictate their precedence.
 FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' ORDER BY publicationYear DESC, title ASC
 ----
 
-[discrete]
-== Grouping and Aggregation
+== Grouping and aggregation
 
 {brandname} has the ability to group query results according to a set of grouping fields and construct aggregations of
 the results from each group by applying an aggregation function to the set of values that fall into each group.
@@ -126,7 +121,7 @@ grouping is allowed. In this case the aggregations will be computed globally as 
 ====
 
 [discrete]
-== Aggregations
+=== Aggregations
 You can apply the following aggregation functions to a field:
 
 .Index merge attributes
@@ -170,7 +165,7 @@ You can apply the following aggregation functions to a field:
 |===
 
 [discrete]
-== Evaluation of queries with grouping and aggregation
+=== Evaluation of queries with grouping and aggregation
 
 Aggregation queries can include filtering conditions, like usual queries. Filtering can be performed in two stages: before
 and after the grouping operation. All filter conditions defined before invoking the `groupBy()` method will be applied
@@ -183,3 +178,30 @@ is allowed; however, referencing non-aggregated and non-grouping fields is forbi
 reduce the amount of groups based on their properties. Sorting can also be specified similar to usual queries. The
 ordering operation is performed after the grouping operation and can reference any of the `groupBy()` fields or aggregated
 fields.
+
+== DELETE statements
+
+You can delete entities from {brandname} caches with the following syntax:
+
+[source,sql,tile="Delete Query in Ickle"]
+----
+DELETE FROM <entityName> [WHERE condition]
+----
+
+* Reference only single entities with `<entityName>`. DELETE queries cannot use joins.
+* WHERE conditions are optional.
+
+DELETE queries cannot use any of the following:
+
+* Projections with SELECT statements
+* Grouping and aggregation
+* ORDER BY clauses
+
+[TIP]
+====
+Invoke the `Query.executeStatement()` method to execute DELETE statements.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]
