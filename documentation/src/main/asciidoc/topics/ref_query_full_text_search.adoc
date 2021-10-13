@@ -3,7 +3,6 @@
 
 You can perform full-text searches with the Ickle query language.
 
-[discrete]
 == Fuzzy queries
 
 To execute a fuzzy query add `~` along with an integer, representing the distance from the term used, after the term.
@@ -14,7 +13,6 @@ For instance
 FROM sample_bank_account.Transaction WHERE description : 'cofee'~2
 ----
 
-[discrete]
 == Range queries
 
 To execute a range query define the given boundaries within a pair of braces, as seen in the following example:
@@ -24,7 +22,6 @@ To execute a range query define the given boundaries within a pair of braces, as
 FROM sample_bank_account.Transaction WHERE amount : [20 to 50]
 ----
 
-[discrete]
 == Phrase queries
 
 A group of words can be searched by surrounding them in quotation marks, as seen in the following example:
@@ -34,7 +31,6 @@ A group of words can be searched by surrounding them in quotation marks, as seen
 FROM sample_bank_account.Transaction WHERE description : 'bus fare'
 ----
 
-[discrete]
 == Proximity queries
 
 To execute a proximity query, finding two terms within a specific distance, add a `~` along with the distance after the phrase.
@@ -45,7 +41,6 @@ For instance, the following example will find the words canceling and fee provid
 FROM sample_bank_account.Transaction WHERE description : 'canceling fee'~3
 ----
 
-[discrete]
 == Wildcard queries
 
 To search for "text" or "test", use the `?` single-character wildcard search:
@@ -62,7 +57,6 @@ To search for "test", "tests", or "tester", use the `*` multi-character wildcard
 FROM sample_bank_account.Transaction where description : 'test*'
 ----
 
-[discrete]
 == Regular expression queries
 
 Regular expression queries can be performed by specifying a pattern between `/`. Ickle uses Lucene’s regular expression syntax, so to search for the words `moat` or `boat` the following could be used:
@@ -72,7 +66,6 @@ Regular expression queries can be performed by specifying a pattern between `/`.
 FROM sample_library.Book  where title : /[mb]oat/
 ----
 
-[discrete]
 == Boosting queries
 
 Terms can be boosted by adding a `^` after the term to increase their relevance in a given query, the higher the boost factor the more relevant the term will be. For instance to search for titles containing beer and wine with a higher relevance on beer, by a factor of 3, the following could be used:
