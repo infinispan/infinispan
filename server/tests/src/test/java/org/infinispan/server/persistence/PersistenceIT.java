@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
- * Only H2 is running by default
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
  * @since 10.0
  **/
@@ -72,8 +71,6 @@ public class PersistenceIT {
    //Some jdbc drivers are not available through maven (like sybase), in this case we can pass the jdbc driver location
    private static JavaArchive[] getJavaArchive() {
       List<JavaArchive> externalJdbcDriver = new ArrayList<>();
-      //adding sybase jar
-      externalJdbcDriver.add(ShrinkWrap.createFromZipFile(JavaArchive.class, Paths.get("src/test/resources/database/jconn4.jar").toFile()));
 
       if(EXTERNAL_JDBC_DRIVER != null) {
          Arrays.stream(EXTERNAL_JDBC_DRIVER.split(","))
