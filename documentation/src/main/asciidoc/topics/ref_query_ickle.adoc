@@ -28,7 +28,6 @@ A query will always target a single entity type and is evaluated over the conten
 Executing the query and fetching the results is as simple as invoking the `execute()` method of the `Query` object. Once
 executed, calling `execute()` on the same instance will re-execute the query.
 
-[discrete]
 == Pagination
 
 You can limit the number of returned results by using  the `Query.maxResults(int maxResults)`. This can be used in
@@ -41,13 +40,11 @@ conjunction with `Query.startOffset(long startOffset)` to achieve pagination of 
 Query<Book> query = queryFactory.create("FROM org.infinispan.sample.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
 ----
 
-[discrete]
 == Number of hits
 
 The `QueryResult` object has the `.hitCount()` method to return the total number of results of the query, regardless
 of any pagination parameter. The hit count is only available for indexed queries for performance reasons.
 
-[discrete]
 == Iteration
 
 The `Query` object has the `.iterator()` method to obtain the results lazily. It returns an instance of `CloseableIterator` that must be closed after usage.
@@ -58,7 +55,6 @@ The iteration support for Remote Queries is currently limited, as it will first 
 before iterating.
 ====
 
-[discrete]
 == Named query parameters
 
 Instead of building a new Query object for every execution it is possible to include named parameters in the query which
@@ -99,3 +95,20 @@ A significant portion of the query parsing, validation and execution planning ef
 execution of a query with parameters. This effort is not repeated during subsequent executions leading to better
 performance compared to a similar query using constant values instead of query parameters.
 ====
+
+== Query execution
+
+The `Query` API provides two methods for executing Ickle queries on a cache:
+
+* `Query.execute()` runs a SELECT statement and returns a result.
+* `Query.executeStatement()` runs a DELETE statement and modifies data.
+
+[NOTE]
+====
+You should always invoke `executeStatement()` to modify data and invoke `execute()` to get the result of a query.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/query/dsl/Query.html#execute()[org.infinispan.query.dsl.Query.execute()]
+* link:{javadocroot}/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]

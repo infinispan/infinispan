@@ -30,7 +30,7 @@
 //
 // Hot Rod clients
 //
-:hr_dotnet: 
+:hr_dotnet:
 :hr_cpp: C{plusplus}
 
 //
@@ -76,6 +76,9 @@
 
 //Dev
 :dev_docs: ../developing/developing.html
+
+//Query
+:query_docs: ../query/query.html
 
 //Marshalling and encoding
 :encoding_docs: ../encoding/encoding.html
