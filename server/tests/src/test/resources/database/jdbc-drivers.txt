@@ -1,5 +1,4 @@
 com.h2database:h2:1.4.199
 mysql:mysql-connector-java:8.0.17
 org.postgresql:postgresql:42.2.8
-com.ibm.db2:jcc:11.5.5.0
 org.mariadb.jdbc:mariadb-java-client:2.7.2
