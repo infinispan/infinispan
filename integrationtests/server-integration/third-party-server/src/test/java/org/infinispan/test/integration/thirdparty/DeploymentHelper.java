@@ -1,5 +1,7 @@
 package org.infinispan.test.integration.thirdparty;
 
+import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary;
+
 import java.io.File;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -11,9 +13,7 @@ public class DeploymentHelper {
    private static final String ARQUILLIAN_LAUNCH = System.getProperty("arquillian.launch");
 
    public static WebArchive createDeployment() {
-
       WebArchive war = ShrinkWrap.create(WebArchive.class, "infinispan-server-integration.war");
-
       if (isTomcat()) {
          tomcat(war);
       } else if (isWildfly()) {
@@ -21,7 +21,6 @@ public class DeploymentHelper {
       } else {
          throw new IllegalStateException(String.format("'%s' not supported", ARQUILLIAN_LAUNCH));
       }
-
       return war;
    }
 
@@ -38,6 +37,7 @@ public class DeploymentHelper {
    }
 
    private static void tomcat(WebArchive war) {
-      // intentionally empty. if you need to implement a custom deploy the code is 'ready'
+      // required for cdi
+      addLibrary(war, "org.jboss.weld.servlet:weld-servlet");
    }
 }

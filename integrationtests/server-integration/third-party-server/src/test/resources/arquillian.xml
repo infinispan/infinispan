@@ -14,7 +14,7 @@
                 <property name="jmxPort">${catalinaJmxPort1}</property>
                 <!--
                 <property name="javaVmArguments">
-                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y,timeout=600000
                 </property>
                 -->
                 <property name="javaVmArguments">
@@ -32,7 +32,7 @@
                 <property name="jmxPort">${catalinaJmxPort2}</property>
                 <!--
                 <property name="javaVmArguments">
-                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+                    -agentlib:jdwp=transport=dt_socket,address=9787,server=y,suspend=y,timeout=600000
                 </property>
                 -->
                 <property name="javaVmArguments">

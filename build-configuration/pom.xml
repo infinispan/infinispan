@@ -222,6 +222,7 @@
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
+      <version.weld-servlet>2.4.8.Final</version.weld-servlet>
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>8.32</versionx.com.puppycrawl.tools.checkstyle>
