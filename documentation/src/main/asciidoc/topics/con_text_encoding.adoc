@@ -14,8 +14,6 @@ If you encode caches with the `text/plain` media type, {brandname} can convert t
 * `application/xml`
 * `application/json`
 * `application/x-protostream`
-* `application/x-jboss-marshalling`
-* `application/x-java-serialized`
 
 The following example configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
 
