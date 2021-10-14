@@ -344,6 +344,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       switch (DB_TYPE) {
          case SYBASE:
          case MYSQL:
+         case MARIA_DB:
             return "DATETIME";
          case SQL_SERVER:
             return "DATETIME2";
