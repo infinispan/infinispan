@@ -23,13 +23,13 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    private static final Log log = LogFactory.getLog(EntryStreamSupplier.class);
 
    private final Cache<K, V> cache;
-   private final ToIntFunction<Object> toIntFunction;
+   private final ToIntFunction<Object> keyPartitioner;
    private final Supplier<Stream<CacheEntry<K, V>>> supplier;
 
-   public EntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction,
+   public EntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> keyPartitioner,
          Supplier<Stream<CacheEntry<K, V>>> supplier) {
       this.cache = cache;
-      this.toIntFunction = toIntFunction;
+      this.keyPartitioner = keyPartitioner;
       this.supplier = supplier;
    }
 
@@ -57,13 +57,13 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
             stream = stream.parallel();
          }
       }
-      if (segmentsToFilter != null && toIntFunction != null) {
+      if (segmentsToFilter != null && keyPartitioner != null) {
          if (log.isTraceEnabled()) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
          stream = stream.filter(k -> {
             K key = k.getKey();
-            int segment = toIntFunction.applyAsInt(key);
+            int segment = keyPartitioner.applyAsInt(key);
             boolean isPresent = segmentsToFilter.contains(segment);
             if (log.isTraceEnabled())
                log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
