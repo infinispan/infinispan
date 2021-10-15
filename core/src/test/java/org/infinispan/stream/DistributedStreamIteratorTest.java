@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -18,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -27,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -43,14 +46,18 @@ import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.util.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager.BlockedRequest;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -73,6 +80,11 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @DataProvider
+   public static Object[][] suspectBeforeTopologyUpdate() {
+      return new Object[][]{{false}, {true}};
+   }
+
    protected Object getKeyTiedToCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
    }
@@ -91,8 +103,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
       blockStateTransfer(cache0, checkPoint);
 
-      EmbeddedCacheManager joinerManager =
-            addClusterEnabledCacheManager(sci, new ConfigurationBuilder(), new TransportFlags().withFD(true));
+      EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(sci);
       ConfigurationBuilder builderNoAwaitInitialTransfer = new ConfigurationBuilder();
       builderNoAwaitInitialTransfer.read(builderUsed.build());
       builderNoAwaitInitialTransfer.clustering().stateTransfer().awaitInitialTransfer(false);
@@ -158,8 +169,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
    /**
     * This test is to verify proper behavior when a node dies after sending a batch to the requestor
     */
-   @Test
-   public void verifyNodeLeavesAfterSendingBackSomeData() throws TimeoutException, InterruptedException, ExecutionException {
+   @Test(dataProvider = "suspectBeforeTopologyUpdate")
+   public void verifyNodeLeavesAfterSendingBackSomeData(boolean suspectBeforeTopologyUpdate)
+         throws TimeoutException, InterruptedException, ExecutionException {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
@@ -172,35 +184,55 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
          values.put(key, key.toString());
       }
 
-      CheckPoint checkPoint = new CheckPoint();
-      // Let the first request come through fine
-      checkPoint.trigger(Mocks.BEFORE_RELEASE);
-      waitUntilSendingResponse(cache1, checkPoint);
+      // Let cache0 start the iteration with EntrySetCommand and InitialPublisherCommand to the others
+      // Then block the NextPublisherCommand to cache1
+      ControlledRpcManager rpc0 = ControlledRpcManager.replaceRpcManager(cache0);
+      try {
+         rpc0.excludeCommands(EntrySetCommand.class, InitialPublisherCommand.class);
+         CompletableFuture<BlockedRequest<NextPublisherCommand>> nextPublisherStage =
+               rpc0.expectCommandAsync(NextPublisherCommand.class);
 
-      final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
-      Future<Void> future = fork(() -> {
-         Iterator<Map.Entry<Object, String>> iter = cache0.entrySet().stream().iterator();
-         while (iter.hasNext()) {
-            Map.Entry<Object, String> entry = iter.next();
-            returnQueue.add(entry);
+         Future<Map<Object, String>> iterationFuture = fork(() -> {
+            Map<Object, String> iteratorValues = new HashMap<>();
+            Iterator<Map.Entry<Object, String>> iter = cache0.entrySet().stream().iterator();
+            iter.forEachRemaining(e -> iteratorValues.put(e.getKey(), e.getValue()));
+            return iteratorValues;
+         });
+
+         BlockedRequest<NextPublisherCommand> nextPublisherRequest = nextPublisherStage.get(10, TimeUnit.SECONDS);
+         assertEquals(address(1), nextPublisherRequest.getTarget());
+
+         if (suspectBeforeTopologyUpdate) {
+            // Finish the request early and make the retry (in ClusterPublisherManagerImpl.SubscriberHandler.start())
+            // wait for a new topology
+            nextPublisherRequest.skipSend().receive(address(1), CacheNotFoundResponse.INSTANCE);
          }
-         return null;
-      });
 
-      // Now wait for them to send back first results
-      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
-      checkPoint.trigger(Mocks.AFTER_RELEASE);
+         // The iteration should not finish yet
+         Thread.sleep(10);
+         assertFalse(iterationFuture.isDone());
 
-      // We should get a value now, note all values are currently residing on cache1 as primary
-      Map.Entry<Object, String> value = returnQueue.poll(10, TimeUnit.SECONDS);
+         // Stop blocking so we don't have to worry about state transfer commands
+         rpc0.stopBlocking();
 
-      // Now kill the cache - we should recover
-      killMember(1, CACHE_NAME);
+         // Now kill cache1
+         killMember(1, CACHE_NAME, false);
 
-      future.get(10, TimeUnit.SECONDS);
+         if (!suspectBeforeTopologyUpdate) {
+            // Wait for cache1 to be removed from the topology
+            eventuallyEquals(2, () -> TestingUtil.extractCacheTopology(cache0).getMembers().size());
+            // And only then finish the request
+            nextPublisherRequest.skipSend().receive(address(1), CacheNotFoundResponse.INSTANCE);
+         }
 
-      for (Map.Entry<Object, String> entry : values.entrySet()) {
-         assertTrue("Entry wasn't found:" + entry, returnQueue.contains(entry) || entry.equals(value));
+         // The rebalance should finish normally
+         TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
+
+         // The iteration should finish normally, returning all the entries
+         Map<Object, String> iteratorValues = iterationFuture.get(10, TimeUnit.SECONDS);
+         assertEquals(values, iteratorValues);
+      } finally {
+         rpc0.revertRpcManager();
       }
    }
 
