@@ -72,17 +72,18 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
          throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
       }
 
-      CloseableIterator<Map.Entry<Object, S>> iterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator();
-      Iterator<ObjectFilter.FilterResult> it = new MappingIterator<>(iterator, i -> objectFilter.filter(i.getKey(), i.getValue()));
-      int count = 0;
-      while (it.hasNext()) {
-         ObjectFilter.FilterResult fr = it.next();
-         Object removed = cache.remove(fr.getKey());
-         if (removed != null) {
-            count++;
+      try (CloseableIterator<Map.Entry<Object, S>> entryIterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator()) {
+         Iterator<ObjectFilter.FilterResult> it = new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.getKey(), e.getValue()));
+         int count = 0;
+         while (it.hasNext()) {
+            ObjectFilter.FilterResult fr = it.next();
+            Object removed = cache.remove(fr.getKey());
+            if (removed != null) {
+               count++;
+            }
          }
+         return count;
       }
-      return count;
    }
 
    @Override
