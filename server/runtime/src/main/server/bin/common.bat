@@ -30,7 +30,7 @@ set "JAVA_OPTS="
 
 set "CLASSPATH="
 
-for %%j in (%ISPN_HOME%\boot\*.jar) do (
+for  /f "delims=" %%j in ('dir /b /s "%ISPN_HOME%\boot\*.jar"') do (
    set "CLASSPATH=%CLASSPATH%;%%~j"
 )
 
