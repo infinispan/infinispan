@@ -168,11 +168,14 @@
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
+      <infinispan.activeprocessorcount>4</infinispan.activeprocessorcount>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
-      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}</testjvm.commonArgs>
+      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError
+         -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}
+         -Dinfinispan.activeprocessorcount=${infinispan.activeprocessorcount}</testjvm.commonArgs>
       <!--
         java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
           core externalizers for JDK types

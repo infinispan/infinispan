@@ -39,7 +39,9 @@ public class KnownComponentNames {
    static {
       DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
       DEFAULT_THREAD_COUNT.put(EXPIRATION_SCHEDULED_EXECUTOR, 1);
-      DEFAULT_THREAD_COUNT.put(NON_BLOCKING_EXECUTOR, ProcessorInfo.availableProcessors() * 2);
+      // The non-blocking executor is CPU-bound, but tasks still block now and then
+      // So we give it Math.ceil(availableProcessors * 1.5) threads
+      DEFAULT_THREAD_COUNT.put(NON_BLOCKING_EXECUTOR, (ProcessorInfo.availableProcessors() * 3 + 1) / 2);
       DEFAULT_THREAD_COUNT.put(BLOCKING_EXECUTOR, 150);
 
       DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 1_000);
