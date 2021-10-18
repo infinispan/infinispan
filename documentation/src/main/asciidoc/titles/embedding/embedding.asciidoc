@@ -19,7 +19,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :embedded_caches:
 
 //Title
-= Embedding {brandname} {infinispanversion}
+= Embedding {brandname} in Java Applications
 
 //User stories
 include::stories.adoc[]

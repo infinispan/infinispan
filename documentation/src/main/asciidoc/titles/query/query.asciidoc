@@ -15,7 +15,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Querying {brandname} caches
+= Querying {brandname} Caches
 
 {brandname} lets you perform queries with embedded and remote caches to efficiently and quickly look up values in your data set.
 

@@ -40,12 +40,12 @@ Written and maintained by the {brandname} community
 == Developer
 
 [unstyled]
-* link:titles/embedding/embedding.html[Embedding {brandname}]
+* link:titles/embedding/embedding.html[Embedding {brandname} in Java Applications]
 * link:titles/configuring/configuring.html[Configuring {brandname} Caches]
 * link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
 * link:titles/query/query.html[Querying {brandname} Caches]
 * link:titles/developing/developing.html[Developer's Guide]
-* link:titles/xsite/xsite.html[Using Cross-Site Replication]
+* link:titles/xsite/xsite.html[{brandname} Cross-Site Replication]
 * link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
