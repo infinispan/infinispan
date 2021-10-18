@@ -14,4 +14,4 @@ setlocal DisableDelayedExpansion
 "%JAVA%" %JAVA_OPTS% ^
    -Dvisualvm.display.name=%PROCESS_NAME% ^
    "-Dinfinispan.server.home.path=%ISPN_HOME%" ^
-   -classpath %CLASSPATH% %LOADER_CLASS% %MAIN_CLASS% %ARGUMENTS%
+   -classpath "%CLASSPATH%" %LOADER_CLASS% %MAIN_CLASS% %ARGUMENTS%
