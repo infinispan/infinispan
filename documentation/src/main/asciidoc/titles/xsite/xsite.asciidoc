@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= {brandname} Guide to Cross-Site Replication
+= {brandname} Cross-Site Replication
 
 Find out how {brandname} performs cross-site replication so you can get optimal
 performance and avoid issues. Learn how to configure {brandname} to back up
