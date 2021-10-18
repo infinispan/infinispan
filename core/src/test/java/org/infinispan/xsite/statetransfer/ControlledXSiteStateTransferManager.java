@@ -33,7 +33,7 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
       if (event != null) {
          log.tracef("Blocking automatic state transfer with sites %s", sites);
          event.receive(sites, () -> {
-            log.tracef("Resuming automatic state transfer with sites %s");
+            log.tracef("Resuming automatic state transfer with sites %s", sites);
             super.startAutomaticStateTransfer(sites);
          });
       } else {
