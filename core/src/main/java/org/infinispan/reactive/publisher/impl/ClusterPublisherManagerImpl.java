@@ -892,12 +892,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        * the entire process again with the segments that haven't yet completed.
        */
       public void start() {
-         Flowable<R> valuesFlowable = Flowable.just(distributionManager)
-               .flatMap(dm -> {
+         Flowable<R> valuesFlowable = Flowable.defer(() -> {
                   if (!componentRegistry.getStatus().allowInvocations()) {
                      return Flowable.error(new IllegalLifecycleStateException());
                   }
-                  LocalizedCacheTopology topology = dm.getCacheTopology();
+                  LocalizedCacheTopology topology = distributionManager.getCacheTopology();
                   int previousTopology = currentTopology;
                   // Store the current topology in case if we have to retry
                   int currentTopology = topology.getTopologyId();
@@ -954,8 +953,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                            targetSupplier, excludedKeys, currentTopology);
                   }
 
-                  return Flowable.mergeArray(publisherArray);
-               }, MAX_INNER_SUBSCRIBERS)
+                  return Flowable.mergeArray(concurrentPublishers, publisher.batchSize, publisherArray);
+               })
                .repeatUntil(() -> {
                   boolean complete = segmentsToComplete.isEmpty();
                   if (log.isTraceEnabled()) {

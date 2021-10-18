@@ -583,18 +583,21 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Function<I, K> toKeyFunction, IntSet segments,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      Flowable<? extends CompletionStage<R>> stageFlowable = Flowable.fromIterable(segments)
-            .parallel()
-            .runOn(nonBlockingScheduler)
-            .map(segment -> {
-               Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
-               if (keysToExclude != null) {
-                  innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
-               }
-               return collator.apply(innerFlowable);
-            }).sequential();
+      Flowable<R> stageFlowable = Flowable.fromIterable(segments)
+                                          .parallel(cpuCount)
+                                          .runOn(nonBlockingScheduler)
+                                          .flatMap(segment -> {
+                                             Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
+                                             if (keysToExclude != null) {
+                                                innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
+                                             }
+                                             // TODO Make the collator return a Flowable/Maybe
+                                             CompletionStage<R> stage = collator.apply(innerFlowable);
+                                             return Maybe.fromCompletionStage(stage).toFlowable();
+                                          }, false, cpuCount)
+                                          .sequential();
 
-      return combineStages(stageFlowable, finalizer, true);
+      return finalizer.apply(stageFlowable);
    }
 
    private <I, R> CompletionStage<R> atMostOnce(boolean parallel, CacheSet<I> set, Set<K> keysToExclude,
@@ -634,29 +637,6 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             return new SegmentPublisherResult<>(lostSegments, value);
          }
       }).whenComplete((u, t) -> changeListener.remove(segmentListener));
-   }
-
-   protected <R> CompletionStage<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer, boolean parallel) {
-      return finalizer.apply(combineStages(stagePublisher, parallel));
-   }
-
-   protected <R> Flowable<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher, boolean parallel) {
-      return stagePublisher.flatMapMaybe(stage -> {
-         // We purposely send completedNull stage for when a segment is suspected
-         if (stage == CompletableFutures.completedNull()) {
-            return Maybe.empty();
-         }
-
-         if (CompletionStages.isCompletedSuccessfully(stage)) {
-            R value = CompletionStages.join(stage);
-            if (value == null) {
-               return Maybe.empty();
-            }
-            return Maybe.just(value);
-         }
-         return Maybe.fromCompletionStage(stage);
-      }, false, parallel ? cpuCount : 1);
    }
 
    private CacheSet<K> getKeySet(boolean includeLoader) {
@@ -778,11 +758,11 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             flowable = flowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
          }
 
-         return combineStages(flowable.buffer(PARALLEL_BATCH_SIZE)
-               .parallel()
+         return flowable.buffer(PARALLEL_BATCH_SIZE)
+               .parallel(cpuCount)
                .runOn(nonBlockingScheduler)
-               .map(buffer -> transformer.apply(Flowable.fromIterable(buffer)))
-               .sequential(), true);
+               .flatMap(buffer -> Flowable.fromCompletionStage(transformer.apply(Flowable.fromIterable(buffer))), false, cpuCount)
+               .sequential();
       }
 
       @Override
@@ -850,7 +830,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
       @Override
       public <I, R> Flowable<R> exactlyOnceSequential(CacheSet<I> set, Set<K> keysToExclude, Function<I, K> toKeyFunction, IntSet segments, Function<? super Publisher<I>, ? extends CompletionStage<R>> collator, SegmentListener listener, IntSet concurrentSegments) {
-         return combineStages(Flowable.fromStream(segments.intStream().mapToObj(segment -> {
+         return Flowable.fromIterable(segments).concatMapMaybe(segment -> {
             Flowable<I> innerFlowable = Flowable.fromPublisher(set.localPublisher(segment))
                   // If we complete the iteration try to remove the segment - so it can't be suspected
                   .doOnComplete(() -> concurrentSegments.remove(segment));
@@ -863,19 +843,19 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             // This will always be true unless there is a store
             if (CompletionStages.isCompletedSuccessfully(stage)) {
                if (listener.segmentsLost.contains(segment)) {
-                  return CompletableFutures.completedNull();
+                  return Maybe.empty();
                }
-               return stage;
+               return Maybe.fromCompletionStage(stage);
             }
 
-            return stage.thenCompose(value -> {
+            return Maybe.fromCompletionStage(stage.thenCompose(value -> {
                // This means the segment was lost in the middle of processing
                if (listener.segmentsLost.contains(segment)) {
-                  return CompletableFutures.<R>completedNull();
+                  return CompletableFutures.completedNull();
                }
                return CompletableFuture.completedFuture(value);
-            });
-         })), false);
+            }));
+         });
       }
 
       @Override

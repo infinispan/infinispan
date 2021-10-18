@@ -260,9 +260,17 @@ public class BlockingManagerImpl implements BlockingManager {
          if (isCurrentThreadBlocking()) {
             return publisher;
          }
+         if (log.isTraceEnabled()) {
+            int publisherId = System.identityHashCode(publisher);
+            log.tracef("Blocking publisher start %d", publisherId);
+            return Flowable.fromPublisher(publisher)
+                           .subscribeOn(blockingScheduler)
+                           .observeOn(nonBlockingScheduler)
+                           .doFinally(() -> log.tracef("Blocking publisher done %d", publisherId));
+         }
          return Flowable.fromPublisher(publisher)
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler);
+                        .subscribeOn(blockingScheduler)
+                        .observeOn(nonBlockingScheduler);
       });
    }
 
