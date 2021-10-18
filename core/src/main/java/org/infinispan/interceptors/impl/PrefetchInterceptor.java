@@ -61,6 +61,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -90,7 +91,9 @@ import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.reactivestreams.Publisher;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -109,6 +112,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Inject protected ComponentRef<AdvancedCache<K, V>> cache;
    @Inject protected EntryFactory entryFactory;
    @Inject protected InternalDataContainer<K, V> dataContainer;
+   @Inject protected BlockingManager blockingManager;
 
    protected int numSegments;
 
@@ -530,6 +534,11 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       }
 
       @Override
+      public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
+         return blockingManager.blockingPublisher(super.localPublisher(segments));
+      }
+
+      @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          // Here we use stream because plain .iterator() would return non-serializable EntryWrapper entries
          return new BackingIterator<>(cache.wired(), ignoreOwnership, () -> entrySet.stream().iterator(), Map.Entry::getKey);
@@ -681,6 +690,11 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       public BackingKeySet(boolean ignoreOwnership, CacheSet<K> keySet) {
          super(cache.wired(), keySet);
          this.ignoreOwnership = ignoreOwnership;
+      }
+
+      @Override
+      public Publisher<K> localPublisher(IntSet segments) {
+         return blockingManager.blockingPublisher(super.localPublisher(segments));
       }
 
       @Override
