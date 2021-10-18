@@ -358,17 +358,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = lock.writeLock();
       try {
          stopAvailabilityTask();
-         Flowable<NonBlockingStore<?, ?>> flowable = Flowable.fromIterable(stores)
-               .map(StoreStatus::store);
-         // If needed, clear the persistent store before stopping
-         if (clearOnStop) {
-            flowable = flowable
-                  .delay(store -> Completable.fromCompletionStage(store.clear()).toFlowable());
+
+         AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
+         for (StoreStatus storeStatus : stores) {
+            NonBlockingStore<Object, Object> store = storeStatus.store();
+            CompletionStage<Void> storeStage = CompletableFutures.completedNull();
+            if (clearOnStop) {
+               // Clear the persistent store before stopping
+               storeStage = store.clear().thenCompose(__ -> store.stop());
+            } else {
+               storeStage = store.stop();
+            }
+            allStage.dependsOn(storeStage);
          }
-         flowable = flowable.delay(store -> Completable.fromCompletionStage(store.stop()).toFlowable());
 
          // Wait until it completes
-         blockingSubscribe(flowable);
+         CompletionStages.join(allStage.freeze());
          stores.clear();
       } finally {
          lock.unlockWrite(stamp);
