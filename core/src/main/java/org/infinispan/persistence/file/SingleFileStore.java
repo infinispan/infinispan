@@ -480,10 +480,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          File segmentFile = getComposedSegmentFile(segment);
          if (SecurityActions.fileExists(segmentFile)) {
             SecurityActions.deleteFile(segmentFile);
-            if (segmentFile.getParentFile() != null && segmentFile.isDirectory() &&
-                segmentFile.getParentFile().list().length == 0) {
+            File parentDir = segmentFile.getParentFile();
+            if (parentDir != null && parentDir.isDirectory() && parentDir.list().length == 0) {
                // The segment directory is empty, remove it
-               SecurityActions.deleteFile(segmentFile.getParentFile());
+               SecurityActions.deleteFile(parentDir);
             }
          }
       }
