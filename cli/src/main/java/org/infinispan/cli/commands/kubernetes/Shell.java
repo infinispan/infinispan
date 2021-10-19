@@ -11,17 +11,22 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.readline.terminal.formatting.Color;
+import org.aesh.readline.terminal.formatting.TerminalColor;
+import org.aesh.readline.terminal.formatting.TerminalString;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.DefaultShell;
 import org.infinispan.cli.impl.KubernetesContext;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.commons.util.Util;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
@@ -42,6 +47,9 @@ public class Shell extends CliCommand {
 
    @Option(shortName = 'p', name = "pod-name", description = "Specifies to which pod you connect.")
    String podName;
+
+   @Option(shortName = 'u', name = "username", description = "The username to use when connecting")
+   String username;
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -85,22 +93,48 @@ public class Shell extends CliCommand {
          if (certSecretName != null) {
             connection.append("https://");
             Secret secret = Kube.getSecret(client, namespace, certSecretName);
-            String crt = secret.getData().get("tls.crt");
-            String pem = new String(Base64.getDecoder().decode(crt));
-            Path path = Files.createTempFile("clitrust", "pem", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
-            Files.write(path, pem.getBytes(StandardCharsets.UTF_8));
+            final byte[] cert;
+            final String suffix;
+            if (secret.getData().containsKey("keystore.p12")) {
+               cert = Base64.getDecoder().decode(secret.getData().get("keystore.p12"));
+               suffix = ".p12";
+               String password = new String(Base64.getDecoder().decode(secret.getData().get("password")));
+               args.add("-s");
+               args.add(password);
+            } else {
+               cert = new String(Base64.getDecoder().decode(secret.getData().get("tls.crt"))).getBytes(StandardCharsets.UTF_8);
+               suffix = ".pem";
+            }
+            Path certPath = Files.createTempFile("clitrust", suffix, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+            Files.write(certPath, cert);
             args.add("-t");
-            args.add(path.toString());
+            args.add(certPath.toString());
+            args.add("--hostname-verifier");
+            args.add(".*");
          } else {
             connection.append("http://");
          }
          if (endpointSecretName != null) {
             Secret secret = Kube.getSecret(client, namespace, endpointSecretName);
-            List<Kube.SecretCredentials> credentials = Kube.decodeOpaqueSecrets(secret);
-            connection.append(credentials.get(0).username);
-            connection.append(':');
-            connection.append(credentials.get(0).password);
-            connection.append('@');
+            Map<String, String> credentials = Kube.decodeOpaqueSecrets(secret);
+            if (username == null) {
+               if (credentials.size() != 1) {
+                  throw Messages.MSG.usernameRequired();
+               } else {
+                  Map.Entry<String, String> entry = credentials.entrySet().iterator().next();
+                  connection.append(entry.getKey());
+                  connection.append(':');
+                  connection.append(entry.getValue());
+                  connection.append('@');
+               }
+            } else {
+               connection.append(username);
+               if (credentials.containsKey(username)) {
+                  connection.append(':');
+                  connection.append(credentials.get(username));
+               }
+               connection.append('@');
+            }
          }
          InetAddress localAddress = portForward.getLocalAddress();
          if (localAddress.getAddress().length == 4) {
@@ -112,9 +146,12 @@ public class Shell extends CliCommand {
          connection.append(portForward.getLocalPort());
          args.add("-c");
          args.add(connection.toString());
+         Messages.CLI.debugf("cli %s", args);
          CLI.main(new DefaultShell(), args.toArray(new String[0]), System.getProperties(), false);
          return CommandResult.SUCCESS;
       } catch (Throwable t) {
+         TerminalString error = new TerminalString(Util.getRootCause(t).getLocalizedMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
+         invocation.getShell().writeln(error.toString());
          return CommandResult.FAILURE;
       }
    }

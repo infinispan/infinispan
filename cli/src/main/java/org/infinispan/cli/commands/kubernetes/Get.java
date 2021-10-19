@@ -88,7 +88,7 @@ public class Get extends CliCommand {
             if (secrets) {
                String secretName = Kube.getProperty(item, "spec", "security", "endpointSecretName");
                Secret secret = Kube.getSecret(client, ns, secretName);
-               Kube.decodeOpaqueSecrets(secret).forEach(c -> out.printf("%n%-60s%-16s %-16s", "", c.username, c.password));
+               Kube.decodeOpaqueSecrets(secret).entrySet().forEach(c -> out.printf("%n%-60s%-16s %-16s", "", c.getKey(), c.getValue()));
                out.println();
             } else {
                out.printf(" %-16s%n", "******");

@@ -6,6 +6,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +32,7 @@ import org.infinispan.cli.util.IterableJsonReader;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
+import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -82,6 +84,10 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public void connect() throws IOException {
       client = RestClient.forConfiguration(builder.build());
+      AuthenticationConfiguration authentication = client.getConfiguration().security().authentication();
+      if (authentication.enabled() && authentication.username() != null && authentication.password() == null && !"Bearer".equals(authentication.mechanism())) {
+         throw new AccessDeniedException("");
+      }
       connectInternal();
    }
 
@@ -431,6 +437,11 @@ public class RestConnection implements Connection, Closeable {
       } catch (IllegalStateException e) {
          // Cannot refresh if there is no container selected
       }
+   }
+
+   @Override
+   public String getUsername() {
+      return builder.build().security().authentication().username();
    }
 
    RestClientConfigurationBuilder getBuilder() {

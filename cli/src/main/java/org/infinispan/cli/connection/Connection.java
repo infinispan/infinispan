@@ -93,5 +93,7 @@ public interface Connection extends Closeable {
 
    Collection<String> getCacheConfigurationAttributes(String name);
 
+   String getUsername();
+
    enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }
