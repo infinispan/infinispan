@@ -12,6 +12,7 @@ import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
 import org.infinispan.cli.user.UserTool;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
@@ -22,6 +23,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
    Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
+   Logger CLI = Logger.getLogger("CLI");
 
    @Message(value = "Username: ")
    String username();
@@ -176,7 +178,7 @@ public interface Messages {
    @Message("Cannot find service '%s' in namespace '%s'")
    IllegalArgumentException noSuchService(String serviceName, String namespace);
 
-   @Message("Cannot find generated secrets for service '%s'")
+   @Message("Cannot find or access generated secrets for service '%s'")
    IllegalStateException noGeneratedSecret(String serviceName);
 
    @Message("A namespace was not specified and a default has not been set")
@@ -229,4 +231,7 @@ public interface Messages {
 
    @Message("No running pods available in service %s")
    IllegalStateException noRunningPodsInService(String name);
+
+   @Message("A username must be specified")
+   IllegalArgumentException usernameRequired();
 }

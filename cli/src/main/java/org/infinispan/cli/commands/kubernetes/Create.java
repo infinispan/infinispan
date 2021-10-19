@@ -3,11 +3,14 @@ package org.infinispan.cli.commands.kubernetes;
 import static org.infinispan.cli.commands.kubernetes.Kube.DEFAULT_CLUSTER_NAME;
 import static org.infinispan.cli.commands.kubernetes.Kube.INFINISPAN_CLUSTER_CRD;
 
+import java.util.Map;
+
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.command.option.OptionGroup;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.EncryptionCompleter;
 import org.infinispan.cli.completers.ExposeCompleter;
@@ -74,6 +77,9 @@ public class Create extends CliCommand {
       @Argument(description = "Defines the cluster name. Defaults to '" + DEFAULT_CLUSTER_NAME + "'", defaultValue = DEFAULT_CLUSTER_NAME)
       String name;
 
+      @OptionGroup(shortName = 'P', description = "Sets a spec property. Use the '.' as separator for child nodes")
+      Map<String, String> specProperties;
+
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
 
@@ -132,6 +138,9 @@ public class Create extends CliCommand {
                   throw Messages.MSG.encryptionTypeRequiresSecret(encryptionType);
                }
             }
+         }
+         if (specProperties != null) {
+            specProperties.forEach((k, v) -> Kube.setProperty(spec, v, k.split("\\.")));
          }
          client.genericKubernetesResources(INFINISPAN_CLUSTER_CRD).inNamespace(namespace).create(infinispan);
          return CommandResult.SUCCESS;

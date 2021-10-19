@@ -11,6 +11,7 @@ import java.security.KeyStore;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -55,6 +56,7 @@ import org.infinispan.cli.commands.rest.Shutdown;
 import org.infinispan.cli.commands.rest.Site;
 import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
+import org.infinispan.cli.connection.RegexHostnameVerifier;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.cli.impl.CliAliasManager;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
@@ -152,6 +154,9 @@ public class CLI extends CliCommand {
    @OptionGroup(shortName = 'D', description = "Sets a system property")
    Map<String, String> propertyMap;
 
+   @Option(name = "hostname-verifier", description = "A regular expression used to match hostnames when connecting to SSL/TLS-enabled servers")
+   String hostnameVerifier;
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -196,7 +201,8 @@ public class CLI extends CliCommand {
             KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, sslTrustStore, sslTrustStorePassword != null ? sslTrustStorePassword.toCharArray() : null);
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(keyStore);
-            SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, trustManagerFactory.getTrustManagers(), null, null);
+            HostnameVerifier verifier = hostnameVerifier != null ? new RegexHostnameVerifier(hostnameVerifier) : null;
+            SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, trustManagerFactory.getTrustManagers(), null, verifier);
             context.setSslContext(sslContext);
          } catch (Exception e) {
             invocation.getShell().writeln(MSG.keyStoreError(sslTrustStore, e));

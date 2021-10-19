@@ -1,6 +1,8 @@
 package org.infinispan.cli.connection.rest;
 
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,7 +11,6 @@ import org.infinispan.cli.connection.Connector;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.SslConfigurationBuilder;
-import org.infinispan.commons.dataconversion.StandardConversions;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -44,9 +45,10 @@ public class RestConnector implements Connector {
                String userInfo = url.getUserInfo();
                if (userInfo != null) {
                   String[] split = userInfo.split(":");
-                  String username = (String) StandardConversions.urlDecode(split[0]);
-                  String password = (String) StandardConversions.urlDecode(split[1]);
-                  builder.security().authentication().username(username).password(password);
+                  builder.security().authentication().username(URLDecoder.decode(split[0], StandardCharsets.UTF_8.name()));
+                  if (split.length == 2) {
+                     builder.security().authentication().password(URLDecoder.decode(split[1], StandardCharsets.UTF_8.name()));
+                  }
                }
                if (url.getProtocol().equals("https")) {
                   SslConfigurationBuilder ssl = builder.security().ssl().enable();
