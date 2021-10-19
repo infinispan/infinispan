@@ -205,7 +205,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
 
    default Publisher<InternalCacheEntry<K, V>> publisher(IntSet segments) {
       return Flowable.fromIterable(segments)
-            .flatMap(this::publisher);
+            .concatMap(this::publisher);
    }
 
    /**

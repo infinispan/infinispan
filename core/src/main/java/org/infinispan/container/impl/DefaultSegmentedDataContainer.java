@@ -105,7 +105,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       return Flowable.defer(() -> {
          long accessTime = timeService.wallClockTime();
          return Flowable.fromIterable(segments)
-               .flatMap(segment -> innerPublisher(segment, accessTime));
+               .concatMap(segment -> innerPublisher(segment, accessTime));
       });
    }
 

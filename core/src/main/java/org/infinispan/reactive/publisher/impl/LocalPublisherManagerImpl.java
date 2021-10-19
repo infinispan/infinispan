@@ -770,7 +770,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          return flowable.buffer(PARALLEL_BATCH_SIZE)
                .parallel(cpuCount)
                .runOn(nonBlockingScheduler)
-               .flatMap(buffer -> Flowable.fromCompletionStage(transformer.apply(Flowable.fromIterable(buffer))), false, cpuCount)
+               .concatMap(buffer -> Flowable.fromCompletionStage(transformer.apply(Flowable.fromIterable(buffer))), 1)
                .sequential();
       }
 
