@@ -1,7 +1,8 @@
 package org.infinispan.cli.commands.kubernetes;
 
-import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 /**
@@ -88,7 +90,21 @@ public class Kube implements Command {
             return null;
          }
       }
-      return (T) properties.get(names[names.length -1 ]);
+      return (T) properties.get(names[names.length - 1]);
+   }
+
+   public static void setProperty(GenericKubernetesResource item, String value, String... names) {
+      for (int i = 0; i < names.length - 1; i++) {
+         Map<String, Object> properties = item.getAdditionalProperties();
+         if (properties.containsKey(names[i])) {
+            item = (GenericKubernetesResource) properties.get(names[i]);
+         } else {
+            GenericKubernetesResource child = new GenericKubernetesResource();
+            item.setAdditionalProperty(names[i], child);
+            item = child;
+         }
+      }
+      item.setAdditionalProperty(names[names.length - 1], value);
    }
 
 
@@ -99,23 +115,25 @@ public class Kube implements Command {
    }
 
    static Secret getSecret(KubernetesClient client, String namespace, String name) {
-      Secret secret = client.secrets().inNamespace(namespace).withName(name).get();
-      if (secret == null) {
-         throw Messages.MSG.noGeneratedSecret(name);
-      } else {
-         return secret;
+      try {
+         return client.secrets().inNamespace(namespace).withName(name).get();
+      } catch (KubernetesClientException e) {
+         return null;
       }
    }
 
-   static List<SecretCredentials> decodeOpaqueSecrets(Secret secret) {
+   static Map<String, String> decodeOpaqueSecrets(Secret secret) {
+      if (secret == null) {
+         return Collections.emptyMap();
+      }
       String opaqueIdentities = secret.getData().get("identities.yaml");
       String identitiesYaml = new String(Base64.getDecoder().decode(opaqueIdentities));
       Yaml yaml = new Yaml();
       Map<String, List> identities = yaml.load(identitiesYaml);
       List<Map<String, String>> credentialsList = identities.get("credentials");
-      List<SecretCredentials> res = new ArrayList<>(identities.size());
+      Map<String, String> res = new LinkedHashMap<>(identities.size());
       for (Map<String, String> credentials : credentialsList) {
-         res.add(new SecretCredentials(credentials.get("username"), credentials.get("password")));
+         res.put(credentials.get("username"), credentials.get("password"));
       }
       return res;
    }
@@ -140,16 +158,6 @@ public class Kube implements Command {
          return ns.get().getMetadata().getName();
       } else {
          throw Messages.MSG.noDefaultOperatorNamespace();
-      }
-   }
-
-   public static class SecretCredentials {
-      String username;
-      String password;
-
-      public SecretCredentials(String username, String password) {
-         this.username = username;
-         this.password = password;
       }
    }
 }
