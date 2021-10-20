@@ -88,8 +88,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    @Override
    public CloseableIterator<E> iterator() throws SearchException {
       partitionHandlingSupport.checkCacheAvailable();
+      long start = queryStatistics.isEnabled() ? System.nanoTime(): 0;
       SearchQuery<?> searchQuery = queryDefinition.getSearchQueryBuilder().build();
-      long start = queryStatistics.isEnabled() ? System.nanoTime(): 0;  // todo  [anistor] should we also count query build time ?
 
       MappingIterator<?, Object> iterator = new MappingIterator<>(iterator(searchQuery))
             .skip(queryDefinition.getFirstResult())
@@ -102,10 +102,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    @Override
    public <K> CloseableIterator<Map.Entry<K, E>> entryIterator() {
-      // todo  [anistor] if queryDefinition has projections, barf!
+      // TODO [anistor] sanity check required: if queryDefinition has projections throw an exception
       partitionHandlingSupport.checkCacheAvailable();
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
       SearchQuery<List<Object>> searchQuery = queryDefinition.getSearchQueryBuilder().keyAndEntity();
-      long start = queryStatistics.isEnabled() ?  System.nanoTime(): 0; // todo  [anistor] should we also count query build time ?
 
       MappingIterator<List<Object>, Map.Entry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
       iterator.skip(queryDefinition.getFirstResult())
