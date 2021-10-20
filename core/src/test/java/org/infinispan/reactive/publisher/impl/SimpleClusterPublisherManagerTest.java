@@ -410,10 +410,16 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       }
 
       IntSet mutableIntSet = IntSets.concurrentSet(10);
-      TestSubscriber<R> testSubscriber = TestSubscriber.create();
-      publisher.subscribe(testSubscriber, mutableIntSet::set);
+      TestSubscriber<SegmentCompletionPublisher.Notification<R>> testSubscriber = TestSubscriber.create();
+      publisher.subscribeWithSegments(testSubscriber);
 
       testSubscriber.await(10, TimeUnit.SECONDS);
+
+      for (SegmentCompletionPublisher.Notification<R> notification : testSubscriber.values()) {
+         if (notification.isSegmentComplete()) {
+            mutableIntSet.set(notification.completedSegment());
+         }
+      }
 
       assertEquals(IntSets.immutableRangeSet(10), mutableIntSet);
    }

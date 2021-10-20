@@ -19,7 +19,6 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -362,12 +361,12 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
                deliveryGuarantee, distributedBatchSize, usedTransformer);
       }
 
-      CompletionSegmentTracker segmentTracker;
+      CompletionSegmentTracker<R> segmentTracker;
       if (segmentCompletionListener != null) {
          // Tracker relies on ordering that a segment completion occurs
-         segmentTracker = new CompletionSegmentTracker(segmentCompletionListener);
-         publisherToSubscribeTo = Flowable.<R>fromPublisher(s -> publisher.subscribe(s, segmentTracker))
-               .doOnNext(segmentTracker);
+         segmentTracker = new CompletionSegmentTracker<>(segmentCompletionListener);
+         publisherToSubscribeTo = Flowable.<SegmentCompletionPublisher.Notification<R>>fromPublisher(publisher::subscribeWithSegments)
+               .mapOptional(segmentTracker);
       } else {
          segmentTracker = null;
          publisherToSubscribeTo = publisher;
@@ -402,31 +401,31 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     * we can guarantee to notify the user after all elements have been processed of which segments were completed.
     * All methods except for accept(int) are guaranteed to be called sequentially and in a safe manner.
     */
-   private class CompletionSegmentTracker implements IntConsumer, io.reactivex.rxjava3.functions.Consumer<Object> {
+   private class CompletionSegmentTracker<R> implements io.reactivex.rxjava3.functions.Function<SegmentCompletionPublisher.Notification<R>, Optional<? extends R>> {
       private final Consumer<Supplier<PrimitiveIterator.OfInt>> listener;
-      private final Map<Object, IntSet> awaitingNotification;
+      private final Map<R, IntSet> awaitingNotification;
       volatile IntSet completedSegments;
 
       private CompletionSegmentTracker(Consumer<Supplier<PrimitiveIterator.OfInt>> listener) {
          this.listener = Objects.requireNonNull(listener);
          this.awaitingNotification = new HashMap<>();
-         this.completedSegments = IntSets.concurrentSet(maxSegment);
+         this.completedSegments = IntSets.mutableEmptySet(maxSegment);
       }
 
 
       @Override
-      public void accept(int value) {
-         // This method can technically be called from multiple threads
-         completedSegments.set(value);
-      }
-
-      @Override
-      public void accept(Object r) {
-         if (!completedSegments.isEmpty()) {
-            log.tracef("Going to complete segments %s when %s is iterated upon", completedSegments, Util.toStr(r));
-            awaitingNotification.put(r, completedSegments);
-            completedSegments = IntSets.concurrentSet(maxSegment);
+      public Optional<R> apply(SegmentCompletionPublisher.Notification<R> r) throws Throwable {
+         if (r.isSegmentComplete()) {
+            completedSegments.set(r.completedSegment());
+            return Optional.empty();
          }
+         R value = r.value();
+         if (!completedSegments.isEmpty()) {
+            log.tracef("Going to complete segments %s when %s is iterated upon", completedSegments, Util.toStr(value));
+            awaitingNotification.put(value, completedSegments);
+            completedSegments = IntSets.mutableEmptySet(maxSegment);
+         }
+         return Optional.of(value);
       }
 
       public void returningObject(Object value) {
