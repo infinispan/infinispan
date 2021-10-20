@@ -489,7 +489,7 @@ public class PublisherHandler {
     * values (>= batchSize) but also get to a new key. This means that we can
     * actually return more values than the batchSize when flatMap returns more than 1 value for a given key.
     */
-   class KeyPublisherState extends PublisherState {
+   public class KeyPublisherState extends PublisherState {
       Object[] extraValues;
       int extraPos;
       Object[] keys;
@@ -559,35 +559,39 @@ public class PublisherHandler {
                   return Flowable.fromPublisher(functionToApply.apply(Flowable.just(originalValue)))
                         .doOnNext(ignore -> size.inc())
                         .doOnComplete(() -> {
-                           int total = size.get();
-                           if (total > 0) {
-                              publisherOffset += total;
-                              // Means our values were consumed downstream immediately and thus our key is complete
-                              if (publisherOffset == consumerOffset) {
-                                 keyCompleted(originalValue);
-                                 previousValueFinishedKey = true;
-                              } else {
-                                 keyCompletionPosition.put(publisherOffset, originalValue);
-                              }
-                           } else {
-                              // If there are no values for the key it is complete but also doesn't need to
-                              // be tracked, so complete any segment tied to it if possible
-                              Integer segment = keySegmentCompletions.remove(originalValue);
-                              if (segment != null) {
-                                 if (log.isTraceEnabled()) {
-                                    log.tracef("Completing segment %s due to empty resulting value of %s for %s",
-                                          segment, originalValue, requestId);
+                              int total = size.get();
+                              if (total > 0) {
+                                 publisherOffset += total;
+                                 // Means our values were consumed downstream immediately and thus our key is complete
+                                 if (publisherOffset == consumerOffset) {
+                                    keyCompleted(originalValue);
+                                    previousValueFinishedKey = true;
+                                 } else {
+                                    keyCompletionPosition.put(publisherOffset, originalValue);
                                  }
-                                 actualCompleteSegment(segment);
+                              } else {
+                                 // If there are no values for the key it is complete but also doesn't need to
+                                 // be tracked, so complete any segment tied to it if possible
+                                 Integer segment = keySegmentCompletions.remove(originalValue);
+                                 if (segment != null) {
+                                    if (log.isTraceEnabled()) {
+                                       log.tracef("Completing segment %s due to empty resulting value of %s for %s",
+                                             segment, originalValue, requestId);
+                                    }
+                                    actualCompleteSegment(segment);
+                                 }
+                                 // Also null out our key for segment completion if needed since this key will never be
+                                 // found published
+                                 if (keyForSegmentCompletion == originalValue) {
+                                    if (log.isTraceEnabled()) log.tracef("Discard key for segment completion %s", keyForSegmentCompletion);
+                                    keyForSegmentCompletion = null;
+                                    try {
+                                       Thread.sleep(100);
+                                    } catch (InterruptedException e) {
+                                       e.printStackTrace();
+                                    }
+                                 }
                               }
-                              // Also null out our key for segment completion if needed since this key will never be
-                              // found published
-                              if (keyForSegmentCompletion == originalValue) {
-                                 if (log.isTraceEnabled())
-                                    log.tracef("Discard key for segment completion %s", keyForSegmentCompletion);
-                                 keyForSegmentCompletion = null;
-                              }
-                           }
                         });
                })
                .subscribe(this);
@@ -642,6 +646,11 @@ public class PublisherHandler {
          if (keyForSegmentCompletion == key) {
             if (log.isTraceEnabled()) log.tracef("Completed key %s", keyForSegmentCompletion);
             keyForSegmentCompletion = null;
+            try {
+               Thread.sleep(100);
+            } catch (InterruptedException e) {
+               e.printStackTrace();
+            }
          }
 
          Integer segmentToComplete = keySegmentCompletions.remove(key);
@@ -729,7 +738,14 @@ public class PublisherHandler {
                      k, requestId);
             }
             keySegmentCompletions.put(keyForSegmentCompletion, segment);
-            assert keyForSegmentCompletion != null : "Segment key " + k + " was removed for " + segment;
+            for (int i = 0; i < 100; i++) {
+               assert keyForSegmentCompletion != null : "Segment key " + k + " was removed for " + segment;
+               try {
+                  Thread.sleep(1);
+               } catch (InterruptedException e) {
+                  e.printStackTrace();
+               }
+            }
             this.keyForSegmentCompletion = null;
          }
       }

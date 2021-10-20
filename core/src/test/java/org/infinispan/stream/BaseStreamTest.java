@@ -1773,6 +1773,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
                   synchronized (stats) {
                      stats.accept(e);
                   }
+                  log.tracef("Processed %s", e);
                });
          DoubleSummaryStatistics stats = getForEachObject(offset);
          assertEquals(2.25, stats.getAverage());
@@ -1828,6 +1829,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
             synchronized (stats) {
                stats.accept(value);
             }
+            log.tracef("Processed %s", value);
          } else {
             fail("Did not receive correct cache!");
          }
@@ -1894,6 +1896,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
                   synchronized (stats) {
                      stats.accept(d);
                   }
+                  log.tracef("Processed %s", d);
                }
             });
             DoubleSummaryStatistics stats = getForEachObject(offset);
@@ -1943,6 +1946,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          iterator.forEachRemaining((double e) -> {
             assertTrue(cache.containsKey(e));
             doubleSummaryStatistics.accept(e);
+            log.tracef("Processed %s", e);
          });
          return doubleSummaryStatistics;
       }, cache);
@@ -2143,6 +2147,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       iterator.forEachRemaining(e -> {
          assertTrue(cache.containsKey(e));
          count.addAndGet(e);
+         log.tracef("Processed %s", e);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2161,6 +2166,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          Integer key = Integer.valueOf(e.substring(0, 1));
          assertEquals(cache.get(key), e);
          count.addAndGet(key);
+         log.tracef("Processed %s", e);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2230,6 +2236,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          Integer key = Integer.valueOf(e.substring(0, 1));
          assertEquals(cache.get(key), e);
          count.addAndGet(key);
+         log.tracef("Processed %s", e);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2249,6 +2256,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       iterator.forEachRemaining((int e) -> {
          assertTrue(cache.containsKey(e));
          count.addAndGet(e);
+         log.tracef("Processed %s", e);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2295,6 +2303,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          if (segments >= keyPartitioner.getSegment(k)) {
             realCount.incrementAndGet();
          }
+         log.tracef("Processed %s", k);
       });
 
       assertEquals(realCount.get(), createStream(entrySet).filterKeySegments(

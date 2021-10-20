@@ -15,6 +15,7 @@ import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManagerImpl;
@@ -102,6 +103,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
     * @param builder the block hound builder to register methods
     */
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
+      CommonsBlockHoundIntegration.allowMethodsToBlock(builder, PublisherHandler.KeyPublisherState.class, false);
+
       // The internal map only supports local mode - we need to replace with Caffeine
       // https://issues.redhat.com/browse/ISPN-11272
       builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
