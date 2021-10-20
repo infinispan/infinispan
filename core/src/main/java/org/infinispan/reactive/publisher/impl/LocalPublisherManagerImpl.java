@@ -233,24 +233,47 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             StreamMarshalling.entryToKeyFunction(), keysToExclude, deliveryGuarantee, transformer);
    }
 
-   private <I, R> SegmentAwarePublisher<R> specificKeyPublisher(IntSet segment, Set<K> keysToInclude,
+   private <I, R> SegmentAwarePublisher<R> specificKeyPublisher(IntSet segments, Set<K> keysToInclude,
          FlowableConverter<K, Flowable<I>> conversionFunction,
          Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-      return (subscriber, completedSegmentConsumer, lostSegmentConsumer) ->
-            Flowable.fromIterable(keysToInclude)
+      return new BaseSegmentAwarePublisher<R>() {
+         private Publisher<R> actualPublisherValues() {
+            return Flowable.fromIterable(keysToInclude)
                   .to(conversionFunction)
-                  .doOnComplete(() -> {
-                     for (PrimitiveIterator.OfInt iter = segment.iterator(); iter.hasNext(); ) {
-                        completedSegmentConsumer.accept(iter.nextInt());
-                     }
-                  })
-                  .to(transformer::apply)
-                  .subscribe(subscriber);
+                  .to(transformer::apply);
+         }
 
+         @Override
+         public void subscribe(Subscriber<? super R> s) {
+            actualPublisherValues().subscribe(s);
+         }
 
+         @Override
+         Flowable<NotificationWithLost<R>> flowableWithNotifications() {
+            return Flowable.fromPublisher(actualPublisherValues())
+                  .map(Notifications::value)
+                  .concatWith(Flowable.fromIterable(segments).map(Notifications::segmentComplete));
+         }
+      };
    }
 
-   private class SegmentAwarePublisherImpl<I, R> implements SegmentAwarePublisher<R> {
+   private abstract static class BaseSegmentAwarePublisher<R> implements SegmentAwarePublisher<R> {
+      @Override
+      public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
+         flowableWithNotifications().filter(notification -> !notification.isLostSegment())
+               .map(n -> (Notification<R>) n)
+               .subscribe(subscriber);
+      }
+
+      @Override
+      public void subscribeWithLostSegments(Subscriber<? super NotificationWithLost<R>> subscriber) {
+         flowableWithNotifications().subscribe(subscriber);
+      }
+
+      abstract Flowable<NotificationWithLost<R>> flowableWithNotifications();
+   }
+
+   private class SegmentAwarePublisherImpl<I, R> extends BaseSegmentAwarePublisher<R> {
       private final IntSet segments;
       private final CacheSet<I> set;
       private final Predicate<? super I> predicate;
@@ -268,54 +291,63 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
 
       @Override
-      public void subscribe(Subscriber<? super R> s, IntConsumer completedSegmentConsumer, IntConsumer lostSegmentConsumer) {
-         Flowable<R> resultPublisher;
+      public void subscribe(Subscriber<? super R> s) {
+         Flowable.fromIterable(segments).concatMap(segment -> {
+            Publisher<I> publisher = set.localPublisher(segment);
+            if (predicate != null) {
+               publisher = Flowable.fromPublisher(publisher)
+                     .filter(predicate);
+            }
+            return transformer.apply(publisher);
+         }).subscribe(s);
+      }
+
+      Flowable<NotificationWithLost<R>> flowableWithNotifications() {
          switch (deliveryGuarantee) {
             case AT_MOST_ONCE:
-               resultPublisher = Flowable.fromIterable(segments).concatMap(segment -> {
-                  Publisher<I> publisher = set.localPublisher(segment);
+               return Flowable.fromIterable(segments).concatMap(segment -> {
+                  Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
                   if (predicate != null) {
-                     publisher = Flowable.fromPublisher(publisher)
+                     flowable = flowable
                            .filter(predicate);
                   }
-                  return Flowable.fromPublisher(transformer.apply(publisher))
-                        .doOnComplete(() -> completedSegmentConsumer.accept(segment));
+                  return flowable.compose(transformer::apply)
+                        .map(Notifications::value)
+                        .concatWith(Single.just(Notifications.segmentComplete(segment)));
                });
-               break;
             case AT_LEAST_ONCE:
             case EXACTLY_ONCE:
-               IntSet concurrentSet = IntSets.concurrentCopyFrom(segments, maxSegment);
-               RemoveSegmentListener listener = new RemoveSegmentListener(concurrentSet);
+               // Need to use defer to have the shared variables between the various inner publishers but also
+               // isolate between multiple subscriptions
+               return Flowable.defer(() -> {
+                  IntSet concurrentSet = IntSets.concurrentCopyFrom(segments, maxSegment);
+                  RemoveSegmentListener listener = new RemoveSegmentListener(concurrentSet);
 
-               changeListener.add(listener);
+                  changeListener.add(listener);
 
-               // Check topology before submitting
-               listener.verifyTopology(distributionManager.getCacheTopology());
+                  // Check topology before submitting
+                  listener.verifyTopology(distributionManager.getCacheTopology());
 
-               resultPublisher = Flowable.fromIterable(segments).concatMap(segment -> {
-                  if (!concurrentSet.contains(segment)) {
-                     return Flowable.empty();
-                  }
-                  Publisher<I> publisher = set.localPublisher(segment);
-                  if (predicate != null) {
-                     publisher = Flowable.fromPublisher(publisher)
-                           .filter(predicate);
-                  }
-                  return Flowable.fromPublisher(transformer.apply(publisher))
-                        .doOnComplete(() -> {
-                           if (concurrentSet.remove(segment)) {
-                              completedSegmentConsumer.accept(segment);
-                           } else {
-                              lostSegmentConsumer.accept(segment);
-                           }
-                        });
-               }).doFinally(() -> changeListener.remove(listener));
-               break;
+                  return Flowable.fromIterable(segments).concatMap(segment -> {
+                     if (!concurrentSet.contains(segment)) {
+                        return Flowable.empty();
+                     }
+                     Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
+                     if (predicate != null) {
+                        flowable = flowable
+                              .filter(predicate);
+                     }
+                     return flowable.compose(transformer::apply)
+                           .map(Notifications::value)
+                           .concatWith(Single.fromCallable(() ->
+                                 concurrentSet.remove(segment) ?
+                                       Notifications.segmentComplete(segment) : Notifications.segmentLost(segment)
+                           ));
+                  }).doFinally(() -> changeListener.remove(listener));
+               });
             default:
                throw new UnsupportedOperationException("Unsupported delivery guarantee: " + deliveryGuarantee);
          }
-
-         resultPublisher.subscribe(s);
       }
    }
 
@@ -819,7 +851,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             }
 
             CompletionStage<R> stage = collator.apply(innerFlowable);
-            // This will always be true unless there is a store
+            // This will always be true unless there is a store or the cache is scattered
             if (CompletionStages.isCompletedSuccessfully(stage)) {
                if (listener.segmentsLost.contains(segment)) {
                   return Maybe.empty();
