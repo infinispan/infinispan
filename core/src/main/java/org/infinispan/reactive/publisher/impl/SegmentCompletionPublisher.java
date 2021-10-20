@@ -17,20 +17,50 @@ import org.reactivestreams.Subscriber;
  * implementors to optimize for the case when segment completion is not needed as this may require additional overhead.
  * @param <R> value type
  */
-@FunctionalInterface
 public interface SegmentCompletionPublisher<R> extends Publisher<R> {
-   IntConsumer EMPTY_CONSUMER = v -> { };
+   /**
+    * Wrapper around an element returned that can either be a value or a segment completion. Note that the user
+    * should invoke {@link #isSegmentComplete()} or {@link #isValue()} to determine which type it is.
+    *
+    * @param <R> the value type if present
+    */
+   interface Notification<R> {
+      /**
+       * Whether this notification contains a value, always non null if so
+       *
+       * @return true if a value is present
+       */
+      boolean isValue();
+
+      /**
+       * Whether this notification is for a completed segmented
+       *
+       * @return true if a segment is complete
+       */
+      boolean isSegmentComplete();
+
+      /**
+       * The value when present for this notification
+       *
+       * @return the value
+       * @throws IllegalStateException if this notification is segment complete
+       */
+      R value();
+
+      /**
+       * The segment that was complete for this notification
+       *
+       * @return the segment
+       * @throws IllegalStateException if this notification contains a value
+       */
+      int completedSegment();
+   }
 
    /**
     * Same as {@link org.reactivestreams.Publisher#subscribe(Subscriber)}, except that we also can notify a listener
     * when a segment has published all of its entries
-    * @param s subscriber to be notified of values and completion
-    * @param completedSegmentConsumer segment notifier to notify
+    *
+    * @param subscriber subscriber to be notified of values and segment completion
     */
-   void subscribe(Subscriber<? super R> s, IntConsumer completedSegmentConsumer);
-
-   @Override
-   default void subscribe(Subscriber<? super R> s) {
-      subscribe(s, EMPTY_CONSUMER);
-   }
+   void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber);
 }

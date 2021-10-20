@@ -115,7 +115,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    @Override
-   public void accept(int segment) {
+   void segmentComplete(int segment) {
       if (justCompletedSegments == null) {
          justCompletedSegments = IntSets.mutableEmptySet();
       }

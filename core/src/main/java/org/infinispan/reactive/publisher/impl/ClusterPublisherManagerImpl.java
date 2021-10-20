@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
@@ -686,9 +685,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer);
 
-      SegmentAwarePublisher<R> localPublisher(IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
+      SegmentAwarePublisherSupplier<R> localPublisher(IntSet segments, Set<K> keysToInclude,
+                                                      Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                      Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
 
       boolean isEntry();
 
@@ -726,9 +725,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
 
-      public SegmentAwarePublisher<R> localPublisher(IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+      public SegmentAwarePublisherSupplier<R> localPublisher(IntSet segments, Set<K> keysToInclude,
+                                                             Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                             Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
          return localPublisherManager.keyPublisher(segments, keysToInclude, keysToExclude, includeLoader,
                deliveryGuarantee, transformer);
       }
@@ -776,9 +775,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
 
-      public SegmentAwarePublisher<R> localPublisher(IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+      public SegmentAwarePublisherSupplier<R> localPublisher(IntSet segments, Set<K> keysToInclude,
+                                                             Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                             Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
          return localPublisherManager.entryPublisher(segments, keysToInclude, keysToExclude, includeLoader,
                deliveryGuarantee, transformer);
       }
@@ -809,27 +808,30 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
-         Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+   public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
+                                                       InvocationContext invocationContext, boolean includeLoader,
+                                                       DeliveryGuarantee deliveryGuarantee, int batchSize,
+                                                       Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null && !keysToInclude.isEmpty()) {
-         return new KeyAwarePublisherImpl<>(keysToInclude, keyComposedType(), segments, invocationContext, includeLoader,
-               deliveryGuarantee, batchSize, transformer);
+         return new KeyAwarePublisherImpl<>(keysToInclude, keyComposedType(), segments, invocationContext,
+                                            includeLoader, deliveryGuarantee, batchSize, transformer);
       }
       return new SegmentAwarePublisherImpl<>(segments, keyComposedType(), invocationContext, includeLoader,
-            deliveryGuarantee, batchSize, transformer);
+                                             deliveryGuarantee, batchSize, transformer);
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+   public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
+                                                         InvocationContext invocationContext, boolean includeLoader,
+                                                         DeliveryGuarantee deliveryGuarantee, int batchSize,
+                                                         Function<? super Publisher<CacheEntry<K, V>>, ?
+                                                               extends Publisher<R>> transformer) {
       if (keysToInclude != null && !keysToInclude.isEmpty()) {
-         return new KeyAwarePublisherImpl<>(keysToInclude, entryComposedType(), segments, invocationContext, includeLoader,
-               deliveryGuarantee, batchSize, transformer);
+         return new KeyAwarePublisherImpl<>(keysToInclude, entryComposedType(), segments, invocationContext,
+                                            includeLoader, deliveryGuarantee, batchSize, transformer);
       }
       return new SegmentAwarePublisherImpl<>(segments, entryComposedType(), invocationContext, includeLoader,
-            deliveryGuarantee, batchSize, transformer);
+                                             deliveryGuarantee, batchSize, transformer);
    }
 
    private final static AtomicInteger requestCounter = new AtomicInteger();
@@ -855,12 +857,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
     */
    class SubscriberHandler<I, R> implements ObjIntConsumer<I> {
       final AbstractSegmentAwarePublisher<I, R> publisher;
-      final Subscriber<? super R> subscriber;
       final String requestId;
 
       final AtomicReferenceArray<Set<K>> keysBySegment;
       final IntSet segmentsToComplete;
-      final IntConsumer completedSegmentConsumer;
       final Map<Object, IntSet> enqueuedSegmentNotifiers;
       // Only allow the first child publisher to use the context values
       final AtomicBoolean useContext = new AtomicBoolean(true);
@@ -868,17 +868,14 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // Variable used to ensure we only read the context once - so it is not read again during a retry
       volatile int currentTopology = -1;
 
-      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher, Subscriber<? super R> subscriber,
-            IntConsumer completedSegmentConsumer) {
+      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher, boolean withSegments) {
          this.publisher = publisher;
-         this.subscriber = subscriber;
          this.requestId = rpcManager.getAddress() + "#" + requestCounter.incrementAndGet();
 
          this.keysBySegment = publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE ?
-               new AtomicReferenceArray<>(maxSegment) : null;
+                              new AtomicReferenceArray<>(maxSegment) : null;
          this.segmentsToComplete = IntSets.concurrentCopyFrom(publisher.segments, maxSegment);
-         this.completedSegmentConsumer = completedSegmentConsumer;
-         this.enqueuedSegmentNotifiers = completedSegmentConsumer == null ? null : new ConcurrentHashMap<>();
+         this.enqueuedSegmentNotifiers = withSegments ? new ConcurrentHashMap<>() : null;
       }
 
       /**
@@ -891,12 +888,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        * us. When all subscribers have completed we see if all segments have been completed, if not we restart
        * the entire process again with the segments that haven't yet completed.
        */
-      public void start() {
-         Flowable<R> valuesFlowable = Flowable.defer(() -> {
+      private Flowable<R> getValuesFlowable() {
+         Flowable<R> valuesFlowable = Flowable.just(distributionManager)
+               .flatMap(dm -> {
                   if (!componentRegistry.getStatus().allowInvocations()) {
                      return Flowable.error(new IllegalLifecycleStateException());
                   }
-                  LocalizedCacheTopology topology = distributionManager.getCacheTopology();
+                  LocalizedCacheTopology topology = dm.getCacheTopology();
                   int previousTopology = currentTopology;
                   // Store the current topology in case if we have to retry
                   int currentTopology = topology.getTopologyId();
@@ -953,8 +951,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                            targetSupplier, excludedKeys, currentTopology);
                   }
 
-                  return Flowable.mergeArray(concurrentPublishers, publisher.batchSize, publisherArray);
-               })
+                  return Flowable.mergeArray(publisherArray);
+               }, MAX_INNER_SUBSCRIBERS)
                .repeatUntil(() -> {
                   boolean complete = segmentsToComplete.isEmpty();
                   if (log.isTraceEnabled()) {
@@ -966,10 +964,21 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                   }
                   return complete;
                });
+         return valuesFlowable;
+      }
 
-         if (completedSegmentConsumer != null) {
-            ByRef<R> previousValue = new ByRef<>(null);
-            valuesFlowable = valuesFlowable.doOnNext(value -> {
+      public Flowable<R> start() {
+         return getValuesFlowable();
+      }
+
+      public Flowable<SegmentPublisherSupplier.Notification<R>> startWithSegments() {
+         ByRef<R> previousValue = new ByRef<>(null);
+         FlowableProcessor<SegmentPublisherSupplier.Notification<R>> flowableProcessor = UnicastProcessor.create();
+
+         Flowable<R> valuesFlowable = getValuesFlowable();
+         return Flowable.defer(() -> {
+            valuesFlowable.subscribe(value -> {
+               flowableProcessor.onNext(Notifications.value(value));
                R previous = previousValue.get();
                if (previous != null) {
                   IntSet segments = enqueuedSegmentNotifiers.remove(previous);
@@ -978,20 +987,25 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                         log.tracef("Enqueued value %s has been returned, completing segments %s",
                               Util.toStr(previous), segments);
                      }
-                     segments.forEach(completedSegmentConsumer);
-                  }
-               }
-               previousValue.set(value);
-            }).doOnComplete(() -> enqueuedSegmentNotifiers.forEach(
-                  (k, segments) -> {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Notifying of completed segments %s due to publisher is complete", segments);
+                     for (PrimitiveIterator.OfInt segmentIter = segments.iterator(); segmentIter.hasNext(); ) {
+                        flowableProcessor.onNext(Notifications.segmentComplete(segmentIter.nextInt()));
                      }
-                     segments.forEach(completedSegmentConsumer);
-                  })
-            );
-         }
-         valuesFlowable.subscribe(subscriber);
+                  }
+                  previousValue.set(value);
+               }
+            }, flowableProcessor::onError, () -> {
+               enqueuedSegmentNotifiers.forEach((k, segments) -> {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Notifying of completed segments %s due to publisher is complete", segments);
+                  }
+                  for (PrimitiveIterator.OfInt segmentIter = segments.iterator(); segmentIter.hasNext(); ) {
+                     flowableProcessor.onNext(Notifications.segmentComplete(segmentIter.nextInt()));
+                  }
+               });
+               flowableProcessor.onComplete();
+            });
+            return flowableProcessor;
+         });
       }
 
       void completeSegment(int segment) {
@@ -1005,7 +1019,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // that all entries have been consumed by the downstream and we can immediately notify of segment completion,
       // otherwise we must wait until the given enqueued value is consumed before notifying of segment completion
       void notifySegmentsComplete(IntSet segments, Object lastValue) {
-         if (completedSegmentConsumer != null) {
+         if (enqueuedSegmentNotifiers != null) {
             if (lastValue == null) {
                if (log.isTraceEnabled()) {
                   log.tracef("Delaying completed segments %s to be notified when current publisher is complete" +
@@ -1158,7 +1172,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       return false;
    }
 
-   abstract class AbstractSegmentAwarePublisher<I, R> implements SegmentCompletionPublisher<R> {
+   abstract class AbstractSegmentAwarePublisher<I, R> implements SegmentPublisherSupplier<R> {
       final ComposedType<K, I, R> composedType;
       final IntSet segments;
       final InvocationContext invocationContext;
@@ -1184,11 +1198,12 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          this.shouldTrackKeys = shouldTrackKeys(deliveryGuarantee, transformer);
       }
 
-      @Override
-      public void subscribe(Subscriber<? super R> s, IntConsumer completedSegmentConsumer) {
-         IntConsumer consumerToUse = completedSegmentConsumer == SegmentCompletionPublisher.EMPTY_CONSUMER ? null :
-               Objects.requireNonNull(completedSegmentConsumer);
-         new SubscriberHandler<I, R>(this, s, consumerToUse).start();
+      public Publisher<Notification<R>> publisherWithSegments() {
+         return new SubscriberHandler<I, R>(this, true).startWithSegments();
+      }
+
+      public Publisher<R> publisherWithoutSegments() {
+         return new SubscriberHandler<I, R>(this, false).start();
       }
 
       abstract InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments,

@@ -22,6 +22,7 @@ import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEv
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.AsyncProcessor;
@@ -128,24 +129,38 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    }
 
    private <R> SegmentCompletionPublisher<R> registerPublisher(SegmentCompletionPublisher<R> original) {
-      return (subscriber, segmentsComplete) -> {
-         // Processor has to be serialized due to possibly invoking onError from a different thread
-         FlowableProcessor<R> earlyTerminatingProcessor = AsyncProcessor.<R>create().toSerialized();
-         pendingProcessors.add(earlyTerminatingProcessor);
+      return new SegmentCompletionPublisher<R>() {
+         @Override
+         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
+            handleEarlyTermination(subscriber, scp -> Flowable.<Notification<R>>fromPublisher(scp::subscribeWithSegments));
+         }
 
-         // Have to check after registering in case if we got a partition between when the publisher was created and
-         // subscribed to
-         if (isPartitionDegraded()) {
-            pendingProcessors.remove(earlyTerminatingProcessor);
-            earlyTerminatingProcessor.onError(CLUSTER.partitionDegraded());
-            original.subscribe(earlyTerminatingProcessor);
-         } else {
-            Flowable<R> actualPublisher = Flowable.<R>fromPublisher(s -> original.subscribe(s, segmentsComplete))
-                  .doFinally(earlyTerminatingProcessor::onComplete);
-            Publisher<R> flowableAsPublisher = earlyTerminatingProcessor
-                  .doFinally(() -> pendingProcessors.remove(earlyTerminatingProcessor));
-            Flowable.merge(flowableAsPublisher, actualPublisher)
-                  .subscribe(subscriber);
+         @Override
+         public void subscribe(Subscriber<? super R> subscriber) {
+            handleEarlyTermination(subscriber, Flowable::fromPublisher);
+         }
+
+         private <S> void handleEarlyTermination(Subscriber<? super S> subscriber, Function<SegmentCompletionPublisher<R>, Flowable<S>> function) {
+            // Processor has to be serialized due to possibly invoking onError from a different thread
+            FlowableProcessor<S> earlyTerminatingProcessor = AsyncProcessor.<S>create().toSerialized();
+            pendingProcessors.add(earlyTerminatingProcessor);
+
+            // Have to check after registering in case if we got a partition between when the publisher was created and
+            // subscribed to
+            if (isPartitionDegraded()) {
+               pendingProcessors.remove(earlyTerminatingProcessor);
+               earlyTerminatingProcessor.onError(CLUSTER.partitionDegraded());
+               // There are no types here so cast is fine
+               // noinspection unchecked
+               original.subscribe((Subscriber<? super R>) earlyTerminatingProcessor);
+            } else {
+               Flowable<S> actualPublisher = function.apply(original)
+                     .doFinally(earlyTerminatingProcessor::onComplete);
+               Publisher<S> flowableAsPublisher = earlyTerminatingProcessor
+                     .doFinally(() -> pendingProcessors.remove(earlyTerminatingProcessor));
+               Flowable.merge(flowableAsPublisher, actualPublisher)
+                     .subscribe(subscriber);
+            }
          }
       };
    }

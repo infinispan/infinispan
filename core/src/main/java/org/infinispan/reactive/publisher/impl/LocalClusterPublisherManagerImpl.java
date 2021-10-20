@@ -20,6 +20,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
@@ -144,11 +145,26 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
             keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       Flowable<K> keyFlowable = keyPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude);
-      return (subscriber, completedSegments) ->
-         Flowable.concat(
-               transformer.apply(keyFlowable),
-               s -> cachePublisher.subscribe(s, completedSegments)
-         ).subscribe(subscriber);
+
+      return new SegmentCompletionPublisher<R>() {
+         @Override
+         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
+            Publisher<Notification<R>> cacheData = cachePublisher::subscribeWithSegments;
+            Flowable.concat(
+                        Flowable.fromPublisher(transformer.apply(keyFlowable))
+                              .map(Notifications::value),
+                        cacheData)
+                  .subscribe(subscriber);
+         }
+
+         @Override
+         public void subscribe(Subscriber<? super R> s) {
+            Flowable.concat(
+                        transformer.apply(keyFlowable),
+                        cachePublisher)
+                  .subscribe(s);
+         }
+      };
    }
 
    @Override
@@ -167,10 +183,25 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
       Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
             keysToInclude);
-      return (subscriber, completedSegments) ->
+
+      return new SegmentCompletionPublisher<R>() {
+         @Override
+         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
+            Publisher<Notification<R>> cacheData = cachePublisher::subscribeWithSegments;
             Flowable.concat(
-                  transformer.apply(entryFlowable),
-                  s -> cachePublisher.subscribe(s, completedSegments)
-            ).subscribe(subscriber);
+                        Flowable.fromPublisher(transformer.apply(entryFlowable))
+                              .map(Notifications::value),
+                        cacheData)
+                  .subscribe(subscriber);
+         }
+
+         @Override
+         public void subscribe(Subscriber<? super R> s) {
+            Flowable.concat(
+                        transformer.apply(entryFlowable),
+                        cachePublisher)
+                  .subscribe(s);
+         }
+      };
    }
 }

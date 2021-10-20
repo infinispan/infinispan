@@ -129,7 +129,6 @@ import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -149,7 +148,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -1128,21 +1126,15 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
 
       Completable delayCompletable = Completable.defer(() -> Completable.fromCompletionStage(handler.delayProcessing()));
 
-      Publisher<CacheEntry<K, V>> p = s -> publisher.subscribe(s, handler);
-
       currentStage = currentStage.thenCompose(ignore ->
-            Flowable.fromPublisher(p)
+            Flowable.<SegmentCompletionPublisher.Notification<CacheEntry<K, V>>>fromPublisher(publisher::subscribeWithSegments)
                   .startWith(delayCompletable)
-                  .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
-                  .delay(ice -> RxJavaInterop.voidCompletionStageToFlowable(
-                        raiseEventForInitialTransfer(generatedId, ice, l.clustered(), kc, kv)))
-                  // Only request up to 20 at a time
-                  .rebatchRequests(20)
-                  .ignoreElements()
+                  .mapOptional(handler)
+                  .flatMapCompletable(ice -> Completable.fromCompletionStage(
+                        raiseEventForInitialTransfer(generatedId, ice, l.clustered(), kc, kv)), false, 20)
                   // Make sure there are no more delays for processing after we have retrieved all values
                   .andThen(delayCompletable)
-                  .toCompletionStage(null)
-      );
+                  .toCompletionStage(null));
 
       currentStage = currentStage.thenCompose(ignore -> {
          if (log.isTraceEnabled()) {

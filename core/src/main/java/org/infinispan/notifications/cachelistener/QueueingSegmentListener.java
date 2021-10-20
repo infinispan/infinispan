@@ -1,13 +1,16 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
-import java.util.function.IntConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.util.concurrent.CompletableFutures;
+
+import io.reactivex.rxjava3.functions.Function;
 
 /**
  * This interface describes methods needed for a segment listener that is used when iterating over the current
@@ -16,7 +19,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author wburns
  * @since 7.0
  */
-public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends IntConsumer {
+public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Function<SegmentCompletionPublisher.Notification<CacheEntry<K, V>>, Optional<? extends CacheEntry<K, V>>> {
    // This is to be used as a placeholder when a value has been iterated and now is being processed by the caller
    // This is considered to be the completed state for the key and should never change from this
    static final Object NOTIFIED = new Object();
@@ -26,21 +29,23 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends In
    static final Object REMOVED = new Object();
 
    /**
-    * This should be invoked on a key before actually processing the data.  This way the handler knows to
-    * keep any newer events have come after the iteration.
-    * @param key The key being processed
-    * @return The previous value that was found to be updated,
-    * {@link BaseQueueingSegmentListener#NOTIFIED} if the key was
-    * previously marked as processing or
-    * {@link BaseQueueingSegmentListener#REMOVED} if the key was removed
-    * and this value shouldn't be processed
+    * This should be invoked on a notification before actually processing the data.
+    * Note this method modifies the underlying listener state.
+    * If it is a value it will determine if the entry should notify the listener by returning the value or empty.
+    * If the notification is a segment completion it will keep track of that and will always return
+    * {@link java.util.Optional#empty} so only values can pass this filter.
+    *
+    * @param cacheEntryNotification The notification being processed
+    * @return an Optional with a value if it is should be processed
     */
-   public Object markKeyAsProcessing(K key);
+   @Override
+   Optional<CacheEntry<K, V>> apply(SegmentCompletionPublisher.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable;
 
    /**
     * This method is to be called just before marking the transfer as complete and after all keys have been manually
     * processed.  This will return all the entries that were raised in an event but not manually marked.  This
     * is indicative of a CREATE event occurring but not seeing the value.
+    *
     * @return
     */
    public Set<CacheEntry<K, V>> findCreatedEntries();
