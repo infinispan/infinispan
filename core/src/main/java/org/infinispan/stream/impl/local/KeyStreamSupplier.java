@@ -40,15 +40,11 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          if (log.isTraceEnabled()) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         // ignore tombstones and non existent keys
+         // ignore non existent keys
          stream = (Stream<K>) (parallel ? keysToFilter.parallelStream() : keysToFilter.stream())
                .filter(k -> advancedCache.get(k) != null);
       } else {
          stream = supplier.get();
-         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
-            // Ignore tombstones
-            stream = stream.filter(k -> advancedCache.get(k) != null);
-         }
          if (parallel) {
             stream = stream.parallel();
          }

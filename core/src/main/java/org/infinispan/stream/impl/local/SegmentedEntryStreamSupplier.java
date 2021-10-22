@@ -12,8 +12,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -70,9 +70,6 @@ public class SegmentedEntryStreamSupplier<K, V> implements AbstractLocalCacheStr
             stream = StreamSupport.stream(cast(internalDataContainer.spliterator(segmentsToFilter)), parallel);
          } else {
             stream = StreamSupport.stream(cast(internalDataContainer.spliterator()), parallel);
-         }
-         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
-            stream = stream.filter(ce -> ce.getValue() != null);
          }
       }
       return stream;
