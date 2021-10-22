@@ -49,10 +49,6 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
                .filter(Objects::nonNull);
       } else {
          stream = supplier.get();
-         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
-            // Ignore tombstones
-            stream = stream.filter(e -> e.getValue() != null);
-         }
          if (parallel) {
             stream = stream.parallel();
          }
