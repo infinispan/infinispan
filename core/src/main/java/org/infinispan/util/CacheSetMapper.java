@@ -6,8 +6,12 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * A {@link CacheSet} that allows for a different set to be mapped as a different instance wtih values replaced on
@@ -42,5 +46,17 @@ public class CacheSetMapper<E, R> extends SetMapper<E, R> implements CacheSet<R>
    @Override
    public CloseableIterator<R> iterator() {
       return new IteratorMapper<>(realSet.iterator(), mapper);
+   }
+
+   @Override
+   public Publisher<R> localPublisher(IntSet segments) {
+      return Flowable.fromPublisher(realSet.localPublisher(segments))
+                     .map(mapper::apply);
+   }
+
+   @Override
+   public Publisher<R> localPublisher(int segment) {
+      return Flowable.fromPublisher(realSet.localPublisher(segment))
+                     .map(mapper::apply);
    }
 }

@@ -10,8 +10,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -66,9 +66,6 @@ public class SegmentedKeyStreamSupplier<K, V> implements AbstractLocalCacheStrea
             entryStream = StreamSupport.stream(internalDataContainer.spliterator(segmentsToFilter), parallel);
          } else {
             entryStream = StreamSupport.stream(internalDataContainer.spliterator(), parallel);
-         }
-         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
-            entryStream = entryStream.filter(ce -> ce.getValue() != null);
          }
          stream = entryStream.map(InternalCacheEntry::getKey);
       }
