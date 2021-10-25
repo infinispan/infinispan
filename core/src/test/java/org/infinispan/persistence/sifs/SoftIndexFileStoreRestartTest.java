@@ -2,6 +2,8 @@ package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.nio.file.Paths;
+
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,8 +44,8 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       // We don't support shared for SIFS
       assert !shared;
       return persistenceConfigurationBuilder.addSoftIndexFileStore()
-            .dataLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "data"))
-            .indexLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "index"));
+            .dataLocation(Paths.get(tmpDirectory, "data").toString())
+            .indexLocation(Paths.get(tmpDirectory, "index").toString());
    }
 
    public void testRestartWithNoIndex() throws Throwable {
@@ -56,7 +58,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       killMember(0, cacheName);
 
       // Delete the index which should force it to rebuild
-      Util.recursiveFileRemove((CommonsTestingUtil.tmpDirectory(tmpDirectory, "index")));
+      Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
 
       createCacheManagers();
 

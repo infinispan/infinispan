@@ -10,6 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.NonBlockingManager;
@@ -89,6 +90,8 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       assert requestProcessor != null;
       requestProcessor.onComplete();
       requestProcessor = null;
+      Util.close(logFile);
+      logFile = null;
    }
 
    static class WriteOperation {

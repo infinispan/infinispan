@@ -39,6 +39,9 @@ public class CommonsTestingUtil {
     * @return an absolute path
     */
    public static String tmpDirectory(String... folders) {
+      if (Paths.get(folders[0]).isAbsolute()) {
+         throw new IllegalArgumentException("Cannot use absolute path " + folders[0]);
+      }
       String[] tFolders = new String[folders.length + 1];
       tFolders[0] = TEST_PATH;
       System.arraycopy(folders, 0, tFolders, 1, folders.length);
