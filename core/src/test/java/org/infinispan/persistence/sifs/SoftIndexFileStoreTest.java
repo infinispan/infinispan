@@ -2,6 +2,8 @@ package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertNull;
 
+import java.nio.file.Paths;
+
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,8 +39,8 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
    protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
       return configurationBuilder.persistence()
             .addSoftIndexFileStore()
-            .dataLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "data"))
-            .indexLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "index"))
+            .dataLocation(Paths.get(tmpDirectory, "data").toString())
+            .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .maxFileSize(1000)
             .build();
    }

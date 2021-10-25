@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -296,9 +297,7 @@ public class FileProvider {
          if (!recordQueue.isEmpty()) throw new IllegalStateException();
          if (!openFiles.isEmpty()) throw new IllegalStateException();
          for (File file : dataDir.listFiles()) {
-            if (!file.delete()) {
-               throw new IOException("Cannot delete file " + file);
-            }
+            Files.delete(file.toPath());
          }
       } finally {
          lock.writeLock().unlock();
@@ -312,7 +311,11 @@ public class FileProvider {
             Record newRecord = new Record(null, fileId);
             Record record = openFiles.putIfAbsent(fileId, newRecord);
             if (record == null) {
-               newRecord.delete();
+               try {
+                  newRecord.delete();
+               } catch (IOException e) {
+                  log.cannotCloseDeleteFile(fileId, e);
+               }
                openFiles.remove(fileId, newRecord);
                return;
             }
@@ -456,10 +459,10 @@ public class FileProvider {
          }
       }
 
-      public void delete() {
+      public void delete() throws IOException {
          log.debugf("Deleting file %s", fileIdToString(fileId));
          //noinspection ResultOfMethodCallIgnored
-         newFile(fileId).delete();
+         Files.deleteIfExists(newFile(fileId).toPath());
       }
 
       public void deleteOnClose() throws IOException {
