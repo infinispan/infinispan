@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +58,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    private void copyServer(Path src, int maxServers) {
       for (int i = 0; i < maxServers; i++) {
-         Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), UUID.randomUUID().toString());
+         Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), Util.threadLocalRandomUUID().toString());
          try {
             Files.createDirectory(dest);
             Files.walkFileTree(src, new CommonsTestingUtil.CopyFileVisitor(dest, true));

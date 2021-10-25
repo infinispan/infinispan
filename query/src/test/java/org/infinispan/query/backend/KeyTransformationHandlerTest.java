@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.CustomKey2;
@@ -26,7 +27,7 @@ public class KeyTransformationHandlerTest {
 
    private KeyTransformationHandler keyTransformationHandler;
 
-   private final UUID randomUUID = UUID.randomUUID();
+   private final UUID randomUUID = Util.threadLocalRandomUUID();
 
    @BeforeMethod
    public void beforeMethod() {

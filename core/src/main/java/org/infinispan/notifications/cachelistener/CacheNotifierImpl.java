@@ -50,6 +50,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -1028,7 +1029,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                                         CacheEventFilter<? super K, ? super V> filter,
                                         CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader, boolean useStorageFormat) {
       final Listener l = testListenerClassValidity(listener.getClass());
-      final UUID generatedId = UUID.randomUUID();
+      final UUID generatedId = Util.threadLocalRandomUUID();
       final CacheMode cacheMode = config.clustering().cacheMode();
       FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
@@ -1304,7 +1305,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                                                 CacheEventConverter<? super K, ? super V, C> converter,
                                                 Set<Class<? extends Annotation>> filterAnnotations, boolean useStorageFormat) {
       final Listener l = testListenerClassValidity(listener.getClass());
-      final UUID generatedId = UUID.randomUUID();
+      final UUID generatedId = Util.threadLocalRandomUUID();
       final CacheMode cacheMode = config.clustering().cacheMode();
 
       FilterIndexingServiceProvider indexingProvider = null;

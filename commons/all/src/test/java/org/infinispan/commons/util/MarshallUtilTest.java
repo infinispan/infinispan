@@ -127,7 +127,7 @@ public class MarshallUtilTest {
 
       for (int i = 0; i < NR_RANDOM; ++i) {
          io.reset();
-         UUID uuid = UUID.randomUUID();
+         UUID uuid = Util.threadLocalRandomUUID();
          MarshallUtil.marshallUUID(uuid, io, false);
          Assert.assertEquals(uuid, MarshallUtil.unmarshallUUID(io, false));
          Assert.assertEquals(0, io.buffer.size());
@@ -135,7 +135,7 @@ public class MarshallUtilTest {
 
       for (int i = 0; i < NR_RANDOM; ++i) {
          io.reset();
-         UUID uuid = UUID.randomUUID();
+         UUID uuid = Util.threadLocalRandomUUID();
          MarshallUtil.marshallUUID(uuid, io, true);
          Assert.assertEquals(uuid, MarshallUtil.unmarshallUUID(io, true));
          Assert.assertEquals(0, io.buffer.size());

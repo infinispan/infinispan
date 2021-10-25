@@ -3,11 +3,11 @@ package org.infinispan.server.router.profiling;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.Router;
 import org.infinispan.server.router.routes.Route;
@@ -34,7 +34,7 @@ public interface PerfTestConfiguration {
     }
 
     default void performLoadTesting(RemoteCacheManager client, int numberOfIterations) {
-        String keyPrefix = UUID.randomUUID().toString();
+        String keyPrefix = Util.threadLocalRandomUUID().toString();
         RemoteCache<String, String> cache = client.getCache();
         IntStream.range(0, numberOfIterations).forEach(i -> cache.put(keyPrefix + i, "val" + i));
     }

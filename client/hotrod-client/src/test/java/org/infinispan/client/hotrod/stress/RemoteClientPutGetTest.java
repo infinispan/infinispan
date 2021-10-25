@@ -2,13 +2,13 @@ package org.infinispan.client.hotrod.stress;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -54,7 +54,7 @@ public class RemoteClientPutGetTest {
          final int thread_index = i;
          threads[i] = new Thread(() -> {
             for (int j = 0; j < NUMBER_OF_ENTRIES; j++) {
-               cache.put("key_" + thread_index + "_" + j, UUID.randomUUID().toString());
+               cache.put("key_" + thread_index + "_" + j, Util.threadLocalRandomUUID().toString());
                if (j % 2 == 0) {
                   cache.remove("key_" + thread_index + "_" + (j / 2));
                }
