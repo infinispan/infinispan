@@ -253,6 +253,23 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.eclipse.transformer</groupId>
+            <artifactId>org.eclipse.transformer.maven</artifactId>
+            <version>0.2.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <classifier>jakarta</classifier>
+                  <artifactId>${project.artifactId}-${classifier}</artifactId>
+                </configuration>
+              </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
