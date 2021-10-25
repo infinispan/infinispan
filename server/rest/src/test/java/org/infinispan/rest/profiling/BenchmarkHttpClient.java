@@ -2,7 +2,6 @@ package org.infinispan.rest.profiling;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +14,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Eventually;
+import org.infinispan.commons.util.Util;
 
 import io.netty.util.CharsetUtil;
 
@@ -60,7 +60,7 @@ public class BenchmarkHttpClient {
    public void performPuts(int numberOfInserts) {
       AtomicInteger count = new AtomicInteger();
       for (int i = 0; i < numberOfInserts; ++i) {
-         String randomKey = UUID.randomUUID().toString();
+         String randomKey = Util.threadLocalRandomUUID().toString();
          executorCompletionService.submit(() -> {
             count.incrementAndGet();
             cacheClient.post(randomKey, CACHE_VALUE).whenComplete((response, e) -> count.decrementAndGet());

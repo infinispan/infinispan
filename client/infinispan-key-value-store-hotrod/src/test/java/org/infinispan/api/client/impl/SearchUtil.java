@@ -2,9 +2,8 @@ package org.infinispan.api.client.impl;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 
-import java.util.UUID;
-
 import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.commons.util.Util;
 
 public final class SearchUtil {
    public static final String PEOPLE = "people";
@@ -39,6 +38,6 @@ public final class SearchUtil {
    }
 
    public static String id() {
-      return UUID.randomUUID().toString();
+      return Util.threadLocalRandomUUID().toString();
    }
 }

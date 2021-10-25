@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -290,7 +289,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
 
       if (this.volumes[i] == null) {
-         String volumeName = UUID.randomUUID().toString();
+         String volumeName = Util.threadLocalRandomUUID().toString();
          DockerClientFactory.instance().client().createVolumeCmd().withName(volumeName).exec();
          this.volumes[i] = volumeName;
       }

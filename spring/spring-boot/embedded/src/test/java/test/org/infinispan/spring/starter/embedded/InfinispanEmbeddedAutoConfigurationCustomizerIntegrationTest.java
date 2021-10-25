@@ -1,5 +1,8 @@
 package test.org.infinispan.spring.starter.embedded;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -17,10 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @SpringBootTest(
       classes = {
             InfinispanEmbeddedAutoConfiguration.class,
@@ -32,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
       }
 )
 public class InfinispanEmbeddedAutoConfigurationCustomizerIntegrationTest {
-   private static final String CLUSTER_NAME = UUID.randomUUID().toString();
+   private static final String CLUSTER_NAME = Util.threadLocalRandomUUID().toString();
 
    @Autowired
    EmbeddedCacheManager manager;

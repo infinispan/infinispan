@@ -13,7 +13,6 @@ import static org.junit.Assert.assertNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -23,6 +22,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -104,13 +104,13 @@ public class XSiteHotRodCacheOperations {
       RemoteMultimapCache<String, String> lonCache = multimapCache(LON, multimapCacheName);
       RemoteMultimapCache<String, String> nycCache = multimapCache(NYC, multimapCacheName);
 
-      String key = UUID.randomUUID().toString();
+      String key = Util.threadLocalRandomUUID().toString();
       Collection<String> values = createValues(4);
       storeMultimapValues(lonCache, key, values);
       assertMultimapData(lonCache, key, values);
       assertMultimapData(nycCache, key, values);
 
-      key = UUID.randomUUID().toString();
+      key = Util.threadLocalRandomUUID().toString();
       values = createValues(5);
       storeMultimapValues(nycCache, key, values);
       assertMultimapData(lonCache, key, values);
@@ -139,7 +139,7 @@ public class XSiteHotRodCacheOperations {
    private static List<String> createValues(int size) {
       List<String> values = new ArrayList<>(size);
       for (int i = 0; i < size; ++i) {
-         values.add(UUID.randomUUID().toString());
+         values.add(Util.threadLocalRandomUUID().toString());
       }
       return values;
    }

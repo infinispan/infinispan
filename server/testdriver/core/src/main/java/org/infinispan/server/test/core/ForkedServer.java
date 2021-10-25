@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.OS;
+import org.infinispan.commons.util.Util;
 
 /**
  * Forked server starts the server using batch scripts from the Infinispan Server distribution to start the server.
@@ -57,7 +58,7 @@ public class ForkedServer {
    private final CountDownLatch isServerStarted = new CountDownLatch(1);
 
    public ForkedServer(String serverHome) {
-      this.serverId = UUID.randomUUID();
+      this.serverId = Util.threadLocalRandomUUID();
       this.serverHome = serverHome;
       this.serverLogDir = serverHome + File.separator + "server" + File.separator + "log";
       this.serverLog = serverLogDir + File.separator + "server.log";

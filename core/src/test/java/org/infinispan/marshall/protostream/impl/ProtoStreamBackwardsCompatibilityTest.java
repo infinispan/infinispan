@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -29,7 +30,7 @@ public class ProtoStreamBackwardsCompatibilityTest {
       sci.registerSchema(coreCtx);
       sci.registerMarshallers(coreCtx);
 
-      UUID uuid = UUID.randomUUID();
+      UUID uuid = Util.threadLocalRandomUUID();
       byte[] oldBytes = ProtobufUtil.toWrappedByteArray(oldServerCtx, uuid);
       UUID unmarshalled = ProtobufUtil.fromWrappedByteArray(coreCtx, oldBytes);
       assertEquals(uuid, unmarshalled);

@@ -6,9 +6,9 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -38,12 +38,12 @@ public class RemoteMultimapStateTransferTest extends MultiHotRodServersTest {
       RemoteMultimapCache<String, String> mc = multimapCache(0);
 
       List<String> values1 = createValues();
-      String key1 = UUID.randomUUID().toString();
+      String key1 = Util.threadLocalRandomUUID().toString();
 
       storeValues(mc, key1, values1);
 
       List<String> values2 = createValues();
-      String key2 = UUID.randomUUID().toString();
+      String key2 = Util.threadLocalRandomUUID().toString();
 
       storeValues(mc, key2, values2);
 
@@ -84,7 +84,7 @@ public class RemoteMultimapStateTransferTest extends MultiHotRodServersTest {
    private static List<String> createValues() {
       List<String> values = new ArrayList<>(VALUES);
       for (int i = 0; i < VALUES; ++i) {
-         values.add(UUID.randomUUID().toString());
+         values.add(Util.threadLocalRandomUUID().toString());
       }
       return values;
    }
