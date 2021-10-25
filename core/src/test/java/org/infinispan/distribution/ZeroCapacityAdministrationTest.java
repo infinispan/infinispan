@@ -3,6 +3,8 @@ package org.infinispan.distribution;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.nio.file.Paths;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,11 +29,11 @@ public class ZeroCapacityAdministrationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      String state1 = tmpDirectory(TEST_DIR, "1");
+      String state1 = Paths.get(TEST_DIR, "1").toString();
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1);
       node1 = addClusterEnabledCacheManager(global1, new ConfigurationBuilder());
 
-      String zeroState = tmpDirectory(TEST_DIR, "zero");
+      String zeroState = Paths.get(TEST_DIR, "zero").toString();
       GlobalConfigurationBuilder globalZero = statefulGlobalBuilder(zeroState).zeroCapacityNode(true);
       zeroCapacityNode = addClusterEnabledCacheManager(globalZero, new ConfigurationBuilder());
       waitForClusterToForm();

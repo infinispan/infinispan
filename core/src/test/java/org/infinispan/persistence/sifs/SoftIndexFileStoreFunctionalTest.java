@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import java.nio.file.Paths;
+
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -27,8 +29,8 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
          String cacheName, boolean preload) {
       persistence
             .addSoftIndexFileStore()
-            .dataLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "data"))
-            .indexLocation(CommonsTestingUtil.tmpDirectory(tmpDirectory, "index"))
+            .dataLocation(Paths.get(tmpDirectory, "data").toString())
+            .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .purgeOnStartup(false).preload(preload);
       return persistence;
    }
