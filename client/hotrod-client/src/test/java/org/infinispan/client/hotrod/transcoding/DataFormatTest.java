@@ -39,6 +39,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -221,7 +222,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       Map<ComplexKey, ComplexValue> entries = new HashMap<>();
       IntStream.range(0, 50).forEach(i -> {
          ComplexKey key = new ComplexKey(String.valueOf(i), (float) i);
-         ComplexValue value = new ComplexValue(UUID.randomUUID());
+         ComplexValue value = new ComplexValue(Util.threadLocalRandomUUID());
          entries.put(key, value);
       });
       remoteCache.putAll(entries);
@@ -241,7 +242,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
                .set("id", i)
                .set("ratio", i);
          Json value = Json.object("_type", "org.infinispan.test.client.DataFormatTest.ComplexValue")
-               .set("uuid",  UUID.randomUUID().toString());
+               .set("uuid",  Util.threadLocalRandomUUID().toString());
          newEntries.put(key.toString(), value.toString());
       });
       jsonCache.putAll(newEntries);
@@ -258,7 +259,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       remoteCache.clear();
 
       ComplexKey complexKey = new ComplexKey("Key-1", 89.88f);
-      ComplexValue complexValue = new ComplexValue(UUID.randomUUID());
+      ComplexValue complexValue = new ComplexValue(Util.threadLocalRandomUUID());
 
       // Receive events as JSON Strings
       DataFormat jsonStringFormat = DataFormat.builder().keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()).build();
@@ -294,9 +295,9 @@ public class DataFormatTest extends SingleHotRodServerTest {
       RawStaticFilteredEventLogListener<Object> l = new RawStaticFilteredEventLogListener<>(jsonCache);
 
       withClientListener(l, remote -> {
-         jsonCache.put("{\"_type\":\"int32\",\"_value\":1}", UUID.randomUUID().toString());
+         jsonCache.put("{\"_type\":\"int32\",\"_value\":1}", Util.threadLocalRandomUUID().toString());
          l.expectNoEvents();
-         jsonCache.put("{\"_type\":\"int32\",\"_value\":2}", UUID.randomUUID().toString());
+         jsonCache.put("{\"_type\":\"int32\",\"_value\":2}", Util.threadLocalRandomUUID().toString());
          l.expectOnlyCreatedEvent("\n{\n   \"_type\": \"int32\",\n   \"_value\": 2\n}\n");
       });
    }

@@ -15,6 +15,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 
 
 /**
@@ -40,7 +41,7 @@ import org.infinispan.commons.logging.LogFactory;
 public abstract class TransactionManagerImpl implements TransactionManager {
    private static final Log log = LogFactory.getLog(TransactionManagerImpl.class);
    private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
-   protected final UUID transactionManagerId = UUID.randomUUID();
+   protected final UUID transactionManagerId = Util.threadLocalRandomUUID();
 
    public static void dissociateTransaction() {
       CURRENT_TRANSACTION.remove();

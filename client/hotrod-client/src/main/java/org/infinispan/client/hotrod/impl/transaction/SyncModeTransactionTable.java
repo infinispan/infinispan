@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 
 /**
  * A {@link TransactionTable} that registers the {@link RemoteCache} as a {@link Synchronization} in the transaction.
@@ -40,7 +41,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class, Log.class);
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
-   private final UUID uuid = UUID.randomUUID();
+   private final UUID uuid = Util.threadLocalRandomUUID();
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;
    private final Function<Transaction, SynchronizationAdapter> constructor = this::createSynchronizationAdapter;
 

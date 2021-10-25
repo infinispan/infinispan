@@ -12,6 +12,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,7 +42,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    private LocalXaTransaction localTx;
    private TransactionXaAdapter xaAdapter;
    private XidImpl xid;
-   private final UUID uuid = UUID.randomUUID();
+   private final UUID uuid = Util.threadLocalRandomUUID();
    private TransactionCoordinator txCoordinator;
 
    @BeforeMethod

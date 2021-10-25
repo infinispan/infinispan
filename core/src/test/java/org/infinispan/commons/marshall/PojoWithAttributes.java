@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.test.data.Key;
 
 /**
@@ -24,7 +25,7 @@ public class PojoWithAttributes {
    public PojoWithAttributes(int age, String key) {
       this.age = age;
       this.key = new Key(key);
-      this.uuid = UUID.randomUUID();
+      this.uuid = Util.threadLocalRandomUUID();
    }
 
    PojoWithAttributes(int age, Key key, UUID uuid) {

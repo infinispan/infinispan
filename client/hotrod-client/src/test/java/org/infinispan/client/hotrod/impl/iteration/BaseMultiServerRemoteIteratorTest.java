@@ -8,7 +8,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,6 +21,7 @@ import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -118,7 +118,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       int filterParam = 12;
 
       RemoteCache<String, String> stringCache = clients.get(0).getCache();
-      IntStream.rangeClosed(0, CACHE_SIZE - 1).forEach(idx -> stringCache.put(String.valueOf(idx), UUID.randomUUID().toString()));
+      IntStream.rangeClosed(0, CACHE_SIZE - 1).forEach(idx -> stringCache.put(String.valueOf(idx), Util.threadLocalRandomUUID().toString()));
 
       Set<Entry<Object, Object>> entries = extractEntries(stringCache.retrieveEntries(factoryName, new Object[]{filterParam}, null, 10));
 
