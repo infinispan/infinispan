@@ -1,9 +1,7 @@
 package org.infinispan.api.reactive.client.impl;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ForkJoinPool;
 
 import org.infinispan.api.client.listener.ClientKeyValueStoreListener;
 import org.infinispan.api.reactive.KeyValueEntry;
@@ -92,8 +90,7 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
 
    @Override
    public CompletionStage<Long> estimateSize() {
-      // TODO: this should be replaced with cache.sizeAsync when https://issues.jboss.org/browse/ISPN-10802 is complete
-      return CompletableFuture.supplyAsync(() -> Long.valueOf(cache.size()), ForkJoinPool.commonPool());
+      return cache.sizeAsync();
    }
 
    @Override
