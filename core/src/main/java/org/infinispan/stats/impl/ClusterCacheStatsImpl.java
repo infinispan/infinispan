@@ -41,15 +41,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
@@ -57,6 +57,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
@@ -69,7 +70,6 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.stats.ClusterCacheStats;
-import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
@@ -85,8 +85,10 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
 
+   @Inject AdvancedCache<?, ?> cache;
+   @Inject Configuration cacheConfiguration;
+   @Inject GlobalConfiguration globalConfiguration;
    private ClusterExecutor clusterExecutor;
-   private AdvancedCache<?, ?> cache;
    private double readWriteRatio;
    private double hitRatio;
 
@@ -94,13 +96,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       super(log);
    }
 
-   @Inject
-   public void injectDependencies(Cache<?, ?> cache, Configuration configuration) {
-      this.cache = cache.getAdvancedCache();
-      this.statisticsEnabled = configuration.statistics().enabled();
-   }
-
    public void start() {
+      this.statisticsEnabled = cacheConfiguration.statistics().enabled();
       this.clusterExecutor = SecurityActions.getClusterExecutor(cache);
    }
 
@@ -122,7 +119,9 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          if (!v.isEmpty())
             resultMap.put(a, v);
       };
-      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedCacheStatsCallable(cache.getName()), triConsumer);
+      boolean accurateSize = globalConfiguration.metrics().accurateSize();
+      DistributedCacheStatsCallable task = new DistributedCacheStatsCallable(cache.getName(), accurateSize);
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(task, triConsumer);
       future.join();
 
       Collection<Map<String, Number>> responseList = resultMap.values();
@@ -142,11 +141,16 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
       putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
 
-      long numberOfEntriesInMemory = getCacheMode(cache).isReplicated() ?
-            cache.getStats().getCurrentNumberOfEntriesInMemory() :
-            (long) addDoubleAttributes(responseList, NUMBER_OF_ENTRIES_IN_MEMORY);
-      statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
-      statsMap.put(NUMBER_OF_ENTRIES, cache.size());
+      if (accurateSize) {
+         // Count each entry only once
+         long numberOfEntriesInMemory = cache.withFlags(Flag.SKIP_CACHE_LOAD).size();
+         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
+         int numberOfEntries = cache.size();
+         statsMap.put(NUMBER_OF_ENTRIES, (long) numberOfEntries);
+      } else {
+         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, -1L);
+         statsMap.put(NUMBER_OF_ENTRIES, -1L);
+      }
 
       updateTimeSinceStart(responseList);
       updateRatios(responseList);
@@ -466,10 +470,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
             .cast(cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass));
    }
 
-   private static CacheMode getCacheMode(Cache cache) {
-      return cache.getCacheConfiguration().clustering().cacheMode();
-   }
-
    @Override
    public Json toJson() {
       //TODO
@@ -479,9 +479,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    private static class DistributedCacheStatsCallable implements Function<EmbeddedCacheManager, Map<String, Number>> {
 
       private final String cacheName;
+      private final boolean accurateSize;
 
-      private DistributedCacheStatsCallable(String cacheName) {
+      private DistributedCacheStatsCallable(String cacheName, boolean accurateSize) {
          this.cacheName = cacheName;
+         this.accurateSize = accurateSize;
       }
 
       @Override
@@ -489,10 +491,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          if (!embeddedCacheManager.cacheExists(cacheName))
             return Collections.emptyMap();
 
-         AdvancedCache<Object, Object> remoteCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+         AdvancedCache<Object, Object> remoteCache =
+               SecurityActions.getUnwrappedCache(embeddedCacheManager.getCache(cacheName)).getAdvancedCache();
 
          Map<String, Number> map = new HashMap<>();
-         Stats stats = remoteCache.getStats();
+         CacheMgmtInterceptor stats = getFirstInterceptorWhichExtends(remoteCache, CacheMgmtInterceptor.class);
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
          map.put(AVERAGE_READ_TIME_NANOS, stats.getAverageReadTimeNanos());
          map.put(AVERAGE_WRITE_TIME, stats.getAverageWriteTime());
@@ -502,12 +505,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          map.put(EVICTIONS, stats.getEvictions());
          map.put(HITS, stats.getHits());
          map.put(MISSES, stats.getMisses());
-
-         if (!getCacheMode(remoteCache).isReplicated()) {
-            double numberOfEntriesInMemory = stats.getCurrentNumberOfEntriesInMemory();
-            numberOfEntriesInMemory /= remoteCache.getCacheConfiguration().clustering().hash().numOwners();
-            map.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
-         }
 
          map.put(DATA_MEMORY_USED, stats.getDataMemoryUsed());
          map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
@@ -522,7 +519,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
          //number of locks available is not exposed through the LockManager interface
          map.put(NUMBER_OF_LOCKS_AVAILABLE, 0);
-
 
          //invalidations
          InvalidationInterceptor invalidationInterceptor = getFirstInterceptorWhichExtends(remoteCache,
@@ -559,6 +555,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
             map.put(CACHE_LOADER_LOADS, 0);
             map.put(CACHE_LOADER_MISSES, 0);
          }
+
          //cache store
          CacheWriterInterceptor
                interceptor = getFirstInterceptorWhichExtends(remoteCache, CacheWriterInterceptor.class);
@@ -585,11 +582,14 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       @Override
       public void writeObject(ObjectOutput output, DistributedCacheStatsCallable object) throws IOException {
          output.writeUTF(object.cacheName);
+         output.writeBoolean(object.accurateSize);
       }
 
       @Override
       public DistributedCacheStatsCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new DistributedCacheStatsCallable(input.readUTF());
+         String cacheName = input.readUTF();
+         boolean accurateSize = input.readBoolean();
+         return new DistributedCacheStatsCallable(cacheName, accurateSize);
       }
    }
 }
