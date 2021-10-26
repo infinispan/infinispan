@@ -295,6 +295,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return getNumberOfEntries();
    }
 
+   @Deprecated
    @Override
    public long getTotalNumberOfEntries() {
       return stores.longValue();
