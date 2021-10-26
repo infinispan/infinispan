@@ -54,6 +54,7 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
@@ -550,6 +551,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private RestResponse getDetailResponse(Cache<?, ?> cache) {
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       PersistenceManager persistenceManager = SecurityActions.getPersistenceManager(cacheManager, cache.getName());
       Stats stats = null;
       Boolean rehashInProgress = null;
@@ -557,6 +559,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Boolean queryable = null;
 
       try {
+         // TODO Shouldn't we return the clustered stats, like Hot Rod does?
          stats = cache.getAdvancedCache().getStats();
          DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
          rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
@@ -576,10 +579,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       Integer size = null;
-      try {
-         size = cache.size();
-      } catch (SecurityException ex) {
-         // Bulk Read is needed
+      if (globalConfiguration.metrics().accurateSize()) {
+         try {
+            size = cache.size();
+         } catch (SecurityException ex) {
+            // Bulk Read is needed
+         }
       }
 
       SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
