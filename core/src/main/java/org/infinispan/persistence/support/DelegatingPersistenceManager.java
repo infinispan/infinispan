@@ -157,11 +157,6 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public CompletionStage<Long> size(IntSet segments) {
-      return persistenceManager.size(segments);
-   }
-
-   @Override
    public void setClearOnStop(boolean clearOnStop) {
       persistenceManager.setClearOnStop(clearOnStop);
    }
