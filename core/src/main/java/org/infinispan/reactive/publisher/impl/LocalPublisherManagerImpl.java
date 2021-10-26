@@ -327,7 +327,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       changeListener.forEach(lostSegments::forEach);
    }
 
-   private static Function<Object, PublisherResult<Object>> ignoreSegmentsFunction  = value ->
+   private static Function<Object, PublisherResult<Object>> ignoreSegmentsFunction = value ->
          new SegmentPublisherResult<>(IntSets.immutableEmptySet(), value);
 
    static <R> Function<R, PublisherResult<R>> ignoreSegmentsFunction() {
@@ -337,18 +337,9 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    private <I, R> void handleParallelSegment(PrimitiveIterator.OfInt segmentIter, int initialSegment, CacheSet<I> set,
          Set<K> keysToExclude, Function<I, K> toKeyFunction, Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          FlowableProcessor<R> processor, IntSet concurrentSegments, SegmentListener listener) {
-      // Indicates how many outstanding tasks we have. We can't complete the FlowableProcessor until
-      // all are done. The invoking thread always has 1 for itself to ensure it is not completed early while
-      // submitting the tasks. Note that this value is really only useful when a store is in use, as the returned
-      // CompletionStage returned from the collator may not be completed (in memory it will always be complete).
-      AtomicInteger pendingCompletions = new AtomicInteger(1);
-      // This variable determines if our processor was serialized or not - We use a non serialized processor
-      // for Publishers that are completed in the invoking thread. If a result was not completed immediately we have
-      // to convert our Processor to be serialized to ensure we are only calling onNext from 1 thread at a time
-      boolean serializedProcessor = false;
       try {
          while (true) {
-            // The first run initialSegment will be 0 or greater. We use that segment and and set it to -1 to notify
+            // The first run initialSegment will be 0 or greater. We use that segment and set it to -1 to notify
             // our next run to try to steal a segment from the iterator to process until the iterator runs out
             // of segments
             int nextSegment;
@@ -362,8 +353,6 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                }
             }
 
-            pendingCompletions.getAndIncrement();
-
             Flowable<I> innerFlowable = Flowable.fromPublisher(set.localPublisher(nextSegment));
             if (keysToExclude != null) {
                innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
@@ -375,22 +364,14 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             if (CompletionStages.isCompletedSuccessfully(stage)) {
                // If we complete the iteration try to remove the segment - so it can't be suspected
                concurrentSegments.remove(nextSegment);
-               R notifiedValue;
-               // This segment was lost before we could complete our iteration - so we have to discard the result
-               if (listener.segmentsLost.contains(nextSegment)) {
-                  notifiedValue = null;
-               } else {
-                  notifiedValue = CompletionStages.join(stage);
-
+               // If we didn't lose the segment we can use its value, otherwise we just ignore it
+               if (!listener.segmentsLost.contains(nextSegment)) {
+                  R result = CompletionStages.join(stage);
+                  if (result != null) {
+                     processor.onNext(result);
+                  }
                }
-               completeTask(pendingCompletions, notifiedValue, processor);
             } else {
-               // If we have a stage that isn't complete we have to convert to a serialized processor as multiple
-               // responses could come back at the same time
-               if (!serializedProcessor) {
-                  serializedProcessor = true;
-                  processor = processor.toSerialized();
-               }
                final FlowableProcessor<R> processorToUse = processor;
                stage.whenComplete((value, t) -> {
                   if (t != null) {
@@ -398,20 +379,18 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                   } else {
                      // If we complete the iteration try to remove the segment - so it can't be suspected
                      concurrentSegments.remove(nextSegment);
-                     R notifiedValue;
                      // This segment was lost before we could complete our iteration - so we have to discard the result
-                     if (listener.segmentsLost.contains(nextSegment)) {
-                        notifiedValue = null;
-                     } else {
-                        notifiedValue = value;
+                     if (!listener.segmentsLost.contains(nextSegment) && value != null) {
+                        processor.onNext(value);
                      }
-                     completeTask(pendingCompletions, notifiedValue, processorToUse);
+                     handleParallelSegment(segmentIter, -1, set, keysToExclude, toKeyFunction, collator,
+                           processor, concurrentSegments, listener);
                   }
                });
+               return;
             }
          }
-         // Null value is ignored
-         completeTask(pendingCompletions, null, processor);
+         processor.onComplete();
       } catch (Throwable t) {
          processor.onError(t);
       }
@@ -584,18 +563,18 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       Flowable<R> stageFlowable = Flowable.fromIterable(segments)
-                                          .parallel(cpuCount)
-                                          .runOn(nonBlockingScheduler)
-                                          .flatMap(segment -> {
-                                             Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
-                                             if (keysToExclude != null) {
-                                                innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
-                                             }
-                                             // TODO Make the collator return a Flowable/Maybe
-                                             CompletionStage<R> stage = collator.apply(innerFlowable);
-                                             return Maybe.fromCompletionStage(stage).toFlowable();
-                                          }, false, cpuCount)
-                                          .sequential();
+            .parallel(cpuCount)
+            .runOn(nonBlockingScheduler)
+            .concatMap(segment -> {
+               Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
+               if (keysToExclude != null) {
+                  innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
+               }
+               // TODO Make the collator return a Flowable/Maybe
+               CompletionStage<R> stage = collator.apply(innerFlowable);
+               return Maybe.fromCompletionStage(stage).toFlowable();
+            })
+            .sequential();
 
       return finalizer.apply(stageFlowable);
    }
