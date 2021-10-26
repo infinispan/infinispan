@@ -563,6 +563,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return getNumberOfEntries();
    }
 
+   @Deprecated
    @Override
    public long getTotalNumberOfEntries() {
       return getStores();
