@@ -354,7 +354,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
       int limit = limitParam == null || limitParam.isEmpty() ? -1 : Integer.parseInt(limitParam);
 
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request);
       if (cache == null)
          return notFoundResponseFuture();
 
@@ -388,8 +388,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
       if (cache == null) return notFoundResponseFuture();
 
-      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, true) : APPLICATION_JSON;
-      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, false) : APPLICATION_JSON;
+      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, true) : TEXT_PLAIN;
+      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, false) : TEXT_PLAIN;
 
       Cache<?, ?> streamCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
 
@@ -431,9 +431,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       boolean jsonSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, APPLICATION_JSON);
       boolean textSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, TEXT_PLAIN);
 
-      if (jsonSupported) return APPLICATION_JSON;
-
       if (textSupported) return TEXT_PLAIN;
+
+      if (jsonSupported) return APPLICATION_JSON;
 
       if (encodingDefined) return storage.withEncoding("hex");
 

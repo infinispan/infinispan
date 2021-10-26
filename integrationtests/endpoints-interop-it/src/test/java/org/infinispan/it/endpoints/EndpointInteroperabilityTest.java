@@ -253,12 +253,12 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    @Test
    public void testStringKeysAndStringValues() {
       // Write via Hot Rod (the HR client is configured with a String marshaller)
-      stringRemoteCache.put("key", "Hello World");
-      assertEquals(stringRemoteCache.get("key"), "Hello World");
+      stringRemoteCache.put("key", "true");
+      assertEquals(stringRemoteCache.get("key"), "true");
 
       // Read via Rest
       Object bytesFromRest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN).read();
-      assertEquals(asString(bytesFromRest), "Hello World");
+      assertEquals(asString(bytesFromRest), "true");
 
       // Write via rest
       new RestRequest().cache(STRING_CACHE_NAME).key("key2").value("Testing").write();
@@ -270,7 +270,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       Object jsonString = stringRemoteCache.withDataFormat(DataFormat.builder()
             .valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build())
             .get("key");
-      assertEquals("\"Hello World\"", jsonString);
+      assertEquals("true", jsonString);
 
    }
 

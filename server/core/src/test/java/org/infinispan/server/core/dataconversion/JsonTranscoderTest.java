@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.test.data.Address;
@@ -113,4 +114,35 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       result = (byte[]) transcoder.transcode(contentUTF, APPLICATION_JSON, textPlainKorean);
       assertArrayEquals(result, contentKorean);
    }
+
+   private void assertTextToJsonConversion(String content) {
+      final Object transcode = transcoder.transcode(content, TEXT_PLAIN, APPLICATION_JSON);
+      assertArrayEquals((byte[]) transcode, content.getBytes(UTF_8));
+   }
+
+   @Test
+   public void testTextToJson() {
+      assertTextToJsonConversion("{\"a\":1}");
+      assertTextToJsonConversion("1.5");
+      assertTextToJsonConversion("\"test\"");
+   }
+
+   @Test(expectedExceptions = EncodingException.class)
+   public void testPreventInvalidJson() {
+      byte[] invalidContent = "\"field\" : value".getBytes(UTF_8);
+      transcoder.transcode(invalidContent, TEXT_PLAIN, APPLICATION_JSON);
+   }
+
+   @Test(expectedExceptions = EncodingException.class)
+   public void testPreventInvalidJson2() {
+      byte[] invalidContent = "text".getBytes(UTF_8);
+      transcoder.transcode(invalidContent, TEXT_PLAIN, APPLICATION_JSON);
+   }
+
+   @Test(expectedExceptions = EncodingException.class)
+   public void testPreventInvalidJson3() {
+      byte[] invalidContent = "{a:1}".getBytes(UTF_8);
+      transcoder.transcode(invalidContent, TEXT_PLAIN, APPLICATION_JSON);
+   }
+
 }

@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,6 +25,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -38,6 +41,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
    public static final String TYPE_PROPERTY = "_type";
 
    private final ObjectMapper objectMapper;
+   private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
    public JsonTranscoder() {
       this(JsonTranscoder.class.getClassLoader(), new ClassAllowList(Collections.emptyList()));
@@ -120,15 +124,25 @@ public class JsonTranscoder extends OneToManyTranscoder {
    private Object convertTextToJson(Object content, Charset contentCharset, Charset destinationCharset, boolean asString) throws IOException {
       byte[] bytes = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(contentCharset);
       if (bytes.length == 0) return bytes;
-      try (InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(bytes), contentCharset)) {
-         String jsonTree = objectMapper.readTree(isr).toString();
-         return asString ? jsonTree : jsonTree.getBytes(destinationCharset);
-      } catch (IOException e) {
-         String contentAsString = new String(bytes, contentCharset);
-         return asString ? objectMapper.writeValueAsString(contentAsString) : objectMapper.writeValueAsBytes(contentAsString);
+      if (isValidJson(bytes, contentCharset)) {
+         return convertCharset(bytes, contentCharset, destinationCharset, asString);
+      } else {
+         throw logger.invalidJson(new String(bytes));
       }
    }
 
+
+   public static boolean isValidJson(byte[] content, Charset charset) {
+      try (InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(content), charset);
+           BufferedReader reader = new BufferedReader(isr);
+           JsonParser parser = JSON_FACTORY.createParser(reader)) {
+         parser.nextToken();
+         while (parser.hasCurrentToken()) parser.nextToken();
+      } catch (IOException e) {
+         return false;
+      }
+      return true;
+   }
 
    private Object convertCharset(Object content, Charset contentCharset, Charset destinationCharset, boolean outputAsString) {
       byte[] bytes = StandardConversions.convertCharset(content, contentCharset, destinationCharset);
