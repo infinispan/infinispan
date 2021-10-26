@@ -331,6 +331,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getNumberOfEntries();
    }
 
+   @Deprecated
    @Override
    public long getTotalNumberOfEntries() {
       return getStores();
