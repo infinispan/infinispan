@@ -124,7 +124,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       }
    }
 
-   private long addLongAttributes(Collection<Map<String, Number>> responseList, String attribute) {
+   long addLongAttributes(Collection<Map<String, Number>> responseList, String attribute) {
       long total = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
