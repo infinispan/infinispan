@@ -1,5 +1,6 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -61,6 +62,7 @@ public class ClusteredIT {
       config.marshaller(new ProtoStreamMarshaller());
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
          builder.indexing().enable()

@@ -364,7 +364,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetAllEntriesConvertedToJson() throws Exception {
+   public void shouldGetAllKeysConvertedToJson() throws Exception {
       //given
       putStringValueInCache("textCache", "key1", "test1");
       putStringValueInCache("textCache", "key2", "test2");
@@ -467,12 +467,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldReturnJsonWithDefaultConfig() throws Exception {
-      putStringValueInCache("textCache", "test", "Hey!");
+      String value = "\"Hey!\"";
+      putStringValueInCache("textCache", "test", value);
 
       CompletionStage<RestResponse> getResponse = client.cache("textCache").get("test", APPLICATION_JSON_TYPE);
 
       ResponseAssertion.assertThat(getResponse).isOk();
-      ResponseAssertion.assertThat(getResponse).hasReturnedText("\"Hey!\"");
+      ResponseAssertion.assertThat(getResponse).hasReturnedText(value);
 
    }
 
@@ -701,21 +702,22 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldNegotiateFromDefaultCacheWithAccept() throws Exception {
-      putStringValueInCache("default", "test", "test");
+      String value = "\"test\"";
+      putStringValueInCache("default", "test", value);
 
       RestResponse jsonResponse = get("default", "test", "application/json");
 
-      ResponseAssertion.assertThat(jsonResponse).hasReturnedText("\"test\"");
+      ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(jsonResponse).hasContentType("application/json");
 
-      RestResponse xmlResponse = get("default", "test", "text/plain");
+      RestResponse textResponse = get("default", "test", "text/plain");
 
-      ResponseAssertion.assertThat(xmlResponse).hasReturnedText("test");
-      ResponseAssertion.assertThat(xmlResponse).hasContentType("text/plain");
+      ResponseAssertion.assertThat(textResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(textResponse).hasContentType("text/plain");
 
       RestResponse binaryResponse = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
 
-      ResponseAssertion.assertThat(binaryResponse).hasReturnedBytes("test".getBytes(UTF_8));
+      ResponseAssertion.assertThat(binaryResponse).hasReturnedBytes(value.getBytes(UTF_8));
       ResponseAssertion.assertThat(binaryResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
    }
 
@@ -746,18 +748,19 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldNegotiateFromDefaultCacheWithMultipleAccept() throws Exception {
-      putStringValueInCache("default", "test", "test");
+      String value = "1432";
+      putStringValueInCache("default", "test", value);
 
       RestResponse sameWeightResponse = get("default", "test", "text/html,application/xhtml+xml,*/*");
 
       ResponseAssertion.assertThat(sameWeightResponse).isOk();
-      ResponseAssertion.assertThat(sameWeightResponse).hasReturnedText("test");
+      ResponseAssertion.assertThat(sameWeightResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(sameWeightResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
 
       RestResponse weightedResponse = get("default", "test", "text/plain;q=0.1, application/json;q=0.8, */*;q=0.7");
 
       ResponseAssertion.assertThat(weightedResponse).isOk();
-      ResponseAssertion.assertThat(weightedResponse).hasReturnedText("\"test\"");
+      ResponseAssertion.assertThat(weightedResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(weightedResponse).hasContentType(APPLICATION_JSON_TYPE);
    }
 

@@ -5,6 +5,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
@@ -34,7 +35,7 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
          errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
       } else if (cause instanceof SecurityException) {
          errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(cause.getMessage()).build();
-      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException) {
+      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException) {
          errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(cause.getMessage()).build();
       } else {
          Throwable rootCause = Util.getRootCause(throwable);
