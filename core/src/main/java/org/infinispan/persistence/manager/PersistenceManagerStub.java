@@ -149,11 +149,6 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Long> size(IntSet segments) {
-      return CompletableFuture.completedFuture(0L);
-   }
-
-   @Override
    public void setClearOnStop(boolean clearOnStop) {
    }
 
