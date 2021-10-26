@@ -880,28 +880,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Long> size(IntSet segments) {
-      long stamp = acquireReadLock();
-      try {
-         checkStoreAvailability();
-         if (log.isTraceEnabled()) {
-            log.tracef("Obtaining size from stores for segments %s", segments);
-         }
-         NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
-               Characteristic.BULK_READ));
-         if (nonBlockingStore == null) {
-            releaseReadLock(stamp);
-            return CompletableFuture.completedFuture(-1L);
-         }
-         return nonBlockingStore.size(segments)
-               .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
-      } catch (Throwable t) {
-         releaseReadLock(stamp);
-         throw t;
-      }
-   }
-
-   @Override
    public void setClearOnStop(boolean clearOnStop) {
       this.clearOnStop = clearOnStop;
    }

@@ -205,14 +205,6 @@ public interface PersistenceManager extends Lifecycle {
     */
    CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate);
 
-   /**
-    * Returns the count of how many entries are persisted within the given segments. The returned value will always
-    * be 0 or greater.
-    * @param segments which segments to count entries from
-    * @return how many entries are in the store which map to the given segments
-    */
-   CompletionStage<Long> size(IntSet segments);
-
    enum AccessMode implements Predicate<StoreConfiguration> {
       /**
        * The operation is performed in all {@link org.infinispan.persistence.spi.CacheWriter} or {@link
