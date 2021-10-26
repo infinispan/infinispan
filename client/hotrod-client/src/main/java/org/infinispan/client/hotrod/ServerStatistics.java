@@ -24,7 +24,9 @@ public interface ServerStatistics {
    /**
     * Number of entries stored in Hot Rod server
     * since the server started running.
+    * @deprecated Since 13.0, please use {@link #STORES} instead.
     */
+   @Deprecated
    String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
 
    /**
