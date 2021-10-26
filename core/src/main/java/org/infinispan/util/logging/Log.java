@@ -2225,4 +2225,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Problem encountered when preloading key %s!", id = 654)
    PersistenceException problemPreloadingKey(Object key, @Cause Throwable t);
+
+   @Message(value = "Unable to convert text content to JSON: '%s'", id = 655)
+   EncodingException invalidJson(String s);
 }

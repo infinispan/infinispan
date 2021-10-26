@@ -1,5 +1,7 @@
 package org.infinispan.rest;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.stream.Stream;
@@ -40,6 +42,10 @@ public class CacheKeyInputStream extends InputStream {
       return currentEntry == null ? 0 : currentEntry.length - cursor * batchSize;
    }
 
+   private byte[] escape(byte[] content) {
+      return ("\"" + new String(content, UTF_8) + "\"").getBytes(UTF_8);
+   }
+
    @Override
    public synchronized int read() {
       for (; ; ) {
@@ -60,7 +66,7 @@ public class CacheKeyInputStream extends InputStream {
                return STREAM_CLOSE_CHAR;
             case ITEM:
                if (currentEntry == null) {
-                  if (hasNext) currentEntry = (byte[]) iterator.next();
+                  if (hasNext) currentEntry = escape((byte[]) iterator.next());
                }
                int c = currentEntry == null || cursor == currentEntry.length ? -1 : currentEntry[cursor++] & 0xff;
 
