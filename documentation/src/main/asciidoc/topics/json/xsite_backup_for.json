@@ -1,0 +1,16 @@
+{
+  "distributed-cache": {
+    "name": "eu-customers",
+    "backups": {
+      "LON": {
+        "backup": {
+          "strategy": "ASYNC"
+        }
+      }
+    },
+    "backup-for" : {
+      "remote-cache" : "customers",
+      "remote-site" : "LON"
+    }
+  }
+}

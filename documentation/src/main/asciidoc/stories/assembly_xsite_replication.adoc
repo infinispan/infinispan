@@ -1,20 +1,20 @@
-[id='xsite_replication']
-:context: xsite
-= {brandname} Cross-Site Replication
+[id='cross-site-replication']
+:context: cross-site-replication
+= Cross-site replication
 
-Cross-site replication allows you to back up data from one {brandname} cluster
-to another. Learn the concepts to understand how {brandname} cross-site
-replication works before you configure your clusters.
+Replicate data across {brandname} clusters in multiple geographic regions to:
+
+* Ensure service continuity in the event of data center outages.
+* Present a single, unified caching service to client applications that consists of different clusters across multiple host platforms.
 
 include::{topics}/con_xsite_replication.adoc[leveloffset=+1]
-include::{topics}/con_xsite_relay_nodes.adoc[leveloffset=+2]
+include::{topics}/con_xsite_relay_nodes.adoc[leveloffset=+1]
 include::{topics}/con_xsite_backup_locations.adoc[leveloffset=+1]
 include::{topics}/con_xsite_backup_strategies.adoc[leveloffset=+1]
 include::{topics}/con_xsite_auto_offline.adoc[leveloffset=+1]
 include::{topics}/con_xsite_state_transfer.adoc[leveloffset=+1]
 include::{topics}/con_xsite_active_passive.adoc[leveloffset=+1]
 include::{topics}/con_xsite_concurrent_writes.adoc[leveloffset=+2]
-
 include::{topics}/con_xsite_expiration.adoc[leveloffset=+1]
 
 // Restore the parent context.

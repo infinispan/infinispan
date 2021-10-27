@@ -1,29 +1,15 @@
-[id='ref_relay_custom-{context}']
-= Custom JGroups RELAY2 Stacks
+[id='custom-jgroups-relay-stacks_{context}']
+= Custom JGroups RELAY2 stacks
 
-The following configuration adds a custom RELAY2 stack that extends the default TCP stack:
+You can add custom JGroups RELAY2 stacks to {brandname} clusters to use different transport properties for cross-site replication.
+For example, the following configuration uses TCPPING instead of MPING for discovery and extends the default TCP stack:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jgroups_custom_relay_extends.xml[]
 ----
 
-You can also reference externally defined JGroups stack files, for example:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/jgroups_custom_relay_external.xml[]
-----
-
-Where `jgroups-relay.xml` references a JGroups stack file such as:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/jgroups_custom_relay.xml[]
-----
-
-.Reference
-
-* link:{server_docs}#setting_up_clusters[Setting Up {brandname} Clusters]
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}#RELAY2[JGroups RELAY2]
 * link:{jgroups_docs}#Relay2Advanced[Relaying between multiple sites (RELAY2)]

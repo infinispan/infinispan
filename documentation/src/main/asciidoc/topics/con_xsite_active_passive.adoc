@@ -1,5 +1,5 @@
-[id='xsite_active_passive-{context}']
-= Client Connections Across Sites
+[id='cross-site-client-connections_{context}']
+= Client connections across sites
 Clients can write to {brandname} clusters in either an Active/Passive or
 Active/Active configuration.
 
@@ -45,11 +45,11 @@ offline sites back online, push state to synchronize data, and switch clients
 as required.
 
 [discrete]
-== Backup strategies
+== Backup strategies and client connections
 
 [IMPORTANT]
 ====
-With an Active/Active configuration, you should always use an asynchronous backup strategy (`strategy=async`).
+An asynchronous backup strategy (`strategy=async`) is recommended with Active/Active configurations.
 ====
 
 If multiple clients attempt to write to the same entry concurrently, and the backup strategy is synchronous (`strategy=sync`), then deadlocks occur.

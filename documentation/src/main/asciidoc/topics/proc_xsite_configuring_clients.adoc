@@ -1,40 +1,30 @@
-[id='configure_clients-{context}']
-= Configuring Hot Rod Clients for Cross-Site Replication
+[id='configuring-hot-rod-clients-cross-site_{context}']
+= Configuring Hot Rod clients for cross-site replication
+
 Configure Hot Rod clients to use {brandname} clusters at different sites.
 
-.`hotrod-client.properties`
-
-[source,options="nowrap",subs=attributes+]
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="primary"]
 ----
-# Servers at the active site
-infinispan.client.hotrod.server_list = LON_host1:11222,LON_host2:11222,LON_host3:11222
-
-# Servers at the backup site
-infinispan.client.hotrod.cluster.NYC = NYC_hostA:11222,NYC_hostB:11222,NYC_hostC:11222,NYC_hostD:11222
+include::properties/hotrod-client-cross-site.properties[]
 ----
 
-.`ConfigurationBuilder`
-
-[source,java,options="nowrap",subs=attributes+]
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.addServers("LON_host1:11222;LON_host2:11222;LON_host3:11222")
-       .addCluster("NYC")
-       .addClusterNodes("NYC_hostA:11222;NYC_hostB:11222;NYC_hostC:11222;NYC_hostD:11222")
+include::code_examples/CrossSiteAddClusters.java[]
 ----
-
 
 [TIP]
 ====
-Use the following methods to switch Hot Rod clients to the default cluster or
-to a cluster at a different site:
+Use the following methods to switch Hot Rod clients to the default cluster or to a cluster at a different site:
 
 * `RemoteCacheManager.switchToDefaultCluster()`
 * `RemoteCacheManager.switchToCluster(${site.name})`
 ====
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[org.infinispan.client.hotrod.configuration package description]
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.ConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]

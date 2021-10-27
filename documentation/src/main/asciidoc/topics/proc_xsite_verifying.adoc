@@ -1,16 +1,16 @@
-[id='verify_xsite_view-{context}']
-= Verifying Cross-Site Views
-After you configure {brandname} for cross-site replication, you should verify
-that {brandname} clusters successfully form cross-site views.
+[id='verifying-cross-site-views_{context}']
+= Verifying cross-site views
+
+When you set up {brandname} to perform cross-site replication, you should check log files to ensure that {brandname} clusters have successfully formed cross-site views.
 
 .Procedure
 
-* Check log messages for `ISPN000439: Received new x-site view` messages.
+. Open {brandname} log files with any appropriate editor.
+. Check for `ISPN000439: Received new x-site view` messages.
 
-For example, if the {brandname} cluster in **LON** has formed a cross-site view
-with the {brandname} cluster in **NYC**, it provides the following messages:
+For example, if a {brandname} cluster in **LON** has formed a cross-site view with a {brandname} cluster in **NYC**, logs include the following messages:
 
 ----
-INFO  [org.infinispan.XSITE] (jgroups-5,${server.hostname}) ISPN000439: Received new x-site view: [NYC]
-INFO  [org.infinispan.XSITE] (jgroups-7,${server.hostname}) ISPN000439: Received new x-site view: [NYC, LON]
+INFO  [org.infinispan.XSITE] (jgroups-5,<server-hostname>) ISPN000439: Received new x-site view: [NYC]
+INFO  [org.infinispan.XSITE] (jgroups-7,<server-hostname>) ISPN000439: Received new x-site view: [LON, NYC]
 ----

@@ -1,5 +1,6 @@
-[id='conflict-resolution_{context}']
-= Concurrent Writes and Conflicting Entries
+[id='concurrent-writes-conflicting-entries_{context}']
+= Concurrent writes and conflicting entries
+
 Conflicting entries can occur with Active/Active site configurations if clients
 write to the same entries at the same time but at different sites.
 
@@ -77,8 +78,7 @@ Find all available algorithms and their descriptions in the `org.infinispan.xsit
 
 [role="_additional-resources"]
 .Additional resources
-
 * link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
 * link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
 * link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
-* link:#customizing-conflict-resolution_xsite[Customizing the Conflict Resolution Strategy]
+* link:{xsite_docs}#customizing-conflict-resolution_configuring-cross-site-replication[Customizing the conflict resolution algorithm]

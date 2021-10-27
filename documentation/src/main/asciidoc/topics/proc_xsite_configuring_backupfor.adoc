@@ -1,16 +1,34 @@
-[id='configure_backupfor-{context}']
-= Backing Up to Caches with Different Names
-By default, {brandname} replicates data between caches that have the same name.
+[id='backing-up-caches-different-names_{context}']
+= Backing up to caches with different names
+
+{brandname} replicates data between caches that have the same name by default.
+If you want {brandname} to replicate between caches with different names, you can explicitly declare the backup for each cache.
 
 .Procedure
 
-* Use `backup-for` to replicate data from a remote site into a cache with a
-different name on the local site.
+. Open your {brandname} configuration for editing.
+. Use `backup-for` or `backupFor` to replicate data from a remote site into a cache with a different name on the local site.
+. Save and close your {brandname} configuration.
 
-For example, the following configuration backs up the "customers" cache on
-**LON** to the "eu-customers" cache on **NYC**.
+[discrete]
+== Backup for configuration
 
-[source,xml,options="nowrap",subs=attributes+]
+The following example configures the "eu-customers" cache to receive updates from the "customers" cache on the **LON** cluster:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_backup_for.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_for.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_backup_for.yaml[]
 ----

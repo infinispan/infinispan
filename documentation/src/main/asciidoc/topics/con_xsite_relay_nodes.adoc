@@ -1,5 +1,5 @@
-[id='xsite_relay_nodes-{context}']
-= Relay Nodes
+[id='cross-site-relay-nodes_{context}']
+= Relay nodes
 
 Relay nodes are the nodes in {brandname} clusters that are responsible for sending and receiving requests from backup locations.
 
