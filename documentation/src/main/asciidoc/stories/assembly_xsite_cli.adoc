@@ -1,21 +1,12 @@
-[id='xsite_operations_cli']
-:context: cli-ops
-= Performing Cross-Site Operations with the CLI
-The {brandname} command line interface lets you remotely connect to {brandname}
-servers, manage sites, and push state transfer to backup locations.
-
-.Prerequisites
-
-* Start the {brandname} CLI.
-* Connect to a running {brandname} cluster.
+[id='cross-site-operations-cli']
+:context: cross-site-operations-cli
+= Performing cross-site operations with the CLI
+Use the {brandname} command line interface (CLI) to connect to {brandname}
+Server clusters, manage sites, and push state transfer to backup locations.
 
 include::{topics}/proc_cli_xsite_sites.adoc[leveloffset=+1]
 include::{topics}/proc_cli_xsite_state_transfer_mode.adoc[leveloffset=+1]
 include::{topics}/proc_cli_xsite_push.adoc[leveloffset=+1]
-
-.Reference
-
-link:{cli_docs}[{brandname} Command Line Interface]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

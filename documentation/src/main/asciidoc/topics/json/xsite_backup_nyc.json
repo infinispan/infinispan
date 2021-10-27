@@ -1,0 +1,12 @@
+{
+  "replicated-cache": {
+    "name": "customers",
+    "backups": {
+      "NYC": {
+        "backup" : {
+          "strategy" : "ASYNC"
+        }
+      }
+    }
+  }
+}

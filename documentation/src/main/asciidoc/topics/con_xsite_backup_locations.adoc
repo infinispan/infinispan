@@ -1,6 +1,7 @@
-[id='xsite_backups-{context}']
-= Adding Backups to Caches
-Name remote sites as backup locations in your cache definitions.
+[id='cross-site-backups_{context}']
+= {brandname} cache backups
+
+{brandname} caches include a `backups` configuration that let you name remote sites as backup locations.
 
 For example, the following diagram shows three caches, "customers", "eu-orders", and "us-orders":
 

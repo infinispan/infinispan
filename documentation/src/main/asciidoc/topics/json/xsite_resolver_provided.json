@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "backups": {
+      "merge-policy": "ALWAYS_REMOVE",
+      "LON": {
+        "backup": {
+          "strategy": "ASYNC"
+        }
+      }
+    }
+  }
+}

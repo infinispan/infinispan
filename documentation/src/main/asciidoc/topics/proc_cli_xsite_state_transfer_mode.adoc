@@ -1,11 +1,15 @@
-[id='configuring-xsite-state-transfer-modes_{context}']
-= Configuring Cross-Site State Transfer Modes
+[id='configuring-cross-site-state-transfer-modes_{context}']
+= Configuring cross-site state transfer modes
+
 You can configure cross-site state transfer operations to happen automatically when {brandname} detects that backup locations come online.
-Alternatively you can use the default mode, which is to manually perform state transfer through the CLI or via JMX or REST.
+Alternatively you can use the default mode, which is to manually perform state transfer.
+
+.Prerequisites
+
+* Create a CLI connection to {brandname}.
 
 .Procedure
 
-. Create a CLI connection to {brandname}.
 . Use the [command]`site` command to configure state transfer modes, as in the following examples:
 
 * Retrieve the current state transfer mode.

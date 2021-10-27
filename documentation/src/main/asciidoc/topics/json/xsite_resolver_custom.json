@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "backups": {
+      "merge-policy": "org.mycompany.MyCustomXSiteEntryMergePolicy",
+      "LON": {
+        "backup": {
+          "strategy": "ASYNC"
+        }
+      }
+    }
+  }
+}

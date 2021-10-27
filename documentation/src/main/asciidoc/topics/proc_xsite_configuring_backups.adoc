@@ -1,36 +1,61 @@
-[id='configure_backups-{context}']
-= Adding Backup Locations to Caches
-Specify the names of remote sites so {brandname} can back up data to those locations.
+[id='adding-backup-locations-caches_{context}']
+= Adding backup locations to caches
+
+Specify the names of remote sites so {brandname} can replicate data to caches on those clusters.
 
 .Procedure
 
-. Add the `backups` element to your cache definition.
-. Specify the name of each remote site with the `backup` element.
-+
-As an example, in the **LON** configuration, specify **NYC** as the remote site.
-+
-. Repeat the preceding steps so that each site is a backup for all other sites. For example, you cannot add **LON** as a backup for **NYC** without adding **NYC** as a backup for **LON**.
+. Open your {brandname} configuration for editing.
+. Add the `backups` element to your cache configuration.
+. Specify the name of the remote site as the backup location. +
+For example, in the **LON** configuration, specify **NYC** as the backup.
+. Repeat the preceding steps on each cluster so that each site is a backup for other sites. +
+For example, if you add **LON** as a backup for **NYC** you should also add **NYC** as a backup for **LON**.
+. Save and close your {brandname} configuration.
 
-[NOTE]
-====
-Cache configurations can be different across sites and use different backup
-strategies. {brandname} replicates data based on cache names.
-====
+[discrete]
+== Backup configuration
 
-.Example "customers" configuration in **LON**
+The following example shows the "customers" cache configuration for the **LON** cluster:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_backup_nyc.xml[]
 ----
 
-.Example "customers" configuration in **NYC**
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_nyc.json[]
+----
 
-[source,xml,options="nowrap",subs=attributes+]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_backup_nyc.yaml[]
+----
+
+The following example shows the "customers" cache configuration for the **NYC** cluster:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_backup_lon.xml[]
 ----
 
-.Reference
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_lon.json[]
+----
 
-* link:{configdocroot}[{brandname} Configuration Schema]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_backup_lon.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]
