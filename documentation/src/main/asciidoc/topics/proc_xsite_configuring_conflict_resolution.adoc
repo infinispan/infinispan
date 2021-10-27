@@ -1,0 +1,68 @@
+[id='configuring-conflict-resolution_{context}']
+= Configuring conflict resolution algorithms
+
+Configure {brandname} to use a different algorithm to resolve conflicting entries between backup locations.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify one of the {brandname} algorithms or a custom implementation as the merge policy to resolve conflicting entries.
+. Save and close your {brandname} configuration for editing.
+
+[discrete]
+== {brandname} algorithms
+
+[TIP]
+====
+Find all {brandname} algorithms and their descriptions in the `org.infinispan.xsite.spi.XSiteMergePolicy` enum.
+====
+
+The following example configuration uses the `ALWAYS_REMOVE` algorithm that deletes conflicting entries from both sites:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/xsite_resolver_provided.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_resolver_provided.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_resolver_provided.yaml[]
+----
+
+[discrete]
+== Custom conflict resolution algorithms
+
+If you create a custom `XSiteEntryMergePolicy` implementation, you can specify the fully qualified class name as the merge policy.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/xsite_resolver_custom.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_resolver_custom.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_resolver_custom.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
+* link:{javadocroot}/org/infinispan/xsite/spi/SiteEntry.html[org.infinispan.xsite.spi.SiteEntry]
+* link:{configdocroot}[{brandname} configuration schema reference]

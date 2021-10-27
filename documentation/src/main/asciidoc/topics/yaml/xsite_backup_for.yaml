@@ -1,0 +1,9 @@
+distributedCache:
+  name: "eu-customers"
+  backups:
+    LON:
+      backup:
+        strategy: "ASYNC"
+  backupFor:
+    remoteCache: "customers"
+    remoteSite: "LON"

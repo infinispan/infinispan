@@ -1,4 +1,9 @@
-<!-- If a cluster attempts to replicate data to NYC and five consecutive operations fail, NYC automatically goes offline. -->
-<backup site="NYC" strategy="ASYNC" timeout="10000">
-  <take-offline after-failures="5"/>
-</backup>
+<distributed-cache>
+  <backups>
+    <backup site="NYC"
+            strategy="ASYNC"
+            timeout="10000">
+      <take-offline after-failures="5"/>
+    </backup>
+  </backups>
+</distributed-cache>

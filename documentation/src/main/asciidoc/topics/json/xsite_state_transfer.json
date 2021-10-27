@@ -1,0 +1,19 @@
+{
+  "distributed-cache": {
+    "name": "eu-customers",
+    "backups": {
+      "LON": {
+        "backup": {
+          "strategy": "ASYNC",
+          "state-transfer": {
+            "chunk-size": "600",
+            "timeout": "2400000",
+            "max-retries": "30",
+            "wait-time": "2000",
+            "mode": "AUTO"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 <distributed-cache name="customers">
   <backups>
-    <backup site="LON" strategy="SYNC" />
+    <backup site="LON"
+            strategy="ASYNC" />
   </backups>
 </distributed-cache>

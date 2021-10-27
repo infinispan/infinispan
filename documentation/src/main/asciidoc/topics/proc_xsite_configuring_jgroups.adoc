@@ -1,21 +1,32 @@
-[id='configure_relay-{context}']
-= Configuring Cluster Transport for Cross-Site Replication
-Add JGroups RELAY2 to your transport layer so that {brandname} clusters can communicate with backup locations.
+[id='configuring-cluster-transport-cross-site_{context}']
+= Configuring cluster transport for cross-site replication
+
+Add JGroups RELAY2 to your transport layer so that {brandname} can replicate caches to backup locations.
 
 .Procedure
 
-. Open `infinispan.xml` for editing.
+. Open your {brandname} configuration for editing.
 . Add the RELAY2 protocol to a JGroups stack.
-. Configure {brandname} cluster transport to use the stack.
-+
+. Specify the stack name with the `stack` attribute for the transport configuration so the {brandname} cluster uses it.
+. Save and close your {brandname} configuration.
+
+[discrete]
+== JGroups RELAY2 stacks
+
+The following configuration shows a JGroups RELAY2 stack that:
+
+* Uses the default JGroups UDP stack for inter-cluster transport, which refers to communication between nodes at the local site.
+* Uses the default JGroups TCP stack for cross-site replication traffic.
+* Names the local site as **LON**.
+* Specifies a maximum of 1000 nodes in the cluster that can send cross-site replication requests.
+* Specifies the names of all backup locations that participate in cross-site replication.
+
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/jgroups_stack_xsite.xml[]
+include::xml/jgroups_relay.xml[]
 ----
-+
-. Save and close `infinispan.xml`.
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:#ref_relay-xsite[JGroups RELAY2 Stacks]
-* link:{configdocroot}[{brandname} Configuration Schema]
+* link:{configdocroot}[{brandname} configuration schema reference]
