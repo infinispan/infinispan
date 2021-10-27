@@ -578,7 +578,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       NearCacheConfiguration nearCache;
       if (remoteCacheConfiguration != null) {
          nearCache = new NearCacheConfiguration(remoteCacheConfiguration.nearCacheMode(), remoteCacheConfiguration.nearCacheMaxEntries(),
-               remoteCacheConfiguration.nearCacheBloomFilter());
+               remoteCacheConfiguration.nearCacheBloomFilter(), null, remoteCacheConfiguration.nearCacheFactory());
       } else {
          Pattern pattern = configuration.nearCache().cacheNamePattern();
          if (pattern == null || pattern.matcher(cacheName).matches()) {

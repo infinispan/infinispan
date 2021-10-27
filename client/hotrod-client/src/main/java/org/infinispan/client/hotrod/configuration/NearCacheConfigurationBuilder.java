@@ -6,6 +6,8 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
+import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -16,6 +18,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
    private Integer maxEntries = null; // undefined
    private Pattern cacheNamePattern = null; // matches all
    private boolean bloomFilter = false;
+   private NearCacheFactory nearCacheFactory = DefaultNearCacheFactory.INSTANCE;
 
    protected NearCacheConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -81,6 +84,17 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
       return this;
    }
 
+   /**
+    * Specifies a {@link NearCacheFactory} which is responsible for creating {@link org.infinispan.client.hotrod.near.NearCache} instances.
+    *
+    * @param factory a {@link NearCacheFactory}
+    * @return an instance of the builder
+    */
+   public NearCacheConfigurationBuilder nearCacheFactory(NearCacheFactory factory) {
+      this.nearCacheFactory = factory;
+      return this;
+   }
+
    @Override
    public void validate() {
       if (mode.enabled()) {
@@ -102,7 +116,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
 
    @Override
    public NearCacheConfiguration create() {
-      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries, bloomFilter, cacheNamePattern);
+      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries, bloomFilter, cacheNamePattern, nearCacheFactory);
    }
 
    @Override
@@ -111,6 +125,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
       maxEntries = template.maxEntries();
       bloomFilter = template.bloomFilter();
       cacheNamePattern = template.cacheNamePattern();
+      nearCacheFactory = template.nearCacheFactory();
       return this;
    }
 

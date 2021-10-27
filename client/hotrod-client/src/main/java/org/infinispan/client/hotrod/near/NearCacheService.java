@@ -108,9 +108,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    protected NearCache<K, V> createNearCache(NearCacheConfiguration config, BiConsumer<K, MetadataValue<V>> removedConsumer) {
-      return config.maxEntries() > 0
-            ? BoundedConcurrentMapNearCache.create(config, removedConsumer)
-            : ConcurrentMapNearCache.create();
+      return config.nearCacheFactory().createNearCache(config, removedConsumer);
    }
 
    public static <K, V> NearCacheService<K, V> create(
