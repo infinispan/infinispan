@@ -1,0 +1,6 @@
+replicatedCache:
+  name: "customers"
+  backups:
+    NYC:
+      backup:
+        strategy: "ASYNC"

@@ -1,10 +1,14 @@
-[id='manage_sites-{context}']
-= Bringing Backup Locations Offline and Online
+[id='bringing-backup-locations-offline-online_{context}']
+= Bringing backup locations offline and online
+
 Take backup locations offline manually and bring them back online.
+
+.Prerequisites
+
+* Create a CLI connection to {brandname}.
 
 .Procedure
 
-. Create a CLI connection to {brandname}.
 . Check if backup locations are online or offline with the [command]`site status` command:
 +
 ----

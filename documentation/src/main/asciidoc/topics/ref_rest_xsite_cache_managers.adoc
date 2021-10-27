@@ -1,5 +1,5 @@
 [id='rest_v2_cache_manager_site_status']
-= Getting Status of Backup Locations
+= Getting status of backup locations
 Retrieve the status of all backup locations from Cache Managers with `GET`
 requests.
 
@@ -15,7 +15,7 @@ GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
 include::json/xsite_backup_status.json[]
 ----
 
-.Returned Status
+.Returned status
 
 |===
 |Value |Description
@@ -31,7 +31,7 @@ include::json/xsite_backup_status.json[]
 |===
 
 [id='rest_v2_cache_manager_take_offline']
-= Taking Backup Locations Offline
+= Taking backup locations offline
 Take backup locations offline with the `?action=take-offline` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -40,7 +40,7 @@ POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action
 ----
 
 [id='rest_v2_cache_manager_bring_online']
-= Bringing Backup Locations Online
+= Bringing backup locations online
 Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -49,7 +49,7 @@ POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action
 ----
 
 [id='rest_v2_cache_manager_get_state_transfer_mode']
-= Retrieving the State Transfer Mode
+= Retrieving the state transfer mode
 Check the state transfer mode with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -58,7 +58,7 @@ GET /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode
 ----
 
 [id='rest_v2_cache_manager_set_state_transfer_mode']
-= Setting the State Transfer Mode
+= Setting the state transfer mode
 Configure the state transfer mode with the `?action=set` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -67,7 +67,7 @@ POST /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode?actio
 ----
 
 [id='rest_v2_cache_manager_start_push']
-= Starting State Transfer
+= Starting state transfer
 Push state of all caches to remote sites with the `?action=start-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -77,7 +77,7 @@ POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action
 
 
 [id='rest_v2_cache_manager_cancel_push']
-= Canceling State Transfer
+= Canceling state transfer
 Cancel ongoing state transfer operations with the `?action=cancel-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]

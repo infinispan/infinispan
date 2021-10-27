@@ -1,0 +1,6 @@
+distributed-cache:
+  backups:
+    mergePolicy: "ALWAYS_REMOVE"
+    LON:
+      backup:
+        strategy: "ASYNC"
