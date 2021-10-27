@@ -120,6 +120,8 @@ public class ConfigurationProperties {
    public static final String CACHE_MARSHALLER = ".marshaller";
    public static final String CACHE_NEAR_CACHE_MODE_SUFFIX = ".near_cache.mode";
    public static final String CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX = ".near_cache.max_entries";
+   public static final String CACHE_NEAR_CACHE_FACTORY_SUFFIX = ".near_cache.factory";
+   public static final String CACHE_NEAR_CACHE_BLOOM_FILTER_SUFFIX = ".near_cache.bloom_filter";
    public static final String CACHE_TEMPLATE_NAME_SUFFIX = ".template_name";
    public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction.transaction_mode";
    public static final String CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX = ".transaction.transaction_manager_lookup";
@@ -546,10 +548,12 @@ public class ConfigurationProperties {
       props.setProperty(NEAR_CACHE_MAX_ENTRIES, nearCacheMaxEntries);
    }
 
+   @Deprecated
    public String getNearCacheNamePattern() {
       return props.getProperty(NEAR_CACHE_NAME_PATTERN);
    }
 
+   @Deprecated
    public void setNearCacheNamePattern(String nearCacheNamePattern) {
       props.setProperty(NEAR_CACHE_NAME_PATTERN, nearCacheNamePattern);
    }

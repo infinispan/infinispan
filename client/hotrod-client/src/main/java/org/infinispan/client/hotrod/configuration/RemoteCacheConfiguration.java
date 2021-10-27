@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
+import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -20,6 +22,7 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<NearCacheMode> NEAR_CACHE_MODE = AttributeDefinition.builder("near-cache-mode", NearCacheMode.DISABLED).build();
    public static final AttributeDefinition<Integer> NEAR_CACHE_MAX_ENTRIES = AttributeDefinition.builder("near-cache-max-entries", -1).build();
    public static final AttributeDefinition<Boolean> NEAR_CACHE_BLOOM_FILTER = AttributeDefinition.builder("near-cache-bloom-filter", false).build();
+   public static final AttributeDefinition<NearCacheFactory> NEAR_CACHE_FACTORY = AttributeDefinition.builder("near-cache-factory", DefaultNearCacheFactory.INSTANCE, NearCacheFactory.class).build();
    public static final AttributeDefinition<String> TEMPLATE_NAME = AttributeDefinition.builder("template-name", null, String.class).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", GenericTransactionManagerLookup.getInstance(), TransactionManagerLookup.class).build();
@@ -27,7 +30,7 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<Class> MARSHALLER_CLASS = AttributeDefinition.builder("marshallerClass", null, Class.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, MARSHALLER, MARSHALLER_CLASS, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
+      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, MARSHALLER, MARSHALLER_CLASS, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, NEAR_CACHE_BLOOM_FILTER, NEAR_CACHE_FACTORY, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
    }
 
    private final Attribute<String> configuration;
@@ -88,6 +91,10 @@ public class RemoteCacheConfiguration {
 
    public boolean nearCacheBloomFilter() {
       return nearCacheBloomFilter.get();
+   }
+
+   public NearCacheFactory nearCacheFactory() {
+      return attributes.attribute(NEAR_CACHE_FACTORY).get();
    }
 
    public String templateName() {
