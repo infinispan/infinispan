@@ -1,0 +1,12 @@
+distributedCache:
+  name: "eu-customers"
+  backups:
+    LON:
+      backup:
+        strategy: "ASYNC"
+        stateTransfer:
+          chunkSize: "600"
+          timeout: "2400000"
+          maxRetries: "30"
+          waitTime: "2000"
+          mode: "AUTO"

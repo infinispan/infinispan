@@ -1,48 +1,94 @@
-[id='xsite_auto_offline-{context}']
-= Automatically Taking Backups Offline
-You can configure backup locations to go offline automatically when the remote
-sites become unavailable. This prevents {brandname} nodes from continuously
-attempting to replicate data to offline backup locations, which results in
-error messages and consumes resources.
+[id='cross-site-automatic-offline_{context}']
+= Factors that take backup locations offline automatically
 
-.Timeout for backup operations
+{brandname} can take backup locations offline when remote sites become unavailable.
+This prevents {brandname} nodes from continuously attempting to replicate data to offline backup locations, which results in error messages and consumes resources.
+There are different factors you can configure for {brandname} to take backup locations offline.
+
+[discrete]
+== Timeout values
+
 Backup configurations include timeout values for operations to replicate data.
-If operations do not complete before the timeout occurs, {brandname} records
-them as failures.
+If operations do not complete before the timeout occurs, {brandname} records them as failures.
 
-[source,xml,options="nowrap",subs=attributes+]
+In the following example, operations to replicate data to NYC are recorded as failures if they do not complete after 10 seconds:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_backup_timeout.xml[]
 ----
 
-.Number of failures
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_timeout.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_backup_timeout.yaml[]
+----
+
+[discrete]
+== Number of failures
+
 You can specify the number of **consecutive** failures that can occur before
 backup locations go offline.
 
-For example, the following configuration for **NYC** sets five as the number of
-failed operations before it goes offline:
+In the following example, if a cluster attempts to replicate data to NYC and five consecutive operations fail, NYC automatically goes offline:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_backup_number_failures.xml[]
 ----
 
-.Time to wait
-You can also specify how long to wait before taking sites offline when backup
-operations fail. If a backup request succeeds before the wait time runs out,
-{brandname} does not take the site offline.
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_number_failures.json[]
+----
 
-[source,xml,options="nowrap",subs=attributes+]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::xml/xsite_backup_time_wait.xml[]
+include::yaml/xsite_backup_number_failures.yaml[]
 ----
+
+[discrete]
+== Time to wait
+
+You can also specify how long to wait before taking sites offline when backup operations fail.
+If a backup request succeeds before the wait time runs out, {brandname} does not take the site offline.
 
 [TIP]
 ====
-Set a negative or zero value for the `after-failures` attribute if you want to use only a minimum time to wait to take sites offline.
+Set a negative or zero value for number of failures to use only a minimum time to wait to take backup locations offline.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 <take-offline after-failures="-1" min-wait="10000"/>
 ----
 ====
+
+In the following example, if a cluster attempts to replicate data to NYC and there are more than five consecutive failures and 15 seconds elapse after the first failed operation, NYC automatically goes offline:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/xsite_backup_time_wait.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_backup_time_wait.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_backup_time_wait.yaml[]
+----

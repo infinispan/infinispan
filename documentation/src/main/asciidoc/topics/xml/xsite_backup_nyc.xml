@@ -1,5 +1,6 @@
 <replicated-cache name="customers">
   <backups>
-    <backup site="NYC" strategy="ASYNC" />
+    <backup site="NYC"
+            strategy="ASYNC" />
   </backups>
 </replicated-cache>

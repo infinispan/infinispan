@@ -1,13 +1,19 @@
-[id='xsite_expiration-{context}']
-= Expiration with Cross-Site Replication
+[id='cross-site-expiration_{context}']
+= Expiration with cross-site replication
+
 Expiration removes cache entries based on time.
 {brandname} provides two ways to configure expiration for entries:
 
-`lifespan`:: Sets the maximum amount of time that entries can exist. +
+.Lifespan
+
+The `lifespan` attribute sets the maximum amount of time that entries can exist.
 When you set `lifespan` with cross-site replication, {brandname} clusters expire entries independently of remote sites.
 
-`max-idle`:: Specifies how long entries can exist based on read or write operations in a given time period. +
-When you set a `max-idle` with cross-site replication, {brandname} clusters send touch commands to coordinate idle timeout values with remote sites. +
+.Maximum idle
+
+The `max-idle` attribute specifies how long entries can exist based on read or write operations in a given time period.
+When you set a `max-idle` with cross-site replication, {brandname} clusters send touch commands to coordinate idle timeout values with remote sites.
+
 [NOTE]
 ====
 Using maximum idle expiration in cross-site deployments can impact performance because the additional processing to keep `max-idle` values synchronized means some operations take longer to complete.

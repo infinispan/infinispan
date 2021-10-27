@@ -1,14 +1,35 @@
 [id='configuring-state-transfer_{context}']
-= Configuring Cross-Site State Transfer
+= Configuring cross-site state transfer
 Change cross-site state transfer settings to optimize performance and specify whether operations happen manually or automatically.
 
 .Procedure
 
-* Use `<state-transfer>` to configure state transfer operations.
+. Open your {brandname} configuration for editing.
+. Configure state transfer operations as appropriate.
+.. Specify the number of entries to include in each state transfer operation with `chunk-size` or `chunkSize`.
+.. Specify the time to wait, in milliseconds, for state transfer operations to complete with `timeout`.
+.. Set the maximum number of attempts for {brandname} to retry failed state transfers with `max-retries` or `maxRetries`.
+.. Specify the time to wait, in milliseconds, between retry attempts with `wait-time` or `waitTime`.
+.. Specify if state transfer operations happen automatically or manually with `mode`.
+. Open your {brandname} configuration for editing.
 
-For example, the following configuration automatically performs cross-site state transfer with custom settings:
+[discrete]
+== State transfer configuration
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/xsite_state_transfer.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_state_transfer.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_state_transfer.yaml[]
 ----
