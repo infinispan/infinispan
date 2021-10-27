@@ -256,7 +256,6 @@
          <plugin>
             <groupId>org.eclipse.transformer</groupId>
             <artifactId>org.eclipse.transformer.maven</artifactId>
-            <version>0.2.0</version>
             <executions>
               <execution>
                 <goals>
