@@ -112,7 +112,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
 
    synchronized void fetchClusterWideStatsIfNeeded() {
       long duration = timeService.timeDuration(statsUpdateTimestamp, timeService.time(), TimeUnit.MILLISECONDS);
-      if (duration > DEFAULT_STALE_STATS_THRESHOLD) {
+      if (duration > staleStatsThreshold) {
          try {
             updateStats();
          } catch (Exception e) {
