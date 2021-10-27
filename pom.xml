@@ -326,6 +326,7 @@
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
+      <versionx.org.eclipse.transformer>0.2.0</versionx.org.eclipse.transformer>
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
       <versionx.org.hamcrest.hamcrest-core>${version.hamcrest}</versionx.org.hamcrest.hamcrest-core>
       <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
@@ -1006,6 +1007,11 @@
                   <artifactId>org.osgi.annotation.versioning</artifactId>
                </exclusion>
             </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.eclipse.transformer</groupId>
+            <artifactId>org.eclipse.transformer.maven</artifactId>
+            <version>${versionx.org.eclipse.transformer}</version>
          </dependency>
          <dependency>
             <groupId>org.glassfish.jaxb</groupId>
@@ -2412,6 +2418,22 @@
                   <suppressionFile>${infinispan.root}/etc/dependency-check-suppressions.xml</suppressionFile>
                </configuration>
             </plugin>
+            <plugin>
+               <groupId>org.eclipse.transformer</groupId>
+               <artifactId>org.eclipse.transformer.maven</artifactId>
+               <executions>
+                  <execution>
+                     <goals>
+                        <goal>run</goal>
+                     </goals>
+                     <phase>package</phase>
+                     <configuration>
+                        <classifier>jakarta</classifier>
+                        <artifactId>${project.artifactId}-${classifier}</artifactId>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
@@ -2642,7 +2664,6 @@
    </reporting>
 
    <profiles>
-
       <profile>
          <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
          <id>nexus-staging</id>
@@ -2944,7 +2965,8 @@
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
                      <argLine>${forkJvmArgs}</argLine>
                      <systemProperties>
-                        <infinispan.test.jvm.version.regex>${infinispan.test.jvm.version.regex}</infinispan.test.jvm.version.regex>
+                        <infinispan.test.jvm.version.regex>${infinispan.test.jvm.version.regex}
+                        </infinispan.test.jvm.version.regex>
                      </systemProperties>
                   </configuration>
                </plugin>
@@ -2957,7 +2979,8 @@
             <jdk>[13,)</jdk>
          </activation>
          <properties>
-            <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.blockHoundRedefinitionArgs>
+            <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods
+            </testjvm.blockHoundRedefinitionArgs>
          </properties>
       </profile>
       <profile>
