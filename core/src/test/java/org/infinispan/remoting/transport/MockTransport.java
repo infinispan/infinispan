@@ -371,7 +371,7 @@ public class MockTransport implements Transport {
          log.debugf("Replying to remote invocation %s with %s from %s", getCommand(), response, sender);
          Object result = collector.addResponse(sender, response);
          if (result != null) {
-            complete(result);
+            resultFuture.complete(result);
          }
          return this;
       }
@@ -384,14 +384,22 @@ public class MockTransport implements Transport {
          return addResponse(a, new ExceptionResponse(e));
       }
 
+      public void throwException(Exception e) {
+         resultFuture.completeExceptionally(e);
+      }
+
       public void finish() {
          if (collector == null) {
             // sendToX methods do not need a finish() call, ignoring it
             return;
          }
 
-         Object result = collector.finish();
-         complete(result);
+         try {
+            Object result = collector.finish();
+            resultFuture.complete(result);
+         } catch (Throwable t) {
+            resultFuture.completeExceptionally(t);
+         }
       }
 
       public void singleResponse(Address sender, Response response) {
@@ -407,10 +415,6 @@ public class MockTransport implements Transport {
 
       boolean isDone() {
          return resultFuture.isDone();
-      }
-
-      void complete(Object result) {
-         resultFuture.complete(result);
       }
 
       @SuppressWarnings("unchecked")

@@ -3,16 +3,9 @@ package org.infinispan.jmx;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
@@ -20,17 +13,15 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.testng.annotations.Test;
 
 /**
@@ -101,33 +92,41 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
       assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "N/A");
 
-      cache1.put(new MagicKey("a1", cache1), new DelayedMarshallingPojo(50, 0));
-      cache1.put(new MagicKey("a2", cache2), new DelayedMarshallingPojo(50, 0));
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 2);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
-      Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
-      assertNotEquals(avgReplTime, (long) 0);
-
       RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
       try {
-         Address mockAddress1 = mock(Address.class);
-         Address mockAddress2 = mock(Address.class);
-         List<Address> memberList = new ArrayList<>(2);
-         memberList.add(mockAddress1);
-         memberList.add(mockAddress2);
-         Transport transport = mock(Transport.class);
-         when(transport.getMembers()).thenReturn(memberList);
-         when(transport.getAddress()).thenReturn(mockAddress1);
-         // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
-         when(transport.invokeCommand(any(Address.class), any(ReplicableCommand.class), any(ResponseCollector.class),
-                                      any(DeliverOrder.class), anyLong(), any(TimeUnit.class)))
-               .thenThrow(new RuntimeException());
-         when(transport.invokeCommandOnAll(anyCollection(), any(ReplicableCommand.class), any(ResponseCollector.class),
-                                           any(DeliverOrder.class), anyLong(), any(TimeUnit.class))).thenThrow(new RuntimeException());
+         MockTransport transport = new MockTransport(address(0));
+         transport.init(originalTransport.getViewId(), originalTransport.getMembers());
          rpcManager.setTransport(transport);
-         Exceptions.expectException(CacheException.class, () -> cache1.put(new MagicKey("a3", cache1), "b3"));
-         Exceptions.expectException(CacheException.class, () -> cache1.put(new MagicKey("a4", cache2), "b4"));
+
+         CompletableFuture<Object> put1 = cache1.putAsync(new MagicKey("a1", cache1), "b1");
+         timeService.advance(50);
+         transport.expectCommand(SingleRpcCommand.class)
+                  .singleResponse(address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+         put1.get(10, TimeUnit.SECONDS);
+
+         CompletableFuture<Object> put2 = cache1.putAsync(new MagicKey("a2", cache2), "b2");
+         timeService.advance(10);
+         transport.expectCommand(SingleRpcCommand.class)
+                  .singleResponse(address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+         put2.get(10, TimeUnit.SECONDS);
+
+         assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 2);
+         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
+         long avgReplTime = (long) mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
+         assertEquals(avgReplTime, 30);
+
+         // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
+         CompletableFuture<Object> put3 = cache1.putAsync(new MagicKey("a3", cache1), "b3");
+         transport.expectCommand(SingleRpcCommand.class)
+                  .throwException(new RuntimeException());
+         Exceptions.expectCompletionException(CacheException.class, put3);
+
+         CompletableFuture<Object> put4 = cache1.putAsync(new MagicKey("a4", cache2), "b4");
+         transport.expectCommand(SingleRpcCommand.class)
+                  .throwException(new RuntimeException());
+         Exceptions.expectCompletionException(CacheException.class, put4);
+
          assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("50%"));
       } finally {
          rpcManager.setTransport(originalTransport);
