@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "backups": {
+      "NYC" : {
+        "backup" : {
+          "strategy" : "ASYNC",
+          "timeout" : "10000"
+        }
+      }
+    }
+  }
+}

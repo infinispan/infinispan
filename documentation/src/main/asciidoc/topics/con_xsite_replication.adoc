@@ -1,5 +1,6 @@
-[id='xsite_replication-{context}']
-= Cross-Site Replication
+[id='cross-site-replication_{context}']
+= Cross-site replication
+
 {brandname} clusters running in different locations can discover and
 communicate with each other.
 

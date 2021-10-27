@@ -1,5 +1,5 @@
-[id='xsite_state_transfer-{context}']
-= State Transfer
+[id='cross-site-state-transfer_{context}']
+= State transfer
 State transfer is an administrative operation that synchronizes data between
 sites.
 
@@ -38,7 +38,8 @@ Before state transfer completes, a client puts "k1,v2" on **LON**.
 In this case the state transfer from **NYC** does not overwrite "k1,v2" because
 that modification happened after you initiated the push.
 
-== Automatic State Transfer
+[discrete]
+== Automatic state transfer
 
 By default you must manually perform cross-site state transfer operations with the CLI or via JMX or REST.
 
@@ -52,9 +53,8 @@ To avoid temporary network disconnects triggering state transfer operations, the
 The status of a backup location must be offline and it must not be included in the cross-site view with JGroups RELAY2.
 ====
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]
-* link:{cli_docs}#deleting_cache_entries[Clearing Caches with the CLI]
-* link:{rest_docs}#rest_v2_clear_cache[Clearing Caches with the REST API]
-* link:#configure_state_transfer-{context}[Configure Cross-Site State Transfer]
+* link:{cli_docs}[Using the {brandname} Command Line Interface]
+* link:{rest_docs}[{brandname} REST API]

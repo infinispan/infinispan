@@ -1,11 +1,11 @@
-[id='xsite_operations_jmx']
-:context: jmx-ops
-= Performing Cross-Site Operations with JMX
-{brandname} provides JMX tooling to perform cross-site operations such as
-pushing state transfer and bringing sites online.
+[id='cross-site-operations-jmx']
+:context: cross-site-operations-jmx
+= Performing cross-site operations via JMX
+Perform cross-site operations such as pushing state transfer and bringing sites online via JMX.
 
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_performing_jmx_operations.adoc[leveloffset=+1]
+include::{topics}/ref_jmx_xsite_components.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

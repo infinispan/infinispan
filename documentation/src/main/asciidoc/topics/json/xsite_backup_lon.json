@@ -1,0 +1,12 @@
+{
+  "distributed-cache": {
+    "name": "customers",
+    "backups": {
+      "LON": {
+        "backup": {
+          "strategy": "ASYNC"
+        }
+      }
+    }
+  }
+}

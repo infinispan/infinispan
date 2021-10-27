@@ -1,4 +1,4 @@
-[id='backup-strategies_{context}']
+[id='cross-site-backup-strategies_{context}']
 = Backup strategies
 
 {brandname} replicates data between clusters at the same time that writes to caches occur.
@@ -8,6 +8,7 @@ To back up data to a different cluster, {brandname} can use either a synchronous
 
 [discrete]
 == Synchronous strategy
+
 When {brandname} replicates data to backup locations, it writes to the cache on the local cluster and the cache on the remote cluster concurrently.
 With the synchronous strategy, {brandname} waits for both write operations to complete before returning.
 
@@ -29,6 +30,7 @@ Two-phase commit with cross-site replication has a significant performance impac
 
 [discrete]
 == Asynchronous strategy
+
 When {brandname} replicates data to backup locations, it does not wait until the operation completes before writing to the local cache.
 
 Asynchronous backup operations and writes to the local cache are independent of each other.
@@ -37,6 +39,7 @@ When this happens {brandname} also retries the write operation until the remote 
 
 [discrete]
 == Synchronous vs asynchronous backups
+
 Synchronous backups offer the strongest guarantee of data consistency across sites.
 If `strategy=sync`, when `cache.put()` calls return you know the value is up to date in the local cache and in the backup locations.
 

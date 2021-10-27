@@ -1,6 +1,7 @@
-[id='performing_jmx_operations-{context}']
-= Performing Cross-Site Operations
-Perform cross-site operations via JMX clients.
+[id='performing-cross-site-operations-jmx_{context}']
+= Performing cross-site operations with JMX clients
+
+Perform cross-site operations with JMX clients.
 
 .Prerequisites
 
@@ -16,10 +17,7 @@ Perform cross-site operations via JMX clients.
 +
 For example, to bring sites back online, invoke `bringSiteOnline(siteName)`.
 
-See the _{brandname} JMX Components_ documentation for details about available
-cross-site operations.
-
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/jmxComponents.html#XSiteAdmin[XSiteAdmin MBean]
 * link:{javadocroot}/jmxComponents.html#XSiteAdmin[GlobalXSiteAdminOperations MBean]
