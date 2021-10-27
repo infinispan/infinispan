@@ -29,6 +29,10 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       return this;
    }
 
+   public TestGlobalConfigurationBuilder testGlobalComponent(Class<?> componentClass, Object instance) {
+      return testGlobalComponent(componentClass.getName(), instance);
+   }
+
    public TestGlobalConfigurationBuilder testCacheComponent(String cacheName, String componentName, Object instance) {
       this.attributes.attribute(TestGlobalConfiguration.CACHE_TEST_COMPONENTS).get()
                      .computeIfAbsent(cacheName, name -> new HashMap<>())

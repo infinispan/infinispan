@@ -9,8 +9,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
-import org.infinispan.stats.impl.AbstractClusterStats;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.ClusterCacheStatsMBeanTest")
@@ -30,7 +28,7 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
       mBeanServer.setAttribute(clusterStats, new Attribute("StatisticsEnabled", true));
       assert (boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled");
 
-      long newStaleThreshold = AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD - 1;
+      long newStaleThreshold = 1000;
       mBeanServer.setAttribute(clusterStats, new Attribute("StaleStatsThreshold", newStaleThreshold));
       assertAttributeValue(mBeanServer, clusterStats, "StaleStatsThreshold", newStaleThreshold);
 
@@ -49,7 +47,7 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
       cache1.get("a2");
 
       //sleep so we pick up refreshed values after remove
-      TestingUtil.sleepThread(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 1000);
+      timeService.advance(newStaleThreshold + 1);
 
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageWriteTime", 0);
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageReadTime", 0);
