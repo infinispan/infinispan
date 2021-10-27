@@ -3,11 +3,14 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_FACTORY;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
+import static org.infinispan.commons.util.Util.getInstance;
+import static org.infinispan.commons.util.Util.loadClass;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +24,7 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -69,6 +73,17 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     */
    public RemoteCacheConfigurationBuilder nearCacheMaxEntries(int maxEntries) {
       attributes.attribute(NEAR_CACHE_MAX_ENTRIES).set(maxEntries);
+      return this;
+   }
+
+   /**
+    * Specifies a {@link NearCacheFactory} which is responsible for creating {@link org.infinispan.client.hotrod.near.NearCache} instances.
+    *
+    * @param factory a {@link NearCacheFactory}
+    * @return an instance of the builder
+    */
+   public RemoteCacheConfigurationBuilder nearCacheFactory(NearCacheFactory factory) {
+      attributes.attribute(NEAR_CACHE_FACTORY).set(factory);
       return this;
    }
 
@@ -162,6 +177,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       findCacheProperty(typed, ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX, v -> this.forceReturnValues(Boolean.parseBoolean(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX, v -> this.nearCacheMode(NearCacheMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_FACTORY_SUFFIX, v -> this.nearCacheFactory(getInstance(loadClass(v, builder.classLoader()))));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
 
       return builder;
