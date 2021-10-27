@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguratio
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER_CLASS;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_FACTORY;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
@@ -28,6 +29,7 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -93,6 +95,17 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     */
    public RemoteCacheConfigurationBuilder nearCacheUseBloomFilter(boolean enable) {
       attributes.attribute(NEAR_CACHE_BLOOM_FILTER).set(enable);
+      return this;
+   }
+
+   /**
+    * Specifies a {@link NearCacheFactory} which is responsible for creating {@link org.infinispan.client.hotrod.near.NearCache} instances.
+    *
+    * @param factory a {@link NearCacheFactory}
+    * @return an instance of the builder
+    */
+   public RemoteCacheConfigurationBuilder nearCacheFactory(NearCacheFactory factory) {
+      attributes.attribute(NEAR_CACHE_FACTORY).set(factory);
       return this;
    }
 
@@ -252,6 +265,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       findCacheProperty(typed, ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX, v -> this.forceReturnValues(Boolean.parseBoolean(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX, v -> this.nearCacheMode(NearCacheMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_BLOOM_FILTER_SUFFIX, v -> this.nearCacheUseBloomFilter(Boolean.parseBoolean(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_FACTORY_SUFFIX, v -> this.nearCacheFactory(getInstance(loadClass(v, builder.classLoader()))));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX, this::transactionManagerLookupClass);
       findCacheProperty(typed, ConfigurationProperties.CACHE_MARSHALLER, this::marshaller);
