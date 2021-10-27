@@ -13,6 +13,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -21,12 +24,12 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodMagicKeyGenerator;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.stats.impl.AbstractClusterStats;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.hotrod.HotRodStatsClusterTest")
 public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
+   ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected byte protocolVersion() {
@@ -42,6 +45,8 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       global.metrics().accurateSize(true);
+      global.addModule(TestGlobalConfigurationBuilder.class)
+            .testGlobalComponent(TimeService.class, timeService);
       return TestCacheManagerFactory.createClusteredCacheManager(global, hotRodCacheConfiguration());
    }
 
@@ -90,7 +95,7 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       assertEquals(stats2.get("globalRetrievals"), "1");
       assertEquals(stats2.get("globalRemoveMisses"), "1");
 
-      TestingUtil.sleepThread(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 2000);
+      timeService.advance(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 1);
 
       client1.remove(key1);
       assertKeyDoesNotExist(client1.get(key1, 0));
