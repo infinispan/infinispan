@@ -163,6 +163,10 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.eclipse.transformer</groupId>
+            <artifactId>org.eclipse.transformer.maven</artifactId>
+         </plugin>
       </plugins>
    </build>
 
