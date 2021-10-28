@@ -51,6 +51,11 @@ public class SerializationConfigUtil {
       if (props.isTargetStore() && majorVersion != Integer.parseInt(Version.getMajor())) {
          throw new CacheConfigurationException(String.format("The marshaller associated with Infinispan %d can only be specified for source stores.", majorVersion));
       }
+
+      if (majorVersion < 8 || majorVersion > Integer.parseInt(Version.getMajor())) {
+         throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
+      }
+
       switch (majorVersion) {
          case 8:
          case 9:
@@ -71,11 +76,8 @@ public class SerializationConfigUtil {
             }
             // Return the user marshaller so that PersistenceMarshaller object wrapping is avoided
             return pm.getUserMarshaller();
-         case 12:
-         case 13:
-            return props.isTargetStore() ? null : createPersistenceMarshaller(props);
          default:
-            throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
+            return props.isTargetStore() ? null : createPersistenceMarshaller(props);
       }
    }
 
