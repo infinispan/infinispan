@@ -1,6 +1,6 @@
 <distributed-cache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-fragment-13.0.xsd"
-                   xmlns="urn:infinispan:config:13.0" name="xcache" statistics="true">
+                   xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-fragment-14.0.xsd"
+                   xmlns="urn:infinispan:config:14.0" name="xcache" statistics="true">
    <encoding>
       <key media-type="application/x-protostream"/>
       <value media-type="application/x-protostream"/>
