@@ -1,15 +1,12 @@
 package org.infinispan.xsite;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -62,7 +59,6 @@ public class AsyncBackupRemoveTest extends AbstractTwoSitesTest {
 
    @Factory
    public Object[] factory() {
-//      };
       List<AsyncBackupRemoveTest> tests = new LinkedList<>();
       tests.add(new AsyncBackupRemoveTest().setLonConfigMode(ConfigMode.NON_TX).setNycConfigMode(ConfigMode.NON_TX));
       return tests.toArray();
@@ -118,21 +114,6 @@ public class AsyncBackupRemoveTest extends AbstractTwoSitesTest {
       return this;
    }
 
-   private ControlledTimeService replaceTimeService() {
-      ControlledTimeService timeService = new ControlledTimeService();
-      // Max idle requires all caches to show it as expired to be removed.
-      for (Cache<?, ?> c : caches(LON)) {
-         replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
-      }
-
-      for (Cache<?, ?> c : caches(NYC)) {
-         replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
-      }
-
-      return timeService;
-   }
-
-
    public void testMaxIdleWithRecentAccess() {
       Cache<Object, Object> mainSiteCache = cache(LON, 0);
       Cache<Object, Object> backupSiteCache = cache(NYC, 0);
@@ -149,16 +130,10 @@ public class AsyncBackupRemoveTest extends AbstractTwoSitesTest {
 
       eventuallyEquals(value, () -> backupSiteCache.get(key));
 
-      try {
-         Thread.sleep(5000);
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-      }
-
       assertNull(TestingUtil.extractComponent(cache(LON, 1), IracVersionGenerator.class).getTombstone(key));
+      assertNull(TestingUtil.extractComponent(mainSiteCache, IracVersionGenerator.class).getTombstone(key));
       assertNull(TestingUtil.extractComponent(cache(NYC, 1), IracVersionGenerator.class).getTombstone(key));
       assertNull(TestingUtil.extractComponent(backupSiteCache, IracVersionGenerator.class).getTombstone(key));
-      assertNull(TestingUtil.extractComponent(mainSiteCache, IracVersionGenerator.class).getTombstone(key));
    }
 
    private enum ConfigMode {

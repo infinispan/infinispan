@@ -24,8 +24,6 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Default implementation of {@link IracVersionGenerator}.
@@ -126,30 +124,14 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
       return tombstone.get(key);
    }
 
-   static final Log log = LogFactory.getLog(DefaultIracVersionGenerator.class);
-
    @Override
    public void removeTombstone(Object key, IracMetadata iracMetadata) {
-      if (iracMetadata == null) {
-         IracMetadata value = tombstone.get(key);
-         log.fatal("Can't remove tombstone as no iracMetadata, tombstone has: " + value);
-         if (value != null) {
-            System.currentTimeMillis();
-         }
-         return;
-      }
-
-      log.fatal("Maybe remove tombstone for key: " + key + " with metadata: " + iracMetadata);
-
-      tombstone.computeIfPresent(key, (k, v) -> {
-         if (v.equals(iracMetadata)) {
-            log.fatal("Removing Tombstone for: " + iracMetadata);
-            return null;
-         }
-         log.fatal("Tombstone value: " + v + " didn't match: " + iracMetadata);
-         return v;
-      });
+      // TODO: this seems wrong, but the backup local node doesn't have the iracMetadata
+//      if (iracMetadata == null) {
+//         return;
+//      }
 //      tombstone.remove(key, iracMetadata);
+      removeTombstone(key);
    }
 
    @Override

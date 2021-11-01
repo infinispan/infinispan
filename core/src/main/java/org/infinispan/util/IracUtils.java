@@ -72,10 +72,8 @@ public final class IracUtils {
          IracVersionGenerator versionGenerator, LogSupplier logSupplier) {
       final Object key = entry.getKey();
       assert metadata.iracMetadata() != null : "[IRAC] Metadata must not be null!";
-      if (entry.isRemoved()) {
-         logTombstoneAssociated(key, metadata.iracMetadata(), logSupplier);
-         versionGenerator.storeTombstone(key, metadata.iracMetadata());
-      } else {
+      // TODO: If the entry is removed don't register the tombstone
+      if (!entry.isRemoved()) {
          logIracMetadataAssociated(key, metadata.iracMetadata(), logSupplier);
          entry.setInternalMetadata(metadata);
          versionGenerator.removeTombstone(key);
