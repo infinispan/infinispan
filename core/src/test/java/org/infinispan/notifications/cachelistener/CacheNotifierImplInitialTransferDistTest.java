@@ -33,7 +33,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
@@ -670,7 +670,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
 
       doAnswer(invocation -> {
-         SegmentCompletionPublisher<?> publisher = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         SegmentPublisherSupplier<?> publisher = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
 
          return Mocks.blockingSegmentPublisherOnElement(publisher, checkPoint,
                n -> n.isSegmentComplete() && n.completedSegment() == segment);
@@ -681,7 +681,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
 
       doAnswer(invocation -> {
-         SegmentCompletionPublisher<?> result = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         SegmentPublisherSupplier<?> result = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
       }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
    }

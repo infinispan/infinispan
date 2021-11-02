@@ -49,7 +49,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
@@ -352,7 +352,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       }
       DeliveryGuarantee deliveryGuarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
       Publisher<R> publisherToSubscribeTo;
-      SegmentCompletionPublisher<R> publisher;
+      SegmentPublisherSupplier<R> publisher;
       if (toKeyFunction == null) {
          publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, invocationContext, includeLoader,
                deliveryGuarantee, distributedBatchSize, usedTransformer);
@@ -365,11 +365,11 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       if (segmentCompletionListener != null) {
          // Tracker relies on ordering that a segment completion occurs
          segmentTracker = new CompletionSegmentTracker<>(segmentCompletionListener);
-         publisherToSubscribeTo = Flowable.<SegmentCompletionPublisher.Notification<R>>fromPublisher(publisher::subscribeWithSegments)
+         publisherToSubscribeTo = Flowable.fromPublisher(publisher.publisherWithSegments())
                .mapOptional(segmentTracker);
       } else {
          segmentTracker = null;
-         publisherToSubscribeTo = publisher;
+         publisherToSubscribeTo = publisher.publisherWithoutSegments();
       }
 
       CloseableIterator<R> realIterator = Closeables.iterator(Flowable.fromPublisher(publisherToSubscribeTo)
@@ -401,7 +401,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     * we can guarantee to notify the user after all elements have been processed of which segments were completed.
     * All methods except for accept(int) are guaranteed to be called sequentially and in a safe manner.
     */
-   private class CompletionSegmentTracker<R> implements io.reactivex.rxjava3.functions.Function<SegmentCompletionPublisher.Notification<R>, Optional<? extends R>> {
+   private class CompletionSegmentTracker<R> implements io.reactivex.rxjava3.functions.Function<SegmentPublisherSupplier.Notification<R>, Optional<? extends R>> {
       private final Consumer<Supplier<PrimitiveIterator.OfInt>> listener;
       private final Map<R, IntSet> awaitingNotification;
       volatile IntSet completedSegments;
@@ -414,7 +414,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
 
       @Override
-      public Optional<R> apply(SegmentCompletionPublisher.Notification<R> r) throws Throwable {
+      public Optional<R> apply(SegmentPublisherSupplier.Notification<R> r) throws Throwable {
          if (r.isSegmentComplete()) {
             completedSegments.set(r.completedSegment());
             return Optional.empty();

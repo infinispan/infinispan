@@ -230,7 +230,7 @@ public class PublisherHandler {
       }
 
       void startProcessing(InitialPublisherCommand command) {
-         SegmentAwarePublisher<Object> sap;
+         SegmentAwarePublisherSupplier<Object> sap;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
                   command.isIncludeLoader(), command.getDeliveryGuarantee(), command.getTransformer());
@@ -239,7 +239,7 @@ public class PublisherHandler {
                   command.isIncludeLoader(), command.getDeliveryGuarantee(), command.getTransformer());
          }
 
-         Flowable.<SegmentAwarePublisher.NotificationWithLost<Object>>fromPublisher(sap::subscribeWithLostSegments)
+         Flowable.fromPublisher(sap.publisherWithLostSegments())
                .mapOptional(notification -> {
                   if (!notification.isValue()) {
                      if (notification.isSegmentComplete()) {
@@ -527,7 +527,7 @@ public class PublisherHandler {
 
       @Override
       void startProcessing(InitialPublisherCommand command) {
-         SegmentAwarePublisher<Object> sap;
+         SegmentAwarePublisherSupplier<Object> sap;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
                   command.isIncludeLoader(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
@@ -538,7 +538,7 @@ public class PublisherHandler {
 
          Function<Publisher<Object>, Publisher<Object>> functionToApply = command.getTransformer();
 
-         Flowable.<SegmentAwarePublisher.NotificationWithLost<Object>>fromPublisher(sap::subscribeWithLostSegments)
+         Flowable.fromPublisher(sap.publisherWithLostSegments())
                // This is a FULL backpressure operation that buffers values thus causes values to not immediately
                // be published
                .concatMap(notification -> {

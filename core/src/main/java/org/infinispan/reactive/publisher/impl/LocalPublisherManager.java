@@ -82,9 +82,9 @@ public interface LocalPublisherManager<K, V> {
     * @param <R> return value type
     * @return SegmentAwarePublisher that will publish the values when subscribed to along with segment completions and losses
     */
-   <R> SegmentAwarePublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<K>, ? extends Publisher<R>> transformer);
+   <R> SegmentAwarePublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
+                                                     Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                     Function<? super Publisher<K>, ? extends Publisher<R>> transformer);
 
    /**
     * Performs the given <b>transformer</b> on data in the cache that is local, resulting in a stream of values of
@@ -113,9 +113,9 @@ public interface LocalPublisherManager<K, V> {
     * @param <R> return value type
     * @return SegmentAwarePublisher that will publish the values when subscribed to along with segment completions and losses
     */
-   <R> SegmentAwarePublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer);
+   <R> SegmentAwarePublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
+                                                       Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                       Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer);
 
    /**
     * Method to invoke when a set of segments are being removed from this node. This way operations can be aware

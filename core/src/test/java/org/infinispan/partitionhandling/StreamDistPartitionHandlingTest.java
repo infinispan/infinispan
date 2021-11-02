@@ -26,7 +26,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -170,7 +170,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
 
       doAnswer(invocation -> {
-         SegmentCompletionPublisher<?> result = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         SegmentPublisherSupplier<?> result = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
       }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
    }
