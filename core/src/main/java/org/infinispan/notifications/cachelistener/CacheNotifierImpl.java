@@ -132,7 +132,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -1118,7 +1118,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    private CompletionStage<Void> handlePublisher(CompletionStage<Void> currentStage,
          Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
          UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
-      SegmentCompletionPublisher<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
+      SegmentPublisherSupplier<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
             null, null, null, true,
             // TODO: do we really need EXACTLY_ONCE? AT_LEAST_ONCE should be fine I think
             DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
@@ -1127,7 +1127,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       Completable delayCompletable = Completable.defer(() -> Completable.fromCompletionStage(handler.delayProcessing()));
 
       currentStage = currentStage.thenCompose(ignore ->
-            Flowable.<SegmentCompletionPublisher.Notification<CacheEntry<K, V>>>fromPublisher(publisher::subscribeWithSegments)
+            Flowable.fromPublisher(publisher.publisherWithSegments())
                   .startWith(delayCompletable)
                   .mapOptional(handler)
                   .flatMapCompletable(ice -> Completable.fromCompletionStage(

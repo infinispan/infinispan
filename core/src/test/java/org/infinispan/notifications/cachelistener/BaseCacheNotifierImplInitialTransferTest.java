@@ -57,7 +57,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
-import org.infinispan.reactive.publisher.impl.DefaultSegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.DefaultSegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -541,8 +541,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
    }
 
-   private DefaultSegmentCompletionPublisher<CacheEntry<String, String>> wrapCompletionPublisher(
+   private DefaultSegmentPublisherSupplier<CacheEntry<String, String>> wrapCompletionPublisher(
          Flowable<CacheEntry<String, String>> flowable) {
-      return flowable::subscribe;
+      return () -> flowable;
    }
 }

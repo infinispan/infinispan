@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.reactivex.rxjava3.functions.Function;
@@ -19,7 +19,7 @@ import io.reactivex.rxjava3.functions.Function;
  * @author wburns
  * @since 7.0
  */
-public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Function<SegmentCompletionPublisher.Notification<CacheEntry<K, V>>, Optional<? extends CacheEntry<K, V>>> {
+public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Function<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>, Optional<? extends CacheEntry<K, V>>> {
    // This is to be used as a placeholder when a value has been iterated and now is being processed by the caller
    // This is considered to be the completed state for the key and should never change from this
    static final Object NOTIFIED = new Object();
@@ -39,7 +39,7 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Fu
     * @return an Optional with a value if it is should be processed
     */
    @Override
-   Optional<CacheEntry<K, V>> apply(SegmentCompletionPublisher.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable;
+   Optional<CacheEntry<K, V>> apply(SegmentPublisherSupplier.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable;
 
    /**
     * This method is to be called just before marking the transfer as complete and after all keys have been manually

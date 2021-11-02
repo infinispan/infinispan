@@ -6,19 +6,19 @@ public class Notifications {
    private Notifications() {
    }
 
-   public static <R> SegmentAwarePublisher.NotificationWithLost<R> value(R value) {
+   public static <R> SegmentAwarePublisherSupplier.NotificationWithLost<R> value(R value) {
       return new ValueNotification<>(value);
    }
 
-   public static <R> SegmentAwarePublisher.NotificationWithLost<R> segmentComplete(int segment) {
+   public static <R> SegmentAwarePublisherSupplier.NotificationWithLost<R> segmentComplete(int segment) {
       return new SegmentNotification<>(segment, true);
    }
 
-   public static <R> SegmentAwarePublisher.NotificationWithLost<R> segmentLost(int segment) {
+   public static <R> SegmentAwarePublisherSupplier.NotificationWithLost<R> segmentLost(int segment) {
       return new SegmentNotification<>(segment, false);
    }
 
-   private static class SegmentNotification<R> implements SegmentAwarePublisher.NotificationWithLost<R> {
+   private static class SegmentNotification<R> implements SegmentAwarePublisherSupplier.NotificationWithLost<R> {
       private final int segment;
       private final boolean complete;
 
@@ -85,7 +85,7 @@ public class Notifications {
       }
    }
 
-   private static class ValueNotification<R> implements SegmentAwarePublisher.NotificationWithLost<R> {
+   private static class ValueNotification<R> implements SegmentAwarePublisherSupplier.NotificationWithLost<R> {
       private final R value;
 
       public ValueNotification(R value) {
