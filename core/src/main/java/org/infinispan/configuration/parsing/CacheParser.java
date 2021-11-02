@@ -1412,22 +1412,22 @@ public class CacheParser implements ConfigurationParser {
    }
 
    protected void parseFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      SoftIndexFileStoreConfigurationBuilder sifsBuilder = null;
+      SoftIndexFileStoreConfigurationBuilder fileStoreBuilder = null;
 
       PersistenceConfigurationBuilder persistence = holder.getCurrentConfigurationBuilder().persistence();
       AbstractStoreConfigurationBuilder<?, ?> actualStoreConfig;
       int majorSchema = reader.getSchema().getMajor();
-      boolean isVersion13 = false;
+      boolean legacyFileStore = false;
       if (majorSchema < 13) {
          parseSingleFileStore(reader, holder);
          return;
       } else if (majorSchema == 13) {
-         sifsBuilder = persistence.addStore(SFSToSIFSConfigurationBuilder.class);
-         actualStoreConfig = sifsBuilder;
-         isVersion13 = true;
+         fileStoreBuilder = persistence.addStore(SFSToSIFSConfigurationBuilder.class);
+         actualStoreConfig = fileStoreBuilder;
+         legacyFileStore = true;
       } else {
-         sifsBuilder = persistence.addSoftIndexFileStore();
-         actualStoreConfig = sifsBuilder;
+         fileStoreBuilder = persistence.addSoftIndexFileStore();
+         actualStoreConfig = fileStoreBuilder;
       }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -1440,23 +1440,13 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case PATH: {
-               if (isVersion13) {
-                  sifsBuilder.dataLocation(value);
-               } else {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
+               fileStoreBuilder.dataLocation(value);
+               fileStoreBuilder.indexLocation(value);
                break;
             }
+            case FRAGMENTATION_FACTOR:
             case MAX_ENTRIES: {
-               if (isVersion13) {
-                  ignoreAttribute(reader, i);
-               } else {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
-               break;
-            }
-            case FRAGMENTATION_FACTOR: {
-               if (isVersion13) {
+               if (legacyFileStore) {
                   ignoreAttribute(reader, i);
                } else {
                   throw ParseUtils.attributeRemoved(reader, i);
@@ -1464,15 +1454,15 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case OPEN_FILES_LIMIT:
-               if (sifsBuilder != null) {
-                  sifsBuilder.openFilesLimit(Integer.parseInt(value));
+               if (fileStoreBuilder != null) {
+                  fileStoreBuilder.openFilesLimit(Integer.parseInt(value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
                break;
             case COMPACTION_THRESHOLD:
-               if (sifsBuilder != null) {
-                  sifsBuilder.compactionThreshold(Double.parseDouble(value));
+               if (fileStoreBuilder != null) {
+                  fileStoreBuilder.compactionThreshold(Double.parseDouble(value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -1490,15 +1480,15 @@ public class CacheParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case DATA:
-               if (sifsBuilder != null) {
-                  parseData(reader, sifsBuilder);
+               if (fileStoreBuilder != null) {
+                  parseData(reader, fileStoreBuilder);
                } else {
                   throw ParseUtils.unexpectedElement(reader);
                }
                break;
             case INDEX:
-               if (sifsBuilder != null) {
-                  parseIndex(reader, sifsBuilder);
+               if (fileStoreBuilder != null) {
+                  parseIndex(reader, fileStoreBuilder);
                } else {
                   throw ParseUtils.unexpectedElement(reader);
                }
