@@ -129,7 +129,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).allMatch(e -> e.getValue().endsWith("-value")));
@@ -144,7 +143,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).anyMatch(e -> e.getValue().endsWith("-value")));
@@ -160,7 +158,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(4.5, createStream(entrySet).collect(
@@ -173,7 +170,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       IntSummaryStatistics stats = createStream(entrySet).collect(
@@ -191,7 +187,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       ConcurrentMap<Boolean, List<Map.Entry<Integer, String>>> grouped = createStream(entrySet).collect(
@@ -206,7 +201,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).collect(ArrayList::new,
@@ -221,7 +215,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).sorted(
@@ -241,7 +234,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(range, createStream(entrySet).count());
@@ -253,7 +245,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).findAny().isPresent());
@@ -270,7 +261,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).sorted(
@@ -421,7 +411,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Queue<String> queue = new ConcurrentLinkedQueue<>();
@@ -451,7 +440,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Map.Entry<Integer, String>> list = new ArrayList<>(range);
@@ -471,7 +459,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(Integer.valueOf(9),
@@ -484,7 +471,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(Integer.valueOf(0),
@@ -497,7 +483,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertFalse(createStream(entrySet).noneMatch(e -> e.getValue().endsWith("-value")));
@@ -513,7 +498,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -531,7 +515,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -547,7 +530,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -561,7 +543,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -589,7 +570,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
@@ -607,7 +587,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Iterator<String> iterator = createStream(entrySet).map(Map.Entry::getValue).iterator();
@@ -636,7 +615,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          log.tracef("Keys by segment are: " + keysBySegment);
       }
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       StringJoiner stringJoiner = new StringJoiner(" ");
@@ -676,7 +654,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Object[] array = createStream(entrySet).toArray();
@@ -692,7 +669,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Map.Entry<Integer, String>[] array = createStream(entrySet).toArray(Map.Entry[]::new);
@@ -708,7 +684,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       for (int i = 0; i < range; ++i) {
@@ -729,7 +704,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       for (int i = 1; i < range; ++i) {
@@ -750,7 +724,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       IntSummaryStatistics stats = createStream(entrySet).sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()))
@@ -771,7 +744,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertFalse(createStream(entrySet).mapToInt(toInt).allMatch(i -> i % 2 == 0));
@@ -785,7 +757,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToInt(toInt).anyMatch(i -> i % 2 == 0));
@@ -799,7 +770,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(4.5, createStream(entrySet).mapToInt(toInt).average().getAsDouble());
@@ -811,7 +781,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       HashSet<Integer> set = createStream(entrySet).mapToInt(toInt).collect(HashSet::new, Set::add, Set::addAll);
@@ -825,7 +794,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(10, createStream(entrySet).mapToInt(toInt).count());
@@ -837,7 +805,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToInt(toInt).findAny().isPresent());
@@ -852,7 +819,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).mapToInt(toInt).sorted().findFirst().getAsInt());
@@ -881,7 +847,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new AtomicInteger());
@@ -905,7 +870,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Integer> list = new ArrayList<>(range);
@@ -966,7 +930,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
 
       assertEquals((range - 1) * (range / 2), intSupplier.get().intValue());
    }
@@ -1016,7 +979,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new AtomicInteger());
@@ -1054,7 +1016,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfInt iterator = createStream(entrySet).mapToInt(toInt).sorted().iterator();
@@ -1068,7 +1029,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfInt iterator = createStream(entrySet).flatMapToInt(
@@ -1094,7 +1054,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -1109,7 +1068,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
@@ -1124,7 +1082,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
@@ -1140,7 +1097,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       IntSummaryStatistics statistics = createStream(entrySet).mapToInt(toInt).summaryStatistics();
@@ -1157,7 +1113,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       int[] array = createStream(entrySet).mapToInt(toInt).toArray();
@@ -1172,7 +1127,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -1186,7 +1140,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(9, createStream(entrySet).mapToInt(toInt).max().getAsInt());
@@ -1198,7 +1151,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).mapToInt(toInt).min().getAsInt());
@@ -1249,7 +1201,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertFalse(createStream(entrySet).mapToLong(toLong).allMatch(i -> i % 2 == 0));
@@ -1263,7 +1214,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToLong(toLong).anyMatch(i -> i % 2 == 0));
@@ -1277,7 +1227,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertEquals(4.5, createStream(entrySet).mapToLong(toLong).average().getAsDouble());
@@ -1289,7 +1238,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       HashSet<Long> set = createStream(entrySet).mapToLong(toLong).collect(HashSet::new, Set::add, Set::addAll);
@@ -1302,7 +1250,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertEquals(10, createStream(entrySet).mapToLong(toLong).count());
@@ -1314,7 +1261,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToLong(toLong).findAny().isPresent());
@@ -1329,7 +1275,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).mapToLong(toLong).sorted().findFirst().getAsLong());
@@ -1359,7 +1304,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new AtomicLong());
@@ -1382,7 +1326,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       List<Long> list = new ArrayList<>(range);
@@ -1443,7 +1386,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
 
       assertEquals((range - 1) * (range / 2), longSupplier.get().longValue());
    }
@@ -1493,7 +1435,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new AtomicLong());
@@ -1531,7 +1472,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfLong iterator = createStream(entrySet).mapToLong(toLong).sorted().iterator();
@@ -1545,7 +1485,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfLong iterator = createStream(entrySet).flatMapToLong(
@@ -1571,7 +1510,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -1586,7 +1524,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
@@ -1601,7 +1538,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
@@ -1617,7 +1553,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       LongSummaryStatistics statistics = createStream(entrySet).mapToLong(toLong).summaryStatistics();
@@ -1634,7 +1569,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       long[] array = createStream(entrySet).mapToLong(toLong).toArray();
@@ -1649,7 +1583,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -1663,7 +1596,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertEquals(9, createStream(entrySet).mapToLong(toLong).max().getAsLong());
@@ -1675,7 +1607,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).mapToLong(toLong).min().getAsLong());
@@ -1725,7 +1656,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i % 2 == 0));
@@ -1740,7 +1670,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(i -> i % 2 == 0));
@@ -1755,7 +1684,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(2.25, createStream(entrySet).mapToDouble(toDouble).average().getAsDouble());
@@ -1767,7 +1695,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       HashSet<Double> set = createStream(entrySet).mapToDouble(toDouble).collect(HashSet::new,
@@ -1781,7 +1708,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(10, createStream(entrySet).mapToDouble(toDouble).count());
@@ -1793,7 +1719,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToDouble(toDouble).findAny().isPresent());
@@ -1808,7 +1733,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).sorted().findFirst().getAsDouble());
@@ -1839,7 +1763,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
@@ -1868,7 +1791,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       List<Double> list = new ArrayList<>(range);
@@ -1932,7 +1854,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
 
       DoubleSummaryStatistics stats = statisticsSupplier.get();
       assertEquals(2.25, stats.getAverage());
@@ -1991,7 +1912,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
@@ -2034,7 +1954,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfDouble iterator = createStream(entrySet).mapToDouble(toDouble).sorted().iterator();
@@ -2048,7 +1967,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfDouble iterator = createStream(entrySet).flatMapToDouble(
@@ -2074,7 +1992,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -2089,7 +2006,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // One value is 0.0 so multiplying them together should be 0.0
@@ -2105,7 +2021,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // One value is 0.0 so multiplying them together should be 0.0
@@ -2126,7 +2041,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       double[] array = createStream(entrySet).mapToDouble(toDouble).toArray();
@@ -2141,7 +2055,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
@@ -2155,7 +2068,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(4.5, createStream(entrySet).mapToDouble(toDouble).max().getAsDouble());
@@ -2167,7 +2079,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).min().getAsDouble());
@@ -2214,7 +2125,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Integer> keySet = cache.keySet();
 
       assertEquals(9, createStream(keySet).max(Integer::compare).get().intValue());
@@ -2226,7 +2136,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Integer> keySet = cache.keySet();
 
       Iterator<Integer> iterator = createStream(keySet).iterator();
@@ -2244,7 +2153,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Integer> keySet = cache.keySet();
 
       Iterator<String> iterator = createStream(keySet).map(i -> i + "-value").iterator();
@@ -2263,7 +2171,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Integer> keySet = cache.keySet();
 
       PrimitiveIterator.OfInt iterator = createStream(keySet).flatMapToInt(
@@ -2289,7 +2196,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheCollection<String> keySet = cache.values();
 
       assertEquals("9-value",
@@ -2316,7 +2222,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheCollection<String> values = cache.values();
 
       Iterator<String> iterator = createStream(values).iterator();
@@ -2335,7 +2240,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheCollection<String> values = cache.values();
 
       PrimitiveIterator.OfInt iterator = createStream(values).mapToInt(
@@ -2355,7 +2259,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheCollection<String> values = cache.values();
 
       PrimitiveIterator.OfInt iterator = createStream(values).flatMapToInt(
@@ -2381,7 +2284,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // Take the first half of the segments
@@ -2405,7 +2307,6 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
 
-      assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Set<Integer> keys = IntStream.of(2, 5, 8, 3, 1, range + 2).boxed().collect(Collectors.toSet());
