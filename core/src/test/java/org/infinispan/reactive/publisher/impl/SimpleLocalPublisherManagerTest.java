@@ -78,7 +78,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
 
       LocalPublisherManager<Integer, String> lpm = lpm(cache);
       IntSet allSegments = IntSets.immutableRangeSet(SEGMENT_COUNT);
-      SegmentAwarePublisher<?> publisher;
+      SegmentAwarePublisherSupplier<?> publisher;
       Consumer<Object> assertConsumer;
       if (isEntry) {
          publisher = lpm.keyPublisher(allSegments, null, null, false,
@@ -99,7 +99,9 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
 
       int expected = SimpleClusterPublisherManagerTest.findHowManyInSegments(inserted.size(), localSegments, TestingUtil.extractComponent(cache, KeyPartitioner.class));
 
-      Set<Object> results = Flowable.fromPublisher(publisher).collectInto(new HashSet<>(), HashSet::add).blockingGet();
+      Set<Object> results = Flowable.fromPublisher(publisher.publisherWithoutSegments())
+            .collectInto(new HashSet<>(), HashSet::add)
+            .blockingGet();
       assertEquals(expected, results.size());
 
       results.forEach(assertConsumer);

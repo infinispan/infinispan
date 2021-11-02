@@ -56,7 +56,7 @@ public interface ClusterPublisherManager<K, V> {
     * @param <R> return value type
     * @return Publisher that when subscribed to will return the results and notify of segment completion if necessary
     */
-   <R> SegmentCompletionPublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext,
+   <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext,
          boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<K>, ? extends Publisher<R>> transformer);
 
@@ -76,7 +76,7 @@ public interface ClusterPublisherManager<K, V> {
     * @param <R> return value type
     * @return Publisher that when subscribed to will return the results and notify of segment completion if necessary
     */
-   <R> SegmentCompletionPublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext,
+   <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext,
          boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer);
 }

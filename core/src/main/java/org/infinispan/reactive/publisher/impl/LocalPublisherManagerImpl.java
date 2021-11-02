@@ -46,7 +46,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableConverter;
@@ -191,16 +190,16 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    @Override
-   public <R> SegmentAwarePublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+   public <R> SegmentAwarePublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
+                                                            Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                            Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
          AdvancedCache<K, V> cache = getCache(deliveryGuarantee, includeLoader);
          return specificKeyPublisher(segments, keysToInclude, keyFlowable -> keyFlowable.filter(cache::containsKey),
                transformer);
       }
-      return new SegmentAwarePublisherImpl<>(segments, getKeySet(includeLoader), Function.identity(),
-            keysToExclude, deliveryGuarantee, transformer);
+      return new SegmentAwarePublisherSupplierImpl<>(segments, getKeySet(includeLoader), Function.identity(),
+                                                     keysToExclude, deliveryGuarantee, transformer);
    }
 
    private Flowable<CacheEntry<K, V>> filterEntries(AdvancedCache<K, V> cacheToUse, Flowable<K> entryFlowable) {
@@ -220,23 +219,23 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    @Override
-   public <R> SegmentAwarePublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+   public <R> SegmentAwarePublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
+                                                              Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                              Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
          AdvancedCache<K, V> cacheToUse = getCache(deliveryGuarantee, includeLoader);
          return specificKeyPublisher(segments, keysToInclude, entryFlowable ->
                      filterEntries(cacheToUse, entryFlowable)
                , transformer);
       }
-      return new SegmentAwarePublisherImpl<>(segments, getEntrySet(includeLoader),
-            StreamMarshalling.entryToKeyFunction(), keysToExclude, deliveryGuarantee, transformer);
+      return new SegmentAwarePublisherSupplierImpl<>(segments, getEntrySet(includeLoader),
+                                                     StreamMarshalling.entryToKeyFunction(), keysToExclude, deliveryGuarantee, transformer);
    }
 
-   private <I, R> SegmentAwarePublisher<R> specificKeyPublisher(IntSet segments, Set<K> keysToInclude,
-         FlowableConverter<K, Flowable<I>> conversionFunction,
-         Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-      return new BaseSegmentAwarePublisher<R>() {
+   private <I, R> SegmentAwarePublisherSupplier<R> specificKeyPublisher(IntSet segments, Set<K> keysToInclude,
+                                                                        FlowableConverter<K, Flowable<I>> conversionFunction,
+                                                                        Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      return new BaseSegmentAwarePublisherSupplier<R>() {
          private Publisher<R> actualPublisherValues() {
             return Flowable.fromIterable(keysToInclude)
                   .to(conversionFunction)
@@ -244,8 +243,8 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          }
 
          @Override
-         public void subscribe(Subscriber<? super R> s) {
-            actualPublisherValues().subscribe(s);
+         public Publisher<R> publisherWithoutSegments() {
+            return actualPublisherValues();
          }
 
          @Override
@@ -257,32 +256,31 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       };
    }
 
-   private abstract static class BaseSegmentAwarePublisher<R> implements SegmentAwarePublisher<R> {
+   private abstract static class BaseSegmentAwarePublisherSupplier<R> implements SegmentAwarePublisherSupplier<R> {
       @Override
-      public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
-         flowableWithNotifications().filter(notification -> !notification.isLostSegment())
-               .map(n -> (Notification<R>) n)
-               .subscribe(subscriber);
+      public Publisher<Notification<R>> publisherWithSegments() {
+         return flowableWithNotifications().filter(notification -> !notification.isLostSegment())
+                                           .map(n -> n);
       }
 
       @Override
-      public void subscribeWithLostSegments(Subscriber<? super NotificationWithLost<R>> subscriber) {
-         flowableWithNotifications().subscribe(subscriber);
+      public Publisher<NotificationWithLost<R>> publisherWithLostSegments() {
+         return flowableWithNotifications();
       }
 
       abstract Flowable<NotificationWithLost<R>> flowableWithNotifications();
    }
 
-   private class SegmentAwarePublisherImpl<I, R> extends BaseSegmentAwarePublisher<R> {
+   private class SegmentAwarePublisherSupplierImpl<I, R> extends BaseSegmentAwarePublisherSupplier<R> {
       private final IntSet segments;
       private final CacheSet<I> set;
       private final Predicate<? super I> predicate;
       private final DeliveryGuarantee deliveryGuarantee;
       private final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
 
-      private SegmentAwarePublisherImpl(IntSet segments, CacheSet<I> set,
-            Function<? super I, K> toKeyFunction, Set<K> keysToExclude, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      private SegmentAwarePublisherSupplierImpl(IntSet segments, CacheSet<I> set, Function<? super I, K> toKeyFunction,
+                                                Set<K> keysToExclude, DeliveryGuarantee deliveryGuarantee,
+                                                Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          this.segments = segments;
          this.set = set;
          this.predicate = keysToExclude != null ? v -> !keysToExclude.contains(toKeyFunction.apply(v)) : null;
@@ -291,15 +289,15 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
 
       @Override
-      public void subscribe(Subscriber<? super R> s) {
-         Flowable.fromIterable(segments).concatMap(segment -> {
+      public Publisher<R> publisherWithoutSegments() {
+         return Flowable.fromIterable(segments).concatMap(segment -> {
             Publisher<I> publisher = set.localPublisher(segment);
             if (predicate != null) {
                publisher = Flowable.fromPublisher(publisher)
                      .filter(predicate);
             }
             return transformer.apply(publisher);
-         }).subscribe(s);
+         });
       }
 
       Flowable<NotificationWithLost<R>> flowableWithNotifications() {

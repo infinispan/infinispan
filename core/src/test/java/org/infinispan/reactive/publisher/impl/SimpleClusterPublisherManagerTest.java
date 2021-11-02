@@ -282,7 +282,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    private <I> void performPublisherOperation(DeliveryGuarantee deliveryGuarantee, boolean isEntry, IntSet segments,
          Set<Integer> keys, InvocationContext context, Map<Integer, String> expectedValues) {
       ClusterPublisherManager<Integer, String> cpm = cpm(cache(0));
-      SegmentCompletionPublisher<?> publisher;
+      SegmentPublisherSupplier<?> publisher;
       Consumer<Object> assertConsumer;
       if (isEntry) {
          publisher = cpm.entryPublisher(segments, keys, context, false,
@@ -299,7 +299,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       }
 
       int expectedSize = expectedValues.size();
-      List<?> results = Flowable.fromPublisher(publisher).toList(expectedSize).blockingGet();
+      List<?> results = Flowable.fromPublisher(publisher.publisherWithoutSegments()).toList(expectedSize).blockingGet();
       if (expectedSize != results.size()) {
          log.fatal("SIZE MISMATCH expected: " + expectedValues + " was: " + results);
       }
@@ -375,7 +375,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       Map<Integer, String> values = insert(cache);
 
       List<String> mappedValues;
-      SegmentCompletionPublisher<String> publisher;
+      SegmentPublisherSupplier<String> publisher;
       if (isEntry) {
          mappedValues = values.entrySet().stream().map(Map.Entry::getValue).map(String::valueOf).collect(Collectors.toList());
          publisher = cpm.entryPublisher(null, null, null, false,
@@ -389,7 +389,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
                (SerializableFunction<Publisher<Integer>, Publisher<String>>) entryPublisher ->
                      Flowable.fromPublisher(entryPublisher).map(String::valueOf));
       }
-      performFunctionPublisherOperation(publisher, mappedValues);
+      performFunctionPublisherOperation(publisher.publisherWithoutSegments(), mappedValues);
    }
 
    @Test(dataProvider = "GuaranteeEntry")
@@ -400,22 +400,22 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    private <I, R> void performSegmentPublisherOperation(DeliveryGuarantee deliveryGuarantee, boolean isEntry, IntSet segments,
          Set<Integer> keys, InvocationContext context, Map<Integer, String> expectedValues) throws InterruptedException {
       ClusterPublisherManager<Integer, String> cpm = cpm(cache(0));
-      SegmentCompletionPublisher<R> publisher;
+      SegmentPublisherSupplier<R> publisher;
       if (isEntry) {
-         publisher = (SegmentCompletionPublisher) cpm.entryPublisher(segments, keys, context, false,
+         publisher = (SegmentPublisherSupplier) cpm.entryPublisher(segments, keys, context, false,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
       } else {
-         publisher = (SegmentCompletionPublisher) cpm.keyPublisher(segments, keys, context, false,
+         publisher = (SegmentPublisherSupplier) cpm.keyPublisher(segments, keys, context, false,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
       }
 
       IntSet mutableIntSet = IntSets.concurrentSet(10);
-      TestSubscriber<SegmentCompletionPublisher.Notification<R>> testSubscriber = TestSubscriber.create();
-      publisher.subscribeWithSegments(testSubscriber);
+      TestSubscriber<SegmentPublisherSupplier.Notification<R>> testSubscriber = TestSubscriber.create();
+      publisher.publisherWithSegments().subscribe(testSubscriber);
 
       testSubscriber.await(10, TimeUnit.SECONDS);
 
-      for (SegmentCompletionPublisher.Notification<R> notification : testSubscriber.values()) {
+      for (SegmentPublisherSupplier.Notification<R> notification : testSubscriber.values()) {
          if (notification.isSegmentComplete()) {
             mutableIntSet.set(notification.completedSegment());
          }

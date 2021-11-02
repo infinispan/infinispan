@@ -20,7 +20,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
@@ -131,7 +130,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
+   public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          int batchSize, Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (transformer instanceof InjectableComponent) {
@@ -141,34 +140,30 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          return localPublisherManager.keyPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
                DeliveryGuarantee.AT_MOST_ONCE, transformer);
       }
-      SegmentCompletionPublisher<R> cachePublisher = localPublisherManager.keyPublisher(handleNullSegments(segments),
+      SegmentPublisherSupplier<R> cachePublisher = localPublisherManager.keyPublisher(handleNullSegments(segments),
             keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       Flowable<K> keyFlowable = keyPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude);
 
-      return new SegmentCompletionPublisher<R>() {
+      return new SegmentPublisherSupplier<R>() {
          @Override
-         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
-            Publisher<Notification<R>> cacheData = cachePublisher::subscribeWithSegments;
-            Flowable.concat(
-                        Flowable.fromPublisher(transformer.apply(keyFlowable))
-                              .map(Notifications::value),
-                        cacheData)
-                  .subscribe(subscriber);
+         public Publisher<Notification<R>> publisherWithSegments() {
+            Publisher<Notification<R>> cacheData = cachePublisher.publisherWithSegments();
+            return Flowable.concat(Flowable.fromPublisher(transformer.apply(keyFlowable))
+                                           .map(Notifications::value),
+                                   cacheData);
          }
 
          @Override
-         public void subscribe(Subscriber<? super R> s) {
-            Flowable.concat(
-                        transformer.apply(keyFlowable),
-                        cachePublisher)
-                  .subscribe(s);
+         public Publisher<R> publisherWithoutSegments() {
+            return Flowable.concat(transformer.apply(keyFlowable),
+                                   cachePublisher.publisherWithoutSegments());
          }
       };
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
+   public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       if (transformer instanceof InjectableComponent) {
@@ -178,29 +173,25 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          return localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
                DeliveryGuarantee.AT_MOST_ONCE, transformer);
       }
-      SegmentCompletionPublisher<R> cachePublisher = localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null,
+      SegmentPublisherSupplier<R> cachePublisher = localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null,
             includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
             keysToInclude);
 
-      return new SegmentCompletionPublisher<R>() {
+      return new SegmentPublisherSupplier<R>() {
          @Override
-         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
-            Publisher<Notification<R>> cacheData = cachePublisher::subscribeWithSegments;
-            Flowable.concat(
-                        Flowable.fromPublisher(transformer.apply(entryFlowable))
-                              .map(Notifications::value),
-                        cacheData)
-                  .subscribe(subscriber);
+         public Publisher<Notification<R>> publisherWithSegments() {
+            Publisher<Notification<R>> cacheData = cachePublisher.publisherWithSegments();
+            return Flowable.concat(Flowable.fromPublisher(transformer.apply(entryFlowable))
+                                           .map(Notifications::value),
+                                   cacheData);
          }
 
          @Override
-         public void subscribe(Subscriber<? super R> s) {
-            Flowable.concat(
-                        transformer.apply(entryFlowable),
-                        cachePublisher)
-                  .subscribe(s);
+         public Publisher<R> publisherWithoutSegments() {
+            return Flowable.concat(transformer.apply(entryFlowable),
+                                   cachePublisher.publisherWithoutSegments());
          }
       };
    }

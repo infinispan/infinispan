@@ -17,7 +17,7 @@ import org.reactivestreams.Subscriber;
  * implementors to optimize for the case when segment completion is not needed as this may require additional overhead.
  * @param <R> value type
  */
-public interface SegmentCompletionPublisher<R> extends Publisher<R> {
+public interface SegmentPublisherSupplier<R> {
    /**
     * Wrapper around an element returned that can either be a value or a segment completion. Note that the user
     * should invoke {@link #isSegmentComplete()} or {@link #isValue()} to determine which type it is.
@@ -56,11 +56,7 @@ public interface SegmentCompletionPublisher<R> extends Publisher<R> {
       int completedSegment();
    }
 
-   /**
-    * Same as {@link org.reactivestreams.Publisher#subscribe(Subscriber)}, except that we also can notify a listener
-    * when a segment has published all of its entries
-    *
-    * @param subscriber subscriber to be notified of values and segment completion
-    */
-   void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber);
+   Publisher<R> publisherWithoutSegments();
+
+   Publisher<Notification<R>> publisherWithSegments();
 }

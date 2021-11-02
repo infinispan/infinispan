@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 
@@ -21,7 +21,7 @@ import org.infinispan.util.logging.Log;
  * appropriate methods at the given time.
  * <p>
  * This base class provides a working set for tracking of entries as they are iterated on, assuming
- * the {@link QueueingSegmentListener#test(SegmentCompletionPublisher.Notification)}
+ * the {@link QueueingSegmentListener#test(SegmentPublisherSupplier.Notification)}
  * method is invoked for each event serially (includes both segment and entries).  Also this class provides the events
  * that caused entry creations that may not be processed yet that are returned by the
  * {@link QueueingSegmentListener#findCreatedEntries()} method.
@@ -38,7 +38,7 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    }
 
    @Override
-   public Optional<CacheEntry<K, V>> apply(SegmentCompletionPublisher.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable {
+   public Optional<CacheEntry<K, V>> apply(SegmentPublisherSupplier.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable {
       if (cacheEntryNotification.isValue()) {
          CacheEntry<K, V> cacheEntry = cacheEntryNotification.value();
          K key = cacheEntry.getKey();

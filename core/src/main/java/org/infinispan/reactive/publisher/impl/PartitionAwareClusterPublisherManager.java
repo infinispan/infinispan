@@ -22,10 +22,8 @@ import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEv
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 
 /**
@@ -109,60 +107,52 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
+   public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
-      SegmentCompletionPublisher<R> original = super.keyPublisher(segments, keysToInclude, invocationContext,
+      SegmentPublisherSupplier<R> original = super.keyPublisher(segments, keysToInclude, invocationContext,
             includeLoader, deliveryGuarantee, batchSize, transformer);
       return registerPublisher(original);
    }
 
    @Override
-   public <R> SegmentCompletionPublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
+   public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
-      SegmentCompletionPublisher<R> original = super.entryPublisher(segments, keysToInclude, invocationContext,
+      SegmentPublisherSupplier<R> original = super.entryPublisher(segments, keysToInclude, invocationContext,
             includeLoader, deliveryGuarantee, batchSize, transformer);
       return registerPublisher(original);
    }
 
-   private <R> SegmentCompletionPublisher<R> registerPublisher(SegmentCompletionPublisher<R> original) {
-      return new SegmentCompletionPublisher<R>() {
+   private <R> SegmentPublisherSupplier<R> registerPublisher(SegmentPublisherSupplier<R> original) {
+      return new SegmentPublisherSupplier<R>() {
          @Override
-         public void subscribeWithSegments(Subscriber<? super Notification<R>> subscriber) {
-            handleEarlyTermination(subscriber, scp -> Flowable.<Notification<R>>fromPublisher(scp::subscribeWithSegments));
+         public Publisher<Notification<R>> publisherWithSegments() {
+            return handleEarlyTermination(SegmentPublisherSupplier::publisherWithSegments);
          }
 
          @Override
-         public void subscribe(Subscriber<? super R> subscriber) {
-            handleEarlyTermination(subscriber, Flowable::fromPublisher);
+         public Publisher<R> publisherWithoutSegments() {
+            return handleEarlyTermination(SegmentPublisherSupplier::publisherWithoutSegments);
          }
 
-         private <S> void handleEarlyTermination(Subscriber<? super S> subscriber, Function<SegmentCompletionPublisher<R>, Flowable<S>> function) {
-            // Processor has to be serialized due to possibly invoking onError from a different thread
-            FlowableProcessor<S> earlyTerminatingProcessor = AsyncProcessor.<S>create().toSerialized();
-            pendingProcessors.add(earlyTerminatingProcessor);
+         private <S> Flowable<S> handleEarlyTermination(Function<SegmentPublisherSupplier<R>, Publisher<S>> function) {
+            CompletableFuture<Void> cf = new CompletableFuture<>();
+            pendingCompletableFutures.add(cf);
 
-            // Have to check after registering in case if we got a partition between when the publisher was created and
-            // subscribed to
-            if (isPartitionDegraded()) {
-               pendingProcessors.remove(earlyTerminatingProcessor);
-               earlyTerminatingProcessor.onError(CLUSTER.partitionDegraded());
-               // There are no types here so cast is fine
-               // noinspection unchecked
-               original.subscribe((Subscriber<? super R>) earlyTerminatingProcessor);
-            } else {
-               Flowable<S> actualPublisher = function.apply(original)
-                     .doFinally(earlyTerminatingProcessor::onComplete);
-               Publisher<S> flowableAsPublisher = earlyTerminatingProcessor
-                     .doFinally(() -> pendingProcessors.remove(earlyTerminatingProcessor));
-               Flowable.merge(flowableAsPublisher, actualPublisher)
-                     .subscribe(subscriber);
-            }
+            return Flowable.fromPublisher(function.apply(original))
+                  .doOnNext(s -> throwExceptionIfNeeded(cf))
+                  .doOnComplete(() -> throwExceptionIfNeeded(cf))
+                  .doFinally(() -> pendingProcessors.remove(cf));
          }
       };
+   }
+
+   private void throwExceptionIfNeeded(CompletableFuture<Void> cf) {
+      if (cf.isDone())
+         cf.join();
    }
 
    private void checkPartitionStatus() {

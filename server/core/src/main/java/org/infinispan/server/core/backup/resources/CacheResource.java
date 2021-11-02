@@ -259,7 +259,7 @@ public class CacheResource extends AbstractContainerResource {
          Publisher<CacheBackupEntry> p =
                Flowable.fromPublisher(
                      clusterPublisherManager.entryPublisher(null, null, null, true,
-                     DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity())
+                           DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity()).publisherWithoutSegments()
                )
                .map(e -> {
                   CacheBackupEntry be = new CacheBackupEntry();
