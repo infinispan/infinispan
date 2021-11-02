@@ -2099,7 +2099,6 @@
         <xs:attribute name="path" type="xs:string">
           <xs:annotation>
             <xs:documentation>
-              Deprecated since 13.0 which ignores the property.
               Specifies a filesystem directory for data. The value can be a
               relative or absolute path. Relative paths are created relative to
               the configured global persistent location. Absolute paths must be
