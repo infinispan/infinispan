@@ -79,7 +79,10 @@ public final class SearchQueryBuilder {
       routingKeys = Collections.emptySet();
    }
 
-   public boolean hasEntityProjection() {
+   /**
+    * Indicates if this query 'projects' just the entity and nothing else.
+    */
+   public boolean isEntityProjection() {
       return projectionInfo.isEntityProjection();
    }
 

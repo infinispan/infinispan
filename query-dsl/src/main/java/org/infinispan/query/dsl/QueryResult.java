@@ -5,6 +5,9 @@ import java.util.OptionalLong;
 
 /**
  * Represents the result of a {@link Query}.
+ * <p>
+ * If the query was executed using {@link Query#executeStatement()}, the list of results will be empty and
+ * {@link #hitCount()} will return the number of affected entries.
  *
  * @param <E> The type of the result. Queries having projections (a SELECT clause) will return an Object[] for each
  *            result, with the field values. When not using SELECT, the results will contain instances of objects
@@ -20,8 +23,8 @@ public interface QueryResult<E> {
    OptionalLong hitCount();   // todo [anistor] if cache size is an int, how can hit count be a wider type?
 
    /**
-    * @return The results of the query as a list, respecting the bounds specified in {@link Query#startOffset(long)} and
-    * {@link Query#maxResults(int)}.
+    * @return The results of the query as a List, respecting the bounds specified in {@link Query#startOffset(long)} and
+    * {@link Query#maxResults(int)}. This never returns {@code null} but will always be an empty List for {@link Query#executeStatement}.
     */
    List<E> list();
 }
