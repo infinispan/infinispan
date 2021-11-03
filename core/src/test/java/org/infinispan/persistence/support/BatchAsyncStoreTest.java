@@ -90,12 +90,12 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
       Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
    }
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       Util.recursiveFileRemove(tmpDirectory);
    }
