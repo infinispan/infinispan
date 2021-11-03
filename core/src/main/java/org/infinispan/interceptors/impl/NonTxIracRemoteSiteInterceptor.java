@@ -14,6 +14,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.Ownership;
@@ -48,6 +49,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    private final InvocationSuccessAction<DataWriteCommand> setMetadataForOwnerAction = this::setIracMetadataForOwner;
    @Inject XSiteEntryMergePolicy<Object, Object> mergePolicy;
    @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject IracTombstoneManager iracTombstoneManager;
    @Inject VersionGenerator versionGenerator;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject IracManager iracManager;
@@ -111,7 +113,7 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       IracMetadata localMetadata = getIracMetadata(entry);
 
       if (localMetadata == null) {
-         localMetadata = iracVersionGenerator.getTombstone(key);
+         localMetadata = iracTombstoneManager.getTombstone(key);
       }
 
       if (needsVersions) {
@@ -130,15 +132,14 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    }
 
    /**
-    * Invoked by backup owners, it make sure the entry has the same version as set
-    * by the primary owner.
+    * Invoked by backup owners, it makes sure the entry has the same version as set by the primary owner.
     */
    private void setIracMetadataForOwner(InvocationContext ctx, DataWriteCommand command,
          @SuppressWarnings("unused") Object rv) {
       final Object key = command.getKey();
       PrivateMetadata metadata = command.getInternalMetadata();
       iracVersionGenerator.updateVersion(command.getSegment(), metadata.iracMetadata().getVersion());
-      setPrivateMetadata(ctx.lookupEntry(key), metadata, iracVersionGenerator, this);
+      setPrivateMetadata(ctx.lookupEntry(key), command.getSegment(), metadata, iracTombstoneManager, this);
    }
 
    private CompletionStage<Boolean> validateRemoteUpdate(CacheEntry<?, ?> entry, IracPutKeyValueCommand command,
@@ -237,10 +238,10 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
    private IracMetadata getIracMetadata(CacheEntry<?, ?> entry) {
       PrivateMetadata privateMetadata = entry.getInternalMetadata();
       if (privateMetadata == null) { // new entry!
-         return iracVersionGenerator.getTombstone(entry.getKey());
+         return iracTombstoneManager.getTombstone(entry.getKey());
       }
       IracMetadata metadata = privateMetadata.iracMetadata();
-      return metadata == null ? iracVersionGenerator.getTombstone(entry.getKey()) : metadata;
+      return metadata == null ? iracTombstoneManager.getTombstone(entry.getKey()) : metadata;
    }
 
    private Ownership getOwnership(int segment) {
