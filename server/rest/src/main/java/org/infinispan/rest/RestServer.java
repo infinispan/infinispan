@@ -1,7 +1,12 @@
 package org.infinispan.rest;
 
+import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
+import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
+
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -36,6 +41,7 @@ import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.group.ChannelMatcher;
+import io.netty.handler.codec.http.cors.CorsConfig;
 
 /**
  * REST Protocol Server.
@@ -45,10 +51,13 @@ import io.netty.channel.group.ChannelMatcher;
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
 
    private static final Log log = LogFactory.getLog(RestServer.class, Log.class);
+   private static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    private RestDispatcher restDispatcher;
    private RestCacheManager<Object> restCacheManager;
    private InvocationHelper invocationHelper;
+   private volatile List<CorsConfig> corsRules;
+   private volatile int maxContentLength;
 
    public RestServer() {
       super("REST");
@@ -108,6 +117,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    protected void startInternal() {
+      this.maxContentLength = configuration.maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
       AuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          auth.authenticator().init(this);
@@ -154,5 +164,26 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (Boolean.parseBoolean(includeLoggingResource)) {
          resourceManager.registerResource(restContext, new LoggingResource(invocationHelper));
       }
+   }
+
+   public int maxContentLength() {
+      return maxContentLength;
+   }
+
+   public List<CorsConfig> getCorsConfigs() {
+      List<CorsConfig> rules = corsRules;
+      if (rules == null) {
+         synchronized (this) {
+            rules = corsRules;
+            if (rules == null) {
+               rules = new ArrayList<>();
+               rules.addAll(CorsUtil.enableAllForSystemConfig());
+               rules.addAll(CorsUtil.enableAllForLocalHost(getPort(), CROSS_ORIGIN_ALT_PORT));
+               rules.addAll(getConfiguration().getCorsRules());
+               corsRules = rules;
+            }
+         }
+      }
+      return corsRules;
    }
 }
