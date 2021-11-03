@@ -11,6 +11,7 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A query that does not return any results because the query filter is a boolean contradiction.
@@ -19,6 +20,8 @@ import org.infinispan.query.dsl.QueryFactory;
  * @since 8.0
  */
 public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
+
+   private static final Log LOG = LogFactory.getLog(EmptyResultQuery.class, Log.class);
 
    public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
                            IckleParsingResult.StatementType statementType,
@@ -60,7 +63,7 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
    @Override
    public int executeStatement() {
       if (isSelectStatement()) {
-         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+         throw LOG.unsupportedStatement();
       }
       return 0;
    }

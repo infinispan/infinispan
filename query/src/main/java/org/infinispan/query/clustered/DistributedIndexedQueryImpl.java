@@ -3,6 +3,8 @@ package org.infinispan.query.clustered;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -85,16 +87,19 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    @Override
    public <K> CloseableIterator<Map.Entry<K, E>> entryIterator() {
-      // todo  [anistor] if queryDefinition has projections, barf!
       partitionHandlingSupport.checkCacheAvailable();
       queryDefinition.setMaxResults(getNodeMaxResults());
 
       ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
       Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
+      // sanity check: if query has projections other than the entity itself throw an exception
+      if (!queryDefinition.getSearchQueryBuilder().isEntityProjection()) {
+         throw CONTAINER.entryIteratorDoesNotAllowProjections();
+      }
+
       return new DistributedEntryIterator<>(queryStatistics, queryDefinition.getSearchQueryBuilder().getLuceneSort(),
-            maxResults, resultSize, maxResults,
-            firstResult, topDocsResponses, cache);
+            maxResults, resultSize, maxResults, firstResult, topDocsResponses, cache);
    }
 
    // number of results of each node of cluster
@@ -137,7 +142,11 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    public int executeStatement() {
       // at the moment the only supported statement is DELETE
       if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
-         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+         throw CONTAINER.unsupportedStatement();
+      }
+
+      if (queryDefinition.getFirstResult() != 0 || queryDefinition.getMaxResults() != Integer.MAX_VALUE) {
+         throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
       try {
