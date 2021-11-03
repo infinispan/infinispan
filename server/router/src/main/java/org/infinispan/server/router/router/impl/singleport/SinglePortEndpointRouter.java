@@ -89,7 +89,7 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      Map<String, ProtocolServer> upgradeServers = new HashMap<>();
+      Map<String, ProtocolServer<?>> upgradeServers = new HashMap<>();
 
       RestServer restServer = routingTable.streamRoutes(SinglePortRouteSource.class, RestServerRouteDestination.class)
             .findFirst()
