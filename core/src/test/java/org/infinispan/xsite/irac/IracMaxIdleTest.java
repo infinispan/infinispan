@@ -98,6 +98,7 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
 
       assertNoKeyInDataContainer(1, cacheName, key);
       assertNoKeyInDataContainer(0, cacheName, key);
+      assertNoDataLeak(cacheName);
    }
 
    private static String createKeyOrValue(TestData testData, String prefix) {

@@ -7,8 +7,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -16,7 +16,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 /**
  * Sends a cleanup request from primary owner to backup owners.
  * <p>
- * Sent after a successfully update of all remote sites.
+ * Sent after a successful update of all remote sites.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -29,7 +29,6 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
    private int segment;
    private Object key;
    private Object lockOwner;
-   private IracMetadata tombstone;
 
    @SuppressWarnings("unused")
    public IracCleanupKeyCommand() {
@@ -39,12 +38,11 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracCleanupKeyCommand(ByteString cacheName, int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public IracCleanupKeyCommand(ByteString cacheName, int segment, Object key, Object lockOwner) {
       this.cacheName = cacheName;
       this.segment = segment;
       this.key = key;
       this.lockOwner = lockOwner;
-      this.tombstone = tombstone;
    }
 
    @Override
@@ -54,7 +52,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync(ComponentRegistry componentRegistry) {
-      componentRegistry.getIracManager().running().cleanupKey(segment, key, lockOwner, tombstone);
+      componentRegistry.getIracManager().running().cleanupKey(segment, key, lockOwner);
       return CompletableFutures.completedNull();
    }
 
@@ -107,7 +105,8 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
    @Override
    public String toString() {
       return "IracCleanupKeyCommand{" +
-            "key=" + key +
+            "cacheName=" + cacheName +
+            ", key=" + Util.toStr(key) +
             ", lockOwner=" + lockOwner +
             '}';
    }

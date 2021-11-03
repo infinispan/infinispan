@@ -27,6 +27,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
@@ -728,8 +729,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      return new IracCleanupKeyCommand(cacheName, segment, key, lockOwner, tombstone);
+   public IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner) {
+      return new IracCleanupKeyCommand(cacheName, segment, key, lockOwner);
+   }
+
+   @Override
+   public IracCleanupTombstoneCommand buildIracCleanupTombstoneCommand(Object key, IracMetadata tombstone) {
+      return new IracCleanupTombstoneCommand(cacheName, key, tombstone);
    }
 
    @Override

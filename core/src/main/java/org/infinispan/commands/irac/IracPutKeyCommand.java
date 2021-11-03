@@ -58,7 +58,7 @@ public class IracPutKeyCommand extends IracUpdateKeyCommand {
       output.writeObject(key);
       output.writeObject(value);
       output.writeObject(metadata);
-      iracMetadata.writeTo(output);
+      IracMetadata.writeTo(output, iracMetadata);
    }
 
    @Override
