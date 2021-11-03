@@ -46,7 +46,7 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
       final Object key = command.getKey();
       if (isIracState(command)) {
          // if this is a state transfer from a remote site, we set the versions here
-         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());
       }
       return invokeNext(ctx, command);
    }
@@ -144,7 +144,7 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
 
          command.addIracMetadata(data.segment, metadata);
          if (isWriteOwner(data)) {
-            setMetadataToCacheEntry(ctx.lookupEntry(data.key), metadata);
+            setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, metadata);
          }
       }
       return invokeNext(ctx, command);
@@ -161,7 +161,7 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
          IracMetadata metadata = command.getIracMetadata(data.segment);
-         setMetadataToCacheEntry(ctx.lookupEntry(data.key), metadata);
+         setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, metadata);
       }
       return invokeNext(ctx, command);
    }

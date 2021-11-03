@@ -16,8 +16,11 @@ import org.infinispan.container.offheap.OffHeapEntryFactory;
 import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
+import org.infinispan.container.versioning.irac.DefaultIracTombstoneManager;
 import org.infinispan.container.versioning.irac.DefaultIracVersionGenerator;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
+import org.infinispan.container.versioning.irac.NoOpIracTombstoneManager;
 import org.infinispan.container.versioning.irac.NoOpIracVersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.NonTransactionalInvocationContextFactory;
@@ -105,7 +108,8 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
                               InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
-                              BackupReceiver.class, StorageConfigurationManager.class, XSiteMetricsCollector.class
+                              BackupReceiver.class, StorageConfigurationManager.class, XSiteMetricsCollector.class,
+                              IracTombstoneManager.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -241,6 +245,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasEnabledBackups() ?
                 new DefaultXSiteMetricsCollector(configuration) :
                 NoOpXSiteMetricsCollector.getInstance();
+      } else if (componentName.equals(IracTombstoneManager.class.getName())) {
+         return configuration.sites().hasAsyncEnabledBackups() ?
+               new DefaultIracTombstoneManager(configuration) :
+               NoOpIracTombstoneManager.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

@@ -26,6 +26,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
@@ -438,7 +439,7 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, long, GlobalTransaction)}
+    * Same as {@link #buildLockControlCommand(Collection, long, GlobalTransaction)}
     * but for locking a single key vs a collection of keys.
     */
    LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx);
@@ -641,7 +642,9 @@ public interface CommandsFactory {
 
    IracClearKeysCommand buildIracClearKeysCommand();
 
-   IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone);
+   IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner);
+
+   IracCleanupTombstoneCommand buildIracCleanupTombstoneCommand(Object key, IracMetadata tombstone);
 
    IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment, IracEntryVersion versionSeen);
 

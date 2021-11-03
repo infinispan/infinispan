@@ -7,8 +7,6 @@ import org.infinispan.topology.CacheTopology;
 /**
  * A version generator for the IRAC protocol.
  * <p>
- * It also stores the tombstone from the keys removed.
- * <p>
  * The version is segment based and the new version is also after than the previous one.
  *
  * @author Pedro Ruivo
@@ -56,47 +54,6 @@ public interface IracVersionGenerator extends Lifecycle {
     * @param remoteVersion The remote {@link IracEntryVersion} received.
     */
    void updateVersion(int segment, IracEntryVersion remoteVersion);
-
-   /**
-    * Stores a tombstone for a key removed.
-    * <p>
-    * It overwrites any existing tombstone.
-    *
-    * @param key      The key.
-    * @param metadata The {@link IracMetadata}.
-    */
-   void storeTombstone(Object key, IracMetadata metadata);
-
-   /**
-    * Same as {@link #storeTombstone(Object, IracMetadata)} but it doesn't overwrite an existing tombstone.
-    *
-    * @param key      The key.
-    * @param metadata The {@link IracMetadata}.
-    */
-   void storeTombstoneIfAbsent(Object key, IracMetadata metadata);
-
-   /**
-    * Returns the tombstone associated to the {@code key} or {@code null} if it doesn't exist.
-    *
-    * @param key The key.
-    * @return The tombstone.
-    */
-   IracMetadata getTombstone(Object key);
-
-   /**
-    * Removes the tombstone for {@code key} if the metadata matches.
-    *
-    * @param key          The key.
-    * @param iracMetadata The expected {@link IracMetadata}.
-    */
-   void removeTombstone(Object key, IracMetadata iracMetadata);
-
-   /**
-    * Removes the tombstone for {@code key}.
-    *
-    * @param key The key.
-    */
-   void removeTombstone(Object key);
 
    /**
     * Invoked when a topology change occurs in the cluster.

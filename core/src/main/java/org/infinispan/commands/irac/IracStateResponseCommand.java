@@ -72,11 +72,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       } else {
          output.writeObject(lockOwner);
       }
-      boolean nullTombstone = tombstone == null;
-      output.writeBoolean(nullTombstone);
-      if (!nullTombstone) {
-         tombstone.writeTo(output);
-      }
+      IracMetadata.writeTo(output, tombstone);
    }
 
    @Override
@@ -88,11 +84,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       } else {
          this.lockOwner = input.readObject();
       }
-      if (input.readBoolean()) {
-         tombstone = null;
-      } else {
-         tombstone = IracMetadata.readFrom(input);
-      }
+      this.tombstone = IracMetadata.readFrom(input);
    }
 
    @Override

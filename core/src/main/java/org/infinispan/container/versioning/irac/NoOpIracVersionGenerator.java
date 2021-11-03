@@ -44,31 +44,6 @@ public class NoOpIracVersionGenerator implements IracVersionGenerator {
    }
 
    @Override
-   public void storeTombstone(Object key, IracMetadata metadata) {
-      //no-op
-   }
-
-   @Override
-   public void storeTombstoneIfAbsent(Object key, IracMetadata metadata) {
-      //no-op
-   }
-
-   @Override
-   public IracMetadata getTombstone(Object key) {
-      return null; //no-op
-   }
-
-   @Override
-   public void removeTombstone(Object key, IracMetadata iracMetadata) {
-      //no-op
-   }
-
-   @Override
-   public void removeTombstone(Object key) {
-      //no-op
-   }
-
-   @Override
    public void onTopologyChange(CacheTopology newTopology) {
       //no-op
    }
