@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
-import org.infinispan.container.versioning.irac.IracVersionGenerator;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.logging.LogSupplier;
@@ -38,20 +38,20 @@ public final class IracUtils {
     * Stores the {@link IracMetadata} into {@link CacheEntry}.
     * <p>
     * If the {@link CacheEntry} is a remove, then the tombstone is added via {@link
-    * IracVersionGenerator#storeTombstone(Object, IracMetadata)}.
+    * IracTombstoneManager#storeTombstone(int, Object, IracMetadata)}.
     *
     * @param entry            The {@link CacheEntry} to update.
     * @param metadata         The {@link IracMetadata} to store.
-    * @param versionGenerator The {@link IracVersionGenerator} to update.
+    * @param versionGenerator The {@link IracTombstoneManager} to update.
     * @param logSupplier      The {@link LogSupplier} to log the {@link IracMetadata} and the key.
     */
-   public static void setIracMetadata(CacheEntry<?, ?> entry, IracMetadata metadata,
-         IracVersionGenerator versionGenerator, LogSupplier logSupplier) {
+   public static void setIracMetadata(CacheEntry<?, ?> entry, int segment, IracMetadata metadata,
+                                      IracTombstoneManager versionGenerator, LogSupplier logSupplier) {
       final Object key = entry.getKey();
       assert metadata != null : "[IRAC] Metadata must not be null!";
       if (entry.isRemoved()) {
          logTombstoneAssociated(key, metadata, logSupplier);
-         versionGenerator.storeTombstone(key, metadata);
+         versionGenerator.storeTombstone(segment, key, metadata);
       } else {
          logIracMetadataAssociated(key, metadata, logSupplier);
          updateCacheEntryMetadata(entry, metadata);
@@ -60,21 +60,24 @@ public final class IracUtils {
    }
 
    /**
-    * Same as {@link #setIracMetadata(CacheEntry, IracMetadata, IracVersionGenerator, LogSupplier)} but it stores a
+    * Same as {@link #setIracMetadata(CacheEntry, int, IracMetadata, IracTombstoneManager, LogSupplier)} but it stores a
     * "full" {@link PrivateMetadata} instead of {@link IracMetadata}.
+    * <p>
+    * This method is invoked to set the version from remote site updates. Note that the tombstone is not stored in case
+    * of a remove operation.
     *
     * @param entry            The {@link CacheEntry} to update.
     * @param metadata         The {@link PrivateMetadata} to store.
-    * @param versionGenerator The {@link IracVersionGenerator} to update.
+    * @param versionGenerator The {@link IracTombstoneManager} to update.
     * @param logSupplier      The {@link LogSupplier} to log the {@link PrivateMetadata} and the key.
     */
-   public static void setPrivateMetadata(CacheEntry<?, ?> entry, PrivateMetadata metadata,
-         IracVersionGenerator versionGenerator, LogSupplier logSupplier) {
+   public static void setPrivateMetadata(CacheEntry<?, ?> entry, int segment, PrivateMetadata metadata,
+                                         IracTombstoneManager versionGenerator, LogSupplier logSupplier) {
       final Object key = entry.getKey();
       assert metadata.iracMetadata() != null : "[IRAC] Metadata must not be null!";
       if (entry.isRemoved()) {
          logTombstoneAssociated(key, metadata.iracMetadata(), logSupplier);
-         versionGenerator.storeTombstone(key, metadata.iracMetadata());
+         versionGenerator.storeTombstone(segment, key, metadata.iracMetadata());
       } else {
          logIracMetadataAssociated(key, metadata.iracMetadata(), logSupplier);
          entry.setInternalMetadata(metadata);

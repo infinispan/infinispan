@@ -201,6 +201,7 @@ public class IracCustomConflictTest extends AbstractMultipleSitesTest {
                                new MySortedSet(new String[]{"a", "site_1"}) :
                                new MySortedSet(new String[]{"a", "site_0", "site_1"}); //the values should be merged.
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(finalValue, cache.get(key)));
+      assertNoDataLeak(null);
    }
 
    private enum ConfigMode {
