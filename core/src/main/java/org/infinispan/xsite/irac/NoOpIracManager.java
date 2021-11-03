@@ -51,8 +51,8 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      //no-op
+   public void cleanupKey(int segment, Object key, Object lockOwner) {
+      // no-op
    }
 
    @Override
@@ -73,5 +73,10 @@ public class NoOpIracManager implements IracManager {
    @Override
    public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
       return CompletableFutures.completedTrue();
+   }
+
+   @Override
+   public boolean containsKey(Object key) {
+      return false;
    }
 }

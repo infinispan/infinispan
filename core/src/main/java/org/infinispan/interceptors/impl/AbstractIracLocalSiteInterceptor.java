@@ -14,6 +14,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -46,6 +47,7 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
 
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject IracTombstoneManager iracTombstoneManager;
    @Inject KeyPartitioner keyPartitioner;
 
    private final InvocationFinallyAction<DataWriteCommand> afterWriteCommand = this::handleNonTxDataWriteCommand;
@@ -116,14 +118,14 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       return SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
    }
 
-   protected void setMetadataToCacheEntry(CacheEntry<?, ?> entry, IracMetadata metadata) {
+   protected void setMetadataToCacheEntry(CacheEntry<?, ?> entry, int segment, IracMetadata metadata) {
       if (entry.isEvicted()) {
          if (log.isTraceEnabled()) {
             log.tracef("[IRAC] Ignoring evict key: %s", entry.getKey());
          }
          return;
       }
-      setIracMetadata(entry, metadata, iracVersionGenerator, this);
+      setIracMetadata(entry, segment, metadata, iracTombstoneManager, this);
    }
 
    protected Stream<StreamData> streamKeysFromModifications(WriteCommand[] mods) {
@@ -157,7 +159,7 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
    protected Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       final Object key = command.getKey();
       if (isIracState(command)) { //all the state transfer/preload is done via put commands.
-         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());
          return invokeNext(ctx, command);
       }
       if (command.hasAnyFlag(FlagBitSets.IRAC_UPDATE)) {
@@ -201,7 +203,7 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       if (!command.isSuccessful() || skipEntryCommit(ctx, command, key)) {
          return;
       }
-      setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
+      setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());
    }
 
    static class StreamData {

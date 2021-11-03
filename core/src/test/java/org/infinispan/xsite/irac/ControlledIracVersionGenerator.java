@@ -40,31 +40,6 @@ public class ControlledIracVersionGenerator implements IracVersionGenerator {
    }
 
    @Override
-   public void storeTombstone(Object key, IracMetadata metadata) {
-      actual.storeTombstone(key, metadata);
-   }
-
-   @Override
-   public void storeTombstoneIfAbsent(Object key, IracMetadata metadata) {
-      actual.storeTombstoneIfAbsent(key, metadata);
-   }
-
-   @Override
-   public IracMetadata getTombstone(Object key) {
-      return actual.getTombstone(key);
-   }
-
-   @Override
-   public void removeTombstone(Object key, IracMetadata iracMetadata) {
-      actual.removeTombstone(key, iracMetadata);
-   }
-
-   @Override
-   public void removeTombstone(Object key) {
-      actual.removeTombstone(key);
-   }
-
-   @Override
    public void onTopologyChange(CacheTopology newTopology) {
       actual.onTopologyChange(newTopology);
    }

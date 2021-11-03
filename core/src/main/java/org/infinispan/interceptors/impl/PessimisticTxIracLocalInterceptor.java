@@ -176,7 +176,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
    private Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       final Object key = command.getKey();
       if (isIracState(command)) {
-         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());
          return invokeNext(ctx, command);
       }
       return skipCommand(ctx, command) ?
@@ -239,7 +239,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
             .iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.command.getInternalMetadata(data.key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, data.command.getInternalMetadata(data.key).iracMetadata());
       }
       return invokeNext(ctx, command);
    }
@@ -249,7 +249,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
       assert entry != null;
       updateCommandMetadata(data.key, data.command, metadata);
       if (isWriteOwner(data)) {
-         setMetadataToCacheEntry(entry, metadata);
+         setMetadataToCacheEntry(entry, data.segment, metadata);
       }
    }
 

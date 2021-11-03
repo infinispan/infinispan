@@ -148,5 +148,6 @@ public class IracAlwaysRemoveConflictTest extends AbstractMultipleSitesTest {
       iracManagerList.forEach(manualIracManager -> manualIracManager.disable(ManualIracManager.DisableMode.SEND));
 
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(null, cache.get(key)));
+      assertNoDataLeak(null);
    }
 }
