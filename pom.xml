@@ -305,7 +305,7 @@
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
-      <versionx.org.apache.mina.mina>2.0.17</versionx.org.apache.mina.mina>
+      <versionx.org.apache.mina.mina>2.1.5</versionx.org.apache.mina.mina>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
       <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
       <versionx.org.apache.logging.log4j.log4j-core>${version.log4j}</versionx.org.apache.logging.log4j.log4j-core>
