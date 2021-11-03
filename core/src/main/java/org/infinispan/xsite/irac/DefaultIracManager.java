@@ -22,6 +22,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -83,6 +84,7 @@ public class DefaultIracManager implements IracManager {
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject CommandsFactory commandsFactory;
    @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject IracTombstoneManager iracTombstoneManager;
 
    private final Map<Object, State> updatedKeys;
    private final Collection<XSiteBackup> asyncBackups;
@@ -95,7 +97,7 @@ public class DefaultIracManager implements IracManager {
       this.asyncBackups = asyncBackups(config);
    }
 
-   private static Collection<XSiteBackup> asyncBackups(Configuration config) {
+   public static Collection<XSiteBackup> asyncBackups(Configuration config) {
       return config.sites().asyncBackupsStream()
             .map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) //convert to sync
             .collect(Collectors.toList());
@@ -171,9 +173,8 @@ public class DefaultIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public void cleanupKey(int segment, Object key, Object lockOwner) {
       State state = new State(segment, key, lockOwner);
-      state.tombstone = tombstone;
       removeStateFromLocal(state);
    }
 
@@ -217,7 +218,7 @@ public class DefaultIracManager implements IracManager {
 
    @Override
    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      iracVersionGenerator.storeTombstoneIfAbsent(key, tombstone);
+      iracTombstoneManager.storeTombstoneIfAbsent(segment, key, tombstone);
       updatedKeys.putIfAbsent(key, new State(segment, key, lockOwner));
       iracExecutor.run();
    }
@@ -262,8 +263,8 @@ public class DefaultIracManager implements IracManager {
       if (!segments.contains(segment)) {
          return;
       }
-      //send the tombstone too
-      IracMetadata tombstone = iracVersionGenerator.getTombstone(key);
+      // send the tombstone too
+      IracMetadata tombstone = iracTombstoneManager.getTombstone(key);
       CacheRpcCommand cmd = commandsFactory.buildIracStateResponseCommand(segment, key, lockOwner, tombstone);
       rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
    }
@@ -401,16 +402,15 @@ public class DefaultIracManager implements IracManager {
       }
       //removes the key from the "updated keys map" in all owners.
       DistributionInfo dInfo = getDistributionInfo(state.segment);
-      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.segment, state.key, state.owner, state.tombstone);
+      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.segment, state.key, state.owner);
       rpcManager.sendToMany(dInfo.writeOwners(), cmd, DeliverOrder.NONE);
       removeStateFromLocal(state);
    }
 
    private void removeStateFromLocal(State state) {
       boolean removed = updatedKeys.remove(state.key, state);
-      iracVersionGenerator.removeTombstone(state.key, state.tombstone);
       if (log.isTraceEnabled()) {
-         log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.tombstone, removed);
+         log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.owner, removed);
       }
    }
 
@@ -432,11 +432,10 @@ public class DefaultIracManager implements IracManager {
 
    private XSiteReplicateCommand<Void> buildRemoveCommand(State state) {
       Object key = state.key;
-      IracMetadata metadata = iracVersionGenerator.getTombstone(key);
+      IracMetadata metadata = iracTombstoneManager.getTombstone(key);
       if (metadata == null) {
          return null;
       }
-      state.tombstone = metadata;
       return commandsFactory.buildIracRemoveKeyCommand(key, metadata, state.isExpiration());
    }
 
@@ -456,7 +455,6 @@ public class DefaultIracManager implements IracManager {
       private final int segment;
       @GuardedBy("this")
       StateStatus stateStatus;
-      private volatile IracMetadata tombstone;
 
       private State(int segment, Object key, Object owner) {
          this.segment = segment;
@@ -569,5 +567,10 @@ public class DefaultIracManager implements IracManager {
       boolean isExpiration() {
          return true;
       }
+   }
+
+   @Override
+   public boolean containsKey(Object key) {
+      return updatedKeys.containsKey(key);
    }
 }
