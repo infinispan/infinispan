@@ -54,6 +54,10 @@ public class CompletionStages {
       return new ValueAggregateCompletionStage<>(valueToReturn);
    }
 
+   public static AggregateCompletionStage<Boolean> orBooleanAggregateCompletionStage() {
+      return new OrBooleanAggregateCompletionStage();
+   }
+
    /**
     * Returns if the provided {@link CompletionStage} has already completed normally, that is not due to an exception.
     * @param stage stage to check
@@ -195,6 +199,28 @@ public class CompletionStages {
       @Override
       R getValue() {
          return value;
+      }
+   }
+
+   private static class OrBooleanAggregateCompletionStage extends AbstractAggregateCompletionStage<Boolean> {
+
+      private volatile boolean value = false;
+
+      @Override
+      Boolean getValue() {
+         return value;
+      }
+
+      @Override
+      public void accept(Object o, Throwable t) {
+         if (t != null) {
+            super.accept(null, t);
+            return;
+         }
+         if (o instanceof Boolean && (Boolean) o) {
+            this.value = true;
+         }
+         super.accept(o, null);
       }
    }
 

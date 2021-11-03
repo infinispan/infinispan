@@ -39,7 +39,6 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
          .newUpdater(DefaultIracVersionGenerator.class, "topologyId");
 
    private final Map<Integer, Map<String, TopologyIracVersion>> segmentVersion;
-   private final Map<Object, IracMetadata> tombstone;
    private final String cacheName;
    @Inject RpcManager rpcManager;
    @Inject GlobalStateManager globalStateManager;
@@ -50,7 +49,6 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
    public DefaultIracVersionGenerator(String cacheName) {
       this.cacheName = cacheName;
       this.segmentVersion = new ConcurrentHashMap<>();
-      this.tombstone = new ConcurrentHashMap<>();
    }
 
    @Start
@@ -106,36 +104,6 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
       }
    }
 
-   @Override
-   public void storeTombstone(Object key, IracMetadata metadata) {
-      tombstone.put(key, metadata);
-   }
-
-   @Override
-   public void storeTombstoneIfAbsent(Object key, IracMetadata metadata) {
-      if (metadata == null) {
-         return;
-      }
-      tombstone.putIfAbsent(key, metadata);
-   }
-
-   @Override
-   public IracMetadata getTombstone(Object key) {
-      return tombstone.get(key);
-   }
-
-   @Override
-   public void removeTombstone(Object key, IracMetadata iracMetadata) {
-      if (iracMetadata == null) {
-         return;
-      }
-      tombstone.remove(key, iracMetadata);
-   }
-
-   @Override
-   public void removeTombstone(Object key) {
-      tombstone.remove(key);
-   }
 
    public Map<Integer, IracEntryVersion> peek() {
       Map<Integer, IracEntryVersion> copy = new HashMap<>();
@@ -155,7 +123,7 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
    }
 
    private Map<String, TopologyIracVersion> getVectorFunction(Integer s,
-                                                               Map<String, TopologyIracVersion> versions) {
+                                                              Map<String, TopologyIracVersion> versions) {
       if (versions == null) {
          return Collections.singletonMap(localSite, TopologyIracVersion.newVersion(topologyId));
       } else {
@@ -203,7 +171,7 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
          if (v == null) {
             return;
          }
-         segmentVersion.compute(segment, (seg, vectorClock) ->  {
+         segmentVersion.compute(segment, (seg, vectorClock) -> {
             if (vectorClock == null) {
                return Collections.singletonMap(site, v);
             } else {

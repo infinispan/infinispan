@@ -48,8 +48,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.cleanupKey(segment, key, lockOwner, tombstone);
+   public void cleanupKey(int segment, Object key, Object lockOwner) {
+      actual.cleanupKey(segment, key, lockOwner);
    }
 
    @Override
@@ -90,6 +90,11 @@ public class ControlledIracManager implements IracManager {
    @Override
    public void incrementNumberOfConflictMerged() {
       actual.incrementNumberOfConflictMerged();
+   }
+
+   @Override
+   public boolean containsKey(Object key) {
+      return actual.containsKey(key);
    }
 
    protected Optional<DefaultIracManager> asDefaultIracManager() {

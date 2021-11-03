@@ -114,6 +114,7 @@ public class IracWriteSkewTest extends AbstractMultipleSitesTest {
             checkKey(key, "write-skew-value");
          }
       }
+      assertNoDataLeak(CACHE_NAME);
    }
 
    @Override
