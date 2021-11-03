@@ -51,7 +51,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public void cleanupKey(int segment, Object key, Object lockOwner) {
       // no-op
    }
 
@@ -93,5 +93,10 @@ public class NoOpIracManager implements IracManager {
    @Override
    public void incrementNumberOfConflictMerged() {
       // no-op
+   }
+
+   @Override
+   public boolean containsKey(Object key) {
+      return false;
    }
 }

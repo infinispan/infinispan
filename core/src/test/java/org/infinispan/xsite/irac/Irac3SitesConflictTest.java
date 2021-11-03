@@ -289,5 +289,6 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
 
       String expectedFinalValue = testConfig.getValueFromArray(finalValues);
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(expectedFinalValue, cache.get(key)));
+      assertNoDataLeak(null);
    }
 }

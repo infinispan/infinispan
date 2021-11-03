@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
@@ -127,7 +128,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class,
             IracUpdateVersionCommand.class,
             XSiteAutoTransferStatusCommand.class,
-            XSiteSetStateTransferModeCommand.class);
+            XSiteSetStateTransferModeCommand.class,
+            IracCleanupTombstoneCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

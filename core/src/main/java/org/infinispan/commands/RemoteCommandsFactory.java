@@ -16,6 +16,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
@@ -486,6 +487,9 @@ public class RemoteCommandsFactory {
                break;
             case XSiteSetStateTransferModeCommand.COMMAND_ID:
                command = new XSiteSetStateTransferModeCommand(cacheName);
+               break;
+            case IracCleanupTombstoneCommand.COMMAND_ID:
+               command = new IracCleanupTombstoneCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
