@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +46,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.SslContextFactory;
 
-import okhttp3.Authenticator;
+import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
@@ -105,11 +106,11 @@ public class RestClientOkHttp implements RestClient {
 
       switch (configuration.protocol()) {
          case HTTP_11:
-            builder.protocols(Arrays.asList(Protocol.HTTP_1_1));
+            builder.protocols(Collections.singletonList(Protocol.HTTP_1_1));
             break;
          case HTTP_20:
             if (!ssl.enabled()) {
-               builder.protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
+               builder.protocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE));
             } else {
                builder.protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
             }
@@ -119,7 +120,7 @@ public class RestClientOkHttp implements RestClient {
       AuthenticationConfiguration authentication = configuration.security().authentication();
       if (authentication.enabled()) {
          Map<String, CachingAuthenticator> authCache = new ConcurrentHashMap<>();
-         Authenticator authenticator;
+         CachingAuthenticator authenticator;
          switch (authentication.mechanism()) {
             case "AUTO":
                authenticator = new AutoDetectAuthenticator(authentication);
@@ -139,12 +140,8 @@ public class RestClientOkHttp implements RestClient {
             default:
                throw new IllegalArgumentException("Cannot handle " + authentication.mechanism());
          }
-         if (authenticator instanceof CachingAuthenticator) {
-            builder.addInterceptor(new CachingAuthenticatorInterceptor(authCache));
-            builder.authenticator(new CachingAuthenticatorWrapper(authenticator, authCache));
-         } else {
-            builder.authenticator(authenticator);
-         }
+         builder.addInterceptor(new CachingAuthenticatorInterceptor(authCache));
+         builder.authenticator(new CachingAuthenticatorWrapper(authenticator, authCache));
       }
 
       httpClient = builder.build();
@@ -163,8 +160,9 @@ public class RestClientOkHttp implements RestClient {
       ConnectionPool connectionPool = httpClient.connectionPool();
       connectionPool.evictAll();
 
-      if (httpClient.cache() != null) {
-         httpClient.cache().close();
+      Cache cache = httpClient.cache();
+      if (cache != null) {
+         cache.close();
       }
    }
 
