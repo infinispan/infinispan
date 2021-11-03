@@ -3,15 +3,14 @@ package org.infinispan.rest;
 import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
 import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.transport.AccessControlFilter;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -21,7 +20,6 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
-import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2MultiplexCodec;
@@ -29,7 +27,6 @@ import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2StreamFrameToHttpObjectCodec;
-import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -40,13 +37,9 @@ import io.netty.util.AsciiString;
  *
  * @author Sebastian Łaskawiec
  */
-@ChannelHandler.Sharable
 public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
-   private static final int CROSS_ORIGIN_ALT_PORT = 9000;
-
    protected final RestServer restServer;
-   volatile List<CorsConfig> corsRules;
 
    public ALPNHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
@@ -55,16 +48,16 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
    @Override
    public void configurePipeline(ChannelHandlerContext ctx, String protocol) {
-      configurePipeline(ctx.pipeline(), protocol);
+      configurePipeline(ctx.pipeline(), protocol, restServer, Collections.emptyMap());
    }
 
-   public void configurePipeline(ChannelPipeline pipeline, String protocol) {
+   public static void configurePipeline(ChannelPipeline pipeline, String protocol, RestServer restServer, Map<String, ProtocolServer<?>> upgradeServers) {
       if (ApplicationProtocolNames.HTTP_2.equals(protocol) || ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-         configureHttpPipeline(pipeline);
+         configureHttpPipeline(pipeline, restServer);
          return;
       }
 
-      ProtocolServer<?> protocolServer = getProtocolServer(protocol);
+      ProtocolServer<?> protocolServer = upgradeServers.get(protocol);
       if (protocolServer != null) {
          pipeline.addLast(protocolServer.getInitializer());
          return;
@@ -73,25 +66,21 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       throw new IllegalStateException("unknown protocol: " + protocol);
    }
 
-   protected ProtocolServer<?> getProtocolServer(String protocol) {
-      return null;
-   }
-
    /**
     * Configure the handlers that should be used for both HTTP 1.1 and HTTP 2.0
     */
-   private void addCommonHandlers(ChannelPipeline pipeline) {
+   private static void addCommonHandlers(ChannelPipeline pipeline, RestServer restServer) {
       // Handles IP filtering for the HTTP connector
       RestServerConfiguration restServerConfiguration = restServer.getConfiguration();
       pipeline.addLast(new AccessControlFilter<>(restServerConfiguration, false));
       // Handles http content encoding (gzip)
       pipeline.addLast(new HttpContentCompressor(restServerConfiguration.getCompressionLevel()));
       // Handles chunked data
-      pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
+      pipeline.addLast(new HttpObjectAggregator(restServer.maxContentLength()));
       // Handles Http/2 headers propagation from request to response
       pipeline.addLast(new StreamCorrelatorHandler());
       // Handles CORS
-      pipeline.addLast(new CorsHandler(getCorsConfigs(), true));
+      pipeline.addLast(new CorsHandler(restServer.getCorsConfigs(), true));
       // Handles Keep-alive
       pipeline.addLast(new HttpServerKeepAliveHandler());
       // Handles the writing of ChunkedInputs
@@ -100,24 +89,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       pipeline.addLast(new RestRequestHandler(restServer));
    }
 
-   private List<CorsConfig> getCorsConfigs() {
-      List<CorsConfig> rules = corsRules;
-      if (rules == null) {
-         synchronized (this) {
-            rules = corsRules;
-            if (rules == null) {
-               rules = new ArrayList<>();
-               rules.addAll(CorsUtil.enableAllForSystemConfig());
-               rules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
-               rules.addAll(restServer.getConfiguration().getCorsRules());
-               corsRules = rules;
-            }
-         }
-      }
-      return corsRules;
-   }
-
-   protected void configureHttpPipeline(ChannelPipeline pipeline) {
+   private static void configureHttpPipeline(ChannelPipeline pipeline, RestServer restServer) {
       //TODO [ISPN-12082]: Rework pipeline removing deprecated codecs
       Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<Channel>() {
          @Override
@@ -125,7 +97,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
             ChannelPipeline p = channel.pipeline();
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
-            addCommonHandlers(p);
+            addCommonHandlers(p, restServer);
          }
       }).initialSettings(Http2Settings.defaultSettings()).build();
 
@@ -137,33 +109,11 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
          }
       };
       // handler for clear-text upgrades
-      HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, maxContentLength());
-      HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(httpCodec, upgradeCodecFactory, maxContentLength());
+      HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, restServer.maxContentLength());
+      HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(httpCodec, upgradeCodecFactory, restServer.maxContentLength());
       CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, multiplexCodec);
       pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
 
-      addCommonHandlers(pipeline);
-   }
-
-   protected int maxContentLength() {
-      return this.restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
-   }
-
-   public ChannelHandler getRestHandler() {
-      return new RestRequestHandler(restServer);
-   }
-
-   public ApplicationProtocolConfig getAlpnConfiguration() {
-      if (restServer.getConfiguration().ssl().enabled()) {
-         return new ApplicationProtocolConfig(
-               ApplicationProtocolConfig.Protocol.ALPN,
-               // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
-               ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-               // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
-               ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-               ApplicationProtocolNames.HTTP_2,
-               ApplicationProtocolNames.HTTP_1_1);
-      }
-      return null;
+      addCommonHandlers(pipeline, restServer);
    }
 }
