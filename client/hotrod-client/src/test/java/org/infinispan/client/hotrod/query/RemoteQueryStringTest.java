@@ -240,4 +240,10 @@ public class RemoteQueryStringTest extends QueryStringTest {
    public void testDeleteWithGroupBy() {
       super.testDeleteWithGroupBy();
    }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN014057: DELETE statements cannot use paging \\(firstResult/maxResults\\)")
+   public void testDeleteWithPaging() {
+      super.testDeleteWithPaging();
+   }
 }

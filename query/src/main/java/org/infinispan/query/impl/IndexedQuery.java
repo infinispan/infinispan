@@ -32,17 +32,34 @@ public interface IndexedQuery<E> {
    /**
     * Sets the maximum number of results to return from the query. Used for pagination.
     *
-    * @param numResults the maximum number of results to return.
+    * @param maxResults the maximum number of results to return.
     */
-   IndexedQuery<E> maxResults(int numResults);
+   IndexedQuery<E> maxResults(int maxResults);
 
    CloseableIterator<E> iterator();
 
-   // TODO [anistor] works for queries without projections only, should throw exception for projections
+   /**
+    * Returns the matching entries (both key and value).
+    * <p>
+    * <b>NOTE:</b> The query must not contain any projections or an exception will be thrown.
+    */
    <K> CloseableIterator<Map.Entry<K, E>> entryIterator();
 
+   /**
+    * Executes an Ickle statement returning results (query aka. SELECT). If the statement happens to be a DELETE it
+    * redirects it to {@link #executeStatement()}.
+    * <p>
+    * <b>NOTE:</b> Paging params (firstResult/maxResults) are honoured for SELECT and dissalowed for DELETE.
+    */
    QueryResult<?> execute();
 
+   /**
+    * Executes an Ickle statement not returning any results (ie. DELETE).
+    * <p>
+    * <b>NOTE:</b> Paging params (firstResult/maxResults) are NOT allowed.
+    *
+    * @return the number of affected entries
+    */
    int executeStatement();
 
    int getResultSize();

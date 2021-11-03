@@ -45,10 +45,11 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     */
    QueryResult<T> execute();
 
-   // TODO [anistor] disallow pagination params if any for non-SELECT statements
    /**
     * Executes a data modifying statement (typically a DELETE) that does not return results; instead it returns an
     * affected entries count. This method cannot be used to execute a SELECT.
+    * <p>
+    * <b>NOTE:</b> Paging params (firstResult/maxResults) are NOT allowed.
     *
     * @return the number of affected (deleted) entries
     */
