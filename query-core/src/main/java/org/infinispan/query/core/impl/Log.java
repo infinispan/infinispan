@@ -1,5 +1,6 @@
 package org.infinispan.query.core.impl;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.jboss.logging.BasicLogger;
@@ -8,7 +9,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 
-//TODO [anistor] query-core and query modules share the id range!
+//TODO [anistor] query-core and query modules share the id range now and in the future these loggers will probably merge
 /**
  * Log abstraction for the query-core module. For this module, message ids ranging from 14001 to 14500 inclusively have been
  * reserved.
@@ -46,4 +47,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot execute query: cluster is operating in degraded mode and partition handling configuration doesn't allow reads and writes.", id = 14042)
    AvailabilityException partitionDegraded();
+
+   @Message(value = "Only DELETE statements are supported by executeStatement", id = 14056)
+   CacheException unsupportedStatement();
+
+   @Message(value = "DELETE statements cannot use paging (firstResult/maxResults)", id = 14057)
+   CacheException deleteStatementsCannotUsePaging();
+
+   @Message(value = "Projections are not supported with entryIterator()", id = 14058)
+   CacheException entryIteratorDoesNotAllowProjections();
 }
