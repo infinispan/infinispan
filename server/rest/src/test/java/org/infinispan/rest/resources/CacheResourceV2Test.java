@@ -557,7 +557,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertNotIndexed(1200);
 
       response = insertEntity(3, 1200, "Invalid");
-      assertThat(response).isBadRequest().hasReturnedText("No enum constant org.infinispan.context.Flag.Invalid");
+      assertThat(response).isBadRequest().containsReturnedText("No enum constant org.infinispan.context.Flag.Invalid");
    }
 
    @Test
