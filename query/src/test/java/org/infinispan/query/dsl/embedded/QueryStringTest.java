@@ -463,7 +463,10 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testDeleteWithProjections() {
+      // exception thrown on create when in embedded mode
       Query<Transaction> delete = createQueryFromString("DELETE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t WHERE t.description = 'bogus' ORDER BY amount");
+
+      // exception thrown just on execute when in remote mode
       delete.executeStatement();
    }
 
@@ -476,6 +479,13 @@ public class QueryStringTest extends AbstractQueryDslTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testDeleteWithGroupBy() {
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus' GROUP BY accountId");
+      delete.executeStatement();
+   }
+
+   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE statements cannot use paging \\(firstResult/maxResults\\)")
+   public void testDeleteWithPaging() {
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus'");
+      delete.maxResults(5);
       delete.executeStatement();
    }
 

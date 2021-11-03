@@ -210,7 +210,7 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    @Override
    public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Not implemented!");
    }
 
    @Override

@@ -23,14 +23,13 @@ final class CQCreateEagerQuery extends CQWorker {
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       setFilter(segments);
 
-      CompletionStage<NodeTopDocs> nodeTopDocs = query.hasEntityProjection() ? collectKeys(query) : collectProjections(query);
+      CompletionStage<NodeTopDocs> nodeTopDocs = query.isEntityProjection() ? collectKeys(query) : collectProjections(query);
 
       return nodeTopDocs.thenApply(QueryResponse::new);
    }
 
    private LuceneSearchResult<?> fetchHits(SearchQueryBuilder query) {
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       LuceneSearchResult<?> result = query.build().fetch(queryDefinition.getMaxResults());
 
@@ -41,8 +40,7 @@ final class CQCreateEagerQuery extends CQWorker {
    }
 
    private LuceneSearchResult<EntityReference> fetchReferences(SearchQueryBuilder query) {
-      long start = 0;
-      if (queryStatistics.isEnabled()) start = System.nanoTime();
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       LuceneSearchResult<EntityReference> result = query.entityReference().fetch(queryDefinition.getMaxResults());
 

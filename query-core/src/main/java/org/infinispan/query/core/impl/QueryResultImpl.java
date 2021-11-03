@@ -22,7 +22,7 @@ public final class QueryResultImpl<E> implements QueryResult<E> {
       this.list = list;
    }
 
-   public QueryResultImpl(List<E> list) {
+   public QueryResultImpl(List<E> list) { //todo [anistor] why not used?
       this.hitCount = OptionalLong.empty();
       this.list = list;
    }

@@ -14,6 +14,7 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A non-indexed query performed on top of the results returned by another query (usually a Lucene based query). This
@@ -24,6 +25,8 @@ import org.infinispan.query.dsl.QueryResult;
  * @since 8.0
  */
 public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
+
+   private static final Log LOG = LogFactory.getLog(HybridQuery.class, Log.class);
 
    // An object filter is used to further filter the baseQuery
    protected final ObjectFilter objectFilter;
@@ -69,7 +72,7 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    @Override
    public int executeStatement() {
       if (isSelectStatement()) {
-         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+         throw LOG.unsupportedStatement();
       }
 
       try (CloseableIterator<Map.Entry<Object, S>> entryIterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator()) {

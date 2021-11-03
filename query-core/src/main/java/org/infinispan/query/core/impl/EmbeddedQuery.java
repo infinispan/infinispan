@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static org.infinispan.query.core.impl.Log.CONTAINER;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -105,7 +107,11 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    @Override
    public int executeStatement() {
       if (isSelectStatement()) {
-         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+         throw CONTAINER.unsupportedStatement();
+      }
+
+      if (getStartOffset() != 0 || getMaxResults() != -1 && getMaxResults() != Integer.MAX_VALUE) {
+         throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
