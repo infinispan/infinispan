@@ -49,7 +49,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
    private String tmpDirectory;
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    }
