@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -134,6 +135,20 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
          EventuallyAssertCondition<K, V> condition) {
       for (TestSite testSite : sites) {
          assertEventuallyInSite(testSite.getSiteName(), cacheName, condition, 30, TimeUnit.SECONDS);
+      }
+   }
+
+   protected void assertNoDataLeak(String cacheName) {
+
+      for (TestSite site : sites) {
+         // note: the cleanup is done asynchronously. trigger the process in all nodes
+         for (Cache<?,?> cache : site.getCaches(cacheName)) {
+            eventually("Updated keys map is not empty!", () -> isIracManagerEmpty(cache));
+            iracTombstoneManager(cache).startCleanupTombstone();
+         }
+         for (Cache<?,?> cache : site.getCaches(cacheName)) {
+            eventually("Tombstone map is not empty!", iracTombstoneManager(cache)::isEmpty);
+         }
       }
    }
 }

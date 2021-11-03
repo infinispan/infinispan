@@ -69,9 +69,8 @@ public interface IracManager {
     * @param segment   The key's segment.
     * @param key       The key.
     * @param lockOwner The lock owner who updated the key.
-    * @param tombstone The tombstone (can be {@code null}).
     */
-   void cleanupKey(int segment, Object key, Object lockOwner, IracMetadata tombstone);
+   void cleanupKey(int segment, Object key, Object lockOwner);
 
    /**
     * Notifies a topology changed.
@@ -127,4 +126,14 @@ public interface IracManager {
     * Increase the count of conflicts if merge policy created a new value (merge remote value with local value)
     */
    void incrementNumberOfConflictMerged();
+
+   /**
+    * Checks if the key is present.
+    * <p>
+    * A key is present as long as its latest update was not confirmed by all remote sites.
+    *
+    * @param key The key to check.
+    * @return {@code true} if the key is present.
+    */
+   boolean containsKey(Object key);
 }
