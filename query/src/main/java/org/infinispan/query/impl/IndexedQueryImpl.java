@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
-import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
@@ -102,10 +103,16 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    @Override
    public <K> CloseableIterator<Map.Entry<K, E>> entryIterator() {
-      // TODO [anistor] sanity check required: if queryDefinition has projections throw an exception
       partitionHandlingSupport.checkCacheAvailable();
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
-      SearchQuery<List<Object>> searchQuery = queryDefinition.getSearchQueryBuilder().keyAndEntity();
+
+      SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
+      // sanity check: if query has projections other than the entity itself throw an exception
+      if (!searchQueryBuilder.isEntityProjection()) {
+         throw CONTAINER.entryIteratorDoesNotAllowProjections();
+      }
+
+      SearchQuery<List<Object>> searchQuery = searchQueryBuilder.keyAndEntity();
 
       MappingIterator<List<Object>, Map.Entry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
       iterator.skip(queryDefinition.getFirstResult())
@@ -163,7 +170,11 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    public int executeStatement() {
       // at the moment the only supported statement is DELETE
       if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
-         throw new UnsupportedOperationException("Only DELETE statements are supported by executeStatement");
+         throw CONTAINER.unsupportedStatement();
+      }
+
+      if (queryDefinition.getFirstResult() != 0 || queryDefinition.getMaxResults() != Integer.MAX_VALUE) {
+         throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
       try {
@@ -173,10 +184,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
          SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
          LuceneSearchQuery<EntityReference> searchQuery = searchQueryBuilder.entityReference();
-         LuceneSearchResult<EntityReference> searchResult = searchQuery.fetch(Integer.MAX_VALUE);
+         List<EntityReference> hits = searchQuery.fetchAllHits();
 
          int count = 0;
-         for (EntityReference ref : searchResult.hits()) {
+         for (EntityReference ref : hits) {
             Object removed = cache.remove(ref.key());
             if (removed != null) {
                count++;
@@ -189,11 +200,6 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }
-   }
-
-   @Override
-   public List<E> list() throws SearchException {
-      return (List<E>) execute().list();
    }
 
    private <T> CloseableIterator<T> iterator(SearchQuery<T> searchQuery) {
