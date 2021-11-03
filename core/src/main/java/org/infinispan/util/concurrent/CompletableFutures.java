@@ -31,6 +31,7 @@ public class CompletableFutures {
    private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
    private static final Function<?, ?> TO_NULL = o -> null;
+   private static final Function<?, Boolean> TO_TRUE_FUNCTION = o -> Boolean.TRUE;
 
    @SuppressWarnings("unchecked")
    public static <K, V> CompletableFuture<Map<K, V>> completedEmptyMap() {
@@ -174,5 +175,10 @@ public class CompletableFutures {
    public static <T, R> Function<T, R> toNullFunction() {
       //noinspection unchecked
       return (Function<T, R>) TO_NULL;
+   }
+
+   public static <T> Function<T, Boolean> toTrueFunction() {
+      //noinspection unchecked
+      return (Function<T, Boolean>) TO_TRUE_FUNCTION;
    }
 }

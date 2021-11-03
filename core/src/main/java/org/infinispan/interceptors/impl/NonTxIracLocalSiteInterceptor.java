@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.commands.SegmentSpecificCommand.extractSegment;
+
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -158,7 +160,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
          if (skipEntryCommit(ctx, command, key)) {
             continue;
          }
-         setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(key), extractSegment(command, key, keyPartitioner), command.getInternalMetadata(key).iracMetadata());
       }
    }
 

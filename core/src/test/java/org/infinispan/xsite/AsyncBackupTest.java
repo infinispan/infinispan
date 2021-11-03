@@ -104,6 +104,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
 
    public AsyncBackupTest() {
       super.lonBackupStrategy = BackupConfiguration.BackupStrategy.ASYNC;
+      super.nycBackupStrategy = BackupConfiguration.BackupStrategy.ASYNC;
       super.implicitBackupCache = true;
    }
 
@@ -143,6 +144,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       resumeRemoteSite();
       eventuallyEquals("v", () -> backup(LON).get("k"));
       assertDataContainerState("v");
+      assertNoDataLeak();
    }
 
    public void testRemove() throws Exception {
@@ -155,6 +157,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v", backup(LON).get("k"));
       resumeRemoteSite();
       eventuallyEquals(null, () -> backup(LON).get("k"));
+      assertNoDataLeak();
    }
 
    public void testClear() throws Exception {
@@ -167,6 +170,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v", backup(LON).get("k"));
       resumeRemoteSite();
       eventuallyEquals(null, () -> backup(LON).get("k"));
+      assertNoDataLeak();
    }
 
    public void testReplace() throws Exception {
@@ -180,6 +184,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       resumeRemoteSite();
       eventuallyEquals("v2", () -> backup(LON).get("k"));
       assertDataContainerState("v2");
+      assertNoDataLeak();
    }
 
    public void testPutAll() throws Exception {
@@ -191,6 +196,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       resumeRemoteSite();
       eventuallyEquals("v", () -> backup(LON).get("k"));
       assertDataContainerState("v");
+      assertNoDataLeak();
    }
 
    public void testPutForExternalRead() throws InterruptedException {
@@ -203,6 +209,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       resumeRemoteSite();
       eventuallyEquals("v", () -> backup(LON).get("k"));
       assertDataContainerState("v");
+      assertNoDataLeak();
    }
 
    private void doPutWithDisabledBlockingInterceptor() {
@@ -281,6 +288,23 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       IracMetadata metadata = extractMetadataFromPrimaryOwner();
       assertInDataContainer(LON, value, metadata);
       assertInDataContainer(NYC, value, metadata);
+   }
+
+   private void assertNoDataLeak() {
+      for (int  i = 0; i < initialClusterSize; ++i) {
+         Cache<?,?> lonCache = cache(LON, null, i);
+         Cache<?,?> nycCache = cache(NYC, null, i);
+         eventually("Updated keys map is not empty in LON!", () -> isIracManagerEmpty(lonCache));
+         eventually("Updated keys map is not empty in NYC!", () -> isIracManagerEmpty(nycCache));
+         iracTombstoneManager(lonCache).startCleanupTombstone();
+         iracTombstoneManager(nycCache).startCleanupTombstone();
+      }
+      for (int  i = 0; i < initialClusterSize; ++i) {
+         Cache<?,?> lonCache = cache(LON, null, i);
+         Cache<?,?> nycCache = cache(NYC, null, i);
+         eventually("Tombstone map is not empty in LON", iracTombstoneManager(lonCache)::isEmpty);
+         eventually("Tombstone map is not empty in NYC", iracTombstoneManager(nycCache)::isEmpty);
+      }
    }
 
    public static class BlockingInterceptor extends DDAsyncInterceptor {

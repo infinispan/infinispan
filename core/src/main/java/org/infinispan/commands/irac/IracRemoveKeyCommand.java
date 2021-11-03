@@ -52,7 +52,7 @@ public class IracRemoveKeyCommand extends IracUpdateKeyCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      iracMetadata.writeTo(output);
+      IracMetadata.writeTo(output, iracMetadata);
       output.writeBoolean(expiration);
    }
 

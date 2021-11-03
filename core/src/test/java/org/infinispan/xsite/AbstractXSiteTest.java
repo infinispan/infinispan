@@ -20,6 +20,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.versioning.irac.DefaultIracTombstoneManager;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -30,6 +32,7 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.ManualIracManager;
 import org.infinispan.xsite.status.DefaultTakeOfflineManager;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.jgroups.protocols.relay.RELAY2;
@@ -437,6 +440,21 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected DefaultIracManager iracManager(String site, String cacheName, int index) {
       return (DefaultIracManager) TestingUtil.extractComponent(cache(site, cacheName, index), IracManager.class);
+   }
+
+   protected boolean isIracManagerEmpty(Cache<?, ?> cache) {
+      IracManager manager = TestingUtil.extractComponent(cache, IracManager.class);
+      if (manager instanceof ManualIracManager) {
+         return ((ManualIracManager) manager).isEmpty();
+      } else if (manager instanceof DefaultIracManager) {
+         return ((DefaultIracManager) manager).isEmpty();
+      } else {
+         return true;
+      }
+   }
+
+   protected DefaultIracTombstoneManager iracTombstoneManager(Cache<?, ?> cache) {
+      return (DefaultIracTombstoneManager) TestingUtil.extractComponent(cache, IracTombstoneManager.class);
    }
 
    @Override

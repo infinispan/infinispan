@@ -30,11 +30,17 @@ public class IracMetadata {
    }
 
    public static void writeTo(ObjectOutput output, IracMetadata metadata) throws IOException {
-      metadata.writeTo(output);
+      if (metadata == null) {
+         output.writeObject(null);
+         return;
+      }
+      output.writeObject(metadata.version);
+      output.writeUTF(metadata.site);
    }
 
    public static IracMetadata readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
-      return new IracMetadata(in.readUTF(), (IracEntryVersion) in.readObject());
+      IracEntryVersion version = (IracEntryVersion) in.readObject();
+      return version == null ? null : new IracMetadata(in.readUTF(), version);
    }
 
    @ProtoField(1)
@@ -74,10 +80,5 @@ public class IracMetadata {
             "site='" + site + '\'' +
             ", version=" + version +
             '}';
-   }
-
-   public void writeTo(ObjectOutput out) throws IOException {
-      out.writeUTF(site);
-      out.writeObject(version);
    }
 }
