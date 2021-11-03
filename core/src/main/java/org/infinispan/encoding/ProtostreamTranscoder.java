@@ -149,8 +149,12 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
       try {
          return fromJson(content, ctxRegistry.getUserCtx());
       } catch (IllegalArgumentException e) {
-         logger.debugf("Unable to process json with user context, attempting global context");
-         return fromJson(content, ctxRegistry.getGlobalCtx());
+         String message = e.getMessage();
+         if (message != null && message.contains("Unknown type")) {
+            logger.debugf("Unable to process json with user context, attempting global context");
+            return fromJson(content, ctxRegistry.getGlobalCtx());
+         }
+         throw e;
       }
    }
 
