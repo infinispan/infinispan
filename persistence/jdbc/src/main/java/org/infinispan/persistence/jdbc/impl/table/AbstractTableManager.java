@@ -183,14 +183,17 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public TableManager.Metadata getMetadata(Connection connection) throws PersistenceException {
       if (metadata == null) {
+         ResultSet rs = null;
          try {
             String sql = String.format("SELECT %s FROM %s", META_TABLE_DATA_COLUMN, metaTableName.toString());
-            ResultSet rs = connection.createStatement().executeQuery(sql);
+            rs = connection.createStatement().executeQuery(sql);
             rs.next();
             this.metadata = unmarshall(rs.getBinaryStream(1), ctx.getPersistenceMarshaller());
          } catch (SQLException e) {
             PERSISTENCE.sqlFailureMetaRetrieval(e);
             throw new PersistenceException(e);
+         } finally {
+            JdbcUtil.safeClose(rs);
          }
       }
       return metadata;
