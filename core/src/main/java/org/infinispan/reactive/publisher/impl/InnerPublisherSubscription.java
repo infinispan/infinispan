@@ -28,20 +28,14 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * enough entries to satisfy the request threshold. When a given address can no longer return any entries this
  * subscription will try to process the next address/segment combination until it can no longer find any more
  * address/segment targets.
- * <p>
- * Note that this publisher returned via {@link #createPublisher(ClusterPublisherManagerImpl.SubscriberHandler, int, Supplier, Map, int)}
- * can only be subscribed to by one subscriber (more than 1 subscriber will cause issues).
+ *
  * @param <R>
  */
-public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action {
+public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent;
-   private final int batchSize;
-   private final Supplier<Map.Entry<Address, IntSet>> supplier;
-   private final Map<Address, Set<K>> excludedKeys;
-   private final int topologyId;
-   private final FlowableProcessor<R> flowableProcessor;
+   private final InnerPublisherSubscriptionBuilder<K, I, R> builder;
+   private final FlowableProcessor<E> flowableProcessor;
 
    private final AtomicLong requestedAmount = new AtomicLong();
 
@@ -52,32 +46,62 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
    // whether the initial request was already sent or not (if so then a next command is used)
    private volatile boolean alreadyCreated;
 
-   private InnerPublisherSubscription(ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent,
-         int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys, int topologyId,
-         FlowableProcessor<R> flowableProcessor, Map.Entry<Address, IntSet> firstTarget) {
-      this.parent = parent;
-      this.batchSize = batchSize;
-      this.supplier = supplier;
-      this.excludedKeys = excludedKeys;
-      this.topologyId = topologyId;
+   private InnerPublisherSubscription(InnerPublisherSubscriptionBuilder<K, I, R> builder,
+         FlowableProcessor<E> flowableProcessor, Map.Entry<Address, IntSet> firstTarget) {
+      this.builder = builder;
       this.flowableProcessor = flowableProcessor;
 
       this.currentTarget = firstTarget;
    }
 
-   static <K, I, R> Publisher<R> createPublisher(ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent,
-         int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys, int topologyId) {
-      return createPublisher(parent, batchSize, supplier, excludedKeys, topologyId, null);
-   }
+   public static class InnerPublisherSubscriptionBuilder<K, I, R> {
+      private final ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent;
+      private final int batchSize;
+      private final Supplier<Map.Entry<Address, IntSet>> supplier;
+      private final Map<Address, Set<K>> excludedKeys;
+      private final int topologyId;
 
-   static <K, I, R> Publisher<R> createPublisher(ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent,
-         int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys, int topologyId,
-         Map.Entry<Address, IntSet> firstTarget) {
-      FlowableProcessor<R> unicastProcessor = UnicastProcessor.create(batchSize);
-      InnerPublisherSubscription<K, I, R> innerPublisherSubscription = new InnerPublisherSubscription<>(parent,
-            batchSize, supplier, excludedKeys, topologyId, unicastProcessor, firstTarget);
-      return unicastProcessor.doOnLifecycle(RxJavaInterop.emptyConsumer(), innerPublisherSubscription,
-            innerPublisherSubscription);
+      public InnerPublisherSubscriptionBuilder(ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent,
+            int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys,
+            int topologyId) {
+         this.parent = parent;
+         this.batchSize = batchSize;
+         this.supplier = supplier;
+         this.excludedKeys = excludedKeys;
+         this.topologyId = topologyId;
+      }
+
+      Publisher<R> createValuePublisher(Map.Entry<Address, IntSet> firstTarget) {
+         FlowableProcessor<R> unicastProcessor = UnicastProcessor.create(batchSize);
+         InnerPublisherSubscription<K, I, R, R> innerPublisherSubscription = new InnerPublisherSubscription<K, I, R, R>(this,
+               unicastProcessor, firstTarget) {
+            @Override
+            protected void doOnValue(R value, int segment) {
+               unicastProcessor.onNext(value);
+            }
+         };
+         return unicastProcessor.doOnLifecycle(RxJavaInterop.emptyConsumer(), innerPublisherSubscription,
+               innerPublisherSubscription);
+      }
+
+      Publisher<SegmentPublisherSupplier.Notification<R>> createNotificationPublisher(
+            Map.Entry<Address, IntSet> firstTarget) {
+         FlowableProcessor<SegmentPublisherSupplier.Notification<R>> unicastProcessor = UnicastProcessor.create(batchSize);
+         InnerPublisherSubscription<K, I, R, SegmentPublisherSupplier.Notification<R>> innerPublisherSubscription =
+               new InnerPublisherSubscription<K, I, R, SegmentPublisherSupplier.Notification<R>>(this, unicastProcessor, firstTarget) {
+                  @Override
+                  protected void doOnValue(R value, int segment) {
+                     unicastProcessor.onNext(Notifications.value(value, segment));
+                  }
+
+                  @Override
+                  protected void doOnSegmentComplete(int segment) {
+                     unicastProcessor.onNext(Notifications.segmentComplete(segment));
+                  }
+               };
+         return unicastProcessor.doOnLifecycle(RxJavaInterop.emptyConsumer(), innerPublisherSubscription,
+               innerPublisherSubscription);
+      }
    }
 
    /**
@@ -89,7 +113,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
       if (alreadyCreated) {
          Map.Entry<Address, IntSet> target = currentTarget;
          if (target != null) {
-            parent.sendCancelCommand(target.getKey());
+            builder.parent.sendCancelCommand(target.getKey());
          }
       }
    }
@@ -112,7 +136,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
          Map.Entry<Address, IntSet> target = currentTarget;
          if (target == null) {
             alreadyCreated = false;
-            target = supplier.get();
+            target = builder.supplier.get();
             if (target == null) {
                if (log.isTraceEnabled()) {
                   log.tracef("Completing processor %s", flowableProcessor);
@@ -127,12 +151,14 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
          Address address = target.getKey();
          IntSet segments = target.getValue();
 
+         ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent = builder.parent;
+
          CompletionStage<PublisherResponse> stage;
          if (alreadyCreated) {
-            stage = parent.sendNextCommand(address, topologyId);
+            stage = parent.sendNextCommand(address, builder.topologyId);
          } else {
             alreadyCreated = true;
-            stage = parent.sendInitialCommand(address, segments, batchSize, excludedKeys.remove(address), topologyId);
+            stage = parent.sendInitialCommand(address, segments, builder.batchSize, builder.excludedKeys.remove(address), builder.topologyId);
          }
 
          stage.whenComplete((values, t) -> {
@@ -169,13 +195,8 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
                   // of this method try the next target if available
                   currentTarget = null;
                } else {
-                  int segment = segments.iterator().nextInt();
-                  values.forEachSegmentValue(parent, segment);
+                  values.keysForNonCompletedSegments(parent);
                }
-
-               long produced = 0;
-
-               Object lastValue = null;
 
                R[] valueArray = (R[]) values.getResults();
 
@@ -192,32 +213,52 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
                   }
                }
 
-               for (R value : valueArray) {
-                  if (value == null) {
-                     // Local execution doesn't trim array down
-                     break;
-                  }
+               int pos = 0;
+               for (PublisherHandler.SegmentResult segmentResult : values.getSegmentResults()) {
                   if (checkCancelled()) {
                      return;
                   }
-
-                  flowableProcessor.onNext(value);
-                  produced++;
-                  lastValue = value;
+                  int segment = segmentResult.getSegment();
+                  for (int i = 0; i < segmentResult.getEntryCount(); ++i) {
+                     R value = valueArray[pos++];
+                     doOnValue(value, segment);
+                  }
+                  if (completedSegments != null && completedSegments.remove(segment)) {
+                     doOnSegmentComplete(segment);
+                  }
                }
 
+               // Any completed segments left were empty, just complete them together
                if (completedSegments != null) {
-                  // We tell the parent of what the value is when we complete segments - this way they can notify
-                  // segment listeners properly
-                  parent.notifySegmentsComplete(completedSegments, lastValue);
+                  completedSegments.forEach((IntConsumer) this::doOnSegmentComplete);
                }
 
-               accept(-produced);
+               accept(-pos);
             } catch (Throwable innerT) {
                handleThrowableInResponse(innerT, address, segments);
             }
          });
       }
+   }
+
+   /**
+    * Method invoked on each value providing the value and segment. This method is designed to be overridden by an
+    * extended class.
+    *
+    * @param value published value
+    * @param segment segment of the value
+    */
+   protected void doOnValue(R value, int segment) {
+
+   }
+
+   /**
+    * Method invoked whenever a segment is completed. This method is designed to be overridden by an extended class.
+    *
+    * @param segment completed segment
+    */
+   protected void doOnSegmentComplete(int segment) {
+
    }
 
    private boolean shouldSubmit(long count) {
@@ -237,7 +278,7 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
       if (cancelled) {
          // If we were cancelled just log the exception - it may not be an actual problem
          log.tracef("Encountered exception after subscription was cancelled, this can most likely ignored, message is %s", t.getMessage());
-      } else if (parent.handleThrowable(t, address, segments)) {
+      } else if (builder.parent.handleThrowable(t, address, segments)) {
          // We were told to continue processing - so ignore those segments and try the next target if possible
          // Since we never invoked parent.completeSegment they may get retried
          currentTarget = null;

@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
@@ -28,7 +29,6 @@ import java.util.function.Supplier;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -721,8 +721,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
             InvocationContext ctx, Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer) {
 
-         return transformer.apply(LocalClusterPublisherManagerImpl.keyPublisherFromContext(ctx, segments, keyPartitioner,
-               keysToInclude))
+         Flowable<K> flowable = LocalClusterPublisherManagerImpl.entryPublisherFromContext(ctx, segments, keyPartitioner, keysToInclude)
+               .map(RxJavaInterop.entryToKeyFunction());
+         return transformer.apply(flowable)
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
 
@@ -862,7 +863,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       final AtomicReferenceArray<Collection<K>> keysBySegment;
       final IntSet segmentsToComplete;
-      final Map<Object, IntSet> enqueuedSegmentNotifiers;
       // Only allow the first child publisher to use the context values
       final AtomicBoolean useContext = new AtomicBoolean(true);
 
@@ -874,13 +874,15 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          this.requestId = rpcManager.getAddress() + "#" + requestCounter.incrementAndGet();
 
          this.keysBySegment = publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE ?
-                              new AtomicReferenceArray<>(maxSegment) : null;
+               new AtomicReferenceArray<>(maxSegment) : null;
          this.segmentsToComplete = IntSets.concurrentCopyFrom(publisher.segments, maxSegment);
-         this.enqueuedSegmentNotifiers = withSegments ? new ConcurrentHashMap<>() : null;
       }
 
       /**
-       * This is the method that starts the actual subscription. This method starts up to 4 concurrent inner
+       * This method creates a Flowable that when published to will return the values while ensuring retries are
+       * performed to guarantee the configured delivery guarantees.
+       * <p>
+       * This method starts up to 4 concurrent inner
        * subscriptions at the same time. These subscriptions will request values from the target node with the given
        * segments. If the local node is requested it is given to the last subscription to ensure the others are subscribed
        * to first, to allow for concurrent processing reliably.
@@ -889,151 +891,94 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        * us. When all subscribers have completed we see if all segments have been completed, if not we restart
        * the entire process again with the segments that haven't yet completed.
        */
-      private Flowable<R> getValuesFlowable() {
-         Flowable<R> valuesFlowable = Flowable.just(distributionManager)
-               .flatMap(dm -> {
-                  if (!componentRegistry.getStatus().allowInvocations()) {
-                     return Flowable.error(new IllegalLifecycleStateException());
+      private <E> Flowable<E> getValuesFlowable(BiFunction<InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<K, I, R>, Map.Entry<Address, IntSet>, Publisher<E>> subToFlowableFunction) {
+         return Flowable.defer(() -> {
+            if (!componentRegistry.getStatus().allowInvocations()) {
+               return Flowable.error(new IllegalLifecycleStateException());
+            }
+            LocalizedCacheTopology topology = distributionManager.getCacheTopology();
+            int previousTopology = currentTopology;
+            // Store the current topology in case if we have to retry
+            int currentTopology = topology.getTopologyId();
+            this.currentTopology = currentTopology;
+            Address localAddress = rpcManager.getAddress();
+            Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);
+            if (previousTopology != -1 && previousTopology == currentTopology || targets.isEmpty()) {
+               int nextTopology = currentTopology + 1;
+               if (log.isTraceEnabled()) {
+                  log.tracef("Request id %s needs a new topology to retry segments %s. Current topology is %d, with targets %s",
+                        requestId, segmentsToComplete, currentTopology, targets);
+               }
+               // When this is complete - the retry below will kick in again and we will have a new topology
+               return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
+            }
+            IntSet localSegments = targets.remove(localAddress);
+            Iterator<Map.Entry<Address, IntSet>> iterator = targets.entrySet().iterator();
+            Supplier<Map.Entry<Address, IntSet>> targetSupplier = () -> {
+               synchronized (this) {
+                  if (iterator.hasNext()) {
+                     return iterator.next();
                   }
-                  LocalizedCacheTopology topology = dm.getCacheTopology();
-                  int previousTopology = currentTopology;
-                  // Store the current topology in case if we have to retry
-                  int currentTopology = topology.getTopologyId();
-                  this.currentTopology = currentTopology;
-                  Address localAddress = rpcManager.getAddress();
-                  Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);
-                  if (previousTopology != -1 && previousTopology == currentTopology ||
-                      targets.isEmpty()) {
-                     int nextTopology = currentTopology + 1;
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Request id %s needs a new topology to retry segments %s. Current topology is %d, with targets %s",
-                                   requestId, segmentsToComplete, currentTopology, targets);
-                     }
-                     // When this is complete - the retry below will kick in again and we will have a new topology
-                     return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
-                  }
-                  IntSet localSegments = targets.remove(localAddress);
-                  Iterator<Map.Entry<Address, IntSet>> iterator = targets.entrySet().iterator();
-                  Supplier<Map.Entry<Address, IntSet>> targetSupplier = () -> {
-                     synchronized (this) {
-                        if (iterator.hasNext()) {
-                           return iterator.next();
-                        }
-                        return null;
-                     }
-                  };
+                  return null;
+               }
+            };
 
-                  Map<Address, Set<K>> excludedKeys;
-                  if (publisher.invocationContext == null) {
-                     excludedKeys = Collections.emptyMap();
-                  } else {
-                     excludedKeys = determineKeyTargets(topology,
-                           (Set<K>) publisher.invocationContext.getLookedUpEntries().keySet(), localAddress,
-                           segmentsToComplete, null);
-                  }
+            Map<Address, Set<K>> excludedKeys;
+            if (publisher.invocationContext == null) {
+               excludedKeys = Collections.emptyMap();
+            } else {
+               excludedKeys = determineKeyTargets(topology,
+                     (Set<K>) publisher.invocationContext.getLookedUpEntries().keySet(), localAddress,
+                     segmentsToComplete, null);
+            }
 
-                  int concurrentPublishers = Math.min(MAX_INNER_SUBSCRIBERS, targets.size() + (localSegments != null ? 1 : 0));
+            int concurrentPublishers = Math.min(MAX_INNER_SUBSCRIBERS, targets.size() + (localSegments != null ? 1 : 0));
 
-                  int targetBatchSize = (publisher.batchSize + concurrentPublishers - 1) / concurrentPublishers;
+            int targetBatchSize = (publisher.batchSize + concurrentPublishers - 1) / concurrentPublishers;
 
-                  Publisher<R>[] publisherArray = new Publisher[concurrentPublishers];
-                  for (int i = 0; i < concurrentPublishers - 1; ++i) {
-                     publisherArray[i] = InnerPublisherSubscription.createPublisher(this, targetBatchSize, targetSupplier,
-                           excludedKeys, currentTopology);
-                  }
-                  // Submit the local target last if necessary (otherwise is a normal submission)
-                  // This is done last as we want to send all the remote requests first and only process the local
-                  // container concurrently with the remote requests
-                  if (localSegments != null) {
-                     publisherArray[concurrentPublishers - 1] = InnerPublisherSubscription.createPublisher(this, targetBatchSize,
-                           targetSupplier, excludedKeys, currentTopology, new AbstractMap.SimpleEntry<>(localAddress, localSegments));
-                  } else {
-                     publisherArray[concurrentPublishers - 1] = InnerPublisherSubscription.createPublisher(this, targetBatchSize,
-                           targetSupplier, excludedKeys, currentTopology);
-                  }
+            InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<K, I, R> builder =
+                  new InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<>(this, targetBatchSize,
+                        targetSupplier, excludedKeys, currentTopology);
 
-                  return Flowable.mergeArray(publisherArray);
-               }, MAX_INNER_SUBSCRIBERS)
-               .repeatUntil(() -> {
-                  boolean complete = segmentsToComplete.isEmpty();
-                  if (log.isTraceEnabled()) {
-                     if (complete) {
-                        log.tracef("All segments complete for %s", requestId);
-                     } else {
-                        log.tracef("Segments %s not completed - retrying", segmentsToComplete);
-                     }
-                  }
-                  return complete;
-               });
-         return valuesFlowable;
+            Publisher<E>[] publisherArray = new Publisher[concurrentPublishers];
+            for (int i = 0; i < concurrentPublishers - 1; ++i) {
+               publisherArray[i] = subToFlowableFunction.apply(builder, null);
+            }
+            // Submit the local target last if necessary (otherwise is a normal submission)
+            // This is done last as we want to send all the remote requests first and only process the local
+            // container concurrently with the remote requests
+            if (localSegments != null) {
+               publisherArray[concurrentPublishers - 1] = subToFlowableFunction.apply(builder, new AbstractMap.SimpleEntry<>(localAddress, localSegments));
+            } else {
+               publisherArray[concurrentPublishers - 1] = subToFlowableFunction.apply(builder, null);
+            }
+
+            return Flowable.mergeArray(publisherArray);
+         }).repeatUntil(() -> {
+            boolean complete = segmentsToComplete.isEmpty();
+            if (log.isTraceEnabled()) {
+               if (complete) {
+                  log.tracef("All segments complete for %s", requestId);
+               } else {
+                  log.tracef("Segments %s not completed - retrying", segmentsToComplete);
+               }
+            }
+            return complete;
+         });
       }
 
       public Flowable<R> start() {
-         return getValuesFlowable();
+         return getValuesFlowable(InnerPublisherSubscription.InnerPublisherSubscriptionBuilder::createValuePublisher);
       }
 
       public Flowable<SegmentPublisherSupplier.Notification<R>> startWithSegments() {
-         ByRef<R> previousValue = new ByRef<>(null);
-         FlowableProcessor<SegmentPublisherSupplier.Notification<R>> flowableProcessor = UnicastProcessor.create();
-
-         Flowable<R> valuesFlowable = getValuesFlowable();
-         return Flowable.defer(() -> {
-            valuesFlowable.subscribe(value -> {
-               flowableProcessor.onNext(Notifications.value(value));
-               R previous = previousValue.get();
-               if (previous != null) {
-                  IntSet segments = enqueuedSegmentNotifiers.remove(previous);
-                  if (segments != null) {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Enqueued value %s has been returned, completing segments %s",
-                              Util.toStr(previous), segments);
-                     }
-                     for (PrimitiveIterator.OfInt segmentIter = segments.iterator(); segmentIter.hasNext(); ) {
-                        flowableProcessor.onNext(Notifications.segmentComplete(segmentIter.nextInt()));
-                     }
-                  }
-                  previousValue.set(value);
-               }
-            }, flowableProcessor::onError, () -> {
-               enqueuedSegmentNotifiers.forEach((k, segments) -> {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Notifying of completed segments %s due to publisher is complete", segments);
-                  }
-                  for (PrimitiveIterator.OfInt segmentIter = segments.iterator(); segmentIter.hasNext(); ) {
-                     flowableProcessor.onNext(Notifications.segmentComplete(segmentIter.nextInt()));
-                  }
-               });
-               flowableProcessor.onComplete();
-            });
-            return flowableProcessor;
-         });
+         return getValuesFlowable(InnerPublisherSubscription.InnerPublisherSubscriptionBuilder::createNotificationPublisher);
       }
 
       void completeSegment(int segment) {
          segmentsToComplete.remove(segment);
          if (keysBySegment != null) {
             keysBySegment.set(segment, null);
-         }
-      }
-
-      // Method to be invoked after processing all the results of a request. If lastEnqueudValue is null that means
-      // that all entries have been consumed by the downstream and we can immediately notify of segment completion,
-      // otherwise we must wait until the given enqueued value is consumed before notifying of segment completion
-      void notifySegmentsComplete(IntSet segments, Object lastValue) {
-         if (enqueuedSegmentNotifiers != null) {
-            if (lastValue == null) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Delaying completed segments %s to be notified when current publisher is complete" +
-                        "(no value to map it's completion)", segments);
-               }
-               enqueuedSegmentNotifiers.put(new Object(), segments);
-            } else {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Delaying completed segments %s to be notified when %s is returned", segments,
-                        Util.toStr(lastValue));
-               }
-               enqueuedSegmentNotifiers.put(lastValue, segments);
-            }
          }
       }
 

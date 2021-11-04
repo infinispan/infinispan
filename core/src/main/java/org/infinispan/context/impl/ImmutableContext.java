@@ -3,11 +3,15 @@ package org.infinispan.context.impl;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * This context is a non-context for operations such as eviction which are not related
@@ -103,5 +107,16 @@ public final class ImmutableContext implements InvocationContext {
    @Override
    public boolean isEntryRemovedInContext(Object key) {
       return false;
+   }
+
+   @Override
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) { }
+
+   @Override
+   public void forEachValue(BiConsumer<Object, CacheEntry> action) { }
+
+   @Override
+   public <K, V> Publisher<CacheEntry<K, V>> publisher() {
+      return Flowable.empty();
    }
 }

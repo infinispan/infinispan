@@ -45,7 +45,19 @@ public interface SegmentPublisherSupplier<R> {
        * @return the value
        * @throws IllegalStateException if this notification is segment complete
        */
-      R value();
+      default R value() {
+         throw new IllegalStateException("Notification does not contain a value, please check with isValue first!");
+      }
+
+      /**
+       * The segment that maps for the value of this notification
+       *
+       * @return the segment
+       * @throws IllegalStateException if this notification is segment complete
+       */
+      default int valueSegment() {
+         throw new IllegalStateException("Notification does not contain a value segment, please check with isValue first!");
+      }
 
       /**
        * The segment that was complete for this notification
@@ -53,7 +65,9 @@ public interface SegmentPublisherSupplier<R> {
        * @return the segment
        * @throws IllegalStateException if this notification contains a value
        */
-      int completedSegment();
+      default int completedSegment() {
+         throw new IllegalStateException("Notification does not contain a completed segment, please check with isSegmentComplete first!");
+      }
    }
 
    Publisher<R> publisherWithoutSegments();

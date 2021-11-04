@@ -3,6 +3,8 @@ package org.infinispan.reactive.publisher.impl.commands.batch;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -10,6 +12,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 
 public class PublisherResponseExternalizer extends AbstractExternalizer<PublisherResponse> {
 
@@ -29,15 +32,21 @@ public class PublisherResponseExternalizer extends AbstractExternalizer<Publishe
       output.writeObject(object.lostSegments);
       output.writeBoolean(object.complete);
 
+      UnsignedNumeric.writeUnsignedInt(output, object.segmentResults.size());
+      for (PublisherHandler.SegmentResult result : object.segmentResults) {
+         UnsignedNumeric.writeUnsignedInt(output, result.getSegment());
+         UnsignedNumeric.writeUnsignedInt(output, result.getEntryCount());
+      }
+
       if (object instanceof KeyPublisherResponse) {
          KeyPublisherResponse keyResponse = (KeyPublisherResponse) object;
          // Just send the combined count of both arrays - the read handles both the same way
          // segmentOffset for a KeyPublisherResponse is actually the extra value size
-         UnsignedNumeric.writeUnsignedInt(output, keyResponse.size + keyResponse.segmentOffset);
+         UnsignedNumeric.writeUnsignedInt(output, keyResponse.size + keyResponse.extraSize);
          for (int i = 0; i < keyResponse.size; ++i) {
             output.writeObject(keyResponse.results[i]);
          }
-         for (int i = 0; i < keyResponse.segmentOffset; ++i) {
+         for (int i = 0; i < keyResponse.extraSize; ++i) {
             output.writeObject(keyResponse.extraObjects[i]);
          }
 
@@ -54,8 +63,6 @@ public class PublisherResponseExternalizer extends AbstractExternalizer<Publishe
          }
 
          output.writeBoolean(false);
-
-         UnsignedNumeric.writeUnsignedInt(output, object.segmentOffset);
       }
    }
 
@@ -64,6 +71,14 @@ public class PublisherResponseExternalizer extends AbstractExternalizer<Publishe
       IntSet completedSegments = (IntSet) input.readObject();
       IntSet lostSegments = (IntSet) input.readObject();
       boolean complete = input.readBoolean();
+
+      int segmentResultSize = UnsignedNumeric.readUnsignedInt(input);
+      List<PublisherHandler.SegmentResult> segmentResults = new ArrayList<>(segmentResultSize);
+      for (int i = 0; i < segmentResultSize; ++i) {
+         int segment = UnsignedNumeric.readUnsignedInt(input);
+         int entryCount = UnsignedNumeric.readUnsignedInt(input);
+         segmentResults.add(new PublisherHandler.SegmentResult(segment, entryCount));
+      }
 
       int size = UnsignedNumeric.readUnsignedInt(input);
       Object[] values = new Object[size];
@@ -78,13 +93,10 @@ public class PublisherResponseExternalizer extends AbstractExternalizer<Publishe
          for (int i = 0; i < keySize; ++i) {
             keys[i] = input.readObject();
          }
-         // All of the extra objects were just smashed into our values - so there is no separate array
-         // The only real discernable difference with this response on the deserialized side is the presence of the
-         // keys
-         return new KeyPublisherResponse(values, completedSegments, lostSegments, size, complete, null, 0, keys, keySize);
+         // All of the extra objects were just smashed into our values - so there is no separate extraObjects array
+         return new KeyPublisherResponse(values, completedSegments, lostSegments, size, complete, segmentResults, null, 0, keys, keySize);
       } else {
-         int segmentOffset = UnsignedNumeric.readUnsignedInt(input);
-         return new PublisherResponse(values, completedSegments, lostSegments, size, complete, segmentOffset);
+         return new PublisherResponse(values, completedSegments, lostSegments, size, complete, segmentResults);
       }
    }
 }

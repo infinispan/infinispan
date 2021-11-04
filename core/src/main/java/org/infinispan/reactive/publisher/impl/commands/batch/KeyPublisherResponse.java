@@ -1,8 +1,10 @@
 package org.infinispan.reactive.publisher.impl.commands.batch;
 
+import java.util.List;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 
 /**
  * A Publisher Response that is used when key tracking is enabled. This is used in cases when EXACTLY_ONCE delivery
@@ -16,22 +18,24 @@ import org.infinispan.commons.util.IntSet;
  */
 public class KeyPublisherResponse extends PublisherResponse {
    final Object[] extraObjects;
+   final int extraSize;
    final Object[] keys;
+   // Note that after being deserialized this is always equal to keySize.length - local this will be how many entries
+   // are in the array
    final int keySize;
 
    public KeyPublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size,
-         boolean complete, Object[] extraObjects, int extraSize, Object[] keys, int keySize) {
-      super(results, completedSegments, lostSegments, size, complete, extraSize);
+         boolean complete, List<PublisherHandler.SegmentResult> segmentResults, Object[] extraObjects, int extraSize,
+         Object[] keys, int keySize) {
+      super(results, completedSegments, lostSegments, size, complete, segmentResults);
       this.extraObjects = extraObjects;
+      this.extraSize = extraSize;
       this.keys = keys;
       this.keySize = keySize;
    }
 
-   // NOTE: extraSize is stored in the segmentOffset field since it isn't valid when using key tracking.
-   // Normally segmentOffset is used to determine which key/entry(s) mapped to the current processing segment,
-   // since we have the keys directly we don't need this field
    public int getExtraSize() {
-      return segmentOffset;
+      return extraSize;
    }
 
    public Object[] getExtraObjects() {
@@ -39,7 +43,13 @@ public class KeyPublisherResponse extends PublisherResponse {
    }
 
    @Override
-   public void forEachSegmentValue(ObjIntConsumer consumer, int segment) {
+   public void keysForNonCompletedSegments(ObjIntConsumer consumer) {
+      int size = segmentResults.size();
+      if (size == 0) {
+         return;
+      }
+      PublisherHandler.SegmentResult segmentResult = segmentResults.get(segmentResults.size() - 1);
+      int segment = segmentResult.getSegment();
       for (int i = 0; i < keySize; ++i) {
          consumer.accept(keys[i], segment);
       }
@@ -49,11 +59,12 @@ public class KeyPublisherResponse extends PublisherResponse {
    public String toString() {
       return "KeyPublisherResponse{" +
             "size=" + size +
-            ", extraSize=" + segmentOffset +
-            ", keySize=" + keySize +
             ", completedSegments=" + completedSegments +
             ", lostSegments=" + lostSegments +
             ", complete=" + complete +
+            ", segmentResults=" + segmentResults +
+            ", extraSize=" + extraSize +
+            ", keySize=" + keySize +
             '}';
    }
 }

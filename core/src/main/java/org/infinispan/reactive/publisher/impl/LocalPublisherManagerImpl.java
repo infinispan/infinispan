@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 
@@ -29,6 +28,7 @@ import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -74,6 +74,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    @Inject DistributionManager distributionManager;
    @Inject PersistenceManager persistenceManager;
    @Inject Configuration configuration;
+   @Inject KeyPartitioner keyPartitioner;
    // This cache should only be used for retrieving entries via Cache#get
    protected AdvancedCache<K, V> remoteCache;
    // This cache should be used for iteration purposes or Cache#get that are local only
@@ -236,39 +237,58 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                                                                         FlowableConverter<K, Flowable<I>> conversionFunction,
                                                                         Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       return new BaseSegmentAwarePublisherSupplier<R>() {
-         private Publisher<R> actualPublisherValues() {
+         @Override
+         public Publisher<R> publisherWithoutSegments() {
             return Flowable.fromIterable(keysToInclude)
                   .to(conversionFunction)
                   .to(transformer::apply);
          }
 
          @Override
-         public Publisher<R> publisherWithoutSegments() {
-            return actualPublisherValues();
-         }
-
-         @Override
-         Flowable<NotificationWithLost<R>> flowableWithNotifications() {
-            return Flowable.fromPublisher(actualPublisherValues())
-                  .map(Notifications::value)
+         Flowable<NotificationWithLost<R>> flowableWithNotifications(boolean reuseNotifications) {
+            return Flowable.fromIterable(keysToInclude)
+                  .groupBy(keyPartitioner::getSegment)
+                  // We use concatMapEager instead of flatMap (groupBy needs either to prevent starvation) to ensure
+                  // ordering guarantees defined in the LocalPublisherManager entryPublisher method.
+                  // Due to eager subscription we cannot reuse notifications
+                  .concatMapEager(group -> {
+                     int segment = group.getKey();
+                     // Shouldn't be possible to get a key that doesn't belong to the required segment - but just so
+                     // we don't accidentally starve the groupBy
+                     if (!segments.remove(segment)) {
+                        throw new IllegalArgumentException("Key: " + blockingFirst(group) + " maps to segment: " + segment +
+                              ", which was not included in segments provided: " + segments);
+                     }
+                     return Flowable.fromPublisher(conversionFunction.apply(group)
+                                 .to(transformer::apply))
+                           .map(r -> Notifications.value(r, segment))
+                           .concatWith(Single.just(Notifications.segmentComplete(segment)));
+                  }, segments.size(), Math.min(keysToInclude.size(), Flowable.bufferSize()))
                   .concatWith(Flowable.fromIterable(segments).map(Notifications::segmentComplete));
          }
       };
    }
 
+   // This method is here for checkstyle, only reason we use this method is for throwing an exception, when we know
+   // there is a guaranteed first value, so it will never actually block.
+   @SuppressWarnings("checkstyle:forbiddenmethod")
+   static Object blockingFirst(Flowable<?> flowable) {
+      return flowable.blockingFirst();
+   }
+
    private abstract static class BaseSegmentAwarePublisherSupplier<R> implements SegmentAwarePublisherSupplier<R> {
       @Override
       public Publisher<Notification<R>> publisherWithSegments() {
-         return flowableWithNotifications().filter(notification -> !notification.isLostSegment())
-                                           .map(n -> n);
+         return flowableWithNotifications(false).filter(notification -> !notification.isLostSegment())
+               .map(n -> n);
       }
 
       @Override
-      public Publisher<NotificationWithLost<R>> publisherWithLostSegments() {
-         return flowableWithNotifications();
+      public Publisher<NotificationWithLost<R>> publisherWithLostSegments(boolean reuseNotifications) {
+         return flowableWithNotifications(reuseNotifications);
       }
 
-      abstract Flowable<NotificationWithLost<R>> flowableWithNotifications();
+      abstract Flowable<NotificationWithLost<R>> flowableWithNotifications(boolean reuseNotifications);
    }
 
    private class SegmentAwarePublisherSupplierImpl<I, R> extends BaseSegmentAwarePublisherSupplier<R> {
@@ -300,24 +320,36 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          });
       }
 
-      Flowable<NotificationWithLost<R>> flowableWithNotifications() {
+      Flowable<NotificationWithLost<R>> flowableWithNotifications(boolean reuseNotifications) {
          switch (deliveryGuarantee) {
             case AT_MOST_ONCE:
-               return Flowable.fromIterable(segments).concatMap(segment -> {
-                  Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
-                  if (predicate != null) {
-                     flowable = flowable
-                           .filter(predicate);
-                  }
-                  return flowable.compose(transformer::apply)
-                        .map(Notifications::value)
-                        .concatWith(Single.just(Notifications.segmentComplete(segment)));
+               return Flowable.defer(() -> {
+                  // LocalClusterPublisherManagerImpl always forces AT_MOST_ONCE so distributionManager may be null
+                  LocalizedCacheTopology localizedCacheTopology = distributionManager != null ?
+                        distributionManager.getCacheTopology() : null;
+                  Notifications.NotificationBuilder<R> builder = reuseNotifications ? Notifications.reuseBuilder() :
+                        Notifications.newBuilder();
+                  return Flowable.fromIterable(segments)
+                        .concatMap(segment -> {
+                           if (localizedCacheTopology != null && !localizedCacheTopology.isSegmentReadOwner(segment)) {
+                              return Flowable.just(builder.segmentLost(segment));
+                           }
+                           Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
+                           if (predicate != null) {
+                              flowable = flowable.filter(predicate);
+                           }
+                           return flowable.compose(transformer::apply)
+                                 .map(r -> builder.value(r, segment))
+                                 .concatWith(Single.fromSupplier(() -> builder.segmentComplete(segment)));
+                  });
                });
             case AT_LEAST_ONCE:
             case EXACTLY_ONCE:
                // Need to use defer to have the shared variables between the various inner publishers but also
                // isolate between multiple subscriptions
                return Flowable.defer(() -> {
+                  Notifications.NotificationBuilder<R> builder = reuseNotifications ? Notifications.reuseBuilder() :
+                        Notifications.newBuilder();
                   IntSet concurrentSet = IntSets.concurrentCopyFrom(segments, maxSegment);
                   RemoveSegmentListener listener = new RemoveSegmentListener(concurrentSet);
 
@@ -328,7 +360,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
                   return Flowable.fromIterable(segments).concatMap(segment -> {
                      if (!concurrentSet.contains(segment)) {
-                        return Flowable.empty();
+                        return Flowable.just(builder.segmentLost(segment));
                      }
                      Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
                      if (predicate != null) {
@@ -336,10 +368,10 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                               .filter(predicate);
                      }
                      return flowable.compose(transformer::apply)
-                           .map(Notifications::value)
-                           .concatWith(Single.fromCallable(() ->
+                           .map(r -> builder.value(r, segment))
+                           .concatWith(Single.fromSupplier(() ->
                                  concurrentSet.remove(segment) ?
-                                       Notifications.segmentComplete(segment) : Notifications.segmentLost(segment)
+                                       builder.segmentComplete(segment) : builder.segmentLost(segment)
                            ));
                   }).doFinally(() -> changeListener.remove(listener));
                });
@@ -426,19 +458,11 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
    }
 
-   private static <V> void completeTask(AtomicInteger count, V value, FlowableProcessor<V> processor) {
-      if (value != null) {
-         processor.onNext(value);
-      }
-      if (count.decrementAndGet() == 0) {
-         processor.onComplete();
-      }
-   }
-
    /**
     * Retrieves the next int from the iterator in a thread safe manner. This method
     * synchronizes on the iterator instance, so be sure not to mix this object monitor with other invocations.
     * If the iterator has been depleted this method will return -1 instead.
+    *
     * @param segmentIter the iterator to retrieve the next segment from
     * @return the next segment or -1 if there are none left
     */

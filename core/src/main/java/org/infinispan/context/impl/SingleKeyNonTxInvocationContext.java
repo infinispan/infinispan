@@ -8,6 +8,9 @@ import java.util.function.BiConsumer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Mircea Markus
@@ -111,6 +114,21 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       if (cacheEntry != null) {
          action.accept(key, cacheEntry);
       }
+   }
+
+   @Override
+   public void forEachValue(BiConsumer<Object, CacheEntry> action) {
+      if (cacheEntry != null && !cacheEntry.isRemoved() && !cacheEntry.isNull()) {
+         action.accept(key, cacheEntry);
+      }
+   }
+
+   @Override
+   public <K, V> Publisher<CacheEntry<K, V>> publisher() {
+      if (cacheEntry != null && !cacheEntry.isRemoved() && !cacheEntry.isNull()) {
+         return Flowable.just(cacheEntry);
+      }
+      return Flowable.empty();
    }
 
    @Override
