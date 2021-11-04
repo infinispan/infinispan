@@ -37,7 +37,7 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
    @OperateOnDeployment("dep1")
    @InSequence(2)
    public void testRunningInDep1() {
-      DefaultCacheManager cm = getOrCreateCacheManager(1);
+      DefaultCacheManager cm = createCacheManager(1);
       Cache<String, String> cache = cm.getCache();
       cache.put("dep1", "dep1");
    }
@@ -52,7 +52,7 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
    @OperateOnDeployment("dep2")
    @InSequence(4)
    public void testRunningInDep2() {
-      DefaultCacheManager cm = getOrCreateCacheManager(2);
+      DefaultCacheManager cm = createCacheManager(2);
       Cache<String, String> cache = cm.getCache();
       assertEquals("dep1", cache.get("dep1"));
    }
@@ -64,7 +64,7 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
       deployer.undeploy("dep2");
    }
 
-   protected DefaultCacheManager getOrCreateCacheManager(int index) {
+   protected DefaultCacheManager createCacheManager(int index) {
       String baseDir = CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "server-" + index);
       String dataDir = baseDir + separator + "data";
       String expiredDir = baseDir + separator + "expired";
