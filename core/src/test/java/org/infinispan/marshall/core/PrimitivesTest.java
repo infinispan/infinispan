@@ -1,6 +1,7 @@
 package org.infinispan.marshall.core;
 
 import static java.util.Objects.deepEquals;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.marshall.core.Primitives.ID_BOOLEAN_ARRAY;
 import static org.infinispan.marshall.core.Primitives.ID_BOOLEAN_OBJ;
 import static org.infinispan.marshall.core.Primitives.ID_BYTE_ARRAY;
@@ -26,7 +27,6 @@ import java.io.IOException;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -73,7 +73,7 @@ public class PrimitivesTest extends AbstractInfinispanTest {
       assertReadAndWrite(new long[]{123L, 456L}, ID_LONG_ARRAY);
       assertReadAndWrite(new short[]{123, 456}, ID_SHORT_ARRAY);
 
-      Exceptions.expectException(IOException.class, "Unknown primitive type: diable",
+      expectException(IOException.class, "Unknown primitive type: diable",
             () -> writePrimitive("diable", new BytesObjectOutput(10240, globalMarshaller), 666));
    }
 
@@ -82,5 +82,12 @@ public class PrimitivesTest extends AbstractInfinispanTest {
       writePrimitive(write, out, id);
       Object read = readPrimitive(BytesObjectInput.from(out.bytes, 0, globalMarshaller));
       assertTrue(deepEquals(write, read));
+   }
+
+   public void testLargeArray() {
+      BytesObjectOutput out = new BytesObjectOutput(10240, globalMarshaller);
+      byte[] bytes = new byte[]{0};
+      out.write(bytes);
+      expectException(OutOfMemoryError.class, () -> out.write(bytes, 0, Integer.MAX_VALUE));
    }
 }

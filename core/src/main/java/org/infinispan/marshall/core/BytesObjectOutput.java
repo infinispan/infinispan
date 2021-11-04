@@ -240,6 +240,8 @@ final class BytesObjectOutput implements ObjectOutput {
          byte newbuf[] = new byte[getNewBufferSize(bytes.length, newcount)];
          System.arraycopy(bytes, 0, newbuf, 0, pos);
          bytes = newbuf;
+      } else if (newcount < 0) {
+         throw new OutOfMemoryError("Serialized objects must fit in 2GB");
       }
       return newcount;
    }
