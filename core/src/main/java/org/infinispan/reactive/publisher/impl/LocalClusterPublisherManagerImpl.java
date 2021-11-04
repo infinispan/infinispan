@@ -1,6 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
-import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -18,11 +18,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 @Scope(Scopes.NAMED_CACHE)
 public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
@@ -42,32 +42,29 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       }
    }
 
-   static <K> Flowable<K> keyPublisherFromContext(InvocationContext ctx, IntSet segments, KeyPartitioner keyPartitioner,
-         Set<K> keysToInclude) {
-      UnicastProcessor<K> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
-      ctx.forEachValue((o, cacheEntry) -> {
-         K key = (K) o;
-         if ((keysToInclude == null || keysToInclude.contains(key))
-               && (segments == null || segments.contains(keyPartitioner.getSegment(key)))) {
-            unicastProcessor.onNext(key);
-         }
-      });
-      unicastProcessor.onComplete();
-      return unicastProcessor;
-   }
-
    static <K, V> Flowable<CacheEntry<K, V>> entryPublisherFromContext(InvocationContext ctx, IntSet segments,
          KeyPartitioner keyPartitioner, Set<K> keysToInclude) {
-      UnicastProcessor<CacheEntry<K, V>> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
-      ctx.forEachValue((o, cacheEntry) -> {
-         K key = (K) o;
-         if ((keysToInclude == null || keysToInclude.contains(key))
-            && (segments == null || segments.contains(keyPartitioner.getSegment(key)))) {
-            unicastProcessor.onNext(cacheEntry);
-         }
-      });
-      unicastProcessor.onComplete();
-      return unicastProcessor;
+      Flowable<CacheEntry<K, V>> flowable = Flowable.fromPublisher(ctx.publisher());
+      if (segments == null && keysToInclude == null) {
+         return flowable;
+      }
+      return flowable.filter(entry -> (keysToInclude == null || keysToInclude.contains(entry.getKey()))
+            && (segments == null || segments.contains(keyPartitioner.getSegment(entry.getKey()))));
+   }
+
+   static <K, V> Flowable<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> notificationPublisherFromContext(
+         InvocationContext ctx, IntSet segments, KeyPartitioner keyPartitioner, Set<K> keysToInclude) {
+      return Flowable.fromPublisher(ctx.<K, V>publisher())
+            .mapOptional(ce -> {
+               K key = ce.getKey();
+               if (keysToInclude == null || keysToInclude.contains(key)) {
+                  int segment = keyPartitioner.getSegment(key);
+                  if (segments == null || segments.contains(segment)) {
+                     return Optional.of(Notifications.value(ce, segment));
+                  }
+               }
+               return Optional.empty();
+            });
    }
 
    IntSet handleNullSegments(IntSet segments) {
@@ -89,13 +86,13 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          return localPublisherManager.keyReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
                includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
       }
-      Set<K> keysToExclude = new HashSet<>(invocationContext.lookedUpEntriesCount());
-      invocationContext.forEachEntry((key, ce) -> keysToExclude.add((K) key));
 
       CompletionStage<R> stage = localPublisherManager.keyReduction(parallelPublisher, handleNullSegments(segments), keysToInclude,
-            keysToExclude, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
+                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
+            .thenApply(PublisherResult::getResult);
 
-      Flowable<K> entryFlowable = keyPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude);
+      Flowable<K> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude)
+            .map(RxJavaInterop.entryToKeyFunction());
       return transformer.apply(entryFlowable)
             .thenCombine(stage, Flowable::just)
             .thenCompose(finalizer);
@@ -116,11 +113,10 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          return localPublisherManager.entryReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
                includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
       }
-      Set<K> keysToExclude = new HashSet<>(invocationContext.lookedUpEntriesCount());
-      invocationContext.forEachEntry((key, ce) -> keysToExclude.add((K) key));
 
       CompletionStage<R> stage = localPublisherManager.entryReduction(parallelPublisher, handleNullSegments(segments), keysToInclude,
-            keysToExclude, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
+                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
+            .thenApply(PublisherResult::getResult);
 
       Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
             keysToInclude);
@@ -137,27 +133,31 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          ((InjectableComponent) transformer).inject(componentRegistry);
       }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
-         return localPublisherManager.keyPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
-               DeliveryGuarantee.AT_MOST_ONCE, transformer);
+         return localPublisherManager.keyPublisher(handleNullSegments(segments),
+               keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
       }
-      SegmentPublisherSupplier<R> cachePublisher = localPublisherManager.keyPublisher(handleNullSegments(segments),
-            keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
-      Flowable<K> keyFlowable = keyPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude);
+      SegmentAwarePublisherSupplier<R> cachePublisher = localPublisherManager.keyPublisher(handleNullSegments(segments),
+            keysToInclude, (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       return new SegmentPublisherSupplier<R>() {
          @Override
          public Publisher<Notification<R>> publisherWithSegments() {
-            Publisher<Notification<R>> cacheData = cachePublisher.publisherWithSegments();
-            return Flowable.concat(Flowable.fromPublisher(transformer.apply(keyFlowable))
-                                           .map(Notifications::value),
-                                   cacheData);
+            Flowable<Notification<CacheEntry<K, V>>> contextFlowable =
+                  notificationPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude);
+
+            return Flowable.concat(contextFlowable.concatMap(notification ->
+                        Flowable.fromPublisher(transformer.apply(Flowable.just(notification.value().getKey())))
+                              .map(r -> Notifications.value(r, notification.valueSegment()))),
+                  cachePublisher.publisherWithSegments());
          }
 
          @Override
          public Publisher<R> publisherWithoutSegments() {
-            return Flowable.concat(transformer.apply(keyFlowable),
-                                   cachePublisher.publisherWithoutSegments());
+            Flowable<K> contextFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude)
+                  .map(RxJavaInterop.entryToKeyFunction());
+            return Flowable.concat(transformer.apply(contextFlowable),
+                  cachePublisher.publisherWithoutSegments());
          }
       };
    }
@@ -169,29 +169,36 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       if (transformer instanceof InjectableComponent) {
          ((InjectableComponent) transformer).inject(componentRegistry);
       }
-      if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
-         return localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
-               DeliveryGuarantee.AT_MOST_ONCE, transformer);
-      }
-      SegmentPublisherSupplier<R> cachePublisher = localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null,
-            includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
-      Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
-            keysToInclude);
+      if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
+         return localPublisherManager.entryPublisher(handleNullSegments(segments),
+               keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
+      }
+
+      SegmentAwarePublisherSupplier<R> cachePublisher = localPublisherManager.entryPublisher(handleNullSegments(segments),
+            keysToInclude, (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       return new SegmentPublisherSupplier<R>() {
+
          @Override
          public Publisher<Notification<R>> publisherWithSegments() {
-            Publisher<Notification<R>> cacheData = cachePublisher.publisherWithSegments();
-            return Flowable.concat(Flowable.fromPublisher(transformer.apply(entryFlowable))
-                                           .map(Notifications::value),
-                                   cacheData);
+            Flowable<Notification<CacheEntry<K, V>>> entryFlowable = notificationPublisherFromContext(invocationContext, segments, keyPartitioner,
+                  keysToInclude);
+
+            Flowable<Notification<R>> contextFlowable = entryFlowable
+                  .concatMap(notification -> Flowable.fromPublisher(transformer.apply(Flowable.just(notification.value())))
+                        .map(r -> Notifications.value(r, notification.valueSegment())));
+
+            return Flowable.concat(contextFlowable,
+                  cachePublisher.publisherWithSegments());
          }
 
          @Override
          public Publisher<R> publisherWithoutSegments() {
+            Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
+                  keysToInclude);
             return Flowable.concat(transformer.apply(entryFlowable),
-                                   cachePublisher.publisherWithoutSegments());
+                  cachePublisher.publisherWithoutSegments());
          }
       };
    }

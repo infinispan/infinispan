@@ -1,9 +1,12 @@
 package org.infinispan.reactive.publisher.impl.commands.batch;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 
 /**
  * The response for a cache publisher request to a given node. It contains an array with how many results there were,
@@ -22,20 +25,20 @@ public class PublisherResponse {
    // are in the array
    final int size;
    final boolean complete;
-   final int segmentOffset;
+   final List<PublisherHandler.SegmentResult> segmentResults;
 
    public PublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size, boolean complete,
-         int segmentOffset) {
+         List<PublisherHandler.SegmentResult> segmentResults) {
       this.results = results;
       this.completedSegments = completedSegments;
       this.lostSegments = lostSegments;
       this.size = size;
       this.complete = complete;
-      this.segmentOffset = segmentOffset;
+      this.segmentResults = segmentResults;
    }
 
    public static PublisherResponse emptyResponse(IntSet completedSegments, IntSet lostSegments) {
-      return new PublisherResponse(Util.EMPTY_OBJECT_ARRAY, completedSegments, lostSegments, 0, true, 0);
+      return new PublisherResponse(Util.EMPTY_OBJECT_ARRAY, completedSegments, lostSegments, 0, true, Collections.emptyList());
    }
 
    public Object[] getResults() {
@@ -58,9 +61,20 @@ public class PublisherResponse {
       return complete;
    }
 
-   public void forEachSegmentValue(ObjIntConsumer consumer, int segment) {
-      for (int i = segmentOffset; i < results.length; ++i) {
-         consumer.accept(results[i], segment);
+   public List<PublisherHandler.SegmentResult> getSegmentResults() {
+      return segmentResults;
+   }
+
+   public void keysForNonCompletedSegments(ObjIntConsumer consumer) {
+      int segmentResultSize = segmentResults.size();
+      if (segmentResultSize == 0) {
+         return;
+      }
+      // The last segment results has ones that weren't completed
+      PublisherHandler.SegmentResult segmentResult = segmentResults.get(segmentResultSize - 1);
+      int segment = segmentResult.getSegment();
+      for (int i = segmentResult.getEntryCount(); i > 0; --i) {
+         consumer.accept(results[size - i], segment);
       }
    }
 
@@ -71,7 +85,7 @@ public class PublisherResponse {
             ", completedSegments=" + completedSegments +
             ", lostSegments=" + lostSegments +
             ", complete=" + complete +
-            ", segmentOffset=" + segmentOffset +
+            ", segmentResults=" + segmentResults +
             '}';
    }
 }

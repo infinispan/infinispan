@@ -1,19 +1,17 @@
 package org.infinispan.reactive.publisher.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.KnownComponentNames;
@@ -27,11 +25,13 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -39,6 +39,7 @@ import org.reactivestreams.Subscription;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
+import io.reactivex.rxjava3.core.Single;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -174,6 +175,24 @@ public class PublisherHandler {
       }
    }
 
+   public static class SegmentResult {
+      private final int segment;
+      private final int entryCount;
+
+      public SegmentResult(int segment, int entryCount) {
+         this.segment = segment;
+         this.entryCount = entryCount;
+      }
+
+      public int getEntryCount() {
+         return entryCount;
+      }
+
+      public int getSegment() {
+         return segment;
+      }
+   }
+
    /**
     * Actual subscriber that listens to the local publisher and stores state and prepares responses as they are ready.
     * This subscriber works by initially requesting {@code batchSize + 1} entries when it is subscribed. The {@code +1}
@@ -196,7 +215,7 @@ public class PublisherHandler {
     * on the {@code IntConsumer} when a segment is completed or lost. This allows us to use a simple array with an offset
     * that is used to collect the response.
     */
-   private class PublisherState implements FlowableSubscriber<Object>, Runnable {
+   private class PublisherState implements FlowableSubscriber<SegmentAwarePublisherSupplier.NotificationWithLost<Object>>, Runnable {
       final String requestId;
       final Address origin;
       final int batchSize;
@@ -206,18 +225,18 @@ public class PublisherHandler {
       // entry to see segment completion, this is the tradeoff
       @GuardedBy("this")
       private CompletableFuture<PublisherResponse> futureResponse = null;
-      @GuardedBy("this")
-      private long requestAmount;
 
       Subscription upstream;
 
       // The remainder of the values hold the values between results received - These do not need synchronization
       // as the Subscriber contract guarantees these are invoked serially and has proper visibility
       Object[] results;
+      List<SegmentResult> segmentResults;
       int pos;
       IntSet completedSegments;
       IntSet lostSegments;
-      int segmentStart;
+      int currentSegment = -1;
+      int segmentEntries;
       // Set to true when the last futureResponse has been set - meaning the next response will be the last
       volatile boolean complete;
 
@@ -239,18 +258,7 @@ public class PublisherHandler {
                   command.isIncludeLoader(), command.getDeliveryGuarantee(), command.getTransformer());
          }
 
-         Flowable.fromPublisher(sap.publisherWithLostSegments())
-               .mapOptional(notification -> {
-                  if (!notification.isValue()) {
-                     if (notification.isSegmentComplete()) {
-                        segmentComplete(notification.completedSegment());
-                     } else {
-                        segmentLost(notification.lostSegment());
-                     }
-                     return Optional.empty();
-                  }
-                  return Optional.of(notification.value());
-               })
+         Flowable.fromPublisher(sap.publisherWithLostSegments(true))
                .subscribe(this);
       }
 
@@ -260,8 +268,7 @@ public class PublisherHandler {
             throw new IllegalStateException("Subscription was already set!");
          }
          this.upstream = Objects.requireNonNull(s);
-         // We request 1 extra to guarantee we see the segment complete/lost message
-         requestMore(s, batchSize + 1);
+         requestMore(s, batchSize);
       }
 
       protected void requestMore(Subscription subscription, int requestAmount) {
@@ -271,41 +278,89 @@ public class PublisherHandler {
       @Override
       public void onError(Throwable t) {
          complete = true;
+         log.trace("Exception encountered while processing publisher", t);
          synchronized (this) {
-            futureResponse = CompletableFutures.completedExceptionFuture(t);
+            if (futureResponse == null) {
+               futureResponse = CompletableFutures.completedExceptionFuture(t);
+            } else {
+               futureResponse.completeExceptionally(t);
+            }
          }
       }
 
       @Override
       public void onComplete() {
          prepareResponse(true);
+         if (log.isTraceEnabled()) {
+            log.tracef("Completed state for %s", requestId);
+         }
       }
 
       @Override
-      public void onNext(Object o) {
+      public void onNext(SegmentAwarePublisherSupplier.NotificationWithLost notification) {
+         if (!notification.isValue()) {
+            int segment;
+            if (notification.isSegmentComplete()) {
+               segment = notification.completedSegment();
+               if (segmentEntries > 0) {
+                  addToSegmentResults(segment, segmentEntries);
+               }
+               segmentComplete(segment);
+            } else {
+               segment = notification.lostSegment();
+               segmentLost(segment);
+            }
+
+            // Need to request more data as our responses are based on entries and not segments
+            requestMore(upstream, 1);
+            return;
+         }
+         int segment = notification.valueSegment();
+
+         assert currentSegment == segment || currentSegment == -1;
+         currentSegment = segment;
+         segmentEntries++;
+
+         results[pos++] = notification.value();
          // Means we just finished a batch
          if (pos == results.length) {
             prepareResponse(false);
          }
-         results[pos++] = o;
       }
 
       public void segmentComplete(int segment) {
+         assert currentSegment == segment || currentSegment == -1;
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Completing segment %s for %s", segment, requestId);
+         }
+
          if (completedSegments == null) {
             completedSegments = IntSets.mutableEmptySet();
          }
          completedSegments.add(segment);
-         segmentStart = pos;
+
+         segmentEntries = 0;
+         currentSegment = -1;
       }
 
       public void segmentLost(int segment) {
+         assert currentSegment == segment || currentSegment == -1;
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Lost segment %s for %s", segment, requestId);
+         }
+
          if (lostSegments == null) {
             lostSegments = IntSets.mutableEmptySet();
          }
          lostSegments.add(segment);
+
          // Just reset the pos back to the segment start - ignoring those entries
          // This saves us from sending these entries back and then having to resend the key to the new owner
-         pos = segmentStart;
+         pos -= segmentEntries;
+         segmentEntries = 0;
+         currentSegment = -1;
       }
 
       public void cancel() {
@@ -317,24 +372,22 @@ public class PublisherHandler {
 
       void resetValues() {
          this.results = new Object[batchSize];
+         this.segmentResults = null;
          this.completedSegments = null;
          this.lostSegments = null;
          this.pos = 0;
-         this.segmentStart = 0;
+         this.currentSegment = -1;
+         this.segmentEntries = 0;
       }
 
       PublisherResponse generateResponse(boolean complete) {
-         return new PublisherResponse(results, completedSegments, lostSegments, pos, complete, segmentStart);
+         return new PublisherResponse(results, completedSegments, lostSegments, pos, complete,
+               segmentResults == null ? Collections.emptyList() : segmentResults);
       }
 
       void prepareResponse(boolean complete) {
-         synchronized (this) {
-            if (!complete && futureResponse != null && futureResponse.isDone()) {
-               // This usually happens when batchSize == 1 and preloading one item is enough to fill a new batch
-               log.tracef("Response %d is already done for request id %s, not generating a new one",
-                          System.identityHashCode(futureResponse), requestId);
-               return;
-            }
+         if (currentSegment != -1) {
+            addToSegmentResults(currentSegment, segmentEntries);
          }
 
          PublisherResponse response = generateResponse(complete);
@@ -354,18 +407,14 @@ public class PublisherHandler {
          synchronized (this) {
             if (futureResponse != null) {
                if (futureResponse.isDone()) {
-                  // If future was done, that means we prefetched the response - so we may as well merge the results
-                  // together (this happens if last entry was by itself - so we will return batchSize + 1)
-                  PublisherResponse prevResponse = futureResponse.join();
-                  PublisherResponse newResponse = mergeResponses(prevResponse, response);
-                  futureResponse = CompletableFuture.completedFuture(newResponse);
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Received additional response, merged responses together %d for request id %s", System.identityHashCode(futureResponse), requestId);
+                  if (!futureResponse.isCompletedExceptionally()) {
+                     throw new IllegalStateException("Response already completed with " + CompletionStages.join(futureResponse) +
+                           " but we want to complete with " + response);
                   }
-               } else {
-                  futureToComplete = futureResponse;
-                  futureResponse = null;
+                  log.tracef("Response %s already completed with an exception, ignoring values", System.identityHashCode(futureResponse));
                }
+               futureToComplete = futureResponse;
+               futureResponse = null;
             } else {
                futureResponse = CompletableFuture.completedFuture(response);
                if (log.isTraceEnabled()) {
@@ -380,43 +429,6 @@ public class PublisherHandler {
             // Complete this outside of synchronized block
             futureToComplete.complete(response);
          }
-      }
-
-      PublisherResponse mergeResponses(PublisherResponse response1, PublisherResponse response2) {
-         IntSet completedSegments = mergeSegments(response1.getCompletedSegments(), response2.getCompletedSegments());
-         IntSet lostSegments = mergeSegments(response1.getLostSegments(), response2.getLostSegments());
-
-         int newSize = response1.getSize() + response2.getSize();
-         Object[] newArray = new Object[newSize];
-         int offset = 0;
-         offset = addToArray(response1.getResults(), newArray, offset);
-         addToArray(response2.getResults(), newArray, offset);
-         // This should always be true
-         boolean complete = response2.isComplete();
-         assert complete;
-         return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
-      }
-
-      int addToArray(Object[] src, Object[] dst, int offset) {
-         if (src != null) {
-            for (Object obj : src) {
-               if (obj == null) {
-                  break;
-               }
-               dst[offset++] = obj;
-            }
-         }
-         return offset;
-      }
-
-      IntSet mergeSegments(IntSet segments1, IntSet segments2) {
-         if (segments1 == null) {
-            return segments2;
-         } else if (segments2 == null) {
-            return segments1;
-         }
-         segments1.addAll(segments2);
-         return segments1;
       }
 
       public Address getOrigin() {
@@ -451,6 +463,13 @@ public class PublisherHandler {
             log.tracef("Retrieved future %d for request id %s", System.identityHashCode(currentFuture), requestId);
          }
          return currentFuture;
+      }
+
+      void addToSegmentResults(int segment, int entryCount) {
+         if (segmentResults == null) {
+            segmentResults = new ArrayList<>();
+         }
+         segmentResults.add(new SegmentResult(segment, entryCount));
       }
 
       /**
@@ -495,187 +514,104 @@ public class PublisherHandler {
       Object[] keys;
       int keyPos;
 
-      // How many values we have published (note that this can higher or lower than the consumerOffset). It will be
-      // higher when values are buffered in the concatMap operator but it also can be lower when the value is passed
-      // directly through to onNext (as we don't increment it until after all values for a given key are consumed).
-      long publisherOffset;
-      // How many values we have seen in onNext
-      long consumerOffset;
-      // Keeps track of how many elements we have requested from the upstream - this is needed when doing flatMap
-      // because we request batchSize + 1 which may not be enough to complete a key
-      long requestOffset;
-
-      // Keeps track of the last key seen so that when a segment is complete we know what the last key is for that segment
-      // which is stored in the keySegmentCompletions map
-      Object keyForSegmentCompletion;
-
-      // Stores for a given key which segment it will complete when consumed
-      Map<Object, Integer> keySegmentCompletions = new HashMap<>();
-
-      // Stores for a given key when the key is consumed (matching the consumer offset
-      Map<Long, Object> keyCompletionPosition = new HashMap<>();
-
-      // Whether the last published value completed a key (we cannot send a respones in the middle of processing a key)
-      boolean previousValueFinishedKey = true;
+      int keyStartPosition;
 
       private KeyPublisherState(String requestId, Address origin, int batchSize) {
-
          super(requestId, origin, batchSize);
-         // Worst case is keys found is same size as the batch 1:1
-         keys = new Object[batchSize];
+      }
+
+      // Class to signal down that a given key was completed for key tracking purposes
+      class KeyCompleted<E> extends Notifications.ReuseNotificationBuilder<E> {
+         @Override
+         public String toString() {
+            return "KeyCompleted{" +
+                  "key=" + value +
+                  ", segment=" + segment +
+                  '}';
+         }
       }
 
       @Override
       void startProcessing(InitialPublisherCommand command) {
          SegmentAwarePublisherSupplier<Object> sap;
+         io.reactivex.rxjava3.functions.Function<Object, Object> toKeyFunction;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
                   command.isIncludeLoader(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+            toKeyFunction = (io.reactivex.rxjava3.functions.Function) RxJavaInterop.entryToKeyFunction();
          } else {
             sap = localPublisherManager.keyPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
                   command.isIncludeLoader(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+            toKeyFunction = RxJavaInterop.identityFunction();
          }
 
          Function<Publisher<Object>, Publisher<Object>> functionToApply = command.getTransformer();
 
+         // We immediately consume the value, so we can reuse a builder for both to save on allocations
+         Notifications.NotificationBuilder<Object> builder = Notifications.reuseBuilder();
+         KeyCompleted<Object> keyBuilder = new KeyCompleted<>();
+
          Flowable.fromPublisher(sap.publisherWithLostSegments())
-               // This is a FULL backpressure operation that buffers values thus causes values to not immediately
-               // be published
                .concatMap(notification -> {
                   if (!notification.isValue()) {
-                     if (notification.isSegmentComplete()) {
-                        segmentComplete(notification.completedSegment());
-                     } else {
-                        segmentLost(notification.lostSegment());
-                     }
-                     return Flowable.empty();
+                     return Flowable.just(notification);
                   }
                   Object originalValue = notification.value();
-
-                  if (log.isTraceEnabled()) log.tracef("Update key for segment completion %s", originalValue);
-                  keyForSegmentCompletion = originalValue;
-
-                  ByRef.Integer size = new ByRef.Integer(0);
+                  Object key = toKeyFunction.apply(originalValue);
                   return Flowable.fromPublisher(functionToApply.apply(Flowable.just(originalValue)))
-                        .doOnNext(ignore -> size.inc())
-                        .doOnComplete(() -> {
-                           int total = size.get();
-                           if (total > 0) {
-                              publisherOffset += total;
-                              // Means our values were consumed downstream immediately and thus our key is complete
-                              if (publisherOffset == consumerOffset) {
-                                 keyCompleted(originalValue);
-                                 previousValueFinishedKey = true;
-                              } else {
-                                 keyCompletionPosition.put(publisherOffset, originalValue);
-                              }
-                           } else {
-                              // If there are no values for the key it is complete but also doesn't need to
-                              // be tracked, so complete any segment tied to it if possible
-                              Integer segment = keySegmentCompletions.remove(originalValue);
-                              if (segment != null) {
-                                 if (log.isTraceEnabled()) {
-                                    log.tracef("Completing segment %s due to empty resulting value of %s for %s",
-                                          segment, originalValue, requestId);
-                                 }
-                                 actualCompleteSegment(segment);
-                              }
-                              // Also null out our key for segment completion if needed since this key will never be
-                              // found published
-                              if (keyForSegmentCompletion == originalValue) {
-                                 if (log.isTraceEnabled())
-                                    log.tracef("Discard key for segment completion %s", keyForSegmentCompletion);
-                                 keyForSegmentCompletion = null;
-                              }
-                           }
-                        });
+                        .map(v -> builder.value(v, notification.valueSegment()))
+                        // Signal the end of the key - flatMap could have 0 or multiple entries
+                        .concatWith(Single.just(keyBuilder.value(key, notification.valueSegment())));
                })
                .subscribe(this);
       }
 
       @Override
       PublisherResponse generateResponse(boolean complete) {
-         return new KeyPublisherResponse(results, completedSegments, lostSegments, pos, complete, extraValues, extraPos,
-               keys, keyPos);
+         return new KeyPublisherResponse(results, completedSegments, lostSegments, pos, complete,
+               segmentResults == null ? Collections.emptyList() : segmentResults, extraValues, extraPos, keys, keyPos);
       }
 
       @Override
-      PublisherResponse mergeResponses(PublisherResponse publisherResponse1, PublisherResponse publisherResponse2) {
-
-         KeyPublisherResponse response1 = (KeyPublisherResponse) publisherResponse1;
-         KeyPublisherResponse response2 = (KeyPublisherResponse) publisherResponse2;
-         IntSet completedSegments = mergeSegments(response1.getCompletedSegments(), response2.getCompletedSegments());
-         IntSet lostSegments = mergeSegments(response1.getLostSegments(), response2.getLostSegments());
-
-         int newSize = response1.getSize() + response1.getExtraSize() + response2.getSize() + response2.getExtraSize();
-         Object[] newArray = new Object[newSize];
-         int offset = 0;
-
-         offset = addToArray(response1.getResults(), newArray, offset);
-         offset = addToArray(response1.getExtraObjects(), newArray, offset);
-         offset = addToArray(response2.getResults(), newArray, offset);
-         addToArray(response2.getExtraObjects(), newArray, offset);
-
-         // This should always be true
-         boolean complete = response2.isComplete();
-         assert complete;
-         return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
-      }
-
-      @Override
-      public void onComplete() {
-         if (log.isTraceEnabled()) {
-            log.tracef("Completed state for %s", requestId);
+      public void onNext(SegmentAwarePublisherSupplier.NotificationWithLost notification) {
+         if (!notification.isValue()) {
+            super.onNext(notification);
+            return;
          }
-         super.onComplete();
-      }
+         boolean requestMore = true;
+         if (notification instanceof KeyCompleted) {
+            // If these don't equal that means the key had some values mapped to it, so we need to retain the key
+            // in case if we can't finish this segment and user needs to retry
+            if (keyStartPosition != pos) {
+               Object key = notification.value();
+               if (keys == null) {
+                  // This is the largest the array can be
+                  keys = new Object[batchSize];
+               }
+               keys[keyPos++] = key;
 
-      @Override
-      protected void requestMore(Subscription subscription, int requestAmount) {
-         requestOffset += requestAmount;
-         super.requestMore(subscription, requestAmount);
-      }
-
-      private void keyCompleted(Object key) {
-         // This means we processed a key without fetching another - thus we must allow if a segment completion
-         // comes next to actually complete
-         if (keyForSegmentCompletion == key) {
-            if (log.isTraceEnabled()) log.tracef("Completed key %s", keyForSegmentCompletion);
-            keyForSegmentCompletion = null;
-         }
-
-         Integer segmentToComplete = keySegmentCompletions.remove(key);
-         if (segmentToComplete != null) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Completing segment %s from key %s for %s", segmentToComplete, key, requestId);
+               if (pos == results.length) {
+                  prepareResponse(false);
+                  // We don't request more if we completed a batch - we will request later after the result is returned
+                  requestMore = false;
+               } else {
+                  keyStartPosition = pos;
+               }
             }
-            actualCompleteSegment(segmentToComplete);
-            keys = null;
-            keyPos = 0;
-         } else {
-            if (log.isTraceEnabled()) log.tracef("No segment to complete for key %s", key);
-            // We don't need to track the key for a segment that just completed
-            if (keys == null) {
-               keys = new Object[batchSize];
+
+            if (requestMore) {
+               requestMore(upstream, 1);
             }
-            keys[keyPos++] = key;
-         }
-      }
 
-      @Override
-      public void onNext(Object value) {
-         if (previousValueFinishedKey) {
-            // We can only send a response when we found a key completed for the prior value
-            // We do this so that the very last entry doesn't send a response and the onComplete will instead
-            tryPrepareResponse();
+            return;
          }
 
-         Object key = keyCompletionPosition.remove(++consumerOffset);
-         previousValueFinishedKey = key != null;
-         if (previousValueFinishedKey) {
-            keyCompleted(key);
-         }
+         int segment = notification.valueSegment();
+         assert currentSegment == segment || currentSegment == -1;
+         currentSegment = segment;
+         segmentEntries++;
 
+         Object value = notification.value();
          if (pos == results.length) {
             // Write any overflow into our buffer
             if (extraValues == null) {
@@ -688,13 +624,15 @@ public class PublisherHandler {
             }
             extraValues[extraPos++] = value;
 
-            // It is possible the overflow has used up the requested amount but a key hasn't completed - we need
-            // to request some more values just to be safe
-            if (consumerOffset == requestOffset) {
-               requestMore(upstream, 2);
-            }
+            // Need to keep requesting until we get to the end of the key
+            requestMore(upstream, 1);
          } else {
             results[pos++] = value;
+
+            // If we have filled up the array, we need to request until we hit end of key
+            if (pos == results.length) {
+               requestMore(upstream, 1);
+            }
          }
       }
 
@@ -709,57 +647,23 @@ public class PublisherHandler {
          extraPos = 0;
          keys = null;
          keyPos = 0;
+         keyStartPosition = 0;
       }
 
-      // Technically this is notified after the last value for a given segment - which means if we filled the buffer
-      // with the last entry that we didn't notify of the segment completion - this should be pretty rare though
       @Override
       public void segmentComplete(int segment) {
-         Object k = keyForSegmentCompletion;
-         // This means the consumer was sent the value immediately - this is most likely caused by the transformer
-         // didn't have flatMap or anything else fancy (or we had an empty segment)
-         if (keyForSegmentCompletion == null) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Completing segment %s for %s", segment, requestId);
-            }
-            actualCompleteSegment(segment);
-         } else {
-            if (log.isTraceEnabled()) {
-               log.tracef("Delaying segment %d completion until key %s is fully consumed for %s", segment,
-                     k, requestId);
-            }
-            keySegmentCompletions.put(keyForSegmentCompletion, segment);
-            assert keyForSegmentCompletion != null : "Segment key " + k + " was removed for " + segment;
-            this.keyForSegmentCompletion = null;
-         }
-      }
-
-      private void actualCompleteSegment(int segment) {
          super.segmentComplete(segment);
+         keys = null;
          keyPos = 0;
+         keyStartPosition = 0;
       }
 
       @Override
       public void segmentLost(int segment) {
          super.segmentLost(segment);
-         // We discard any extra values - the super method already discarded the ones found
+         // We discard any extra values as they would all be in the same segment - the super method already discarded
+         // the non extra values
          keyResetValues();
-      }
-
-      @Override
-      void prepareResponse(boolean complete) {
-         if (complete) {
-            assert keySegmentCompletions.isEmpty();
-            assert keyCompletionPosition.isEmpty();
-         }
-         super.prepareResponse(complete);
-      }
-
-      void tryPrepareResponse() {
-         // We hit the batch size already - so send the prior data
-         if (pos == results.length) {
-            prepareResponse(false);
-         }
       }
    }
 }

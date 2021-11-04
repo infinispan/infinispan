@@ -295,6 +295,11 @@ public class Mocks {
       });
    }
 
+   /**
+    * Creates a {@link SegmentPublisherSupplier} that will block on a given entry that matches the given predicate.
+    * Note that if the {@link SegmentPublisherSupplier#publisherWithoutSegments()} method is invoked the provided
+    * segment will be -1 for predicate checks.
+    */
    public static <E> SegmentPublisherSupplier<E> blockingSegmentPublisherOnElement(SegmentPublisherSupplier<E> publisher,
          CheckPoint checkPoint, Predicate<? super SegmentPublisherSupplier.Notification<E>> predicate) {
       return new SegmentPublisherSupplier<E>() {
@@ -324,7 +329,7 @@ public class Mocks {
          @Override
          public Publisher<E> publisherWithoutSegments() {
             return blockingPublisherOnElement((Publisher<E>) publisher, checkPoint,
-                  value -> predicate.test(Notifications.value(value)));
+                  value -> predicate.test(Notifications.value(value, -1)));
          }
       };
    }

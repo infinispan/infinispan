@@ -279,7 +279,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
          flowable = Flowable.fromIterable(segments)
                  .concatMap(segment -> {
                     Map<Object, byte[]> map = store.get(segment);
-                    if (map == null) {
+                    if (map == null || map.isEmpty()) {
                        return Flowable.<Map.Entry<Object, byte[]>>empty();
                     }
                     return Flowable.fromIterable(map.entrySet());
@@ -288,19 +288,21 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
          flowable = Flowable.fromIterable(store.get(0).entrySet());
       }
 
-      if (filter != null) {
-         flowable = flowable.filter(e -> filter.test(e.getKey()));
-      }
-      if (configuration.slow()) {
-         flowable = flowable.doOnNext(ignore -> Thread.sleep(SLOW_STORE_WAIT));
-      }
-
       Flowable<MarshallableEntry> meFlowable = flowable.map(entry -> deserialize(entry.getKey(), entry.getValue()));
 
-      // Defer the check for time until subscriber so it can be subscribed to at different times
+      if (filter != null) {
+         meFlowable = meFlowable.filter(e -> filter.test(e.getKey()));
+      }
+      if (configuration.slow()) {
+         meFlowable = meFlowable.doOnNext(ignore -> Thread.sleep(SLOW_STORE_WAIT));
+      }
+
+      Flowable<MarshallableEntry> meFlowableFinal = meFlowable;
+
+      // Defer the check for time, so it can be subscribed to at different times
       return Flowable.defer(() -> {
          final long currentTimeMillis = timeService.wallClockTime();
-         return meFlowable.filter(me -> !isExpired(me, currentTimeMillis));
+         return meFlowableFinal.filter(me -> !isExpired(me, currentTimeMillis));
       });
    }
 

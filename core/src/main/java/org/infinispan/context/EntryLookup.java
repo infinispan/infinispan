@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.reactivestreams.Publisher;
 
 /**
  * Interface that can look up MVCC wrapped entries.
@@ -32,8 +33,17 @@ public interface EntryLookup {
    Map<Object, CacheEntry> getLookedUpEntries();
 
    /**
-    * Execute an action for each value in the context.
+    * Returns a Publisher that when subscribed to provide all values that have a value in the given context.
     *
+    * @param <K> key type provided from user
+    * @param <V> value type provided from user
+    * @return
+    */
+   <K, V> Publisher<CacheEntry<K, V>> publisher();
+
+   /**
+    * Execute an action for each value in the context.
+    * <p>
     * Entries that do not have a value (because the key was removed, or it doesn't exist in the cache).
     *
     * @since 9.3
