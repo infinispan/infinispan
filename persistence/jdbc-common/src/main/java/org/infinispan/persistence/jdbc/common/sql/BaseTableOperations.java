@@ -232,7 +232,7 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
          ResultSet rs = ps.executeQuery();
          return Flowable.fromIterable(() -> new ResultSetEntryIterator(rs, filter, fetchValue))
                .doFinally(() -> JdbcUtil.safeClose(rs));
-      }, FlowableConnection::close);
+      }, FlowableConnection::close, /* Not eager so result set is closed first */false);
    }
 
    protected static class FlowableConnection {
