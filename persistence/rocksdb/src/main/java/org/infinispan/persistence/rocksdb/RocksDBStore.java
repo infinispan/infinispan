@@ -286,7 +286,10 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(() -> {
-         handler.close();
+         // it could be null if an issue occurs during the initialization
+         if (handler != null) {
+            handler.close();
+         }
       }, "rocksdb-stop");
    }
 
