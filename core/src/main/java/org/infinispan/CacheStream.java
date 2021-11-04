@@ -1,5 +1,8 @@
 package org.infinispan;
 
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
+
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -38,9 +41,6 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
-
-import static org.infinispan.util.Casting.toSerialSupplierCollect;
-import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.
@@ -331,6 +331,22 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * creates the actual collector lazily after being deserialized.  This is useful to use any method from the
     * {@link java.util.stream.Collectors} class as you would normally.
     * Alternatively, you can call {@link #collect(SerializableSupplier)} too.</p>
+    *
+    * <p>Note: The collector is applied on each node until all the local stream's values
+    * are reduced into a single object.
+    * Because of marshalling limitations, the final result of the collector on remote nodes
+    * is limited to a size of 2GB.
+    * If you need to process more than 2GB of data, you must force the collector to run on the
+    * originator with {@link #spliterator()}:
+    * <pre>
+    * StreamSupport.stream(stream.filter(entry -> ...)
+    *                            .map(entry -> ...)
+    *                            .spliterator(),
+    *                      false)
+    *              .collect(Collectors.toList());
+    * </pre>
+    * </p>
+    *
     * @param collector
     * @param <R1> collected type
     * @param <A> intermediate collected type if applicable
@@ -358,6 +374,21 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * In this particular case, the function that instantiates the
     * {@link Collector} will be marshalled according to the
     * {@link Serializable} rules.
+    *
+    * <p>Note: The collector is applied on each node until all the local stream's values
+    * are reduced into a single object.
+    * Because of marshalling limitations, the final result of the collector on remote nodes
+    * is limited to a size of 2GB.
+    * If you need to process more than 2GB of data, you must force the collector to run on the
+    * originator with {@link #spliterator()}:
+    * <pre>
+    * StreamSupport.stream(stream.filter(entry -> ...)
+    *                            .map(entry -> ...)
+    *                            .spliterator(),
+    *                      false)
+    *              .collect(Collectors.toList());
+    * </pre>
+    * </p>
     *
     * @param supplier The supplier to create the collector that is specifically serializable
     * @param <R1> The resulting type of the collector
@@ -388,6 +419,21 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * {@link org.infinispan.commons.marshall.Externalizer} class or one of its
     * subtypes.
     *
+    * <p>Note: The collector is applied on each node until all the local stream's values
+    * are reduced into a single object.
+    * Because of marshalling limitations, the final result of the collector on remote nodes
+    * is limited to a size of 2GB.
+    * If you need to process more than 2GB of data, you must force the collector to run on the
+    * originator with {@link #spliterator()}:
+    * <pre>
+    * StreamSupport.stream(stream.filter(entry -> ...)
+    *                            .map(entry -> ...)
+    *                            .spliterator(),
+    *                      false)
+    *              .collect(Collectors.toList());
+    * </pre>
+    * </p>
+    *
     * @param supplier The supplier to create the collector
     * @param <R1> The resulting type of the collector
     * @return the collected value
@@ -402,6 +448,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * also implement <code>Serializable</code>
     * <p>
     * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
+    *
     * @param <R1> type of the result
     * @param supplier a function that creates a new result container. For a
     *                 parallel execution, this function may be called
@@ -419,6 +466,27 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
            SerializableBiConsumer<R1, R1> combiner) {
       return collect((Supplier<R1>) supplier, accumulator, combiner);
    }
+
+   /**
+    * {@inheritDoc}
+    *
+    * <p>Note: The accumulator and combiner are applied on each node until all the local stream's values
+    * are reduced into a single object.
+    * Because of marshalling limitations, the final result of the collector on remote nodes
+    * is limited to a size of 2GB.
+    * If you need to process more than 2GB of data, you must force the collector to run on the
+    * originator with {@link #spliterator()}:
+    * <pre>
+    * StreamSupport.stream(stream.filter(entry -> ...)
+    *                            .map(entry -> ...)
+    *                            .spliterator(),
+    *                      false)
+    *              .collect(Collectors.toList());
+    * </pre>
+    * </p>
+    */
+   @Override
+   <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner);
 
    /**
     * Same as {@link CacheStream#allMatch(Predicate)} except that the Predicate must also
