@@ -104,6 +104,12 @@ public interface LocalPublisherManager<K, V> {
     *       <td>EXACTLY_ONCE</td> <td>Same as AT_LEAST_ONCE except whenever as segment is lost the value(s) collected in the same response for that segment are always dropped.</td>
     *    </tr>
     * </table>
+    * <p>
+    * The returned publisher supplier method {@link SegmentAwarePublisherSupplier#publisherWithLostSegments()} will
+    * guarantee that all entries from a given segment are returned first proceeded by a segment lost or completed notification.
+    * This publisher will not intermingle entries from different segment together.
+    * This guarantee should allow for callers to be able to optimize knowing this since segments can be completed
+    * quicker and fewer entries should have to be retained in memory.
     * @param segments determines what entries should be evaluated by only using ones that map to the given segments (must not be null)
     * @param keysToInclude set of keys that should only be used. May be null, in which case all provided entries for the given segments will be evaluated
     * @param keysToExclude set of keys that should not be used. May be null, in which case all provided entries will be evaluated

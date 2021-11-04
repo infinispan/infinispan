@@ -1,12 +1,14 @@
 package org.infinispan.reactive.publisher.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -42,10 +44,15 @@ import io.reactivex.rxjava3.functions.BiFunction;
 public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
    private static final int SEGMENT_COUNT = 128;
 
-   @Override
-   protected void createCacheManagers() throws Throwable {
+   ConfigurationBuilder cacheConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
       builder.clustering().hash().numSegments(SEGMENT_COUNT);
+      return builder;
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder builder = cacheConfiguration();
       createCluster(builder, 3);
       waitForClusterToForm();
    }
@@ -81,11 +88,11 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
       SegmentAwarePublisherSupplier<?> publisher;
       Consumer<Object> assertConsumer;
       if (isEntry) {
-         publisher = lpm.keyPublisher(allSegments, null, null, false,
+         publisher = lpm.keyPublisher(allSegments, null, null, true,
                deliveryGuarantee, Function.identity());
          assertConsumer = obj -> assertTrue(inserted.containsKey(obj));
       } else {
-         publisher = lpm.entryPublisher(allSegments, null, null, false,
+         publisher = lpm.entryPublisher(allSegments, null, null, true,
                deliveryGuarantee, Function.identity());
          assertConsumer = obj -> {
             Map.Entry<Object, Object> entry = (Map.Entry) obj;
@@ -105,6 +112,62 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
       assertEquals(expected, results.size());
 
       results.forEach(assertConsumer);
+   }
+
+   @Test(dataProvider = "GuaranteeEntry")
+   public void testProperOrderingGuarantees(DeliveryGuarantee deliveryGuarantee, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      Map<Integer, String> inserted = insert(cache);
+
+      LocalPublisherManager<Integer, String> lpm = lpm(cache);
+      IntSet allSegments = IntSets.immutableRangeSet(SEGMENT_COUNT);
+      SegmentAwarePublisherSupplier<?> publisher;
+      if (isEntry) {
+         publisher = lpm.keyPublisher(allSegments, null, null, true,
+               deliveryGuarantee, Function.identity());
+      } else {
+         publisher = lpm.entryPublisher(allSegments, null, null, true,
+               deliveryGuarantee, Function.identity());
+      }
+
+      DistributionManager dm = TestingUtil.extractComponent(cache, DistributionManager.class);
+      IntSet localSegments = dm.getCacheTopology().getLocalReadSegments();
+
+      int expected = SimpleClusterPublisherManagerTest.findHowManyInSegments(inserted.size(), localSegments,
+            TestingUtil.extractComponent(cache, KeyPartitioner.class));
+
+      List<?> list = Flowable.fromPublisher(publisher.publisherWithLostSegments())
+            .collect(Collectors.toList())
+            .blockingGet();
+      assertEquals(expected + SEGMENT_COUNT, list.size());
+
+      int currentSegment = -1;
+
+      for (Object obj : list) {
+         SegmentAwarePublisherSupplier.NotificationWithLost<Object> notification =
+               (SegmentAwarePublisherSupplier.NotificationWithLost<Object>) obj;
+         if (notification.isValue()) {
+            if (currentSegment == -1) {
+               currentSegment = notification.valueSegment();
+            } else {
+               assertEquals(currentSegment, notification.valueSegment());
+            }
+         } else {
+            int segment;
+            if (notification.isSegmentComplete()) {
+               segment = notification.completedSegment();
+               assertTrue(localSegments.contains(segment));
+            } else {
+               segment = notification.lostSegment();
+               assertFalse(localSegments.contains(segment));
+            }
+
+            if (currentSegment != -1) {
+               assertEquals(currentSegment, notification.completedSegment());
+               currentSegment = -1;
+            }
+         }
+      }
    }
 
    @DataProvider(name = "GuaranteeParallelEntry")
@@ -138,7 +201,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
             Single.fromCompletionStage(blockingManager.supplyBlocking(() -> value, "test-blocking-thread"));
 
       if (isEntry) {
-         stage = lpm.keyReduction(isParallel, allSegments, null, null, false, deliveryGuarantee,
+         stage = lpm.keyReduction(isParallel, allSegments, null, null, true, deliveryGuarantee,
                publisher -> Flowable.fromPublisher(publisher)
                      .concatMapSingle(sleepOnBlockingPoolFunction)
                      .collect(collector)
@@ -148,7 +211,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
                      .toCompletionStage(Collections.emptySet()));
          assertConsumer = obj -> assertTrue(inserted.containsKey(obj));
       } else {
-         stage = lpm.entryReduction(isParallel, allSegments, null, null, false,
+         stage = lpm.entryReduction(isParallel, allSegments, null, null, true,
                deliveryGuarantee, publisher -> Flowable.fromPublisher(publisher)
                      .concatMapSingle(sleepOnBlockingPoolFunction).collect(collector).toCompletionStage()
                , publisher -> Flowable.fromPublisher(publisher)

@@ -57,7 +57,8 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
-import org.infinispan.reactive.publisher.impl.DefaultSegmentPublisherSupplier;
+import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -66,6 +67,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -542,8 +544,19 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
    }
 
-   private DefaultSegmentPublisherSupplier<CacheEntry<String, String>> wrapCompletionPublisher(
+   private SegmentPublisherSupplier<CacheEntry<String, String>> wrapCompletionPublisher(
          Flowable<CacheEntry<String, String>> flowable) {
-      return () -> flowable;
+      return new SegmentPublisherSupplier<CacheEntry<String, String>>() {
+         @Override
+         public Publisher<CacheEntry<String, String>> publisherWithoutSegments() {
+            return flowable;
+         }
+
+         @Override
+         public Publisher<Notification<CacheEntry<String, String>>> publisherWithSegments() {
+            // This may need to be changed if a test requires the actual segment
+            return flowable.map(entry -> Notifications.value(entry, 0));
+         }
+      };
    }
 }

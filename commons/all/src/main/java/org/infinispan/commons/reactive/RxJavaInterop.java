@@ -21,12 +21,25 @@ public class RxJavaInterop {
    /**
     * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
     * the key of the entry. This is useful for the instance passed to a method like {@link Flowable#map(Function)}.
+    *
     * @param <K> key type
     * @param <V> value type
     * @return rxjava function to convert from a Map.Entry to its key.
     */
    public static <K, V> Function<Map.Entry<K, V>, K> entryToKeyFunction() {
       return (Function) entryToKeyFunction;
+   }
+
+   /**
+    * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
+    * the value of the entry. This is useful for the instance passed to a method like {@link Flowable#map(Function)}.
+    *
+    * @param <K> key type
+    * @param <V> value type
+    * @return rxjava function to convert from a Map.Entry to its value.
+    */
+   public static <K, V> Function<Map.Entry<K, V>, V> entryToValueFunction() {
+      return (Function) entryToValueFunction;
    }
 
    public static <R> Function<? super Throwable, Publisher<R>> cacheExceptionWrapper() {
@@ -42,7 +55,8 @@ public class RxJavaInterop {
    }
 
    private static final Function<Object, Object> identityFunction = i -> i;
-   private static final Consumer<Object> emptyConsumer = ignore -> {};
+   private static final Consumer<Object> emptyConsumer = ignore -> { };
    private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
+   private static final Function<Map.Entry<Object, Object>, Object> entryToValueFunction = Map.Entry::getValue;
    private static final Function<? super Throwable, Publisher<?>> wrapThrowable = t -> Flowable.error(Util.rewrapAsCacheException(t));
 }
