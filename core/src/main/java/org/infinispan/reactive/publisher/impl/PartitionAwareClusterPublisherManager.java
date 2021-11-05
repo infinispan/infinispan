@@ -3,9 +3,9 @@ package org.infinispan.reactive.publisher.impl;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -19,12 +19,11 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
-import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.processors.FlowableProcessor;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
@@ -37,24 +36,19 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    protected final PartitionListener listener = new PartitionListener();
    @Inject protected ComponentRef<Cache<?, ?>> cache;
 
-   private final Set<CompletableFuture<?>> pendingCompletableFutures = ConcurrentHashMap.newKeySet();
-   private final Set<FlowableProcessor<?>> pendingProcessors = ConcurrentHashMap.newKeySet();
+   private final Set<AtomicBoolean> pendingOperations = ConcurrentHashMap.newKeySet();
 
    @Listener
    private class PartitionListener {
-      volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
-
       @PartitionStatusChanged
       public void onPartitionChange(PartitionStatusChangedEvent<K, ?> event) {
          if (!event.isPre()) {
             AvailabilityMode newMode = event.getAvailabilityMode();
-            if (newMode == AvailabilityMode.DEGRADED_MODE) {
-               AvailabilityException ae = CLUSTER.partitionDegraded();
-               pendingProcessors.forEach(pp -> pp.onError(ae));
-               pendingCompletableFutures.forEach(cf -> cf.completeExceptionally(ae));
-            }
-            // We have to assign this after reassigning exceptionProcessor if necessary
             currentMode = newMode;
+
+            if (newMode == AvailabilityMode.DEGRADED_MODE) {
+               pendingOperations.forEach(ab -> ab.set(true));
+            }
          }
       }
    }
@@ -87,23 +81,27 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    }
 
    private <R> CompletionStage<R> registerStage(CompletionStage<R> original) {
-      CompletableFuture<R> future = new CompletableFuture<>();
-      pendingCompletableFutures.add(future);
-      // Recheck after adding to futures to close small gap between
+      AtomicBoolean ab = registerOperation();
+      return original.handle((value, t) -> {
+         pendingOperations.remove(ab);
+         if (ab.get()) {
+            // Ignore the original exception and throw an AvailabilityException instead
+            throw CLUSTER.partitionDegraded();
+         }
+
+         CompletableFutures.rethrowExceptionIfPresent(t);
+         return value;
+      });
+   }
+
+   private AtomicBoolean registerOperation() {
+      AtomicBoolean ab = new AtomicBoolean();
+      pendingOperations.add(ab);
+      // Recheck after adding to listener map to close small gap between
       if (isPartitionDegraded()) {
-         pendingCompletableFutures.remove(future);
-         future.completeExceptionally(CLUSTER.partitionDegraded());
-      } else {
-         original.whenComplete((value, t) -> {
-            if (t != null) {
-               future.completeExceptionally(t);
-            } else {
-               future.complete(value);
-            }
-            pendingCompletableFutures.remove(future);
-         });
+         ab.set(true);
       }
-      return future;
+      return ab;
    }
 
    @Override
@@ -139,20 +137,19 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
          }
 
          private <S> Flowable<S> handleEarlyTermination(Function<SegmentPublisherSupplier<R>, Publisher<S>> function) {
-            CompletableFuture<Void> cf = new CompletableFuture<>();
-            pendingCompletableFutures.add(cf);
+            AtomicBoolean ab = registerOperation();
 
             return Flowable.fromPublisher(function.apply(original))
-                  .doOnNext(s -> throwExceptionIfNeeded(cf))
-                  .doOnComplete(() -> throwExceptionIfNeeded(cf))
-                  .doFinally(() -> pendingProcessors.remove(cf));
+                           .doOnNext(s -> checkPendingOperation(ab))
+                           .doOnComplete(() -> checkPendingOperation(ab))
+                           .doFinally(() -> pendingOperations.remove(ab));
          }
       };
    }
 
-   private void throwExceptionIfNeeded(CompletableFuture<Void> cf) {
-      if (cf.isDone())
-         cf.join();
+   private void checkPendingOperation(AtomicBoolean ab) {
+      if (ab.get())
+         throw CLUSTER.partitionDegraded();
    }
 
    private void checkPartitionStatus() {
