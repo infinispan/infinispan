@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
 
 import io.netty.buffer.ByteBuf;
@@ -49,7 +50,19 @@ public enum ResponseWriter {
          if (entity instanceof byte[]) {
             responseContent.writeBytes((byte[]) entity);
          } else if (entity instanceof ByteArrayOutputStream) {
-            responseContent.writeBytes(((ByteArrayOutputStream)entity).toByteArray());
+            responseContent.writeBytes(((ByteArrayOutputStream) entity).toByteArray());
+         } else if (entity instanceof Throwable) {
+            Throwable t = Util.getRootCause((Throwable) entity);
+            StringBuilder sb = new StringBuilder();
+            if (t.getSuppressed().length > 0) {
+               for(Throwable s : t.getSuppressed()) {
+                  sb.append(s.getMessage());
+                  sb.append(System.lineSeparator());
+               }
+            } else {
+               sb.append(t.getMessage());
+            }
+            ByteBufUtil.writeUtf8(responseContent, sb);
          } else {
             ByteBufUtil.writeUtf8(responseContent, entity.toString());
          }

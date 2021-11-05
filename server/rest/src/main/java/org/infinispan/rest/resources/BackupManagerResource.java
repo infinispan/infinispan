@@ -205,7 +205,7 @@ class BackupManagerResource {
          return responseFuture(ACCEPTED);
       } catch (IOException e) {
          LOG.error(e);
-         return responseFuture(INTERNAL_SERVER_ERROR, e.getMessage());
+         return responseFuture(INTERNAL_SERVER_ERROR, e);
       }
    }
 
@@ -233,7 +233,7 @@ class BackupManagerResource {
 
    private static RestResponse handleDelete(BackupManager.Status s, Throwable t) {
       if (t != null)
-         return response(INTERNAL_SERVER_ERROR, t.getMessage());
+         return response(INTERNAL_SERVER_ERROR, t);
 
       switch (s) {
          case NOT_FOUND:

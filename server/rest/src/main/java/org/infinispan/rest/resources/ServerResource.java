@@ -369,8 +369,7 @@ public class ServerResource implements ResourceHandler {
                builder.status(SERVICE_UNAVAILABLE).entity(Messages.MSG.dataSourceTestFail(name));
             }
          } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());

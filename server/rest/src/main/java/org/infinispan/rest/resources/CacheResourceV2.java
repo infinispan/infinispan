@@ -219,7 +219,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                builder.status(NOT_FOUND);
             }
          } catch (Exception e) {
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());
@@ -240,7 +240,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             builder.status(HttpResponseStatus.NOT_MODIFIED);
          }
       } catch (Exception e) {
-         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e);
       }
       return completedFuture(builder.build());
    }
@@ -280,8 +280,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                builder.status(HttpResponseStatus.NOT_MODIFIED);
             }
          } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());
@@ -310,8 +309,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);
             builder.entity(Log.REST.synchronizedEntries(hotrod));
          } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());
@@ -526,7 +524,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             }
             responseBuilder.status(OK);
          } catch (Throwable t) {
-            responseBuilder.status(BAD_REQUEST).entity(t.getMessage());
+            responseBuilder.status(BAD_REQUEST).entity(t);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -788,7 +786,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             ltm.setCacheRebalancingEnabled(cacheName, enable);
             builder.status(NO_CONTENT);
          } catch (Exception e) {
-            builder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+            builder.status(INTERNAL_SERVER_ERROR).entity(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());

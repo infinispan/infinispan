@@ -181,7 +181,7 @@ public class ContainerResource implements ResourceHandler {
             SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager().setRebalancingEnabled(enable);
             responseBuilder.status(NO_CONTENT);
          } catch (Exception e) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(e);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());

@@ -15,6 +15,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
@@ -50,7 +51,7 @@ class CacheResourceQueryAction {
          try {
             query = getQueryFromJSON(restRequest);
          } catch (IOException e) {
-            return CompletableFuture.completedFuture(queryError("Invalid search request", e.getMessage()));
+            return CompletableFuture.completedFuture(queryError("Invalid search request", e));
          }
       }
 
@@ -73,7 +74,7 @@ class CacheResourceQueryAction {
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
-            return queryError("Error executing search", e.getMessage());
+            return queryError("Error executing search", e);
          }
       }, invocationHelper.getExecutor());
    }
@@ -99,9 +100,9 @@ class CacheResourceQueryAction {
       return values == null ? null : values.iterator().next();
    }
 
-   private RestResponse queryError(String message, String cause) {
+   private RestResponse queryError(String message, Throwable t) {
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(BAD_REQUEST);
-      builder.entity(new JsonQueryErrorResult(message, cause).asBytes());
+      builder.entity(new JsonQueryErrorResult(message, Util.getRootCause(t).getMessage()).asBytes());
       return builder.build();
    }
 

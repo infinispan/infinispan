@@ -88,7 +88,7 @@ public final class MetricsResource implements ResourceHandler {
             return builder.build();
          } catch (Exception e) {
             RestResponseBuilder<NettyRestResponse.Builder> errorBuilder = new NettyRestResponse.Builder()
-                  .status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+                  .status(INTERNAL_SERVER_ERROR).entity(e);
             return errorBuilder.build();
          }
       }, blockingExecutor);

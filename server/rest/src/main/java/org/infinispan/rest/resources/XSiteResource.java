@@ -27,7 +27,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.JsonUtils;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -227,8 +226,7 @@ public class XSiteResource implements ResourceHandler {
          minWait = minWaitValue.asInteger();
          afterFailures = afterFailuresValue.asInteger();
       } catch (Exception e) {
-         Throwable rootCause = Util.getRootCause(e);
-         return completedFuture(responseBuilder.status(BAD_REQUEST).entity(rootCause.getMessage()).build());
+         return completedFuture(responseBuilder.status(BAD_REQUEST).entity(e).build());
       }
       if (afterFailures == current.afterFailures() && minWait == current.minTimeToWait()) {
          return completedFuture(responseBuilder.status(NOT_MODIFIED).build());

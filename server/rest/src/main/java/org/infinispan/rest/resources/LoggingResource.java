@@ -115,15 +115,15 @@ public final class LoggingResource implements ResourceHandler {
             t = t.getCause();
          }
          if (t instanceof IllegalStateException) {
-            response.status(HttpResponseStatus.CONFLICT).entity(t.getMessage());
+            response.status(HttpResponseStatus.CONFLICT).entity(t);
          } else if (t instanceof IllegalArgumentException) {
-            response.status(HttpResponseStatus.BAD_REQUEST).entity(t.getMessage());
+            response.status(HttpResponseStatus.BAD_REQUEST).entity(t);
          } else if (t instanceof NoSuchElementException) {
-            response.status(HttpResponseStatus.NOT_FOUND).entity(t.getMessage());
+            response.status(HttpResponseStatus.NOT_FOUND).entity(t);
          } else if (t instanceof SecurityException) {
-            response.status(HttpResponseStatus.FORBIDDEN).entity(t.getMessage());
+            response.status(HttpResponseStatus.FORBIDDEN).entity(t);
          } else {
-            response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(t.getMessage());
+            response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(t);
          }
       }
       return response.build();
