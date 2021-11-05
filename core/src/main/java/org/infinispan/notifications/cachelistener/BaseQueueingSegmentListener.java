@@ -39,21 +39,23 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
 
    @Override
    public Optional<CacheEntry<K, V>> apply(SegmentPublisherSupplier.Notification<CacheEntry<K, V>> cacheEntryNotification) throws Throwable {
-      if (cacheEntryNotification.isValue()) {
-         CacheEntry<K, V> cacheEntry = cacheEntryNotification.value();
-         K key = cacheEntry.getKey();
-         // By putting the NOTIFIED value it has signaled that any more updates for this key have to be enqueud instead
-         // of taking the last one
-         Object value = notifiedKeys.put(key, NOTIFIED);
-         if (value != null) {
-            if (getLog().isTraceEnabled()) {
-               getLog().tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
-            }
-         }
-         return value != QueueingSegmentListener.REMOVED ? Optional.of(cacheEntry) : Optional.empty();
+      if (cacheEntryNotification.isSegmentComplete()) {
+         segmentComplete(cacheEntryNotification.completedSegment());
+         return Optional.empty();
       }
-      segmentComplete(cacheEntryNotification.completedSegment());
-      return Optional.empty();
+
+      CacheEntry<K, V> cacheEntry = cacheEntryNotification.value();
+      K key = cacheEntry.getKey();
+      // By putting the NOTIFIED value it has signaled that any more updates for this key have to be enqueued instead
+      // of taking the last one
+      Object value = notifiedKeys.put(key, NOTIFIED);
+      if (value == null)
+         return Optional.of(cacheEntry);
+
+      if (getLog().isTraceEnabled()) {
+         getLog().tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
+      }
+      return value != QueueingSegmentListener.REMOVED ? Optional.of(((CacheEntry<K, V>) value)) : Optional.empty();
    }
 
    @Override

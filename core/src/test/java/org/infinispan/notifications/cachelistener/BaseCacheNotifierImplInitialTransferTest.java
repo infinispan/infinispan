@@ -330,12 +330,13 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       });
 
       barrier.await(10, TimeUnit.SECONDS);
+      log.debugf("Synced with publisher, performing operation");
 
+      String prevValue = initialValues.get(3).getValue();
       switch (operation) {
          case REMOVE:
             String key = "key-3";
 
-            Object prevValue = initialValues.get(3).getValue();
             n.notifyCacheEntryRemoved(key, prevValue, null, true, ctx, null);
             n.notifyCacheEntryRemoved(key, prevValue, null, false, ctx, null);
 
@@ -355,8 +356,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             key = "key-3";
             value = "value-3-changed";
 
-            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), null, value, null, true, ctx, null);
-            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), null, value, null, false, ctx, null);
+            n.notifyCacheEntryModified(key, value, null, prevValue, null, true, ctx, null);
+            n.notifyCacheEntryModified(key, value, null, prevValue, null, false, ctx, null);
 
             // Now remove the old value and put in the new one
             initialValues.remove(3);
@@ -366,7 +367,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             throw new IllegalArgumentException("Unsupported Operation provided " + operation);
       }
 
-      // Now let the iteration complete
+      log.debugf("Operation done, let the iteration complete");
       barrier.await(10, TimeUnit.SECONDS);
 
       future.get(10, TimeUnit.MINUTES);
