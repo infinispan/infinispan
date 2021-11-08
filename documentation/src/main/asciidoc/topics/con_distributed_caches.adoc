@@ -10,7 +10,6 @@ In particular, if `numOwners` nodes leave in quick succession, some entries will
 
 The number of copies represents a trade-off between performance and durability of data.
 The more copies you maintain, the lower performance will be, but also the lower the risk of losing data due to server or network failures.
-Regardless of how many copies are maintained, distribution still scales linearly, and this is key to {brandname} scalability.
 
 {brandname} splits the owners of a key into one *primary owner*, which coordinates writes to the key, and zero or more *backup owners*.
 
