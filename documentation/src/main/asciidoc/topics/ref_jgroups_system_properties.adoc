@@ -1,5 +1,5 @@
 [id='jgroups-system-properties_{context}']
-= Cluster Transport Properties
+= Cluster transport properties
 
 Use the following properties to customize JGroups cluster transport.
 
@@ -58,7 +58,7 @@ Use the following properties to customize JGroups cluster transport.
 
 |===
 
-.Reference
-
-* link:{jgroups_docs}#SystemProperties[JGroups System Properties]
-* link:{jgroups_docs}#protlist[JGroups Protocol List]
+[role="_additional-resources"]
+.Additional resources
+* link:{jgroups_docs}#SystemProperties[JGroups system properties]
+* link:{jgroups_docs}#protlist[JGroups protocol list]
