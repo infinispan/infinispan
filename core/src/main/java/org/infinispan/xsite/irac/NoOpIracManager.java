@@ -46,7 +46,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void trackClear() {
+   public void trackClear(boolean sendClear) {
       // no-op
    }
 

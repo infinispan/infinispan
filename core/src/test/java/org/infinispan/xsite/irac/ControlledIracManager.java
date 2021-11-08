@@ -43,8 +43,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void trackClear() {
-      actual.trackClear();
+   public void trackClear(boolean sendClear) {
+      actual.trackClear(sendClear);
    }
 
    @Override
