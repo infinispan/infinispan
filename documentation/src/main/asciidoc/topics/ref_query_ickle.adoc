@@ -75,7 +75,7 @@ query.setParameter("authorName", "Doe");
 query.setParameter("publicationYear", 2010);
 
 // Execute the query
-List<Book> found = query.execute.list();
+List<Book> found = query.execute().list();
 ----
 
 Alternatively, you can supply a map of actual parameter values to set multiple parameters at once:

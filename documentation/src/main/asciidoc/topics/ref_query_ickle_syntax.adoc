@@ -14,26 +14,52 @@ The parser syntax has some notable rules:
 * String terms must be enclosed with either single or double quotes.
 * Fuzziness and boosting are not accepted in arbitrary order; fuzziness always comes first.
 * `!=` is accepted instead of `<>`.
-* Boosting cannot be applied to `>`,`>=`,`<`,`<=` operators. Ranges may be used to achieve the same result.
+* Boosting cannot be applied to `>`,`>=`,`<`,`\<=` operators. Ranges may be used to achieve the same result.
 
 == Filtering operators
 
 Ickle support many filtering operators that can be used for both indexed and non-indexed fields.
 
-[options="header"]
-|==============================================================================
-| Operator | Description | Example
-| in | Checks that the left operand is equal to one of the elements from the Collection of values given as argument.
-|FROM Book WHERE isbn IN ('ZZ', 'X1234')
-| like | Checks that the left argument (which is expected to be a String) matches a wildcard pattern that follows the JPA rules.| FROM Book WHERE title LIKE '%Java%'
-|=| Checks that the left argument is an exact match of the given value         | FROM Book WHERE name = 'Programming Java'
-|!=| Checks that the left argument is different from the given value            | FROM Book WHERE language != 'English'
-|>| Checks that the left argument is greater than the given value.             | FROM Book WHERE price > 20
-|>=| Checks that the left argument is greater than or equal to the given value. | FROM Book WHERE price >= 20
-|<| Checks that the left argument is less than the given value.                | FROM Book WHERE year < 2012
-|<=| Checks that the left argument is less than or equal to the given value.   | FROM Book WHERE price  <= 50
-|between| Checks that the left argument is between the given range limits.  | FROM Book WHERE price BETWEEN 50 AND 100
-|==============================================================================
+[%header%autowidth,cols="1,1,1",stripes=even]
+|===
+|Operator |Description |Example
+
+|`in`
+|Checks that the left operand is equal to one of the elements from the Collection of values given as argument.
+|`FROM Book WHERE isbn IN ('ZZ', 'X1234')`
+
+|`like`
+|Checks that the left argument (which is expected to be a String) matches a wildcard pattern that follows the JPA rules.
+|`FROM Book WHERE title LIKE '%Java%'`
+
+|`=`
+|Checks that the left argument is an exact match of the given value.
+|`FROM Book WHERE name = 'Programming Java'`
+
+|`!=`
+|Checks that the left argument is different from the given value.
+|`FROM Book WHERE language != 'English'`
+
+|`>`
+|Checks that the left argument is greater than the given value.
+|`FROM Book WHERE price > 20`
+
+|`>=`
+|Checks that the left argument is greater than or equal to the given value.
+|`FROM Book WHERE price >= 20`
+
+|`<`
+|Checks that the left argument is less than the given value.
+|`FROM Book WHERE year < 2020`
+
+|`\<=`
+|Checks that the left argument is less than or equal to the given value.
+|`FROM Book WHERE price  <= 50`
+
+|`between`
+|Checks that the left argument is between the given range limits.
+|`FROM Book WHERE price BETWEEN 50 AND 100`
+|===
 
 == Boolean conditions
 

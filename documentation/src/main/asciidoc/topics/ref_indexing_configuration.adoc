@@ -110,6 +110,7 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 
 |===
 
-.Reference
 
-For more information about indexing elements and attributes, refer to the link:{configdocroot}[{brandname} Configuration Schema].
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]

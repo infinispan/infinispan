@@ -36,11 +36,17 @@ You then generate Protobuf schema, `.proto` files, before uploading them to {bra
 
 * Annotate Protobuf schema directly with `@Indexed` and `@Field(...)`. +
 You then upload your Protobuf schema to {brandname} Server.
++
+For example, the following schema uses the `@Field` annotation:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::protobuf/indexed_field.protobuf[]
+----
 
 [discrete]
 == Embedded caches
 
 For embedded caches, you add indexing annotations to your Java classes according to how {brandname} stores your entries.
 
-* Use the `@Indexed` and `@Field` annotations, along with other Hibernate Search annotations such as `@FullTextField`, for Plain Old Java Objects (POJOs).
-* Use the `@ProtoDoc("@Indexed")` and `@ProtoDoc("@Field(...)")` annotations for objects encoded as Protobuf.
+Use the `@Indexed` and `@Field` annotations, along with other Hibernate Search annotations such as `@FullTextField`.
