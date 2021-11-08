@@ -1,0 +1,55 @@
+[id='synchronizing-data-target-clusters_{context}']
+= Synchronizing data to target clusters
+
+When you set up a target {brandname} cluster and connect it to a source cluster, the target cluster can handle client requests using a remote cache store and load data on demand.
+To completely migrate data to the target cluster, so you can decommission the source cluster, you can synchronize data.
+This operation reads data from the source cluster and writes it to the target cluster.
+Data migrates to all nodes in the target cluster in parallel, with each node receiving a subset of the data.
+You must perform the synchronization for each cache that you want to migrate to the target cluster.
+
+.Prerequisites
+
+* Set up a target cluster with the appropriate {brandname} version.
+
+.Procedure
+
+. Start synchronizing each cache that you want to migrate to the target cluster with the {brandname} Command Line Interface (CLI) or REST API.
++
+* CLI: Use the [command]`migrate cluster synchronize` command.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> migrate cluster synchronize -c myCache
+----
++
+* REST API: Use the `?action=sync-data` parameter with a POST request.
++
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/myCache?action=sync-data
+----
++
+When the operation completes, {brandname} responds with the total number of
+entries copied to the target cluster.
++
+. Disconnect each node in the target cluster from the source cluster.
++
+* CLI: Use the [command]`migrate cluster disconnect` command.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> migrate cluster disconnect -c myCache
+----
++
+* REST API: Invoke a DELETE request.
++
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/caches/myCache/rolling-upgrade/source-connection
+----
+
+.Next steps
+
+After you synchronize all data from the source cluster, the rolling upgrade
+process is complete.
+You can now decommission the source cluster.
