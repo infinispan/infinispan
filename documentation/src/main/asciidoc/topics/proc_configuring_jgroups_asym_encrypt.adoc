@@ -1,5 +1,5 @@
-[id='configuring_jgroups_asym_encrypt-{context}']
-= Configuring Cluster Transport with Asymmetric Encryption
+[id='configuring-jgroups-asym-encrypt_{context}']
+= Securing cluster transport with asymmetric encryption
 Configure {brandname} clusters to generate and distribute secret keys that encrypt JGroups messages.
 
 .Procedure
@@ -33,10 +33,7 @@ Otherwise the following message is written to {brandname} logs:
 [org.jgroups.protocols.ASYM_ENCRYPT] <hostname>: received message without encrypt header from <hostname>; dropping it
 ----
 
-.Reference
-
-The example `ASYM_ENCRYPT` configuration in this procedure shows commonly used parameters.
-Refer to JGroups documentation for the full set of available parameters.
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}[JGroups 4 Manual]
 * link:{jgroups_schema}[JGroups 4.2 Schema]

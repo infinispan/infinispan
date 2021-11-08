@@ -1,10 +1,14 @@
 ifdef::context[:parent-context: {context}]
-[id='jgroups_encrypt']
-:context: cluster_transport
-= Encrypting Cluster Transport
+[id='secure-cluster-transport']
+:context: secure-cluster-transport
+= Encrypting cluster transport
 Secure cluster transport so that nodes communicate with encrypted messages.
 You can also configure {brandname} clusters to perform certificate authentication so that only nodes with valid identities can join.
 
+//Server only
+ifdef::remote_caches[]
+include::{topics}/proc_securing_cluster_transport.adoc[leveloffset=+1]
+endif::remote_caches[]
 include::{topics}/con_jgroups_encrypt.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_jgroups_asym_encrypt.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_jgroups_sym_encrypt.adoc[leveloffset=+1]

@@ -1,0 +1,49 @@
+[id='securing-cluster-transport-tls-identities_{context}']
+= Securing cluster transport with TLS identities
+
+Add SSL/TLS identities to a {brandname} Server security realm and use them to secure cluster transport.
+Nodes in the {brandname} Server cluster then exchange SSL/TLS certificates to encrypt JGroups messages, including RELAY messages if you configure cross-site replication.
+
+.Prerequisites
+
+* Install a {brandname} Server cluster.
+
+.Procedure
+
+. Create a TLS keystore that contains a single certificate to identify {brandname} Server.
++
+You can also use a PEM file if it contains a private key in PKCS#1 or PKCS#8 format, a certificate, and has an empty password: `password=""`.
++
+[NOTE]
+====
+If the certificate in the keystore is not signed by a public certificate authority (CA) then you must also create a trust store that contains either the signing certificate or the public key.
+====
++
+. Add the keystore to the `{server_home}/server/conf` directory.
+. Add the keystore to a new security realm in your {brandname} Server configuration.
++
+[IMPORTANT]
+====
+You should create dedicated keystores and security realms so that {brandname} Server endpoints do not use the same security realm as cluster transport.
+====
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server-transport-security.xml[]
+----
++
+. Configure cluster transport to use the security realm by specifying the name of the security realm with the `server:security-realm` attribute.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server-transport-cache-container.xml[]
+----
+
+.Verification
+
+When you start {brandname} Server, the following log message indicates that the cluster is using the security realm for cluster transport:
+
+[source,bash,options="nowrap"]
+----
+[org.infinispan.SERVER] ISPN080060: SSL Transport using realm <security_realm_name>
+----
