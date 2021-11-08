@@ -1,5 +1,5 @@
-[id='jgroups_ports-{context}']
-= TCP and UDP Ports for Cluster Traffic
+[id='jgroups-ports_{context}']
+= TCP and UDP ports for cluster traffic
 
 {brandname} uses the following ports for cluster transport messages:
 
@@ -20,7 +20,7 @@
 |===
 
 [discrete]
-== Cross-Site Replication
+== Cross-site replication
 
 {brandname} uses the following ports for the JGroups RELAY2 protocol:
 

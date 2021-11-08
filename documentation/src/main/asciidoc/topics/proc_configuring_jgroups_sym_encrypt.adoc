@@ -1,5 +1,5 @@
-[id='configuring_jgroups_sym_encrypt-{context}']
-= Configuring Cluster Transport with Symmetric Encryption
+[id='configuring-jgroups-sym-encrypt_{context}']
+= Securing cluster transport with symmetric encryption
 Configure {brandname} clusters to encrypt JGroups messages with secret keys from keystores that you provide.
 
 .Procedure
@@ -32,10 +32,7 @@ Otherwise the following message is written to {brandname} logs:
 [org.jgroups.protocols.SYM_ENCRYPT] <hostname>: received message without encrypt header from <hostname>; dropping it
 ----
 
-.Reference
-
-The example `SYM_ENCRYPT` configuration in this procedure shows commonly used parameters.
-Refer to JGroups documentation for the full set of available parameters.
-
+[role="_additional-resources"]
+.Additional resources
 * link:{jgroups_docs}[JGroups 4 Manual]
 * link:{jgroups_schema}[JGroups 4.2 Schema]

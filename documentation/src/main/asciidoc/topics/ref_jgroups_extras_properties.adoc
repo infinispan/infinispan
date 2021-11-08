@@ -1,5 +1,5 @@
 [id='jgroups-extras-properties_{context}']
-= System Properties for Cloud Discovery Protocols
+= System properties for cloud discovery protocols
 
 Use the following properties to configure JGroups discovery protocols for hosted platforms.
 

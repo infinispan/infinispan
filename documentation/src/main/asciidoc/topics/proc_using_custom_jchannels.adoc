@@ -1,5 +1,5 @@
-[id='jgroups_jchannels-{context}']
-= Using Custom JChannels
+[id='using-custom-jchannels_{context}']
+= Using custom JChannels
 Construct custom JGroups JChannels as in the following example:
 
 [source,java]
@@ -12,6 +12,6 @@ include::code_examples/CustomJChannel.java[]
 {brandname} cannot use custom JChannels that are already connected.
 ====
 
-.Reference
-
-link:{jgroups_docs}#JChannel[JGroups JChannel]
+[role="_additional-resources"]
+.Additional resources
+* link:{jgroups_docs}#JChannel[JGroups JChannel]
