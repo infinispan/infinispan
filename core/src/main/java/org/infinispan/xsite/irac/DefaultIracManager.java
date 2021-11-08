@@ -313,7 +313,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          }
          DistributionInfo dInfo = getDistributionInfo(state.segment);
          if (!dInfo.isPrimary()) {
-            state.sendFail();
+            state.retrySend();
             continue;
          } else if (!dInfo.isWriteOwner()) {
             // topology changed! cleanup the key
@@ -324,7 +324,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             // we need the data in DataContainer and CacheLoaders, so we must wait until we
             // receive the key or will end up sending a remove update.
             // when the new topology arrives, this will be triggered again
-            state.sendFail();
+            state.retrySend();
             continue;
          }
 
@@ -335,16 +335,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
                      log.sendFailMissingTombstone(Util.toStr(state.key));
                      // avoid retrying
                      state.accept(IracResponseCollector.Result.OK, null);
-                     onSendingCompleted(IracResponseCollector.Result.OK, null);
                      return;
                   }
                   IracResponseCollector rsp = sendCommandToAllBackups(cmd);
                   rsp.whenComplete(state); // this can block in JGroups Flow Control. move to thread pool?
-                  rsp.whenComplete(this::onSendingCompleted);
                })
                .exceptionally(throwable -> {
-                  state.sendFail();
-                  onSendingCompleted(null, CompletableFutures.extractException(throwable));
+                  state.accept(null, CompletableFutures.extractException(throwable));
                   return null;
                });
 
@@ -368,22 +365,16 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    private void onClearCompleted(IracResponseCollector.Result result, Throwable throwable) {
-      onRoundCompleted(result, throwable, true);
-   }
-
-   private void onSendingCompleted(IracResponseCollector.Result result, Throwable throwable) {
-      onRoundCompleted(result, throwable, false);
-   }
-
-   private void onRoundCompleted(IracResponseCollector.Result result, Throwable throwable, boolean isClear) {
-      if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] Round completed (is clear? %s). Result: %s (throwable=%s)", isClear, result, throwable);
-      }
       if (throwable != null) {
-         // unlikely, retry
-         log.unexpectedErrorFromIrac(throwable);
-         iracExecutor.run();
+         onUnexpectedThrowable(throwable);
          return;
+      }
+      onRoundCompleted(result, true);
+   }
+
+   private void onRoundCompleted(IracResponseCollector.Result result, boolean isClear) {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Round completed (is clear? %s). Result: %s", isClear, result);
       }
       switch (result) {
          case OK:
@@ -404,9 +395,14 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             iracExecutor.run();
             return;
          default:
-            log.unexpectedErrorFromIrac(new IllegalStateException("Unknown result: " + result));
-            iracExecutor.run();
+            onUnexpectedThrowable(new IllegalStateException("Unknown result: " + result));
       }
+   }
+
+   private void onUnexpectedThrowable(Throwable throwable) {
+      // unlikely, retry
+      log.unexpectedErrorFromIrac(throwable);
+      iracExecutor.run();
    }
 
    private void sendStateRequest(Address primary, IntSet segments) {
@@ -496,17 +492,19 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          return false;
       }
 
-      synchronized void discard() {
-         if (log.isTraceEnabled()) {
-            log.tracef("[IRAC] State.onDiscard for key %s (status=%s)", key, stateStatus);
+      void discard() {
+         synchronized (this) {
+            if (log.isTraceEnabled()) {
+               log.tracef("[IRAC] State.discard for key %s (status=%s)", key, stateStatus);
+            }
+            stateStatus = StateStatus.COMPLETED;
          }
-         stateStatus = StateStatus.COMPLETED;
          removeStateFromLocal(this);
       }
 
-      synchronized void sendFail() {
+      synchronized void retrySend() {
          if (log.isTraceEnabled()) {
-            log.tracef("[IRAC] State.sendFail for key %s (status=%s)", key, stateStatus);
+            log.tracef("[IRAC] State.retrySend for key %s (status=%s)", key, stateStatus);
          }
          if (stateStatus == StateStatus.SENDING) {
             stateStatus = StateStatus.NEW;
@@ -515,6 +513,40 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
       boolean isExpiration() {
          return false;
+      }
+
+      private void onSuccess() {
+         synchronized (this) {
+            // send succeed.
+            if (log.isTraceEnabled()) {
+               log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
+            }
+            if (stateStatus != StateStatus.SENDING) {
+               // discarded or overwritten by another write operation
+               // do not send the cleanup command.
+               return;
+            }
+            stateStatus = StateStatus.COMPLETED;
+         }
+         onRoundCompleted(IracResponseCollector.Result.OK, false);
+         removeStateFromCluster(this);
+      }
+
+      private void onResponse(IracResponseCollector.Result result, Throwable throwable) {
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] State.onResponse for key %s (status=%s). Result=%s, Throwable=%s", key, stateStatus, result, throwable);
+         }
+         if (throwable != null) {
+            retrySend();
+            onUnexpectedThrowable(throwable);
+            return;
+         }
+         if (result != IracResponseCollector.Result.OK) {
+            retrySend();
+            onRoundCompleted(result, false);
+            return;
+         }
+         onSuccess();
       }
 
       @Override
@@ -534,23 +566,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
       @Override
       public void accept(IracResponseCollector.Result result, Throwable throwable) {
-         if (throwable != null || result != IracResponseCollector.Result.OK) {
-            sendFail();
-         } else {
-            synchronized (this) {
-               // send succeed.
-               if (log.isTraceEnabled()) {
-                  log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
-               }
-               if (stateStatus != StateStatus.SENDING) {
-                  // discarded or overwritten by another write operation
-                  // do not send the cleanup command.
-                  return;
-               }
-               stateStatus = StateStatus.COMPLETED;
-            }
-            removeStateFromCluster(this);
-         }
+         onResponse(result, throwable);
       }
    }
 
@@ -564,7 +580,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       }
 
       @Override
-      synchronized void discard() {
+      void discard() {
          super.discard();
          completableFuture.complete(null);
       }
