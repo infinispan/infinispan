@@ -7,12 +7,6 @@ Use {brandname} Console to create remote caches in an intuitive visual interface
 * Create a {brandname} user with `admin` permissions.
 * Start at least one {brandname} Server instance.
 * Have a {brandname} cache configuration.
-+
-[NOTE]
-====
-If you are getting started, you can use an `org.infinispan` template configuration.
-These templates provide example caches and are intended for demonstration purposes only.
-====
 
 .Procedure
 

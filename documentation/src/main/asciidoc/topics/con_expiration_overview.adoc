@@ -16,8 +16,7 @@ reaper.
 
 For example, `k1` reaches the maximum idle time and a client makes a
 `Cache.get(k1)` request. In this case, {brandname} detects that the entry is
-expired and removes it from the data container. The `Cache.get()` returns
-`null`.
+expired and removes it from the data container. The `Cache.get(k1)` request returns `null`.
 
 {brandname} also expires entries from cache stores, but only with lifespan
 expiration. Maximum idle expiration does not work with cache stores. In the
