@@ -3,27 +3,18 @@
     "cache-container" : {
       "distributed-cache-configuration" : {
         "name" : "base-template",
-        "mode": "SYNC",
-        "statistics": "true",
         "encoding": {
           "media-type": "application/x-protostream"
         },
         "expiration" : {
           "lifespan" : "5000",
           "max-idle" : "1000"
-        },
-        "memory": {
-          "max-count": "1000000",
-          "when-full": "REMOVE"
         }
       },
       "distributed-cache-configuration" : {
         "name" : "extended-template",
         "expiration" : {
           "lifespan" : "10000"
-        },
-        "memory": {
-          "max-size": "1.5GB"
         }
       }
     }
