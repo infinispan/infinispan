@@ -1,5 +1,5 @@
-[id='jgroups-default_{context}']
-= Default JGroups Stacks
+[id='default-jgroups-stacks_{context}']
+= Default JGroups stacks
 
 {brandname} provides default JGroups stack files, `default-jgroups-*.xml`, in the `default-configs` directory inside the `infinispan-core-{ispn_version}.jar` file.
 

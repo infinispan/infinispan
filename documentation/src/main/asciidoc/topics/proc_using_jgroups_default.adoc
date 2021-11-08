@@ -1,5 +1,5 @@
 [id='using-jgroups-default-stacks_{context}']
-= Using the Default JGroups Stacks
+= Using the default JGroups stacks
 {brandname} uses JGroups protocol stacks so nodes can send each other messages on dedicated cluster channels.
 
 {brandname} provides preconfigured JGroups stacks for `UDP` and `TCP` protocols.

@@ -1,14 +1,15 @@
 ifdef::context[:parent-context: {context}]
-[id='setting_up_clusters']
+[id='cluster-transport']
 :context: cluster-transport
-= Setting Up {brandname} Clusters
+= Setting up {brandname} cluster transport
+
 {brandname} requires a transport layer so nodes can automatically join and leave clusters.
 The transport layer also enables {brandname} nodes to replicate or distribute data across the network and perform operations such as re-balancing and state transfer.
 
 include::{topics}/ref_jgroups_default.adoc[leveloffset=+1]
 
 //Discovery
-include::{topics}/con_discovery.adoc[leveloffset=+1]
+include::{topics}/con_cluster_discovery_protocols.adoc[leveloffset=+1]
 include::{topics}/ref_discovery_ping.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_tcp_ping.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_mping.adoc[leveloffset=+2]

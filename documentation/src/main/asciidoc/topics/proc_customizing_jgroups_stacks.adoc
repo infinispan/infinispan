@@ -1,5 +1,5 @@
-[id='using_jgroups_inheritance-{context}']
-= Customizing JGroups Stacks
+[id='customizing-jgroups-stacks_{context}']
+= Customizing JGroups stacks
 Adjust and tune properties to create a cluster transport configuration that works for your network requirements.
 
 {brandname} provides attributes that let you extend the default JGroups stacks for easier configuration.

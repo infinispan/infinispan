@@ -1,5 +1,5 @@
 [id='jgroups-cloud-discovery-protocols_{context}']
-= Cloud Discovery Protocols
+= Cloud discovery protocols
 
 {brandname} includes default JGroups stacks that use discovery protocol implementations that are specific to cloud providers.
 
@@ -27,7 +27,7 @@
 |===
 
 [discrete]
-== Providing Dependencies for Cloud Discovery Protocols
+== Providing dependencies for cloud discovery protocols
 
 To use `NATIVE_S3_PING`, `GOOGLE_PING2`, or `AZURE_PING` cloud discovery protocols, you need to provide dependent libraries to {brandname}.
 
