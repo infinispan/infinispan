@@ -289,7 +289,7 @@
       <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
       <versionx.io.reactivex.rxjava3.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava3.rxjava>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
-      <versionx.javax.annotation.javax.annotation-api>1.3.1</versionx.javax.annotation.javax.annotation-api>
+      <versionx.javax.annotation.javax.annotation-api>1.3.2</versionx.javax.annotation.javax.annotation-api>
       <versionx.javax.cache.cache-api>${version.javax.cache}</versionx.javax.cache.cache-api>
       <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.cache.cdi-weld-annotations-test-harness>${version.javax.cache}</versionx.javax.cache.cdi-weld-annotations-test-harness>
