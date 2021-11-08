@@ -144,7 +144,9 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       LocalizedCacheTopology localizedCacheTopology = clusteringDependentLogic.getCacheTopology();
       for (Object key : writeCommand.getAffectedKeys()) {
          DistributionInfo info = localizedCacheTopology.getDistribution(key);
-         if (info.isWriteOwner()) { //all owners need to keep track.
+         if (info.isPrimary() || (!ctx.isOriginLocal() && info.isWriteOwner())) {
+            // track the update for the ASYNC cross-site
+            // backup owner only track updates when the context is remote.
             iracManager.trackUpdatedKey(info.segmentId(), key, writeCommand.getCommandInvocationId());
          }
          if (!info.isPrimary()) {

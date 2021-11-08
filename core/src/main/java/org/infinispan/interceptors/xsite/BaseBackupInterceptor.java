@@ -55,7 +55,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
-      if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
+      if (skipXSiteBackup(command)) {
          return invokeNext(ctx, command);
       }
       return invokeNextThenApply(ctx, command, handleClearReturn);
@@ -125,8 +125,8 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    }
 
    private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) {
-      iracManager.trackClear();
-      return backupSender.backupClear(rCommand).thenReturn(ctx, rCommand, rv);
+      iracManager.trackClear(ctx.isOriginLocal());
+      return ctx.isOriginLocal() ? backupSender.backupClear(rCommand).thenReturn(ctx, rCommand, rv) : rv;
    }
 
    private Object handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
@@ -137,15 +137,16 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
          return rv;
       }
       int segment = dataWriteCommand.getSegment();
-      DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment);
-      if (dInfo.isWriteOwner()) {
-         //all owners has to keep track of the updates even if the primary owner is the only one who sends it.
+      if (clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary()) {
+         //primary owner always tracks updates to the remote sites (and sends the update in the background)
          iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
-      }
-      if (dInfo.isPrimary()) { //primary owner sends for sync backups
          CacheEntry<?,?> entry = ctx.lookupEntry(dataWriteCommand.getKey());
          WriteCommand crossSiteCommand = createCommandForXSite(entry, segment, dataWriteCommand.getFlagsBitSet());
          return backupSender.backupWrite(crossSiteCommand, dataWriteCommand).thenReturn(ctx, dataWriteCommand, rv);
+      } else if (!ctx.isOriginLocal()) {
+         // backup owners need to keep track of the update in the remote context for ASYNC cross-site
+         // if backup owner == originator, we don't want to track the key again when ctx.isOriginLocal==true
+         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
       }
       return rv;
    }

@@ -188,13 +188,16 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    @Override
-   public void trackClear() {
+   public void trackClear(boolean sendClear) {
+      // only the originator sends the clear to the backup sites but all nodes need to clear the "updatedKeys" map
       if (log.isTraceEnabled()) {
-         log.trace("Tracking clear request");
+         log.tracef("Tracking clear request. Replicate to backup sites? %s", sendClear);
       }
-      hasClear = true;
+      hasClear = sendClear;
       updatedKeys.values().forEach(State::discard);
-      iracExecutor.run();
+      if (sendClear) {
+         iracExecutor.run();
+      }
    }
 
    @Override
@@ -218,23 +221,24 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       }
 
-      if (addedSegments.isEmpty()) {
-         // this node doesn't have any new segments but it may become the primary owner
-         // of some.
-         // trigger a new round (it also removes the keys if the node isn't a owner)
+      if (!addedSegments.isEmpty()) {
+         // request state from old primary owner
+         // and group new segments by primary owner
+         Map<Address, IntSet> primarySegments = new HashMap<>();
+         for (int segment : addedSegments) {
+            Address primary = newCacheTopology.getWriteConsistentHash().locatePrimaryOwnerForSegment(segment);
+            primarySegments.computeIfAbsent(primary, DefaultIracManager::newIntSet).add(segment);
+         }
+
+         primarySegments.forEach(this::sendStateRequest);
+      }
+
+      // even if this node doesn't have any new segments, it may become the primary owner of some segments
+      // i.e. backup owner => primary owner "promotion".
+      // only trigger a round if we have pending updates.
+      if (!updatedKeys.isEmpty()) {
          iracExecutor.run();
-         return;
       }
-
-      // group new segments by primary owner
-      Map<Address, IntSet> primarySegments = new HashMap<>();
-      for (int segment : addedSegments) {
-         Address primary = newCacheTopology.getWriteConsistentHash().locatePrimaryOwnerForSegment(segment);
-         primarySegments.computeIfAbsent(primary, DefaultIracManager::newIntSet).add(segment);
-      }
-
-      primarySegments.forEach(this::sendStateRequest);
-      iracExecutor.run();
    }
 
    @Override
