@@ -1,0 +1,52 @@
+[id='setting-up-target-clusters_{context}']
+= Setting up target {brandname} clusters
+
+Create a cluster that uses the {brandname} version to which you plan to upgrade and then connect the source cluster to the target cluster using a remote cache store.
+
+.Prerequisites
+
+* Install {brandname} Server nodes with the desired version for your target cluster.
+
+[IMPORTANT]
+====
+Ensure the network properties for the target cluster do not overlap with those
+for the source cluster.
+You should specify unique names for the target and source clusters in the JGroups transport configuration.
+Depending on your environment you can also use different network interfaces and port offsets to separate the target and source clusters.
+====
+
+.Procedure
+
+. Create a remote cache store configuration, in JSON format, that allows the target cluster to connect to the source cluster.
++
+Remote cache stores on the target cluster use the Hot Rod protocol to retrieve data from the source cluster.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/remote_store_minimal.json[]
+----
++
+. Use the {brandname} Command Line Interface (CLI) or REST API to add the remote cache store configuration to the target cluster so it can connect to the source cluster.
++
+* CLI: Use the [command]`migrate cluster connect` command.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> migrate cluster connect -c myCache -f remote-store.json
+----
++
+* REST API: Use the `?action=connect-source` parameter with a POST request that includes the remote store configuration in the payload.
++
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/myCache?action=connect-source
+----
++
+. Repeat the preceding step for each cache that you want to migrate.
+. Switch clients over to the target cluster, so it starts handling all requests.
+.. Update client configuration with the location of the target cluster.
+.. Restart clients.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
