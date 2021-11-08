@@ -1,6 +1,6 @@
-[id='jgroups_encryption-{context}']
-= {brandname} Cluster Security
-To secure cluster traffic, you configure {brandname} nodes to encrypt JGroups message payloads with secret keys.
+[id='jgroups-encryption-protocols_{context}']
+= JGroups encryption protocols
+To secure cluster traffic, you can configure {brandname} nodes to encrypt JGroups message payloads with secret keys.
 
 {brandname} nodes can obtain secret keys from either:
 

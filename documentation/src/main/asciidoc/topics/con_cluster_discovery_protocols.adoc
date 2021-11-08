@@ -1,5 +1,5 @@
-[id='cluster_discovery-{context}']
-= Cluster Discovery Protocols
+[id='cluster-discovery-protocols_{context}']
+= Cluster discovery protocols
 {brandname} supports different protocols that allow nodes to automatically find each other on the network and form clusters.
 
 There are two types of discovery mechanisms that {brandname} can use:

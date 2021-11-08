@@ -1,5 +1,6 @@
-[id='using_jgroups_system_properties-{context}']
-= Using JGroups System Properties
+[id='using-jgroups-system-properties_{context}']
+= Using JGroups system properties
+
 Pass system properties to {brandname} at startup to tune cluster transport.
 
 .Procedure

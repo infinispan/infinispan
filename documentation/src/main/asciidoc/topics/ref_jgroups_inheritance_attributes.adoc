@@ -1,5 +1,5 @@
-[id='jgroups_inheritance_attributes-{context}']
-= Inheritance Attributes
+[id='jgroups-inheritance-attributes_{context}']
+= Inheritance attributes
 When you extend a JGroups stack, inheritance attributes let you adjust protocols and properties in the stack you are extending.
 
 * `stack.position` specifies protocols to modify.

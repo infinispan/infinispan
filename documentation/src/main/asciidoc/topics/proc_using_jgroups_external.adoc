@@ -1,5 +1,5 @@
-[id='jgroups_external-{context}']
-= Using External JGroups Stacks
+[id='using-external-jgroups-stacks_{context}']
+= Using external JGroups stacks
 Reference external files that define custom JGroups stacks in `infinispan.xml` files.
 
 .Procedure

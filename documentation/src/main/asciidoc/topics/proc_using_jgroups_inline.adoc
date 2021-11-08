@@ -1,5 +1,6 @@
-[id='using_jgroups_inline-{context}']
-= Using Inline JGroups Stacks
+[id='using-inline-jgroups-stacks_{context}']
+= Using inline JGroups stacks
+
 You can insert complete JGroups stack definitions into `infinispan.xml` files.
 
 .Procedure
